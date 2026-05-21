@@ -29,10 +29,6 @@ async def retrieval_node(state: State) -> dict:
     from vectora.config.settings import settings
     from vectora.nodes.rag_subgraph import _call_vector_search, _extract_query
 
-    if not settings.enable_rag:
-        logger.debug("retrieval_node: RAG desabilitado, skipping")
-        return {}
-
     query = _extract_query(state)
     if not query:
         logger.debug("retrieval_node: sem query, skipping")

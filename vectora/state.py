@@ -10,6 +10,8 @@ from typing import Annotated, Any, Literal, NotRequired, TypedDict
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
+from vectora.messages import ArtifactMetadata
+
 
 class Document(TypedDict, total=False):
     """Estrutura de documento recuperado do RAG."""
@@ -33,7 +35,7 @@ class SessionMetadata(TypedDict, total=False):
     - llm_model: Active model name
     """
 
-    thread_id: int
+    thread_id: str  # 6-digit zero-padded string, e.g. '042731'
     user_type: str
     created_at: str  # ISO 8601
     llm_provider: str
@@ -83,3 +85,19 @@ class State(TypedDict):
     web_search_triggered: NotRequired[
         bool | None
     ]  # Flag: web_search foi acionado no ciclo atual
+
+    # Artifacts gerados na sessão (planos, specs, guias)
+    # Persistidos em ~/.vectora/artifacts/{session_id}/{slug}.md
+    # Nunca enviados ao LLM — apenas metadados para o orchestrator
+    artifacts: NotRequired[list[ArtifactMetadata] | None]
+
+    # Task query do orchestrator para sub-agents
+    # Quando o orchestrator delega, escreve aqui uma instrução clara e concisa
+    # O sub-agent (coder/search) lê este campo e prioriza sobre o histórico bruto
+    orchestrator_task: NotRequired[str | None]
+
+    # Contexto do projeto carregado na primeira mensagem da sessão
+    # Conteúdo concatenado de AGENTS.md, CLAUDE.md, GEMINI.md encontrados no cwd
+    # Persistido no checkpoint para não re-escanear a cada turno
+    # None = já foi tentado e não encontrou nada; ausente = ainda não tentou
+    project_context: NotRequired[str | None]

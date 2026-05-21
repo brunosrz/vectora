@@ -64,7 +64,6 @@ async def generate_debug_dump(
         "platform": platform.platform(),
         "architecture": platform.machine(),
         "llm_provider": settings.get_llm_provider(),
-        "rag_enabled": settings.enable_rag,
         "include_databases": include_databases,
         "include_logs": include_logs,
     }

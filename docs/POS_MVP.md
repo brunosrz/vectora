@@ -10,13 +10,26 @@ O pré-requisito absoluto para qualquer item desta lista é que o **v0.1.0 estej
 
 Estes itens foram antecipados e implementados no MVP:
 
-- ✅ Supervisor com routing inteligente (`agents/supervisor.py`)
+- ✅ Orchestrator com routing inteligente (`agents/orchestrator.py`)
 - ✅ Search Agent — RAG + web search + cascading embeddings (`agents/search.py`)
 - ✅ Coder Agent — filesystem + terminal (`agents/coder.py`)
-- ✅ Direct Agent — síntese + memória (`agents/direct.py`)
 - ✅ RAG subgraph com threshold adaptativo (retrieve → rerank/websearch → inject)
 - ✅ Cascading automático: web_search → LanceDB fire-and-forget
 - ✅ Tools distribuídas por agente (SEARCH_TOOLS / FS_TOOLS / MEMORY_TOOLS)
+
+## ✅ Shipped em v0.1.0rc2 (em desenvolvimento)
+
+Features adicionadas durante o ciclo rc2, antes da publicação final:
+
+- ✅ Orchestrator como agente primário — responde inline, elimina o `direct` agent
+- ✅ Síntese RAG inline pelo Orchestrator (sem nó `direct` separado)
+- ✅ Tool `create_artifact` — persistência explícita de planos, specs, guias em `~/.vectora/artifacts/`
+- ✅ Carregamento de contexto do projeto (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`) na primeira mensagem
+- ✅ Delegação com `orchestrator_task` — sub-agentes recebem instrução clara, não histórico bruto
+- ✅ Session ID como string de 6 dígitos zero-padded (`"042731"`)
+- ✅ Session per working directory — retoma a última sessão usada em cada pasta
+- ✅ Verbosity levels 0–5 (`/debug N`)
+- ✅ CI/CD hardening: docker/deploy/PyPI em tags `v*` apenas, `[ci skip]` suportado
 
 ---
 
@@ -68,7 +81,7 @@ LangGraph suporta `interrupt_before` — o grafo pausa e aguarda confirmação h
 
 ### Execução Paralela de Sub-Agentes
 
-- [ ] `asyncio.gather` para tarefas independentes — supervisor despacha search + coder em paralelo quando não há dependência entre eles
+- [ ] `asyncio.gather` para tarefas independentes — orchestrator despacha search + coder em paralelo quando não há dependência entre eles
 
 ---
 
@@ -85,10 +98,10 @@ call_llm → [resposta fraca?] → critique_node → call_llm (nova tentativa)
 
 Critérios de qualidade: coerência, completude, fundamentação em fontes, tom adequado. O agente recebe a crítica como nova instrução: _"Sua resposta anterior foi incompleta porque X. Tente novamente com foco em Y."_
 
-### Supervisor com LLM Full
+### Orchestrator com LLM Full
 
-- [ ] Hoje o supervisor usa regex + keyword fallback. Migrar para LLM call com structured output para casos ambíguos.
-- [ ] Roteamento multi-hop — supervisor pode re-rotear após worker completar (ex: search completa busca → direct sintetiza).
+- [ ] Hoje o orchestrator usa regex + keyword fallback. Migrar para LLM call com structured output para casos ambíguos.
+- [ ] Roteamento multi-hop — orchestrator pode re-rotear após worker completar (ex: search completa busca → direct sintetiza).
 
 ### Streaming de Respostas
 
@@ -112,7 +125,7 @@ Critérios de qualidade: coerência, completude, fundamentação em fontes, tom 
 
 ```
 v0.1.0 ── MVP ──────────────────────────────────────────────┐
-          Supervisor + 3 Workers + RAG Subgraph              │
+          Orchestrator + 3 Workers + RAG Subgraph              │
           14 tools, cascading embeddings, MCP server         │
                                                              │
 v0.2   ── Infra de Produção ─────────────────────────────── │
@@ -125,7 +138,7 @@ v0.3   ── Memory & HITL ─────────────────�
                                                              │
 v0.4   ── Deep Agents ─────────────────────────────────── │
           Reflection + Self-correction                       │
-          Supervisor com LLM full + multi-hop routing        │
+          Orchestrator com LLM full + multi-hop routing        │
                                                              │
 v1.0   ── Plugins & Ecossistema ──────────────────────────┘
           VSCode + ACP + Asset Library + Gemini CLI

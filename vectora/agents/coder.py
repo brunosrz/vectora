@@ -94,6 +94,15 @@ async def coder(state: State) -> dict:
     - Executar comandos (git, npm, pip, terminal)
     - Criar estrutura de projeto
     - Grep e navegação em arquivos
+
+    Quando recebe orchestrator_task, injeta a instrução no topo do system prompt
+    para que o LLM saiba exatamente o que o orchestrator delegou — sem precisar
+    inferir intent do histórico bruto.
     """
-    logger.info("coder: processando mensagem")
-    return await invoke_llm(_get_coder_llm(), state, system_prompt=SYSTEM_PROMPT)
+    task = state.get("orchestrator_task")
+    task_block = f"\n\n## Task delegada pelo Orchestrator\n{task}" if task else ""
+
+    logger.info("coder: processando mensagem%s", " (task delegada)" if task else "")
+    return await invoke_llm(
+        _get_coder_llm(), state, system_prompt=SYSTEM_PROMPT + task_block
+    )

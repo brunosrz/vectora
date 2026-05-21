@@ -34,16 +34,13 @@ def _build_tools_list() -> list[BaseTool]:
     tools.extend([web_search, fetch_url])
 
     # RAG
-    tools.extend([vector_search])
-    if settings.enable_rag:
-        tools.extend([embedding, ingest_docs])
+    tools.extend([vector_search, embedding, ingest_docs])
 
     # Memória persistente
     tools.extend([save_memory, get_memory, delete_memory])
 
     # Filesystem + Terminal
-    if settings.enable_file_operations:
-        tools.extend([file_read, file_edit, file_write, grep, list_dir, terminal])
+    tools.extend([file_read, file_edit, file_write, grep, list_dir, terminal])
 
     # MCP
     if settings.enable_mcp:

@@ -193,10 +193,6 @@ class BackgroundEmbeddingWorker:
             logger.warning("Worker já está rodando")
             return
 
-        if not self.config.enable_rag:
-            logger.warning("RAG desabilitado, worker não iniciando")
-            return
-
         self.running = True
 
         # Instala interceptor no logger langchain_cohere.utils:

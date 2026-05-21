@@ -26,12 +26,12 @@
     ".stylelintrc": "json",
     "*.tsx": "typescriptreact",
     ".env.*": "dotenv",
-    ".prettierrc": "json",
+    ".prettierrc": "json"
   },
   "workbench.iconTheme": "symbols",
   "symbols.folders.associations": {
     ".github": "github",
-    ".vscode": "folder-vscode",
+    ".vscode": "folder-vscode"
   },
   "symbols.files.associations": {
     "*.module.ts": "nest",
@@ -46,6 +46,9 @@
     ".env.sst": "gear",
     ".env.example": "gear",
     "*.ndjson": "brackets-orange",
+    "docker-compose.yml": "docker-pink",
+    "docker-compose.traefik.yml": "docker-pink",
+    "docker-compose.paperclip.yml": "docker-pink"
   },
   "workbench.secondarySideBar.defaultVisibility": "hidden",
   "chat.commandCenter.enabled": false,
@@ -71,7 +74,7 @@
     "**/.next": true,
     "**/.turbo": true,
     "**/.cache": true,
-    "**/*.log": true,
+    "**/*.log": true
   },
   "search.exclude": {
     "**/node_modules": true,
@@ -81,7 +84,7 @@
     "**/.pytest_cache": true,
     "**/dist": true,
     "**/build": true,
-    "**/.next": true,
+    "**/.next": true
   },
   "editor.mouseWheelZoom": true,
   "editor.autoIndentOnPaste": true,
@@ -103,17 +106,17 @@
     "mkdir": true,
     "/^cmd /c \"mkdir src\\\\pages\\\\account 2>nul & mkdir src\\\\pages\\\\oauth 2>nul & echo done\"$/": {
       "approve": true,
-      "matchCommandLine": true,
+      "matchCommandLine": true
     },
-    "Test-Path": true,
+    "Test-Path": true
   },
   "[markdown]": {
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
   },
   "window.confirmSaveUntitledWorkspace": false,
   "geminicodeassist.project": "ageless-falcon-j2j41",
   "security.promptForLocalFileProtocolHandling": false,
   "python.languageServer": "Default",
   "python.terminal.activateEnvironment": false,
-  "workbench.colorTheme": "Min Dark",
+  "workbench.colorTheme": "Min Dark"
 }

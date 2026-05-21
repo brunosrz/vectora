@@ -1,14 +1,15 @@
-"""Filesystem tools: leitura, escrita, edição de arquivos, grep, listagem e terminal."""
+"""Filesystem tools: leitura, escrita, edição de arquivos, grep, listagem, terminal e artifacts."""
 
 import asyncio
+import json
 import logging
 import platform
 import re
+from datetime import UTC, datetime
 from pathlib import Path
 
 from langchain.tools import tool
 
-from vectora.config.settings import settings
 from vectora.services.gitignore import is_ignored as _is_ignored
 from vectora.services.gitignore import load_gitignore_spec as _load_gitignore_spec
 from vectora.services.security import (
@@ -31,9 +32,6 @@ def file_read(file_path: str) -> str:
     Returns:
         Conteúdo do arquivo como string
     """
-    if not settings.enable_file_operations:
-        return "File operations are disabled. Enable ENABLE_FILE_OPERATIONS=true to use this tool."
-
     if not is_safe_file_path(file_path, allowed_dirs=["."]):
         logger.warning("file_read blocked by safety check", extra={"path": file_path})
         return f"Error: File path '{file_path}' is not allowed"
@@ -66,9 +64,6 @@ def file_edit(
     Returns:
         Confirmação da edição
     """
-    if not settings.enable_file_operations:
-        return "File operations are disabled."
-
     if not is_safe_file_path(file_path, allowed_dirs=["."]):
         logger.warning("file_edit blocked by safety check", extra={"path": file_path})
         return f"Error: File path '{file_path}' is not allowed"
@@ -120,9 +115,6 @@ def file_write(file_path: str, content: str) -> str:
     Returns:
         Confirmação com caminho e tamanho em bytes
     """
-    if not settings.enable_file_operations:
-        return "File operations are disabled."
-
     if not is_safe_file_path(file_path, allowed_dirs=["."]):
         logger.warning("file_write blocked by safety check", extra={"path": file_path})
         return f"Error: File path '{file_path}' is not allowed"
@@ -153,9 +145,6 @@ def grep(pattern: str, path: str = ".") -> str:
     Returns:
         Linhas que correspondem ao padrão (arquivo:linha: conteúdo)
     """
-    if not settings.enable_file_operations:
-        return "File operations are disabled."
-
     if not is_safe_regex_pattern(pattern):
         return "Error: Invalid or unsafe regex pattern"
 
@@ -201,9 +190,6 @@ def list_dir(path: str = ".", *, recursive: bool = False) -> str:
     Returns:
         Lista de arquivos e pastas com prefixo [DIR] ou [FILE]
     """
-    if not settings.enable_file_operations:
-        return "File operations are disabled."
-
     try:
         dir_path = Path(path)
 
@@ -256,9 +242,6 @@ async def terminal(command: str) -> str:
     if platform.system() == "Windows":
         command = re.sub(r"\bmkdir\s+-p\s+", "mkdir ", command)
         command = re.sub(r"\bmkdir\s+-p\s*$", "mkdir .", command)
-
-    if not settings.enable_file_operations:
-        return "File operations are disabled."
 
     if not is_safe_shell_command(command):
         logger.warning(
@@ -335,3 +318,117 @@ async def terminal(command: str) -> str:
             except Exception:
                 pass
         return "Error executing command. Check logs."
+
+
+# ---------------------------------------------------------------------------
+# Artifact helpers
+# ---------------------------------------------------------------------------
+
+_VALID_ARTIFACT_TYPES = {
+    "plan",
+    "spec",
+    "task_list",
+    "overview",
+    "guide",
+    "architecture",
+    "implementation",
+}
+
+
+def _artifact_slug(title: str) -> str:
+    """Converte título em slug kebab-case para nome de arquivo (max 50 chars)."""
+    slug = title.lower()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug)
+    slug = slug.strip("-")
+    return slug[:50] or "artifact"
+
+
+# ---------------------------------------------------------------------------
+# Tool
+# ---------------------------------------------------------------------------
+
+
+@tool
+def create_artifact(
+    artifact_type: str,
+    title: str,
+    content: str,
+    session_id: str = "000000",
+) -> str:
+    """Cria e persiste um artifact estruturado em ~/.vectora/artifacts/{session_id}/{slug}.md.
+
+    Use esta tool quando o usuário pedir um documento que deve ser salvo permanentemente:
+    plano de implementação, especificação técnica, lista de tarefas, visão geral de
+    projeto, guia/tutorial, diagrama de arquitetura ou implementação de referência.
+    NÃO use para respostas conversacionais — apenas para documentos que o usuário
+    vai querer consultar depois.
+
+    Args:
+        artifact_type: Tipo do artifact. Valores válidos:
+            - "plan"           → plano de implementação, roadmap
+            - "spec"           → especificação técnica, requisitos
+            - "task_list"      → lista de tarefas, TODOs
+            - "overview"       → visão geral de projeto, resumo executivo
+            - "guide"          → guia, tutorial, how-to
+            - "architecture"   → decisões de arquitetura, diagramas
+            - "implementation" → código de referência, snippets documentados
+        title: Título descritivo do artifact (ex: "Plano de implementação do módulo Auth")
+        content: Conteúdo completo em markdown
+        session_id: ID da sessão atual — disponível no bloco de contexto do sistema
+
+    Returns:
+        JSON com path, title, artifact_type, session_id e created_at
+    """
+    if artifact_type not in _VALID_ARTIFACT_TYPES:
+        return json.dumps(
+            {
+                "error": f"artifact_type inválido: '{artifact_type}'. "
+                f"Valores válidos: {sorted(_VALID_ARTIFACT_TYPES)}"
+            }
+        )
+
+    if not title or not title.strip():
+        return json.dumps({"error": "title não pode ser vazio"})
+
+    if not content or not content.strip():
+        return json.dumps({"error": "content não pode ser vazio"})
+
+    slug = _artifact_slug(title.strip())
+    artifact_dir = Path.home() / ".vectora" / "artifacts" / str(session_id)
+
+    try:
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+
+        # Evita sobrescrever com mesmo slug — adiciona sufixo numérico
+        path = artifact_dir / f"{slug}.md"
+        counter = 1
+        while path.exists():
+            path = artifact_dir / f"{slug}-{counter}.md"
+            counter += 1
+
+        path.write_text(content.strip(), encoding="utf-8")
+
+        created_at = datetime.now(UTC).isoformat()
+        logger.info(
+            "create_artifact: salvo '%s' (%s) → %s",
+            title,
+            artifact_type,
+            path,
+        )
+
+        return json.dumps(
+            {
+                "path": str(path),
+                "title": title.strip(),
+                "artifact_type": artifact_type,
+                "session_id": session_id,
+                "created_at": created_at,
+            },
+            ensure_ascii=False,
+        )
+
+    except Exception as e:
+        logger.exception("create_artifact: falha ao salvar '%s'", title)
+        return json.dumps({"error": f"Falha ao salvar artifact: {e}"})

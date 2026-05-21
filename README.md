@@ -8,9 +8,9 @@ At its core, Vectora solves the **knowledge gap problem**: LLMs don't know your 
 
 ## Why Vectora?
 
-- **Supervisor + Specialized Agents**: A router classifies every message and delegates to the right specialist — search agent for web/RAG, coder agent for files and terminal, direct agent for conversation and synthesis.
-- **RAG-native subgraph**: Every query goes through a full retrieve → score → rerank → inject pipeline before hitting the LLM.
-- **14 tools across 4 categories**: Web search, vector search, file system, memory — each agent sees only the tools it needs.
+- **Orchestrator + Specialized Agents**: The Orchestrator is the primary LLM agent — it answers directly for simple queries and crafts explicit task instructions for specialists (search, coder). No wasted routing hops.
+- **RAG-native subgraph**: Every document query goes through a full retrieve → score → rerank → inject pipeline. Results flow back to the Orchestrator for synthesis.
+- **15 tools across 4 categories**: Web search, vector search, file system, artifacts, memory — always available across all agents.
 - **Cascading embeddings**: Web search results are automatically queued for embedding into LanceDB (fire-and-forget), building your knowledge base as you chat.
 - **Sub-agent architecture**: Runs as an MCP server. Claude Code delegates complex tasks to Vectora; Vectora reasons, routes, and responds.
 - **Persistent memory**: Cross-session memory in SQLite. Vectora remembers your preferences, project context, and decisions.
@@ -21,29 +21,28 @@ At its core, Vectora solves the **knowledge gap problem**: LLMs don't know your 
 
 ## Architecture
 
-### Supervisor + Workers
+### Orchestrator + Workers
 
-Every message enters through a single entry point and is routed by the **Supervisor** to the right specialized agent:
+Every message enters through a single entry point and is routed by the **Orchestrator** to the right specialized agent:
 
 ```
 START
-  └─► supervisor (classify intent)
-        ├─► direct    ──► direct_tools (memory) ──► direct ──► END
-        ├─► search    ──► search_tools ──► process_retrieval ──► search ──► END
-        ├─► coder     ──► coder_tools (fs + memory) ──► coder ──► END
-        └─► rag_subgraph ──────────────────────────────────────► direct ──► END
+  └─► orchestrator (responds inline OR delegates with task_query)
+        ├─► [respond]      → END
+        ├─► [search]       → search → search_tools → process_retrieval ↻ → END
+        ├─► [coder]        → coder → coder_tools ↻ → END
+        └─► [rag_subgraph] → rag_subgraph → orchestrator (synthesis) → END
 ```
 
-| Agent          | Responsibility                                                               | Tools                                                                  |
-| -------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **supervisor** | Classifies intent via regex + LLM fallback, routes via `Command(goto=...)`   | —                                                                      |
-| **direct**     | General conversation, synthesis after RAG, memory management                 | `save_memory`, `get_memory`, `delete_memory`                           |
-| **search**     | Web research, real-time info, builds knowledge base via cascading embeddings | `web_search`, `fetch_url`, `vector_search`                             |
-| **coder**      | File operations, terminal commands, code generation                          | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` |
+| Agent            | Responsibility                                                                       | Tools                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| **orchestrator** | Primary LLM agent — responds directly OR delegates with an explicit task description | `create_artifact`, `save_memory`, `get_memory`, `delete_memory`        |
+| **search**       | Web research, real-time info, builds knowledge base via cascading embeddings         | `web_search`, `fetch_url`, `vector_search`                             |
+| **coder**        | File operations, terminal commands, code generation                                  | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` |
 
 ### RAG Subgraph
 
-When the supervisor routes to `rag`, a dedicated subgraph runs the full retrieval pipeline before synthesis:
+When the orchestrator routes to `rag`, a dedicated subgraph runs the full retrieval pipeline before synthesis:
 
 ```
 rag_retrieve (vector_search)
@@ -53,7 +52,11 @@ rag_retrieve (vector_search)
         └─► rag_websearch  (score < 0.4 — fall back to web + auto-embed results)
 ```
 
-Results are injected as a `SystemMessage` into context before the `direct` agent synthesizes the final answer.
+Results are injected as a `SystemMessage` into context. The Orchestrator then synthesizes the final answer inline, without a separate agent hop.
+
+### Artifact Tool
+
+Agents explicitly call `create_artifact` to persist structured documents (plans, specs, guides, architecture decisions) to `~/.vectora/artifacts/{session_id}/` as Markdown files. The tool returns structured metadata (path, title, type, session_id, timestamp) that the Orchestrator can reference in future turns.
 
 ### Cascading Embeddings
 
@@ -89,146 +92,122 @@ Get your key: https://app.tavily.com/
 
 ## Installation
 
-### Option 1: UV (Recommended)
+### Option 1: UV — Local install (recommended)
+
+Install Vectora globally with [uv](https://github.com/astral-sh/uv):
 
 ```bash
-# Install globally
 uv tool install vectora-agent
-
-# First-time setup (interactive wizard)
-vectora setup
-
-# Start chatting
-vectora chat
 ```
 
-### Option 2: From Source
+On first run, the setup wizard will ask for your API keys and write them to `~/.vectora/.env`.
+
+```bash
+vectora        # starts chat (wizard runs automatically if no keys found)
+```
+
+To connect Vectora as an MCP sub-agent for Claude Code or Claude Desktop, add to your `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "Vectora": {
+      "command": "vectora",
+      "args": ["mcp-server"]
+    }
+  }
+}
+```
+
+### Option 2: Docker — VPS / remote MCP server
+
+Use this when you want Vectora running on a server and accessible from multiple machines or orchestrators via SSE.
+
+**Local (no domain):**
+
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+
+docker compose up -d
+# SSE endpoint: http://localhost:8000/sse
+```
+
+**VPS with Traefik (HTTPS + domain):**
+
+```bash
+cp .env.example .env
+# Edit .env with your API keys, VECTORA_DOMAIN and ACME_EMAIL
+
+# Create the shared Traefik network if it doesn't exist yet
+docker network create traefik-public
+
+docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
+# SSE endpoint: https://vectora.yourdomain.com/sse
+```
+
+To connect from Claude Code or any MCP-compatible orchestrator:
+
+```json
+{
+  "mcpServers": {
+    "Vectora": {
+      "url": "https://vectora.yourdomain.com/sse"
+    }
+  }
+}
+```
+
+### Option 3: From Source
 
 ```bash
 git clone https://github.com/brunosrz/vectora.git
 cd vectora
 
-# Install with all dependencies
 uv sync
 
-# Configure your keys
-cp .env.example .env
-# Edit .env with your GOOGLE_API_KEY and COHERE_API_KEY
-
-# Run
-uv run vectora chat
-```
-
-### Option 3: Docker
-
-```bash
-# Copy and configure environment
 cp .env.example .env
 # Edit .env with your API keys
 
-# Run the chat interface
-docker compose run --rm vectora
-
-# Or run as MCP server (multi-agent mode)
-MCP_TRANSPORT=sse docker compose up -d
+uv run vectora
 ```
 
 ---
 
-## Running Modes
+## CLI Reference
 
-### Chat Mode (Interactive TUI)
-
-The primary interface — a terminal dashboard built with Rich.
-
-```bash
-vectora chat
 ```
+vectora [options]              Start chat (resume last session for this directory)
+vectora mcp-server             Start MCP server (stdio)
+vectora traces                 View observability traces
+vectora sessions               List all saved sessions
+vectora config                 Show current configuration
+vectora config --set KEY=VALUE Edit a setting
 
-Features: multi-turn conversation, session history, live tool feedback (colored panels), debug mode toggle, model switching.
-
-### MCP Server — Local (stdio)
-
-Run Vectora as an MCP sub-agent for Claude Code or Claude Desktop.
-
-```bash
-vectora mcp-server
-```
-
-### MCP Server — Remote (SSE, Multi-Agent)
-
-Run Vectora as a shared hub for multiple Paperclip agents or orchestrators connecting simultaneously.
-
-```bash
-MCP_TRANSPORT=sse MCP_PORT=8000 vectora mcp-server
-```
-
-Each client passes its own `thread_id` — sessions are fully isolated.
-
-### Setup Wizard
-
-Interactive configuration to set up API keys, choose LLM provider, and test connectivity.
-
-```bash
-vectora setup
-```
-
----
-
-## Connecting to Claude Code / Claude Desktop
-
-Add Vectora to your `.mcp.json` (in your project root):
-
-```json
-{
-  "mcpServers": {
-    "Vectora-MCP": {
-      "command": "uv",
-      "args": ["run", "--project", "/absolute/path/to/vectora", "vectora-mcp"]
-    }
-  }
-}
-```
-
-For a globally installed Vectora:
-
-```json
-{
-  "mcpServers": {
-    "Vectora-MCP": {
-      "command": "vectora-mcp"
-    }
-  }
-}
-```
-
-For Docker (SSE mode, multiple agents):
-
-```json
-{
-  "mcpServers": {
-    "Vectora-MCP": {
-      "url": "http://localhost:8000/sse"
-    }
-  }
-}
+Options:
+  --model MODEL        Switch LLM model (provider auto-detected). Persists.
+  --ollama             Force Ollama provider (for arbitrary local model names)
+  --session ID         Resume a specific session by 6-digit ID
+  --new                Force a new session
+  --verbosity N        Verbosity level 0–5 (0=silent, 5=debug panel). Persists.
+  --version            Show version
 ```
 
 ---
 
 ## Chat Commands
 
-| Command         | Description                                                |
-| --------------- | ---------------------------------------------------------- |
-| `/help`         | Show quick help                                            |
-| `/list`         | Show all commands                                          |
-| `/tools`        | List available tools                                       |
-| `/model`        | List or switch models                                      |
-| `/debug`        | Toggle debug mode (shows tool calls and routing decisions) |
-| `/new`          | Start a new session                                        |
-| `/sessions`     | List all sessions                                          |
-| `/session <id>` | Switch to a specific session                               |
-| `/quit`         | Exit                                                       |
+| Command         | Description                                                    |
+| --------------- | -------------------------------------------------------------- |
+| `/help`         | Show quick help                                                |
+| `/list`         | Show all commands                                              |
+| `/tools`        | List available tools                                           |
+| `/model`        | List or switch models                                          |
+| `/debug [0-5]`  | Set verbosity level (tool calls, routing decisions, log panel) |
+| `/new`          | Start a new session                                            |
+| `/sessions`     | List all sessions                                              |
+| `/session <id>` | Switch to a specific session                                   |
+| `/quit`         | Exit                                                           |
 
 **Input shortcuts:** `Enter` sends, `Alt+Enter` or `Shift+Enter` adds a line break.
 
@@ -236,15 +215,16 @@ For Docker (SSE mode, multiple agents):
 
 ## Tools Reference
 
-14 tools across 4 categories, distributed to the agent that needs them:
+15 tools across 5 categories, always available to all agents:
 
-| Category   | Tools                                                                  | Agent                 |
-| ---------- | ---------------------------------------------------------------------- | --------------------- |
-| **Web**    | `web_search`, `fetch_url`                                              | search                |
-| **RAG**    | `vector_search`, `embedding`, `ingest_docs`                            | search / RAG subgraph |
-| **Files**  | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` | coder                 |
-| **Memory** | `save_memory`, `get_memory`, `delete_memory`                           | direct / coder        |
-| **MCP**    | `call_mcp_tool`                                                        | all                   |
+| Category      | Tools                                                                  | Primary Agent         |
+| ------------- | ---------------------------------------------------------------------- | --------------------- |
+| **Web**       | `web_search`, `fetch_url`                                              | search                |
+| **RAG**       | `vector_search`, `embedding`, `ingest_docs`                            | search / RAG subgraph |
+| **Files**     | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` | coder                 |
+| **Artifacts** | `create_artifact`                                                      | orchestrator          |
+| **Memory**    | `save_memory`, `get_memory`, `delete_memory`                           | orchestrator / coder  |
+| **MCP**       | `call_mcp_tool`                                                        | all                   |
 
 ---
 
@@ -254,17 +234,26 @@ All data is stored locally in `~/.vectora/`:
 
 ```
 ~/.vectora/
-├── .env                    # Your API keys
-├── chat_config.json        # Persistent chat settings
+├── .env                    # API keys (secrets — never commit)
+├── settings.json           # Runtime preferences (provider, model, verbosity)
 ├── data/
-│   ├── vectora.db          # Sessions, memories, checkpoints (SQLite)
+│   ├── vectora.db          # Sessions, memories, LangGraph checkpoints (SQLite)
 │   ├── embedding_queue.db  # Async embedding queue (SQLite)
-│   └── lancedb/            # Vector store for RAG
-├── logs/
-│   ├── vectora.jsonl       # Structured JSON logs (rotating, 10 MB)
-│   └── mcp.log             # MCP server logs
-└── exports/                # Session audit trails + debug dumps
+│   ├── traces.db           # Internal observability spans (SQLite)
+│   └── lancedb/            # Vector store for RAG (LanceDB)
+├── artifacts/              # Auto-detected plans, specs, guides
+│   └── {session_id}/
+│       └── *.md
+├── keys/                   # Reserved for future key management
+└── logs/
+    ├── vectora.jsonl       # Structured JSON logs
+    └── session_*.md        # Exported session audit trails
 ```
+
+**Separation of concerns:**
+
+- `~/.vectora/.env` — secrets (API keys). Never versioned.
+- `~/.vectora/settings.json` — non-secret runtime preferences (active provider, model, verbosity, last session per directory). Managed by `vectora config`.
 
 ---
 
@@ -274,7 +263,7 @@ All data is stored locally in `~/.vectora/`:
 | ---------------- | ------------------------------------------------------------------------------------------------------ |
 | Language         | Python 3.14+ managed by [uv](https://github.com/astral-sh/uv)                                          |
 | Agent Framework  | [LangChain](https://langchain.com/) + [LangGraph](https://langchain-ai.github.io/langgraph/)           |
-| Agent Pattern    | Supervisor + Specialized Workers (direct / search / coder) + RAG Subgraph                              |
+| Agent Pattern    | Orchestrator + Specialized Workers (search / coder) + RAG Subgraph                                     |
 | Vector Store     | [LanceDB](https://lancedb.github.io/lancedb/) — file-based, zero-config                                |
 | Embeddings       | [Cohere](https://cohere.com/) — `embed-multilingual-v3.0` + `rerank-multilingual-v3.0`                 |
 | Persistence      | SQLite via `aiosqlite` + LangGraph Checkpointer                                                        |
@@ -286,10 +275,10 @@ All data is stored locally in `~/.vectora/`:
 
 ## Configuration
 
-All configuration goes in `~/.vectora/.env` or a project-local `.env`:
+API keys go in `~/.vectora/.env` (created by the setup wizard) or a project-local `.env`:
 
 ```env
-# LLM Provider
+# LLM Provider (auto-detected from available keys if not set)
 LLM_PROVIDER=google-genai
 GOOGLE_API_KEY=your_key_here
 
@@ -303,17 +292,14 @@ TAVILY_API_KEY=your_key_here
 LANGSMITH_TRACING=false
 LANGSMITH_API_KEY=your_key_here
 LANGSMITH_PROJECT=vectora
-
-# Optional: Logging
-LOG_LEVEL=INFO
-
-# Feature flags
-ENABLE_RAG=true
-ENABLE_FILE_OPERATIONS=true
 ```
+
+Runtime preferences (model, verbosity, session history) are managed in `~/.vectora/settings.json` via `vectora config` or the `/model` and `/debug` chat commands — no need to touch `.env` for these.
 
 ---
 
 ## License
 
 Apache 2.0. See [LICENSE](./LICENSE).
+
+<!-- mcp-name: io.github.brunosrz/vectora -->

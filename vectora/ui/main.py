@@ -1,4 +1,4 @@
-"""Rich UI Components for Vectora - "Rich Gorda" Dashboard.
+"""Rich UI Components for Vectora.
 
 Advanced visual components using Rich for a professional, real-time CLI experience.
 Includes layouts, status indicators, panels, and live rendering capabilities.
@@ -13,6 +13,7 @@ from typing import Any
 from rich.console import Console, Group
 from rich.layout import Layout
 from rich.markdown import Markdown
+from rich.markup import escape
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.rule import Rule
@@ -239,7 +240,11 @@ class ToolCallPanel:
     """Painel amarelo para exibir chamadas de tools pelo agente."""
 
     @staticmethod
-    def render(tool_name: str, tool_args: dict[str, Any] | str | None = None) -> Panel:
+    def render(
+        tool_name: str,
+        tool_args: dict[str, Any] | str | None = None,
+        max_len: int = 600,
+    ) -> Panel:
         """Renderiza chamada de tool com argumentos.
 
         Args:
@@ -262,10 +267,10 @@ class ToolCallPanel:
             args_repr = str(tool_args)
 
         # Limita tamanho para não poluir o terminal
-        if len(args_repr) > 600:
-            args_repr = args_repr[:600] + "\n... [truncated]"
+        if len(args_repr) > max_len:
+            args_repr = args_repr[:max_len] + "\n... [truncated]"
 
-        body = f"[bold yellow]{tool_name}[/bold yellow]\n[dim]{args_repr}[/dim]"
+        body = f"[bold yellow]{escape(tool_name)}[/bold yellow]\n[dim]{escape(args_repr)}[/dim]"
         return Panel(
             body,
             title="[bold yellow][TOOL CALL][/bold yellow]",
@@ -299,11 +304,11 @@ class ToolMessagePanel:
         )
 
         prefix = "[bold red][X] ERROR[/bold red]\n" if is_error else ""
-        body = f"{prefix}[red]{truncated}[/red]"
+        body = f"{prefix}[red]{escape(truncated)}[/red]"
 
         return Panel(
             body,
-            title=f"[bold red][TOOL RESPONSE][/bold red] [dim]{tool_name}[/dim]",
+            title=f"[bold red][TOOL RESPONSE][/bold red] [dim]{escape(tool_name)}[/dim]",
             style="red",
             border_style="red",
             expand=False,
@@ -324,7 +329,7 @@ class TerminalPanel:
             Panel verde claro com prompt $ comando
         """
         return Panel(
-            f"[bold green]$[/bold green] [bright_green]{command}[/bright_green]",
+            f"[bold green]$[/bold green] [bright_green]{escape(command)}[/bright_green]",
             title="[bold green][TERMINAL][/bold green]",
             style="green",
             border_style="green",
@@ -373,7 +378,7 @@ class TerminalPanel:
         title_suffix = f" [dim]exit={exit_code}[/dim]" if exit_code is not None else ""
 
         return Panel(
-            f"[green]{truncated or '(no output)'}[/green]",
+            f"[green]{escape(truncated) or '(no output)'}[/green]",
             title=f"[bold green][TERMINAL OUTPUT][/bold green]{title_suffix}",
             style="green",
             border_style="green",
@@ -492,8 +497,8 @@ class ErrorPanel:
         """Render error as styled panel."""
         error_text = str(error)
         return Panel(
-            f"[red]{error_text}[/red]",
-            title=f"[bold red][X] {title}[/bold red]",
+            f"[red]{escape(error_text)}[/red]",
+            title=f"[bold red][X] {escape(title)}[/bold red]",
             style="red",
             expand=False,
             border_style="red",
@@ -507,8 +512,8 @@ class SuccessPanel:
     def render(message: str, title: str = "Success") -> Panel:
         """Render success as styled panel."""
         return Panel(
-            f"[green]{message}[/green]",
-            title=f"[bold green][OK] {title}[/bold green]",
+            f"[green]{escape(message)}[/green]",
+            title=f"[bold green][OK] {escape(title)}[/bold green]",
             style="green",
             expand=False,
             border_style="green",

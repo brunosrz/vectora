@@ -108,9 +108,9 @@ Before running `git commit`, verify:
 | `vectora/config/settings.py`        | Single source of truth for configuration     |
 | `vectora/graph.py`                  | LangGraph graph builder                      |
 | `vectora/nodes/engine.py`           | Node implementations                         |
-| `vectora/agents/supervisor.py`      | Intent classification and routing            |
+| `vectora/agents/orchestrator.py`    | Intent classification and routing            |
 | `vectora/agents/_identity.py`       | Shared identity block for all agents         |
-| `vectora/tools/__init__.py`         | Registry of all 14 tools                     |
+| `vectora/nodes/tools.py`            | Registry of all 15 tools                     |
 | `vectora/mcp/server.py`             | MCP Server (FastMCP, 13 tools, 4 resources)  |
 | `vectora/services/security.py`      | Blacklist, path validation, ReDoS protection |
 | `vectora/ui/setup_wizard.py`        | Interactive onboarding wizard                |

@@ -11,7 +11,7 @@ Arquitetura Multi-Agent:
 
 Uso:
     # Modo stdio (local)
-    proxy = VectoraProxy(transport="stdio", command="uv", args=["run", "vectora-mcp"])
+    proxy = VectoraProxy(transport="stdio", command="vectora", args=["mcp-server"])
 
     # Modo SSE (remoto, multi-agent)
     proxy = VectoraProxy(transport="sse", url="http://vectora:8000/sse")
@@ -210,9 +210,7 @@ class VectoraProxy:
                 "delegate_task_to_vectora",
                 arguments={
                     "task_prompt": task,
-                    "thread_id": int(thread_id)
-                    if isinstance(thread_id, (int, str))
-                    else 1,
+                    "thread_id": str(thread_id),
                 },
             )
             # Extract text from MCP CallToolResult
@@ -365,7 +363,7 @@ class VectoraProxy:
 def create_local_proxy(timeout: float = 300.0) -> VectoraProxy:
     """Cria um proxy para servidor Vectora local via stdio.
 
-    Equivalente a executar `uv run vectora-mcp` localmente.
+    Equivalente a executar `vectora mcp-server` localmente.
 
     Args:
         timeout: Timeout padrão por chamada
@@ -375,8 +373,8 @@ def create_local_proxy(timeout: float = 300.0) -> VectoraProxy:
     """
     return VectoraProxy(
         transport="stdio",
-        command="uv",
-        args=["run", "vectora-mcp"],
+        command="vectora",
+        args=["mcp-server"],
         timeout=timeout,
     )
 

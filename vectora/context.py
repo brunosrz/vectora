@@ -23,10 +23,8 @@ class UserPreferences:
 class FeatureFlags:
     """Which tools/features are enabled for this user."""
 
-    enable_web_search: bool = True
     enable_url_fetch: bool = True
     enable_database: bool = True
-    enable_rag: bool = True
     enable_mcp: bool = False
 
 

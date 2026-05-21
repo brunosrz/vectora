@@ -14,8 +14,15 @@ from typing import TYPE_CHECKING
 
 from langgraph.prebuilt import ToolNode
 
-from vectora.config.settings import settings
-from vectora.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
+from vectora.tools.fs import (
+    create_artifact,
+    file_edit,
+    file_read,
+    file_write,
+    grep,
+    list_dir,
+    terminal,
+)
 from vectora.tools.memory import delete_memory, get_memory, save_memory
 from vectora.tools.rag import embedding, ingest_docs, vector_search
 from vectora.tools.web import fetch_url, web_search
@@ -30,22 +37,30 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 #: Ferramentas de busca e pesquisa
-SEARCH_TOOLS: list[BaseTool] = [web_search, fetch_url, vector_search]
-if settings.enable_rag:
-    SEARCH_TOOLS.extend([embedding, ingest_docs])
+SEARCH_TOOLS: list[BaseTool] = [
+    web_search,
+    fetch_url,
+    vector_search,
+    embedding,
+    ingest_docs,
+]
 
-#: Ferramentas de filesystem e terminal
-FS_TOOLS: list[BaseTool] = []
-if settings.enable_file_operations:
-    FS_TOOLS.extend([file_read, file_edit, file_write, grep, list_dir, terminal])
+#: Ferramentas de filesystem, terminal e artifacts
+FS_TOOLS: list[BaseTool] = [
+    file_read,
+    file_edit,
+    file_write,
+    grep,
+    list_dir,
+    terminal,
+    create_artifact,
+]
 
 #: Ferramentas de memória
 MEMORY_TOOLS: list[BaseTool] = [save_memory, get_memory, delete_memory]
 
 #: Ferramentas RAG de ingestão
-RAG_TOOLS: list[BaseTool] = [vector_search]
-if settings.enable_rag:
-    RAG_TOOLS.extend([embedding, ingest_docs])
+RAG_TOOLS: list[BaseTool] = [vector_search, embedding, ingest_docs]
 
 # ---------------------------------------------------------------------------
 # ALL_TOOLS — lista canônica usada por TODOS os agentes
@@ -55,15 +70,23 @@ if settings.enable_rag:
 # da restrição de acesso às ferramentas.
 
 _all: dict[str, BaseTool] = {}
-for _t in [web_search, fetch_url, vector_search]:
-    _all[_t.name] = _t
-if settings.enable_rag:
-    for _t in [embedding, ingest_docs]:
-        _all[_t.name] = _t
-if settings.enable_file_operations:
-    for _t in [file_read, file_edit, file_write, grep, list_dir, terminal]:
-        _all[_t.name] = _t
-for _t in [save_memory, get_memory, delete_memory]:
+for _t in [
+    web_search,
+    fetch_url,
+    vector_search,
+    embedding,
+    ingest_docs,
+    file_read,
+    file_edit,
+    file_write,
+    grep,
+    list_dir,
+    terminal,
+    create_artifact,
+    save_memory,
+    get_memory,
+    delete_memory,
+]:
     _all[_t.name] = _t
 
 ALL_TOOLS: list[BaseTool] = list(_all.values())

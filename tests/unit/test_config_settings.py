@@ -32,7 +32,6 @@ def test_settings_embedding_queue_dsn():
 
 def test_settings_defaults():
     s = Settings()
-    assert isinstance(s.enable_rag, bool)
     assert isinstance(s.debug_mode, bool)
     assert isinstance(s.max_context_tokens, int)
     assert s.max_context_tokens > 0

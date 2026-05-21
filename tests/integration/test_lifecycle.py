@@ -64,7 +64,7 @@ def _reset_session_1212():
 @pytest.mark.order(1)
 @REQUIRES_GOOGLE
 async def test_fresh_greeting(lifecycle_graph, lifecycle_config):
-    """Step 1: Saudação simples → resposta não-vazia; supervisor roteia para direct."""
+    """Step 1: Saudação simples → resposta não-vazia; orchestrator roteia para direct."""
     response = await invoke_graph(lifecycle_graph, lifecycle_config, "Olá!")
 
     assert len(response) > 0, "O Vectora deve responder à saudação"
@@ -78,8 +78,8 @@ async def test_fresh_greeting(lifecycle_graph, lifecycle_config):
 
 @pytest.mark.order(2)
 @REQUIRES_GOOGLE
-async def test_supervisor_routes_to_coder(lifecycle_graph, lifecycle_config):
-    """Step 2: Pedido de listagem de arquivos → supervisor roteia para coder."""
+async def test_orchestrator_routes_to_coder(lifecycle_graph, lifecycle_config):
+    """Step 2: Pedido de listagem de arquivos → orchestrator roteia para coder."""
     from vectora.services.tracer import tracer
 
     response = await invoke_graph(
@@ -91,21 +91,21 @@ async def test_supervisor_routes_to_coder(lifecycle_graph, lifecycle_config):
     assert len(response) > 0, "O coder deve retornar uma resposta"
     logger.info(f"Step 2 — resposta coder: {response[:150]}")
 
-    # Verifica no tracer que o supervisor registrou routing para coder
+    # Verifica no tracer que o orchestrator registrou routing para coder
     spans = await tracer.get_session(TEST_SESSION_ID)
-    supervisor_spans = [s for s in spans if s.get("node") == "supervisor"]
+    orchestrator_spans = [s for s in spans if s.get("node") == "orchestrator"]
 
-    if supervisor_spans:
-        # Se o tracer capturou o span do supervisor, verificamos o routing
+    if orchestrator_spans:
+        # Se o tracer capturou o span do orchestrator, verificamos o routing
         import ast
 
-        for span in supervisor_spans:
+        for span in orchestrator_spans:
             meta_raw = span.get("metadata", "{}")
             try:
                 meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
                 routing = meta.get("routing", "")
                 if routing:
-                    logger.info(f"Supervisor routing: {routing}")
+                    logger.info(f"Orchestrator routing: {routing}")
                     # Pedido de listagem deve ter ido para coder ou direct
                     assert routing in (
                         "coder",
@@ -311,7 +311,7 @@ async def test_traces_recorded():
         assert span.get("duration_ms", -1) >= 0, "duration_ms deve ser não-negativo"
 
     # Verifica que há spans de nodes conhecidos (pelo menos um)
-    known_nodes = {"supervisor", "invoke_llm", "rag_retrieve", "retrieval_node"}
+    known_nodes = {"orchestrator", "invoke_llm", "rag_retrieve", "retrieval_node"}
     found_nodes = {s.get("node") for s in spans}
     overlap = known_nodes & found_nodes
 

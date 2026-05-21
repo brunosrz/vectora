@@ -1,0 +1,66 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.brunosrz/vectora",
+  "description": "AI assistant with RAG, web search, filesystem and memory. MCP sub-agent for Claude Code.",
+  "repository": {
+    "url": "https://github.com/brunosrz/vectora",
+    "source": "github"
+  },
+  "version": "0.1.0rc2",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "vectora-agent",
+      "version": "0.1.0rc2",
+      "transport": {
+        "type": "stdio",
+        "command": "vectora",
+        "args": ["mcp-server"]
+      },
+      "environmentVariables": [
+        {
+          "name": "GOOGLE_API_KEY",
+          "description": "Google Gemini API key (recommended free-tier LLM provider)",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "COHERE_API_KEY",
+          "description": "Cohere API key — required for RAG embeddings and reranking",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "TAVILY_API_KEY",
+          "description": "Tavily API key — required for web search and URL extraction",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "description": "OpenAI API key (optional — alternative LLM provider)",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "description": "Anthropic API key (optional — alternative LLM provider)",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "LANGSMITH_API_KEY",
+          "description": "LangSmith API key (optional — tracing and observability)",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
