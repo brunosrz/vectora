@@ -1,0 +1,119 @@
+default_language_version:
+  python: python3
+
+default_stages: [pre-commit]
+minimum_pre_commit_version: 3.0.0
+
+exclude: |
+  (?x)^(
+    \.git/.*|
+    .*\.pdf$|
+    .*\.lock$|
+    package-lock\.json|
+    yarn\.lock|
+    coverage\..*|
+    \.env.*|
+    \.venv/.*
+  )$
+
+repos:
+  # ==========================================
+  # UV Lock Validation
+  # ==========================================
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.5.21
+    hooks:
+      - id: uv-lock
+
+  # ==========================================
+  # Basic File Validation
+  # ==========================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        args: [--markdown-linebreak-ext=md]
+        stages: [pre-commit]
+      - id: end-of-file-fixer
+        name: Fix End of File
+        stages: [pre-commit]
+      - id: check-yaml
+        name: Validate YAML
+        args: ["--allow-multiple-documents", "--unsafe"]
+        stages: [pre-commit]
+      - id: check-json
+        name: Validate JSON
+        stages: [pre-commit]
+      - id: check-toml
+        name: Validate TOML
+        stages: [pre-commit]
+      - id: check-merge-conflict
+        name: Check for Merge Conflicts
+        stages: [pre-commit]
+      - id: check-added-large-files
+        name: Check for Large Files
+        args: ["--maxkb=5000"]
+        stages: [pre-commit]
+      - id: detect-private-key
+        name: Detect Private Keys
+        stages: [pre-commit]
+
+  # ==========================================
+  # Python Validation
+  # ==========================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff
+        name: Ruff Lint (Python)
+        args: [--fix, --select, I]
+        files: \.py$
+      - id: ruff-format
+        name: Ruff Format (Python)
+        files: \.py$
+
+  # ==========================================
+  # TypeScript / JavaScript Validation
+  # ==========================================
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: Prettier
+        args: ["--write"]
+        files: \.(ts|tsx|js|jsx|mjs|cjs|json)$
+        types_or: [text]
+
+  # ==========================================
+  # Markdown & YAML Validation
+  # ==========================================
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: Prettier (markdown + yaml)
+        args: ["--write"]
+        files: \.(md|yaml|yml|css)$
+        types_or: [text]
+
+  # ==========================================
+  # Type Checking (Disabled in Pre-commit)
+  # ==========================================
+  # Note: `ty` (Python type checker) is not integrated here due to:
+  # - Cannot resolve relative imports in vectora/ without manual PYTHONPATH configuration
+  # - Strict incompatibility with optional imports used for lazy-loading external libraries
+  # - Conflicts with LangGraph's TypedDict and State typing patterns
+  #
+  # For manual type validation, run:
+  #   PYTHONPATH=vectora uv run ty check vectora tests
+  #
+  # Type checking via mypy is handled per-file in ruff configuration
+
+ci:
+  autofix_commit_msg: "chore: auto fixes from pre-commit hooks"
+  autofix_prs: false
+  autoupdate_branch: ""
+  skip: []
+  submodules: false

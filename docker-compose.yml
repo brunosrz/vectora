@@ -1,0 +1,49 @@
+name: vectora
+
+# Vectora MCP Server - Multi-Agent Hub
+#
+# Esta configuração suporta dois modos de transport:
+# - stdio (default): para clientes locais (Claude Desktop, Claude Code)
+# - sse/http (opcional): para múltiplos agentes remotos (Paperclip, etc.)
+#
+# Arquitetura Multi-Agent:
+# - Singleton AgentManager: 1 instância compartilhada (LanceDB + worker)
+# - thread_id segrega sessões: cada agente passa seu próprio thread_id
+# - SQLite único com múltiplas sessões (LangGraph Checkpointer pattern)
+# - Sem necessidade de SQLite por agente — thread_id é a chave de segregação
+
+services:
+  vectora:
+    image: ghcr.io/brunosrz/vectora:latest
+    restart: unless-stopped
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+      # Modo transport: stdio (default) ou sse (para multi-agent remoto)
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-stdio}
+      - MCP_HOST=${MCP_HOST:-0.0.0.0}
+      - MCP_PORT=${MCP_PORT:-8000}
+    volumes:
+      - vectora-data:/root/.vectora
+      - ./data:/root/.vectora/data
+    # Porta exposta apenas se MCP_TRANSPORT=sse (HTTP transport)
+    # Para stdio puro, deixe MCP_TRANSPORT=stdio (default) e ignore esta porta
+    ports:
+      - "${MCP_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  vectora-data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

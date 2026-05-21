@@ -1,0 +1,155 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vectora-agent"
+version = "0.1.0rc1"
+description = "Vectora - Advanced AI Assistant with RAG and MCP capabilities"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [{name = "Bruno Soares", email = "bruno.soarxz@gmail.com"}]
+requires-python = ">=3.14"
+
+dependencies = [
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "langchain>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langgraph>=0.2.0",
+    "langgraph-checkpoint-sqlite>=2.0.0",
+    "langchain-ollama>=0.2.0",
+    "aiosqlite>=0.20.0",
+    "lancedb>=0.14.0",
+    "pyarrow>=17.0.0",
+    "sqlalchemy>=2.0.0",
+    "mcp>=0.1.0",
+    "tavily-python>=0.7.24",
+    "langchain-mcp-adapters>=0.1.0",
+    "trio>=0.27.0",
+    "rich>=13.0.0",
+    "prompt-toolkit>=3.0.0",
+    "rank-bm25>=0.2.2",
+    "python-dotenv>=1.0.0",
+    "langsmith>=0.8.4",
+    "deepagents>=0.6.1",
+    "dotfiles>=0.6.5",
+    "ast-serialize>=0.3.0",
+    "librt>=0.11.0",
+    "pathspec>=1.1.1",
+    "langchain-text-splitters>=1.1.2",
+    "tiktoken>=0.13.0",
+    "langchain-cohere>=0.5.1",
+    "ruff>=0.15.12",
+    "pytest>=9.0.3",
+    "ty>=0.0.38",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=9.0",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.0.0",
+    "coverage>=7.0.0",
+]
+integration = [
+    "pytest-order>=1.0",
+    "pytest-rerunfailures>=12.0",
+    "pytest-timeout>=2.3",
+]
+dev = [
+    "ruff>=0.15.0",
+    "mypy>=2.1.0",
+    "bandit>=1.9.0",
+    "types-python-dateutil",
+]
+
+[project.scripts]
+vectora = "vectora.main:run"
+vectora-mcp = "vectora.mcp.server:run"
+vectora-traces = "vectora.main:run_traces"
+
+[tool.hatch.build.targets.wheel]
+packages = ["vectora"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"vectora/config/defaults.env" = "defaults.env"
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+fix = true
+show-fixes = true
+indent-width = 4
+exclude = [".venv", "data", "logs"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "T201", "COM812", "INP001", "D", "ANN401", "ERA001", "PLW0603",
+    "RUF012", "G202", "TRY300", "TRY301", "SIM117", "SIM102", "ARG001",
+    "ARG002", "BLE001", "RUF001", "PGH003", "SLF001", "S110", "PLR2004",
+    "E501", "PD011", "DTZ005", "TRY004", "PLC0415", "F841", "ASYNC240",
+    "F401", "PT011", "PT017", "FBT001", "G004", "TRY401", "TRY002",
+    "ARG005", "C901", "A004", "ASYNC230", "PLR0913", "E402",
+    # Exception message style — too strict for this codebase
+    "TRY003", "EM101", "EM102",
+    # TODO comment formatting — subjective style rules
+    "TD002", "TD003", "TD004", "FIX002",
+    # Boolean args are acceptable in internal Python APIs
+    "FBT002", "FBT003",
+    # PLR complexity — chat_loop and commands are intentionally large
+    "PLR0912", "PLR0915",
+    # ANN for __init__ return type — implied None, not needed
+    "ANN204",
+    # TC: moving imports to TYPE_CHECKING blocks requires from __future__ import annotations
+    # which can break runtime type inspection in Pydantic/LangGraph/LangChain
+    "TC001", "TC002", "TC003"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN201", "ANN001", "ANN202", "ANN003", "ARG001", "ARG002", "S101", "S108", "N806", "RUF003"]
+"tests/e2e/**/*.py" = ["S603", "S607", "PLW1510"]
+"tests/integration/**/*.py" = ["S603", "PLW1510"]
+"check_coverage.py" = ["S603", "PLW1510", "PLW2901", "B007"]
+"run_coverage.py" = ["S603", "PLW1510", "RUF005"]
+"vectora/tools/*.py" = ["PLR0911", "S602"]
+"vectora/agents/*.py" = ["PLR0911"]
+"vectora/nodes/engine.py" = ["E501"]
+"vectora/nodes/base.py" = ["PLR0911"]
+"vectora/ui/setup_wizard.py" = ["S603", "RUF006"]
+"vectora/services/checkpoint.py" = ["N802"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.pyright]
+typeCheckingMode = "standard"
+pythonVersion = "3.14"
+include = ["vectora", "tests"]
+exclude = ["**/venv", "**/.venv", "**/env", "**/.env", "**/node_modules", "**/__pycache__"]
+venv = ".venv"
+venvPath = "."
+executionEnvironments = [{ root = "vectora" }]
+
+[tool.pytest.ini_options]
+addopts = "-s --color=yes --tb=short"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    # asyncio.iscoroutinefunction está deprecado em Python 3.12 e será removido no futuro.
+    # Esses avisos vêm de libs externas (cohere-sdk, langchain-core) — não do nosso código.
+    # Suprimir até que as libs atualizem para inspect.iscoroutinefunction().
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:cohere",
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:langchain_core",
+]
+markers = [
+    "e2e: testes end-to-end com APIs reais (requer env vars e gemini CLI)",
+    "integration: testes de integração com APIs reais (requer GOOGLE_API_KEY + COHERE_API_KEY)",
+    "lifecycle: testes de ciclo de vida sequenciais na session 1212",
+    "stress: testes de carga e concorrência — sem APIs externas, apenas infra local",
+]
