@@ -145,20 +145,8 @@ class Settings(BaseSettings):
     # FEATURE FLAGS & LIMITS
     # ============================================================================
 
-    enable_rag: bool = True
-    """Enable RAG (vector search) functionality."""
-
-    enable_web_search: bool = True
-    """Enable web search tools (Tavily)."""
-
-    enable_file_tools: bool = True
-    """Enable file manipulation tools."""
-
     enable_mcp: bool = False
     """Enable MCP (Model Context Protocol) server integration."""
-
-    enable_file_operations: bool = True
-    """Enable file operations tools (file_read, file_edit, grep, etc)."""
 
     max_context_tokens: int = 8000
     """Maximum tokens to keep in message history (sliding window)."""

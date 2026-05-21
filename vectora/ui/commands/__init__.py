@@ -62,8 +62,8 @@ async def handle_command(
     config: Any,
     console: Any,
     context: Any = None,
-    debug_mode: bool = False,
-) -> tuple[bool, Any, bool]:
+    debug_mode: int = 0,
+) -> tuple[bool, Any, int]:
     """Process system commands (user input starting with /).
 
     Args:
@@ -71,10 +71,10 @@ async def handle_command(
         config: Config instance (kept for backward compatibility, unused)
         console: Rich console for output
         context: Context object that may be modified by commands
-        debug_mode: Current debug mode state
+        debug_mode: Current verbosity level (0-5)
 
     Returns:
-        Tuple of (should_exit, updated_context, debug_mode)
+        Tuple of (should_exit, updated_context, verbosity)
     """
     parts = user_input.split(maxsplit=1)
     cmd = parts[0].lower()

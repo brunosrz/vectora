@@ -26,7 +26,7 @@ _SETTINGS_FILE = Path.home() / ".vectora" / "settings.json"
 _DEFAULTS: dict = {
     "active_provider": "google-genai",
     "active_model": "gemini-2.5-flash",
-    "debug_mode": False,
+    "verbosity": 0,
 }
 
 
@@ -103,8 +103,14 @@ class RuntimeSettings:
         return str(self.get("active_model", "gemini-2.5-flash"))
 
     @property
+    def verbosity(self) -> int:
+        """Verbosity level 0-5. 0 = silent, 5 = full debug panel."""
+        return int(self.get("verbosity", 0))  # type: ignore[arg-type]
+
+    @property
     def debug_mode(self) -> bool:
-        return bool(self.get("debug_mode", False))
+        """Backward-compat: True when verbosity >= 5."""
+        return self.verbosity >= 5
 
     # ─── Métodos de negócio ───────────────────────────────────────────────────
 
@@ -116,9 +122,31 @@ class RuntimeSettings:
             self._save()
         logger.info("runtime_settings: provider=%s model=%s", provider, model)
 
+    def set_verbosity(self, level: int) -> None:
+        """Define verbosity level (0-5) e persiste."""
+        self.set("verbosity", max(0, min(5, level)))
+
     def set_debug_mode(self, enabled: bool) -> None:
-        """Liga/desliga modo debug e persiste."""
-        self.set("debug_mode", enabled)
+        """Backward-compat: liga/desliga verbosity entre 0 e 5."""
+        self.set_verbosity(5 if enabled else 0)
+
+    @property
+    def last_session_by_dir(self) -> dict[str, str]:
+        """Mapping of working directory path -> thread_id (6-digit string)."""
+        val = self.get("last_session_by_dir", {})
+        return val if isinstance(val, dict) else {}
+
+    def get_session_for_dir(self, cwd: str) -> str | None:
+        """Return the last thread_id used in the given directory, or None."""
+        return self.last_session_by_dir.get(cwd)
+
+    def set_session_for_dir(self, cwd: str, thread_id: str) -> None:
+        """Persist the last thread_id used in the given directory."""
+        with self._lock:
+            mapping = dict(self.last_session_by_dir)
+            mapping[cwd] = thread_id
+            self._data["last_session_by_dir"] = mapping
+            self._save()
 
 
 # Singleton — único por processo

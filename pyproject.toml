@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vectora-agent"
-version = "0.1.0rc1"
+version = "0.1.0rc02"
 description = "Vectora - Advanced AI Assistant with RAG and MCP capabilities"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -67,8 +67,6 @@ dev = [
 
 [project.scripts]
 vectora = "vectora.main:run"
-vectora-mcp = "vectora.mcp.server:run"
-vectora-traces = "vectora.main:run_traces"
 
 [tool.hatch.build.targets.wheel]
 packages = ["vectora"]
@@ -152,4 +150,9 @@ markers = [
     "integration: testes de integração com APIs reais (requer GOOGLE_API_KEY + COHERE_API_KEY)",
     "lifecycle: testes de ciclo de vida sequenciais na session 1212",
     "stress: testes de carga e concorrência — sem APIs externas, apenas infra local",
+]
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=1.3.0",
 ]

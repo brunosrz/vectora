@@ -2,8 +2,8 @@
 
 Registro técnico completo de tudo implementado no Vectora v0.1.0. Serve como referência para o time e como checklist de release.
 
-**Versão:** 0.1.0
-**Status:** 🟡 Feature-complete, polimento final
+**Versão:** 0.1.0rc02
+**Status:** 🟡 Feature-complete, em polimento final (rc2 — não publicada)
 
 ---
 
@@ -13,33 +13,30 @@ Registro técnico completo de tudo implementado no Vectora v0.1.0. Serve como re
 
 ```
 START
-  └─► supervisor  ─────────────────────────────── Command(goto=...)
-        ├─► direct      ──► direct_tools (memory) ──► direct ──► END
-        ├─► search      ──► search_tools ──► process_retrieval ──► search ──► END
-        ├─► coder       ──► coder_tools (fs + memory) ──► coder ──► END
-        └─► rag_subgraph ─────────────────────────────────────► direct ──► END
+  └─► orchestrator  ─────────────────────────────── Command(goto=...)
+        ├─► [respond]      ──► END
+        ├─► [search]       ──► search_tools ──► process_retrieval ──► search ──► END
+        ├─► [coder]        ──► coder_tools ──► coder ──► END
+        └─► [rag_subgraph] ──► rag_subgraph ──► orchestrator (síntese) ──► END
 ```
 
 ### Nós
 
-| Nó                  | Tipo               | Função                                               |
-| ------------------- | ------------------ | ---------------------------------------------------- |
-| `supervisor`        | Custom             | Classifica intenção e roteia via `Command(goto=...)` |
-| `direct`            | Custom             | Respostas diretas, síntese pós-RAG, memória          |
-| `direct_tools`      | DiagnosticToolNode | Loop de ferramentas de memória                       |
-| `search`            | Custom             | Pesquisa web + RAG                                   |
-| `search_tools`      | DiagnosticToolNode | web_search, fetch_url, vector_search                 |
-| `process_retrieval` | Custom             | Cascading automático web → LanceDB                   |
-| `coder`             | Custom             | Filesystem, terminal, git                            |
-| `coder_tools`       | DiagnosticToolNode | Ferramentas de fs + memória                          |
-| `rag_subgraph`      | CompiledStateGraph | Pipeline RAG completo (nó atômico)                   |
+| Nó                  | Tipo               | Função                                                                |
+| ------------------- | ------------------ | --------------------------------------------------------------------- |
+| `orchestrator`      | Custom (LLM)       | Agente primário — responde inline ou delega com task_query explícita  |
+| `search`            | Custom             | Pesquisa web + RAG                                                    |
+| `search_tools`      | DiagnosticToolNode | web_search, fetch_url, vector_search                                  |
+| `process_retrieval` | Custom             | Cascading automático web → LanceDB                                    |
+| `coder`             | Custom             | Filesystem, terminal, git                                             |
+| `coder_tools`       | DiagnosticToolNode | Ferramentas de fs + create_artifact                                   |
+| `rag_subgraph`      | CompiledStateGraph | Pipeline RAG completo (nó atômico); injeta contexto via SystemMessage |
 
 ### Edges
 
-- `START → supervisor` (determinístico)
-- `supervisor → {direct, search, coder, rag_subgraph}` (`add_conditional_edges` via `_supervisor_route`)
-- `rag_subgraph → direct` (determinístico — síntese sempre por direct)
-- `direct ↔ direct_tools` (`tools_condition` loop)
+- `START → orchestrator` (determinístico)
+- `orchestrator → {END, search, coder, rag_subgraph}` (`add_conditional_edges` via `_orchestrator_route`)
+- `rag_subgraph → orchestrator` (síntese inline — orchestrator vê contexto RAG e responde)
 - `search ↔ search_tools → process_retrieval → search` (cascading loop)
 - `coder ↔ coder_tools` (`tools_condition` loop)
 
@@ -107,36 +104,33 @@ class Context:
 
 ---
 
-## 3. Supervisor & Roteamento
+## 3. Orchestrator & Roteamento
 
-### `classify_intent(text: str) -> str` (`agents/supervisor.py`)
+O Orchestrator é o agente primário do sistema. Ele usa **LLM structured output** (`OrchestratorDecision`) para decidir entre responder inline ou delegar a um sub-agente com uma instrução clara.
 
-Regex compilados em módulo, avaliados em ordem de prioridade:
-
-| Prioridade | Pattern                                                                         | Route      |
-| ---------- | ------------------------------------------------------------------------------- | ---------- |
-| 1          | `_IDENTITY_PATTERNS` (identidade, criador, "sou o", "meu nome é")               | `"direct"` |
-| 2          | `_DIRECT_PATTERNS` (saudações, agradecimentos, meta-perguntas, confirmações)    | `"direct"` |
-| 3          | `_CODER_PATTERNS` (verbos de fs, artefatos, ferramentas dev: git, docker, npm)  | `"coder"`  |
-| 4          | `_URL_PATTERNS` (URLs explícitas `https://...`)                                 | `"search"` |
-| 5          | `_FILE_PATH_PATTERNS` (caminhos Windows `C:\...` ou Unix `/home/...`)           | `"coder"`  |
-| 6          | `_SEARCH_PATTERNS` (web explícita, temporal, notícias)                          | `"search"` |
-| 7          | `_RAG_PATTERNS` (documentos, wiki, "segundo o documento", base de conhecimento) | `"rag"`    |
-| 8          | Fallback final                                                                  | `"direct"` |
-
-### `supervisor(state: State) -> Command`
+### `OrchestratorDecision` (Pydantic)
 
 ```python
-intent = classify_intent(last_human_message)
-return Command(
-    goto=_AGENT_MAP[intent],      # "direct" | "coder" | "search" | "rag_subgraph"
-    update={"routing_decision": intent}
-)
+class OrchestratorDecision(BaseModel):
+    action: Literal["respond", "delegate"]
+    response: str | None = None          # resposta completa quando action=="respond"
+    delegate_to: Literal["coder", "search", "rag"] | None = None
+    task_query: str | None = None        # instrução focada para o sub-agente (1–3 frases)
+    reason: str                          # uma frase para log/debug
 ```
 
-- Extrai a última `HumanMessage` do `State.messages`
-- `_supervisor_route` em `graph.py` mapeia `routing_decision → node_name`
-- Fallback a `"direct"` para valores inválidos
+### `orchestrator(state: State) -> Command`
+
+Fluxo de execução:
+
+1. Carrega project context (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md` do cwd) na primeira mensagem da sessão — persiste em `state["project_context"]`
+2. Monta `_build_context_block(state, session_id)` com session metadata (incluindo `Session ID:`) e histórico de artifacts
+3. Chama LLM com `.bind_tools(ALL_TOOLS).with_structured_output(OrchestratorDecision)` para obter decisão estruturada
+4. **`action="respond"`**: cria `AIMessage`, injeta em `messages`, roteia para `END`
+5. **`action="delegate"`**: escreve `orchestrator_task = task_query` no state, roteia para `coder` / `search` / `rag_subgraph`
+6. Fallback (LLM call falha): responde inline com mensagem de erro
+
+Sub-agentes (`coder`, `search`) leem `state["orchestrator_task"]` e injetam como diretiva no topo do system prompt, priorizando sobre o histórico bruto.
 
 ### Self-Awareness (`agents/_identity.py`)
 
@@ -144,7 +138,17 @@ return Command(
 
 - Identidade: open-source Python, GitHub brunosrz/vectora, Apache 2.0
 - Stack declarada: LangChain, LangGraph, FastMCP, LanceDB, Cohere, Tavily
-- Arquitetura: multi-agent stateful com supervisor + specialization
+- Arquitetura: multi-agent stateful com orchestrator + specialization
+- Capacidades: RAG local, busca web, fs/terminal, memória persistente, embedding assíncrono, MCP, multi-sessão, artifacts
+- Comandos disponíveis: `/list`, `/tools`, `/debug`, `/new`, `/session`, `/model`, `/rag`, `/help`
+
+### Self-Awareness (`agents/_identity.py`)
+
+`VECTORA_IDENTITY` — string constante importada por todos os agents:
+
+- Identidade: open-source Python, GitHub brunosrz/vectora, Apache 2.0
+- Stack declarada: LangChain, LangGraph, FastMCP, LanceDB, Cohere, Tavily
+- Arquitetura: multi-agent stateful com orchestrator + specialization
 - Capacidades: RAG local, busca web, fs/terminal, memória persistente, embedding assíncrono, MCP, multi-sessão
 - Comandos disponíveis: `/list`, `/tools`, `/debug`, `/new`, `/session`, `/model`, `/rag`, `/help`
 
@@ -152,13 +156,13 @@ return Command(
 
 ## 4. Agents
 
-### Direct Agent (`agents/direct.py`)
+### Orchestrator Agent (`agents/orchestrator.py`)
 
-- **Papel**: Respostas gerais, síntese pós-RAG, gerenciamento de memória cross-session
-- **LLM**: Singleton lazy-loaded `_direct_llm` via `_get_direct_llm() -> Runnable`
-- **Tools bindadas**: `MEMORY_TOOLS` (`save_memory`, `get_memory`, `delete_memory`)
-- **System prompt**: VECTORA_IDENTITY + instruções de síntese RAG + uso de memória + estilo adaptativo
-- **Invocação**: `invoke_llm(_get_direct_llm(), state, system_prompt=SYSTEM_PROMPT)`
+- **Papel**: Agente primário — responde inline para perguntas simples, sintetiza contexto RAG, cria artifacts explicitamente via `create_artifact`, delega tarefas complexas a sub-agentes com instrução clara
+- **LLM**: Singleton lazy-loaded `_orchestrator_llm` via `_get_orchestrator_llm() -> Runnable`; usa `.bind_tools(ALL_TOOLS).with_structured_output(OrchestratorDecision)`
+- **Tools disponíveis**: `ALL_TOOLS` (15 tools, incluindo `create_artifact`, `save_memory`, `get_memory`, `delete_memory`)
+- **System prompt**: `_ORCHESTRATOR_PROMPT` — VECTORA_IDENTITY + regras de delegação + instruções de síntese RAG + uso correto de `create_artifact` (passar `session_id` do context block)
+- **Project context**: `_load_project_context()` escaneia cwd recursivamente por `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` na primeira mensagem; resultado persiste em `state["project_context"]`
 
 ### Search Agent (`agents/search.py`)
 
@@ -315,17 +319,17 @@ Wrapper sobre `ToolNode` com logging detalhado para cada invocação de ferramen
 
 ```python
 SEARCH_TOOLS  = [web_search, fetch_url, vector_search] + [embedding] (se enable_rag)
-FS_TOOLS      = [file_read, file_edit, file_write, grep, list_dir, terminal] (se enable_file_operations)
+FS_TOOLS      = [file_read, file_edit, file_write, grep, list_dir, terminal, create_artifact]
 MEMORY_TOOLS  = [save_memory, get_memory, delete_memory]
 RAG_TOOLS     = [vector_search] + [embedding, ingest_docs] (se enable_rag)
-ALL_TOOLS     = union deduplicated por name
+ALL_TOOLS     = union deduplicated por name  # 15 tools no total
 ```
 
-Tool nodes pré-instanciados: `search_tool_node`, `coder_tool_node`, `memory_tool_node`, `all_tool_node`
+Tool nodes pré-instanciados via `DiagnosticToolNode(tools=ALL_TOOLS)`: `search_tools_node`, `coder_tools_node`
 
 ---
 
-## 10. Ferramentas (14)
+## 10. Ferramentas (15)
 
 ### Web — `tools/web.py`
 
@@ -400,6 +404,15 @@ Tool nodes pré-instanciados: `search_tool_node`, `coder_tool_node`, `memory_too
 - Respeita `.gitignore`
 - `iterdir()` ou `rglob("*")` se `recursive=True`
 - Formato: `[DIR] nome` / `[FILE] nome`; máx 500 itens
+
+**`create_artifact(artifact_type, title, content, session_id="000000") -> str`**
+
+- Guard: `title` e `content` não podem ser vazios; `artifact_type` deve estar em `_VALID_ARTIFACT_TYPES`
+- Tipos aceitos: `plan`, `spec`, `task_list`, `overview`, `guide`, `architecture`, `implementation`
+- `_artifact_slug(title)` — kebab-case unicode-aware, max 50 chars, fallback `"artifact"`
+- Salva em `~/.vectora/artifacts/{session_id}/{slug}.md` (ou `{slug}-1.md`, `{slug}-2.md` para colisões)
+- Retorna JSON: `{path, title, artifact_type, session_id, created_at}`
+- Erro retornado como JSON: `{error: "..."}`
 
 **`terminal(command) -> str`** (async)
 
@@ -814,7 +827,7 @@ DI hub e ponto de acesso de alto nível para todas as funcionalidades:
 ### Core
 
 - [x] 14 ferramentas implementadas e testadas
-- [x] Supervisor + 3 workers especializados (direct / search / coder)
+- [x] Orchestrator + 3 workers especializados (direct / search / coder)
 - [x] RAG subgraph com 5 nós e threshold adaptativo
 - [x] Cascading embeddings (web → LanceDB fire-and-forget)
 - [x] Background worker com retry exponencial + DLQ

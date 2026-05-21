@@ -63,6 +63,20 @@ except ImportError:
 @asynccontextmanager
 async def _mcp_lifespan(server: object) -> AsyncGenerator[None]:
     """Context manager de ciclo de vida para o servidor MCP."""
+    from vectora.mcp.env_bootstrap import bootstrap_env_from_mcp, validate_required_keys
+
+    bootstrapped = bootstrap_env_from_mcp()
+    if bootstrapped:
+        logger.info("MCP lifespan: keys persistidas a partir de variáveis de ambiente")
+
+    missing = validate_required_keys()
+    if missing:
+        logger.warning(
+            "MCP lifespan: keys obrigatórias ausentes: %s — "
+            "configure-as em ~/.vectora/.env ou passe como variáveis de ambiente",
+            ", ".join(missing),
+        )
+
     try:
         yield
     finally:
@@ -617,9 +631,6 @@ async def get_server_status() -> str:
             "status": "ready",
             "timestamp": datetime.now(UTC).isoformat(),
             "capabilities": {
-                "rag_enabled": settings.enable_rag,
-                "web_search_enabled": settings.enable_web_search,
-                "file_operations_enabled": settings.enable_file_operations,
                 "mcp_enabled": settings.enable_mcp,
                 "embedding_queue_enabled": settings.embedding_queue_enabled,
             },

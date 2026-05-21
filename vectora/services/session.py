@@ -11,6 +11,7 @@ Implementation: Ports AsyncSqliteSaver logic from checkpointer.py
 
 import json
 import logging
+import random
 from datetime import UTC, datetime
 
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 _SESSION_TABLE_DDL = """
 CREATE TABLE IF NOT EXISTS vectora_sessions (
-    thread_id     INTEGER PRIMARY KEY,
+    thread_id     TEXT    PRIMARY KEY,
     user_type     TEXT    NOT NULL DEFAULT 'default',
     created_at    TEXT    NOT NULL,
     last_activity TEXT    NOT NULL,
@@ -31,6 +32,15 @@ CREATE TABLE IF NOT EXISTS vectora_sessions (
     extra         TEXT    NOT NULL DEFAULT '{}'
 );
 """
+
+
+def _generate_session_id() -> str:
+    """Gera ID de sessão de 6 dígitos com zero-padding.
+
+    Exemplos: '042731', '000101', '999999'.
+    Armazenado como string para preservar zeros à esquerda.
+    """
+    return f"{random.randint(0, 999_999):06d}"  # noqa: S311 — não é criptográfico, apenas ID de sessão
 
 
 class SessionService:
@@ -56,7 +66,7 @@ class SessionService:
         self.settings = settings
         self.checkpointer: AsyncSqliteSaver | None = None
         self._checkpointer_context = None  # Keep context manager alive
-        self._session_cache: dict[int, dict] = {}  # In-memory mirror do banco
+        self._session_cache: dict[str, dict] = {}  # In-memory mirror do banco (str key)
 
         logger.debug("SessionService initialized")
 
@@ -169,28 +179,37 @@ class SessionService:
         except Exception as e:
             logger.warning("SessionService: erro ao persistir session (%s)", e)
 
-    async def create(self, user_type: str = "default") -> int:
+    async def create(
+        self,
+        user_type: str = "default",
+        working_directory: str | None = None,
+    ) -> str:
         """Create new chat session.
 
         Args:
             user_type: User classification ("default" or custom)
+            working_directory: The working directory (cwd) where the session was created.
+                Stored in session.extra so /sessions can show it.
 
         Returns:
-            New session/thread ID
+            New session/thread ID (6-digit zero-padded string, e.g. '042731')
         """
-        # Find max existing thread_id
-        max_thread_id = max(self._session_cache.keys()) if self._session_cache else 0
-        new_thread_id = max_thread_id + 1
+        # Gera ID aleatório de 6 dígitos, garantindo unicidade no cache
+        new_thread_id = _generate_session_id()
+        while new_thread_id in self._session_cache:
+            new_thread_id = _generate_session_id()
 
         # Create session metadata
         created_at = datetime.now(UTC).isoformat()
-        session_metadata = {
+        session_metadata: dict = {
             "thread_id": new_thread_id,
             "user_type": user_type,
             "created_at": created_at,
             "last_activity": created_at,
             "message_count": 0,
         }
+        if working_directory:
+            session_metadata["working_directory"] = working_directory
 
         # Store in cache and persist to database
         self._session_cache[new_thread_id] = session_metadata
@@ -201,12 +220,13 @@ class SessionService:
             extra={
                 "thread_id": new_thread_id,
                 "user_type": user_type,
+                "working_directory": working_directory,
             },
         )
 
         return new_thread_id
 
-    async def switch(self, thread_id: int) -> bool:
+    async def switch(self, thread_id: str) -> bool:
         """Switch to existing session.
 
         Args:
@@ -243,7 +263,7 @@ class SessionService:
         logger.debug(f"Listed {len(sessions)} sessions")
         return sessions
 
-    def get_runnable_config(self, thread_id: int) -> RunnableConfig:
+    def get_runnable_config(self, thread_id: str) -> RunnableConfig:
         """Get LangGraph runnable config for session.
 
         Phase 2 Refactor: No longer injects Context in configurable.
@@ -261,7 +281,7 @@ class SessionService:
             }
         )
 
-    async def delete(self, thread_id: int) -> bool:
+    async def delete(self, thread_id: str) -> bool:
         """Delete session and its history.
 
         Args:
@@ -291,7 +311,7 @@ class SessionService:
         logger.warning(f"Session deleted: {thread_id}")
         return True
 
-    async def get_history(self, thread_id: int, limit: int = 50) -> list[dict]:
+    async def get_history(self, thread_id: str, limit: int = 50) -> list[dict]:
         """Get message history for session.
 
         Args:
@@ -316,7 +336,7 @@ class SessionService:
             logger.exception(f"Failed to get history: {e}")
             return []
 
-    async def update_activity(self, thread_id: int) -> None:
+    async def update_activity(self, thread_id: str) -> None:
         """Update last activity timestamp for session and persist.
 
         Args:

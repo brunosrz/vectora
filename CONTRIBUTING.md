@@ -217,7 +217,7 @@ vectora/
 ├── nodes/            # LangGraph nodes (engine, debug)
 ├── tools/            # 14 tools (fs, rag, web, memory, mcp)
 ├── mcp/              # MCP Server, Client, VectoraProxy
-├── agents/           # Supervisor + specialized agents + identity
+├── agents/           # Orchestrator + specialized agents + identity
 ├── services/         # Services (queue, memory, checkpoint, security...)
 ├── ui/               # TUI (chat, commands, setup wizard)
 └── testing/          # Fixtures, mocks, message factories

@@ -254,7 +254,7 @@ async def rag_websearch(state: State) -> dict:
         )
 
         # Cascading automático: enfileira para LanceDB
-        if settings.enable_rag and settings.embedding_queue_enabled:
+        if settings.embedding_queue_enabled:
             qid = await _enqueue_for_embedding(
                 content,
                 collection="articles",

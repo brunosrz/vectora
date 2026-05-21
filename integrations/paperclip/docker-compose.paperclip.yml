@@ -1,0 +1,26 @@
+services:
+  paperclip:
+    image: ghcr.io/hostinger/hvps-paperclip:latest
+    restart: unless-stopped
+    ports:
+      - "${PUBLIC_PORT}:3100"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${COMPOSE_PROJECT_NAME}.${TRAEFIK_HOST}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3100
+      # HTTP router que redireciona para HTTPS
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-http.rule=Host(`${COMPOSE_PROJECT_NAME}.${TRAEFIK_HOST}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-http.entrypoints=web
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-http.middlewares=${COMPOSE_PROJECT_NAME}-redirect
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-redirect.redirectscheme.permanent=true
+    volumes:
+      - ./data:/paperclip
+      - /root/.claude:/paperclip/.claude
+    env_file:
+      - .env
+    environment:
+      PAPERCLIP_PUBLIC_URL: https://${COMPOSE_PROJECT_NAME}.${TRAEFIK_HOST}
+      PAPERCLIP_ALLOWED_HOSTNAMES: ${TRAEFIK_HOST},${VPS_IP}:${PUBLIC_PORT}

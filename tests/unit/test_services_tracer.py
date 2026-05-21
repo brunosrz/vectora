@@ -61,7 +61,7 @@ class TestSpanContextManager:
 
     @pytest.mark.asyncio
     async def test_span_set_stores_metadata(self, tr):
-        async with tr.span("supervisor", "route") as s:
+        async with tr.span("orchestrator", "route") as s:
             s.set(routing="search", intent="search", query_len=50)
 
         spans = await tr.get_recent(n=1)

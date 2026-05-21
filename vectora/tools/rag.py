@@ -57,15 +57,6 @@ async def embedding(
     Returns:
         JSON com status fire_and_forget + queue_id, ou error
     """
-    if not settings.enable_rag:
-        logger.warning("embedding tool called but RAG disabled")
-        return json.dumps(
-            {
-                "status": "error",
-                "error": "RAG is disabled. Enable ENABLE_RAG=true to use this tool.",
-            }
-        )
-
     if not settings.embedding_queue_enabled:
         logger.error("embedding called but queue not enabled")
         return json.dumps(
@@ -156,10 +147,6 @@ async def vector_search(
     Returns:
         JSON com documentos e scores de similaridade
     """
-    if not settings.enable_rag:
-        logger.warning("vector_search tool called but RAG disabled")
-        return "RAG is disabled. Enable ENABLE_RAG=true to use this tool."
-
     try:
         if lancedb is None or CohereEmbeddings is None:
             return "LanceDB or Cohere dependencies missing."
@@ -325,9 +312,6 @@ async def ingest_docs(
 
     from vectora.services.gitignore import is_ignored, load_gitignore_spec
     from vectora.services.security import is_safe_file_path
-
-    if not settings.enable_file_operations:
-        return "File operations are disabled."
 
     if not is_safe_file_path(directory_path):
         return f"Access denied: {directory_path} is outside allowed directory"

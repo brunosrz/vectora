@@ -24,10 +24,6 @@ def web_search(query: str) -> str:
     Returns:
         JSON com resultados estruturados (url, title, content) prontos para embedding
     """
-    if not settings.enable_web_search:
-        logger.warning("web_search tool called but disabled")
-        return "Web search is disabled. Enable ENABLE_WEB_SEARCH=true to use this tool."
-
     if not settings.tavily_api_key:
         logger.error("TAVILY_API_KEY not configured")
         return json.dumps(

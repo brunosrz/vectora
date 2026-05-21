@@ -48,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import vectora; import sys; sys.exit(0)" || exit 1
 
 # Chama o entrypoint diretamente do venv (sem overhead do `uv run`)
-ENTRYPOINT ["vectora-mcp"]
+ENTRYPOINT ["vectora", "mcp-server"]

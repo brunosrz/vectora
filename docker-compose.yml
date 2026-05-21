@@ -1,16 +1,15 @@
 name: vectora
 
-# Vectora MCP Server - Multi-Agent Hub
+# Vectora MCP Server — Multi-Agent Hub (SSE/HTTP)
 #
-# Esta configuração suporta dois modos de transport:
-# - stdio (default): para clientes locais (Claude Desktop, Claude Code)
-# - sse/http (opcional): para múltiplos agentes remotos (Paperclip, etc.)
+# Uso local (sem Traefik):
+#   docker compose up -d
+#   A API SSE fica disponível em http://localhost:8000/sse
 #
-# Arquitetura Multi-Agent:
-# - Singleton AgentManager: 1 instância compartilhada (LanceDB + worker)
-# - thread_id segrega sessões: cada agente passa seu próprio thread_id
-# - SQLite único com múltiplas sessões (LangGraph Checkpointer pattern)
-# - Sem necessidade de SQLite por agente — thread_id é a chave de segregação
+# Uso em VPS com Traefik:
+#   Defina VECTORA_DOMAIN no .env (ex: vectora.meudominio.com)
+#   Certifique-se que a rede "traefik-public" já existe no host
+#   docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
 
 services:
   vectora:
@@ -19,18 +18,18 @@ services:
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - COHERE_API_KEY=${COHERE_API_KEY}
-      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY:-}
+      - LANGSMITH_TRACING=${LANGSMITH_TRACING:-false}
+      - LANGSMITH_PROJECT=${LANGSMITH_PROJECT:-vectora}
       - PYTHONUNBUFFERED=1
-      # Modo transport: stdio (default) ou sse (para multi-agent remoto)
-      - MCP_TRANSPORT=${MCP_TRANSPORT:-stdio}
-      - MCP_HOST=${MCP_HOST:-0.0.0.0}
+      - MCP_TRANSPORT=sse
+      - MCP_HOST=0.0.0.0
       - MCP_PORT=${MCP_PORT:-8000}
     volumes:
       - vectora-data:/root/.vectora
-      - ./data:/root/.vectora/data
-    # Porta exposta apenas se MCP_TRANSPORT=sse (HTTP transport)
-    # Para stdio puro, deixe MCP_TRANSPORT=stdio (default) e ignore esta porta
     ports:
       - "${MCP_PORT:-8000}:8000"
     healthcheck:
@@ -43,7 +42,3 @@ services:
 volumes:
   vectora-data:
     driver: local
-
-networks:
-  default:
-    driver: bridge

@@ -1,4 +1,4 @@
-"""Rich CLI Chat Interface for Vectora - "Rich Gorda" Dashboard.
+"""Rich CLI Chat Interface for Vectora.
 
 Professional agent dashboard using Rich components for real-time rendering.
 Features advanced layout, status indicators, and audit trails.
@@ -38,6 +38,7 @@ from vectora.context import Context
 from vectora.graph import build_graph
 from vectora.services.checkpoint import Checkpointer
 from vectora.services.log_setup import setup_logging, setup_queue_handler
+from vectora.services.runtime_settings import runtime_settings
 from vectora.services.terminal_stream import (
     register_terminal_output_callback,
     unregister_terminal_output_callback,
@@ -192,39 +193,15 @@ def _is_terminal_tool(tool_name: str) -> bool:
     return tool_name.lower() in {"terminal", "terminal_tool"}
 
 
-def _render_tool_event_start(
-    tool_name: str, tool_input: object, status_ctx: Any
-) -> None:
-    """Exibe um evento de início de tool no console.
-
-    Suspende o spinner momentaneamente para não embaralhar o panel.
-    Terminal recebe tratamento verde especial; outras tools ficam amarelas.
-    """
+def _suspend(status_ctx: Any) -> None:
     try:
         if status_ctx is not None and hasattr(status_ctx, "stop"):
             status_ctx.stop()
     except Exception:
         pass
 
-    if _is_terminal_tool(tool_name):
-        # Comando shell em verde
-        command = ""
-        if isinstance(tool_input, dict):
-            command = str(tool_input.get("command", ""))  # ty: ignore[no-matching-overload]
-        else:
-            command = str(tool_input)
-        console.print(TerminalPanel.render_command(command))
 
-        # Registra callback de streaming: cada linha chega em tempo real
-        def _stream_line(line: str) -> None:
-            console.print(TerminalPanel.render_line(line))
-
-        register_terminal_output_callback(_stream_line)
-    else:
-        # Tool genérica em amarelo
-        args_obj = tool_input if isinstance(tool_input, dict) else {"input": tool_input}
-        console.print(ToolCallPanel.render(tool_name, args_obj))  # ty: ignore[invalid-argument-type]
-
+def _resume(status_ctx: Any) -> None:
     try:
         if status_ctx is not None and hasattr(status_ctx, "start"):
             status_ctx.start()
@@ -232,21 +209,70 @@ def _render_tool_event_start(
         pass
 
 
-def _render_tool_event_end(
-    tool_name: str, tool_output: object, status_ctx: Any
+def _render_tool_event_start(
+    tool_name: str, tool_input: object, status_ctx: Any, verbosity: int = 0
 ) -> None:
-    """Exibe um evento de fim de tool no console.
+    """Render tool-call start according to verbosity level.
 
-    Suspende o spinner momentaneamente para não embaralhar o panel.
-    Terminal recebe tratamento verde; demais tools ficam vermelhas.
+    Level 0 — silent.
+    Level 1 — one-line "[→ tool_name]" indicator.
+    Level 2 — compact panel: tool name only, no args.
+    Level 3 — panel with truncated args (≤ 200 chars).
+    Level 4+ — panel with full args (≤ 600 chars, same as before).
+    Terminal always gets special green treatment when verbosity ≥ 1.
     """
-    try:
-        if status_ctx is not None and hasattr(status_ctx, "stop"):
-            status_ctx.stop()
-    except Exception:
-        pass
+    if verbosity == 0:
+        # Register terminal streaming silently so output still works
+        if _is_terminal_tool(tool_name):
+            if verbosity >= 1:
+                pass
+            register_terminal_output_callback(lambda line: None)
+        return
 
-    # Extrai conteúdo de string ou ToolMessage
+    _suspend(status_ctx)
+
+    if _is_terminal_tool(tool_name):
+        command = ""
+        if isinstance(tool_input, dict):
+            command = str(tool_input.get("command", ""))  # ty: ignore[no-matching-overload]
+        else:
+            command = str(tool_input)
+
+        if verbosity == 1:
+            console.print("[dim green]→ terminal[/dim green]")
+        else:
+            console.print(TerminalPanel.render_command(command))
+
+        def _stream_line(line: str) -> None:
+            if verbosity >= 2:
+                console.print(TerminalPanel.render_line(line))
+
+        register_terminal_output_callback(_stream_line)
+    elif verbosity == 1:
+        console.print(f"[dim yellow]→ {tool_name}[/dim yellow]")
+    elif verbosity == 2:
+        console.print(ToolCallPanel.render(tool_name, None))
+    elif verbosity == 3:
+        args_obj = tool_input if isinstance(tool_input, dict) else {"input": tool_input}
+        console.print(ToolCallPanel.render(tool_name, args_obj, max_len=200))  # ty: ignore[call-arg]
+    else:
+        args_obj = tool_input if isinstance(tool_input, dict) else {"input": tool_input}
+        console.print(ToolCallPanel.render(tool_name, args_obj))  # ty: ignore[invalid-argument-type]
+
+    _resume(status_ctx)
+
+
+def _render_tool_event_end(
+    tool_name: str, tool_output: object, status_ctx: Any, verbosity: int = 0
+) -> None:
+    """Render tool-call end according to verbosity level.
+
+    Level 0 — silent.
+    Level 1 — one-line "✓ tool_name" or "✗ tool_name" indicator.
+    Level 2 — compact panel: status only, no content.
+    Level 3 — panel with response truncated to 200 chars.
+    Level 4+ — panel with full response (≤ 800 chars).
+    """
     if hasattr(tool_output, "content"):
         output_str = str(tool_output.content)
     else:
@@ -254,23 +280,28 @@ def _render_tool_event_end(
 
     is_error = output_str.lower().startswith(("erro", "error"))
 
-    if _is_terminal_tool(tool_name):
-        # Desregistra o callback de streaming — processo terminou
-        unregister_terminal_output_callback()
+    if verbosity == 0:
+        if _is_terminal_tool(tool_name):
+            unregister_terminal_output_callback()
+        return
 
-        # Extrai exit code do output se presente (formato "[exit=N]" não existe
-        # no output real, mas o returncode pode estar no log; exibe apenas
-        # um painel compacto de conclusão — a saída já foi exibida linha a linha)
-        is_error = output_str.lower().startswith(("erro", "error"))
-        if is_error:
-            # Erros aparecem completos para o usuário saber o que falhou
+    _suspend(status_ctx)
+
+    if _is_terminal_tool(tool_name):
+        unregister_terminal_output_callback()
+        if verbosity == 1:
+            icon = "✗" if is_error else "✓"
+            color = "red" if is_error else "green"
+            console.print(f"[{color}]{icon} terminal done[/{color}]")
+        elif verbosity == 2:
+            icon = "✗ ERROR" if is_error else "✓ done"
+            color = "red" if is_error else "green"
+            console.print(f"[{color}][TERMINAL] {icon}[/{color}]")
+        elif is_error:
             console.print(TerminalPanel.render_output(output_str))
         else:
-            # Sucesso: painel mínimo para não duplicar o que já foi streamado
-            from rich.panel import Panel as _Panel
-
             console.print(
-                _Panel(
+                Panel(
                     "[green]✓ Command completed[/green]",
                     title="[bold green][TERMINAL DONE][/bold green]",
                     style="green",
@@ -278,15 +309,30 @@ def _render_tool_event_end(
                     expand=False,
                 )
             )
+    elif verbosity == 1:
+        icon = "✗" if is_error else "✓"
+        color = "red" if is_error else "dim green"
+        console.print(f"[{color}]{icon} {tool_name}[/{color}]")
+    elif verbosity == 2:
+        status = "ERROR" if is_error else "ok"
+        color = "red" if is_error else "green"
+        console.print(
+            Panel(
+                f"[{color}]{status}[/{color}]",
+                title=f"[bold red][TOOL RESPONSE][/bold red] [dim]{tool_name}[/dim]"
+                if is_error
+                else f"[bold green][TOOL RESPONSE][/bold green] [dim]{tool_name}[/dim]",
+                expand=False,
+                border_style="red" if is_error else "green",
+            )
+        )
+    elif verbosity == 3:
+        truncated = output_str[:200] + ("…" if len(output_str) > 200 else "")
+        console.print(ToolMessagePanel.render(tool_name, truncated, is_error=is_error))
     else:
-        # Resposta de tool genérica em vermelho
         console.print(ToolMessagePanel.render(tool_name, output_str, is_error=is_error))
 
-    try:
-        if status_ctx is not None and hasattr(status_ctx, "start"):
-            status_ctx.start()
-    except Exception:
-        pass
+    _resume(status_ctx)
 
 
 async def _process_user_turn(
@@ -295,6 +341,7 @@ async def _process_user_turn(
     config: RunnableConfig,
     audit: AuditPanel,
     status_panel: VectoraStatusPanel,
+    verbosity: int = 0,
 ) -> str:
     """Process a single user turn and return AI response.
 
@@ -342,12 +389,12 @@ async def _process_user_turn(
             # Tool chamada: AMARELO (ou VERDE se terminal)
             elif event_type == LangGraphEvent.TOOL_START:
                 tool_input = event.get("data", {}).get("input")
-                _render_tool_event_start(event_name, tool_input, status_ctx)
+                _render_tool_event_start(event_name, tool_input, status_ctx, verbosity)
 
             # Tool retornou: VERMELHO (ou VERDE se terminal)
             elif event_type == LangGraphEvent.TOOL_END:
                 tool_output = event.get("data", {}).get("output")
-                _render_tool_event_end(event_name, tool_output, status_ctx)
+                _render_tool_event_end(event_name, tool_output, status_ctx, verbosity)
 
             # Captura AIMessage retornado diretamente pelo nó (sem streaming).
             # Acontece quando call_llm captura internamente um erro de quota/rate-limit
@@ -470,27 +517,25 @@ async def chat_loop(
     context: Context,
     provider: str = "unset",
 ) -> None:
-    """Rich Gorda chat loop with dashboard layout and live rendering."""
-    # Initialize Debug Mode (load from persistent config)
+    """Chat loop with dashboard layout and live rendering."""
     from vectora.ui.commands import _load_debug_config
 
-    debug_mode = _load_debug_config()
+    verbosity: int = _load_debug_config()
     log_queue: Queue | None = None
     log_panel_obj: LogPanel | None = None
 
-    def _setup_debug_mode() -> None:
-        """Set up debug mode components (queue and panel)."""
+    def _setup_full_debug() -> None:
+        """Set up live log panel (verbosity 5 only)."""
         nonlocal log_queue, log_panel_obj
         log_queue = Queue()
         setup_queue_handler(log_queue)
         log_panel_obj = LogPanel(log_queue, max_lines=15)
-        logger.info("🔧 Debug Mode enabled - God-Mode dashboard active")
+        logger.info("🔧 Full debug panel active")
 
-    def _teardown_debug_mode() -> None:
-        """Clean up debug mode components."""
+    def _teardown_full_debug() -> None:
+        """Remove live log panel."""
         nonlocal log_queue, log_panel_obj
         if log_queue is not None:
-            # Drain the queue to prevent lingering handler
             try:
                 while not log_queue.empty():
                     log_queue.get_nowait()
@@ -498,14 +543,13 @@ async def chat_loop(
                 pass
         log_queue = None
         log_panel_obj = None
-        logger.info("Debug Mode disabled")
 
     # Initialize dashboard
     layout = VectoraLayout()
 
-    # Set up debug mode if enabled
-    if debug_mode:
-        _setup_debug_mode()
+    # Set up full debug panel only at verbosity 5
+    if verbosity >= 5:
+        _setup_full_debug()
         assert log_queue is not None  # noqa: S101
         layout.split_with_debug(log_queue)
 
@@ -525,15 +569,15 @@ async def chat_loop(
     message_count = await _load_prior_messages(graph, context, audit)
 
     # Update header and body based on mode
-    if debug_mode:
+    debug_label = f" | [cyan]🔧 v={verbosity}[/cyan]" if verbosity > 0 else ""
+    if verbosity >= 5:
         main_layout = layout.get_main_layout()
         main_layout["header"].update(
             Panel(
                 f"[bold cyan][ROCKET] Vectora v{__version__}[/bold cyan] | "
                 f"[yellow]Provider: {provider}[/yellow] | "
                 f"[magenta]Thread: {context.thread_id}[/magenta] | "
-                f"[green]Messages: {message_count}[/green] | "
-                f"[cyan]🔧 DEBUG MODE[/cyan]",
+                f"[green]Messages: {message_count}[/green]{debug_label}",
                 style="blue",
                 expand=False,
             )
@@ -568,23 +612,21 @@ async def chat_loop(
 
             # Handle system commands (/, /model, /help, etc)
             if user_input.startswith("/"):
-                should_exit, context, debug_mode = await handle_command(
-                    user_input, config, console, context, debug_mode
+                old_verbosity = verbosity
+                should_exit, context, verbosity = await handle_command(
+                    user_input, config, console, context, verbosity
                 )
                 if should_exit:
                     console.print("\n[yellow][WAVE] Goodbye![/yellow]")
                     break
 
-                # Handle debug mode changes
-                old_debug_mode = log_queue is not None
-                if debug_mode and not old_debug_mode:
-                    # Debug mode was enabled
-                    _setup_debug_mode()
+                # Handle verbosity level 5 (full debug panel) transitions
+                if verbosity >= 5 and log_queue is None:
+                    _setup_full_debug()
                     assert log_queue is not None  # noqa: S101
                     layout.split_with_debug(log_queue)
-                elif not debug_mode and old_debug_mode:
-                    # Debug mode was disabled
-                    _teardown_debug_mode()
+                elif verbosity < 5 and log_queue is not None:
+                    _teardown_full_debug()
                     layout = VectoraLayout()
                     layout.update_header(
                         provider=provider, message_count=len(audit.messages)
@@ -623,7 +665,9 @@ async def chat_loop(
                 continue
 
             # Process turn
-            await _process_user_turn(user_input, graph, config, audit, status_panel)
+            await _process_user_turn(
+                user_input, graph, config, audit, status_panel, verbosity
+            )
 
             # Read real queue depth for footer display
             queue_depth = 0
@@ -642,15 +686,15 @@ async def chat_loop(
                 pass
 
             # Update display
-            if debug_mode:
+            debug_label = f" | [cyan]🔧 v={verbosity}[/cyan]" if verbosity > 0 else ""
+            if verbosity >= 5:
                 main_layout = layout.get_main_layout()
                 main_layout["header"].update(
                     Panel(
                         f"[bold cyan][ROCKET] Vectora v{__version__}[/bold cyan] | "
                         f"[yellow]Provider: {provider}[/yellow] | "
                         f"[magenta]Thread: {context.thread_id}[/magenta] | "
-                        f"[green]Messages: {len(audit.messages)}[/green] | "
-                        f"[cyan]🔧 DEBUG MODE[/cyan]",
+                        f"[green]Messages: {len(audit.messages)}[/green]{debug_label}",
                         style="blue",
                         expand=False,
                     )
@@ -670,7 +714,6 @@ async def chat_loop(
                         expand=False,
                     )
                 )
-                # Update debug panel with latest logs
                 if log_panel_obj:
                     layout.update_debug_panel(log_panel_obj.render())
                 console.print(layout.render())
@@ -703,11 +746,81 @@ async def chat_loop(
     await _export_audit(audit)
 
 
-async def run_chat(settings: Any | None = None) -> None:
-    """Run chat with Rich Gorda dashboard.
+async def _resolve_startup_session(
+    settings: Any,
+    *,
+    force_new: bool = False,
+    session_id: str | None = None,
+) -> str:
+    """Resolve which thread_id to use on startup based on the current directory.
+
+    Priority:
+    1. ``session_id`` explicit override (--session CLI flag) — use it if it exists.
+    2. ``force_new`` (--new CLI flag) — always create a fresh session.
+    3. Last session for cwd stored in runtime_settings — resume if still in DB.
+    4. Fallback — create a new session and associate it with cwd.
+    """
+    from pathlib import Path
+
+    from vectora.services.session import SessionService
+
+    cwd = str(Path.cwd())
+
+    try:
+        session_service = SessionService(settings)
+        await session_service.initialize()
+
+        # ── 1. Explicit --session override ────────────────────────────────────
+        if session_id is not None:
+            existing = {s["thread_id"] for s in await session_service.list_all()}
+            if session_id in existing:
+                logger.info(
+                    "Resuming explicit session",
+                    extra={"thread_id": session_id},
+                )
+                return session_id
+            logger.warning(
+                "Session %s not found — creating a new session instead.", session_id
+            )
+
+        # ── 2. --new: skip resume, create fresh ───────────────────────────────
+        if not force_new:
+            last_id = runtime_settings.get_session_for_dir(cwd)
+            if last_id is not None:
+                existing = {s["thread_id"] for s in await session_service.list_all()}
+                if last_id in existing:
+                    logger.info(
+                        "Resuming session for directory",
+                        extra={"thread_id": last_id, "cwd": cwd},
+                    )
+                    return last_id
+
+        # ── 3/4. Create a new session ─────────────────────────────────────────
+        new_id = await session_service.create(working_directory=cwd)
+        runtime_settings.set_session_for_dir(cwd, new_id)
+        logger.info(
+            "New session created for directory",
+            extra={"thread_id": new_id, "cwd": cwd},
+        )
+        return new_id
+
+    except Exception as e:
+        logger.warning("Session resolution failed (%s) — using fallback session.", e)
+        return "000001"
+
+
+async def run_chat(
+    settings: Any | None = None,
+    *,
+    force_new: bool = False,
+    session_id: str | None = None,
+) -> None:
+    """Run the chat dashboard.
 
     Args:
         settings: Settings instance. If None, loads fresh from config.
+        force_new: If True, always create a new session (--new flag).
+        session_id: If given, resume this specific session ID (--session flag).
     """
     from vectora.config.settings import Settings as SettingsClass
 
@@ -732,7 +845,12 @@ async def run_chat(settings: Any | None = None) -> None:
         # Get LLM provider from settings
         provider = settings.get_llm_provider() if settings else "unset"
 
-        context = Context(user_type="default", thread_id=1)
+        thread_id = await _resolve_startup_session(
+            settings,
+            force_new=force_new,
+            session_id=session_id,
+        )
+        context = Context(user_type="default", thread_id=thread_id)
 
         try:
             # For now, still use legacy graph/checkpointer from agent

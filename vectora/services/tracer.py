@@ -5,7 +5,7 @@ KISS: sem deps externas, sem servidor, sem Docker. Mesmo padrão SQLite do proje
 
 Uso em código async (nodes, async tools):
     from vectora.services.tracer import tracer
-    async with tracer.span("supervisor", "route", session_id=42) as s:
+    async with tracer.span("orchestrator", "route", session_id=42) as s:
         result = await do_work()
         s.set(routing="search", in_tokens=120, out_tokens=35)
 

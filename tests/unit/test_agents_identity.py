@@ -27,7 +27,7 @@ def test_identity_mentions_cohere():
 
 
 def test_identity_describes_agents():
-    assert "Supervisor" in VECTORA_IDENTITY
+    assert "Orchestrator" in VECTORA_IDENTITY
     assert "Direct" in VECTORA_IDENTITY
     assert "Search" in VECTORA_IDENTITY
     assert "Coder" in VECTORA_IDENTITY

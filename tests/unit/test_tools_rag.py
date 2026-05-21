@@ -99,17 +99,6 @@ class TestVectorSearch:
         assert data["status"] == "no_results"
 
     @pytest.mark.asyncio
-    async def test_rag_disabled_returns_message(self):
-        from vectora.tools.rag import vector_search
-
-        with patch("vectora.tools.rag.settings") as mock_settings:
-            mock_settings.enable_rag = False
-            result = await vector_search.ainvoke(
-                {"query": "test", "collection": "articles", "limit": 5}
-            )
-        assert "disabled" in result.lower() or "RAG" in result
-
-    @pytest.mark.asyncio
     async def test_missing_dependencies_returns_message(self):
         from vectora.tools.rag import vector_search
 
@@ -206,17 +195,6 @@ class TestEmbedding:
 
 
 class TestIngestDocs:
-    @pytest.mark.asyncio
-    async def test_file_operations_disabled(self):
-        from vectora.tools.rag import ingest_docs
-
-        with patch("vectora.tools.rag.settings") as mock_settings:
-            mock_settings.enable_file_operations = False
-            result = await ingest_docs.ainvoke(
-                {"directory_path": "/tmp", "collection": "articles"}
-            )
-        assert "disabled" in result.lower()
-
     @pytest.mark.asyncio
     async def test_unsafe_path_denied(self):
         from vectora.tools.rag import ingest_docs

@@ -125,10 +125,10 @@ def reset_llm_singletons() -> None:
     """Zera singletons de LLM dos agentes para forçar recriação com novo provider/model."""
     try:
         import vectora.agents.coder as _c
-        import vectora.agents.direct as _d
+        import vectora.agents.orchestrator as _o
         import vectora.agents.search as _s
 
-        _d._direct_llm = None
+        _o._orchestrator_llm = None
         _c._coder_llm = None
         _s._search_llm = None
         logger.debug("LLM singletons resetados")
