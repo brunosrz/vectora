@@ -53,9 +53,15 @@ def _orchestrator_route(state: State) -> str:
 
 
 def build_graph(
-    checkpointer: BaseCheckpointSaver,
+    checkpointer: BaseCheckpointSaver | None = None,
 ) -> CompiledStateGraph[State, Context, State, State]:  # ty: ignore[invalid-type-arguments]
-    """Constrói LangGraph com orchestrator + sub-agents + RAG subgraph."""
+    """Constrói LangGraph com orchestrator + sub-agents + RAG subgraph.
+
+    `checkpointer` é opcional: o chat passa um AsyncSqliteSaver para persistir
+    sessões. O LangGraph Studio (`langgraph dev`) chama `build_graph()` sem
+    argumentos e injeta a própria camada de persistência — por isso o default
+    é None. `compile(checkpointer=None)` é válido e não persiste nada.
+    """
     logger.info("Building LangGraph: orchestrator + subagents topology")
 
     builder = StateGraph(  # type: ignore[type-arg,arg-type]

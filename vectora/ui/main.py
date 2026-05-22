@@ -220,11 +220,12 @@ class ChatMessage:
                 expand=False,
                 border_style="cyan",
             )
-        # Render AI response as markdown for better formatting
+        # Render AI response as markdown for better formatting.
+        # O role carrega o label correto: "Vectora", "Vectora RAG", etc.
         markdown = Markdown(self.content)
         return Panel(
             markdown,
-            title="[bold magenta][Vectora][/bold magenta]",
+            title=f"[bold magenta][{self.role}][/bold magenta]",
             style="magenta",
             expand=False,
             border_style="magenta",
@@ -234,6 +235,70 @@ class ChatMessage:
         """Render as markdown for file export."""
         role_text = "**User**" if self.role.lower() == "user" else "**Vectora**"
         return f"## {role_text}\n\n{self.content}\n\n---\n\n"
+
+
+class QuotaErrorPanel:
+    """Painel estilizado para erros de quota/rate-limit do LLM."""
+
+    _DASHBOARD_URLS: dict[str, str] = {
+        "google-genai": "https://aistudio.google.com/plan_information",
+        "openai": "https://platform.openai.com/usage",
+        "anthropic": "https://console.anthropic.com/settings/usage",
+        "cohere": "https://dashboard.cohere.com/",
+    }
+
+    @staticmethod
+    def render(
+        provider: str = "LLM",
+        retry_after: int | None = None,
+        kind: str = "unknown",
+    ) -> Panel:
+        """Renderiza aviso de quota como panel Vectora amarelo.
+
+        Args:
+            provider: nome do provedor (ex: "google-genai", "openai").
+            retry_after: segundos até o limite resetar, se disponível na API.
+            kind: "rpm" | "rpd" | "unknown"
+        """
+        dashboard = QuotaErrorPanel._DASHBOARD_URLS.get(provider, "")
+        dashboard_line = f"\n\nVerifique seu uso em: {dashboard}" if dashboard else ""
+
+        if kind == "rpd":
+            title_extra = " — Cota Diária"
+            body = (
+                f"**Limite de cota diária atingido ({provider})**\n\n"
+                "Você esgotou a cota diária do provedor. "
+                "O limite reseta às **00:00 PT** (meia-noite, horário do Pacífico).\n\n"
+                "_Considere aguardar o reset ou fazer upgrade do plano._"
+                f"{dashboard_line}"
+            )
+        elif kind == "rpm" and retry_after:
+            title_extra = " — Por Minuto"
+            body = (
+                f"**Limite por minuto atingido ({provider})**\n\n"
+                f"Aguarde **{retry_after}s** e tente novamente. "
+                "Sua cota total **não foi consumida**.\n\n"
+                "_Dica: envie mensagens com um intervalo de alguns segundos._"
+                f"{dashboard_line}"
+            )
+        else:
+            title_extra = ""
+            body = (
+                f"**Rate limit atingido ({provider})**\n\n"
+                "O provedor retornou **429 Too Many Requests**. "
+                "Aguarde alguns segundos e tente novamente.\n\n"
+                "_Se persistir após horas de inatividade, pode ser cota diária esgotada._"
+                f"{dashboard_line}"
+            )
+
+        content = Group(Markdown(body))
+        return Panel(
+            content,
+            title=f"[bold yellow][Vectora] Rate Limit (429){title_extra}[/bold yellow]",
+            style="yellow",
+            expand=False,
+            border_style="yellow",
+        )
 
 
 class ToolCallPanel:

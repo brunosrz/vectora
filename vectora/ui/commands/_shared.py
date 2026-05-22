@@ -19,20 +19,38 @@ logger = logging.getLogger(__name__)
 
 AVAILABLE_MODELS: dict[str, list[str]] = {
     "google-genai": [
+        # Gemini 3.x — geração atual
+        "gemini-3.5-flash",
+        "gemini-3.1-pro-preview",
+        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite",
+        # Gemini 2.5 — ainda ativos e recomendados
         "gemini-2.5-flash",
         "gemini-2.5-pro",
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
     ],
     "openai": [
-        "gpt-4o",
-        "gpt-4o-mini",
+        # GPT-5.5 — geração atual (frontier)
+        "gpt-5.5",
+        "gpt-5.5-pro",
+        # GPT-5.4
+        "gpt-5.4",
+        "gpt-5.4-pro",
+        "gpt-5.4-mini",
+        "gpt-5.4-nano",
+        # GPT-5
+        "gpt-5",
+        "gpt-5-mini",
+        "gpt-5-nano",
+        # Geração anterior ainda suportada
+        "gpt-4.1",
+        # Série de raciocínio
         "o3",
         "o4-mini",
     ],
     "anthropic": [
-        "claude-sonnet-4-5",
-        "claude-opus-4-5",
+        # Claude 4 — geração atual
+        "claude-opus-4-7",
+        "claude-sonnet-4-6",
         "claude-haiku-4-5",
     ],
     "cohere": [

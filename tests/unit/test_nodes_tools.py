@@ -43,3 +43,15 @@ def test_fs_tools_include_file_read():
 def test_memory_tools_include_save_memory():
     names = [t.name for t in MEMORY_TOOLS]
     assert "save_memory" in names
+
+
+def test_manage_retriever_registered():
+    # Bloco A5.3 — a tool de gestão do RAG deve estar disponível aos agentes.
+    names = [t.name for t in ALL_TOOLS]
+    assert "manage_retriever" in names
+
+
+def test_all_tools_count():
+    # 16 tools após o Bloco A5 (15 + manage_retriever). Guarda contra perda
+    # acidental de registro de ferramentas.
+    assert len(ALL_TOOLS) == 16

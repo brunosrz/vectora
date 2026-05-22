@@ -4,8 +4,8 @@ Usage:
     vectora                                 Start chat (resume last session)
     vectora --new                           Start chat with a new session
     vectora --session 042731                Resume a specific session
-    vectora --model gpt-4o                  Switch to gpt-4o (auto-detects openai)
-    vectora --model gemini-2.5-pro          Switch to Gemini (auto-detects google-genai)
+    vectora --model gpt-5.5                 Switch to GPT-5.5 (auto-detects openai)
+    vectora --model gemini-3.5-flash        Switch to Gemini (auto-detects google-genai)
     vectora --model ollama:llama3.2         Ollama model (prefix required)
     vectora --ollama --model llama3.2       Alias for ollama
     vectora --verbosity 3                   Set verbosity level (persists)
@@ -56,13 +56,13 @@ def _build_parser() -> argparse.ArgumentParser:
   vectora                              resume last session for this directory
   vectora --new                        start a fresh session
   vectora --session 042731             resume session 042731
-  vectora --model gpt-4o               switch to GPT-4o (auto-detects openai)
-  vectora --model gemini-2.5-pro       switch to Gemini (auto-detects google-genai)
-  vectora --model claude-opus-4-5      switch to Claude (auto-detects anthropic)
+  vectora --model gpt-5.5              switch to GPT-5.5 (auto-detects openai)
+  vectora --model gemini-3.5-flash     switch to Gemini (auto-detects google-genai)
+  vectora --model claude-opus-4-7      switch to Claude (auto-detects anthropic)
   vectora --model command-a-03-2025    switch to Cohere (auto-detects cohere)
   vectora --model ollama:llama3.2      ollama (prefix required — names are arbitrary)
   vectora --ollama --model llama3.2    alias: --ollama sets provider to ollama
-  vectora --model gpt-4o --new         switch model AND start fresh session
+  vectora --model gpt-5.5 --new        switch model AND start fresh session
   vectora --verbosity 3                set verbosity 0-5 (persists)
   vectora mcp-server                   start MCP server (stdio)
   vectora traces                       show last 50 traces
@@ -70,7 +70,7 @@ def _build_parser() -> argparse.ArgumentParser:
   vectora traces --clear               delete all traces
   vectora sessions                     list all saved sessions
   vectora config                       show current configuration
-  vectora config --set verbosity=2 --set active_model=gpt-4o
+  vectora config --set verbosity=2 --set active_model=gpt-5.5
 """,
     )
 
@@ -88,7 +88,7 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="MODEL",
         help=(
             "LLM model to use. Provider is auto-detected from the model name. "
-            "Examples: gpt-4o, gemini-2.5-pro, claude-opus-4-5, command-a-03-2025. "
+            "Examples: gpt-5.5, gemini-3.5-flash, claude-opus-4-7, command-a-03-2025. "
             "For Ollama use 'ollama:<model>' or --ollama --model <model>. "
             "Persists to ~/.vectora/settings.json."
         ),

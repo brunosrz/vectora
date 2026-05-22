@@ -24,10 +24,9 @@ async def retrieval_node(state: State) -> dict:
     """Executa vector_search + CohereRerank e popula state['rag_docs'].
 
     Extrai a query da última HumanMessage, busca no LanceDB e aplica rerank.
-    Retorna dict vazio se RAG não estiver habilitado ou sem resultados.
+    Retorna dict vazio se não houver query ou se a busca não tiver resultados.
     """
-    from vectora.config.settings import settings
-    from vectora.nodes.rag_subgraph import _call_vector_search, _extract_query
+    from vectora.nodes.rag_subgraph import _call_vector_search_all, _extract_query
 
     query = _extract_query(state)
     if not query:
@@ -46,7 +45,7 @@ async def retrieval_node(state: State) -> dict:
 
     try:
         async with tracer.span("retrieval_node", "search", session_id=session_id) as s:
-            docs = await _call_vector_search(query)
+            docs = await _call_vector_search_all(query)
             if not docs:
                 logger.info("retrieval_node: sem resultados para '%s'", query[:60])
                 s.set(n_results=0)
@@ -55,7 +54,7 @@ async def retrieval_node(state: State) -> dict:
             logger.info("retrieval_node: %d docs após rerank", len(reranked))
             s.set(n_results=len(reranked))
     except Exception:
-        docs = await _call_vector_search(query)
+        docs = await _call_vector_search_all(query)
         if not docs:
             return {}
         reranked = await _rerank(docs, query)
@@ -94,7 +93,7 @@ async def _rerank(docs: list[Document], query: str) -> list[Document]:
             Document(
                 page_content=doc.page_content,
                 metadata=doc.metadata,
-                relevance_score=getattr(doc, "relevance_score", None),
+                relevance_score=doc.metadata.get("relevance_score"),
             )
             for doc in reranked
         ]

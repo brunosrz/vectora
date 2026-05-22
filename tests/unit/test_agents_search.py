@@ -68,13 +68,13 @@ def test_system_prompt_has_no_identity_via_web_guardrail():
     assert "Restrições" in SYSTEM_PROMPT or "NUNCA" in SYSTEM_PROMPT
 
 
-def test_system_prompt_has_embedding_guardrail():
-    """Não deve indexar conteúdo irrelevante (ex: perfis aleatórios de pessoas)."""
+def test_system_prompt_has_curation_guardrail():
+    """O prompt deve orientar sobre a curadoria do RAG e a correção da base."""
     prompt_lower = SYSTEM_PROMPT.lower()
     assert any(
         keyword in prompt_lower
-        for keyword in ["contamina", "lixo", "irrelevante", "random", "aleatório"]
-    ), "O prompt deve ter guardrail contra embedding de conteúdo irrelevante"
+        for keyword in ["curadoria", "gate", "homônimo", "manage_retriever"]
+    ), "O prompt deve mencionar o gate de curadoria / correção do RAG"
 
 
 def test_system_prompt_warns_about_identity_poisoning():

@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.constants import END
 from langgraph.types import Command
 
-from vectora.agents.orchestrator import orchestrator
+from vectora.agents.orchestrator import _is_post_rag, orchestrator
 
 if TYPE_CHECKING:
     from vectora.state import State
@@ -54,7 +55,12 @@ class TestOrchestrator:
         # mensagem contém texto de erro — skip em vez de falhar
         if cmd.goto == END:
             msgs = cmd.update.get("messages", [])
-            if msgs and "erro interno" in str(msgs[0].content).lower():
+            content = str(msgs[0].content).lower() if msgs else ""
+            if (
+                "erro interno" in content
+                or "quota" in content
+                or "rate limit" in content
+            ):
                 pytest.skip("LLM rate-limited — fallback acionado, skip do teste")
 
         assert cmd.goto == "coder", f"esperado 'coder', got '{cmd.goto}'"
@@ -76,7 +82,12 @@ class TestOrchestrator:
 
         if cmd.goto == END:
             msgs = cmd.update.get("messages", [])
-            if msgs and "erro interno" in str(msgs[0].content).lower():
+            content = str(msgs[0].content).lower() if msgs else ""
+            if (
+                "erro interno" in content
+                or "quota" in content
+                or "rate limit" in content
+            ):
                 pytest.skip("LLM rate-limited — fallback acionado, skip do teste")
 
         assert cmd.goto == "rag_subgraph", f"esperado 'rag_subgraph', got '{cmd.goto}'"
@@ -144,3 +155,99 @@ class TestOrchestrator:
             assert cmd.update.get("orchestrator_task") is None
             messages = cmd.update.get("messages", [])
             assert len(messages) == 1
+
+
+# ---------------------------------------------------------------------------
+# A6.2 — regressão do loop orchestrator ↔ rag_subgraph
+# ---------------------------------------------------------------------------
+
+
+class TestIsPostRag:
+    """_is_post_rag — detecção determinística do marcador rag_context."""
+
+    def test_rag_context_as_last_message_detected(self):
+        msgs = [
+            HumanMessage(content="pergunta"),
+            SystemMessage(content="## Contexto Recuperado (RAG)", name="rag_context"),
+        ]
+        assert _is_post_rag(msgs) is True
+
+    def test_other_systemmessage_not_detected(self):
+        msgs = [SystemMessage(content="ctx", name="project_context")]
+        assert _is_post_rag(msgs) is False
+
+    def test_human_last_not_detected(self):
+        assert _is_post_rag([HumanMessage(content="pergunta")]) is False
+
+    def test_empty_messages_not_detected(self):
+        assert _is_post_rag([]) is False
+
+    def test_rag_context_not_last_not_detected(self):
+        """rag_context de turno anterior, já seguido de resposta → não é pós-RAG."""
+        msgs = [
+            SystemMessage(content="ctx antigo", name="rag_context"),
+            AIMessage(content="resposta do turno anterior"),
+            HumanMessage(content="nova pergunta"),
+        ]
+        assert _is_post_rag(msgs) is False
+
+
+class TestOrchestratorPostRAG:
+    """Caminho de síntese pós-RAG — sempre encerra em END, nunca re-roteia."""
+
+    @pytest.mark.asyncio
+    async def test_post_rag_routes_to_end_never_rag(self):
+        """Última msg = rag_context → síntese → END (nunca 'rag_subgraph')."""
+        state: State = {
+            "messages": [
+                HumanMessage(content="me responda com rag: o que é o ability system?"),
+                SystemMessage(
+                    content="## Contexto Recuperado (RAG)\n\nDoc relevante...",
+                    name="rag_context",
+                ),
+            ],
+            "session_metadata": {},
+        }
+        fake_llm = AsyncMock()
+        fake_llm.ainvoke = AsyncMock(
+            return_value=AIMessage(content="Resposta sintetizada do contexto.")
+        )
+        with patch(
+            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
+        ):
+            cmd = await orchestrator(state)
+
+        assert cmd.goto == END
+        assert cmd.goto != "rag_subgraph"
+        assert cmd.update["routing_decision"] == "respond"
+        msgs = cmd.update.get("messages", [])
+        assert len(msgs) == 1
+        assert isinstance(msgs[0], AIMessage)
+        assert msgs[0].content == "Resposta sintetizada do contexto."
+        fake_llm.ainvoke.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_post_rag_synthesis_failure_has_fallback(self):
+        """LLM de síntese falha → ainda encerra em END com fallback não-vazio."""
+        state: State = {
+            "messages": [
+                HumanMessage(content="o que diz a base sobre X?"),
+                SystemMessage(
+                    content="## Contexto Recuperado (RAG)\n\nNenhum documento...",
+                    name="rag_context",
+                ),
+            ],
+            "session_metadata": {},
+        }
+        fake_llm = AsyncMock()
+        fake_llm.ainvoke = AsyncMock(side_effect=Exception("LLM indisponível"))
+        with patch(
+            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
+        ):
+            cmd = await orchestrator(state)
+
+        assert cmd.goto == END
+        msgs = cmd.update.get("messages", [])
+        assert len(msgs) == 1
+        assert isinstance(msgs[0], AIMessage)
+        assert msgs[0].content  # fallback não-vazio

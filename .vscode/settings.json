@@ -74,7 +74,8 @@
     "**/.next": true,
     "**/.turbo": true,
     "**/.cache": true,
-    "**/*.log": true
+    "**/*.log": true,
+    "**/MagicMock": true
   },
   "search.exclude": {
     "**/node_modules": true,

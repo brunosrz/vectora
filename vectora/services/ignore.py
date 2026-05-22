@@ -1,8 +1,16 @@
-"""Utilitários de filtragem baseada em .gitignore via pathspec.
+"""Utilitários de filtragem baseada em .gitignore e .vectoraignore via pathspec.
 
 Módulo compartilhado entre fs.py (grep, list_dir) e rag.py (ingest_docs)
 para garantir que nenhuma tool do Vectora indexe ou varra arquivos que
-estejam no .gitignore do projeto.
+estejam no .gitignore ou .vectoraignore do projeto.
+
+.vectoraignore — controle dedicado para o Vectora:
+  - Mesmo formato gitwildmatch do .gitignore
+  - Colocado na raiz do projeto (ou qualquer ancestral)
+  - Combinado com .gitignore: ambos são respeitados simultaneamente
+  - Útil para excluir arquivos que não estão no .gitignore mas que
+    não devem ser indexados no RAG (ex: fixtures de teste volumosos,
+    dados gerados, arquivos de benchmark, docs temporários)
 
 Usa a lib pathspec com suporte a gitwildmatch — o mesmo formato do git.
 """
@@ -36,6 +44,70 @@ ALWAYS_SKIP_DIRS: frozenset[str] = frozenset(
         ".anthropic",
     }
 )
+
+
+def load_vectoraignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
+    """Carrega o .vectoraignore mais próximo e retorna um PathSpec gitwildmatch.
+
+    Mesmo comportamento de busca do ``load_gitignore_spec``: sobe a árvore de
+    diretórios a partir de ``base_dir`` até encontrar um ``.vectoraignore``.
+
+    O ``.vectoraignore`` usa exatamente o mesmo formato do ``.gitignore`` —
+    padrões gitwildmatch como ``*.log``, ``data/**``, ``!important.txt``.
+
+    Args:
+        base_dir: Diretório de partida para a busca.
+
+    Returns:
+        PathSpec pronto para uso em ``match_file()``, ou None se não houver
+        nenhum ``.vectoraignore`` acessível.
+    """
+    for parent in [base_dir.resolve(), *base_dir.resolve().parents]:
+        vectoraignore = parent / ".vectoraignore"
+        if vectoraignore.is_file():
+            try:
+                patterns = vectoraignore.read_text(encoding="utf-8", errors="ignore")
+                return pathspec.PathSpec.from_lines(
+                    "gitwildmatch", patterns.splitlines()
+                )
+            except Exception:
+                return None
+    return None
+
+
+def load_ignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
+    """Combina .gitignore + .vectoraignore num único PathSpec gitwildmatch.
+
+    Cada arquivo é procurado independentemente subindo a árvore de diretórios.
+    Os padrões dos dois são mesclados: um arquivo é ignorado se bater com
+    qualquer padrão de qualquer um dos dois arquivos.
+
+    Esta é a função a usar nos call-sites principais (``ingest_docs``,
+    ``grep``, ``list_dir``) — substitui chamadas diretas a
+    ``load_gitignore_spec`` quando se quer o comportamento completo.
+
+    Args:
+        base_dir: Diretório de partida para a busca de ambos os arquivos.
+
+    Returns:
+        PathSpec combinado, ou None se nenhum dos dois arquivos existir.
+    """
+    all_lines: list[str] = []
+
+    for filename in (".gitignore", ".vectoraignore"):
+        for parent in [base_dir.resolve(), *base_dir.resolve().parents]:
+            candidate = parent / filename
+            if candidate.is_file():
+                try:
+                    content = candidate.read_text(encoding="utf-8", errors="ignore")
+                    all_lines.extend(content.splitlines())
+                except Exception:
+                    pass
+                break  # encontrou o mais próximo; para de subir para este arquivo
+
+    if not all_lines:
+        return None
+    return pathspec.PathSpec.from_lines("gitwildmatch", all_lines)
 
 
 def load_gitignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
@@ -95,7 +167,9 @@ def is_ignored(path: Path, base_dir: Path, spec: pathspec.PathSpec | None) -> bo
     if path.suffix in ALWAYS_SKIP_SUFFIXES:
         return True
 
-    # Camada 3 — regras do .gitignore via pathspec
+    # Camada 3 — regras do .gitignore / .vectoraignore via pathspec
+    # ``spec`` pode ser um PathSpec isolado (load_gitignore_spec) ou
+    # combinado (load_ignore_spec). A função não precisa saber a origem.
     if spec is not None:
         try:
             rel = path.relative_to(base_dir)

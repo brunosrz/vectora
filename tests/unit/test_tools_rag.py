@@ -48,7 +48,6 @@ class TestVectorSearch:
         from vectora.tools.rag import vector_search
 
         with patch("vectora.tools.rag.settings") as ms:
-            ms.enable_rag = True
             ms.get_cohere_api_key.return_value = "test-key"
             ms.lancedb_dir = "/tmp/lancedb"
             ms.embedding_model = "embed-english-v3.0"
@@ -85,7 +84,6 @@ class TestVectorSearch:
         from vectora.tools.rag import vector_search
 
         with patch("vectora.tools.rag.settings") as ms:
-            ms.enable_rag = True
             ms.get_cohere_api_key.return_value = "test-key"
             ms.lancedb_dir = "/tmp/lancedb"
             ms.embedding_model = "embed-english-v3.0"
@@ -105,7 +103,6 @@ class TestVectorSearch:
         with patch("vectora.tools.rag.settings") as mock_settings:
             with patch("vectora.tools.rag.lancedb", None):
                 with patch("vectora.tools.rag.CohereEmbeddings", None):
-                    mock_settings.enable_rag = True
                     result = await vector_search.ainvoke(
                         {"query": "test", "collection": "articles", "limit": 5}
                     )
@@ -116,7 +113,6 @@ class TestVectorSearch:
         from vectora.tools.rag import vector_search
 
         with patch("vectora.tools.rag.settings") as mock_settings:
-            mock_settings.enable_rag = True
             mock_settings.get_cohere_api_key.return_value = None
             with patch("vectora.tools.rag.lancedb", MagicMock()):
                 with patch("vectora.tools.rag.CohereEmbeddings", MagicMock()):
@@ -129,21 +125,10 @@ class TestVectorSearch:
 
 class TestEmbedding:
     @pytest.mark.asyncio
-    async def test_rag_disabled_returns_error(self):
-        from vectora.tools.rag import embedding
-
-        with patch("vectora.tools.rag.settings") as mock_settings:
-            mock_settings.enable_rag = False
-            result = await embedding.ainvoke({"text": "doc", "collection": "articles"})
-        data = json.loads(result)
-        assert data["status"] == "error"
-
-    @pytest.mark.asyncio
     async def test_queue_not_enabled_returns_error(self):
         from vectora.tools.rag import embedding
 
         with patch("vectora.tools.rag.settings") as mock_settings:
-            mock_settings.enable_rag = True
             mock_settings.embedding_queue_enabled = False
             result = await embedding.ainvoke({"text": "doc", "collection": "articles"})
         data = json.loads(result)
@@ -157,7 +142,6 @@ class TestEmbedding:
         mock_queue.enqueue.return_value = "queue-id-123"
 
         with patch("vectora.tools.rag.settings") as mock_settings:
-            mock_settings.enable_rag = True
             mock_settings.embedding_queue_enabled = True
             mock_settings.embedding_queue_dsn = "sqlite:///test.db"
             with patch(
@@ -178,7 +162,6 @@ class TestEmbedding:
         from vectora.tools.rag import embedding
 
         with patch("vectora.tools.rag.settings") as mock_settings:
-            mock_settings.enable_rag = True
             mock_settings.embedding_queue_enabled = True
             mock_settings.embedding_queue_dsn = "sqlite:///test.db"
             with patch(
@@ -236,7 +219,7 @@ class TestIngestDocs:
                 "vectora.services.security.is_safe_file_path", return_value=True
             ):
                 with patch(
-                    "vectora.services.gitignore.load_gitignore_spec", return_value=None
+                    "vectora.services.ignore.load_ignore_spec", return_value=None
                 ):
                     result = await ingest_docs.ainvoke(
                         {
@@ -260,9 +243,9 @@ class TestIngestDocs:
             with patch(
                 "vectora.services.security.is_safe_file_path", return_value=True
             ):
-                with patch("vectora.services.gitignore.is_ignored", return_value=False):
+                with patch("vectora.services.ignore.is_ignored", return_value=False):
                     with patch(
-                        "vectora.services.gitignore.load_gitignore_spec",
+                        "vectora.services.ignore.load_ignore_spec",
                         return_value=None,
                     ):
                         with patch("vectora.tools.rag.embedding") as mock_emb:
@@ -294,12 +277,10 @@ class TestIngestDocs:
                 "vectora.services.security.is_safe_file_path", return_value=True
             ):
                 with patch(
-                    "vectora.services.gitignore.load_gitignore_spec", return_value=None
+                    "vectora.services.ignore.load_ignore_spec", return_value=None
                 ):
                     # All files are ignored → no_files result
-                    with patch(
-                        "vectora.services.gitignore.is_ignored", return_value=True
-                    ):
+                    with patch("vectora.services.ignore.is_ignored", return_value=True):
                         result = await ingest_docs.ainvoke(
                             {
                                 "directory_path": str(tmp_path),
@@ -326,9 +307,9 @@ class TestIngestDocs:
             with patch(
                 "vectora.services.security.is_safe_file_path", return_value=True
             ):
-                with patch("vectora.services.gitignore.is_ignored", return_value=False):
+                with patch("vectora.services.ignore.is_ignored", return_value=False):
                     with patch(
-                        "vectora.services.gitignore.load_gitignore_spec",
+                        "vectora.services.ignore.load_ignore_spec",
                         return_value=None,
                     ):
                         with patch(
@@ -362,9 +343,9 @@ class TestIngestDocs:
             with patch(
                 "vectora.services.security.is_safe_file_path", return_value=True
             ):
-                with patch("vectora.services.gitignore.is_ignored", return_value=False):
+                with patch("vectora.services.ignore.is_ignored", return_value=False):
                     with patch(
-                        "vectora.services.gitignore.load_gitignore_spec",
+                        "vectora.services.ignore.load_ignore_spec",
                         return_value=None,
                     ):
                         with patch("vectora.tools.rag.embedding") as mock_emb:
@@ -392,14 +373,13 @@ class TestIngestDocs:
 
         with patch("vectora.tools.rag.settings") as mock_settings:
             mock_settings.enable_file_operations = True
-            mock_settings.enable_rag = True
             mock_settings.embedding_queue_enabled = True
             with patch(
                 "vectora.services.security.is_safe_file_path", return_value=True
             ):
-                with patch("vectora.services.gitignore.is_ignored", return_value=False):
+                with patch("vectora.services.ignore.is_ignored", return_value=False):
                     with patch(
-                        "vectora.services.gitignore.load_gitignore_spec",
+                        "vectora.services.ignore.load_ignore_spec",
                         return_value=None,
                     ):
                         with patch("vectora.tools.rag.embedding") as mock_emb:
@@ -418,3 +398,153 @@ class TestIngestDocs:
         data = json.loads(result)
         assert data["status"] == "completed"
         assert mock_emb.ainvoke.called
+
+
+class TestManageRetriever:
+    """Bloco A5.3 — tool de gestão do RAG (list / delete / purge)."""
+
+    @pytest.mark.asyncio
+    async def test_delete_without_source_errors_early(self):
+        from vectora.tools.rag import manage_retriever
+
+        result = await manage_retriever.ainvoke(
+            {"action": "delete", "collection": "web_cache"}
+        )
+        data = json.loads(result)
+        assert data["status"] == "error"
+        assert "source" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_purge_drops_table(self):
+        from vectora.tools.rag import manage_retriever
+
+        mock_db = MagicMock()
+        mock_db.drop_table = AsyncMock()
+        with patch("vectora.tools.rag.lancedb") as mock_lancedb:
+            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+            result = await manage_retriever.ainvoke(
+                {"action": "purge", "collection": "web_cache"}
+            )
+        data = json.loads(result)
+        assert data["status"] == "purged"
+        mock_db.drop_table.assert_awaited_once_with("web_cache")
+
+    @pytest.mark.asyncio
+    async def test_list_missing_collection(self):
+        from vectora.tools.rag import manage_retriever
+
+        mock_db = MagicMock()
+        mock_db.open_table = AsyncMock(side_effect=Exception("table not found"))
+        with patch("vectora.tools.rag.lancedb") as mock_lancedb:
+            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+            result = await manage_retriever.ainvoke(
+                {"action": "list", "collection": "ghost"}
+            )
+        data = json.loads(result)
+        assert data["status"] == "no_results"
+
+    @staticmethod
+    def _mock_db_with_df(df) -> tuple[MagicMock, MagicMock]:
+        """Monta um mock LanceDB cujo open_table().to_pandas() devolve `df`."""
+        mock_table = MagicMock()
+        mock_table.to_pandas = AsyncMock(return_value=df)
+        mock_table.delete = AsyncMock()
+        mock_db = MagicMock()
+        mock_db.open_table = AsyncMock(return_value=mock_table)
+        return mock_db, mock_table
+
+    @pytest.mark.asyncio
+    async def test_list_returns_documents_via_pandas(self):
+        """A6.1 — list parseia o DataFrame (metadata JSON) sem iterrows."""
+        import pandas as pd
+
+        from vectora.tools.rag import manage_retriever
+
+        df = pd.DataFrame(
+            {
+                "id": ["a1", "b2"],
+                "metadata": [
+                    json.dumps(
+                        {
+                            "source": "https://github.com/brunosrz/AbilitySystem",
+                            "title": "Ability System",
+                            "origin": "web_search",
+                        }
+                    ),
+                    json.dumps({"source": "docs/manual.md", "title": "Manual"}),
+                ],
+            }
+        )
+        mock_db, _ = self._mock_db_with_df(df)
+        with patch("vectora.tools.rag.lancedb") as mock_lancedb:
+            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+            result = await manage_retriever.ainvoke(
+                {"action": "list", "collection": "web_cache"}
+            )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert data["count"] == 2
+        assert {d["source"] for d in data["documents"]} == {
+            "https://github.com/brunosrz/AbilitySystem",
+            "docs/manual.md",
+        }
+
+    @pytest.mark.asyncio
+    async def test_delete_matches_by_source_via_pandas(self):
+        """A6.1 — delete usa máscara booleana vetorizada sobre o DataFrame."""
+        import pandas as pd
+
+        from vectora.tools.rag import manage_retriever
+
+        df = pd.DataFrame(
+            {
+                "id": ["a1", "b2", "c3"],
+                "metadata": [
+                    json.dumps({"source": "godot-gameplay-systems/foo"}),
+                    json.dumps({"source": "github.com/brunosrz/AbilitySystem"}),
+                    json.dumps({"title": "godot-gameplay-systems wiki"}),
+                ],
+            }
+        )
+        mock_db, mock_table = self._mock_db_with_df(df)
+        with patch("vectora.tools.rag.lancedb") as mock_lancedb:
+            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+            result = await manage_retriever.ainvoke(
+                {
+                    "action": "delete",
+                    "collection": "web_cache",
+                    "source": "godot-gameplay-systems",
+                }
+            )
+        data = json.loads(result)
+        assert data["status"] == "deleted"
+        assert data["deleted"] == 2
+        assert set(data["ids"]) == {"a1", "c3"}
+        mock_table.delete.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_no_match_via_pandas(self):
+        """A6.1 — delete sem match retorna no_match, sem chamar table.delete."""
+        import pandas as pd
+
+        from vectora.tools.rag import manage_retriever
+
+        df = pd.DataFrame(
+            {
+                "id": ["a1"],
+                "metadata": [json.dumps({"source": "docs/manual.md"})],
+            }
+        )
+        mock_db, mock_table = self._mock_db_with_df(df)
+        with patch("vectora.tools.rag.lancedb") as mock_lancedb:
+            mock_lancedb.connect_async = AsyncMock(return_value=mock_db)
+            result = await manage_retriever.ainvoke(
+                {
+                    "action": "delete",
+                    "collection": "web_cache",
+                    "source": "inexistente",
+                }
+            )
+        data = json.loads(result)
+        assert data["status"] == "no_match"
+        mock_table.delete.assert_not_awaited()

@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     # APPLICATION IDENTITY & VERSIONING
     # ============================================================================
 
-    version: str = "0.1.0rc1"
+    version: str = "0.1.0rc4"
     """Vectora version (synced with pyproject.toml)."""
 
     app_name: str = "Vectora"
@@ -211,6 +211,24 @@ class Settings(BaseSettings):
 
     reranker_top_k: int = 5
     """Number of results to rerank."""
+
+    # ── RAG Collections & Curadoria Web (Bloco A5) ───────────────────────────
+    rag_collection_default: str = "articles"
+    """Coleção LanceDB para docs curados pelo usuário (ingest_docs, embedding manual).
+    Conteúdo confiável — escolhido explicitamente pelo usuário."""
+
+    rag_collection_web: str = "web_cache"
+    """Coleção LanceDB dedicada a conteúdo vindo da web (cascading automático).
+    Separada do bucket curado para audit, observabilidade e purge cirúrgico —
+    web é a única superfície de contaminação do RAG."""
+
+    web_curation_enabled: bool = True
+    """Liga o gate de curadoria (reranker + LLM judge) antes de persistir
+    resultados web. Se False, volta ao comportamento legado (indexa tudo)."""
+
+    web_persist_min_score: float = 0.5
+    """Score mínimo do reranker para um resultado web sobreviver ao gate de
+    curadoria. Abaixo disso é descartado antes mesmo do LLM judge."""
 
     # ============================================================================
     # MCP (MODEL CONTEXT PROTOCOL)

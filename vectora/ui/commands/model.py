@@ -35,7 +35,7 @@ async def prompt_for_api_key(provider: str, key_env: str, console: Any) -> str |
     url = PROVIDER_KEY_URL.get(provider, "")
 
     body = (
-        f"[yellow]⚠️  Chave API do {display} não configurada.[/yellow]\n\n"
+        f"[yellow] Chave API do {display} não configurada.[/yellow]\n\n"
         f"Variável necessária: [bold]{key_env}[/bold]\n"
     )
     if url:

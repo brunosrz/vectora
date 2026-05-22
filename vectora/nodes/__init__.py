@@ -2,11 +2,7 @@
 
 from vectora.nodes.base import build_messages, invoke_llm, sanitize_for_gemini
 from vectora.nodes.debug import DiagnosticToolNode
-from vectora.nodes.engine import (
-    _extract_tavily_results,
-    _process_tavily_results,
-    process_retrieval,
-)
+from vectora.nodes.engine import _extract_tavily_results, process_retrieval
 from vectora.nodes.retrieval import retrieval_node
 from vectora.nodes.tools import (
     ALL_TOOLS,
@@ -19,6 +15,7 @@ from vectora.nodes.tools import (
     memory_tool_node,
     search_tool_node,
 )
+from vectora.nodes.web_curation import curate_and_enqueue, curate_web_results
 
 __all__ = [
     "ALL_TOOLS",
@@ -28,10 +25,11 @@ __all__ = [
     "SEARCH_TOOLS",
     "DiagnosticToolNode",
     "_extract_tavily_results",
-    "_process_tavily_results",
     "all_tool_node",
     "build_messages",
     "coder_tool_node",
+    "curate_and_enqueue",
+    "curate_web_results",
     "invoke_llm",
     "memory_tool_node",
     "process_retrieval",

@@ -10,8 +10,8 @@ from pathlib import Path
 
 from langchain.tools import tool
 
-from vectora.services.gitignore import is_ignored as _is_ignored
-from vectora.services.gitignore import load_gitignore_spec as _load_gitignore_spec
+from vectora.services.ignore import is_ignored as _is_ignored
+from vectora.services.ignore import load_ignore_spec as _load_ignore_spec
 from vectora.services.security import (
     is_safe_file_path,
     is_safe_regex_pattern,
@@ -152,7 +152,7 @@ def grep(pattern: str, path: str = ".") -> str:
         results = []
         search_path = Path(path)
         base_dir = search_path if search_path.is_dir() else search_path.parent
-        spec = _load_gitignore_spec(base_dir)
+        spec = _load_ignore_spec(base_dir)
 
         files = [search_path] if search_path.is_file() else list(search_path.rglob("*"))
 
@@ -198,7 +198,7 @@ def list_dir(path: str = ".", *, recursive: bool = False) -> str:
         if not dir_path.is_dir():
             return f"Error: '{path}' is not a directory"
 
-        spec = _load_gitignore_spec(dir_path)
+        spec = _load_ignore_spec(dir_path)
         items = []
         if recursive:
             for item in sorted(dir_path.rglob("*")):

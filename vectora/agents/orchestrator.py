@@ -45,6 +45,82 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
+def _is_llm_quota_error(err: str) -> bool:
+    """Retorna True se o erro indica quota/rate-limit do LLM (Gemini, OpenAI…)."""
+    err_lower = err.lower()
+    return (
+        "429" in err
+        or "resource_exhausted" in err_lower
+        or "too many requests" in err_lower
+        or "rate limit" in err_lower
+        or "quota" in err_lower
+        or "rateLimitExceeded" in err
+        or "quota_exceeded" in err_lower
+    )
+
+
+def _classify_quota_error(exc: Exception) -> str:
+    """Classifica o tipo de limite atingido: 'rpm', 'rpd' ou 'unknown'.
+
+    O Gemini inclui `retryDelay` apenas para limites por minuto (RPM).
+    Limites diários (RPD/quota total) não têm retry_delay — a API retorna
+    RESOURCE_EXHAUSTED sem informar quando vai resetar.
+    """
+    err_str = str(exc).lower()
+    # Sinais de cota diária / total esgotada
+    if any(
+        s in err_str
+        for s in (
+            "daily",
+            "per day",
+            "quota exceeded",
+            "quota_exceeded",
+            "free tier",
+            "billing",
+        )
+    ):
+        return "rpd"
+    # Se tem retry_delay → é RPM (limite por minuto)
+    if _extract_retry_delay(exc) is not None:
+        return "rpm"
+    # Genérico: sem retry_delay → provavelmente RPD ou desconhecido
+    return "unknown"
+
+
+def _extract_retry_delay(exc: Exception) -> int | None:
+    """Tenta extrair o tempo de retry (segundos) do erro 429 do Gemini/Google API.
+
+    A Google API Core inclui `retryDelay` nos detalhes do erro 429 quando o
+    limite é por minuto (RPM). Retorna None se não encontrar o campo.
+    """
+    try:
+        # google.api_core.exceptions.ResourceExhausted tem .details()
+        details = getattr(exc, "details", None)
+        if callable(details):
+            details = details()
+        if isinstance(details, list):
+            for d in details:
+                # d pode ser um proto RetryInfo com retry_delay
+                rd = getattr(d, "retry_delay", None)
+                if rd is not None:
+                    return max(1, int(getattr(rd, "seconds", 0)))
+        # Fallback: parsear string do erro (ex: "retry_delay { seconds: 30 }")
+        import re
+
+        err_str = str(exc)
+        m = re.search(r"retry_delay\s*\{\s*seconds:\s*(\d+)", err_str)
+        if m:
+            return int(m.group(1))
+        # Header Retry-After em formato numérico
+        m = re.search(r"retry.after['\"]?\s*[:=]\s*['\"]?(\d+)", err_str, re.IGNORECASE)
+        if m:
+            return int(m.group(1))
+    except Exception:
+        pass
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Schema de saída estruturada
 # ---------------------------------------------------------------------------
@@ -98,13 +174,15 @@ Responda diretamente para:
 - Perguntas de conhecimento geral que não precisam de dados externos
 - **Síntese RAG**: quando há um bloco `## Contexto Recuperado (RAG)` no histórico,
   sintetize-o e responda diretamente — o pipeline RAG já fez a recuperação
-- Qualquer coisa que NÃO precise de filesystem, terminal, busca web ou base de conhecimento
+- Qualquer coisa que NÃO precise de filesystem, terminal, busca web ou base de
+  conhecimento
 
 ### Artifacts — criar documentos estruturados
 Quando o usuário pedir um plano, spec, lista de tarefas, overview, guia, diagrama de
 arquitetura ou implementação de referência que deve ser **salvo como documento**:
 - Use a tool `create_artifact` — não responda apenas com texto
-- Tipos válidos: `plan`, `spec`, `task_list`, `overview`, `guide`, `architecture`, `implementation`
+- Tipos válidos: `plan`, `spec`, `task_list`, `overview`, `guide`, `architecture`,
+  `implementation`
 - Sempre passe o `session_id` disponível no bloco de contexto do sistema
 - Após salvar, confirme ao usuário com o caminho do arquivo
 
@@ -157,18 +235,36 @@ delegando a um colega que não leu a conversa:
 3. Consultas sobre documentos ou base de conhecimento → **rag**.
    Se o usuário pergunta "o que diz o documento", "de acordo com o manual" ou similar,
    delegue ao rag — mesmo que você "saiba" a resposta.
-4. Pedidos de planos, specs, task lists, guias → use `create_artifact` (action="respond").
+4. Pedidos de planos, specs, task lists, guias → use `create_artifact`
+   (action="respond").
 5. Se já há tool chain na sessão (ex: search concluiu), considere isso ao decidir.
-6. Fallback: se dúvida entre responder e delegar → **responda diretamente**.
+6. Correção do RAG: se o usuário fornecer uma fonte autoritativa (repositório
+   canônico, doc oficial) que contradiz algo buscado antes na web, delegue ao
+   **search** com a instrução de reavaliar e remover do RAG o conteúdo errado.
+7. Fallback: se dúvida entre responder e delegar → **responda diretamente**.
 
 Responda apenas com o JSON estruturado. Nenhum texto adicional.
 """
 
+# Prompt da síntese pós-RAG — usado quando o subgrafo RAG já recuperou o
+# contexto e o orchestrator precisa apenas redigir a resposta final.
+_RAG_SYNTHESIS_PROMPT = """Você é o Vectora. O pipeline de RAG já recuperou o \
+contexto abaixo da base de conhecimento indexada. Sua tarefa é responder à \
+pergunta do usuário usando ESSE contexto como fonte primária.
+
+Regras:
+- Baseie a resposta no contexto recuperado; cite as fontes quando relevante.
+- Se o contexto não contém a informação necessária, diga isso honestamente —
+  não invente. Sugira indexar a documentação correta ou refinar a pergunta.
+- Responda em português, de forma clara e completa, em markdown.
+"""
+
 # ---------------------------------------------------------------------------
-# LLM singleton
+# LLM singletons
 # ---------------------------------------------------------------------------
 
 _orchestrator_llm = None
+_synthesis_llm = None
 
 
 def _get_orchestrator_llm() -> object:
@@ -184,6 +280,23 @@ def _get_orchestrator_llm() -> object:
         )
         logger.debug("orchestrator LLM inicializado com structured output + tools")
     return _orchestrator_llm
+
+
+def _get_synthesis_llm() -> object:
+    """LLM plano (sem structured output, sem tools) para síntese pós-RAG.
+
+    Separado do `_get_orchestrator_llm` de propósito: a síntese precisa
+    gerar texto livre, não uma `OrchestratorDecision`. Usar o LLM estruturado
+    aqui reabriria a porta para re-rotear ao RAG — exatamente o loop que o
+    Bloco A6 elimina.
+    """
+    global _synthesis_llm
+    if _synthesis_llm is None:
+        from vectora.services.utils import load_llm
+
+        _synthesis_llm = load_llm()
+        logger.debug("orchestrator: LLM de síntese pós-RAG inicializado")
+    return _synthesis_llm
 
 
 # ---------------------------------------------------------------------------
@@ -253,7 +366,8 @@ def _select_context_messages(all_messages: list) -> list:
 def _load_project_context() -> str | None:
     """Escaneia cwd recursivamente por AGENTS.md, CLAUDE.md, GEMINI.md.
 
-    Retorna conteúdo concatenado com cabeçalho por arquivo, ou None se não encontrar nada.
+    Retorna conteúdo concatenado com cabeçalho por arquivo, ou None se não
+    encontrar nada.
     Limita cada arquivo a 4000 chars para não inflar o contexto.
     """
     targets = ["AGENTS.md", "CLAUDE.md", "GEMINI.md"]
@@ -282,6 +396,92 @@ _AGENT_MAP = {
     "search": "search",
     "rag": "rag_subgraph",
 }
+
+
+def _is_post_rag(all_messages: list) -> bool:
+    """True se a última mensagem é o marcador `rag_context` do subgrafo RAG.
+
+    É o sinal determinístico de que o turno atual já passou pelo pipeline
+    RAG. `rag_inject` sempre emite esse `SystemMessage` (mesmo sem docs),
+    então a detecção é confiável.
+    """
+    if not all_messages:
+        return False
+    last = all_messages[-1]
+    return (
+        isinstance(last, SystemMessage) and getattr(last, "name", "") == "rag_context"
+    )
+
+
+async def _synthesize_after_rag(
+    all_messages: list,
+    session_id: str | None,
+    state_update_extra: dict,
+) -> Command:
+    """Síntese pós-RAG: o subgrafo RAG já recuperou o contexto; aqui o
+    orchestrator apenas redige a resposta final e encerra o turno.
+
+    Este caminho vai SEMPRE para `END` com um LLM plano — nunca toma decisão
+    de roteamento. Isso elimina estruturalmente o loop orchestrator ↔
+    rag_subgraph: é impossível re-rotear para o RAG a partir daqui.
+    """
+    from vectora.services.tracer import tracer
+
+    # A última mensagem é o bloco rag_context (garantido por _is_post_rag).
+    rag_context_msg = all_messages[-1]
+
+    user_question = ""
+    for msg in reversed(all_messages):
+        if isinstance(msg, HumanMessage):
+            user_question = str(msg.content)
+            break
+
+    payload: list = [
+        SystemMessage(content=_RAG_SYNTHESIS_PROMPT),
+        rag_context_msg,
+        HumanMessage(content=user_question or "Responda com base no contexto acima."),
+    ]
+
+    answer = ""
+    try:
+        llm = _get_synthesis_llm()
+        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]
+        answer = str(getattr(result, "content", "") or "").strip()
+    except Exception as e:
+        err_str = str(e)
+        if _is_llm_quota_error(err_str):
+            logger.warning("orchestrator: quota/rate-limit do LLM na síntese pós-RAG")
+            retry_s = _extract_retry_delay(e)
+            kind = _classify_quota_error(e)
+            suffix = f":{retry_s}:{kind}" if retry_s else f":0:{kind}"
+            answer = f"quota rate limit{suffix}"
+        else:
+            logger.warning("orchestrator: síntese pós-RAG falhou: %s", e)
+
+    if not answer:
+        answer = (
+            "Não consegui sintetizar uma resposta a partir do contexto "
+            "recuperado. Tente reformular a pergunta ou indexar a "
+            "documentação relevante."
+        )
+
+    logger.info("Orchestrator: síntese pós-RAG → END (%d chars)", len(answer))
+
+    with contextlib.suppress(Exception):
+        async with tracer.span(
+            "orchestrator", "rag_synthesis", session_id=session_id
+        ) as s:
+            s.set(answer_len=len(answer), question_len=len(user_question))
+
+    return Command(
+        goto=END,
+        update={
+            **state_update_extra,
+            "routing_decision": "respond",
+            "messages": [AIMessage(content=answer)],
+        },  # type: ignore[arg-type]
+    )
+
 
 # ---------------------------------------------------------------------------
 # Nó do grafo
@@ -318,6 +518,14 @@ async def orchestrator(state: State) -> Command:
         state_update_extra["project_context"] = project_context
         if project_context:
             logger.info("project_context carregado (%d chars)", len(project_context))
+
+    # --- Modo pós-RAG ---
+    # Se a última mensagem é o marcador `rag_context`, o subgrafo RAG já rodou
+    # neste turno. O orchestrator NÃO decide rota agora — apenas sintetiza a
+    # resposta final e encerra. Sem isto, ele re-decidiria "rag" (o usuário
+    # ainda pediu RAG) e voltaria ao subgrafo: loop infinito → recursão.
+    if _is_post_rag(all_messages):
+        return await _synthesize_after_rag(all_messages, session_id, state_update_extra)
 
     context_messages = _select_context_messages(all_messages)
     context_block = _build_context_block(state, session_id)
@@ -358,8 +566,15 @@ async def orchestrator(state: State) -> Command:
         task_query = result.task_query
         reason = result.reason
     except Exception as e:
-        logger.warning("orchestrator LLM falhou, respondendo diretamente: %s", e)
-        response = "Desculpe, ocorreu um erro interno. Tente novamente."
+        err_str = str(e)
+        if _is_llm_quota_error(err_str):
+            logger.warning("orchestrator: quota/rate-limit do LLM atingida")
+            retry_s = _extract_retry_delay(e)
+            suffix = f":{retry_s}" if retry_s else ""
+            response = f"quota rate limit{suffix}"
+        else:
+            logger.warning("orchestrator LLM falhou, respondendo diretamente: %s", e)
+            response = "Desculpe, ocorreu um erro interno. Tente novamente."
 
     # Determinar destino e update do state
     if action == "respond":

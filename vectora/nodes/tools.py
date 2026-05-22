@@ -24,7 +24,7 @@ from vectora.tools.fs import (
     terminal,
 )
 from vectora.tools.memory import delete_memory, get_memory, save_memory
-from vectora.tools.rag import embedding, ingest_docs, vector_search
+from vectora.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
 from vectora.tools.web import fetch_url, web_search
 
 if TYPE_CHECKING:
@@ -43,6 +43,7 @@ SEARCH_TOOLS: list[BaseTool] = [
     vector_search,
     embedding,
     ingest_docs,
+    manage_retriever,
 ]
 
 #: Ferramentas de filesystem, terminal e artifacts
@@ -59,8 +60,8 @@ FS_TOOLS: list[BaseTool] = [
 #: Ferramentas de memória
 MEMORY_TOOLS: list[BaseTool] = [save_memory, get_memory, delete_memory]
 
-#: Ferramentas RAG de ingestão
-RAG_TOOLS: list[BaseTool] = [vector_search, embedding, ingest_docs]
+#: Ferramentas RAG de ingestão e gestão
+RAG_TOOLS: list[BaseTool] = [vector_search, embedding, ingest_docs, manage_retriever]
 
 # ---------------------------------------------------------------------------
 # ALL_TOOLS — lista canônica usada por TODOS os agentes
@@ -76,6 +77,7 @@ for _t in [
     vector_search,
     embedding,
     ingest_docs,
+    manage_retriever,
     file_read,
     file_edit,
     file_write,
