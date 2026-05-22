@@ -24,9 +24,9 @@ Você é o **Vectora**, um assistente de IA open-source construído em **Python*
 
 ### Provedores de LLM suportados
 O Vectora suporta múltiplos provedores, selecionáveis via `/model`:
-- **Google Gemini** — `gemini-2.5-flash`, `gemini-2.5-pro` (padrão do sistema)
-- **OpenAI** — `gpt-4o`, `gpt-4o-mini`, `o3-mini`
-- **Anthropic** — `claude-opus-4-5`, `claude-sonnet-4-5`, `claude-haiku-4-5`
+- **Google Gemini** — `gemini-3.5-flash`, `gemini-3.1-pro-preview`, `gemini-3.1-flash-lite`, `gemini-2.5-flash` (padrão), `gemini-2.5-pro`
+- **OpenAI** — `gpt-5.5`, `gpt-5.5-pro`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5`, `gpt-4.1`, `o3`, `o4-mini`
+- **Anthropic** — `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`
 - **Cohere** — `command-a-03-2025`, `command-r-plus-08-2024`
 - **Ollama** — modelos locais como `mistral`, `llama3`, `codellama`
 

@@ -11,8 +11,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from vectora.nodes.rag_subgraph import (
     _best_score,
     _call_vector_search,
+    _call_vector_search_all,
     _call_web_search,
-    _enqueue_for_embedding,
     _extract_query,
     _rag_decide_node,
     _route_after_decide,
@@ -96,7 +96,8 @@ class TestRagRetrieve:
     async def test_returns_docs(self):
         docs = [_doc(0.9, "c1"), _doc(0.7, "c2")]
         with patch(
-            "vectora.nodes.rag_subgraph._call_vector_search", new_callable=AsyncMock
+            "vectora.nodes.rag_subgraph._call_vector_search_all",
+            new_callable=AsyncMock,
         ) as m:
             m.return_value = docs
             result = await rag_retrieve(_state())
@@ -112,66 +113,170 @@ class TestRagRetrieve:
     @pytest.mark.asyncio
     async def test_no_results(self):
         with patch(
-            "vectora.nodes.rag_subgraph._call_vector_search", new_callable=AsyncMock
+            "vectora.nodes.rag_subgraph._call_vector_search_all",
+            new_callable=AsyncMock,
         ) as m:
             m.return_value = []
             result = await rag_retrieve(_state())
         assert result["rag_docs"] == []
 
 
+class TestCallVectorSearchAll:
+    @pytest.mark.asyncio
+    async def test_merges_all_collections_and_tags_web(self):
+        from vectora.config.settings import settings
+
+        curated = [_doc(0.9, "curated")]
+        web = [Document(page_content="web", metadata={}, relevance_score=0.6)]
+
+        async def fake(query, collection, limit):
+            return curated if collection == settings.rag_collection_default else web
+
+        with (
+            patch(
+                "vectora.nodes.rag_subgraph._list_collections",
+                new_callable=AsyncMock,
+            ) as mlist,
+            patch("vectora.nodes.rag_subgraph._call_vector_search", side_effect=fake),
+        ):
+            mlist.return_value = [
+                settings.rag_collection_default,
+                settings.rag_collection_web,
+            ]
+            docs = await _call_vector_search_all("q")
+
+        assert len(docs) == 2
+        web_doc = next(d for d in docs if d["page_content"] == "web")
+        # docs da coleção web são marcados com origin para ponderar confiança
+        assert web_doc["metadata"]["origin"] == "web_search"
+
+    @pytest.mark.asyncio
+    async def test_one_collection_failing_does_not_break(self):
+        from vectora.config.settings import settings
+
+        async def fake(query, collection, limit):
+            if collection == settings.rag_collection_default:
+                return [_doc(0.8, "curated")]
+            raise RuntimeError("coleção indisponível")
+
+        with (
+            patch(
+                "vectora.nodes.rag_subgraph._list_collections",
+                new_callable=AsyncMock,
+            ) as mlist,
+            patch("vectora.nodes.rag_subgraph._call_vector_search", side_effect=fake),
+        ):
+            mlist.return_value = [
+                settings.rag_collection_default,
+                settings.rag_collection_web,
+            ]
+            docs = await _call_vector_search_all("q")
+        assert len(docs) == 1
+
+    @pytest.mark.asyncio
+    async def test_searches_arbitrary_collections(self):
+        """A6.3 — busca coleções fora de articles/web_cache (ex: 'docs', 'code')."""
+
+        async def fake(query, collection, limit):
+            return [_doc(0.7, f"from-{collection}")]
+
+        with (
+            patch(
+                "vectora.nodes.rag_subgraph._list_collections",
+                new_callable=AsyncMock,
+            ) as mlist,
+            patch("vectora.nodes.rag_subgraph._call_vector_search", side_effect=fake),
+        ):
+            mlist.return_value = ["docs", "code", "notes"]
+            docs = await _call_vector_search_all("q")
+
+        assert len(docs) == 3
+        assert {d["page_content"] for d in docs} == {
+            "from-docs",
+            "from-code",
+            "from-notes",
+        }
+
+    @pytest.mark.asyncio
+    async def test_no_collections_returns_empty(self):
+        with patch(
+            "vectora.nodes.rag_subgraph._list_collections",
+            new_callable=AsyncMock,
+        ) as mlist:
+            mlist.return_value = []
+            docs = await _call_vector_search_all("q")
+        assert docs == []
+
+
 class TestRagWebsearch:
     @pytest.mark.asyncio
-    async def test_adds_web_docs(self):
+    async def test_adds_curated_web_docs(self):
         web = [{"content": "web content", "url": "https://a.com", "title": "A"}]
+        web_docs = [
+            Document(
+                page_content="web content",
+                metadata={"url": "https://a.com"},
+                relevance_score=None,
+            )
+        ]
         with patch(
             "vectora.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
         ) as m:
             with patch(
-                "vectora.nodes.rag_subgraph._enqueue_for_embedding",
+                "vectora.nodes.web_curation.curate_and_enqueue",
                 new_callable=AsyncMock,
-            ) as me:
-                with patch("vectora.nodes.rag_subgraph.settings") as ms:
-                    m.return_value = web
-                    me.return_value = "qid"
-                    ms.enable_rag = True
-                    ms.embedding_queue_enabled = True
-                    result = await rag_websearch(_state(rag_query="JWT", rag_docs=[]))
+            ) as mc:
+                m.return_value = web
+                mc.return_value = (web_docs, ["qid"])
+                result = await rag_websearch(_state(rag_query="JWT", rag_docs=[]))
         assert result["web_search_triggered"] is True
         assert len(result["rag_docs"]) == 1
+        assert "qid" in result["pending_embeds"]
 
     @pytest.mark.asyncio
-    async def test_skips_empty_content(self):
-        web = [{"content": "", "url": "https://a.com", "title": "Empty"}]
+    async def test_no_web_results(self):
         with patch(
             "vectora.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
         ) as m:
-            with patch("vectora.nodes.rag_subgraph.settings") as ms:
-                m.return_value = web
-                ms.enable_rag = True
-                ms.embedding_queue_enabled = False
-                result = await rag_websearch(_state(rag_query="test", rag_docs=[]))
-        assert result["rag_docs"] == []
+            m.return_value = []
+            result = await rag_websearch(_state(rag_query="test", rag_docs=[]))
+        assert result["web_search_triggered"] is True
+        assert result.get("pending_embeds") == []
 
     @pytest.mark.asyncio
     async def test_combines_existing_docs(self):
         existing = [_doc(0.3, "existing")]
         web = [{"content": "web doc", "url": "https://a.com", "title": "A"}]
+        web_docs = [Document(page_content="web doc", metadata={}, relevance_score=None)]
         with patch(
             "vectora.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
         ) as m:
             with patch(
-                "vectora.nodes.rag_subgraph._enqueue_for_embedding",
+                "vectora.nodes.web_curation.curate_and_enqueue",
                 new_callable=AsyncMock,
-            ) as me:
-                with patch("vectora.nodes.rag_subgraph.settings") as ms:
-                    m.return_value = web
-                    me.return_value = None
-                    ms.enable_rag = True
-                    ms.embedding_queue_enabled = True
-                    result = await rag_websearch(
-                        _state(rag_query="test", rag_docs=existing)
-                    )
+            ) as mc:
+                m.return_value = web
+                mc.return_value = (web_docs, [])
+                result = await rag_websearch(
+                    _state(rag_query="test", rag_docs=existing)
+                )
         assert len(result["rag_docs"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_curation_rejecting_all_persists_nothing(self):
+        web = [{"content": "lixo", "url": "https://spam.com", "title": "Spam"}]
+        web_docs = [Document(page_content="lixo", metadata={}, relevance_score=None)]
+        with patch(
+            "vectora.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
+        ) as m:
+            with patch(
+                "vectora.nodes.web_curation.curate_and_enqueue",
+                new_callable=AsyncMock,
+            ) as mc:
+                m.return_value = web
+                mc.return_value = (web_docs, [])  # 0 persistidos
+                result = await rag_websearch(_state(rag_query="test", rag_docs=[]))
+        assert result["pending_embeds"] == []
 
 
 class TestRagInject:
@@ -185,8 +290,30 @@ class TestRagInject:
         assert "conteúdo JWT" in result["messages"][0].content
 
     @pytest.mark.asyncio
-    async def test_no_docs_returns_empty(self):
-        assert await rag_inject(_state(rag_docs=[])) == {}
+    async def test_web_origin_is_tagged(self):
+        docs = [
+            Document(
+                page_content="conteúdo web",
+                metadata={"source": "https://a.com", "origin": "web_search"},
+                relevance_score=0.8,
+            )
+        ]
+        result = await rag_inject(_state(rag_docs=docs, rag_query="q"))
+        assert "web (cache)" in result["messages"][0].content
+
+    @pytest.mark.asyncio
+    async def test_no_docs_emits_rag_context_marker(self):
+        """A6.2 — sem docs, rag_inject ainda emite o marcador rag_context.
+
+        É o sinal determinístico que impede o orchestrator de re-rotear para
+        o RAG (loop infinito → GraphRecursionError).
+        """
+        result = await rag_inject(_state(rag_docs=[], rag_query="JWT"))
+        assert "messages" in result
+        msg = result["messages"][0]
+        assert isinstance(msg, SystemMessage)
+        assert msg.name == "rag_context"
+        assert "Nenhum documento" in msg.content
 
     @pytest.mark.asyncio
     async def test_truncates_to_5_docs(self):
@@ -195,6 +322,45 @@ class TestRagInject:
         result = await rag_inject(_state(rag_docs=docs, rag_query="test"))
         assert "doc 4" in result["messages"][0].content
         assert "doc 5" not in result["messages"][0].content
+
+
+class TestResultScore:
+    """A6.4 — normalização de score (relevance_score do reranker vs _distance)."""
+
+    def test_relevance_score_used_directly(self):
+        from vectora.nodes.rag_subgraph import _result_score
+
+        assert _result_score({"relevance_score": 0.83}) == pytest.approx(0.83)
+
+    def test_distance_converted_to_similarity_monotonic(self):
+        from vectora.nodes.rag_subgraph import _result_score
+
+        # _distance 0 (match perfeito) → similaridade 1.0
+        assert _result_score({"score": 0.0}) == pytest.approx(1.0)
+        # monotônico: menor distância → maior similaridade
+        near = _result_score({"score": 0.1})
+        far = _result_score({"score": 2.0})
+        assert near is not None
+        assert far is not None
+        assert near > far
+
+    def test_relevance_score_takes_precedence(self):
+        from vectora.nodes.rag_subgraph import _result_score
+
+        # com ambos presentes, o relevance_score do reranker vence
+        assert _result_score({"relevance_score": 0.9, "score": 0.1}) == pytest.approx(
+            0.9
+        )
+
+    def test_no_score_returns_none(self):
+        from vectora.nodes.rag_subgraph import _result_score
+
+        assert _result_score({}) is None
+
+    def test_invalid_score_returns_none(self):
+        from vectora.nodes.rag_subgraph import _result_score
+
+        assert _result_score({"score": "nan-string"}) is None
 
 
 class TestCallVectorSearch:
@@ -257,28 +423,6 @@ class TestCallWebSearch:
             mock_ws.invoke = lambda **_: (_ for _ in ()).throw(Exception("fail"))
             result = await _call_web_search("query")
         assert result == []
-
-
-class TestEnqueueForEmbedding:
-    @pytest.mark.asyncio
-    async def test_returns_queue_id(self):
-        import json
-        from unittest.mock import AsyncMock, patch
-
-        payload = json.dumps({"queue_id": "abc-123"})
-        with patch("vectora.tools.rag.embedding") as mock_emb:
-            mock_emb.ainvoke = AsyncMock(return_value=payload)
-            result = await _enqueue_for_embedding("text", "articles")
-        assert result == "abc-123"
-
-    @pytest.mark.asyncio
-    async def test_returns_none_on_exception(self):
-        from unittest.mock import AsyncMock, patch
-
-        with patch("vectora.tools.rag.embedding") as mock_emb:
-            mock_emb.ainvoke = AsyncMock(side_effect=Exception("fail"))
-            result = await _enqueue_for_embedding("text")
-        assert result is None
 
 
 class TestRagRerank:

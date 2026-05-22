@@ -426,10 +426,17 @@ class BackgroundEmbeddingWorker:
             model=self.config.embedding_model,
         )
 
-        # embed_query é bloqueante (HTTP síncrono ~1-2s por chunk).
-        # asyncio.to_thread() move para a thread pool do SO, liberando o event loop
-        # para o spinner da UI e demais tarefas async enquanto a API responde.
-        return await asyncio.to_thread(embeddings_model.embed_query, text)
+        # Indexação usa embed_documents → input_type="search_document".
+        # O Cohere v3 é assimétrico: documentos indexados e queries de busca
+        # vivem em espaços de embedding distintos. A query (vector_search em
+        # rag.py) usa embed_query → input_type="search_query". Indexar com
+        # embed_query — como era feito antes — degrada o recall porque grava
+        # o documento no espaço errado.
+        # embed_documents é bloqueante (HTTP síncrono ~1-2s por chunk);
+        # asyncio.to_thread() move para a thread pool do SO, liberando o event
+        # loop para o spinner da UI enquanto a API responde.
+        vectors = await asyncio.to_thread(embeddings_model.embed_documents, [text])
+        return vectors[0]
 
     async def _write_to_lancedb(
         self, record: EmbeddingQueueRecord, vector: list[float]

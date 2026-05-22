@@ -8,12 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from vectora.nodes.engine import (
-    _extract_tavily_results,
-    _process_tavily_results,
-    process_retrieval,
-)
-from vectora.state import State
+from vectora.nodes.engine import _extract_tavily_results, process_retrieval
+from vectora.state import Document, State
 
 
 class TestExtractTavilyResults:
@@ -34,66 +30,9 @@ class TestExtractTavilyResults:
         assert result is None
 
 
-class TestProcessTavilyResults:
-    @pytest.mark.asyncio
-    async def test_formats_and_enqueues(self):
-        results = [{"content": "doc content", "title": "Title", "url": "https://a.com"}]
-        mock_embedding = AsyncMock()
-        mock_embedding.ainvoke.return_value = json.dumps({"queue_id": "qid-1"})
-
-        docs, queue_ids = await _process_tavily_results(
-            results, "web_search", mock_embedding
-        )
-
-        assert len(docs) == 1
-        assert docs[0]["page_content"] == "doc content"
-        assert docs[0]["metadata"]["url"] == "https://a.com"
-        assert "qid-1" in queue_ids
-
-    @pytest.mark.asyncio
-    async def test_skips_empty_content(self):
-        results = [{"content": "", "title": "Empty", "url": "https://a.com"}]
-        mock_embedding = AsyncMock()
-
-        docs, queue_ids = await _process_tavily_results(
-            results, "web_search", mock_embedding
-        )
-
-        assert docs == []
-        assert queue_ids == []
-        mock_embedding.ainvoke.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_embedding_failure_skips_queue_id(self):
-        results = [{"content": "valid content", "title": "T", "url": "https://b.com"}]
-        mock_embedding = AsyncMock()
-        mock_embedding.ainvoke.side_effect = Exception("API error")
-
-        docs, queue_ids = await _process_tavily_results(
-            results, "web_search", mock_embedding
-        )
-
-        assert len(docs) == 1  # doc ainda formatado
-        assert queue_ids == []  # mas sem queue_id
-
-    @pytest.mark.asyncio
-    async def test_multiple_results(self):
-        results = [
-            {"content": "doc 1", "title": "A", "url": "https://a.com"},
-            {"content": "doc 2", "title": "B", "url": "https://b.com"},
-        ]
-        mock_embedding = AsyncMock()
-        mock_embedding.ainvoke.return_value = json.dumps({"queue_id": "q1"})
-
-        docs, queue_ids = await _process_tavily_results(
-            results, "web_search", mock_embedding
-        )
-
-        assert len(docs) == 2
-        assert len(queue_ids) == 2
-
-
 class TestProcessRetrieval:
+    """process_retrieval passa resultados web pelo gate de curadoria (A5)."""
+
     def _runtime(self):
         return MagicMock()
 
@@ -143,26 +82,9 @@ class TestProcessRetrieval:
         assert result == {}
 
     @pytest.mark.asyncio
-    async def test_valid_web_search_populates_state(self):
-        content = json.dumps(
-            [{"content": "article content", "title": "Art", "url": "https://a.com"}]
-        )
-        state: State = {
-            "messages": [self._tool_msg(content, name="web_search")],
-            "session_metadata": {},
-        }
-
-        mock_resp = json.dumps({"queue_id": "q-abc"})
-        with patch("vectora.nodes.engine.embedding") as mock_emb:
-            mock_emb.ainvoke = AsyncMock(return_value=mock_resp)
-            result = await process_retrieval(state, self._runtime())
-
-        assert "retrieval_results" in result
-        assert result.get("web_search_triggered") is True
-        assert len(result["retrieval_results"]["web_search"]) == 1
-
-    @pytest.mark.asyncio
-    async def test_fetch_url_also_detected(self):
+    async def test_fetch_url_not_cascaded(self):
+        # fetch_url não entra no cascading — o usuário escolheu a URL
+        # explicitamente (intenção de leitura, não de indexação).
         content = json.dumps(
             [{"content": "fetched page", "title": "Page", "url": "https://b.com"}]
         )
@@ -170,13 +92,59 @@ class TestProcessRetrieval:
             "messages": [self._tool_msg(content, name="fetch_url")],
             "session_metadata": {},
         }
+        result = await process_retrieval(state, self._runtime())
+        assert result == {}
 
-        with patch("vectora.nodes.engine.embedding") as mock_emb:
-            mock_emb.ainvoke = AsyncMock(return_value=json.dumps({"queue_id": "q2"}))
+    @pytest.mark.asyncio
+    async def test_valid_web_search_runs_curation(self):
+        content = json.dumps(
+            [{"content": "article content", "title": "Art", "url": "https://a.com"}]
+        )
+        state: State = {
+            "messages": [
+                HumanMessage(content="pesquisa X"),
+                self._tool_msg(content, name="web_search"),
+            ],
+            "session_metadata": {},
+        }
+        docs = [
+            Document(
+                page_content="article content",
+                metadata={"url": "https://a.com"},
+                relevance_score=None,
+            )
+        ]
+        with patch(
+            "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+        ) as mock_curate:
+            mock_curate.return_value = (docs, ["q-abc"])
             result = await process_retrieval(state, self._runtime())
 
-        assert "retrieval_results" in result
-        assert "fetch_url" in result["retrieval_results"]
+        assert result.get("web_search_triggered") is True
+        assert len(result["retrieval_results"]["web_search"]) == 1
+        assert "q-abc" in result["pending_embeds"]
+        # O gate recebe a query do usuário para julgar relevância.
+        assert mock_curate.await_args.args[1] == "pesquisa X"
+
+    @pytest.mark.asyncio
+    async def test_curation_rejecting_everything_persists_nothing(self):
+        content = json.dumps(
+            [{"content": "lixo", "title": "Spam", "url": "https://spam.com"}]
+        )
+        state: State = {
+            "messages": [self._tool_msg(content, name="web_search")],
+            "session_metadata": {},
+        }
+        docs = [Document(page_content="lixo", metadata={}, relevance_score=None)]
+        with patch(
+            "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+        ) as mock_curate:
+            # Curadoria devolve docs para contexto imediato, mas 0 persistidos.
+            mock_curate.return_value = (docs, [])
+            result = await process_retrieval(state, self._runtime())
+
+        assert result.get("web_search_triggered") is True
+        assert "pending_embeds" not in result or result["pending_embeds"] == []
 
     @pytest.mark.asyncio
     async def test_accumulates_existing_pending_embeds(self):
@@ -188,11 +156,11 @@ class TestProcessRetrieval:
             "session_metadata": {},
             "pending_embeds": ["existing-qid"],
         }
-
-        with patch("vectora.nodes.engine.embedding") as mock_emb:
-            mock_emb.ainvoke = AsyncMock(
-                return_value=json.dumps({"queue_id": "new-qid"})
-            )
+        docs = [Document(page_content="new doc", metadata={}, relevance_score=None)]
+        with patch(
+            "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+        ) as mock_curate:
+            mock_curate.return_value = (docs, ["new-qid"])
             result = await process_retrieval(state, self._runtime())
 
         assert "existing-qid" in result["pending_embeds"]

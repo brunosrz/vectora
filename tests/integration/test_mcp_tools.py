@@ -270,9 +270,8 @@ class TestMcpRagTools:
         assert data  # não vazio
 
     @REQUIRES_COHERE
-    async def test_embedding_tool_enqueues(self, monkeypatch):
+    async def test_embedding_tool_enqueues(self):
         """embedding_tool deve enfileirar documento (fire-and-forget)."""
-        monkeypatch.setenv("ENABLE_RAG", "true")
         from vectora.mcp.server import embedding_tool
 
         result = await embedding_tool(

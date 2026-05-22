@@ -58,7 +58,7 @@ LLM_PROVIDERS: dict[str, dict[str, str]] = {
         "provider_id": "anthropic",
         "env_var": "ANTHROPIC_API_KEY",
         "url": "https://console.anthropic.com/",
-        "default_model": "claude-sonnet-4-5",
+        "default_model": "claude-sonnet-4-6",
     },
     "5": {
         "name": "Ollama (Local)",

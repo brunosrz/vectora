@@ -10,8 +10,8 @@ Em sua essência, o Vectora resolve o **problema do abismo de conhecimento (know
 
 - **Orchestrator + Agentes Especializados**: O Orchestrator é o agente LLM primário — responde diretamente para consultas simples e cria instruções explícitas de tarefa para os especialistas (search, coder). Sem hops de roteamento desnecessários.
 - **RAG nativo**: Cada consulta a documentos passa por um pipeline completo de retrieve → score → rerank → inject. O resultado flui de volta para o Orchestrator para síntese inline.
-- **15 ferramentas integradas**: Busca web, busca vetorial, filesystem, artifacts, memória e ponte MCP — sempre disponíveis.
-- **Embeddings em cascata**: Resultados de busca web são automaticamente enfileirados para embedding no LanceDB (fire-and-forget), construindo sua base de conhecimento conforme você conversa.
+- **16 ferramentas integradas**: Busca web, busca vetorial, filesystem, artifacts, memória e ponte MCP — sempre disponíveis.
+- **Embeddings curados**: Resultados da busca web passam por um gate de curadoria (reranker Cohere + LLM judge) antes de serem indexados em uma coleção isolada (`web_cache`) — seus docs curados nunca são misturados com conteúdo web não revisado.
 - **Arquitetura de sub-agente**: Projetado para rodar como um servidor MCP. O Claude Code pode delegar tarefas complexas para o Vectora, que raciocina, roteia e responde.
 - **Memória persistente**: Memória entre sessões armazenada em SQLite. O Vectora lembra das suas preferências, contexto do projeto e decisões anteriores.
 - **Infraestrutura zero**: SQLite + LanceDB. Não é necessário Docker para uso local.
@@ -34,11 +34,12 @@ START
         └─► [rag_subgraph] → rag_subgraph → orchestrator (síntese) → END
 ```
 
-| Agente           | Responsabilidade                                                                       | Ferramentas                                                            |
-| ---------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **orchestrator** | Agente LLM primário — responde diretamente OU delega com instrução explícita de tarefa | `create_artifact`, `save_memory`, `get_memory`, `delete_memory`        |
-| **search**       | Pesquisa web em tempo real, constrói base de conhecimento via embeddings em cascata    | `web_search`, `fetch_url`, `vector_search`                             |
-| **coder**        | Operações de filesystem, comandos de terminal, geração de código                       | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` |
+| Agente           | Responsabilidade                                                                       | Ferramentas                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **orchestrator** | Agente LLM primário — responde diretamente OU delega com instrução explícita de tarefa | `create_artifact`, `save_memory`, `get_memory`, `delete_memory`                |
+| **search**       | Pesquisa web em tempo real, constrói base de conhecimento via embeddings curados       | `web_search`, `fetch_url`, `vector_search`                                     |
+| **coder**        | Operações de filesystem, comandos de terminal, geração de código                       | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal`         |
+| **rag**          | Pipeline de recuperação — retrieve → score → rerank/websearch → inject → orchestrator  | `vector_search`, `embedding`, `ingest_docs`, `manage_retriever` (via subgrafo) |
 
 ### RAG Subgraph
 
@@ -58,9 +59,14 @@ Os resultados são injetados como `SystemMessage` no contexto. O Orchestrator en
 
 Os agentes chamam explicitamente `create_artifact` para persistir documentos estruturados (planos, specs, guias, decisões de arquitetura) em `~/.vectora/artifacts/{session_id}/` como arquivos Markdown. A ferramenta retorna metadados estruturados (path, title, type, session_id, timestamp) que o Orchestrator pode referenciar em turnos futuros.
 
-### Embeddings em Cascata
+### Anti-contaminação do RAG web
 
-Após qualquer chamada de `web_search` ou `fetch_url`, o `process_retrieval` enfileira automaticamente os resultados para embedding no LanceDB — fire-and-forget, sem bloqueio. Sua base vetorial cresce passivamente conforme você usa a busca web.
+Após qualquer chamada de `web_search` ou `fetch_url`, o `process_retrieval` passa os resultados por um gate de curadoria antes de embeddar:
+
+1. **Reranker Cohere** pontua cada candidato contra a query atual — itens abaixo de `web_persist_min_score` são descartados.
+2. **LLM judge** avalia os sobreviventes contra o contexto do projeto e a tarefa corrente, retornando um veredicto `keep/discard` por documento.
+
+O conteúdo aprovado é indexado em uma coleção dedicada `web_cache`, isolada da coleção `articles` (conteúdo curado pelo usuário). O painel `/rag` exibe o breakdown por coleção, e a tool `manage_retriever` permite auditar ou remover conteúdo web em cache a qualquer momento.
 
 ---
 
@@ -215,16 +221,15 @@ Opções:
 
 ## Referência de Ferramentas
 
-15 ferramentas em 5 categorias, sempre disponíveis para todos os agentes:
+16 ferramentas em 5 categorias, sempre disponíveis para todos os agentes:
 
 | Categoria     | Ferramentas                                                            | Agente Principal      |
 | ------------- | ---------------------------------------------------------------------- | --------------------- |
 | **Web**       | `web_search`, `fetch_url`                                              | search                |
-| **RAG**       | `vector_search`, `embedding`, `ingest_docs`                            | search / RAG subgraph |
+| **RAG**       | `vector_search`, `embedding`, `ingest_docs`, `manage_retriever`        | search / RAG subgraph |
 | **Arquivos**  | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` | coder                 |
 | **Artifacts** | `create_artifact`                                                      | orchestrator          |
 | **Memória**   | `save_memory`, `get_memory`, `delete_memory`                           | orchestrator / coder  |
-| **MCP**       | `call_mcp_tool`                                                        | todos                 |
 
 ---
 

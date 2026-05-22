@@ -74,6 +74,7 @@ class TestToolTimeouts:
             "vector_search",
             "embedding",
             "ingest_docs",
+            "manage_retriever",
             "file_read",
             "file_edit",
             "file_write",
@@ -131,7 +132,7 @@ class TestGetServerStatus:
         assert data["server"] == "Vectora"
         assert data["status"] == "ready"
         assert "capabilities" in data
-        assert data["tools_count"] == 13
+        assert data["tools_count"] == 14
         assert data["resources_count"] == 4
 
     @pytest.mark.asyncio

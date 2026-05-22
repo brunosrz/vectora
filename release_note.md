@@ -1,34 +1,79 @@
-# Vectora v0.1.0rc3
+# Vectora v0.1.0rc4
 
 **Vectora** is an open-source AI assistant for developers, built to run as a sub-agent inside Claude Code, Paperclip, and any MCP-compatible orchestrator. Local-first, self-hosted, zero mandatory infrastructure.
 
 ---
 
-## What's new in rc2
+## What's new in rc4
 
-**Orchestrator — generalist agent replaces the supervisor router**
-The supervisor was a pure router: one LLM call to decide the destination, then a second call inside the target agent. The new Orchestrator is the primary agent. It can respond directly for greetings, knowledge questions, and synthesis — no routing hop needed. When delegation is necessary, it crafts an explicit `task_query` (1–3 focused sentences) for the sub-agent instead of passing raw conversation history. Sub-agents (coder, search) read `orchestrator_task` from state and treat it as their primary directive, reducing ambiguity on long multi-turn sessions.
+### RAG hotfix — 4 bugs resolved
 
-**Artifact tool (`create_artifact`)**
-Agents now explicitly call `create_artifact` to persist structured documents. Supported types: `plan`, `spec`, `task_list`, `overview`, `guide`, `architecture`, `implementation`. Files are saved to `~/.vectora/artifacts/{session_id}/{slug}.md` and the tool returns structured metadata (path, title, type, timestamp). No heuristic detection — the agent decides when a document is worth persisting.
+**pandas declared as a first-class dependency**
+`vector_search` and `manage_retriever` use LanceDB's `.to_pandas()` — but `pandas` was never declared in `pyproject.toml`. Any environment installed via `uv tool` silently failed with `ModuleNotFoundError`, making local RAG completely inaccessible. Fixed by declaring `pandas` as a dependency and adopting it idiomatically: `manage_retriever` now uses vectorized DataFrame operations (boolean masks, `.map()`) instead of row-by-row loops; the `/rag` panel loads `.to_pandas()` per collection to display the curated vs web-search origin breakdown.
 
-**Project context loading**
-On the first turn of each session, Vectora scans the current working directory recursively for `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md`. Any files found are injected as context so the agent immediately understands project conventions, architecture, and coding standards. The result is persisted in state and not re-scanned on subsequent turns.
+**Orchestrator ↔ RAG subgraph recursion loop eliminated**
+Querying the RAG subgraph caused a `GraphRecursionError` (limit 25). Root cause: `rag_inject` returned an empty dict when no docs were found, so the orchestrator never received the `rag_context` signal and re-routed to `rag` indefinitely. Fix: `rag_inject` now always emits `SystemMessage(name="rag_context")` — even when empty — as a deterministic turn marker. The orchestrator detects this marker via `_is_post_rag()` and enters a synthesis-only path (`_synthesize_after_rag()` → `END`), making the loop structurally impossible.
 
-**Session tracer**
-A lightweight async SQLite-backed tracer records every orchestrator routing decision and agent span with timing data. Useful for debugging routing behavior and building observability tooling on top.
+**Multi-collection RAG — all indexed content now reachable**
+`_call_vector_search_all` previously searched only two hardcoded collections (`articles` + `web_cache`). Content indexed via `/rag add docs/` landed in a `docs` collection that was never queried. Fixed by discovering all LanceDB tables dynamically via `table_names()` and querying them in parallel (`asyncio.gather`). Collections matching `rag_collection_web` have `metadata["origin"]="web_search"` injected so the LLM and reranker can weigh source trust.
 
-**Verbosity levels (0–5)**
-`/debug` now accepts a level from 0 to 5 instead of a boolean toggle. Level 0 is silent, level 5 shows full tool payloads and LLM internals. Displayed as a Rich table with descriptions per level.
+**Distance vs similarity inversion corrected**
+Without Cohere reranking, `vector_search` returns `_distance` (L2 — lower is better). The subgraph was reading it as a similarity score (higher is better), inverting routing logic: an exact match (distance ~0.1) triggered web fallback; a poor match (distance ~0.9) went straight to inject. Fixed via `_result_score()`: converts L2 distance to a bounded similarity `1 / (1 + distance)` ∈ (0, 1].
 
-**Session per working directory**
-On startup, Vectora automatically resumes the last session used in the current directory. Opening a new terminal in a different project gets an independent session. `/new` creates a new session and associates it with the current directory. `/session <id>` switches manually and updates the mapping.
+---
 
-**Unified CLI**
-`vectora` and `vectora-mcp` are now the only entry points. The setup wizard, chat loop, and MCP server are all reachable from a single install.
+### Anti-contamination for RAG web content
 
-**CI/CD hardening**
-Docker build, VPS deploy, and PyPI publish now run exclusively on `v*` tags or manual `workflow_dispatch`. The `[deploy]` commit keyword is removed. Adding `[ci skip]` to any commit message skips the entire pipeline.
+**Isolated web bucket**
+Web results from `web_search` and `fetch_url` cascade now land in a dedicated `web_cache` collection instead of the shared `articles` collection. User-curated content (indexed via `ingest_docs` or `/rag add`) is never mixed with live web results.
+
+**Curation gate — reranker + LLM judge**
+New `web_curation.py` module. No web result is persisted without passing two gates: Cohere reranker scores each candidate against the current query/task, filtering below `web_persist_min_score`; a batch LLM judge evaluates survivors against `project_context` + `orchestrator_task` and returns a `keep/discard` verdict per document. Only approved content reaches the embedding queue.
+
+**`manage_retriever` tool**
+New tool with three actions: `list` (audit indexed docs by source and origin), `delete` (remove by source URL), `purge` (clear an entire collection). Useful when authoritative sources replace previously cached web content.
+
+---
+
+### `.vectoraignore` support
+
+Vectora now respects both `.gitignore` and `.vectoraignore` when indexing files via `ingest_docs` or `/rag add`. Patterns in `.vectoraignore` follow the same gitignore syntax and are applied on top of `.gitignore` rules, giving per-project control over what enters the knowledge base without touching the git ignore file.
+
+---
+
+### Rate limit UI for the main LLM
+
+When the LLM provider (Gemini, OpenAI, etc.) returns a 429, the TUI now displays a styled yellow panel — `[Vectora] ⚠️ Quota / Rate Limit` — instead of dumping the raw API error JSON to the terminal. `_is_llm_quota_error()` detects 429, `resource_exhausted`, `rateLimitExceeded`, and quota-related strings across providers.
+
+---
+
+### TUI improvements
+
+**Routing-aware panel titles**
+Response panels now reflect which agent actually answered:
+
+- `[Vectora]` — orchestrator direct response or RAG synthesis
+- `[Vectora RAG]` — answer synthesized after RAG pipeline
+- `[Vectora Coder]` — response from the coder agent
+- `[Vectora Search]` — response from the search agent
+
+**Structured output JSON no longer leaks into chat**
+The orchestrator uses `with_structured_output()` for routing decisions. `astream_events` was capturing the raw JSON tokens as if they were the response, prepending the routing decision to every message. Fixed by filtering `CHAT_MODEL_STREAM` events from the `orchestrator` node during the routing phase and capturing the final `AIMessage` from the `CHAIN_END` event instead.
+
+**Console logging respects verbosity**
+`[INFO]` log lines no longer appear in the terminal when debug is disabled (`verbosity == 0`). The `StreamHandler` level is now adjusted at runtime: `WARNING` at verbosity 0, `INFO` at 1–3, `DEBUG` at 4+. Logs continue to flow to the JSON audit file regardless of verbosity.
+
+**Tavily v2 (`langchain-tavily`)**
+Migrated from `tavily-python` to `langchain-tavily`. Unlocks `topic` (general / news / finance), `time_range`, `include_raw_content`, `include_images`, and per-call `include_domains` / `exclude_domains` filtering. New `tavily_extract` tool replaces `fetch_url` for multi-URL batch extraction.
+
+**Cohere asymmetric embeddings**
+Embedding calls now pass the correct `input_type` to the Cohere API: `search_document` at index time, `search_query` at query time. This is the intended usage of Cohere's asymmetric embedding model and measurably improves retrieval quality.
+
+**`langchain-mcp-adapters` integration**
+The MCP client (`vectora/tools/mcp.py`) now uses `MultiServerMCPClient` from the official `langchain-mcp-adapters` library. Gains: OAuth per-server auth, resource loading (file blobs), persistent sessions, `allowedTools` / `disabledTools` filtering, `structuredContent` for typed return values.
+
+**LangGraph Studio**
+`langgraph.json` added at the repo root. Run `langgraph dev` for a local UI at `http://127.0.0.1:2024` with real-time node/edge visualization, per-step state inspection, time-travel debugging, and state forking.
 
 ---
 
@@ -48,34 +93,28 @@ START
 ## What's included
 
 **Multi-agent architecture**
-The Orchestrator is the single entry point and primary LLM agent. It responds directly for simple queries and delegates to specialists with an explicit task description. RAG synthesis is done inline by the Orchestrator after the RAG subgraph injects context. The Search agent covers web research and cascading embeddings. The Coder agent handles files, terminal, and git.
+The Orchestrator is the single entry point and primary LLM agent. It responds directly for simple queries and delegates to specialists with an explicit task description. RAG synthesis is done inline by the Orchestrator after the RAG subgraph injects context.
 
 **RAG subgraph with adaptive thresholds**
-Every document query goes through a full pipeline: vector retrieval → confidence scoring → rerank (Cohere) or web fallback → context injection before the LLM responds. Thresholds are adaptive: high confidence (≥ 0.7) injects directly; mid confidence (0.4–0.7) reranks first; low confidence falls back to live web search.
+Every document query goes through a full pipeline: vector retrieval → confidence scoring → rerank (Cohere) or web fallback → context injection. Thresholds: high confidence (≥ 0.7) injects directly; mid confidence (0.4–0.7) reranks first; low confidence falls back to live web search. All collections are searched in parallel — no orphaned indexed content.
 
-**Cascading embeddings**
-Web search results are automatically queued for embedding into LanceDB after every retrieval — fire-and-forget, non-blocking. The knowledge base grows passively as you use the assistant.
+**Web content anti-contamination**
+Web results land in a separate `web_cache` collection. A curation gate (Cohere reranker + LLM judge) filters every candidate before it reaches the embedding queue. User-curated content in `articles` is never overwritten by live web results.
 
-**15 tools across 5 categories**
-Web search and URL extraction via Tavily. Semantic vector search, embedding queue, and batch ingestion via Cohere + LanceDB. Full filesystem access (read, edit, write, grep, list, terminal). Artifact persistence via `create_artifact`. Cross-session persistent memory with optional TTL.
+**16 tools across 5 categories**
+Web (`web_search`, `fetch_url`). RAG (`vector_search`, `embedding`, `ingest_docs`, `manage_retriever`). Files (`file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal`). Artifacts (`create_artifact`). Memory (`save_memory`, `get_memory`, `delete_memory`). All tools are available to all agents — specialization comes from system prompts, not tool restrictions.
 
 **MCP server (stdio + SSE)**
-13 tools and 4 resources exposed via Model Context Protocol. `stdio` mode for local Claude Code / Claude Desktop integration. `sse` mode for Docker-based multi-agent deployments where N Paperclip agents share a single Vectora hub — each isolated by `thread_id`.
+Tools and resources exposed via Model Context Protocol. `stdio` mode for local Claude Code / Claude Desktop. `sse` mode for Docker-based deployments where multiple agents share a single Vectora hub.
 
 **Background embedding worker**
-Async worker with token bucket rate limiting (90 calls/min against Cohere's 100/min trial limit), exponential backoff retry, dead-letter queue after 3 attempts, and crash recovery via WAL reconciliation on startup.
+Async worker with token bucket rate limiting (90 calls/min), exponential backoff retry, dead-letter queue after 3 attempts, and WAL crash recovery on startup.
 
 **Multi-LLM support**
-Google Gemini (free tier, recommended), Cohere (free tier), OpenAI, Anthropic, or Ollama for fully local inference. Switch providers at runtime via `/model` or the setup wizard.
-
-**Security layer**
-Path traversal prevention, ReDoS-safe regex validation, shell command blacklist (`rm -rf`, fork bombs, destructive sudo), and 30-second terminal execution timeout with async subprocess isolation.
+Google Gemini (free tier, recommended), Cohere, OpenAI, Anthropic, or Ollama for fully local inference.
 
 **Interactive TUI**
-Terminal UI built with Rich and prompt-toolkit. Colored panels per message type, live tool call feedback, verbosity levels (0–5), session management, and multiline input via `Alt+Enter`.
-
-**CI/CD pipeline**
-GitHub Actions with lint, unit/integration/e2e/stress tests, Docker build → GHCR push, VPS deploy via SSH, and PyPI publish via Trusted Publishing. Docker/deploy/PyPI gated to `v*` tags only.
+Rich + prompt-toolkit. Agent-aware panel titles, structured output JSON filtering, verbosity-gated console logging, rate limit UI for LLM and embedding providers.
 
 ---
 

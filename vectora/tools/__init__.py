@@ -3,7 +3,7 @@
 Agrupa todas as ferramentas do agente em módulos temáticos:
 
 - web      → web_search, fetch_url
-- rag      → embedding, vector_search, ingest_docs
+- rag      → embedding, vector_search, ingest_docs, manage_retriever
 - fs       → file_read, file_edit, file_write, grep, list_dir, terminal
 - memory   → save_memory, get_memory, delete_memory
 - mcp      → call_mcp_tool
@@ -20,7 +20,12 @@ from vectora.config.settings import settings
 from vectora.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
 from vectora.tools.mcp import call_mcp_tool
 from vectora.tools.memory import delete_memory, get_memory, save_memory
-from vectora.tools.rag import embedding, ingest_docs, vector_search
+from vectora.tools.rag import (
+    embedding,
+    ingest_docs,
+    manage_retriever,
+    vector_search,
+)
 from vectora.tools.web import fetch_url, web_search
 
 logger = logging.getLogger(__name__)
@@ -34,7 +39,7 @@ def _build_tools_list() -> list[BaseTool]:
     tools.extend([web_search, fetch_url])
 
     # RAG
-    tools.extend([vector_search, embedding, ingest_docs])
+    tools.extend([vector_search, embedding, ingest_docs, manage_retriever])
 
     # Memória persistente
     tools.extend([save_memory, get_memory, delete_memory])
@@ -74,6 +79,7 @@ __all__ = [
     "grep",
     "ingest_docs",
     "list_dir",
+    "manage_retriever",
     "save_memory",
     "terminal",
     "vector_search",

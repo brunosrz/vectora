@@ -10,8 +10,8 @@ At its core, Vectora solves the **knowledge gap problem**: LLMs don't know your 
 
 - **Orchestrator + Specialized Agents**: The Orchestrator is the primary LLM agent — it answers directly for simple queries and crafts explicit task instructions for specialists (search, coder). No wasted routing hops.
 - **RAG-native subgraph**: Every document query goes through a full retrieve → score → rerank → inject pipeline. Results flow back to the Orchestrator for synthesis.
-- **15 tools across 4 categories**: Web search, vector search, file system, artifacts, memory — always available across all agents.
-- **Cascading embeddings**: Web search results are automatically queued for embedding into LanceDB (fire-and-forget), building your knowledge base as you chat.
+- **16 tools across 5 categories**: Web search, vector search, file system, artifacts, memory — always available across all agents.
+- **Cascading embeddings**: Web search results land in an isolated `web_cache` collection and pass a curation gate (Cohere reranker + LLM judge) before being embedded — your curated knowledge base is never contaminated by unreviewed web results.
 - **Sub-agent architecture**: Runs as an MCP server. Claude Code delegates complex tasks to Vectora; Vectora reasons, routes, and responds.
 - **Persistent memory**: Cross-session memory in SQLite. Vectora remembers your preferences, project context, and decisions.
 - **Zero infra**: SQLite + LanceDB. No Docker required for local use.
@@ -34,11 +34,12 @@ START
         └─► [rag_subgraph] → rag_subgraph → orchestrator (synthesis) → END
 ```
 
-| Agent            | Responsibility                                                                       | Tools                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| **orchestrator** | Primary LLM agent — responds directly OR delegates with an explicit task description | `create_artifact`, `save_memory`, `get_memory`, `delete_memory`        |
-| **search**       | Web research, real-time info, builds knowledge base via cascading embeddings         | `web_search`, `fetch_url`, `vector_search`                             |
-| **coder**        | File operations, terminal commands, code generation                                  | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` |
+| Agent            | Responsibility                                                                       | Tools                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| **orchestrator** | Primary LLM agent — responds directly OR delegates with an explicit task description | `create_artifact`, `save_memory`, `get_memory`, `delete_memory`                |
+| **search**       | Web research, real-time info, builds knowledge base via cascading embeddings         | `web_search`, `fetch_url`, `vector_search`                                     |
+| **coder**        | File operations, terminal commands, code generation                                  | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal`         |
+| **rag**          | Retrieval pipeline — retrieve → score → rerank/websearch → inject → orchestrator     | `vector_search`, `embedding`, `ingest_docs`, `manage_retriever` (via subgraph) |
 
 ### RAG Subgraph
 
@@ -58,9 +59,14 @@ Results are injected as a `SystemMessage` into context. The Orchestrator then sy
 
 Agents explicitly call `create_artifact` to persist structured documents (plans, specs, guides, architecture decisions) to `~/.vectora/artifacts/{session_id}/` as Markdown files. The tool returns structured metadata (path, title, type, session_id, timestamp) that the Orchestrator can reference in future turns.
 
-### Cascading Embeddings
+### Web Content Anti-contamination
 
-After any `web_search` or `fetch_url` call, `process_retrieval` automatically queues the results for embedding into LanceDB — fire-and-forget, no blocking. Your vector store grows passively as you use web search.
+After any `web_search` or `fetch_url` call, `process_retrieval` routes results through a curation gate before embedding:
+
+1. **Cohere reranker** scores each candidate against the current query — items below `web_persist_min_score` are discarded.
+2. **LLM judge** evaluates survivors against the project context and current task, returning a `keep/discard` verdict per document.
+
+Approved content is embedded into a dedicated `web_cache` collection, isolated from `articles` (user-curated content). The `/rag` panel shows the breakdown per collection, and `manage_retriever` lets you audit or remove cached web content at any time.
 
 ---
 
@@ -215,16 +221,15 @@ Options:
 
 ## Tools Reference
 
-15 tools across 5 categories, always available to all agents:
+16 tools across 5 categories, always available to all agents:
 
 | Category      | Tools                                                                  | Primary Agent         |
 | ------------- | ---------------------------------------------------------------------- | --------------------- |
 | **Web**       | `web_search`, `fetch_url`                                              | search                |
-| **RAG**       | `vector_search`, `embedding`, `ingest_docs`                            | search / RAG subgraph |
+| **RAG**       | `vector_search`, `embedding`, `ingest_docs`, `manage_retriever`        | search / RAG subgraph |
 | **Files**     | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` | coder                 |
 | **Artifacts** | `create_artifact`                                                      | orchestrator          |
 | **Memory**    | `save_memory`, `get_memory`, `delete_memory`                           | orchestrator / coder  |
-| **MCP**       | `call_mcp_tool`                                                        | all                   |
 
 ---
 

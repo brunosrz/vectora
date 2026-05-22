@@ -44,7 +44,7 @@ _COMMANDS_TEXT = """
 
 [bold]/model <model_name>[/bold]
   Switch to a different model
-  Usage: [dim]/model gemini-2.5-flash[/dim]
+  Usage: [dim]/model gemini-3.5-flash[/dim]
 
 [bold]/debug[/bold]
   Toggle debug mode (shows logs from all components)

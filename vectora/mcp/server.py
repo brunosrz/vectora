@@ -47,6 +47,7 @@ try:
         grep,
         ingest_docs,
         list_dir,
+        manage_retriever,
         terminal,
         vector_search,
         web_search,
@@ -143,6 +144,7 @@ TOOL_TIMEOUTS = {
     "vector_search": 20.0,  # 20 segundos para busca vetorial
     "embedding": 60.0,  # 60 segundos para embedding (fire-and-forget)
     "ingest_docs": 120.0,  # 2 minutos para ingestão em batch
+    "manage_retriever": 30.0,  # 30 segundos para listar/remover do RAG
     "file_read": 10.0,  # 10 segundos para ler arquivo
     "file_edit": 15.0,  # 15 segundos para editar arquivo
     "file_write": 15.0,  # 15 segundos para escrever arquivo
@@ -328,6 +330,35 @@ async def ingest_docs_tool(
 
 
 @mcp.tool()
+async def manage_retriever_tool(
+    action: str,
+    collection: str = "web_cache",
+    source: str | None = None,
+) -> str:
+    """Gerencia o RAG: lista, remove ou limpa documentos indexados no LanceDB.
+
+    Use para corrigir a base de conhecimento — remover conteúdo web indexado
+    por engano quando a fonte canônica passa a ser conhecida.
+
+    Args:
+        action: "list" (lista docs), "delete" (remove por source) ou
+            "purge" (apaga a coleção inteira)
+        collection: coleção LanceDB alvo (default: "web_cache", o bucket web)
+        source: trecho da URL/source a remover — obrigatório para "delete"
+
+    Returns:
+        JSON com o resultado da operação
+    """
+    args: dict = {"action": action, "collection": collection}
+    if source:
+        args["source"] = source
+    return await _with_timeout(
+        manage_retriever.ainvoke(args),
+        "manage_retriever",
+    )
+
+
+@mcp.tool()
 async def file_read_tool(file_path: str) -> str:
     """Lê o conteúdo completo de um arquivo de texto.
 
@@ -500,9 +531,9 @@ async def delegate_task_to_vectora(
 
 
 logger.info(
-    "13 tools registered: web_search, fetch_url, vector_search, embedding, ingest_docs, "
-    "file_read, file_edit, file_write, grep, list_dir, terminal, call_mcp_tool, "
-    "delegate_task_to_vectora"
+    "14 tools registered: web_search, fetch_url, vector_search, embedding, ingest_docs, "
+    "manage_retriever, file_read, file_edit, file_write, grep, list_dir, terminal, "
+    "call_mcp_tool, delegate_task_to_vectora"
 )
 
 
@@ -634,7 +665,7 @@ async def get_server_status() -> str:
                 "mcp_enabled": settings.enable_mcp,
                 "embedding_queue_enabled": settings.embedding_queue_enabled,
             },
-            "tools_count": 13,
+            "tools_count": 14,
             "resources_count": 4,
         }
     )
@@ -733,7 +764,7 @@ def run() -> None:
             Panel(
                 "[bold green]✓ Vectora MCP Server pronto (Multi-Agent)[/bold green]\n"
                 f"[dim]Transport:[/dim] SSE HTTP  [dim]Endpoint:[/dim] http://{host}:{port}/sse\n"
-                "[dim]Tools:[/dim] 13  [dim]Resources:[/dim] 4\n"
+                "[dim]Tools:[/dim] 14  [dim]Resources:[/dim] 4\n"
                 f"[dim]Logs:[/dim] {_log_dir / 'mcp.log'}\n"
                 "[yellow]⚡ Múltiplos agentes podem conectar simultaneamente[/yellow]",
                 title="[bold cyan]Vectora MCP (Multi-Agent Hub)[/bold cyan]",
@@ -749,7 +780,7 @@ def run() -> None:
             Panel(
                 "[bold green]✓ Vectora MCP Server pronto[/bold green]\n"
                 "[dim]Transport:[/dim] stdio JSON-RPC  "
-                "[dim]Tools:[/dim] 13  [dim]Resources:[/dim] 4\n"
+                "[dim]Tools:[/dim] 14  [dim]Resources:[/dim] 4\n"
                 f"[dim]Logs:[/dim] {_log_dir / 'mcp.log'}",
                 title="[bold cyan]Vectora MCP[/bold cyan]",
                 border_style="cyan",
@@ -757,7 +788,7 @@ def run() -> None:
         )
         logger.info("Starting Vectora MCP server", extra={"transport": "stdio"})
 
-    logger.info("Tools: 13 | Resources: 4")
+    logger.info("Tools: 14 | Resources: 4")
 
     try:
         if transport == "sse":

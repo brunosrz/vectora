@@ -36,8 +36,11 @@ from rich.panel import Panel
 
 from vectora.context import Context
 from vectora.graph import build_graph
-from vectora.services.checkpoint import Checkpointer
-from vectora.services.log_setup import setup_logging, setup_queue_handler
+from vectora.services.log_setup import (
+    set_console_log_level,
+    setup_logging,
+    setup_queue_handler,
+)
 from vectora.services.runtime_settings import runtime_settings
 from vectora.services.terminal_stream import (
     register_terminal_output_callback,
@@ -50,6 +53,7 @@ from vectora.ui.main import (
     AuditPanel,
     ChatMessage,
     LogPanel,
+    QuotaErrorPanel,
     SeparatorLine,
     SuccessPanel,
     TerminalPanel,
@@ -335,6 +339,32 @@ def _render_tool_event_end(
     _resume(status_ctx)
 
 
+_AGENT_LABELS: dict[str, str] = {
+    "respond": "Vectora",
+    "rag": "Vectora RAG",
+    "coder": "Vectora Coder",
+    "search": "Vectora Search",
+}
+
+
+def _extract_text_chunk(chunk: Any) -> str:
+    """Extrai texto de um chunk de CHAT_MODEL_STREAM."""
+    content = chunk.content if hasattr(chunk, "content") else None
+    if not content:
+        return ""
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, dict) and "text" in item:
+                parts.append(item["text"])
+            elif isinstance(item, str):
+                parts.append(item)
+        return "".join(parts)
+    if isinstance(content, dict) and "text" in content:
+        return content["text"]
+    return str(content)
+
+
 async def _process_user_turn(
     user_input: str,
     graph: CompiledStateGraph[State, Context, State, State],  # ty: ignore[invalid-type-arguments]
@@ -355,36 +385,84 @@ async def _process_user_turn(
     console.print(ChatMessage("User", user_input).to_panel())
 
     response_content = ""
+    routing_decision = "respond"  # atualizado ao detectar CHAIN_END do orchestrator
+    _orchestrator_delegated = False  # True após 1ª decisão de delegação
+
     # Usamos status_ctx manualmente para poder suspender/retomar o spinner
     # quando exibimos panels de tool (evita conflito visual com Live render)
     status_ctx = status_panel.thinking("Processing your message...")
     status_ctx.__enter__()
     try:
+        # recursion_limit: 50 — defesa em profundidade. O loop estrutural
+        # orchestrator ↔ rag_subgraph foi eliminado (Bloco A6.2), mas a folga
+        # acima do default 25 acomoda cadeias legítimas longas (coder com
+        # muitas tool calls, search iterativo) sem abortar o turno.
         async for event in graph.astream_events(
             {"messages": [HumanMessage(user_input)]},
-            config=config,
+            config={**config, "recursion_limit": 50},
             version="v2",
         ):
             event_type = event.get("event")
             event_name = event.get("name", "")
+            node = event.get("metadata", {}).get("langgraph_node", "")
 
-            # Streaming do conteúdo da IA
+            # Streaming do conteúdo da IA.
+            # O orchestrator usa with_structured_output() — astream_events captura
+            # os tokens JSON do roteamento, que NÃO devem aparecer no chat.
+            # Filtra por langgraph_node: só captura conteúdo de outros nós OU da
+            # segunda invocação do orchestrator (síntese pós-RAG após delegação).
             if event_type == LangGraphEvent.CHAT_MODEL_STREAM:
-                chunk = event.get("data", {}).get("chunk")
-                if chunk and hasattr(chunk, "content") and chunk.content:
-                    content = chunk.content
-                    if isinstance(content, list):
-                        for item in content:
-                            if isinstance(item, dict) and "text" in item:
-                                response_content += item["text"]
-                            elif isinstance(item, str):
-                                response_content += item
-                            else:
-                                response_content += str(item)
-                    elif isinstance(content, dict) and "text" in content:
-                        response_content += content["text"]
-                    else:
-                        response_content += str(content)
+                if node == "orchestrator" and not _orchestrator_delegated:
+                    # Primeira invocação do orchestrator: JSON de roteamento — descartar
+                    pass
+                else:
+                    chunk = event.get("data", {}).get("chunk")
+                    if chunk:
+                        response_content += _extract_text_chunk(chunk)
+
+            # CHAIN_END do orchestrator: captura routing_decision e resposta.
+            # O nó retorna um Command — o output pode ser o Command em si ou
+            # o dict de update resolvido. Suportamos ambos os formatos.
+            elif (
+                event_type == LangGraphEvent.CHAIN_END and event_name == "orchestrator"
+            ):
+                raw_output = event.get("data", {}).get("output", {})
+                # Command object → extrai o dict de update
+                if hasattr(raw_output, "update") and isinstance(
+                    raw_output.update, dict
+                ):
+                    output = raw_output.update
+                elif isinstance(raw_output, dict):
+                    output = raw_output
+                else:
+                    output = {}
+
+                if output:
+                    rd = output.get("routing_decision", "respond")
+                    if rd and rd != "respond":
+                        # Orchestrator delegou — marcar para liberar síntese
+                        routing_decision = rd
+                        _orchestrator_delegated = True
+                    elif rd == "respond":
+                        # Resposta direta OU síntese pós-RAG:
+                        # - sem delegação prévia → routing_decision = "respond"
+                        # - com delegação prévia → mantém o label do sub-agent
+                        if not _orchestrator_delegated:
+                            routing_decision = "respond"
+                        # Em ambos os casos, capturar AIMessage se ainda sem conteúdo
+                        if not response_content:
+                            msgs = output.get("messages", [])
+                            for msg in msgs:
+                                if (
+                                    isinstance(msg, AIMessage)
+                                    and msg.content
+                                    and not getattr(msg, "tool_calls", None)
+                                ):
+                                    c = msg.content
+                                    response_content = (
+                                        c if isinstance(c, str) else str(c)
+                                    )
+                                    break
 
             # Tool chamada: AMARELO (ou VERDE se terminal)
             elif event_type == LangGraphEvent.TOOL_START:
@@ -396,9 +474,7 @@ async def _process_user_turn(
                 tool_output = event.get("data", {}).get("output")
                 _render_tool_event_end(event_name, tool_output, status_ctx, verbosity)
 
-            # Captura AIMessage retornado diretamente pelo nó (sem streaming).
-            # Acontece quando call_llm captura internamente um erro de quota/rate-limit
-            # e retorna um AIMessage de fallback — nenhum CHAT_MODEL_STREAM é emitido.
+            # Fallback: captura AIMessage de nós legacy (call_llm, call_llm_debug)
             elif event_type == LangGraphEvent.CHAIN_END and event_name in (
                 "call_llm",
                 "call_llm_debug",
@@ -423,7 +499,26 @@ async def _process_user_turn(
             status_ctx.__exit__(None, None, None)
 
     if response_content:
-        console.print(ChatMessage("Vectora", response_content).to_panel())
+        # Marcador de quota: "quota rate limit:30:rpm" ou "quota rate limit:0:rpd"
+        _stripped = response_content.strip()
+        _is_quota_marker = _stripped.startswith("quota rate limit")
+        if _is_quota_marker:
+            import re
+
+            try:
+                from vectora.config.settings import settings
+
+                _provider = settings.llm_provider or "LLM"
+            except Exception:
+                _provider = "LLM"
+            # Formato: "quota rate limit:<segundos>:<kind>"
+            _m = re.search(r"quota rate limit:(\d+):(\w+)", _stripped)
+            _retry_after = int(_m.group(1)) if _m and int(_m.group(1)) > 0 else None
+            _kind = _m.group(2) if _m else "unknown"
+            console.print(QuotaErrorPanel.render(_provider, _retry_after, _kind))
+        else:
+            label = _AGENT_LABELS.get(routing_decision, "Vectora")
+            console.print(ChatMessage(label, response_content).to_panel())
         audit.add_message("Vectora", response_content)
 
     return response_content
@@ -524,6 +619,26 @@ async def chat_loop(
     log_queue: Queue | None = None
     log_panel_obj: LogPanel | None = None
 
+    def _apply_verbosity_logging(v: int) -> None:
+        """Ajusta nível do console handler conforme verbosity.
+
+        verbosity 0  → CRITICAL  (silencia tudo — console limpo para o usuário)
+        verbosity 1+ → WARNING
+        verbosity 2+ → INFO
+        verbosity 4+ → DEBUG
+        """
+        if v == 0:
+            set_console_log_level(logging.CRITICAL)
+        elif v == 1:
+            set_console_log_level(logging.WARNING)
+        elif v >= 4:
+            set_console_log_level(logging.DEBUG)
+        else:
+            set_console_log_level(logging.INFO)
+
+    # Aplica imediatamente — antes de qualquer log aparecer na tela
+    _apply_verbosity_logging(verbosity)
+
     def _setup_full_debug() -> None:
         """Set up live log panel (verbosity 5 only)."""
         nonlocal log_queue, log_panel_obj
@@ -619,6 +734,10 @@ async def chat_loop(
                 if should_exit:
                     console.print("\n[yellow][WAVE] Goodbye![/yellow]")
                     break
+
+                # Atualiza nível de log do console quando verbosity muda
+                if verbosity != old_verbosity:
+                    _apply_verbosity_logging(verbosity)
 
                 # Handle verbosity level 5 (full debug panel) transitions
                 if verbosity >= 5 and log_queue is None:

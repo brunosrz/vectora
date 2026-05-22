@@ -5,7 +5,7 @@ import json
 import logging
 import time
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from langchain.tools import tool
 from langchain_core.documents import Document as LCDoc
@@ -16,15 +16,34 @@ from vectora.services.text import text_service
 
 try:
     import lancedb
+    import pandas as pd
     from langchain_cohere import CohereEmbeddings, CohereRerank
     from pydantic import SecretStr
 except ImportError:
     lancedb = None  # type: ignore
+    pd = None  # type: ignore
     CohereEmbeddings = None  # type: ignore
     CohereRerank = None  # type: ignore
     SecretStr = None  # type: ignore
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_metadata(raw: object) -> dict[str, Any]:
+    """Desserializa o campo `metadata` de uma linha LanceDB para dict.
+
+    O metadata é gravado como string JSON pelo background worker. Aceita
+    também dict já desserializado (defensivo) e devolve {} em qualquer falha.
+    """
+    if isinstance(raw, dict):
+        return raw
+    if not isinstance(raw, str) or not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, dict) else {}
+    except json.JSONDecodeError, ValueError:
+        return {}
 
 
 def _is_cohere_quota_error(err: str) -> bool:
@@ -116,7 +135,7 @@ async def embedding(
                 {
                     "status": "quota_error",
                     "error": (
-                        "**⚠️ Cohere: quota/rate limit atingido.**\n"
+                        "**Cohere: quota/rate limit atingido.**\n"
                         "Aguarde alguns minutos ou verifique seu plano em dashboard.cohere.com."
                     ),
                     "collection": collection,
@@ -166,6 +185,9 @@ async def vector_search(
             model=settings.embedding_model,
         )
 
+        # embed_query → input_type="search_query" (Cohere v3 assimétrico).
+        # Os documentos são indexados com embed_documents → "search_document"
+        # no background worker. Não trocar por embed_documents aqui.
         query_vector = embeddings_model.embed_query(query)
 
         db = await lancedb.connect_async(str(settings.lancedb_dir))
@@ -225,7 +247,7 @@ async def vector_search(
                     {
                         "content": doc.page_content,
                         "metadata": doc.metadata,
-                        "relevance_score": getattr(doc, "relevance_score", None),
+                        "relevance_score": doc.metadata.get("relevance_score"),
                     }
                     for doc in reranked_docs
                 ]
@@ -272,7 +294,7 @@ async def vector_search(
                 {
                     "status": "quota_error",
                     "error": (
-                        "**⚠️ Cohere: quota/rate limit atingido.**\n"
+                        "**Cohere: quota/rate limit atingido.**\n"
                         "Aguarde alguns minutos ou verifique seu plano em dashboard.cohere.com."
                     ),
                 }
@@ -294,8 +316,10 @@ async def ingest_docs(
     - Indexar código-fonte Python, documentação ou qualquer conjunto de arquivos
 
     NUNCA chamar via terminal — esta é uma tool nativa, não um comando de shell.
-    Respeita automaticamente o .gitignore — __pycache__, .venv, node_modules
-    e demais entradas do .gitignore são ignorados automaticamente.
+    Respeita automaticamente .gitignore e .vectoraignore — __pycache__, .venv,
+    node_modules e demais entradas de ambos os arquivos são ignorados.
+    Crie um .vectoraignore na raiz do projeto para controle granular do RAG
+    (mesmo formato do .gitignore, ex: "tests/fixtures/**", "*.generated.py").
 
     Args:
         directory_path: Caminho da pasta (ex: ".", "vectora/agents", "docs/")
@@ -310,7 +334,7 @@ async def ingest_docs(
     """
     from pathlib import Path
 
-    from vectora.services.gitignore import is_ignored, load_gitignore_spec
+    from vectora.services.ignore import is_ignored, load_ignore_spec
     from vectora.services.security import is_safe_file_path
 
     if not is_safe_file_path(directory_path):
@@ -320,8 +344,8 @@ async def ingest_docs(
     if not path.is_dir():
         return f"Not a directory: {directory_path}"
 
-    # Carrega spec do .gitignore uma vez para todo o diretório
-    spec = load_gitignore_spec(path)
+    # Carrega specs combinadas (.gitignore + .vectoraignore) uma vez para todo o diretório
+    spec = load_ignore_spec(path)
 
     # Extrai o sufixo do glob_pattern (ex: **/*.md → .md) para filtrar por extensão
     # Se o padrão não tiver extensão definida, aceita todos os arquivos
@@ -342,7 +366,7 @@ async def ingest_docs(
         if is_ignored(f, path, spec):
             skipped_ignored += 1
             logger.debug(
-                "ingest_docs: arquivo ignorado por .gitignore",
+                "ingest_docs: arquivo ignorado por .gitignore, .vectoraignore",
                 extra={"file": str(f)},
             )
             continue
@@ -352,7 +376,7 @@ async def ingest_docs(
         return json.dumps(
             {
                 "status": "no_files",
-                "message": f"Nenhum arquivo encontrado em '{directory_path}' com padrão '{glob_pattern}' (após filtrar .gitignore)",
+                "message": f"Nenhum arquivo encontrado em '{directory_path}' com padrão '{glob_pattern}' (após filtrar .gitignore, .vectoraignore)",
                 "skipped_ignored": skipped_ignored,
             }
         )
@@ -406,7 +430,7 @@ async def ingest_docs(
                         {
                             "status": "quota_error",
                             "error": (
-                                "**⚠️ Cohere: quota/rate limit atingido.**\n"
+                                "**Cohere: quota/rate limit atingido.**\n"
                                 "Aguarde alguns minutos ou verifique seu plano em dashboard.cohere.com."
                             ),
                             "indexed_before_error": success_count,
@@ -445,3 +469,154 @@ async def ingest_docs(
             "collection": collection,
         }
     )
+
+
+@tool
+async def manage_retriever(
+    action: Literal["list", "delete", "purge"],
+    collection: str = "web_cache",
+    source: str | None = None,
+) -> str:
+    """Gerencia documentos indexados no RAG — listar, remover ou limpar.
+
+    Use para CORRIGIR a base de conhecimento. O Vectora indexa conteúdo web
+    automaticamente (após curadoria). Quando uma fonte se revela errada — por
+    exemplo, o usuário fornece depois o repositório ou doc canônico — use esta
+    tool para remover o que foi indexado por engano. Indexar é só metade do
+    trabalho; poder desfazer é o que mantém o RAG confiável.
+
+    Args:
+        action:
+            - "list": lista os documentos da coleção (source, title, score)
+            - "delete": remove documentos cujo source/url/title contém `source`
+            - "purge": apaga a coleção inteira — use com cuidado
+        collection: coleção LanceDB alvo (default: "web_cache", o bucket web).
+            Use "articles" para o bucket de docs curados pelo usuário.
+        source: para action="delete", trecho da URL/source/título a remover
+            (ex: "godot-gameplay-systems"). Obrigatório quando action="delete".
+
+    Returns:
+        JSON com o resultado da operação
+    """
+    if lancedb is None:
+        return json.dumps({"status": "error", "error": "LanceDB não instalado."})
+    if settings.lancedb_dir is None:
+        return json.dumps({"status": "error", "error": "lancedb_dir não configurado."})
+    if action == "delete" and not source:
+        return json.dumps(
+            {
+                "status": "error",
+                "error": "Param 'source' é obrigatório para action='delete'.",
+            }
+        )
+
+    try:
+        db = await lancedb.connect_async(str(settings.lancedb_dir))
+    except Exception as e:
+        return json.dumps(
+            {"status": "error", "error": f"Falha ao conectar LanceDB: {e}"}
+        )
+
+    # purge — apaga a coleção inteira
+    if action == "purge":
+        try:
+            await db.drop_table(collection)
+            logger.info("manage_retriever_purge", extra={"collection": collection})
+            return json.dumps({"status": "purged", "collection": collection})
+        except Exception as e:
+            return json.dumps(
+                {"status": "error", "error": f"Falha ao apagar '{collection}': {e}"}
+            )
+
+    # list / delete — abrem a tabela e escaneiam os metadados
+    try:
+        async with asyncio.timeout(10):
+            table = await db.open_table(collection)
+    except Exception:
+        return json.dumps(
+            {
+                "status": "no_results",
+                "message": f"Coleção '{collection}' não encontrada ou vazia",
+            }
+        )
+
+    try:
+        async with asyncio.timeout(15):
+            df = await table.to_pandas()
+    except Exception as e:
+        return json.dumps(
+            {"status": "error", "error": f"Falha ao ler '{collection}': {e}"}
+        )
+
+    # Parse do metadata vetorizado — uma passada pandas (.map), sem iterrows()
+    # (iterrows é notoriamente lento; .map roda em C sobre a Series inteira).
+    if "metadata" not in df.columns or "id" not in df.columns:
+        return json.dumps(
+            {
+                "status": "no_results",
+                "message": f"Coleção '{collection}' sem schema id/metadata",
+            }
+        )
+    ids = df["id"].astype(str)
+    meta = df["metadata"].map(_parse_metadata)
+
+    if action == "list":
+        items = [
+            {
+                "id": doc_id,
+                "source": m.get("source") or m.get("url", ""),
+                "title": m.get("title", ""),
+                "origin": m.get("origin", ""),
+                "relevance_score": m.get("relevance_score"),
+                "indexed_at": m.get("indexed_at", ""),
+            }
+            for doc_id, m in zip(ids, meta, strict=False)
+        ]
+        return json.dumps(
+            {
+                "status": "success",
+                "collection": collection,
+                "count": len(items),
+                "documents": items,
+            }
+        )
+
+    # action == "delete" — 'source' já validado no início da função.
+    # Match por substring via máscara booleana vetorizada sobre o DataFrame.
+    needle = (source or "").lower()
+
+    def _meta_matches(m: dict[str, Any]) -> bool:
+        return (
+            needle in str(m.get("source", "")).lower()
+            or needle in str(m.get("url", "")).lower()
+            or needle in str(m.get("title", "")).lower()
+        )
+
+    matched = ids[meta.map(_meta_matches)].tolist()
+    if not matched:
+        return json.dumps(
+            {
+                "status": "no_match",
+                "collection": collection,
+                "message": f"Nenhum documento com source contendo '{source}'",
+            }
+        )
+
+    try:
+        # queue_ids são UUIDs — sem aspas/escape a tratar no predicado SQL.
+        id_list = ", ".join(f"'{i}'" for i in matched)
+        await table.delete(f"id IN ({id_list})")
+        logger.info(
+            "manage_retriever_delete",
+            extra={"collection": collection, "deleted": len(matched)},
+        )
+        return json.dumps(
+            {
+                "status": "deleted",
+                "collection": collection,
+                "deleted": len(matched),
+                "ids": matched,
+            }
+        )
+    except Exception as e:
+        return json.dumps({"status": "error", "error": f"Falha ao deletar: {e}"})

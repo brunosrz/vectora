@@ -148,40 +148,40 @@ def _quota_message(err: str) -> str | None:
     # Google Gemini
     if "RESOURCE_EXHAUSTED" in err or "resource_exhausted" in err_lower:
         return (
-            "**⚠️ Gemini: quota da API atingida.**\n"
+            "**Gemini: quota da API atingida.**\n"
             "Aguarde alguns minutos ou configure outra `GOOGLE_API_KEY`."
         )
 
     # Anthropic — rate limit
     if "rate_limit_error" in err_lower and "anthropic" in err_lower:
         return (
-            "**⚠️ Anthropic: rate limit atingido.**\n"
+            "**Anthropic: rate limit atingido.**\n"
             "Aguarde alguns instantes ou consulte console.anthropic.com."
         )
     # Anthropic — servidor sobrecarregado
     if "overloaded_error" in err_lower:
         return (
-            "**⚠️ Anthropic: serviço sobrecarregado.**\n"
+            "**Anthropic: serviço sobrecarregado.**\n"
             "Tente novamente em alguns instantes."
         )
 
     # OpenAI — saldo/quota esgotado
     if "insufficient_quota" in err_lower or "exceeded your current quota" in err_lower:
         return (
-            "**⚠️ OpenAI: saldo/quota insuficiente.**\n"
+            "**OpenAI: saldo/quota insuficiente.**\n"
             "Verifique seu plano em platform.openai.com/account/billing."
         )
     # OpenAI — rate limit
     if "rate_limit_exceeded" in err_lower and ("openai" in err_lower or "429" in err):
         return (
-            "**⚠️ OpenAI: rate limit atingido.**\n"
+            "**OpenAI: rate limit atingido.**\n"
             "Aguarde alguns instantes antes de continuar."
         )
 
     # Genérico 429 / too many requests
     if "429" in err or "too many requests" in err_lower:
         return (
-            "**⚠️ Quota/rate limit da API atingido.**\n"
+            "**Quota/rate limit da API atingido.**\n"
             "Aguarde alguns minutos ou configure outra chave de API."
         )
 

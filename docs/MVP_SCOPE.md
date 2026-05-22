@@ -2,8 +2,8 @@
 
 Registro técnico completo de tudo implementado no Vectora v0.1.0. Serve como referência para o time e como checklist de release.
 
-**Versão:** 0.1.0rc3
-**Status:** 🟡 Feature-complete, em polimento final (rc2 — não publicada)
+**Versão:** 0.1.0rc4
+**Status:** 🟡 Feature-complete, em polimento final (rc4 — não publicada)
 
 ---
 
@@ -208,7 +208,7 @@ Pipeline de construção do prompt final:
 
 1. `build_messages(state, system_prompt)`
 2. `llm.astream(messages)` — coleta chunks acumulando `content` e `tool_calls`
-3. Trata `RESOURCE_EXHAUSTED` / HTTP 429 com mensagem de fallback `"⚠️ Quota da API atingida"`
+3. Trata `RESOURCE_EXHAUSTED` / HTTP 429 com mensagem de fallback `"Quota da API atingida"`
 4. Retorna `{"messages": [AIMessage(content=..., tool_calls=[...])]}`
 
 ---

@@ -150,7 +150,7 @@ async def handle_rag_add(raw_args: str, console: Any) -> None:
                     f"  Chunks:    [bold]{data.get('total_chunks', 0)}[/bold]\n"
                     f"  Enfileirados: [green]{data.get('indexed', 0)}[/green]\n"
                     f"  Falhas:    [red]{data.get('failed', 0)}[/red]\n"
-                    f"  Ignorados (.gitignore): [dim]{data.get('skipped_ignored', 0)}[/dim]\n\n"
+                    f"  Ignorados (.gitignore, .vectoraignore): [dim]{data.get('skipped_ignored', 0)}[/dim]\n\n"
                     f"[dim]Use /rag para acompanhar o progresso do worker.[/dim]",
                     title=f"[bold cyan]RAG — {directory_path}[/bold cyan]",
                     border_style="cyan",
@@ -330,10 +330,13 @@ async def handle_rag_command(args: str, console: Any) -> None:
         n = queue_stats.get(key, 0)
         queue_table.add_row(key, f"{color}{n}[/]", desc)
 
-    # LanceDB collections
+    # LanceDB collections — total + breakdown por origem (curado vs web).
+    # O breakdown usa pandas para agregar `metadata.origin` numa passada.
     lancedb_lines: list[str] = []
     try:
         import lancedb as _lancedb
+
+        from vectora.tools.rag import _parse_metadata
 
         db = await _lancedb.connect_async(str(settings.lancedb_dir))
         names = await db.table_names()
@@ -342,7 +345,25 @@ async def handle_rag_command(args: str, console: Any) -> None:
                 try:
                     tbl = await db.open_table(name)
                     cnt = await tbl.count_rows()
-                    lancedb_lines.append(f"  [bold]{name}[/bold]   {cnt} docs")
+                    origin_note = ""
+                    if cnt:
+                        try:
+                            df = await tbl.to_pandas()
+                            origins = (
+                                df["metadata"]
+                                .map(_parse_metadata)
+                                .map(lambda m: m.get("origin", ""))
+                            )
+                            web_n = int((origins == "web_search").sum())
+                            curated_n = cnt - web_n
+                            origin_note = (
+                                f"  [dim](curado {curated_n} · web {web_n})[/dim]"
+                            )
+                        except Exception:
+                            origin_note = ""
+                    lancedb_lines.append(
+                        f"  [bold]{name}[/bold]   {cnt} docs{origin_note}"
+                    )
                 except Exception:
                     lancedb_lines.append(f"  [bold]{name}[/bold]   (erro ao contar)")
         else:
