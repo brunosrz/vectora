@@ -17,7 +17,7 @@ Estes itens foram antecipados e implementados no MVP:
 - ✅ Cascading automático: web_search → LanceDB fire-and-forget
 - ✅ Tools distribuídas por agente (SEARCH_TOOLS / FS_TOOLS / MEMORY_TOOLS)
 
-## ✅ Shipped em v0.1.0rc2 (em desenvolvimento)
+## ✅ Shipped em v0.1.0rc3 (em desenvolvimento)
 
 Features adicionadas durante o ciclo rc2, antes da publicação final:
 
