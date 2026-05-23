@@ -11,15 +11,15 @@ def get_vectora_version() -> str:
     """Get Vectora version from package metadata.
 
     Returns the version string from pyproject.toml.
-    Falls back to "0.1.0rc4" if package is not installed.
+    Falls back to "0.1.0dev6" if package is not installed.
 
     Returns:
-        Version string (e.g., "0.1.0rc4")
+        Version string (e.g., "0.1.0dev6")
     """
     try:
         return get_version("vectora")
     except PackageNotFoundError:
-        return "0.1.0rc4"
+        return "0.1.0dev6"
 
 
 __version__ = get_vectora_version()

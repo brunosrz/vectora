@@ -39,6 +39,18 @@ services:
       retries: 3
       start_period: 40s
 
+  vectora-chat:
+    image: ghcr.io/brunosrz/vectora-chat:latest
+    restart: unless-stopped
+    depends_on:
+      vectora:
+        condition: service_healthy
+    environment:
+      # O backend LangGraph via endpoint HTTP
+      - VECTORA_API_URL=http://vectora:8000
+    ports:
+      - "3000:3000"
+
 volumes:
   vectora-data:
     driver: local

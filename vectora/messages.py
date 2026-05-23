@@ -8,22 +8,6 @@ Não são enviados ao LLM — apenas rastreados no State para que o orchestrator
 possa saber o que já foi gerado na sessão.
 """
 
-from typing import NotRequired, TypedDict
+from vectora.types.documents import ArtifactMetadata
 
-
-class ArtifactMetadata(TypedDict, total=False):
-    """Metadado de um artifact persistido em disco.
-
-    Campos:
-    - title: Título extraído do conteúdo (primeiro # ou primeiras 6 palavras)
-    - path: Caminho absoluto do arquivo no disco
-    - session_id: ID da sessão que gerou o artifact
-    - created_at: ISO 8601 timestamp
-    - content_preview: Primeiros 200 chars do conteúdo (para exibição no orchestrator)
-    """
-
-    title: str
-    path: str
-    session_id: str
-    created_at: str
-    content_preview: NotRequired[str]
+__all__ = ["ArtifactMetadata"]

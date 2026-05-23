@@ -1,6 +1,6 @@
 # Vectora
 
-**Vectora** is an open-source AI assistant (Apache 2.0) built for developers — local-first, self-hosted, and designed to run as a powerful sub-agent inside any MCP-compatible orchestrator (Claude Code, Claude Desktop, Paperclip, VS Code extensions).
+**Vectora** is an open-source AI assistant (Apache 2.0) built for developers — self-hosted, and designed to run as a powerful sub-agent inside any MCP-compatible orchestrator (Claude Code, Claude Desktop, Paperclip, VS Code extensions).
 
 At its core, Vectora solves the **knowledge gap problem**: LLMs don't know your codebase, your docs, or the latest versions of your stack. Vectora bridges that gap with RAG (Retrieval-Augmented Generation) — ingest your docs once, and every AI interaction becomes contextually aware.
 

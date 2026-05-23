@@ -1,6 +1,6 @@
 # Vectora
 
-O **Vectora** é um assistente de IA de código aberto (licença Apache 2.0) desenvolvido especialmente para desenvolvedores. Ele é projetado com foco no local-first e auto-hospedado (self-hosted), funcionando perfeitamente como um sub-agente poderoso dentro de qualquer orquestrador compatível com o protocolo MCP (como Claude Code, Claude Desktop, Paperclip e extensões do VS Code).
+O **Vectora** é um assistente de IA de código aberto (licença Apache 2.0) desenvolvido especialmente para desenvolvedores. Ele é self-hosted, funcionando perfeitamente como um sub-agente poderoso dentro de qualquer orquestrador compatível com o protocolo MCP (como Claude Code, Claude Desktop, Paperclip e extensões do VS Code).
 
 Em sua essência, o Vectora resolve o **problema do abismo de conhecimento (knowledge gap)**: os LLMs não conhecem sua base de código, sua documentação ou as versões mais recentes das tecnologias da sua stack. O Vectora preenche essa lacuna utilizando RAG (Retrieval-Augmented Generation) — você indexa seus documentos uma única vez e, a partir de então, todas as interações com a IA passam a ter consciência contextual completa.
 

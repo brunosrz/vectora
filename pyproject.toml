@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vectora-agent"
-version = "0.1.0rc4"
+version = "0.1.0dev6"
 description = "Vectora - Advanced AI Assistant with RAG and MCP capabilities"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -56,6 +56,7 @@ dependencies = [
     "mypy>=2.1.0",
     "bandit>=1.9.4",
     "types-python-dateutil",
+    "pyright>=1.1.409",
 ]
 
 [project.scripts]
@@ -63,6 +64,10 @@ vectora = "vectora.main:run"
 
 [tool.hatch.build.targets.wheel]
 packages = ["vectora"]
+exclude = ["chat"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["chat"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "vectora/config/defaults.env" = "defaults.env"

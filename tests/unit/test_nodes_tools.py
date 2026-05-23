@@ -51,7 +51,21 @@ def test_manage_retriever_registered():
     assert "manage_retriever" in names
 
 
+def test_workspace_tools_registered():
+    # Bloco B6 — ferramentas de workspace expostas aos agentes.
+    names = [t.name for t in ALL_TOOLS]
+    assert "workspace_describe" in names
+    assert "workspace_list" in names
+    assert "bucket_summary" in names
+
+
+def test_search_memory_registered():
+    # C4 — busca semântica em memórias deve estar disponível aos agentes.
+    names = [t.name for t in ALL_TOOLS]
+    assert "search_memory" in names
+
+
 def test_all_tools_count():
-    # 16 tools após o Bloco A5 (15 + manage_retriever). Guarda contra perda
-    # acidental de registro de ferramentas.
-    assert len(ALL_TOOLS) == 16
+    # 20 tools após o Bloco C4 (19 + search_memory).
+    # Guarda contra perda acidental de registro de ferramentas.
+    assert len(ALL_TOOLS) == 20

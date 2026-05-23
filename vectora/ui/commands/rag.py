@@ -143,15 +143,27 @@ async def handle_rag_add(raw_args: str, console: Any) -> None:
 
         status = data.get("status", "unknown")
         if status == "completed":
+            skipped = data.get("skipped_ignored", 0)
+            ingest_fails = data.get("failed", 0)
+            skipped_note = (
+                f"  Ignorados (__pycache__, .gitignore…): [dim]{skipped}[/dim]\n"
+                if skipped > 0
+                else "  Ignorados (.gitignore, .vectoraignore): [dim]0[/dim]\n"
+            )
+            fail_hint = (
+                "\n[dim]  → /rag failed para ver erros · /rag retry para reprocessar[/dim]\n"
+                if ingest_fails > 0
+                else ""
+            )
             console.print(
                 Panel(
                     f"[green]✓ Indexação concluída[/green]\n\n"
                     f"  Arquivos:  [bold]{data.get('total_files', 0)}[/bold]\n"
                     f"  Chunks:    [bold]{data.get('total_chunks', 0)}[/bold]\n"
                     f"  Enfileirados: [green]{data.get('indexed', 0)}[/green]\n"
-                    f"  Falhas:    [red]{data.get('failed', 0)}[/red]\n"
-                    f"  Ignorados (.gitignore, .vectoraignore): [dim]{data.get('skipped_ignored', 0)}[/dim]\n\n"
-                    f"[dim]Use /rag para acompanhar o progresso do worker.[/dim]",
+                    f"  Falhas ao ler/chunkar: [red]{ingest_fails}[/red]{fail_hint}"
+                    f"{skipped_note}"
+                    f"\n[dim]Use /rag para acompanhar o progresso do worker.[/dim]",
                     title=f"[bold cyan]RAG — {directory_path}[/bold cyan]",
                     border_style="cyan",
                 )

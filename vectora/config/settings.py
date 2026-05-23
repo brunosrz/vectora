@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     # APPLICATION IDENTITY & VERSIONING
     # ============================================================================
 
-    version: str = "0.1.0rc4"
+    version: str = "0.1.0dev6"
     """Vectora version (synced with pyproject.toml)."""
 
     app_name: str = "Vectora"
@@ -229,6 +229,46 @@ class Settings(BaseSettings):
     web_persist_min_score: float = 0.5
     """Score mínimo do reranker para um resultado web sobreviver ao gate de
     curadoria. Abaixo disso é descartado antes mesmo do LLM judge."""
+
+    # ── RAG Curator (Bloco B4) ────────────────────────────────────────────────
+    rag_curator_enabled: bool = True
+    """Liga o curator de RAG (resumo automático do manifest após ingestão)."""
+
+    rag_curator_debounce_seconds: float = 30.0
+    """Segundos de debounce após último doc indexado antes de disparar o curator.
+    Garante que batchs grandes geram apenas 1 LLM call de síntese, não N."""
+
+    # ── Hybrid RAG — BM25 + Dense (Bloco C1) ─────────────────────────────────
+    rag_hybrid_enabled: bool = True
+    """Ativa busca híbrida: dense (Cohere) + sparse (BM25) com RRF merge.
+    Melhora recall em queries curtas ou com termos técnicos exatos."""
+
+    rag_hybrid_fetch_limit: int = 20
+    """Candidatos por coleção para BM25 (pool maior que o resultado final).
+    BM25 reordena esses candidatos; RRF faz a fusão final."""
+
+    # ── Multi-query retrieval (Bloco C2) ─────────────────────────────────────
+    rag_multi_query_enabled: bool = True
+    """Gera N reformulações da query antes de buscar para aumentar o recall."""
+
+    rag_multi_query_n: int = 3
+    """Número de variantes da query geradas pelo LLM (inclui a original)."""
+
+    # ── HyDE — Hypothetical Document Embedding (Bloco C3) ────────────────────
+    rag_hyde_enabled: bool = True
+    """Ativa HyDE quando score inicial < threshold: gera documento hipotético,
+    embeda-o e usa o vetor resultante para uma segunda busca."""
+
+    rag_hyde_threshold: float = 0.5
+    """Score abaixo do qual HyDE é ativado — entre _SCORE_LOW (0.4) e _SCORE_HIGH (0.7)."""
+
+    # ── Semantic Memory (Bloco C4) ────────────────────────────────────────────
+    memory_semantic_enabled: bool = True
+    """Armazena embeddings das memórias para busca semântica via search_memory."""
+
+    # ── Parallel Agent Execution (Bloco C5) ──────────────────────────────────
+    rag_parallel_agents_enabled: bool = True
+    """Permite ao orchestrator disparar múltiplos agentes em paralelo via asyncio.gather."""
 
     # ============================================================================
     # MCP (MODEL CONTEXT PROTOCOL)

@@ -23,9 +23,10 @@ from vectora.tools.fs import (
     list_dir,
     terminal,
 )
-from vectora.tools.memory import delete_memory, get_memory, save_memory
+from vectora.tools.memory import delete_memory, get_memory, save_memory, search_memory
 from vectora.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
 from vectora.tools.web import fetch_url, web_search
+from vectora.tools.workspace import bucket_summary, workspace_describe, workspace_list
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
@@ -57,8 +58,11 @@ FS_TOOLS: list[BaseTool] = [
     create_artifact,
 ]
 
-#: Ferramentas de memória
-MEMORY_TOOLS: list[BaseTool] = [save_memory, get_memory, delete_memory]
+#: Ferramentas de memória (C4: search_memory adicionado)
+MEMORY_TOOLS: list[BaseTool] = [save_memory, get_memory, delete_memory, search_memory]
+
+#: Ferramentas de workspace e manifests (B6)
+WORKSPACE_TOOLS: list[BaseTool] = [workspace_describe, workspace_list, bucket_summary]
 
 #: Ferramentas RAG de ingestão e gestão
 RAG_TOOLS: list[BaseTool] = [vector_search, embedding, ingest_docs, manage_retriever]
@@ -88,6 +92,10 @@ for _t in [
     save_memory,
     get_memory,
     delete_memory,
+    search_memory,
+    workspace_describe,
+    workspace_list,
+    bucket_summary,
 ]:
     _all[_t.name] = _t
 
@@ -118,6 +126,7 @@ __all__ = [
     "MEMORY_TOOLS",
     "RAG_TOOLS",
     "SEARCH_TOOLS",
+    "WORKSPACE_TOOLS",
     "all_tool_node",
     "coder_tool_node",
     "memory_tool_node",

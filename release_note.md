@@ -1,6 +1,6 @@
-# Vectora v0.1.0rc4
+# Vectora v0.1.0dev6
 
-**Vectora** is an open-source AI assistant for developers, built to run as a sub-agent inside Claude Code, Paperclip, and any MCP-compatible orchestrator. Local-first, self-hosted, zero mandatory infrastructure.
+**Vectora** is an open-source AI assistant for developers, built to run as a sub-agent inside Claude Code, Paperclip, and any MCP-compatible orchestrator. Self-hosted, zero mandatory infrastructure.
 
 ---
 

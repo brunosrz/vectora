@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 from langchain.tools import tool
 from langchain_core.documents import Document as LCDoc
+from langchain_core.runnables import RunnableConfig
 
 from vectora.config.settings import settings
 from vectora.services.queue import get_embedding_queue
@@ -59,7 +60,7 @@ def _is_cohere_quota_error(err: str) -> bool:
     )
 
 
-@tool
+@tool(extras={"render_hint": "queue_badge"})
 async def embedding(
     text: str, collection: str = "articles", metadata: dict[str, Any] | None = None
 ) -> str:
@@ -150,7 +151,7 @@ async def embedding(
         )
 
 
-@tool
+@tool(extras={"render_hint": "search_results"})
 async def vector_search(
     query: str, collection: str = "articles", limit: int = 5
 ) -> str:
@@ -302,11 +303,12 @@ async def vector_search(
         return json.dumps({"status": "failed", "error": err or "Vector search failed"})
 
 
-@tool
+@tool(extras={"render_hint": "queue_progress"})
 async def ingest_docs(
     directory_path: str,
     collection: str = "articles",
     glob_pattern: str = "**/*.py",
+    config: RunnableConfig | None = None,
 ) -> str:
     """Indexa um diretório inteiro de arquivos no banco vetorial (LanceDB).
 
@@ -347,30 +349,28 @@ async def ingest_docs(
     # Carrega specs combinadas (.gitignore + .vectoraignore) uma vez para todo o diretório
     spec = load_ignore_spec(path)
 
-    # Extrai o sufixo do glob_pattern (ex: **/*.md → .md) para filtrar por extensão
-    # Se o padrão não tiver extensão definida, aceita todos os arquivos
-    suffix_filter: str | None = None
-    if "." in glob_pattern.rsplit("/", maxsplit=1)[-1]:
-        suffix_filter = "." + glob_pattern.rsplit(".", 1)[-1]
+    # Usa o glob_pattern diretamente no rglob para que o Python filtre por extensão
+    # de forma nativa — ex: "**/*.py" → rglob("*.py") retorna apenas arquivos .py,
+    # nunca .pyc nem qualquer outro sufixo.  Depois aplica is_ignored em TODOS os
+    # candidatos, garantindo que __pycache__, .venv e demais dirs hardcoded em
+    # ALWAYS_SKIP_DIRS sejam contabilizados corretamente em skipped_ignored.
+    stripped_glob = glob_pattern
+    while stripped_glob.startswith("**/"):
+        stripped_glob = stripped_glob[3:]
 
-    # Varre o diretório respeitando .gitignore
-    raw_files = sorted(path.rglob("*"))
+    all_matching = sorted(f for f in path.rglob(stripped_glob) if f.is_file())
     files_to_ingest: list[Path] = []
     skipped_ignored = 0
 
-    for f in raw_files:
-        if not f.is_file():
-            continue
-        if suffix_filter and f.suffix != suffix_filter:
-            continue
+    for f in all_matching:
         if is_ignored(f, path, spec):
             skipped_ignored += 1
             logger.debug(
-                "ingest_docs: arquivo ignorado por .gitignore, .vectoraignore",
+                "ingest_docs: arquivo ignorado por .gitignore/.vectoraignore/ALWAYS_SKIP",
                 extra={"file": str(f)},
             )
-            continue
-        files_to_ingest.append(f)
+        else:
+            files_to_ingest.append(f)
 
     if not files_to_ingest:
         return json.dumps(
@@ -403,11 +403,19 @@ async def ingest_docs(
         total_chunks += len(chunks)
 
         for chunk_text in chunks:
-            chunk_metadata = {
+            # workspace_id injetado no metadata para isolamento por projeto (B5)
+            _workspace_id = (
+                (config.get("configurable") or {}).get("workspace_id")
+                if config is not None
+                else None
+            )
+            chunk_metadata: dict[str, Any] = {
                 "source": str(file_path),
                 "source_dir": directory_path,
                 "ingested_at": datetime.now(UTC).isoformat(),
             }
+            if _workspace_id:
+                chunk_metadata["workspace_id"] = _workspace_id
 
             try:
                 res = await embedding.ainvoke(
@@ -471,7 +479,7 @@ async def ingest_docs(
     )
 
 
-@tool
+@tool(extras={"render_hint": "table"})
 async def manage_retriever(
     action: Literal["list", "delete", "purge"],
     collection: str = "web_cache",

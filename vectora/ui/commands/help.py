@@ -89,6 +89,13 @@ _COMMANDS_TEXT = """
   Switch to a specific session by ID
   Usage: [dim]/session 1[/dim]
 
+[bold]/traces[/bold]
+  Exibe spans recentes do VectoraTracer (observabilidade interna)
+  Usage: [dim]/traces[/dim]
+         [dim]/traces --session <id>[/dim]
+         [dim]/traces --node orchestrator[/dim]
+         [dim]/traces --clear[/dim]
+
 [bold]/list[/bold]
   Show this list of all available commands
   Usage: [dim]/list[/dim]

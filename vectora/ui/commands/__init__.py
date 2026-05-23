@@ -33,6 +33,8 @@ from vectora.ui.commands.session import (
     handle_new_session,
     handle_switch_session,
 )
+from vectora.ui.commands.traces import handle_traces_command
+from vectora.ui.commands.workspaces import handle_workspaces_command
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +109,13 @@ async def handle_command(
 
     elif cmd == "/rag":
         await handle_rag_command(args, console)
+
+    elif cmd == "/traces":
+        await handle_traces_command(args, console, context)
+
+    elif cmd == "/workspaces":
+        workspace_id = getattr(context, "workspace_id", None) if context else None
+        handle_workspaces_command(args, console, current_workspace_id=workspace_id)
 
     elif cmd == "/list":
         display_command_list(console)

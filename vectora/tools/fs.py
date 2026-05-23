@@ -22,7 +22,7 @@ from vectora.services.terminal_stream import emit_terminal_line
 logger = logging.getLogger(__name__)
 
 
-@tool
+@tool(extras={"render_hint": "code_block"})
 def file_read(file_path: str) -> str:
     """Lê conteúdo completo de um arquivo de texto.
 
@@ -49,7 +49,7 @@ def file_read(file_path: str) -> str:
         return "Error reading file. Check logs."
 
 
-@tool
+@tool(extras={"render_hint": "diff"})
 def file_edit(
     file_path: str, old_text: str, new_text: str, replace_all: bool = False
 ) -> str:
@@ -101,7 +101,7 @@ def file_edit(
         return "Error editing file. Check logs."
 
 
-@tool
+@tool(extras={"render_hint": "code_block"})
 def file_write(file_path: str, content: str) -> str:
     """Cria ou sobrescreve completamente um arquivo com o conteúdo fornecido.
 
@@ -134,7 +134,7 @@ def file_write(file_path: str, content: str) -> str:
         return "Error writing file. Check logs."
 
 
-@tool
+@tool(extras={"render_hint": "code_block"})
 def grep(pattern: str, path: str = ".") -> str:
     """Busca padrão em arquivos usando regex.
 
@@ -179,7 +179,7 @@ def grep(pattern: str, path: str = ".") -> str:
         return "Error during grep. Check logs."
 
 
-@tool
+@tool(extras={"render_hint": "code_block"})
 def list_dir(path: str = ".", *, recursive: bool = False) -> str:
     """Lista arquivos em um diretório.
 
@@ -224,7 +224,7 @@ def list_dir(path: str = ".", *, recursive: bool = False) -> str:
         return "Error listing directory. Check logs."
 
 
-@tool
+@tool(extras={"render_hint": "terminal_output"})
 async def terminal(command: str) -> str:
     """Executa um comando shell de forma assíncrona (não bloqueia o event loop).
 
@@ -350,7 +350,7 @@ def _artifact_slug(title: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-@tool
+@tool(extras={"render_hint": "code_block"})
 def create_artifact(
     artifact_type: str,
     title: str,

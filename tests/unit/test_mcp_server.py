@@ -467,19 +467,20 @@ class TestRun:
         mock_run.assert_called_once_with(transport="stdio")
 
     def test_run_sse_transport(self):
-        """run() com MCP_TRANSPORT=sse chama mcp.run(transport='sse')."""
+        """run() com MCP_TRANSPORT=sse chama _run_sse_with_heartbeat (D2)."""
         with (
             patch.dict(
                 "os.environ",
                 {"MCP_TRANSPORT": "sse", "MCP_HOST": "127.0.0.1", "MCP_PORT": "9000"},
                 clear=False,
             ),
-            patch.object(srv.mcp, "run") as mock_run,
+            patch.object(srv, "_run_sse_with_heartbeat") as mock_heartbeat,
             patch("rich.console.Console"),
         ):
             srv.run()
 
-        mock_run.assert_called_once_with(transport="sse")
+        # D2: SSE agora usa _run_sse_with_heartbeat em vez de mcp.run(transport="sse")
+        mock_heartbeat.assert_called_once_with(srv.mcp, "127.0.0.1", 9000)
 
     def test_run_keyboard_interrupt_exits_0(self):
         """KeyboardInterrupt durante mcp.run() → sys.exit(0)."""

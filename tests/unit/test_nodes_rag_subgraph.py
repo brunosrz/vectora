@@ -94,30 +94,44 @@ class TestRagDecide:
 class TestRagRetrieve:
     @pytest.mark.asyncio
     async def test_returns_docs(self):
+        from langchain_core.runnables import RunnableConfig
+
         docs = [_doc(0.9, "c1"), _doc(0.7, "c2")]
+        config: RunnableConfig = {"configurable": {}}
         with patch(
             "vectora.nodes.rag_subgraph._call_vector_search_all",
             new_callable=AsyncMock,
         ) as m:
             m.return_value = docs
-            result = await rag_retrieve(_state())
+            result = await rag_retrieve(_state(), config=config)
         assert result["rag_query"] == "como funciona o JWT?"
         assert len(result["rag_docs"]) == 2
 
     @pytest.mark.asyncio
     async def test_empty_query_returns_early(self):
-        result = await rag_retrieve(_state(messages=[]))
+        from langchain_core.runnables import RunnableConfig
+
+        config: RunnableConfig = {"configurable": {}}
+        result = await rag_retrieve(_state(messages=[]), config=config)
         assert result["rag_docs"] == []
         assert result["rag_query"] == ""
 
     @pytest.mark.asyncio
     async def test_no_results(self):
-        with patch(
-            "vectora.nodes.rag_subgraph._call_vector_search_all",
-            new_callable=AsyncMock,
-        ) as m:
+        from langchain_core.runnables import RunnableConfig
+
+        config: RunnableConfig = {"configurable": {}}
+        with (
+            patch(
+                "vectora.nodes.rag_subgraph._call_vector_search_all",
+                new_callable=AsyncMock,
+            ) as m,
+            patch("vectora.nodes.rag_subgraph.settings") as ms,
+        ):
             m.return_value = []
-            result = await rag_retrieve(_state())
+            ms.rag_hyde_enabled = False  # isola teste do HyDE
+            ms.rag_multi_query_enabled = False
+            result = await rag_retrieve(_state(), config=config)
         assert result["rag_docs"] == []
 
 

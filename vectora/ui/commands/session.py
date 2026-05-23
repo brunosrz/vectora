@@ -12,6 +12,19 @@ from vectora.ui.main import SuccessPanel
 logger = logging.getLogger(__name__)
 
 
+def _fmt_session_id(tid: object) -> str:
+    """Formata um thread_id para exibição no padrão de 6 dígitos.
+
+    - IDs novos já vêm como string de 6 dígitos ('674227') → exibidos como estão.
+    - IDs legados são inteiros ou strings curtas ('1', '42') → zero-padded ('000001').
+    - Qualquer outro valor é exibido como string pura (graceful fallback).
+    """
+    s = str(tid)
+    if re.fullmatch(r"\d{1,6}", s):
+        return s.zfill(6)
+    return s  # já é 6 dígitos exatos ou formato inesperado
+
+
 async def handle_new_session(context: Any, console: Any) -> Any:
     """Create a new chat session associated with the current working directory.
 
@@ -32,10 +45,12 @@ async def handle_new_session(context: Any, console: Any) -> Any:
         await session_service.initialize()
         new_thread_id = await session_service.create(working_directory=cwd)
     except Exception:
-        # Fallback: simple increment (no DB available)
-        new_thread_id = (context.thread_id or 1) + 1
+        # Fallback: gera ID de 6 dígitos aleatório (sem DB)
+        import random
+
+        new_thread_id = f"{random.randint(0, 999_999):06d}"  # noqa: S311
         logger.warning(
-            "SessionService unavailable, using fallback thread_id=%d", new_thread_id
+            "SessionService unavailable, using fallback thread_id=%s", new_thread_id
         )
 
     # Update directory mapping so the next startup resumes this session
@@ -47,12 +62,12 @@ async def handle_new_session(context: Any, console: Any) -> Any:
 
     console.print(
         SuccessPanel.render(
-            f"New session created: [bold]{new_thread_id}[/bold]\n"
+            f"New session created: [bold]{_fmt_session_id(new_thread_id)}[/bold]\n"
             f"[dim]Linked to: {cwd}[/dim]",
             title="New Session",
         )
     )
-    logger.info("New session created: thread_id=%d cwd=%s", new_thread_id, cwd)
+    logger.info("New session created: thread_id=%s cwd=%s", new_thread_id, cwd)
     return new_context
 
 
@@ -76,14 +91,15 @@ async def handle_list_sessions(context: Any, console: Any) -> None:
         sessions = await session_service.list_all()
 
         table = Table(title="Sessions", show_lines=True, border_style="cyan")
-        table.add_column("ID", style="bold green", justify="center", width=6)
+        table.add_column("ID", style="bold green", justify="center", width=8)
         table.add_column("Messages", justify="center", width=9)
         table.add_column("Last Activity", style="dim", width=22)
         table.add_column("Directory", style="dim")
         table.add_column("", width=10)
 
         for s in sessions:
-            tid = s.get("thread_id", "?")
+            tid_raw = s.get("thread_id", "?")
+            tid_str = _fmt_session_id(tid_raw)
             msgs = str(s.get("message_count", 0))
             activity = str(s.get("last_activity", ""))[:19].replace("T", " ")
             wdir = str(s.get("working_directory", "—"))
@@ -91,9 +107,10 @@ async def handle_list_sessions(context: Any, console: Any) -> None:
             home = str(Path.home())
             if wdir.startswith(home):
                 wdir = "~" + wdir[len(home) :]
-            current = "◀ current" if tid == context.thread_id else ""
-            style = "on dark_cyan" if tid == context.thread_id else ""
-            table.add_row(str(tid), msgs, activity, wdir, current, style=style)
+            is_current = str(tid_raw) == str(context.thread_id)
+            current = "◀ current" if is_current else ""
+            style = "on dark_cyan" if is_current else ""
+            table.add_row(tid_str, msgs, activity, wdir, current, style=style)
 
         console.print(Panel(table, style="cyan", expand=False))
 

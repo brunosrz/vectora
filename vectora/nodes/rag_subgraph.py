@@ -1,21 +1,28 @@
 """RAG Subgraph — Pipeline completo de Retrieval-Augmented Generation.
 
 Fluxo:
-  START → rag_retrieve → rag_decide → rag_rerank  → rag_inject → END
-                                    ↘ rag_websearch → rag_inject → END
+  START → rag_expand_query → rag_retrieve → rag_decide → rag_rerank  → rag_inject → END
+                                                        ↘ rag_websearch → rag_inject → END
 
 Integração com o grafo principal:
   - Entra como nó "rag_subgraph" vindo do router
   - Ao terminar, devolve controle para "call_llm" via END do subgrafo
+
+Melhorias C1-C3:
+  C1 — Hybrid RAG: dense (Cohere) + BM25 sparse com RRF merge
+  C2 — Multi-query: LLM gera N variantes da query para aumentar recall
+  C3 — HyDE: documento hipotético quando score inicial é baixo
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 
 from vectora.config.settings import settings
 from vectora.state import Document, State
@@ -95,6 +102,77 @@ async def _list_collections() -> list[str]:
         return []
 
 
+# ---------------------------------------------------------------------------
+# C1 — Hybrid RAG: BM25 + RRF
+# ---------------------------------------------------------------------------
+
+
+def _tokenize(text: str) -> list[str]:
+    """Tokenização simples para BM25 — divide por palavras e lowercasa.
+
+    Usa regex em vez de NLTK para manter o código multilíngue sem deps extras.
+    Funciona bem para PT-BR, inglês e código-fonte (tokens alfanuméricos).
+    """
+    return re.findall(r"\w+", text.lower())
+
+
+def _bm25_search(
+    query: str, docs: list[Document], n_results: int = 5
+) -> list[Document]:
+    """Rerank de docs usando BM25Okapi — retorna top N por score esparso.
+
+    Se `rank-bm25` não estiver disponível ou a lista estiver vazia, devolve os
+    docs originais truncados a n_results (degradação graciosa).
+    """
+    if not docs:
+        return []
+    try:
+        from rank_bm25 import BM25Okapi
+    except ImportError:
+        logger.debug("rank-bm25 não disponível, skip BM25")
+        return docs[:n_results]
+
+    corpus = [_tokenize(d.get("page_content", "")) for d in docs]
+    bm25 = BM25Okapi(corpus)
+    scores = bm25.get_scores(_tokenize(query))
+
+    ranked = sorted(zip(scores, docs, strict=False), key=lambda x: x[0], reverse=True)
+    return [doc for _, doc in ranked[:n_results]]
+
+
+def _rrf_merge(
+    dense_docs: list[Document],
+    sparse_docs: list[Document],
+    k: int = 60,
+    n_results: int = 5,
+) -> list[Document]:
+    """Reciprocal Rank Fusion — combina rankings denso e esparso.
+
+    RRF score = Σ 1/(k + rank_i + 1) para cada lista i que contém o doc.
+    k=60 é o valor canônico da literatura (Cormack et al., 2009).
+    """
+
+    def _doc_key(doc: Document) -> str:
+        meta = doc.get("metadata") or {}
+        return meta.get("source", "") + "|" + (doc.get("page_content") or "")[:80]
+
+    rrf_scores: dict[str, float] = {}
+    doc_map: dict[str, Document] = {}
+
+    for rank, doc in enumerate(dense_docs):
+        key = _doc_key(doc)
+        rrf_scores[key] = rrf_scores.get(key, 0.0) + 1.0 / (k + rank + 1)
+        doc_map[key] = doc
+
+    for rank, doc in enumerate(sparse_docs):
+        key = _doc_key(doc)
+        rrf_scores[key] = rrf_scores.get(key, 0.0) + 1.0 / (k + rank + 1)
+        doc_map.setdefault(key, doc)
+
+    sorted_keys = sorted(rrf_scores, key=lambda x: rrf_scores[x], reverse=True)
+    return [doc_map[key] for key in sorted_keys[:n_results]]
+
+
 async def _call_vector_search(
     query: str, collection: str = "articles", limit: int = 5
 ) -> list[Document]:
@@ -128,21 +206,25 @@ async def _call_vector_search(
         return []
 
 
-async def _call_vector_search_all(query: str, limit: int = 5) -> list[Document]:
-    """Busca em TODAS as coleções LanceDB existentes e mescla os resultados.
+async def _call_vector_search_all(
+    query: str,
+    limit: int = 5,
+    workspace_id: str | None = None,
+) -> list[Document]:
+    """Busca em TODAS as coleções LanceDB e mescla resultados com hybrid RAG (C1).
 
-    Antes consultava apenas dois nomes fixos (`articles` + `web_cache`). Mas o
-    conteúdo pode ser indexado em outras coleções — `/rag add` infere o nome
-    pela extensão/pasta (`code`, `docs`, `notes`…), e a tool `embedding`
-    aceita qualquer coleção. Resultado: docs ficavam órfãos, indexados mas
-    fora do alcance da busca.
+    Antes consultava apenas dois nomes fixos (`articles` + `web_cache`). Agora
+    descobre as tabelas via `table_names()` e busca em cada uma, em paralelo.
+    "Indexou → o RAG acha", qualquer que seja a coleção.
 
-    Agora descobre as tabelas via `table_names()` e busca em cada uma, em
-    paralelo. "Indexou → o RAG acha", qualquer que seja a coleção.
+    **C1 — Hybrid RAG (BM25 + Dense + RRF)**:
+    Quando `settings.rag_hybrid_enabled`, usa `rag_hybrid_fetch_limit` (20)
+    candidatos por coleção, re-ranqueia com BM25 e funde os dois rankings via
+    Reciprocal Rank Fusion — maior recall sem perder precisão.
 
-    Resultados da coleção web (`rag_collection_web`) recebem
-    `metadata["origin"]="web_search"` para o reranker e o LLM ponderarem a
-    confiança da fonte.
+    Resultados da coleção web recebem `metadata["origin"]="web_search"`.
+
+    Quando `workspace_id` é fornecido (B5), filtra por workspace pós-retrieval.
     """
     import asyncio
 
@@ -150,13 +232,18 @@ async def _call_vector_search_all(query: str, limit: int = 5) -> list[Document]:
     if not collections:
         return []
 
+    # C1: usa pool maior para dar mais candidatos ao BM25
+    fetch_limit = (
+        settings.rag_hybrid_fetch_limit if settings.rag_hybrid_enabled else limit
+    )
+
     results = await asyncio.gather(
-        *[_call_vector_search(query, name, limit) for name in collections],
+        *[_call_vector_search(query, name, fetch_limit) for name in collections],
         return_exceptions=True,
     )
 
     web_collection = settings.rag_collection_web
-    docs: list[Document] = []
+    dense_docs: list[Document] = []
     for name, res in zip(collections, results, strict=False):
         if not isinstance(res, list):
             continue
@@ -165,8 +252,118 @@ async def _call_vector_search_all(query: str, limit: int = 5) -> list[Document]:
                 meta = d.get("metadata") or {}
                 meta.setdefault("origin", "web_search")
                 d["metadata"] = meta
-        docs.extend(res)
+        dense_docs.extend(res)
+
+    # Filtro por workspace (B5)
+    if workspace_id:
+        filtered: list[Document] = []
+        for doc in dense_docs:
+            meta = doc.get("metadata") or {}
+            doc_ws = meta.get("workspace_id")
+            if doc_ws is None or doc_ws in (workspace_id, "__global__"):
+                filtered.append(doc)
+        dense_docs = filtered
+
+    if not dense_docs:
+        return []
+
+    # C1 — BM25 + RRF: reranqueia os candidatos densos com BM25 e funde
+    if settings.rag_hybrid_enabled and len(dense_docs) > 1:
+        sparse_docs = _bm25_search(query, dense_docs, n_results=limit)
+        docs = _rrf_merge(dense_docs, sparse_docs, n_results=limit)
+    else:
+        docs = dense_docs[:limit]
+
     return docs
+
+
+# ---------------------------------------------------------------------------
+# C2 — Multi-query retrieval
+# ---------------------------------------------------------------------------
+
+
+async def _generate_query_variants(query: str, n: int = 3) -> list[str]:
+    """LLM gera N reformulações da query para aumentar o recall vetorial (C2).
+
+    Retorna a lista de variantes incluindo a query original.
+    Em caso de falha (sem API key, LLM indisponível), retorna só a original.
+    """
+    from vectora.services.utils import load_llm
+
+    try:
+        llm = load_llm()
+        prompt = (
+            f"Gere {n - 1} reformulações diferentes desta query para busca semântica.\n"
+            f"Cada variante deve cobrir ângulos distintos do mesmo tema.\n"
+            f"Responda APENAS com as variantes, uma por linha, sem numeração.\n\n"
+            f"Query original: {query}"
+        )
+        response = await llm.ainvoke([HumanMessage(content=prompt)])
+        raw = str(response.content).strip()
+        variants = [v.strip() for v in raw.splitlines() if v.strip()]
+        # Garante que a query original está na lista e limita ao n pedido
+        all_variants = [query] + [v for v in variants if v != query]
+        return all_variants[: max(n, 1)]
+    except Exception:
+        logger.debug(
+            "_generate_query_variants: falha ao gerar variantes", exc_info=True
+        )
+        return [query]
+
+
+# ---------------------------------------------------------------------------
+# C3 — HyDE (Hypothetical Document Embedding)
+# ---------------------------------------------------------------------------
+
+
+async def _hyde_search(query: str, workspace_id: str | None = None) -> list[Document]:
+    """Gera um documento hipotético via LLM e usa-o como query de embedding (C3).
+
+    HyDE (Hypothetical Document Embeddings) melhora recall para perguntas
+    abstratas onde a query tem pouca sobreposição lexical com os documentos.
+    O LLM gera um "modelo de resposta", que é embeddado e buscado.
+    """
+    from vectora.agents.orchestrator import _load_llm
+
+    try:
+        llm = _load_llm()
+        hyde_prompt = (
+            "Escreva um trecho técnico conciso (2-4 parágrafos) que responderia "
+            "diretamente a esta pergunta. Seja específico e use terminologia técnica.\n\n"
+            f"Pergunta: {query}\n\n"
+            "Responda apenas com o conteúdo do trecho, sem introduções."
+        )
+        response = await llm.ainvoke([HumanMessage(content=hyde_prompt)])
+        hypothetical_doc = str(response.content).strip()
+
+        if not hypothetical_doc:
+            return []
+
+        # O doc hipotético vira a nova query — o vetor do doc responde melhor
+        # à pergunta do que o vetor da pergunta em si (lacuna embedding gap).
+        hyde_docs = await _call_vector_search_all(
+            hypothetical_doc,
+            workspace_id=workspace_id,
+        )
+        logger.debug("HyDE: %d docs via documento hipotético", len(hyde_docs))
+        return hyde_docs
+
+    except Exception:
+        logger.debug("_hyde_search: falha, skipping HyDE", exc_info=True)
+        return []
+
+
+def _deduplicate_docs(docs: list[Document]) -> list[Document]:
+    """Remove docs duplicados por (source, primeiros 80 chars do conteúdo)."""
+    seen: set[str] = set()
+    result: list[Document] = []
+    for doc in docs:
+        meta = doc.get("metadata") or {}
+        key = meta.get("source", "") + "|" + (doc.get("page_content") or "")[:80]
+        if key not in seen:
+            seen.add(key)
+            result.append(doc)
+    return result
 
 
 async def _call_web_search(query: str) -> list[dict[str, Any]]:
@@ -191,8 +388,18 @@ async def _call_web_search(query: str) -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-async def rag_retrieve(state: State) -> dict:
-    """Nó 1: Executa vector_search com a query do usuário."""
+async def rag_retrieve(state: State, config: RunnableConfig) -> dict:
+    """Nó 2: Executa vector_search com multi-query (C2) e HyDE (C3).
+
+    C2 — Multi-query: usa variantes geradas por `rag_expand_query` (se presentes)
+    para buscas paralelas com deduplicação, aumentando recall.
+
+    C3 — HyDE: quando score inicial < `rag_hyde_threshold`, gera documento
+    hipotético via LLM e combina os resultados com a busca original.
+
+    Workspace: filtra por workspace_id quando fornecido via config (B5).
+    """
+    import asyncio
     import contextlib
 
     from vectora.services.tracer import tracer
@@ -201,20 +408,77 @@ async def rag_retrieve(state: State) -> dict:
     with contextlib.suppress(Exception):
         session_id = state.get("session_metadata", {}).get("thread_id")  # type: ignore[assignment]
 
+    # workspace_id: prioritiza config (runtime), fallback ao state
+    workspace_id: str | None = None
+    with contextlib.suppress(Exception):
+        workspace_id = (config.get("configurable") or {}).get("workspace_id")
+    if workspace_id is None:
+        workspace_id = state.get("session_metadata", {}).get("workspace_id")  # type: ignore[call-overload]
+
     query = _extract_query(state)
     if not query:
         logger.warning("rag_retrieve: no query found in state")
-        return {"rag_query": "", "rag_docs": []}
+        return {"rag_query": "", "rag_docs": [], "rag_query_variants": None}
 
     logger.info("rag_retrieve: searching for '%s...'", query[:60])
 
+    # C2 — Multi-query: usa variantes se disponíveis (geradas por rag_expand_query)
+    variants = state.get("rag_query_variants") or []
+    queries_to_search = variants or [query]
+
     try:
         async with tracer.span("rag_retrieve", "search", session_id=session_id) as s:
-            docs = await _call_vector_search_all(query)
+            if len(queries_to_search) > 1:
+                # Busca paralela para cada variante
+                batch_results = await asyncio.gather(
+                    *[
+                        _call_vector_search_all(q, workspace_id=workspace_id)
+                        for q in queries_to_search
+                    ]
+                )
+                all_docs: list[Document] = []
+                for batch in batch_results:
+                    all_docs.extend(batch)
+                docs = _deduplicate_docs(all_docs)
+                logger.info(
+                    "rag_retrieve: multi-query %d variantes → %d docs únicos",
+                    len(queries_to_search),
+                    len(docs),
+                )
+            else:
+                docs = await _call_vector_search_all(query, workspace_id=workspace_id)
+
             best = _best_score(docs)
-            s.set(n_docs=len(docs), best_score=round(best, 3), query_len=len(query))
+            s.set(
+                n_docs=len(docs),
+                best_score=round(best, 3),
+                query_len=len(query),
+                n_variants=len(queries_to_search),
+            )
     except Exception:
-        docs = await _call_vector_search_all(query)  # fallback sem tracer
+        docs = await _call_vector_search_all(query, workspace_id=workspace_id)
+        best = _best_score(docs)
+
+    # C3 — HyDE: se score inicial < threshold, tenta com documento hipotético
+    if (
+        settings.rag_hyde_enabled
+        and best < settings.rag_hyde_threshold
+        and query  # não roda se não há query
+    ):
+        logger.debug(
+            "rag_retrieve: score %.3f < %.3f, tentando HyDE",
+            best,
+            settings.rag_hyde_threshold,
+        )
+        hyde_docs = await _hyde_search(query, workspace_id=workspace_id)
+        if hyde_docs:
+            combined = _deduplicate_docs(docs + hyde_docs)
+            logger.info(
+                "rag_retrieve: HyDE adicionou %d docs (total %d)",
+                len(hyde_docs),
+                len(combined),
+            )
+            docs = combined
 
     logger.info(
         "rag_retrieve: found %d docs, best_score=%.3f", len(docs), _best_score(docs)
@@ -222,8 +486,38 @@ async def rag_retrieve(state: State) -> dict:
     return {"rag_query": query, "rag_docs": docs}
 
 
+async def rag_expand_query(state: State) -> dict:
+    """Nó 1: Gera variantes da query com LLM para multi-query retrieval (C2).
+
+    Quando `settings.rag_multi_query_enabled`, usa o LLM para reformular a query
+    em N variantes cobrindo ângulos distintos. `rag_retrieve` recebe essas
+    variantes e executa buscas paralelas, aumentando o recall.
+
+    Se desabilitado ou em caso de falha, retorna vazio → `rag_retrieve` usa a
+    query original (comportamento pré-C2, degradação graciosa).
+    """
+    if not settings.rag_multi_query_enabled:
+        return {}
+
+    query = _extract_query(state)
+    if not query:
+        return {}
+
+    variants = await _generate_query_variants(query, n=settings.rag_multi_query_n)
+
+    if len(variants) <= 1:
+        return {}  # Só a original — não há ganho em multi-query
+
+    logger.info(
+        "rag_expand_query: %d variantes geradas para '%s...'",
+        len(variants),
+        query[:50],
+    )
+    return {"rag_query_variants": variants}
+
+
 def rag_decide(state: State) -> str:
-    """Nó 2: Decide o próximo passo com base na qualidade dos resultados.
+    """Nó 4: Decide o próximo passo com base na qualidade dos resultados.
 
     Retorna o nome do próximo nó (usado como valor em add_conditional_edges).
     """
@@ -404,7 +698,14 @@ async def rag_inject(state: State) -> dict:
 
 
 def build_rag_subgraph():  # type: ignore[return]  # noqa: ANN201
-    """Constrói e compila o subgrafo RAG.
+    """Constrói e compila o subgrafo RAG com C1/C2/C3.
+
+    Fluxo:
+      START → rag_expand_query (C2) → rag_retrieve (C1+C3) → rag_decide_node
+                → rag_inject (score alto)
+                → rag_rerank → rag_inject (score médio)
+                → rag_websearch → rag_inject (score baixo)
+              → END
 
     Returns:
         CompiledStateGraph pronto para ser usado como nó no grafo principal.
@@ -413,13 +714,15 @@ def build_rag_subgraph():  # type: ignore[return]  # noqa: ANN201
 
     builder = StateGraph(State)  # ty: ignore[invalid-argument-type]
 
+    builder.add_node("rag_expand_query", rag_expand_query)  # C2 multi-query
     builder.add_node("rag_retrieve", rag_retrieve)
     builder.add_node("rag_decide_node", _rag_decide_node)  # wrapper para nó síncrono
     builder.add_node("rag_rerank", rag_rerank)
     builder.add_node("rag_websearch", rag_websearch)
     builder.add_node("rag_inject", rag_inject)
 
-    builder.add_edge(START, "rag_retrieve")
+    builder.add_edge(START, "rag_expand_query")
+    builder.add_edge("rag_expand_query", "rag_retrieve")
     builder.add_edge("rag_retrieve", "rag_decide_node")
 
     # Roteamento condicional baseado na qualidade dos docs

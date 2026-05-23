@@ -99,17 +99,28 @@ repos:
         types_or: [text]
 
   # ==========================================
-  # Type Checking (Disabled in Pre-commit)
   # ==========================================
-  # Note: `ty` (Python type checker) is not integrated here due to:
-  # - Cannot resolve relative imports in vectora/ without manual PYTHONPATH configuration
-  # - Strict incompatibility with optional imports used for lazy-loading external libraries
-  # - Conflicts with LangGraph's TypedDict and State typing patterns
-  #
-  # For manual type validation, run:
-  #   PYTHONPATH=vectora uv run ty check vectora tests
-  #
-  # Type checking via mypy is handled per-file in ruff configuration
+  # Security & Vulnerability Scans
+  # ==========================================
+  - repo: local
+    hooks:
+      - id: bandit
+        name: Bandit Security Scan
+        entry: uv run bandit -s B110,B101 -c pyproject.toml
+        language: system
+        types: [python]
+
+  # ==========================================
+  # Type Checking (Pyright)
+  # ==========================================
+  - repo: local
+    hooks:
+      - id: pyright
+        name: Pyright Type Check
+        entry: uv run pyright vectora/types vectora/agents
+        language: system
+        types: [python]
+        pass_filenames: false
 
 ci:
   autofix_commit_msg: "chore: auto fixes from pre-commit hooks"

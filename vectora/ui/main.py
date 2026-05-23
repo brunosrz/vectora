@@ -585,6 +585,67 @@ class SuccessPanel:
         )
 
 
+class HITLPanel:
+    """Painel laranja de confirmação HITL (Human-in-the-Loop).
+
+    Exibido quando o coder tenta executar uma ação destrutiva
+    (terminal ou file_write) antes de pedir aprovação do usuário.
+    """
+
+    @staticmethod
+    def render(pending: list[dict]) -> Panel:
+        """Renderiza o painel de confirmação HITL.
+
+        Args:
+            pending: lista de {name, args, id} das tools aguardando aprovação.
+        """
+        import json
+
+        lines: list[str] = []
+        for tc in pending:
+            name = tc.get("name", "unknown")
+            args = tc.get("args", {})
+
+            if name in ("terminal", "terminal_tool"):
+                cmd = args.get("command", str(args))
+                if len(cmd) > 300:
+                    cmd = cmd[:300] + "…"
+                lines.append(f"[bold yellow]$ {escape(cmd)}[/bold yellow]")
+
+            elif name in ("file_write", "file_write_tool"):
+                path = args.get("path", args.get("file_path", "?"))
+                content = str(args.get("content", ""))
+                preview = content[:200] + ("…" if len(content) > 200 else "")
+                lines.append(
+                    f"[bold yellow]escrever:[/bold yellow] [white]{escape(str(path))}[/white]\n"
+                    f"[dim]{escape(preview)}[/dim]"
+                )
+
+            else:
+                try:
+                    args_str = json.dumps(args, ensure_ascii=False)[:200]
+                except Exception:
+                    args_str = str(args)[:200]
+                lines.append(
+                    f"[bold yellow]{escape(name)}[/bold yellow] "
+                    f"[dim]{escape(args_str)}[/dim]"
+                )
+
+        body = "\n\n".join(lines)
+        body += (
+            "\n\n[bold]Executar? [[green]S[/green]/[red]n[/red]][/bold]  "
+            "[dim](Enter = confirmar)[/dim]"
+        )
+
+        return Panel(
+            body,
+            title="[bold yellow]⚠  HITL — Confirmação necessária[/bold yellow]",
+            style="yellow",
+            border_style="yellow",
+            expand=False,
+        )
+
+
 class SeparatorLine:
     """Visual separator between sections."""
 

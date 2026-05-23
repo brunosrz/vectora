@@ -73,7 +73,7 @@ def _is_quota_error(err: str) -> bool:
     )
 
 
-@tool
+@tool(extras={"render_hint": "web_results"})
 def web_search(
     query: str,
     topic: Literal["general", "news", "finance"] = "general",
@@ -182,7 +182,7 @@ def web_search(
         )
 
 
-@tool
+@tool(extras={"render_hint": "web_results"})
 def fetch_url(url: str) -> str:
     """Busca e extrai conteúdo de texto de uma URL específica usando Tavily.
 

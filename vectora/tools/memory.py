@@ -15,16 +15,50 @@ logger = logging.getLogger(__name__)
 
 
 def _user_id_from_config(config: RunnableConfig | None) -> str:
-    """Deriva user_id a partir do thread_id da sessão LangGraph.
+    """Deriva user_id a partir do contexto da sessão LangGraph.
 
-    Retorna 'session_<thread_id>' para isolamento por sessão (D3).
-    Fallback para 'default_session' quando config não está disponível
-    (ex: chamadas diretas fora de um grafo LangGraph).
+    Prioridade (B3/B7):
+    1. workspace_<workspace_id> — quando há workspace ativo, memórias seguem
+       o projeto e persistem entre sessões do mesmo diretório.
+    2. session_<thread_id> — fallback para isolamento por sessão simples.
+    3. default_session — quando chamado fora de um grafo LangGraph.
     """
     if config is None:
         return "default_session"
-    thread_id = (config.get("configurable") or {}).get("thread_id")
+    configurable = config.get("configurable") or {}
+    workspace_id = configurable.get("workspace_id")
+    if workspace_id:
+        return f"workspace_{workspace_id}"
+    thread_id = configurable.get("thread_id")
     return f"session_{thread_id}" if thread_id else "default_session"
+
+
+async def _embed_for_memory(text: str) -> list[float] | None:
+    """Gera embedding Cohere para uma memória (C4). Retorna None se não configurado."""
+    from vectora.config.settings import settings
+
+    if not settings.memory_semantic_enabled:
+        return None
+    try:
+        import cohere
+
+        api_key = settings.get_cohere_api_key()
+        if not api_key:
+            return None
+        client = cohere.AsyncClient(api_key=api_key)
+        resp = await client.embed(
+            texts=[text],
+            model=settings.embedding_model,
+            input_type="search_document",
+        )
+        embeddings = resp.embeddings
+        if isinstance(embeddings, list) and embeddings:
+            row = embeddings[0]
+            return list(row) if not isinstance(row, list) else row
+        return None
+    except Exception:
+        logger.debug("_embed_for_memory: falha ao embeddar", exc_info=True)
+        return None
 
 
 @tool
@@ -37,9 +71,9 @@ async def save_memory(
 ) -> str:
     """Salva uma memória persistente para uso em futuras conversas da mesma sessão.
 
-    As memórias são isoladas por sessão (thread_id) para evitar poluição entre
-    projetos distintos. São armazenadas no SQLite e recuperadas automaticamente
-    nas próximas interações da mesma sessão.
+    As memórias são isoladas por workspace ou sessão para evitar poluição entre
+    projetos distintos. São armazenadas no SQLite com embedding Cohere (C4) para
+    busca semântica via `search_memory`.
 
     Args:
         key: Chave única da memória (ex: 'user_preferences', 'project_context')
@@ -56,17 +90,27 @@ async def save_memory(
 
         user_id = _user_id_from_config(config)
         memory_store = await get_memory_store()
+
+        # C4 — Semantic Memory: gera embedding assincronamente
+        embedding = await _embed_for_memory(content)
+
         memory_id = await memory_store.save(
             user_id=user_id,
             key=key,
             content=content,
             metadata=metadata,
             ttl_days=ttl_days,
+            embedding=embedding,
         )
 
         logger.info(
             "memory_saved",
-            extra={"key": key, "memory_id": memory_id, "ttl_days": ttl_days},
+            extra={
+                "key": key,
+                "memory_id": memory_id,
+                "ttl_days": ttl_days,
+                "has_embedding": embedding is not None,
+            },
         )
 
         return json.dumps(
@@ -105,6 +149,12 @@ async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
 
         if key is not None:
             memory = await memory_store.get(user_id, key)
+            # Dual-lookup: quando o namespace é workspace_*, tenta também o
+            # namespace session_* legado para não perder memórias antigas (B7).
+            if memory is None and user_id.startswith("workspace_"):
+                thread_id = (config.get("configurable") or {}).get("thread_id")
+                if thread_id:
+                    memory = await memory_store.get(f"session_{thread_id}", key)
             if memory is None:
                 logger.warning("memory_not_found", extra={"key": key})
                 return json.dumps({"status": "not_found", "key": key})
@@ -121,6 +171,13 @@ async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
             )
 
         all_memories = await memory_store.get_all(user_id)
+        # Dual-lookup: inclui memórias do namespace session_* legado (B7).
+        if user_id.startswith("workspace_"):
+            thread_id = (config.get("configurable") or {}).get("thread_id")
+            if thread_id:
+                legacy = await memory_store.get_all(f"session_{thread_id}")
+                seen_keys = {m["key"] for m in all_memories}
+                all_memories += [m for m in legacy if m["key"] not in seen_keys]
         logger.debug("all_memories_retrieved", extra={"count": len(all_memories)})
         return json.dumps(
             {
@@ -140,6 +197,121 @@ async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
 
     except Exception as e:
         logger.exception("get_memory_failed", extra={"key": key})
+        return json.dumps({"status": "failed", "error": str(e)})
+
+
+@tool
+async def search_memory(query: str, config: RunnableConfig, limit: int = 5) -> str:
+    """Busca semântica em memórias — encontra memórias relevantes por similaridade (C4).
+
+    Diferente de `get_memory` (busca por chave exata), `search_memory` usa embedding
+    Cohere para encontrar memórias semanticamente relacionadas à query, mesmo que não
+    contenham as palavras exatas. Ideal para "o que sei sobre X?" ou "decisões sobre Y?".
+
+    Args:
+        query: Texto da busca semântica (ex: "preferências de código", "arquitetura")
+        config: Injetado automaticamente pelo LangGraph com workspace_id / thread_id
+        limit: Máximo de memórias a retornar (padrão: 5)
+
+    Returns:
+        JSON com lista de memórias ordenadas por relevância semântica
+    """
+    try:
+        from vectora.config.settings import settings
+        from vectora.services.memory import get_memory_store
+
+        user_id = _user_id_from_config(config)
+        memory_store = await get_memory_store()
+
+        if not settings.memory_semantic_enabled:
+            # Fallback: retorna todas as memórias sem ranqueamento semântico
+            all_mems = await memory_store.get_all(user_id)
+            return json.dumps(
+                {
+                    "status": "success",
+                    "semantic": False,
+                    "count": len(all_mems[:limit]),
+                    "memories": [
+                        {
+                            "key": m["key"],
+                            "content": m["content"],
+                            "score": None,
+                            "updated_at": m["updated_at"],
+                        }
+                        for m in all_mems[:limit]
+                    ],
+                }
+            )
+
+        # C4 — embed query e busca por cosine similarity
+        import cohere
+
+        api_key = settings.get_cohere_api_key()
+        if not api_key:
+            logger.warning("search_memory: COHERE_API_KEY não configurada")
+            all_mems = await memory_store.get_all(user_id)
+            return json.dumps(
+                {
+                    "status": "success",
+                    "semantic": False,
+                    "count": len(all_mems[:limit]),
+                    "memories": [
+                        {
+                            "key": m["key"],
+                            "content": m["content"],
+                            "score": None,
+                            "updated_at": m["updated_at"],
+                        }
+                        for m in all_mems[:limit]
+                    ],
+                }
+            )
+
+        client = cohere.AsyncClient(api_key=api_key)
+        resp = await client.embed(
+            texts=[query],
+            model=settings.embedding_model,
+            input_type="search_query",
+        )
+        embeddings = resp.embeddings
+        if not (isinstance(embeddings, list) and embeddings):
+            raise ValueError("Cohere embed retornou lista vazia")
+        row = embeddings[0]
+        query_embedding = list(row) if not isinstance(row, list) else row
+
+        results = await memory_store.search_semantic(user_id, query_embedding, limit)
+
+        # Dual-lookup legado (B3/B7)
+        if user_id.startswith("workspace_"):
+            thread_id = (config.get("configurable") or {}).get("thread_id")
+            if thread_id:
+                legacy = await memory_store.search_semantic(
+                    f"session_{thread_id}", query_embedding, limit
+                )
+                seen_keys = {m["key"] for m in results}
+                results += [m for m in legacy if m["key"] not in seen_keys]
+                results = results[:limit]
+
+        logger.debug("search_memory: %d resultados semânticos", len(results))
+        return json.dumps(
+            {
+                "status": "success",
+                "semantic": True,
+                "query": query,
+                "count": len(results),
+                "memories": [
+                    {
+                        "key": m["key"],
+                        "content": m["content"],
+                        "updated_at": m["updated_at"],
+                    }
+                    for m in results
+                ],
+            }
+        )
+
+    except Exception as e:
+        logger.exception("search_memory_failed", extra={"query": query})
         return json.dumps({"status": "failed", "error": str(e)})
 
 

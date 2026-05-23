@@ -17,6 +17,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 # Logging to file only — never pollute stdout (JSON-RPC channel)
 _log_dir = Path.home() / ".vectora" / "logs"
@@ -51,6 +52,11 @@ try:
         terminal,
         vector_search,
         web_search,
+    )
+    from vectora.tools.workspace import (
+        bucket_summary,
+        workspace_describe,
+        workspace_list,
     )
 except ImportError:
     logger.exception("Failed to import Vectora dependencies")
@@ -145,6 +151,9 @@ TOOL_TIMEOUTS = {
     "embedding": 60.0,  # 60 segundos para embedding (fire-and-forget)
     "ingest_docs": 120.0,  # 2 minutos para ingestão em batch
     "manage_retriever": 30.0,  # 30 segundos para listar/remover do RAG
+    "workspace_describe": 5.0,  # 5 segundos — leitura de arquivo local
+    "workspace_list": 5.0,  # 5 segundos — leitura de arquivo local
+    "bucket_summary": 5.0,  # 5 segundos — leitura de arquivo local
     "file_read": 10.0,  # 10 segundos para ler arquivo
     "file_edit": 15.0,  # 15 segundos para editar arquivo
     "file_write": 15.0,  # 15 segundos para escrever arquivo
@@ -359,6 +368,67 @@ async def manage_retriever_tool(
 
 
 @mcp.tool()
+async def workspace_describe_tool(workspace_id: str | None = None) -> str:
+    """Descreve o workspace ativo: base de conhecimento indexada, buckets e tópicos.
+
+    Retorna o MANIFEST.md do workspace — resumo gerado automaticamente pelo
+    curator de tudo que foi indexado neste projeto.
+
+    Args:
+        workspace_id: ID do workspace (None = workspace ativo)
+
+    Returns:
+        Conteúdo do MANIFEST.md em markdown, ou mensagem indicando que não há manifest
+    """
+    args: dict = {}
+    if workspace_id:
+        args["workspace_id"] = workspace_id
+    return await _with_timeout(
+        workspace_describe.ainvoke(args),
+        "workspace_describe",
+    )
+
+
+@mcp.tool()
+async def workspace_list_tool() -> str:
+    """Lista todos os workspaces Vectora registrados.
+
+    Retorna ID, nome, caminho e contagem de documentos de cada workspace
+    encontrado em ~/.vectora/workspaces.json.
+
+    Returns:
+        Listagem formatada de todos os workspaces
+    """
+    return await _with_timeout(
+        workspace_list.ainvoke({}),
+        "workspace_list",
+    )
+
+
+@mcp.tool()
+async def bucket_summary_tool(bucket: str, workspace_id: str | None = None) -> str:
+    """Retorna o resumo de um bucket específico do workspace.
+
+    Lê o arquivo ~/.vectora/workspaces/<id>/buckets/<bucket>.md gerado pelo
+    curator após indexação. Útil para entender o conteúdo de um bucket específico.
+
+    Args:
+        bucket: Nome do bucket (ex: "code", "docs", "notes", "web_cache")
+        workspace_id: ID do workspace (None = workspace ativo)
+
+    Returns:
+        Conteúdo do resumo do bucket em markdown
+    """
+    args: dict = {"bucket": bucket}
+    if workspace_id:
+        args["workspace_id"] = workspace_id
+    return await _with_timeout(
+        bucket_summary.ainvoke(args),
+        "bucket_summary",
+    )
+
+
+@mcp.tool()
 async def file_read_tool(file_path: str) -> str:
     """Lê o conteúdo completo de um arquivo de texto.
 
@@ -530,10 +600,87 @@ async def delegate_task_to_vectora(
     )
 
 
+@mcp.tool()
+async def vectora_metrics(
+    n: int = 30,
+    node: str | None = None,
+) -> str:
+    """Retorna métricas de observabilidade do Vectora (spans recentes do tracer).
+
+    Expõe latência por nó, contagem de chamadas e distribuição de status
+    das últimas execuções do grafo LangGraph.
+
+    Args:
+        n: Número de spans recentes a analisar (default: 30)
+        node: Filtrar por nó específico (ex: "orchestrator", "invoke_llm", "rag_retrieve")
+
+    Returns:
+        JSON com métricas agregadas: por nó — contagem, latência média/p95, status
+    """
+    import asyncio
+
+    from vectora.services.tracer import tracer
+
+    try:
+        spans = await asyncio.wait_for(tracer.get_recent(n=n), timeout=5.0)
+    except Exception as exc:
+        return json.dumps({"error": f"Tracer indisponível: {exc}"})
+
+    if node:
+        spans = [s for s in spans if s.get("node", "").startswith(node)]
+
+    if not spans:
+        return json.dumps({"spans_analyzed": 0, "nodes": {}})
+
+    # Agrega por nó
+    nodes: dict[str, dict] = {}
+    for sp in spans:
+        n_name = sp.get("node", "unknown")
+        dur = sp.get("duration_ms")
+        status = sp.get("status", "ok")
+        in_tok = sp.get("in_tokens") or 0
+        out_tok = sp.get("out_tokens") or 0
+
+        entry = nodes.setdefault(
+            n_name,
+            {
+                "count": 0,
+                "durations": [],
+                "statuses": {},
+                "in_tokens": 0,
+                "out_tokens": 0,
+            },
+        )
+        entry["count"] += 1
+        if dur is not None:
+            entry["durations"].append(float(dur))
+        entry["statuses"][status] = entry["statuses"].get(status, 0) + 1
+        entry["in_tokens"] += in_tok
+        entry["out_tokens"] += out_tok
+
+    # Formata métricas finais
+    result: dict = {"spans_analyzed": len(spans), "nodes": {}}
+    for n_name, data in sorted(nodes.items()):
+        durs = sorted(data["durations"])
+        avg_ms = round(sum(durs) / len(durs), 1) if durs else None
+        p95_ms = round(durs[int(len(durs) * 0.95)], 1) if durs else None
+        result["nodes"][n_name] = {
+            "count": data["count"],
+            "avg_ms": avg_ms,
+            "p95_ms": p95_ms,
+            "statuses": data["statuses"],
+            "total_in_tokens": data["in_tokens"],
+            "total_out_tokens": data["out_tokens"],
+        }
+
+    return json.dumps(result, ensure_ascii=False)
+
+
 logger.info(
-    "14 tools registered: web_search, fetch_url, vector_search, embedding, ingest_docs, "
-    "manage_retriever, file_read, file_edit, file_write, grep, list_dir, terminal, "
-    "call_mcp_tool, delegate_task_to_vectora"
+    "18 tools registered: web_search, fetch_url, vector_search, embedding, ingest_docs, "
+    "manage_retriever, workspace_describe, workspace_list, bucket_summary, "
+    "file_read, file_edit, file_write, grep, list_dir, terminal, "
+    "call_mcp_tool, delegate_task_to_vectora, vectora_metrics"
 )
 
 
@@ -543,6 +690,51 @@ logger.info(
 # Resources expose Vectora's internal state so Claude Code can read context
 # before deciding which tool to call.
 # Pattern: vectora://<resource>/<id>
+
+
+@mcp.resource("vectora://tools/schema")
+async def get_tools_schema() -> str:
+    """Retorna metadados de todas as tools do Vectora, incluindo render_hint para a Web UI.
+
+    O campo `render_hint` em cada tool indica ao frontend como exibir o resultado:
+    - search_results: cards com score, fonte e trecho
+    - web_results: cards com favicon, URL e snippet
+    - diff: unified diff colorido (file_edit)
+    - code_block: syntax highlight por extensão (file_read, terminal)
+    - terminal_output: fundo escuro, monospace
+    - queue_progress: barra de progresso (ingest_docs)
+    - queue_badge: badge com queue_id + status (embedding)
+    - table: tabela paginada (manage_retriever, workspace_list)
+    - markdown: conteúdo Markdown renderizado (workspace_describe, bucket_summary)
+    - json: JSON expandível (fallback padrão)
+
+    Returns:
+        JSON com lista de tools e seus metadados
+    """
+    from vectora.nodes.tools import ALL_TOOLS
+
+    tools_data = []
+    for t in ALL_TOOLS:
+        schema: dict = {}
+        try:
+            if hasattr(t, "args_schema") and t.args_schema is not None:
+                schema = t.args_schema.model_json_schema()
+        except Exception:
+            pass
+        tools_data.append(
+            {
+                "name": t.name,
+                "description": (t.description or "").split("\n")[0][:200],
+                "args_schema": schema,
+                "render_hint": (t.extras or {}).get("render_hint", "json"),
+            }
+        )
+
+    return json.dumps(
+        {"version": "1", "tool_count": len(tools_data), "tools": tools_data},
+        ensure_ascii=False,
+        indent=2,
+    )
 
 
 @mcp.resource("vectora://thread/{thread_id}/context")
@@ -725,6 +917,113 @@ logger.info("4 resources registered: context, history, status, collections")
 
 
 # ============================================================================
+# SSE HEARTBEAT
+# ============================================================================
+
+_SSE_HEARTBEAT_INTERVAL = 25  # segundos — abaixo do timeout típico de 30-60s
+
+
+def _run_sse_with_heartbeat(mcp_instance: Any, host: str, port: int) -> None:
+    """Roda o servidor SSE com heartbeat de 25s injetado no EventSourceResponse.
+
+    Firewalls e load-balancers costumam fechar conexões HTTP idle após 30-60s.
+    O SSE usa um único stream HTTP persistente — sem tráfego, a conexão é
+    silenciosamente dropada. O parâmetro ``ping`` do sse-starlette envia uma
+    linha de comentário SSE (": ping\\n\\n") a cada N segundos, mantendo o
+    stream vivo sem modificar o protocolo MCP.
+
+    Estratégia: monkey-patch no ``EventSourceResponse`` do sse-starlette e do
+    módulo mcp.server.sse *antes* de criar o Starlette app, para que todas as
+    conexões SSE já nasçam com ping habilitado.
+    """
+    import anyio
+    import uvicorn
+
+    try:
+        import sse_starlette.sse as _sse_mod
+        from sse_starlette.sse import EventSourceResponse as _OrigESR
+
+        class _ESRWithHeartbeat(_OrigESR):
+            """EventSourceResponse que força ping=25s em todas as conexões SSE."""
+
+            def __init__(
+                self, *args: Any, ping: int | None = None, **kwargs: Any
+            ) -> None:
+                super().__init__(
+                    *args,
+                    ping=ping if ping is not None else _SSE_HEARTBEAT_INTERVAL,
+                    **kwargs,
+                )
+
+        # Substituir em sse_starlette.sse e em mcp.server.sse (já importado)
+        _sse_mod.EventSourceResponse = _ESRWithHeartbeat  # type: ignore[assignment]
+        with contextlib.suppress(Exception):
+            import mcp.server.sse as _mcp_sse  # type: ignore[import-untyped]
+
+            _mcp_sse.EventSourceResponse = _ESRWithHeartbeat  # type: ignore[assignment]
+
+        logger.info("SSE heartbeat enabled: ping every %ds", _SSE_HEARTBEAT_INTERVAL)
+    except ImportError:
+        logger.warning("sse-starlette not available — SSE heartbeat disabled")
+
+    async def _serve() -> None:
+        from starlette.applications import Starlette
+        from starlette.requests import Request
+        from starlette.responses import JSONResponse
+        from starlette.routing import Mount, Route
+
+        async def _tools_schema_http(request: Request) -> JSONResponse:
+            """GET /api/tools/schema — para a Discovery Layer da Web UI (D1.1)."""
+            from vectora.nodes.tools import ALL_TOOLS
+
+            tools_data = []
+            for t in ALL_TOOLS:
+                schema: dict = {}
+                try:
+                    if hasattr(t, "args_schema") and t.args_schema is not None:
+                        schema = t.args_schema.model_json_schema()
+                except Exception:
+                    pass
+                tools_data.append(
+                    {
+                        "name": t.name,
+                        "description": (t.description or "").split("\n")[0][:200],
+                        "args_schema": schema,
+                        "render_hint": (t.extras or {}).get("render_hint", "json"),
+                    }
+                )
+
+            return JSONResponse(
+                {
+                    "version": "1",
+                    "tool_count": len(tools_data),
+                    "tools": tools_data,
+                }
+            )
+
+        sse_app = mcp_instance.sse_app()
+        # Montar o endpoint HTTP de schema antes do app SSE
+        starlette_app = Starlette(
+            routes=[
+                Route("/api/tools/schema", _tools_schema_http, methods=["GET"]),
+                Mount("/", app=sse_app),
+            ]
+        )
+
+        config = uvicorn.Config(
+            starlette_app,
+            host=host,
+            port=port,
+            timeout_keep_alive=120,  # keep-alive HTTP generoso para SSE
+            log_level="warning",
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
+
+    anyio.run(_serve)
+
+
+# ============================================================================
 # ENTRY POINT
 # ============================================================================
 
@@ -792,11 +1091,12 @@ def run() -> None:
 
     try:
         if transport == "sse":
-            # FastMCP SSE: HTTP transport para múltiplos agentes remotos
-            # Configurar host/port via settings antes de chamar run()
+            # FastMCP SSE: HTTP transport para múltiplos agentes remotos.
+            # Configura host/port e injeta heartbeat de 25s para evitar que
+            # firewalls fechem conexões SSE idle após 30-60s.
             mcp.settings.host = host
             mcp.settings.port = port
-            mcp.run(transport="sse")
+            _run_sse_with_heartbeat(mcp, host, port)
         else:
             # stdio JSON-RPC (default) — Claude Desktop, Claude Code
             mcp.run(transport="stdio")

@@ -1,6 +1,6 @@
 # Security Policy
 
-Vectora is a local-first application. The attack surface is intentionally small — no remote servers, no user authentication, no exposed REST APIs. Even so, code that executes on behalf of the user needs real protections.
+Vectora is a self-hosted application. The attack surface is intentionally small — no remote servers, no user authentication, no exposed REST APIs. Even so, code that executes on behalf of the user needs real protections.
 
 ---
 
@@ -49,7 +49,7 @@ The `grep` tool accepts regex patterns from the LLM. Malicious patterns can caus
 
 ## What Is NOT in the MVP
 
-By design — Vectora is local-first, single-user:
+By design — Vectora is self-hosted, single-user:
 
 - ❌ **Authentication**: No users, no access tokens, no OAuth.
 - ❌ **TLS/SSL**: Local communication via stdio; SSE on LAN without TLS is acceptable in the MVP.

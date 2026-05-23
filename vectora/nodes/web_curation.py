@@ -24,10 +24,9 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
-
 from vectora.config.settings import settings
 from vectora.state import Document
+from vectora.types import CurationDecision, WebResultVerdict
 
 logger = logging.getLogger(__name__)
 
@@ -35,24 +34,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Schemas do LLM judge
 # ---------------------------------------------------------------------------
-
-
-class WebResultVerdict(BaseModel):
-    """Veredito do LLM judge para um único resultado web."""
-
-    index: int = Field(description="Índice do resultado na lista avaliada (base 0).")
-    keep: bool = Field(
-        description="True se o resultado é relevante e confiável para o projeto."
-    )
-    reason: str = Field(description="Uma frase curta justificando manter ou descartar.")
-
-
-class CurationDecision(BaseModel):
-    """Decisão de curadoria do LLM judge para o lote de resultados web."""
-
-    verdicts: list[WebResultVerdict] = Field(
-        description="Um veredito por resultado avaliado."
-    )
 
 
 _JUDGE_PROMPT = """Você é o curador da base de conhecimento (RAG) do Vectora.

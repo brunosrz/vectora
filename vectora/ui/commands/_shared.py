@@ -145,10 +145,13 @@ def reset_llm_singletons() -> None:
         import vectora.agents.coder as _c
         import vectora.agents.orchestrator as _o
         import vectora.agents.search as _s
+        import vectora.nodes.web_curation as _wc
 
         _o._orchestrator_llm = None
+        _o._synthesis_llm = None  # LLM de síntese pós-RAG
         _c._coder_llm = None
         _s._search_llm = None
+        _wc._judge_llm = None  # LLM judge da curadoria web
         logger.debug("LLM singletons resetados")
     except Exception as e:
         logger.warning("Erro ao resetar LLM singletons: %s", e)

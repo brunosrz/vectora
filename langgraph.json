@@ -4,5 +4,6 @@
   "graphs": {
     "vectora": "./vectora/graph.py:build_graph"
   },
+  "python_version": "3.12",
   "env": ".env"
 }

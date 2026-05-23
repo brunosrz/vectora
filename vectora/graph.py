@@ -3,15 +3,17 @@
 Topologia:
   START → orchestrator
             ├── [respond]       → END
-            ├── [coder]         → coder → coder_tools ↻ → END
-            ├── [search]        → search → search_tools → process_retrieval ↻ → END
+            ├── [coder]         → coder → (hitl_check →) coder_tools ↻
+            │                           → coder_finalize → orchestrator (síntese)
+            ├── [search]        → search → search_tools → process_retrieval ↻
+            │                           → search_finalize → orchestrator (síntese)
             └── [rag_subgraph]  → rag_subgraph → orchestrator (síntese inline)
 
 O orchestrator decide em: respond (inline) | coder | search | rag.
 Quando delega, injeta orchestrator_task no state para o sub-agent executar
 com instrução clara, sem depender de inferência do histórico bruto.
-Após o rag_subgraph injetar contexto em messages, o orchestrator é acionado
-novamente para sintetizar a resposta diretamente — sem nó direct separado.
+Após o sub-agent concluir, o finalize node extrai um resultado estruturado
+e o orchestrator é acionado novamente para sintetizar a resposta final.
 """
 
 from __future__ import annotations
@@ -23,20 +25,29 @@ from langgraph.constants import END, START
 from langgraph.graph.state import CompiledStateGraph, StateGraph
 from langgraph.prebuilt.tool_node import tools_condition
 
-from vectora.agents.coder import coder
-from vectora.agents.orchestrator import orchestrator
-from vectora.agents.search import search
+from vectora.agents.coder import coder, coder_finalize
+from vectora.agents.orchestrator import _PARALLEL_AGENT_PROMPTS, orchestrator
+from vectora.agents.search import search, search_finalize
 from vectora.context import Context
 from vectora.nodes.debug import DiagnosticToolNode
 from vectora.nodes.engine import process_retrieval
+from vectora.nodes.hitl import hitl_check
 from vectora.nodes.rag_subgraph import build_rag_subgraph
 from vectora.nodes.tools import ALL_TOOLS
 from vectora.state import State
 
 if TYPE_CHECKING:
+    from langchain_core.runnables import RunnableConfig
     from langgraph.pregel.main import BaseCheckpointSaver
 
 logger = logging.getLogger(__name__)
+
+
+def _hitl_route(state: State) -> str:
+    """Após hitl_check: vai para coder_tools (aprovado) ou de volta ao coder (rejeitado)."""
+    if state.get("hitl_cancelled"):
+        return "coder"
+    return "coder_tools"
 
 
 def _orchestrator_route(state: State) -> str:
@@ -47,9 +58,74 @@ def _orchestrator_route(state: State) -> str:
         "search": "search",
         "coder": "coder",
         "rag": "rag_subgraph",
+        "parallel": "parallel_dispatch",  # C5
         "tools": "search",
     }
     return mapping.get(decision, END)
+
+
+async def parallel_dispatch(state: State, config: RunnableConfig) -> dict:
+    """Executa múltiplas tasks de agentes em paralelo via asyncio.gather (C5).
+
+    Cada task �� executada chamando o LLM com o prompt do agent correspondente.
+    Em modo paralelo, agentes respondem diretamente sem tool calls — é uma
+    "consulta rápida" em paralelo antes da síntese pelo orchestrator.
+
+    Após coleta, retorna ao orchestrator via edge direto para síntese final.
+    """
+    import asyncio
+
+    from langchain_core.messages import HumanMessage, SystemMessage
+    from langchain_core.runnables import RunnableConfig
+
+    from vectora.services.utils import load_llm
+
+    tasks = state.get("parallel_tasks") or []
+    if not tasks:
+        logger.info("parallel_dispatch: nenhuma task, retornando vazio")
+        return {"parallel_results": []}
+
+    async def _run_task(task: dict) -> dict:
+        agent = task.get("agent", "search")
+        task_query = task.get("task_query", "")
+        reason = task.get("reason", "")
+
+        system_prompt = _PARALLEL_AGENT_PROMPTS.get(
+            agent, _PARALLEL_AGENT_PROMPTS["search"]
+        )
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=task_query),
+        ]
+
+        try:
+            llm = load_llm()
+            response = await llm.ainvoke(messages, config=config)
+            return {
+                "agent": agent,
+                "task": task_query,
+                "reason": reason,
+                "response": str(getattr(response, "content", response)),
+                "success": True,
+            }
+        except Exception as e:
+            logger.warning("parallel_dispatch: task[%s] falhou: %s", agent, e)
+            return {
+                "agent": agent,
+                "task": task_query,
+                "reason": reason,
+                "response": f"Erro ao executar task: {e}",
+                "success": False,
+            }
+
+    logger.info("parallel_dispatch: executando %d tasks em paralelo", len(tasks))
+    results = await asyncio.gather(*[_run_task(t) for t in tasks])
+    logger.info(
+        "parallel_dispatch: %d/%d tasks bem-sucedidas",
+        sum(1 for r in results if r.get("success")),
+        len(results),
+    )
+    return {"parallel_results": list(results)}
 
 
 def build_graph(
@@ -84,11 +160,15 @@ def build_graph(
 
     builder.add_node("search", search)
     builder.add_node("search_tools", search_tools_node)
+    builder.add_node("search_finalize", search_finalize)
 
     builder.add_node("coder", coder)
+    builder.add_node("hitl_check", hitl_check)
     builder.add_node("coder_tools", coder_tools_node)
+    builder.add_node("coder_finalize", coder_finalize)
 
     builder.add_node("process_retrieval", process_retrieval)
+    builder.add_node("parallel_dispatch", parallel_dispatch)  # C5
 
     # --- Edges ---
 
@@ -104,29 +184,44 @@ def build_graph(
             "search": "search",
             "coder": "coder",
             "rag_subgraph": "rag_subgraph",
+            "parallel_dispatch": "parallel_dispatch",  # C5
         },
     )
 
-    # RAG subgraph → orchestrator para síntese inline (sem direct)
+    # RAG subgraph → orchestrator para síntese inline
     builder.add_edge("rag_subgraph", "orchestrator")
 
+    # C5 — parallel_dispatch → orchestrator para síntese dos resultados paralelos
+    builder.add_edge("parallel_dispatch", "orchestrator")
+
     # search → search_tools → process_retrieval → search (loop)
-    # ao terminar → END
+    # ao terminar → search_finalize → orchestrator (síntese estruturada)
     builder.add_conditional_edges(
         "search",
-        lambda s: "search_tools" if tools_condition(s) == "tools" else END,
-        {"search_tools": "search_tools", END: END},
+        lambda s: (
+            "search_tools" if tools_condition(s) == "tools" else "search_finalize"
+        ),
+        {"search_tools": "search_tools", "search_finalize": "search_finalize"},
     )
     builder.add_edge("search_tools", "process_retrieval")
     builder.add_edge("process_retrieval", "search")
+    builder.add_edge("search_finalize", "orchestrator")
 
-    # coder: loop de tools → ao terminar → END
+    # coder: tem tool_calls → hitl_check (HITL gate) → coder_tools → coder
+    # Sem tool_calls → coder_finalize → orchestrator (síntese estruturada)
     builder.add_conditional_edges(
         "coder",
-        lambda s: "coder_tools" if tools_condition(s) == "tools" else END,
-        {"coder_tools": "coder_tools", END: END},
+        lambda s: "hitl_check" if tools_condition(s) == "tools" else "coder_finalize",
+        {"hitl_check": "hitl_check", "coder_finalize": "coder_finalize"},
+    )
+    # hitl_check: aprovado → coder_tools; rejeitado (cancel msgs) → coder
+    builder.add_conditional_edges(
+        "hitl_check",
+        _hitl_route,
+        {"coder_tools": "coder_tools", "coder": "coder"},
     )
     builder.add_edge("coder_tools", "coder")
+    builder.add_edge("coder_finalize", "orchestrator")
 
     compiled = builder.compile(checkpointer=checkpointer)
     logger.info("Graph compiled: orchestrator + search/coder agents + RAG subgraph")

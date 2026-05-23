@@ -52,6 +52,7 @@ class Context:
     user_id: str = "default"
     user_type: str
     thread_id: str | int
+    workspace_id: str | None = None
     correlation_id: str | None = field(default=None, compare=False)
     conversation_id: str | None = None
     created_at: str | None = field(default=None, compare=False)

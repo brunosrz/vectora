@@ -10,7 +10,14 @@ from typing import Annotated, Any, Literal, NotRequired, TypedDict
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
-from vectora.messages import ArtifactMetadata
+from vectora.types import (
+    ArtifactMetadata,
+    CoderResult,
+    ParallelResult,
+    SearchResult,
+    SubTask,
+    UIMetrics,
+)
 
 
 class Document(TypedDict, total=False):
@@ -33,6 +40,8 @@ class SessionMetadata(TypedDict, total=False):
     - created_at: ISO 8601 timestamp
     - llm_provider: Active LLM provider (google-genai, openai, etc.)
     - llm_model: Active model name
+    - workspace_id: ID do workspace ativo (sha256[:8] do cwd)
+    - manifest_version: Versão do manifest carregada no contexto desta sessão
     """
 
     thread_id: str  # 6-digit zero-padded string, e.g. '042731'
@@ -40,6 +49,8 @@ class SessionMetadata(TypedDict, total=False):
     created_at: str  # ISO 8601
     llm_provider: str
     llm_model: str
+    workspace_id: str  # ID do workspace ativo (B5)
+    manifest_version: int  # Versão do manifest no contexto (B7 — invalidação)
 
 
 class State(TypedDict):
@@ -71,7 +82,7 @@ class State(TypedDict):
 
     # Roteamento determinístico
     routing_decision: NotRequired[
-        Literal["direct", "coder", "search", "tools", "rag"] | None
+        Literal["direct", "coder", "search", "tools", "rag", "parallel"] | None
     ]
 
     # Pipeline de RAG
@@ -79,6 +90,9 @@ class State(TypedDict):
     rag_docs: NotRequired[
         list[Document] | None
     ]  # Documentos recuperados pelo subgrafo RAG
+    rag_query_variants: NotRequired[
+        list[str] | None
+    ]  # C2 — variantes da query geradas pelo LLM para multi-query retrieval
     pending_embeds: NotRequired[
         list[str] | None
     ]  # queue_ids do fire-and-forget para rastreamento
@@ -101,3 +115,35 @@ class State(TypedDict):
     # Persistido no checkpoint para não re-escanear a cada turno
     # None = já foi tentado e não encontrou nada; ausente = ainda não tentou
     project_context: NotRequired[str | None]
+
+    # HITL — Human-in-the-Loop
+    # Definido pelo nó hitl_check ao retomar após interrupt():
+    #   False → ação aprovada, seguir para coder_tools
+    #   True  → ação rejeitada, seguir de volta ao coder com msgs de cancelamento
+    hitl_cancelled: NotRequired[bool | None]
+
+    # Resultados estruturados dos sub-agents (B2 — Structured Outputs)
+    # Produzidos por coder_finalize / search_finalize antes de retornar ao orchestrator.
+    # O orchestrator lê esses campos para síntese final e os zera após uso.
+    coder_result: NotRequired[CoderResult | None]
+    search_result: NotRequired[SearchResult | None]
+
+    # Execução paralela de agentes (C5)
+    # parallel_tasks: lista de SubTasks emitidas pelo orchestrator
+    # parallel_results: resultados coletados por parallel_dispatch antes de síntese
+    parallel_tasks: NotRequired[list[SubTask] | None]
+    parallel_results: NotRequired[list[ParallelResult] | None]
+
+    # Métricas de observabilidade em tempo real (D1.5 — State-Sync Observability)
+    # Atualizadas pelos nós principais via Command(update={"ui_metrics": ...}).
+    # Consumidas pela Web UI (MetricsPanel.tsx) sem polling — chegam via SSE stream.
+    # Campos:
+    #   last_node: nó que acabou de executar
+    #   last_node_ms: latência em ms desse nó
+    #   total_tokens_session: tokens acumulados na sessão
+    #   rag_hits: buscas RAG que retornaram documentos relevantes
+    #   rag_misses: fallbacks para websearch por score < threshold
+    #   tool_calls: {tool_name: count} de chamadas nesta sessão
+    #   workspace_id: workspace ativo (espelha session_metadata.workspace_id)
+    #   manifest_version: versão do manifest carregado (espelha session_metadata)
+    ui_metrics: NotRequired[UIMetrics | None]

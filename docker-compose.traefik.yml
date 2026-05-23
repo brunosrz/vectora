@@ -36,11 +36,21 @@ services:
     ports: !reset []
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vectora.rule=Host(`${VECTORA_DOMAIN}`)"
+      - "traefik.http.routers.vectora.rule=Host(`${VECTORA_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/sse`))"
       - "traefik.http.routers.vectora.entrypoints=websecure"
       - "traefik.http.routers.vectora.tls=true"
       - "traefik.http.routers.vectora.tls.certresolver=letsencrypt"
       - "traefik.http.services.vectora.loadbalancer.server.port=8000"
+
+  vectora-chat:
+    ports: !reset []
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vectora-chat.rule=Host(`${VECTORA_DOMAIN}`)"
+      - "traefik.http.routers.vectora-chat.entrypoints=websecure"
+      - "traefik.http.routers.vectora-chat.tls=true"
+      - "traefik.http.routers.vectora-chat.tls.certresolver=letsencrypt"
+      - "traefik.http.services.vectora-chat.loadbalancer.server.port=3000"
 
 volumes:
   traefik-letsencrypt:

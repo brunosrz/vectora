@@ -179,6 +179,11 @@ class BackgroundEmbeddingWorker:
         # Token bucket rate limiter — evita bursts que disparam HTTP 429.
         # Inicializado com o valor de settings (configurável; default 90/min).
         self._rate_limiter = CohereRateLimiter(self.config.cohere_calls_per_minute)
+        # B4 curator: rastreia o momento do último doc indexado com sucesso e
+        # os workspace_ids dos docs indexados no batch atual.
+        self._last_indexed_at: float = 0.0
+        self._indexed_workspaces: set[str] = set()
+        self._curator_locks: dict[str, asyncio.Lock] = {}
         # Polling adaptativo: _poll_interval cresce enquanto fila está vazia
         # e é resetado ao encontrar items (evita 12+ queries/min em idle).
         self._poll_interval: float = POLL_INTERVAL_MIN
@@ -269,6 +274,9 @@ class BackgroundEmbeddingWorker:
                         "embedding_queue_empty, aguardando %.0fs",
                         self._poll_interval,
                     )
+                    # B4: dispara o curator se houver workspaces novamente indexados
+                    # e o debounce de 30s tiver passado.
+                    await self._maybe_run_curator()
                     await asyncio.sleep(self._poll_interval)
                     self._poll_interval = min(
                         self._poll_interval * POLL_BACKOFF_FACTOR, POLL_INTERVAL_MAX
@@ -498,6 +506,68 @@ class BackgroundEmbeddingWorker:
                 "collection": record.collection,
             },
         )
+
+        # B4: rastreia workspace_id dos docs indexados para o curator
+        try:
+            import json as _json
+
+            meta = _json.loads(record.doc_metadata or "{}")
+            wid = meta.get("workspace_id")
+            if wid:
+                self._indexed_workspaces.add(wid)
+            self._last_indexed_at = time.monotonic()
+        except Exception:
+            pass
+
+    async def _maybe_run_curator(self) -> None:
+        """Dispara o curator para workspaces com docs recém-indexados (B4).
+
+        Condições para disparo:
+        1. rag_curator_enabled = True
+        2. Há workspaces pendentes de curadoria
+        3. Debounce: último doc foi indexado há ≥ rag_curator_debounce_seconds
+
+        Single flush por batch — ingestar 1000 arquivos = 1 LLM call de síntese.
+        """
+        if not getattr(self.config, "rag_curator_enabled", True):
+            return
+        if not self._indexed_workspaces:
+            return
+
+        debounce = getattr(self.config, "rag_curator_debounce_seconds", 30.0)
+        if time.monotonic() - self._last_indexed_at < debounce:
+            return
+
+        # Snapshot e limpeza para o próximo batch
+        workspaces_to_curate = set(self._indexed_workspaces)
+        self._indexed_workspaces.clear()
+
+        for workspace_id in workspaces_to_curate:
+            asyncio.create_task(self._run_curator(workspace_id))  # noqa: RUF006
+
+    async def _run_curator(self, workspace_id: str) -> None:
+        """Executa a curadoria para um workspace específico (reentrância protegida)."""
+        if workspace_id not in self._curator_locks:
+            self._curator_locks[workspace_id] = asyncio.Lock()
+
+        lock = self._curator_locks[workspace_id]
+        if lock.locked():
+            logger.debug("curator: workspace %s já em curadoria, pulando", workspace_id)
+            return
+
+        async with lock:
+            try:
+                from vectora.agents.rag import curate_workspace_knowledge
+
+                logger.info(
+                    "curator: iniciando curadoria do workspace %s", workspace_id
+                )
+                result = await curate_workspace_knowledge(workspace_id)
+                logger.info("curator: %s — %s", workspace_id, result)
+            except Exception:
+                logger.exception(
+                    "curator: falha na curadoria do workspace %s", workspace_id
+                )
 
 
 # Singleton global com lock

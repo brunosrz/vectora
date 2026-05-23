@@ -9,10 +9,13 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from langchain_core.messages import AIMessage
+
 from vectora.agents._identity import VECTORA_IDENTITY
 from vectora.nodes.base import invoke_llm
 from vectora.nodes.tools import ALL_TOOLS
 from vectora.services.utils import load_llm
+from vectora.types import SearchResult
 
 if TYPE_CHECKING:
     from langchain_core.runnables import Runnable
@@ -98,9 +101,70 @@ _search_llm = None
 def _get_search_llm() -> Runnable:
     global _search_llm
     if _search_llm is None:
-        _search_llm = load_llm().bind_tools(ALL_TOOLS)  # ty: ignore[unresolved-attribute]
+        _search_llm = load_llm().bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]
         logger.debug("search_worker LLM inicializado com %d tools", len(ALL_TOOLS))
     return _search_llm
+
+
+# ---------------------------------------------------------------------------
+# Nós do grafo
+# ---------------------------------------------------------------------------
+
+
+async def search_finalize(state: State) -> dict:
+    """Extrai resultado estruturado da sessão de busca e prepara para síntese.
+
+    Roda após o search concluir (sem mais tool_calls). Analisa o histórico de
+    mensagens heuristicamente para produzir um SearchResult sem custo de LLM:
+    - `sources`         → URLs de fetch_url + domínios de web_search
+    - `web_search_used` → True se web_search ou fetch_url foram chamados
+    - `confidence`      → 0.8 com fontes, 0.5 sem
+    - `summary`         → último AIMessage do search sem tool_calls
+
+    O resultado fica em `state["search_result"]` para o orchestrator sintetizar.
+    """
+    messages = list(state.get("messages", []))
+
+    sources: list[str] = []
+    web_search_used = False
+    _web_ops = frozenset(
+        {"web_search", "web_search_tool", "fetch_url", "fetch_url_tool"}
+    )
+
+    for msg in messages:
+        if not isinstance(msg, AIMessage):
+            continue
+        tool_calls = getattr(msg, "tool_calls", None) or []
+        for tc in tool_calls:
+            name = tc.get("name", "") if isinstance(tc, dict) else ""
+            args = tc.get("args", {}) if isinstance(tc, dict) else {}
+            if name in _web_ops:
+                web_search_used = True
+                # Para fetch_url coleta a URL direto; web_search usa a query
+                url = str(args.get("url") or args.get("query", "")).strip()
+                if url and url not in sources:
+                    sources.append(url)
+
+    summary = ""
+    for msg in reversed(messages):
+        if isinstance(msg, AIMessage) and not getattr(msg, "tool_calls", None):
+            c = msg.content
+            summary = c if isinstance(c, str) else str(c)
+            break
+
+    result = SearchResult(
+        summary=summary or "Pesquisa concluída.",
+        sources=sources,
+        confidence=0.8 if sources else 0.5,
+        web_search_used=web_search_used,
+    )
+
+    logger.info(
+        "search_finalize: %d fontes, web=%s",
+        len(sources),
+        web_search_used,
+    )
+    return {"search_result": result}
 
 
 async def search(state: State) -> dict:

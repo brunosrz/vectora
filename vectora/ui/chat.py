@@ -31,6 +31,7 @@ if os.getenv("QUIET_MODE", "true").lower() == "true":
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph.state import CompiledStateGraph, RunnableConfig
+from langgraph.types import Command
 from rich.console import Console
 from rich.panel import Panel
 
@@ -52,6 +53,7 @@ from vectora.ui.commands import handle_command
 from vectora.ui.main import (
     AuditPanel,
     ChatMessage,
+    HITLPanel,
     LogPanel,
     QuotaErrorPanel,
     SeparatorLine,
@@ -176,6 +178,7 @@ async def _load_prior_messages(
         configurable={
             "thread_id": context.thread_id,
             "context": context,
+            "workspace_id": getattr(context, "workspace_id", None),
         }
     )
     try:
@@ -346,6 +349,20 @@ _AGENT_LABELS: dict[str, str] = {
     "search": "Vectora Search",
 }
 
+# Nós internos do RAG e da curadoria web que emitem tokens de LLMs utilitários
+# (judge de curadoria, reranker) — esses tokens NÃO devem aparecer no chat.
+_RAG_INTERNAL_NODES: frozenset[str] = frozenset(
+    {
+        "rag_retrieve",
+        "rag_decide_node",
+        "_rag_decide_node",
+        "rag_websearch",
+        "rag_rerank",
+        "rag_inject",
+        "process_retrieval",  # curation judge no loop de search
+    }
+)
+
 
 def _extract_text_chunk(chunk: Any) -> str:
     """Extrai texto de um chunk de CHAT_MODEL_STREAM."""
@@ -365,6 +382,140 @@ def _extract_text_chunk(chunk: Any) -> str:
     return str(content)
 
 
+def _handle_stream_event(
+    event: dict,
+    *,
+    response_content: str,
+    routing_decision: str,
+    orchestrator_delegated: bool,
+    status_ctx: Any,
+    verbosity: int,
+) -> tuple[str, str, bool]:
+    """Processa um evento individual do astream_events.
+
+    Retorna (response_content, routing_decision, orchestrator_delegated) atualizados.
+    Extraído de _process_user_turn para ser reutilizado no loop de HITL resume.
+    """
+    event_type = event.get("event")
+    event_name = event.get("name", "")
+    node = event.get("metadata", {}).get("langgraph_node", "")
+
+    # Streaming do conteúdo da IA.
+    # Filtra duas categorias de tokens que NÃO devem aparecer no chat:
+    #   1. Nós internos do RAG / curadoria (judge, reranker) — os tokens
+    #      JSON do CurationDecision vazariam como lixo no painel.
+    #   2. Primeira invocação do orchestrator — tokens do JSON de
+    #      roteamento (OrchestratorDecision) gerados pelo structured output.
+    if event_type == LangGraphEvent.CHAT_MODEL_STREAM:
+        if node in _RAG_INTERNAL_NODES:
+            # Nó utilitário interno — descartar silenciosamente
+            pass
+        elif node == "orchestrator" and not orchestrator_delegated:
+            # Primeira invocação do orchestrator: JSON de roteamento — descartar
+            pass
+        else:
+            chunk = event.get("data", {}).get("chunk")
+            if chunk:
+                response_content += _extract_text_chunk(chunk)
+
+    # CHAIN_END do orchestrator: captura routing_decision e resposta.
+    elif event_type == LangGraphEvent.CHAIN_END and event_name == "orchestrator":
+        raw_output = event.get("data", {}).get("output", {})
+        if hasattr(raw_output, "update") and isinstance(raw_output.update, dict):
+            output = raw_output.update
+        elif isinstance(raw_output, dict):
+            output = raw_output
+        else:
+            output = {}
+
+        if output:
+            rd = output.get("routing_decision", "respond")
+            if rd and rd != "respond":
+                routing_decision = rd
+                orchestrator_delegated = True
+            elif rd == "respond":
+                # Sempre "respond" → garante label correto mesmo após delegação
+                routing_decision = "respond"
+                # Captura a AIMessage do orchestrator.
+                # Remove o guard `if not response_content` para que a síntese
+                # pós-coder/search SOBREPONHA o streaming acumulado dos sub-agents.
+                msgs = output.get("messages", [])
+                for msg in msgs:
+                    if (
+                        isinstance(msg, AIMessage)
+                        and msg.content
+                        and not getattr(msg, "tool_calls", None)
+                    ):
+                        c = msg.content
+                        response_content = c if isinstance(c, str) else str(c)
+                        break
+
+    # Tool chamada: AMARELO (ou VERDE se terminal)
+    elif event_type == LangGraphEvent.TOOL_START:
+        tool_input = event.get("data", {}).get("input")
+        _render_tool_event_start(event_name, tool_input, status_ctx, verbosity)
+
+    # Tool retornou: VERMELHO (ou VERDE se terminal)
+    elif event_type == LangGraphEvent.TOOL_END:
+        tool_output = event.get("data", {}).get("output")
+        _render_tool_event_end(event_name, tool_output, status_ctx, verbosity)
+
+    # Fallback: captura AIMessage de nós legacy (call_llm, call_llm_debug)
+    elif event_type == LangGraphEvent.CHAIN_END and event_name in (
+        "call_llm",
+        "call_llm_debug",
+    ):
+        if not response_content:
+            output = event.get("data", {}).get("output", {})
+            if isinstance(output, dict):
+                msgs = output.get("messages", [])
+                for msg in msgs:
+                    if (
+                        isinstance(msg, AIMessage)
+                        and msg.content
+                        and not getattr(msg, "tool_calls", None)
+                    ):
+                        c = msg.content
+                        response_content = c if isinstance(c, str) else str(c)
+                        break
+
+    return response_content, routing_decision, orchestrator_delegated
+
+
+async def _ask_hitl_decision(pending: list[dict], status_ctx: Any) -> dict:
+    """Exibe o HITLPanel e lê a decisão do usuário (approve / reject).
+
+    Pausa o spinner, renderiza o painel de confirmação, lê input inline
+    e retoma o spinner antes de retornar.
+    """
+    _suspend(status_ctx)
+    console.print(HITLPanel.render(pending))
+
+    try:
+        from prompt_toolkit import PromptSession  # type: ignore[attr-defined]
+        from prompt_toolkit.patch_stdout import patch_stdout as _pso
+
+        _ps = PromptSession("> ")  # type: ignore[type-arg]
+
+        def _read() -> str:
+            with _pso():
+                return _ps.prompt()
+
+        loop = asyncio.get_event_loop()
+        answer = await loop.run_in_executor(None, _read)
+    except Exception:
+        loop = asyncio.get_event_loop()
+        answer = await loop.run_in_executor(None, input, "")
+
+    answer = answer.strip().lower()
+    _resume(status_ctx)
+
+    # Qualquer input vazio, "s", "y", "sim", "yes" → aprovação
+    if answer in ("", "s", "y", "sim", "yes"):
+        return {"action": "approve"}
+    return {"action": "reject"}
+
+
 async def _process_user_turn(
     user_input: str,
     graph: CompiledStateGraph[State, Context, State, State],  # ty: ignore[invalid-type-arguments]
@@ -373,128 +524,75 @@ async def _process_user_turn(
     status_panel: VectoraStatusPanel,
     verbosity: int = 0,
 ) -> str:
-    """Process a single user turn and return AI response.
+    """Process a single user turn e retorna a resposta do AI.
+
+    Suporta HITL: quando o grafo pausa (interrupt() em hitl_check), exibe
+    o painel de confirmação, lê a decisão do usuário e retoma o grafo com
+    Command(resume=decision). O loop continua até o grafo terminar.
 
     Exibe eventos visuais ao longo do processamento:
     - Tool calls em AMARELO (ToolCallPanel)
     - Tool responses em VERMELHO (ToolMessagePanel)
     - Terminal commands/outputs em VERDE (TerminalPanel)
+    - Confirmações HITL em AMARELO (HITLPanel)
     - Resposta final do LLM em magenta (ChatMessage)
     """
+    import contextlib
+
     audit.add_message("User", user_input)
     console.print(ChatMessage("User", user_input).to_panel())
 
     response_content = ""
-    routing_decision = "respond"  # atualizado ao detectar CHAIN_END do orchestrator
-    _orchestrator_delegated = False  # True após 1ª decisão de delegação
+    routing_decision = "respond"
+    _orchestrator_delegated = False
 
     # Usamos status_ctx manualmente para poder suspender/retomar o spinner
     # quando exibimos panels de tool (evita conflito visual com Live render)
     status_ctx = status_panel.thinking("Processing your message...")
     status_ctx.__enter__()
+
+    # Entrada inicial para o grafo — após o primeiro turno, pode ser
+    # Command(resume=...) quando retomando de um interrupt HITL
+    graph_input: Any = {"messages": [HumanMessage(user_input)]}
+
     try:
-        # recursion_limit: 50 — defesa em profundidade. O loop estrutural
-        # orchestrator ↔ rag_subgraph foi eliminado (Bloco A6.2), mas a folga
-        # acima do default 25 acomoda cadeias legítimas longas (coder com
-        # muitas tool calls, search iterativo) sem abortar o turno.
-        async for event in graph.astream_events(
-            {"messages": [HumanMessage(user_input)]},
-            config={**config, "recursion_limit": 50},
-            version="v2",
-        ):
-            event_type = event.get("event")
-            event_name = event.get("name", "")
-            node = event.get("metadata", {}).get("langgraph_node", "")
-
-            # Streaming do conteúdo da IA.
-            # O orchestrator usa with_structured_output() — astream_events captura
-            # os tokens JSON do roteamento, que NÃO devem aparecer no chat.
-            # Filtra por langgraph_node: só captura conteúdo de outros nós OU da
-            # segunda invocação do orchestrator (síntese pós-RAG após delegação).
-            if event_type == LangGraphEvent.CHAT_MODEL_STREAM:
-                if node == "orchestrator" and not _orchestrator_delegated:
-                    # Primeira invocação do orchestrator: JSON de roteamento — descartar
-                    pass
-                else:
-                    chunk = event.get("data", {}).get("chunk")
-                    if chunk:
-                        response_content += _extract_text_chunk(chunk)
-
-            # CHAIN_END do orchestrator: captura routing_decision e resposta.
-            # O nó retorna um Command — o output pode ser o Command em si ou
-            # o dict de update resolvido. Suportamos ambos os formatos.
-            elif (
-                event_type == LangGraphEvent.CHAIN_END and event_name == "orchestrator"
+        # Loop de execução + HITL: roda até o grafo terminar sem interrupt
+        while True:
+            # recursion_limit: 50 — defesa em profundidade (ver A6.2)
+            async for event in graph.astream_events(
+                graph_input,
+                config={**config, "recursion_limit": 50},
+                version="v2",
             ):
-                raw_output = event.get("data", {}).get("output", {})
-                # Command object → extrai o dict de update
-                if hasattr(raw_output, "update") and isinstance(
-                    raw_output.update, dict
-                ):
-                    output = raw_output.update
-                elif isinstance(raw_output, dict):
-                    output = raw_output
-                else:
-                    output = {}
+                response_content, routing_decision, _orchestrator_delegated = (
+                    _handle_stream_event(
+                        event,
+                        response_content=response_content,
+                        routing_decision=routing_decision,
+                        orchestrator_delegated=_orchestrator_delegated,
+                        status_ctx=status_ctx,
+                        verbosity=verbosity,
+                    )
+                )
 
-                if output:
-                    rd = output.get("routing_decision", "respond")
-                    if rd and rd != "respond":
-                        # Orchestrator delegou — marcar para liberar síntese
-                        routing_decision = rd
-                        _orchestrator_delegated = True
-                    elif rd == "respond":
-                        # Resposta direta OU síntese pós-RAG:
-                        # - sem delegação prévia → routing_decision = "respond"
-                        # - com delegação prévia → mantém o label do sub-agent
-                        if not _orchestrator_delegated:
-                            routing_decision = "respond"
-                        # Em ambos os casos, capturar AIMessage se ainda sem conteúdo
-                        if not response_content:
-                            msgs = output.get("messages", [])
-                            for msg in msgs:
-                                if (
-                                    isinstance(msg, AIMessage)
-                                    and msg.content
-                                    and not getattr(msg, "tool_calls", None)
-                                ):
-                                    c = msg.content
-                                    response_content = (
-                                        c if isinstance(c, str) else str(c)
-                                    )
-                                    break
+            # ── Verifica se o grafo pausou em um interrupt HITL ──────────────
+            state = await graph.aget_state({**config, "recursion_limit": 50})
+            interrupts = [
+                intr for task in (state.tasks or []) for intr in (task.interrupts or ())
+            ]
 
-            # Tool chamada: AMARELO (ou VERDE se terminal)
-            elif event_type == LangGraphEvent.TOOL_START:
-                tool_input = event.get("data", {}).get("input")
-                _render_tool_event_start(event_name, tool_input, status_ctx, verbosity)
+            if not interrupts:
+                # Sem interrupt — turno finalizado normalmente
+                break
 
-            # Tool retornou: VERMELHO (ou VERDE se terminal)
-            elif event_type == LangGraphEvent.TOOL_END:
-                tool_output = event.get("data", {}).get("output")
-                _render_tool_event_end(event_name, tool_output, status_ctx, verbosity)
+            # Há pelo menos um interrupt HITL pendente
+            payload: list[dict] = interrupts[0].value  # lista de {name, args, id}
+            decision = await _ask_hitl_decision(payload, status_ctx)
 
-            # Fallback: captura AIMessage de nós legacy (call_llm, call_llm_debug)
-            elif event_type == LangGraphEvent.CHAIN_END and event_name in (
-                "call_llm",
-                "call_llm_debug",
-            ):
-                if not response_content:
-                    output = event.get("data", {}).get("output", {})
-                    if isinstance(output, dict):
-                        msgs = output.get("messages", [])
-                        for msg in msgs:
-                            if (
-                                isinstance(msg, AIMessage)
-                                and msg.content
-                                and not getattr(msg, "tool_calls", None)
-                            ):
-                                c = msg.content
-                                response_content = c if isinstance(c, str) else str(c)
-                                break
+            # Retoma o grafo com a decisão do usuário
+            graph_input = Command(resume=decision)
+
     finally:
-        import contextlib
-
         with contextlib.suppress(Exception):
             status_ctx.__exit__(None, None, None)
 
@@ -675,6 +773,7 @@ async def chat_loop(
         configurable={
             "thread_id": context.thread_id,
             "context": context,
+            "workspace_id": getattr(context, "workspace_id", None),
         }
     )
     # Track current thread_id to detect session changes
@@ -763,6 +862,7 @@ async def chat_loop(
                         configurable={
                             "thread_id": context.thread_id,
                             "context": context,
+                            "workspace_id": getattr(context, "workspace_id", None),
                         }
                     )
                     console.print(
@@ -969,7 +1069,13 @@ async def run_chat(
             force_new=force_new,
             session_id=session_id,
         )
-        context = Context(user_type="default", thread_id=thread_id)
+        # Determina workspace ativo para isolamento por projeto (B5)
+        from pathlib import Path as _Path
+
+        from vectora.services.workspace import workspace_registry as _ws_registry
+
+        _ws = _ws_registry.get_or_create(str(_Path.cwd()))
+        context = Context(user_type="default", thread_id=thread_id, workspace_id=_ws.id)
 
         try:
             # For now, still use legacy graph/checkpointer from agent

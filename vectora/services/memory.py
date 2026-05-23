@@ -1,11 +1,18 @@
 """Gerenciador de memórias persistentes em SQLite.
 
 Armazena memórias globais do usuário que transcendem sessões individuais.
-Cada memória tem: chave, conteúdo, TTL (opcional), e metadados.
+Cada memória tem: chave, conteúdo, TTL (opcional), metadados e embedding.
+
+C4 — Semantic Memory: embeddings Cohere armazenados junto às memórias para
+busca semântica via `search_semantic()`. Quando `memory_semantic_enabled`,
+`save_with_embedding` persiste o vetor; `search_semantic` faz cosine similarity
+em Python puro (sem deps externas além do já declarado `cohere`).
 """
 
+import contextlib
 import json
 import logging
+import math
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -14,6 +21,16 @@ import aiosqlite
 from vectora.config.settings import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    """Similaridade coseno em Python puro — sem numpy/scipy."""
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
+    norm_a = math.sqrt(sum(x**2 for x in a))
+    norm_b = math.sqrt(sum(x**2 for x in b))
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+    return dot / (norm_a * norm_b)
 
 
 class MemoryStore:
@@ -36,7 +53,7 @@ class MemoryStore:
             self.db_dsn = dsn
 
     async def initialize(self) -> None:
-        """Cria a tabela de memórias se não existir."""
+        """Cria a tabela de memórias e adiciona coluna embedding se necessário."""
         async with aiosqlite.connect(self.db_dsn) as db:
             await db.execute(
                 """
@@ -46,6 +63,7 @@ class MemoryStore:
                     key TEXT NOT NULL,
                     content TEXT NOT NULL,
                     metadata TEXT,
+                    embedding TEXT,
                     created_at TIMESTAMP NOT NULL,
                     updated_at TIMESTAMP NOT NULL,
                     expires_at TIMESTAMP,
@@ -53,6 +71,9 @@ class MemoryStore:
                 )
                 """
             )
+            # Migração graciosa: adiciona coluna embedding se tabela já existia sem ela
+            with contextlib.suppress(Exception):
+                await db.execute("ALTER TABLE memories ADD COLUMN embedding TEXT")
             await db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_user_key ON memories(user_id, key)"
             )
@@ -69,6 +90,7 @@ class MemoryStore:
         content: str,
         metadata: dict[str, Any] | None = None,
         ttl_days: int | None = None,
+        embedding: list[float] | None = None,
     ) -> str:
         """Salva ou atualiza uma memória.
 
@@ -78,6 +100,7 @@ class MemoryStore:
             content: Conteúdo da memória (string)
             metadata: Metadados adicionais (dict)
             ttl_days: Dias até expiração (None = nunca expira)
+            embedding: Vetor Cohere do conteúdo (C4 — busca semântica)
 
         Returns:
             ID da memória salva
@@ -89,13 +112,15 @@ class MemoryStore:
 
         memory_id = f"{user_id}:{key}"
         meta_json = json.dumps(metadata or {})
+        emb_json = json.dumps(embedding) if embedding is not None else None
 
         async with aiosqlite.connect(self.db_dsn) as db:
             await db.execute(
                 """
                 INSERT OR REPLACE INTO memories
-                (id, user_id, key, content, metadata, created_at, updated_at, expires_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (id, user_id, key, content, metadata, embedding,
+                 created_at, updated_at, expires_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     memory_id,
@@ -103,6 +128,7 @@ class MemoryStore:
                     key,
                     content,
                     meta_json,
+                    emb_json,
                     now.isoformat(),
                     now.isoformat(),
                     expires_at.isoformat() if expires_at else None,
@@ -180,6 +206,65 @@ class MemoryStore:
             }
             for row in rows
         ]
+
+    async def get_all_with_embeddings(self, user_id: str) -> list[dict[str, Any]]:
+        """Recupera todas as memórias ativas incluindo o campo embedding (C4)."""
+        async with aiosqlite.connect(self.db_dsn) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                """
+                SELECT key, content, metadata, embedding, created_at, updated_at
+                FROM memories
+                WHERE user_id = ? AND (expires_at IS NULL OR expires_at > ?)
+                ORDER BY updated_at DESC
+                """,
+                (user_id, datetime.now(UTC).isoformat()),
+            )
+            rows = await cursor.fetchall()
+
+        return [
+            {
+                "key": row["key"],
+                "content": row["content"],
+                "metadata": json.loads(row["metadata"] or "{}"),
+                "embedding": row["embedding"],  # JSON string ou None
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            }
+            for row in rows
+        ]
+
+    async def search_semantic(
+        self,
+        user_id: str,
+        query_embedding: list[float],
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Busca semântica: retorna memórias ordenadas por similaridade coseno (C4).
+
+        Compara o `query_embedding` com os embeddings armazenados em Python puro —
+        sem deps externas. Memórias sem embedding são incluídas no final com score 0.
+        """
+        all_mems = await self.get_all_with_embeddings(user_id)
+
+        with_score: list[tuple[float, dict[str, Any]]] = []
+        without_embedding: list[dict[str, Any]] = []
+
+        for mem in all_mems:
+            emb_json = mem.get("embedding")
+            if emb_json:
+                try:
+                    emb = json.loads(emb_json)
+                    score = _cosine_similarity(query_embedding, emb)
+                    with_score.append((score, mem))
+                except Exception:
+                    without_embedding.append(mem)
+            else:
+                without_embedding.append(mem)
+
+        with_score.sort(key=lambda x: x[0], reverse=True)
+        ranked = [m for _, m in with_score] + without_embedding
+        return ranked[:limit]
 
     async def delete(self, user_id: str, key: str) -> bool:
         """Deleta uma memória.

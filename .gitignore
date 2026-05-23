@@ -315,6 +315,12 @@ data/
 .env
 .env.local
 
+# Vectora Web UI (Next.js) — build artifacts e segredos locais
+chat/node_modules/
+chat/.next/
+chat/out/
+chat/.env.local
+
 # Test artifacts and coverage
 htmlcov/
 .coverage

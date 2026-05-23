@@ -2,7 +2,7 @@
 
 Registro técnico completo de tudo implementado no Vectora v0.1.0. Serve como referência para o time e como checklist de release.
 
-**Versão:** 0.1.0rc4
+**Versão:** 0.1.0dev6
 **Status:** 🟡 Feature-complete, em polimento final (rc4 — não publicada)
 
 ---

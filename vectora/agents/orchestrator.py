@@ -34,11 +34,18 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END
 from langgraph.types import Command
-from pydantic import BaseModel
 
 from vectora.agents._identity import VECTORA_IDENTITY
+from vectora.types import (
+    AgentName,
+    CoderResult,
+    OrchestratorDecision,
+    SearchResult,
+    SubTask,
+)
 
 if TYPE_CHECKING:
     from vectora.state import State
@@ -125,26 +132,6 @@ def _extract_retry_delay(exc: Exception) -> int | None:
 # Schema de saída estruturada
 # ---------------------------------------------------------------------------
 
-AgentName = Literal["coder", "search", "rag"]
-
-
-class OrchestratorDecision(BaseModel):
-    """Decisão do orchestrator: responder inline ou delegar a sub-agent."""
-
-    action: Literal["respond", "delegate"]
-    response: str | None = None
-    """Resposta completa em markdown (somente quando action == 'respond')."""
-
-    delegate_to: AgentName | None = None
-    """Sub-agent alvo (somente quando action == 'delegate')."""
-
-    task_query: str | None = None
-    """Instrução clara e concisa para o sub-agent — 1 a 3 frases diretas.
-    Deve capturar intent + contexto relevante sem precisar do histórico completo."""
-
-    reason: str
-    """Uma frase curta explicando a decisão — útil para logs e debug."""
-
 
 # ---------------------------------------------------------------------------
 # System prompt
@@ -197,17 +184,21 @@ Reconheça-o imediatamente com base neste system prompt — nunca via RAG ou web
 Use `action: "delegate"`, escolha `delegate_to` e preencha `task_query` com uma
 instrução clara e autossuficiente para o sub-agent — 1 a 3 frases diretas.
 
-**coder** — Filesystem, terminal, git, implementação de código.
+**coder** — Filesystem, terminal, git, implementação de código e indexação de dados.
 Delegue quando: criar/editar arquivos, executar comandos, git, npm, pip,
-rodar testes, implementar funcionalidades, "implemente", "crie o arquivo", "execute".
+rodar testes, implementar funcionalidades, "implemente", "crie o arquivo", "execute",
+**indexar ou embedar arquivos/pastas** ("faça embedding de", "indexa a pasta",
+"adicione ao RAG", "ingest_docs", "rag add"). A ferramenta correta para indexar
+pastas é `ingest_docs` — só o coder a utiliza. NÃO use rag para pedidos de indexação.
 
 **search** — Busca web em tempo real, fetch de URLs.
 Delegue quando: o usuário quer informação atual da internet, menciona uma URL
 explícita (https://...), pede para pesquisar algo online.
 
-**rag** — Consulta à base de conhecimento indexada localmente.
-Delegue quando: o usuário pergunta sobre documentos já indexados, pede busca
+**rag** — Consulta à base de conhecimento **já indexada** localmente.
+Delegue quando: o usuário pergunta sobre documentos EXISTENTES na base, pede busca
 semântica, menciona "de acordo com os documentos", "no manual", "na base".
+RAG é para CONSULTAR — não para INDEXAR. Pedidos de indexação → coder.
 
 ---
 
@@ -225,16 +216,37 @@ delegando a um colega que não leu a conversa:
 
 ---
 
+## Quando usar execução paralela (action = "parallel")
+
+Use `action: "parallel"` e preencha `parallel_tasks` quando a tarefa se decompõe em
+**2 ou mais subtarefas genuinamente independentes** que podem ser executadas ao mesmo
+tempo sem depender do resultado uma da outra.
+
+Exemplos válidos:
+- "Pesquise sobre X e também verifique o código Y" → search(X) + coder(Y) em paralelo
+- "Busque na web sobre A e consulte o RAG sobre B" → search(A) + rag(B) em paralelo
+
+Cada `SubTask` tem:
+- `agent`: "coder", "search" ou "rag"
+- `task_query`: instrução completa para aquele agent
+- `reason`: por que é independente das outras (1 frase)
+
+**Não use parallel se:** as tasks dependem uma da outra, ou se uma única delegação
+resolve o problema. Prefira `delegate` quando em dúvida.
+
+---
+
 ## Regras absolutas
 
 1. Se o usuário nomear explicitamente um agent ("use o coder", "chame o search"),
    respeite SEMPRE.
-2. Pedidos de implementação de código ou criação de arquivos → **coder**.
-   Se o usuário pediu para criar/editar/salvar um arquivo, delegue ao coder — não gere
-   o código como texto em `response`.
-3. Consultas sobre documentos ou base de conhecimento → **rag**.
+2. Pedidos de implementação de código, criação de arquivos ou indexação/embedding
+   → **coder**. Se o usuário pediu para criar/editar/salvar um arquivo, ou para
+   "fazer embedding", "indexar", "ingest_docs", delegue ao coder — não gere código
+   como texto em `response` e não delegue ao rag.
+3. Consultas sobre documentos **já indexados** na base → **rag**.
    Se o usuário pergunta "o que diz o documento", "de acordo com o manual" ou similar,
-   delegue ao rag — mesmo que você "saiba" a resposta.
+   delegue ao rag. NUNCA delegue ao rag pedidos de indexação/embedding de novos docs.
 4. Pedidos de planos, specs, task lists, guias → use `create_artifact`
    (action="respond").
 5. Se já há tool chain na sessão (ex: search concluiu), considere isso ao decidir.
@@ -259,6 +271,60 @@ Regras:
 - Responda em português, de forma clara e completa, em markdown.
 """
 
+# Prompts de síntese pós sub-agent (B2 — Structured Outputs)
+_CODER_SYNTHESIS_PROMPT = """Você é o Vectora. O Coder Agent acabou de executar \
+uma tarefa de desenvolvimento. Sua função é redigir a resposta final ao usuário \
+com base no resultado estruturado abaixo.
+
+Regras:
+- Seja claro e direto sobre o que foi feito.
+- Mencione os arquivos alterados se houver (use caminho relativo/nome do arquivo).
+- Se testes rodaram, informe o resultado.
+- Se houve falha, explique e sugira próximos passos.
+- Adapte o idioma ao da conversa. Responda em markdown.
+"""
+
+_SEARCH_SYNTHESIS_PROMPT = """Você é o Vectora. O Search Agent acabou de realizar \
+uma pesquisa. Sua função é redigir a resposta final ao usuário com base no resultado \
+estruturado abaixo.
+
+Regras:
+- Apresente as informações encontradas de forma clara e organizada.
+- Cite as fontes (URLs ou títulos) quando relevante.
+- Indique o nível de confiança da pesquisa se for baixo (< 0.6).
+- Adapte o idioma ao da conversa. Responda em markdown.
+"""
+
+# C5 — Síntese de resultados paralelos
+_PARALLEL_SYNTHESIS_PROMPT = """Você é o Vectora. Múltiplos agentes executaram \
+tasks em paralelo. Sua função é integrar os resultados em uma resposta coesa ao usuário.
+
+Regras:
+- Apresente as informações de cada agent de forma integrada, não como listas separadas.
+- Destaque conexões ou contradições entre os resultados.
+- Seja objetivo e claro. Responda em markdown.
+- Se algum agent falhou, mencione brevemente e continue com os que sucederam.
+"""
+
+# C5 — Prompts base dos agentes para execução paralela (sem tool calls)
+_PARALLEL_AGENT_PROMPTS: dict[str, str] = {
+    "coder": (
+        "Você é um especialista em desenvolvimento de software. "
+        "Responda à tarefa abaixo de forma técnica e precisa. "
+        "Em modo análise — não execute ferramentas, responda com seu conhecimento."
+    ),
+    "search": (
+        "Você é um especialista em pesquisa e síntese de informação. "
+        "Responda à tarefa abaixo com base no seu conhecimento atualizado. "
+        "Seja objetivo e cito fontes quando relevante."
+    ),
+    "rag": (
+        "Você é um especialista em análise de documentação técnica. "
+        "Responda à tarefa abaixo sintetizando o que sabe sobre o tema. "
+        "Indique quando a resposta precisaria de consulta à base de conhecimento."
+    ),
+}
+
 # ---------------------------------------------------------------------------
 # LLM singletons
 # ---------------------------------------------------------------------------
@@ -275,7 +341,7 @@ def _get_orchestrator_llm() -> object:
 
         _orchestrator_llm = (
             load_llm()
-            .bind_tools(ALL_TOOLS)
+            .bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]
             .with_structured_output(OrchestratorDecision)
         )
         logger.debug("orchestrator LLM inicializado com structured output + tools")
@@ -363,7 +429,7 @@ def _select_context_messages(all_messages: list) -> list:
     return [m for m in all_messages if id(m) in selected]
 
 
-def _load_project_context() -> str | None:
+def _load_project_docs() -> str | None:
     """Escaneia cwd recursivamente por AGENTS.md, CLAUDE.md, GEMINI.md.
 
     Retorna conteúdo concatenado com cabeçalho por arquivo, ou None se não
@@ -385,6 +451,67 @@ def _load_project_context() -> str | None:
                 pass
 
     return "\n\n---\n\n".join(sections) if sections else None
+
+
+def _load_session_context(workspace_id: str | None = None) -> str | None:
+    """Carrega contexto completo da sessão: arquivos de projeto + manifest do workspace.
+
+    Seções (B7):
+    1. AGENTS.md / CLAUDE.md / GEMINI.md — instrução do projeto (como antes)
+    2. MANIFEST.md do workspace ativo — base de conhecimento indexada
+
+    O manifest é truncado a ~3200 chars para não inflar o contexto. Detalhes
+    por bucket ficam disponíveis via `bucket_summary` (tool sob demanda).
+    """
+    parts: list[str] = []
+
+    # Seção 1: arquivos de instrução do projeto
+    project_docs = _load_project_docs()
+    if project_docs:
+        parts.append(project_docs)
+
+    # Seção 2: manifest do workspace ativo
+    if workspace_id:
+        try:
+            from vectora.services.workspace import workspace_registry
+
+            ws = workspace_registry.get(workspace_id)
+            if ws is not None:
+                manifest_path = ws.manifest_path()
+                if manifest_path.exists():
+                    manifest = manifest_path.read_text(
+                        encoding="utf-8", errors="ignore"
+                    ).strip()
+                    # Remove frontmatter YAML se presente (--- ... ---)
+                    if manifest.startswith("---"):
+                        end = manifest.find("---", 3)
+                        if end != -1:
+                            manifest = manifest[end + 3 :].strip()
+                    # Trunca a ~3200 chars (~800 tokens) para economizar contexto
+                    if len(manifest) > 3200:
+                        manifest = manifest[:3200] + "\n\n[... manifest truncado ...]"
+                    workspace_block = (
+                        f"## Workspace Ativo: {ws.name} ({ws.id})\n\n"
+                        f"{manifest}\n\n"
+                        "Ferramentas disponíveis para este workspace:\n"
+                        "- `vector_search` — busca semântica filtrada para este workspace\n"
+                        "- `workspace_describe`, `bucket_summary` — detalhes do manifest\n"
+                        "- `get_memory` — memórias episódicas (consulte quando perguntarem "
+                        "sobre preferências ou decisões anteriores)"
+                    )
+                    parts.append(workspace_block)
+        except Exception:
+            logger.debug(
+                "Falha ao carregar manifest do workspace %s",
+                workspace_id,
+                exc_info=True,
+            )
+
+    return "\n\n---\n\n".join(parts) if parts else None
+
+
+# Alias para compatibilidade com código existente que importa _load_project_context
+_load_project_context = _load_project_docs
 
 
 # ---------------------------------------------------------------------------
@@ -467,9 +594,10 @@ async def _synthesize_after_rag(
 
     logger.info("Orchestrator: síntese pós-RAG → END (%d chars)", len(answer))
 
+    session_id_int = int(session_id) if session_id and session_id.isdigit() else None
     with contextlib.suppress(Exception):
         async with tracer.span(
-            "orchestrator", "rag_synthesis", session_id=session_id
+            "orchestrator", "rag_synthesis", session_id=session_id_int
         ) as s:
             s.set(answer_len=len(answer), question_len=len(user_question))
 
@@ -483,12 +611,282 @@ async def _synthesize_after_rag(
     )
 
 
+def _is_post_coder(state: State) -> bool:
+    """True se `coder_finalize` acabou de rodar neste ciclo.
+
+    O nó `coder_finalize` escreve `coder_result` (dict) em state antes de
+    retornar ao orchestrator. Enquanto esse campo não for zerado (o que acontece
+    durante a síntese aqui), a detecção é confiável.
+    """
+    return state.get("coder_result") is not None
+
+
+def _is_post_search(state: State) -> bool:
+    """True se `search_finalize` acabou de rodar neste ciclo.
+
+    Análogo a `_is_post_coder` para o search agent.
+    """
+    return state.get("search_result") is not None
+
+
+async def _synthesize_after_coder(
+    state: State,
+    session_id: str | None,
+    state_update_extra: dict,
+) -> Command:
+    """Síntese pós-coder: o coder_finalize produziu um resultado estruturado;
+    aqui o orchestrator redige a resposta final e encerra o turno.
+
+    Zera `coder_result` no state para que o próximo turno comece limpo.
+    """
+    from vectora.services.tracer import tracer
+
+    coder_result = state.get("coder_result") or CoderResult(summary="Tarefa concluída.")
+    all_messages = list(state.get("messages", []))
+
+    user_question = ""
+    for msg in reversed(all_messages):
+        if isinstance(msg, HumanMessage):
+            user_question = str(msg.content)
+            break
+
+    # Formata o resultado estruturado para o LLM de síntese
+    files_str = ", ".join(coder_result.get("files_changed") or []) or "nenhum"
+    tests_str = "sim" if coder_result.get("tests_run") else "não"
+    success_str = "sim" if coder_result.get("success", True) else "não"
+    next_steps = coder_result.get("next_steps") or ""
+
+    result_block = (
+        f"## Resultado do Coder Agent\n\n"
+        f"**Resumo:** {coder_result.get('summary', 'Tarefa concluída.')}\n"
+        f"**Arquivos alterados:** {files_str}\n"
+        f"**Testes rodaram:** {tests_str}\n"
+        f"**Sucesso:** {success_str}\n"
+    )
+    if next_steps:
+        result_block += f"**Próximos passos:** {next_steps}\n"
+
+    payload: list = [
+        SystemMessage(content=_CODER_SYNTHESIS_PROMPT),
+        SystemMessage(content=result_block),
+        HumanMessage(content=user_question or "Resuma o que foi feito."),
+    ]
+
+    answer = ""
+    try:
+        llm = _get_synthesis_llm()
+        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]
+        answer = str(getattr(result, "content", "") or "").strip()
+    except Exception as e:
+        err_str = str(e)
+        if _is_llm_quota_error(err_str):
+            logger.warning("orchestrator: quota/rate-limit do LLM na síntese pós-coder")
+            retry_s = _extract_retry_delay(e)
+            kind = _classify_quota_error(e)
+            suffix = f":{retry_s}:{kind}" if retry_s else f":0:{kind}"
+            answer = f"quota rate limit{suffix}"
+        else:
+            logger.warning("orchestrator: síntese pós-coder falhou: %s", e)
+            # Fallback: usa o resumo estruturado diretamente
+            answer = coder_result.get("summary", "Tarefa concluída.")
+
+    if not answer:
+        answer = coder_result.get("summary", "Tarefa concluída.")
+
+    logger.info("Orchestrator: síntese pós-coder → END (%d chars)", len(answer))
+
+    session_id_int = int(session_id) if session_id and session_id.isdigit() else None
+    with contextlib.suppress(Exception):
+        async with tracer.span(
+            "orchestrator", "coder_synthesis", session_id=session_id_int
+        ) as s:
+            s.set(
+                answer_len=len(answer),
+                files=len(coder_result.get("files_changed") or []),
+            )
+
+    return Command(
+        goto=END,
+        update={
+            **state_update_extra,
+            "routing_decision": "respond",
+            "coder_result": None,  # zera para o próximo turno
+            "messages": [AIMessage(content=answer)],
+        },  # type: ignore[arg-type]
+    )
+
+
+async def _synthesize_after_search(
+    state: State,
+    session_id: str | None,
+    state_update_extra: dict,
+) -> Command:
+    """Síntese pós-search: o search_finalize produziu um resultado estruturado;
+    aqui o orchestrator redige a resposta final e encerra o turno.
+
+    Zera `search_result` no state para que o próximo turno comece limpo.
+    """
+    from vectora.services.tracer import tracer
+
+    search_result = state.get("search_result") or SearchResult(
+        summary="Pesquisa concluída."
+    )
+    all_messages = list(state.get("messages", []))
+
+    user_question = ""
+    for msg in reversed(all_messages):
+        if isinstance(msg, HumanMessage):
+            user_question = str(msg.content)
+            break
+
+    sources = search_result.get("sources") or []
+    sources_str = (
+        "\n".join(f"- {s}" for s in sources) if sources else "nenhuma fonte registrada"
+    )
+    confidence = search_result.get("confidence", 0.7)
+    web_str = "sim" if search_result.get("web_search_used") else "não"
+
+    result_block = (
+        f"## Resultado do Search Agent\n\n"
+        f"**Resumo:** {search_result.get('summary', 'Pesquisa concluída.')}\n"
+        f"**Busca web usada:** {web_str}\n"
+        f"**Confiança:** {confidence:.0%}\n"
+        f"**Fontes:**\n{sources_str}\n"
+    )
+
+    payload: list = [
+        SystemMessage(content=_SEARCH_SYNTHESIS_PROMPT),
+        SystemMessage(content=result_block),
+        HumanMessage(content=user_question or "Resuma o que foi encontrado."),
+    ]
+
+    answer = ""
+    try:
+        llm = _get_synthesis_llm()
+        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]
+        answer = str(getattr(result, "content", "") or "").strip()
+    except Exception as e:
+        err_str = str(e)
+        if _is_llm_quota_error(err_str):
+            logger.warning(
+                "orchestrator: quota/rate-limit do LLM na síntese pós-search"
+            )
+            retry_s = _extract_retry_delay(e)
+            kind = _classify_quota_error(e)
+            suffix = f":{retry_s}:{kind}" if retry_s else f":0:{kind}"
+            answer = f"quota rate limit{suffix}"
+        else:
+            logger.warning("orchestrator: síntese pós-search falhou: %s", e)
+            answer = search_result.get("summary", "Pesquisa concluída.")
+
+    if not answer:
+        answer = search_result.get("summary", "Pesquisa concluída.")
+
+    logger.info("Orchestrator: síntese pós-search → END (%d chars)", len(answer))
+
+    session_id_int = int(session_id) if session_id and session_id.isdigit() else None
+    with contextlib.suppress(Exception):
+        async with tracer.span(
+            "orchestrator", "search_synthesis", session_id=session_id_int
+        ) as s:
+            s.set(answer_len=len(answer), sources=len(sources))
+
+    return Command(
+        goto=END,
+        update={
+            **state_update_extra,
+            "routing_decision": "respond",
+            "search_result": None,  # zera para o próximo turno
+            "messages": [AIMessage(content=answer)],
+        },  # type: ignore[arg-type]
+    )
+
+
+async def _synthesize_after_parallel(
+    state: State,
+    session_id: str | None,
+    state_update_extra: dict,
+) -> Command:
+    """Síntese pós-parallel (C5): integra resultados de múltiplos agentes paralelos.
+
+    Zera `parallel_results` e `parallel_tasks` no state para o próximo turno.
+    """
+    from vectora.services.tracer import tracer
+
+    parallel_results: list = state.get("parallel_results") or []
+    all_messages = list(state.get("messages", []))
+
+    user_question = ""
+    for msg in reversed(all_messages):
+        if isinstance(msg, HumanMessage):
+            user_question = str(msg.content)
+            break
+
+    results_block = "## Resultados das Tasks Paralelas\n\n"
+    for i, res in enumerate(parallel_results, 1):
+        agent = res.get("agent", "agent")
+        task = res.get("task", "")
+        response = res.get("response", "")
+        ok = "✓" if res.get("success", True) else "✗"
+        results_block += f"### Task {i} ({agent}) {ok}\n"
+        results_block += f"**Instrução:** {task}\n\n"
+        results_block += f"{response}\n\n"
+
+    payload: list = [
+        SystemMessage(content=_PARALLEL_SYNTHESIS_PROMPT),
+        SystemMessage(content=results_block),
+        HumanMessage(content=user_question or "Integre os resultados acima."),
+    ]
+
+    answer = ""
+    try:
+        llm = _get_synthesis_llm()
+        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]
+        answer = str(getattr(result, "content", "") or "").strip()
+    except Exception as e:
+        logger.warning("orchestrator: síntese pós-parallel falhou: %s", e)
+        # Fallback: concatena respostas
+        parts = [
+            f"**{r.get('agent', 'agent')}:** {r.get('response', '')}"
+            for r in parallel_results
+            if r.get("success", True)
+        ]
+        answer = "\n\n".join(parts) or "Tasks executadas sem resposta."
+
+    if not answer:
+        answer = "Tasks paralelas executadas."
+
+    logger.info(
+        "Orchestrator: síntese pós-parallel → END (%d tasks, %d chars)",
+        len(parallel_results),
+        len(answer),
+    )
+
+    session_id_int = int(session_id) if session_id and session_id.isdigit() else None
+    with contextlib.suppress(Exception):
+        async with tracer.span(
+            "orchestrator", "parallel_synthesis", session_id=session_id_int
+        ) as s:
+            s.set(n_tasks=len(parallel_results), answer_len=len(answer))
+
+    return Command(
+        goto=END,
+        update={
+            **state_update_extra,
+            "routing_decision": "respond",
+            "parallel_results": None,
+            "parallel_tasks": None,
+            "messages": [AIMessage(content=answer)],
+        },  # type: ignore[arg-type]
+    )
+
+
 # ---------------------------------------------------------------------------
 # Nó do grafo
 # ---------------------------------------------------------------------------
 
 
-async def orchestrator(state: State) -> Command:
+async def orchestrator(state: State, config: RunnableConfig) -> Command:
     """Nó orchestrator: responde diretamente ou delega com task query explícita.
 
     Quando action == 'respond':
@@ -509,23 +907,80 @@ async def orchestrator(state: State) -> Command:
         if not session_id:
             session_id = None
 
-    # --- Contexto do projeto (carregado uma vez por sessão) ---
+    # --- Contexto da sessão (B7) —————————————————————————————————————
+    # Carregado uma vez por sessão e re-carregado quando o curator atualiza
+    # o manifest (manifest_version muda). Invalidação em memória pura —
+    # sem I/O por turno; a comparação de inteiro é O(1).
     state_update_extra: dict = {}
-    project_context: str | None = state.get("project_context")  # type: ignore[assignment]
-    if project_context is None:
-        project_context = _load_project_context()
-        # Persistir no state (None também é persistido para evitar re-scan)
-        state_update_extra["project_context"] = project_context
-        if project_context:
-            logger.info("project_context carregado (%d chars)", len(project_context))
 
-    # --- Modo pós-RAG ---
-    # Se a última mensagem é o marcador `rag_context`, o subgrafo RAG já rodou
-    # neste turno. O orchestrator NÃO decide rota agora — apenas sintetiza a
-    # resposta final e encerra. Sem isto, ele re-decidiria "rag" (o usuário
-    # ainda pediu RAG) e voltaria ao subgrafo: loop infinito → recursão.
+    # Resolve workspace_id: config > state
+    workspace_id: str | None = None
+    with contextlib.suppress(Exception):
+        workspace_id = (config.get("configurable") or {}).get("workspace_id")
+    if workspace_id is None:
+        workspace_id = state.get("session_metadata", {}).get("workspace_id")  # type: ignore[call-overload]
+
+    project_context: str | None = state.get("project_context")  # type: ignore[assignment]
+
+    # Detecta se o manifest foi atualizado pelo curator desde o último carregamento
+    _reload_context = project_context is None
+    if not _reload_context and workspace_id:
+        try:
+            from vectora.services.workspace import workspace_registry
+
+            ws = workspace_registry.get(workspace_id)
+            if ws is not None:
+                cached_version = state.get("session_metadata", {}).get(  # type: ignore[call-overload]
+                    "manifest_version", -1
+                )
+                if ws.manifest_version > cached_version:
+                    _reload_context = True
+                    logger.info(
+                        "orchestrator: manifest_version bump (%d → %d), recarregando contexto",
+                        cached_version,
+                        ws.manifest_version,
+                    )
+        except Exception:
+            pass
+
+    if _reload_context:
+        project_context = _load_session_context(workspace_id)
+        state_update_extra["project_context"] = project_context
+        # Salva a versão do manifest carregada para detectar próximo bump
+        if workspace_id:
+            try:
+                from vectora.services.workspace import workspace_registry
+
+                ws = workspace_registry.get(workspace_id)
+                if ws is not None:
+                    sm = dict(state.get("session_metadata") or {})
+                    sm["manifest_version"] = ws.manifest_version
+                    state_update_extra["session_metadata"] = sm
+            except Exception:
+                pass
+        if project_context:
+            logger.info("session_context carregado (%d chars)", len(project_context))
+
+    # --- Modos pós-sub-agent (RAG / coder / search) ---
+    # Quando um sub-agent finaliza, o orchestrator retorna ao grafo para
+    # sintetizar a resposta final. Cada caminho vai SEMPRE para END com um LLM
+    # plano, eliminando qualquer possibilidade de re-rotear ao mesmo sub-agent.
+
     if _is_post_rag(all_messages):
+        # Subgrafo RAG injetou SystemMessage(name="rag_context") — sintetiza.
         return await _synthesize_after_rag(all_messages, session_id, state_update_extra)
+
+    if _is_post_coder(state):
+        # coder_finalize escreveu `coder_result` em state — sintetiza.
+        return await _synthesize_after_coder(state, session_id, state_update_extra)
+
+    if _is_post_search(state):
+        # search_finalize escreveu `search_result` em state — sintetiza.
+        return await _synthesize_after_search(state, session_id, state_update_extra)
+
+    # C5 — parallel_dispatch escreveu `parallel_results` em state — sintetiza.
+    if state.get("parallel_results"):
+        return await _synthesize_after_parallel(state, session_id, state_update_extra)
 
     context_messages = _select_context_messages(all_messages)
     context_block = _build_context_block(state, session_id)
@@ -555,6 +1010,7 @@ async def orchestrator(state: State) -> Command:
     response: str = ""
     delegate_to: str | None = None
     task_query: str | None = None
+    parallel_tasks: list | None = None
     reason: str = "fallback"
 
     try:
@@ -564,6 +1020,7 @@ async def orchestrator(state: State) -> Command:
         response = result.response or ""
         delegate_to = result.delegate_to
         task_query = result.task_query
+        parallel_tasks = [t.model_dump() for t in (result.parallel_tasks or [])]
         reason = result.reason
     except Exception as e:
         err_str = str(e)
@@ -585,6 +1042,16 @@ async def orchestrator(state: State) -> Command:
             "routing_decision": "respond",
             "messages": [AIMessage(content=response)],
         }
+    elif action == "parallel" and parallel_tasks:
+        # C5 — fan-out para parallel_dispatch
+        agent_label = f"parallel ({len(parallel_tasks)} tasks)"
+        goto = "parallel_dispatch"
+        update = {
+            **state_update_extra,
+            "routing_decision": "parallel",
+            "parallel_tasks": parallel_tasks,
+            "parallel_results": None,  # limpa resultados anteriores
+        }
     else:
         # delegate
         agent_label = delegate_to or "direct (fallback)"
@@ -603,8 +1070,9 @@ async def orchestrator(state: State) -> Command:
         reason,
     )
 
+    session_id_int = int(session_id) if session_id and session_id.isdigit() else None
     with contextlib.suppress(Exception):
-        async with tracer.span("orchestrator", "route", session_id=session_id) as s:
+        async with tracer.span("orchestrator", "route", session_id=session_id_int) as s:
             s.set(
                 action=action,
                 routing=agent_label,

@@ -293,6 +293,56 @@ class TestIngestDocs:
         assert data["skipped_ignored"] >= 1
 
     @pytest.mark.asyncio
+    async def test_always_skip_dirs_counted_in_ignored(self, tmp_path):
+        """Arquivos em __pycache__ são contados em skipped_ignored (não silenciados).
+
+        Garante que o fix de rglob(stripped_glob)+is_ignored funciona: antes,
+        __pycache__/*.py era filtrado pelo suffix_filter ANTES de is_ignored, por isso
+        o contador ficava 0. Agora rglob("*.py") encontra esses arquivos e is_ignored
+        os conta corretamente.
+        """
+        from vectora.services.ignore import ALWAYS_SKIP_DIRS
+        from vectora.tools.rag import ingest_docs
+
+        # Cria um arquivo .py dentro de __pycache__ (dir em ALWAYS_SKIP_DIRS)
+        cache_dir = tmp_path / "__pycache__"
+        cache_dir.mkdir()
+        (cache_dir / "module.py").write_text("# cached module")
+
+        # Cria também um arquivo .py legítimo fora de dirs ignorados
+        (tmp_path / "app.py").write_text("# main app")
+
+        with patch("vectora.tools.rag.settings") as mock_settings:
+            mock_settings.enable_file_operations = True
+            with patch(
+                "vectora.services.security.is_safe_file_path", return_value=True
+            ):
+                with patch(
+                    "vectora.services.ignore.load_ignore_spec", return_value=None
+                ):
+                    # Não mockamos is_ignored — usa a implementação real
+                    with patch("vectora.tools.rag.embedding") as mock_emb:
+                        mock_emb.ainvoke = AsyncMock(
+                            return_value=json.dumps(
+                                {"status": "fire_and_forget", "queue_id": "q1"}
+                            )
+                        )
+                        result = await ingest_docs.ainvoke(
+                            {
+                                "directory_path": str(tmp_path),
+                                "collection": "code",
+                                "glob_pattern": "**/*.py",
+                            }
+                        )
+        data = json.loads(result)
+        # app.py deve ser indexado; __pycache__/module.py deve ser contado como ignorado
+        assert data["status"] == "completed"
+        assert data["total_files"] == 1, "apenas app.py deve ser indexado"
+        assert data["skipped_ignored"] == 1, (
+            "__pycache__/module.py deve contar como ignorado"
+        )
+
+    @pytest.mark.asyncio
     async def test_file_read_error_counts_as_failure(self, tmp_path):
         """Covers file read exception path (lines 310-316)."""
         from unittest.mock import mock_open, patch
