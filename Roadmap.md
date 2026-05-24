@@ -20,52 +20,40 @@ Após leitura completa das docs do LangChain, LangGraph, Deep Agents, Tavily, Co
 
 ## DIRETIVA PERMANENTE — Sistema de Tipos (Type Safety)
 
-> **Esta diretiva se aplica a todos os blocos, presentes e futuros.**
+> **Esta diretiva rege a manutenção e evolução da arquitetura de tipos do projeto.**
 
-### Regras Obrigatórias
+### Regras Obrigatórias para Evolução
 
-1. **Centralização em `vectora/types/`**: Todo modelo de dados complexo (estado intermediário, resultado de agente, schema de curadoria, métricas) deve residir em `vectora/types/`. Módulos de domínio (agents/, nodes/, services/) definem lógica — não tipos.
+1. **Centralização em `vectora/types/`**: Todo novo modelo de dados (estado intermediário, resultado de agente, métrica, ou schema) deve ser adicionado exclusivamente em `vectora/types/`. Módulos de domínio (`agents/`, `nodes/`, `services/`) contêm apenas lógica de execução — jamais definições de tipos complexos.
 
-2. **Pydantic como base**: Todos os modelos de dados devem herdar de `pydantic.BaseModel`. TypedDicts são permitidos apenas como anotação de estado LangGraph (onde o próprio framework exige dict-like serialization).
+2. **Pydantic como padrão**: Todos os modelos de dados devem herdar de `pydantic.BaseModel`. O uso de `TypedDict` é restrito apenas à definição de `State` para compatibilidade estrita com o LangGraph.
 
-3. **PEP 585 / PEP 604 — Sintaxe moderna obrigatória**:
+3. **Sintaxe moderna (PEP 585 / PEP 604)**:
+   - Use `list[str]`, `dict[str, Any]`, `str | None`.
+   - É proibido importar coleções básicas (`List`, `Dict`, `Optional`, etc.) do módulo `typing`. Use tipos nativos sempre.
 
-   - `list[str]` em vez de `List[str]`
-   - `str | None` em vez de `Optional[str]`
-   - `dict[str, Any]` em vez de `Dict[str, Any]`
-   - Zero imports de `typing` para primitivos (`List`, `Dict`, `Optional`, `Tuple`, `Set`) — apenas `Annotated`, `Literal`, `NotRequired`, `TYPE_CHECKING` quando necessários
+4. **Contratos de Interface**: Mantenha o `state.py` como a camada de "bridge". Campos de estado que representam resultados ou decisões de agentes devem ser obrigatoriamente tipados pelos modelos Pydantic definidos em `vectora/types/`, garantindo a validação no fluxo de execução.
 
-4. **Contratos de interface**: `state.py` importa os tipos de `vectora/types/`. Os campos de estado que referenciam resultados de agentes usam os modelos Pydantic (`CoderResult | None`, `SearchResult | None`, `SubTask`, etc.) e não `dict | None`.
+5. **Vectora Chat (TypeScript)**: A mesma rigorosidade se aplica ao frontend. Todos os dados vindos do agente devem ser mapeados em interfaces centralizadas em `chat/src/types/`. Evite `any` a todo custo, utilizando as interfaces definidas para garantir que a UI reflita fielmente o estado do grafo.
 
-5. **Lógica pura + decoradores de infra**: Funções de nó implementam apenas a lógica de negócio. Preocupações transversais (tracing, observabilidade, awareness de workspace) são aplicadas via decoradores (`@trace_node`, `@workspace_aware`).
+6. **Infraestrutura via Decoradores**: A lógica de infraestrutura (tracing, observabilidade, contexto de workspace, HITL) deve ser aplicada de forma transparente via decoradores (`@trace_node`, `@workspace_aware`, etc.), mantendo a lógica de negócio dos nós limpa e legível.
 
-### Estrutura `vectora/types/`
+### Estrutura do Catálogo (`vectora/types/`)
 
-```
-vectora/types/
-├── __init__.py        # re-export de todos os tipos públicos
-├── documents.py       # Document, ArtifactMetadata
-├── agents.py          # AgentName, SubTask, OrchestratorDecision,
-│                      # CoderResult, SearchResult, ParallelResult, UIMetrics
-├── curation.py        # WebResultVerdict, CurationDecision
-├── session.py         # SessionMetadata
-└── workspace.py       # Workspace (Pydantic)
-```
+A pasta `vectora/types/` é a fonte única da verdade para a estrutura de dados. Ao adicionar novas funcionalidades, siga o arquivo correspondente:
 
-### Estado atual da tipagem (inventário)
+- `agents.py`: Decisões do orquestrador e resultados de agentes.
+- `documents.py`: Estruturas de documentos e artifacts.
+- `curation.py`: Schemas para julgamento de conteúdo.
+- `session.py`: Metadados persistentes de sessão.
+- `workspace.py`: Definições de workspaces e estados de projeto.
+- `metrics.py`: Schemas para observabilidade via `ui_metrics`.
 
-| Modelo                                       | Local atual                    | Tipo atual             | Ação                                                                        |
-| -------------------------------------------- | ------------------------------ | ---------------------- | --------------------------------------------------------------------------- |
-| `OrchestratorDecision`, `SubTask`            | `agents/orchestrator.py`       | Pydantic ✓             | Mover para `types/agents.py`                                                |
-| `CoderResult`, `SearchResult`                | `agents/results.py`            | Pydantic ✓             | Mover para `types/agents.py`                                                |
-| `WebResultVerdict`, `CurationDecision`       | `nodes/web_curation.py`        | Pydantic ✓             | Mover para `types/curation.py`                                              |
-| `Document`, `SessionMetadata`                | `state.py`                     | TypedDict              | Criar Pydantic em `types/`; manter TypedDict em state por compat. LangGraph |
-| `ArtifactMetadata`                           | `messages.py`                  | TypedDict              | Criar Pydantic em `types/documents.py`                                      |
-| `Workspace`                                  | `services/workspace.py`        | Dataclass              | Migrar para Pydantic em `types/workspace.py`                                |
-| `UIMetrics`                                  | `providers/Stream.tsx` (só TS) | —                      | Criar Pydantic em `types/metrics.py`                                        |
-| `ParallelResult`                             | (não existe)                   | —                      | Criar em `types/agents.py`                                                  |
-| `EmbeddingQueueRecord`                       | `services/queue.py`            | SQLAlchemy ORM         | Manter como ORM (não Pydantic)                                              |
-| `Context`, `UserPreferences`, `FeatureFlags` | `context.py`                   | Dataclass frozen+slots | Manter como dataclass (frozen+slots sem equivalente Pydantic trivial)       |
+### Manutenção e Expansão
+
+- **Ao criar uma nova Tool**: Adicione o `metadata={"render_hint": "..."}` ao decorador `@tool` para permitir a autodescoberta pela Web UI (D1.1).
+- **Ao modificar nós**: Certifique-se de que o contrato de entrada/saída (via `State`) respeita os tipos Pydantic definidos em `types/`.
+- **Linting**: O projeto segue *Strict Typing*. Qualquer novo código deve passar na validação de tipo sem o uso de `Any` explícito, priorizando o uso de `Union` ou `Discriminated Unions` quando a estrutura for variável.
 
 ---
 

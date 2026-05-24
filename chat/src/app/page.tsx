@@ -6,7 +6,7 @@ import { ThreadProvider } from "@/providers/Thread";
 import { Toaster } from "@/components/ui/sonner";
 import React from "react";
 
-export default function DemoPage(): React.ReactNode {
+export default function DemoPage() {
   return (
     <React.Suspense fallback={<div>Loading (layout)...</div>}>
       <Toaster />

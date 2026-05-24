@@ -33,9 +33,13 @@ def load_llm() -> BaseLanguageModel:
     - ollama: Local Ollama instance
     - openai: OpenAI API
     - anthropic: Anthropic Claude API
+    - cohere: Cohere Chat API
+
+    Fallback: uses ~/.vectora/settings.json (runtime_settings) if env vars
+    are not set. This ensures /model chat command takes immediate effect.
 
     Environment variables:
-        LLM_PROVIDER: Provider name (default: google-genai)
+        LLM_PROVIDER: Provider name (google-genai, openai, anthropic, ollama, cohere)
         GOOGLE_API_KEY: Google API key (for google-genai)
         GOOGLE_MODEL: Model name (default: gemini-2.0-flash)
         OLLAMA_BASE_URL: Ollama URL (default: http://127.0.0.1:11434)
@@ -44,16 +48,29 @@ def load_llm() -> BaseLanguageModel:
         OPENAI_MODEL: Model name (default: gpt-4o)
         ANTHROPIC_API_KEY: Anthropic API key
         ANTHROPIC_MODEL: Model name (default: claude-opus-4-1)
+        COHERE_API_KEY: Cohere API key
+        COHERE_CHAT_MODEL: Cohere model name (default: command-a-03-2025)
         LLM_TEMPERATURE: Temperature (default: 0.2)
     """
-    provider = _get_env_with_default("LLM_PROVIDER", "google-genai")
+    import os
+
+    from vectora.services.runtime_settings import runtime_settings
+
+    # Precedência: os.environ > runtime_settings > defaults.env (google-genai)
+    provider = os.getenv("LLM_PROVIDER") or runtime_settings.active_provider
     temperature = float(_get_env_with_default("LLM_TEMPERATURE", "0.2"))
 
     if provider == "google-genai":
+        # Fallback para active_model se o provider for o mesmo
+        default_model = (
+            runtime_settings.active_model
+            if runtime_settings.active_provider == "google-genai"
+            else "gemini-2.5-flash"
+        )
         model = cast(
             "BaseLanguageModel",
             init_chat_model(
-                model=_get_env_with_default("GOOGLE_MODEL", "gemini-2.5-flash"),
+                model=os.getenv("GOOGLE_MODEL") or default_model,
                 model_provider="google-genai",
                 api_key=get_env("GOOGLE_API_KEY"),
                 temperature=temperature,
@@ -62,10 +79,15 @@ def load_llm() -> BaseLanguageModel:
         )
 
     elif provider == "ollama":
+        default_model = (
+            runtime_settings.active_model
+            if runtime_settings.active_provider == "ollama"
+            else "gpt-oss:20b"
+        )
         model = cast(
             "BaseLanguageModel",
             init_chat_model(
-                model=_get_env_with_default("OLLAMA_MODEL", "gpt-oss:20b"),
+                model=os.getenv("OLLAMA_MODEL") or default_model,
                 model_provider="ollama",
                 base_url=_get_env_with_default(
                     "OLLAMA_BASE_URL", "http://127.0.0.1:11434"
@@ -76,10 +98,15 @@ def load_llm() -> BaseLanguageModel:
         )
 
     elif provider == "openai":
+        default_model = (
+            runtime_settings.active_model
+            if runtime_settings.active_provider == "openai"
+            else "gpt-4o"
+        )
         model = cast(
             "BaseLanguageModel",
             init_chat_model(
-                model=_get_env_with_default("OPENAI_MODEL", "gpt-4o"),
+                model=os.getenv("OPENAI_MODEL") or default_model,
                 model_provider="openai",
                 api_key=get_env("OPENAI_API_KEY"),
                 temperature=temperature,
@@ -88,10 +115,15 @@ def load_llm() -> BaseLanguageModel:
         )
 
     elif provider == "anthropic":
+        default_model = (
+            runtime_settings.active_model
+            if runtime_settings.active_provider == "anthropic"
+            else "claude-opus-4-1"
+        )
         model = cast(
             "BaseLanguageModel",
             init_chat_model(
-                model=_get_env_with_default("ANTHROPIC_MODEL", "claude-opus-4-1"),
+                model=os.getenv("ANTHROPIC_MODEL") or default_model,
                 model_provider="anthropic",
                 api_key=get_env("ANTHROPIC_API_KEY"),
                 temperature=temperature,
@@ -111,6 +143,12 @@ def load_llm() -> BaseLanguageModel:
             msg = "COHERE_API_KEY não configurado. Adicione ao seu .env para usar o provider cohere."
             raise ValueError(msg)
 
+        default_model = (
+            runtime_settings.active_model
+            if runtime_settings.active_provider == "cohere"
+            else "command-a-03-2025"
+        )
+
         # NOTE: NÃO usar SecretStr aqui.
         # langchain-core's get_from_dict_or_env chama str(SecretStr) → "**********",
         # o que causa 401 Unauthorized da API do Cohere.
@@ -118,7 +156,7 @@ def load_llm() -> BaseLanguageModel:
             "BaseLanguageModel",
             ChatCohere(
                 cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
-                model=_get_env_with_default("COHERE_CHAT_MODEL", "command-a-03-2025"),
+                model=os.getenv("COHERE_CHAT_MODEL") or default_model,
                 temperature=temperature,
             ),
         )

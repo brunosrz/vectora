@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import TYPE_CHECKING, Annotated
 
 from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import InjectedToolArg
 
-from vectora.types import Workspace
+if TYPE_CHECKING:
+    from vectora.types import Workspace
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +43,7 @@ def _resolve_workspace(
 @tool(extras={"render_hint": "markdown"})
 async def workspace_describe(
     workspace_id: str | None = None,
-    config: RunnableConfig | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,
 ) -> str:
     """Descreve o workspace ativo: base de conhecimento indexada, buckets e tópicos.
 
@@ -121,7 +124,7 @@ async def workspace_list() -> str:
 async def bucket_summary(
     bucket: str,
     workspace_id: str | None = None,
-    config: RunnableConfig | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,
 ) -> str:
     """Retorna o resumo de um bucket específico do workspace.
 

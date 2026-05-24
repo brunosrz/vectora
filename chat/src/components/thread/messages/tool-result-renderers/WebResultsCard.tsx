@@ -7,16 +7,10 @@
  * Aceita array de resultados Tavily: {url, title, content, raw_content}.
  */
 
-interface WebResult {
-  url?: string;
-  title?: string;
-  content?: string;
-  raw_content?: string;
-  score?: number;
-}
+import { type WebSearchResult } from "@/types/agent";
 
 interface WebResultsCardProps {
-  results: WebResult[];
+  results: WebSearchResult[];
 }
 
 function FaviconImg({ url }: { url: string }) {
@@ -27,7 +21,7 @@ function FaviconImg({ url }: { url: string }) {
     return null;
   }
   return (
-    /* eslint-disable-next-line @next/next/no-img-element */
+    /* eslint-disable-next-line */
     <img
       src={`https://www.google.com/s2/favicons?domain=${domain}&sz=16`}
       alt=""

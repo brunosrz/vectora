@@ -13,6 +13,10 @@ import {
 } from "react";
 import { createClient } from "./client";
 
+// Default values for Vectora
+const DEFAULT_API_URL = "http://localhost:2024";
+const DEFAULT_ASSISTANT_ID = "vectora";
+
 interface ThreadContextType {
   getThreads: () => Promise<Thread[]>;
   threads: Thread[];
@@ -34,24 +38,41 @@ function getThreadSearchMetadata(
 }
 
 export function ThreadProvider({ children }: { children: ReactNode }) {
-  const [apiUrl] = useQueryState("apiUrl");
-  const [assistantId] = useQueryState("assistantId");
+  // Use environment variables with hardcoded fallbacks
+  const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const envAssistantId = process.env.NEXT_PUBLIC_ASSISTANT_ID;
+
+  const [apiUrl] = useQueryState("apiUrl", {
+    defaultValue: envApiUrl || DEFAULT_API_URL,
+  });
+  const [assistantId] = useQueryState("assistantId", {
+    defaultValue: envAssistantId || DEFAULT_ASSISTANT_ID,
+  });
   const [threads, setThreads] = useState<Thread[]>([]);
   const [threadsLoading, setThreadsLoading] = useState(false);
 
   const getThreads = useCallback(async (): Promise<Thread[]> => {
-    if (!apiUrl || !assistantId) return [];
-    const client = createClient(apiUrl, getApiKey() ?? undefined);
+    const finalApiUrl = apiUrl || envApiUrl || DEFAULT_API_URL;
+    const finalAssistantId = assistantId || envAssistantId || DEFAULT_ASSISTANT_ID;
+    
+    if (!finalApiUrl || !finalAssistantId) return [];
+    
+    const client = createClient(finalApiUrl, getApiKey() ?? undefined);
 
-    const threads = await client.threads.search({
-      metadata: {
-        ...getThreadSearchMetadata(assistantId),
-      },
-      limit: 100,
-    });
+    try {
+      const threads = await client.threads.search({
+        metadata: {
+          ...getThreadSearchMetadata(finalAssistantId),
+        },
+        limit: 100,
+      });
 
-    return threads;
-  }, [apiUrl, assistantId]);
+      return threads;
+    } catch (error) {
+      console.error("Failed to fetch threads:", error);
+      return [];
+    }
+  }, [apiUrl, assistantId, envApiUrl, envAssistantId]);
 
   const value = {
     getThreads,

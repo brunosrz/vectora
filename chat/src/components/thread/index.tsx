@@ -1,9 +1,10 @@
+"use client";
+
 import { v4 as uuidv4 } from "uuid";
-import { ReactNode, useEffect, useRef, useState as _useState } from "react";
+import { ReactNode, useEffect, useRef, useState, FormEvent } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useStreamContext } from "@/providers/Stream";
-import { useState, FormEvent } from "react";
 import { Button } from "../ui/button";
 import { Checkpoint, Message } from "@langchain/langgraph-sdk";
 import { AssistantMessage, AssistantMessageLoading } from "./messages/ai";
@@ -126,10 +127,9 @@ export function Thread() {
   const messages = stream.messages;
   const isLoading = stream.isLoading;
 
-  // Ler API URL e assistant ID do contexto
-  const apiUrl: string =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:2024";
-  const assistantId: string = process.env.NEXT_PUBLIC_ASSISTANT_ID || "vectora";
+  // Obter config do contexto (via setup ou defaults)
+  const apiUrl = stream.apiUrl;
+  const assistantId = stream.assistantId;
 
   const lastError = useRef<string | undefined>(undefined);
 
@@ -139,7 +139,7 @@ export function Thread() {
       return;
     }
     try {
-      const message = (stream.error as any).message;
+      const message = (stream.error as { message?: string }).message;
       if (!message || lastError.current === message) return;
       lastError.current = message;
       toast.error("Ocorreu um erro. Tente novamente.", {

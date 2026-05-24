@@ -50,7 +50,7 @@ export function TerminalBlock({ content, command }: TerminalBlockProps) {
                 {line}
               </span>
             ) : (
-              <span className="text-transparent select-none">​</span>
+              <span className="text-transparent select-none"> </span>
             )}
           </div>
         ))}

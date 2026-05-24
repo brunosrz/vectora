@@ -25,6 +25,12 @@ import {
 } from "./tool-result-renderers";
 import { MarkdownText } from "../markdown-text";
 import { SyntaxHighlighter } from "../syntax-highlighter";
+import {
+  type SearchResult,
+  type WebSearchResult,
+  type QueueProgress,
+  type WorkspaceDescribeResult,
+} from "@/types/agent";
 
 // ---------------------------------------------------------------------------
 // Generative UI — registra componentes indexados por ui_component string
@@ -41,13 +47,13 @@ const UI_COMPONENTS: Record<
     results,
     query,
   }: {
-    results: unknown[];
+    results: SearchResult[];
     query?: string;
   }) => (
-    <SearchResultsTable results={results as any} query={query} /> // eslint-disable-line @typescript-eslint/no-explicit-any
+    <SearchResultsTable results={results} query={query} />
   ),
-  web_results: ({ results }: { results: unknown[] }) => (
-    <WebResultsCard results={results as any} /> // eslint-disable-line @typescript-eslint/no-explicit-any
+  web_results: ({ results }: { results: WebSearchResult[] }) => (
+    <WebResultsCard results={results} />
   ),
 };
 
@@ -88,17 +94,22 @@ interface DispatchProps {
 function DispatchByHint({ toolName, hint, parsed, raw }: DispatchProps) {
   // search_results
   if (hint === "search_results") {
-    const results = Array.isArray(parsed)
-      ? parsed
-      : (parsed as any)?.results ?? (parsed as any)?.docs ?? [];
+    const results = (
+      Array.isArray(parsed)
+        ? parsed
+        : (parsed as { results?: SearchResult[]; docs?: SearchResult[] })?.results ?? 
+          (parsed as { results?: SearchResult[]; docs?: SearchResult[] })?.docs ?? []
+    ) as SearchResult[];
     return <SearchResultsTable results={results} />;
   }
 
   // web_results
   if (hint === "web_results") {
-    const results = Array.isArray(parsed)
-      ? parsed
-      : (parsed as any)?.results ?? [];
+    const results = (
+      Array.isArray(parsed)
+        ? parsed
+        : (parsed as { results?: WebSearchResult[] })?.results ?? []
+    ) as WebSearchResult[];
     // fetch_url returns plain text, not an array
     if (typeof parsed === "string") {
       return (
@@ -112,8 +123,9 @@ function DispatchByHint({ toolName, hint, parsed, raw }: DispatchProps) {
 
   // diff
   if (hint === "diff") {
-    const diff = (parsed as any)?.diff ?? raw;
-    const filePath = (parsed as any)?.file ?? (parsed as any)?.file_path;
+    const p = parsed as { diff?: string; file?: string; file_path?: string };
+    const diff = p?.diff ?? raw;
+    const filePath = p?.file ?? p?.file_path;
     // If it's just a success string, show plain text
     if (!diff.includes("\n") || (!diff.includes("+") && !diff.includes("-"))) {
       return <span className="text-sm text-gray-700">{raw}</span>;
@@ -133,13 +145,13 @@ function DispatchByHint({ toolName, hint, parsed, raw }: DispatchProps) {
 
   // terminal_output
   if (hint === "terminal_output") {
-    const command = (parsed as any)?.command;
+    const command = (parsed as { command?: string })?.command;
     return <TerminalBlock content={raw} command={command} />;
   }
 
   // queue_progress
   if (hint === "queue_progress") {
-    const p = parsed as any;
+    const p = parsed as QueueProgress;
     return (
       <QueueProgressCard
         total={p?.total ?? p?.count}
@@ -153,7 +165,7 @@ function DispatchByHint({ toolName, hint, parsed, raw }: DispatchProps) {
 
   // queue_badge
   if (hint === "queue_badge") {
-    const p = parsed as any;
+    const p = parsed as QueueProgress;
     return (
       <QueueProgressCard
         queue_id={p?.queue_id ?? p?.id}
@@ -165,11 +177,8 @@ function DispatchByHint({ toolName, hint, parsed, raw }: DispatchProps) {
 
   // markdown
   if (hint === "markdown") {
-    const content =
-      (parsed as any)?.manifest ??
-      (parsed as any)?.summary ??
-      (parsed as any)?.content ??
-      raw;
+    const p = parsed as WorkspaceDescribeResult;
+    const content = p?.manifest ?? p?.summary ?? p?.content ?? raw;
     if (typeof content === "string" && content.trim()) {
       return (
         <div className="text-sm prose prose-sm max-w-none">
@@ -181,14 +190,17 @@ function DispatchByHint({ toolName, hint, parsed, raw }: DispatchProps) {
 
   // table — render as key/value rows (generic)
   if (hint === "table") {
-    const items = Array.isArray(parsed)
-      ? parsed
-      : (parsed as any)?.workspaces ??
-        (parsed as any)?.items ??
-        (parsed as any)?.results ??
-        null;
+    const items = (
+      Array.isArray(parsed)
+        ? parsed
+        : (parsed as any)?.workspaces ??
+          (parsed as any)?.items ??
+          (parsed as any)?.results ??
+          null
+    ) as Record<string, unknown>[] | null;
+
     if (Array.isArray(items) && items.length > 0) {
-      const headers = Object.keys(items[0] as object);
+      const headers = Object.keys(items[0]);
       return (
         <div className="overflow-x-auto rounded-md border border-gray-200">
           <table className="min-w-full text-xs divide-y divide-gray-200">
@@ -212,7 +224,7 @@ function DispatchByHint({ toolName, hint, parsed, raw }: DispatchProps) {
                       key={h}
                       className="px-3 py-1.5 text-gray-600 max-w-xs truncate"
                     >
-                      {String((row as any)[h] ?? "")}
+                      {String(row[h] ?? "")}
                     </td>
                   ))}
                 </tr>

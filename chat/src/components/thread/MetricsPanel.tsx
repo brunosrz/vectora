@@ -11,7 +11,8 @@
  * - Workspace ativo
  */
 
-import { useStreamContext, type UIMetrics } from "@/providers/Stream";
+import { useStreamContext } from "@/providers/Stream";
+import { type UIMetrics } from "@/types/agent";
 
 function MetricRow({
   label,

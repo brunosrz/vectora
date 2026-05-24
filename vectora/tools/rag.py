@@ -1,15 +1,18 @@
 """RAG tools: embedding assíncrono, busca vetorial e ingestão de documentos."""
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 import time
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from langchain.tools import tool
 from langchain_core.documents import Document as LCDoc
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import InjectedToolArg
 
 from vectora.config.settings import settings
 from vectora.services.queue import get_embedding_queue
@@ -308,7 +311,7 @@ async def ingest_docs(
     directory_path: str,
     collection: str = "articles",
     glob_pattern: str = "**/*.py",
-    config: RunnableConfig | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,
 ) -> str:
     """Indexa um diretório inteiro de arquivos no banco vetorial (LanceDB).
 

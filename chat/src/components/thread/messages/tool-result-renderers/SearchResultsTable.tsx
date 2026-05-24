@@ -8,19 +8,7 @@
  * e relevance_score.
  */
 
-interface SearchResult {
-  text?: string;
-  page_content?: string;
-  metadata?: {
-    source?: string;
-    collection?: string;
-    workspace_id?: string;
-    origin?: string;
-    [key: string]: unknown;
-  };
-  relevance_score?: number;
-  score?: number;
-}
+import { type SearchResult } from "@/types/agent";
 
 interface SearchResultsTableProps {
   results: SearchResult[];

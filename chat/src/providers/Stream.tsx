@@ -6,54 +6,35 @@ import React, {
   useEffect,
 } from "react";
 import { useStream } from "@langchain/langgraph-sdk/react";
-import { type Message } from "@langchain/langgraph-sdk";
 import {
   uiMessageReducer,
-  type UIMessage,
-  type RemoveUIMessage,
 } from "@langchain/langgraph-sdk/react-ui";
-import { useQueryState } from "nuqs";
+import { useQueryState, parseAsBoolean } from "nuqs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LangGraphLogoSVG } from "@/components/icons/langgraph";
 import { Label } from "@/components/ui/label";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Settings2 } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { getApiKey } from "@/lib/api-key";
 import { useThreads } from "./Thread";
 import { toast } from "sonner";
+import { StateType, StreamUpdateType, CustomEventType } from "@/types/agent";
 
-/** ui_metrics — D1.5 State-Sync Observability */
-export interface UIMetrics {
-  last_node?: string;
-  last_node_ms?: number;
-  total_tokens_session?: number;
-  rag_hits?: number;
-  rag_misses?: number;
-  tool_calls?: Record<string, number>;
-  workspace_id?: string;
-  manifest_version?: number;
-}
-
-export type StateType = {
-  messages: Message[];
-  ui?: UIMessage[];
-  /** Métricas de observabilidade — atualizadas pelos nós do grafo */
-  ui_metrics?: UIMetrics;
-};
+export type { UIMetrics, StateType } from "@/types/agent";
 
 const useTypedStream = useStream<
   StateType,
   {
-    UpdateType: {
-      messages?: Message[] | Message | string;
-      ui?: (UIMessage | RemoveUIMessage)[] | UIMessage | RemoveUIMessage;
-    };
-    CustomEventType: UIMessage | RemoveUIMessage;
+    UpdateType: StreamUpdateType;
+    CustomEventType: CustomEventType;
   }
 >;
 
-type StreamContextType = ReturnType<typeof useTypedStream>;
+type StreamContextType = ReturnType<typeof useTypedStream> & {
+  apiUrl: string;
+  assistantId: string;
+};
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
 
 async function sleep(ms = 4000) {
@@ -118,8 +99,7 @@ const StreamSession = ({
         toast.error("Failed to connect to LangGraph server", {
           description: () => (
             <p>
-              Please ensure your graph is running at <code>{apiUrl}</code> and
-              your API key is correctly set (if connecting to a deployed graph).
+              Please ensure your graph is running at <code>{apiUrl}</code>.
             </p>
           ),
           duration: 10000,
@@ -131,15 +111,21 @@ const StreamSession = ({
   }, [apiKey, apiUrl]);
 
   return (
-    <StreamContext.Provider value={streamValue}>
+    <StreamContext.Provider
+      value={{
+        ...streamValue,
+        apiUrl,
+        assistantId,
+      }}
+    >
       {children}
     </StreamContext.Provider>
   );
 };
 
-// Default values for the form
+// Default values for Vectora
 const DEFAULT_API_URL = "http://localhost:2024";
-const DEFAULT_ASSISTANT_ID = "agent";
+const DEFAULT_ASSISTANT_ID = "vectora";
 
 export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -151,13 +137,14 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   const envApiKey: string | undefined =
     process.env.NEXT_PUBLIC_LANGSMITH_API_KEY;
 
-  // Use URL params with env var fallbacks
+  // Use URL params with env var fallbacks and finally hardcoded defaults
   const [apiUrl, setApiUrl] = useQueryState("apiUrl", {
-    defaultValue: envApiUrl || "",
+    defaultValue: envApiUrl || DEFAULT_API_URL,
   });
   const [assistantId, setAssistantId] = useQueryState("assistantId", {
-    defaultValue: envAssistantId || "",
+    defaultValue: envAssistantId || DEFAULT_ASSISTANT_ID,
   });
+  const [showConfig, setShowConfig] = useQueryState("setup", parseAsBoolean.withDefault(false));
 
   // For API key, use localStorage with env var fallback
   const [apiKey, _setApiKey] = useState(() => {
@@ -170,26 +157,29 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
     _setApiKey(key);
   };
 
-  // Determine final values to use, prioritizing URL params then env vars
-  const finalApiUrl = apiUrl || envApiUrl;
-  const finalAssistantId = assistantId || envAssistantId;
+  // Determine final values to use
+  const finalApiUrl = apiUrl || envApiUrl || DEFAULT_API_URL;
+  const finalAssistantId = assistantId || envAssistantId || DEFAULT_ASSISTANT_ID;
 
-  // If we're missing any required values, show the form
-  if (!finalApiUrl || !finalAssistantId) {
+  // If we want to show config OR if somehow required values are missing
+  if (showConfig || !finalApiUrl || !finalAssistantId) {
     return (
-      <div className="flex items-center justify-center min-h-screen w-full p-4">
-        <div className="animate-in fade-in-0 zoom-in-95 flex flex-col border bg-background shadow-lg rounded-lg max-w-3xl">
-          <div className="flex flex-col gap-2 mt-14 p-6 border-b">
-            <div className="flex items-start flex-col gap-2">
-              <LangGraphLogoSVG className="h-7" />
-              <h1 className="text-xl font-semibold tracking-tight">
-                Agent Chat
-              </h1>
+      <div className="flex items-center justify-center min-h-screen w-full p-4 bg-gray-50/50">
+        <div className="animate-in fade-in-0 zoom-in-95 flex flex-col border bg-background shadow-xl rounded-xl max-w-xl w-full overflow-hidden">
+          <div className="flex flex-col gap-2 p-8 border-b bg-white">
+            <div className="flex items-center gap-3">
+              <div className="bg-indigo-600 p-2 rounded-lg">
+                <Settings2 className="size-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">
+                  Configuração do Agent
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Ajuste a conexão com o Vectora Agent.
+                </p>
+              </div>
             </div>
-            <p className="text-muted-foreground">
-              Welcome to Agent Chat! Before you get started, you need to enter
-              the URL of the deployment and the assistant / graph ID.
-            </p>
           </div>
           <form
             onSubmit={(e) => {
@@ -197,74 +187,77 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
 
               const form = e.target as HTMLFormElement;
               const formData = new FormData(form);
-              const apiUrl = formData.get("apiUrl") as string;
-              const assistantId = formData.get("assistantId") as string;
-              const apiKey = formData.get("apiKey") as string;
+              const newApiUrl = formData.get("apiUrl") as string;
+              const newAssistantId = formData.get("assistantId") as string;
+              const newApiKey = formData.get("apiKey") as string;
 
-              setApiUrl(apiUrl);
-              setApiKey(apiKey);
-              setAssistantId(assistantId);
+              setApiUrl(newApiUrl);
+              setApiKey(newApiKey);
+              setAssistantId(newAssistantId);
+              setShowConfig(null); // Hide setup after submit
 
               form.reset();
             }}
-            className="flex flex-col gap-6 p-6 bg-muted/50"
+            className="flex flex-col gap-6 p-8"
           >
             <div className="flex flex-col gap-2">
-              <Label htmlFor="apiUrl">
-                Deployment URL<span className="text-rose-500">*</span>
+              <Label htmlFor="apiUrl" className="text-sm font-semibold">
+                URL de Deployment<span className="text-rose-500">*</span>
               </Label>
-              <p className="text-muted-foreground text-sm">
-                This is the URL of your LangGraph deployment. Can be a local, or
-                production deployment.
-              </p>
               <Input
                 id="apiUrl"
                 name="apiUrl"
                 className="bg-background"
                 defaultValue={apiUrl || DEFAULT_API_URL}
+                placeholder="http://localhost:2024"
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Porta padrão do Vectora Agent: 2024.
+              </p>
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="assistantId">
-                Assistant / Graph ID<span className="text-rose-500">*</span>
+              <Label htmlFor="assistantId" className="text-sm font-semibold">
+                Graph ID / Assistant ID<span className="text-rose-500">*</span>
               </Label>
-              <p className="text-muted-foreground text-sm">
-                This is the ID of the graph (can be the graph name), or
-                assistant to fetch threads from, and invoke when actions are
-                taken.
-              </p>
               <Input
                 id="assistantId"
                 name="assistantId"
                 className="bg-background"
                 defaultValue={assistantId || DEFAULT_ASSISTANT_ID}
+                placeholder="vectora"
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Graph ID padrão: "vectora".
+              </p>
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="apiKey">LangSmith API Key</Label>
-              <p className="text-muted-foreground text-sm">
-                This is <strong>NOT</strong> required if using a local LangGraph
-                server. This value is stored in your browser's local storage and
-                is only used to authenticate requests sent to your LangGraph
-                server.
-              </p>
+              <Label htmlFor="apiKey" className="text-sm font-semibold text-gray-400">
+                LangSmith API Key (opcional)
+              </Label>
               <PasswordInput
                 id="apiKey"
                 name="apiKey"
                 defaultValue={apiKey ?? ""}
-                className="bg-background"
+                className="bg-background border-dashed"
                 placeholder="lsv2_pt_..."
               />
             </div>
 
-            <div className="flex justify-end mt-2">
-              <Button type="submit" size="lg">
-                Continue
-                <ArrowRight className="size-5" />
+            <div className="flex justify-between items-center mt-4">
+              <button 
+                type="button" 
+                onClick={() => setShowConfig(null)}
+                className="text-sm text-muted-foreground hover:text-indigo-600 transition-colors"
+              >
+                Pular
+              </button>
+              <Button type="submit" size="lg" className="px-8 bg-indigo-600 hover:bg-indigo-700 shadow-md">
+                Conectar
+                <ArrowRight className="size-4 ml-2" />
               </Button>
             </div>
           </form>
@@ -274,7 +267,7 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   }
 
   return (
-    <StreamSession apiKey={apiKey} apiUrl={apiUrl} assistantId={assistantId}>
+    <StreamSession apiKey={apiKey} apiUrl={finalApiUrl} assistantId={finalAssistantId}>
       {children}
     </StreamSession>
   );

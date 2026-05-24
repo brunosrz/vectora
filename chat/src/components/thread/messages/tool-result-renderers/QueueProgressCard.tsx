@@ -7,20 +7,9 @@
  * e `render_hint: "queue_badge"` (embedding).
  */
 
-interface QueueProgressProps {
-  /** Para queue_progress: total de itens */
-  total?: number;
-  /** Para queue_progress: itens processados */
-  processed?: number;
-  /** Status geral: pending, processing, success, failed */
-  status?: string;
-  /** IDs enfileirados */
-  queue_ids?: string[];
-  /** Única ID para badge compacto */
-  queue_id?: string;
-  /** Mensagem adicional */
-  message?: string;
-}
+import { type QueueProgress } from "@/types/agent";
+
+type QueueProgressProps = QueueProgress;
 
 const STATUS_COLORS: Record<string, string> = {
   success: "bg-green-100 text-green-800 border-green-200",

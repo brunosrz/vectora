@@ -9,7 +9,7 @@ description = "Vectora - Advanced AI Assistant with RAG and MCP capabilities"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [{name = "Bruno Soares", email = "bruno.soarxz@gmail.com"}]
-requires-python = ">=3.14"
+requires-python = ">=3.13.13"
 
 dependencies = [
     "pydantic>=2.13.4",
@@ -124,7 +124,7 @@ line-ending = "lf"
 
 [tool.pyright]
 typeCheckingMode = "standard"
-pythonVersion = "3.14"
+pythonVersion = "3.13.13"
 include = ["vectora", "tests"]
 exclude = ["**/venv", "**/.venv", "**/env", "**/.env", "**/node_modules", "**/__pycache__"]
 venv = ".venv"
