@@ -1,4 +1,4 @@
-# Vectora
+# <img src="assets/vectora.svg" width="32" height="32"> Vectora
 
 **Vectora** is an open-source AI assistant (Apache 2.0) built for developers — self-hosted, and designed to run as a powerful sub-agent inside any MCP-compatible orchestrator (Claude Code, Claude Desktop, Paperclip, VS Code extensions).
 
@@ -177,6 +177,21 @@ cp .env.example .env
 
 uv run vectora
 ```
+
+---
+
+## 🎨 Vectora Chat (Optional)
+
+In addition to the CLI, you can use **Vectora Chat**, a modern web interface for a more visual experience.
+
+- **Installation**: Must be installed on the same host as the Vectora agent.
+  ```bash
+  pnpm install -g vectora-chat
+  ```
+- **Usage**: Simply run the following command to start both the web UI and the agent:
+  ```bash
+  vectora-chat
+  ```
 
 ---
 

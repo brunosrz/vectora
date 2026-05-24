@@ -46,13 +46,14 @@ class VectoraLayout:
         message_count: int = 0,
     ) -> None:
         """Update header with session info."""
+        # Logo colors: Indigo (#4F46E5) background, White V, Cyan (#0EA5E9) dot
         header_text = (
-            f"[bold cyan][ROCKET] Vectora v{__version__}[/bold cyan] | "
-            f"[yellow]Provider: {provider}[/yellow] | "
-            f"[magenta]Thread: {thread_id}[/magenta] | "
-            f"[green]Messages: {message_count}[/green]"
+            f"[bold white]V[/bold white][bold #0EA5E9]•[/bold #0EA5E9] [bold white]Vectora v{__version__}[/bold white] | "
+            f"[#0EA5E9]Provider: {provider}[/#0EA5E9] | "
+            f"[#FFFFFF]Thread: {thread_id}[/#FFFFFF] | "
+            f"[#FFFFFF]Messages: {message_count}[/#FFFFFF]"
         )
-        self.layout["header"].update(Panel(header_text, style="blue", expand=False))
+        self.layout["header"].update(Panel(header_text, style="on #4F46E5", expand=False))
 
     def update_body(self, content: str | Panel | Table) -> None:
         """Update main body with chat or content."""
