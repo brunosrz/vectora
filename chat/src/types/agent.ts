@@ -65,7 +65,12 @@ export interface WebSearchResult {
 }
 
 export interface QueueProgress {
-  status: "fire_and_forget" | "processing" | "completed" | "error" | "quota_error";
+  status:
+    | "fire_and_forget"
+    | "processing"
+    | "completed"
+    | "error"
+    | "quota_error";
   queue_id?: string;
   queue_ids?: string[];
   total?: number;

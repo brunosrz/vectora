@@ -49,9 +49,7 @@ const UI_COMPONENTS: Record<
   }: {
     results: SearchResult[];
     query?: string;
-  }) => (
-    <SearchResultsTable results={results} query={query} />
-  ),
+  }) => <SearchResultsTable results={results} query={query} />,
   web_results: ({ results }: { results: WebSearchResult[] }) => (
     <WebResultsCard results={results} />
   ),
@@ -97,8 +95,11 @@ function DispatchByHint({ toolName, hint, parsed, raw }: DispatchProps) {
     const results = (
       Array.isArray(parsed)
         ? parsed
-        : (parsed as { results?: SearchResult[]; docs?: SearchResult[] })?.results ?? 
-          (parsed as { results?: SearchResult[]; docs?: SearchResult[] })?.docs ?? []
+        : (parsed as { results?: SearchResult[]; docs?: SearchResult[] })
+            ?.results ??
+          (parsed as { results?: SearchResult[]; docs?: SearchResult[] })
+            ?.docs ??
+          []
     ) as SearchResult[];
     return <SearchResultsTable results={results} />;
   }

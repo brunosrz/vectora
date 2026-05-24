@@ -61,7 +61,7 @@ const defaultComponents: any = {
   h1: ({ className, ...props }: { className?: string }) => (
     <h1
       className={cn(
-        "mb-8 scroll-m-20 text-4xl font-extrabold tracking-tight last:mb-0",
+        "mb-8 scroll-m-20 text-4xl font-extrabold tracking-tight last:mb-0 text-gray-900 dark:text-gray-100",
         className,
       )}
       {...props}
@@ -70,7 +70,7 @@ const defaultComponents: any = {
   h2: ({ className, ...props }: { className?: string }) => (
     <h2
       className={cn(
-        "mb-4 mt-8 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0 last:mb-0",
+        "mb-4 mt-8 scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0 last:mb-0 text-gray-900 dark:text-gray-100",
         className,
       )}
       {...props}
@@ -79,7 +79,7 @@ const defaultComponents: any = {
   h3: ({ className, ...props }: { className?: string }) => (
     <h3
       className={cn(
-        "mb-4 mt-6 scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0 last:mb-0",
+        "mb-4 mt-6 scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0 last:mb-0 text-gray-900 dark:text-gray-100",
         className,
       )}
       {...props}
@@ -88,7 +88,7 @@ const defaultComponents: any = {
   h4: ({ className, ...props }: { className?: string }) => (
     <h4
       className={cn(
-        "mb-4 mt-6 scroll-m-20 text-xl font-semibold tracking-tight first:mt-0 last:mb-0",
+        "mb-4 mt-6 scroll-m-20 text-xl font-semibold tracking-tight first:mt-0 last:mb-0 text-gray-900 dark:text-gray-100",
         className,
       )}
       {...props}
@@ -97,7 +97,7 @@ const defaultComponents: any = {
   h5: ({ className, ...props }: { className?: string }) => (
     <h5
       className={cn(
-        "my-4 text-lg font-semibold first:mt-0 last:mb-0",
+        "my-4 text-lg font-semibold first:mt-0 last:mb-0 text-gray-900 dark:text-gray-100",
         className,
       )}
       {...props}
@@ -105,20 +105,20 @@ const defaultComponents: any = {
   ),
   h6: ({ className, ...props }: { className?: string }) => (
     <h6
-      className={cn("my-4 font-semibold first:mt-0 last:mb-0", className)}
+      className={cn("my-4 font-semibold first:mt-0 last:mb-0 text-gray-900 dark:text-gray-100", className)}
       {...props}
     />
   ),
   p: ({ className, ...props }: { className?: string }) => (
     <p
-      className={cn("mb-5 mt-5 leading-7 first:mt-0 last:mb-0", className)}
+      className={cn("mb-5 mt-5 leading-7 first:mt-0 last:mb-0 text-gray-700 dark:text-gray-300", className)}
       {...props}
     />
   ),
   a: ({ className, ...props }: { className?: string }) => (
     <a
       className={cn(
-        "text-primary font-medium underline underline-offset-4",
+        "text-indigo-600 dark:text-indigo-400 font-medium underline underline-offset-4 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors",
         className,
       )}
       {...props}
@@ -126,29 +126,29 @@ const defaultComponents: any = {
   ),
   blockquote: ({ className, ...props }: { className?: string }) => (
     <blockquote
-      className={cn("border-l-2 pl-6 italic", className)}
+      className={cn("border-l-2 border-indigo-500 dark:border-indigo-400 pl-6 italic text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-gray-900/50 py-2 rounded-r-md", className)}
       {...props}
     />
   ),
   ul: ({ className, ...props }: { className?: string }) => (
     <ul
-      className={cn("my-5 ml-6 list-disc [&>li]:mt-2", className)}
+      className={cn("my-5 ml-6 list-disc [&>li]:mt-2 text-gray-700 dark:text-gray-300", className)}
       {...props}
     />
   ),
   ol: ({ className, ...props }: { className?: string }) => (
     <ol
-      className={cn("my-5 ml-6 list-decimal [&>li]:mt-2", className)}
+      className={cn("my-5 ml-6 list-decimal [&>li]:mt-2 text-gray-700 dark:text-gray-300", className)}
       {...props}
     />
   ),
   hr: ({ className, ...props }: { className?: string }) => (
-    <hr className={cn("my-5 border-b", className)} {...props} />
+    <hr className={cn("my-5 border-b border-gray-200 dark:border-gray-800", className)} {...props} />
   ),
   table: ({ className, ...props }: { className?: string }) => (
     <table
       className={cn(
-        "my-5 w-full border-separate border-spacing-0 overflow-y-auto",
+        "my-5 w-full border-separate border-spacing-0 overflow-y-auto border border-gray-200 dark:border-gray-800 rounded-lg",
         className,
       )}
       {...props}
@@ -157,7 +157,7 @@ const defaultComponents: any = {
   th: ({ className, ...props }: { className?: string }) => (
     <th
       className={cn(
-        "bg-muted px-4 py-2 text-left font-bold first:rounded-tl-lg last:rounded-tr-lg [&[align=center]]:text-center [&[align=right]]:text-right",
+        "bg-gray-50 dark:bg-gray-900 px-4 py-2 text-left font-bold first:rounded-tl-lg last:rounded-tr-lg [&[align=center]]:text-center [&[align=right]]:text-right text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-800",
         className,
       )}
       {...props}
@@ -166,7 +166,7 @@ const defaultComponents: any = {
   td: ({ className, ...props }: { className?: string }) => (
     <td
       className={cn(
-        "border-b border-l px-4 py-2 text-left last:border-r [&[align=center]]:text-center [&[align=right]]:text-right",
+        "border-b border-gray-200 dark:border-gray-800 px-4 py-2 text-left last:border-r-0 [&[align=center]]:text-center [&[align=right]]:text-right text-gray-700 dark:text-gray-300",
         className,
       )}
       {...props}
@@ -175,7 +175,7 @@ const defaultComponents: any = {
   tr: ({ className, ...props }: { className?: string }) => (
     <tr
       className={cn(
-        "m-0 border-b p-0 first:border-t [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg",
+        "m-0 border-b border-gray-100 dark:border-gray-800 p-0 last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-gray-900/50 transition-colors",
         className,
       )}
       {...props}

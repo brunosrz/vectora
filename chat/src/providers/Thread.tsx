@@ -53,10 +53,11 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
 
   const getThreads = useCallback(async (): Promise<Thread[]> => {
     const finalApiUrl = apiUrl || envApiUrl || DEFAULT_API_URL;
-    const finalAssistantId = assistantId || envAssistantId || DEFAULT_ASSISTANT_ID;
-    
+    const finalAssistantId =
+      assistantId || envAssistantId || DEFAULT_ASSISTANT_ID;
+
     if (!finalApiUrl || !finalAssistantId) return [];
-    
+
     const client = createClient(finalApiUrl, getApiKey() ?? undefined);
 
     try {

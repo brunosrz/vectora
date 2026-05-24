@@ -29,6 +29,7 @@ Após leitura completa das docs do LangChain, LangGraph, Deep Agents, Tavily, Co
 2. **Pydantic como padrão**: Todos os modelos de dados devem herdar de `pydantic.BaseModel`. O uso de `TypedDict` é restrito apenas à definição de `State` para compatibilidade estrita com o LangGraph.
 
 3. **Sintaxe moderna (PEP 585 / PEP 604)**:
+
    - Use `list[str]`, `dict[str, Any]`, `str | None`.
    - É proibido importar coleções básicas (`List`, `Dict`, `Optional`, etc.) do módulo `typing`. Use tipos nativos sempre.
 
@@ -53,7 +54,7 @@ A pasta `vectora/types/` é a fonte única da verdade para a estrutura de dados.
 
 - **Ao criar uma nova Tool**: Adicione o `metadata={"render_hint": "..."}` ao decorador `@tool` para permitir a autodescoberta pela Web UI (D1.1).
 - **Ao modificar nós**: Certifique-se de que o contrato de entrada/saída (via `State`) respeita os tipos Pydantic definidos em `types/`.
-- **Linting**: O projeto segue *Strict Typing*. Qualquer novo código deve passar na validação de tipo sem o uso de `Any` explícito, priorizando o uso de `Union` ou `Discriminated Unions` quando a estrutura for variável.
+- **Linting**: O projeto segue _Strict Typing_. Qualquer novo código deve passar na validação de tipo sem o uso de `Any` explícito, priorizando o uso de `Union` ou `Discriminated Unions` quando a estrutura for variável.
 
 ---
 

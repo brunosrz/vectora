@@ -47,16 +47,16 @@ export function SearchResultsTable({
   }
 
   return (
-    <div className="rounded-md border border-gray-200 overflow-hidden text-sm">
+    <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden text-sm bg-white dark:bg-gray-900/50">
       {query && (
-        <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-500">
-          Query: <span className="font-medium text-gray-700">{query}</span>
-          <span className="ml-2 text-gray-400">
+        <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 text-xs text-gray-500 dark:text-gray-400">
+          Query: <span className="font-medium text-gray-700 dark:text-gray-300">{query}</span>
+          <span className="ml-2 text-gray-400 dark:text-gray-500">
             — {results.length} resultado(s)
           </span>
         </div>
       )}
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {results.map((r, idx) => {
           const text = r.text ?? r.page_content ?? "";
           const src = r.metadata?.source ?? "–";
@@ -67,26 +67,26 @@ export function SearchResultsTable({
           return (
             <div
               key={idx}
-              className="px-3 py-2 hover:bg-gray-50 transition-colors"
+              className="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <div className="flex items-start justify-between gap-2 mb-1">
                 <div className="flex items-center gap-1.5 min-w-0">
                   {isWeb ? (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded shrink-0">
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded shrink-0">
                       web
                     </span>
                   ) : collection ? (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded shrink-0">
+                    <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded shrink-0">
                       {collection}
                     </span>
                   ) : null}
-                  <span className="text-xs text-gray-500 truncate" title={src}>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate" title={src}>
                     {src}
                   </span>
                 </div>
                 <ScoreBar score={score} />
               </div>
-              <p className="text-xs text-gray-700 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
                 {text.slice(0, 200)}
                 {text.length > 200 && "…"}
               </p>

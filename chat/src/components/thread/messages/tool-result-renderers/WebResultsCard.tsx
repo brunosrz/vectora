@@ -42,7 +42,7 @@ export function WebResultsCard({ results }: WebResultsCardProps) {
   }
 
   return (
-    <div className="rounded-md border border-gray-200 overflow-hidden text-sm divide-y divide-gray-100">
+    <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden text-sm divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900/50">
       {results.map((r, idx) => {
         const snippet = r.content ?? r.raw_content ?? "";
         const displayUrl = r.url ?? "";
@@ -50,13 +50,13 @@ export function WebResultsCard({ results }: WebResultsCardProps) {
         return (
           <div
             key={idx}
-            className="px-3 py-2.5 hover:bg-gray-50 transition-colors"
+            className="px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
           >
             <div className="flex items-start gap-2">
               {displayUrl && <FaviconImg url={displayUrl} />}
               <div className="min-w-0 flex-1">
                 {r.title && (
-                  <div className="font-medium text-gray-900 truncate text-xs mb-0.5">
+                  <div className="font-medium text-gray-900 dark:text-gray-100 truncate text-xs mb-0.5">
                     {r.title}
                   </div>
                 )}
@@ -65,13 +65,13 @@ export function WebResultsCard({ results }: WebResultsCardProps) {
                     href={displayUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:underline truncate block"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline truncate block"
                   >
                     {displayUrl}
                   </a>
                 )}
                 {snippet && (
-                  <p className="text-xs text-gray-600 mt-1 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
                     {snippet.slice(0, 250)}
                     {snippet.length > 250 && "…"}
                   </p>

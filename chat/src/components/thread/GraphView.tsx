@@ -129,9 +129,9 @@ export function GraphView({
       },
       style: {
         ...n.style,
-        background: isActive ? "#f97316" : "#ffffff",
-        color: isActive ? "#ffffff" : "#111827",
-        border: isActive ? "2px solid #ea580c" : "1px solid #d1d5db",
+        background: isActive ? "#f97316" : "hsl(var(--card))",
+        color: isActive ? "#ffffff" : "hsl(var(--card-foreground))",
+        border: isActive ? "2px solid #ea580c" : "1px solid hsl(var(--border))",
         fontWeight: isActive ? 700 : 400,
         boxShadow: isActive ? "0 0 0 3px rgba(249,115,22,0.3)" : undefined,
         transition: "all 0.3s ease",
@@ -141,7 +141,7 @@ export function GraphView({
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center text-sm text-gray-400">
+      <div className="h-full flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-950">
         Carregando topologia do grafo…
       </div>
     );
@@ -149,7 +149,7 @@ export function GraphView({
 
   if (error) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-2 text-sm text-gray-500 p-4">
+      <div className="h-full flex flex-col items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400 p-4 bg-white dark:bg-gray-950">
         <p className="text-red-500 font-medium">Grafo indisponível</p>
         <p className="text-xs text-center opacity-70">
           Certifique-se de que <code>langgraph dev</code> está rodando e{" "}
@@ -157,7 +157,7 @@ export function GraphView({
         </p>
         <button
           onClick={fetchGraph}
-          className="mt-2 text-xs text-blue-600 hover:underline"
+          className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
         >
           Tentar novamente
         </button>
@@ -167,14 +167,14 @@ export function GraphView({
 
   if (nodes.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-sm text-gray-400">
+      <div className="h-full flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-950">
         Nenhum nó encontrado no grafo.
       </div>
     );
   }
 
   return (
-    <div style={{ height: "100%", width: "100%" }}>
+    <div style={{ height: "100%", width: "100%" }} className="bg-white dark:bg-gray-950">
       <ReactFlow
         nodes={styledNodes}
         edges={edges}
@@ -185,8 +185,8 @@ export function GraphView({
         elementsSelectable={false}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#f3f4f6" gap={20} />
-        <Controls showInteractive={false} />
+        <Background color="currentColor" className="text-gray-100 dark:text-gray-900" gap={20} />
+        <Controls showInteractive={false} className="dark:bg-gray-900 dark:border-gray-800" />
       </ReactFlow>
     </div>
   );

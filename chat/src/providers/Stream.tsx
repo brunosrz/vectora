@@ -6,9 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { useStream } from "@langchain/langgraph-sdk/react";
-import {
-  uiMessageReducer,
-} from "@langchain/langgraph-sdk/react-ui";
+import { uiMessageReducer } from "@langchain/langgraph-sdk/react-ui";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,17 +44,21 @@ async function checkGraphStatus(
   apiKey: string | null,
 ): Promise<boolean> {
   try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 5000);
+    
     const res = await fetch(`${apiUrl}/info`, {
+      signal: controller.signal,
       ...(apiKey && {
         headers: {
           "X-Api-Key": apiKey,
         },
       }),
     });
-
+    clearTimeout(id);
     return res.ok;
   } catch (e) {
-    console.error(e);
+    console.debug("Graph status check failed:", e);
     return false;
   }
 }
@@ -96,13 +98,14 @@ const StreamSession = ({
   useEffect(() => {
     checkGraphStatus(apiUrl, apiKey).then((ok) => {
       if (!ok) {
-        toast.error("Failed to connect to LangGraph server", {
+        toast.error("Erro de conexão", {
           description: () => (
             <p>
-              Please ensure your graph is running at <code>{apiUrl}</code>.
+              Não foi possível conectar ao servidor Vectora em <code>{apiUrl}</code>. 
+              Certifique-se de que o agent está rodando (<code>uv run vectora</code>).
             </p>
           ),
-          duration: 10000,
+          duration: 15000,
           richColors: true,
           closeButton: true,
         });
@@ -144,7 +147,10 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   const [assistantId, setAssistantId] = useQueryState("assistantId", {
     defaultValue: envAssistantId || DEFAULT_ASSISTANT_ID,
   });
-  const [showConfig, setShowConfig] = useQueryState("setup", parseAsBoolean.withDefault(false));
+  const [showConfig, setShowConfig] = useQueryState(
+    "setup",
+    parseAsBoolean.withDefault(false),
+  );
 
   // For API key, use localStorage with env var fallback
   const [apiKey, _setApiKey] = useState(() => {
@@ -159,25 +165,27 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
 
   // Determine final values to use
   const finalApiUrl = apiUrl || envApiUrl || DEFAULT_API_URL;
-  const finalAssistantId = assistantId || envAssistantId || DEFAULT_ASSISTANT_ID;
+  const finalAssistantId =
+    assistantId || envAssistantId || DEFAULT_ASSISTANT_ID;
 
-  // If we want to show config OR if somehow required values are missing
   if (showConfig || !finalApiUrl || !finalAssistantId) {
     return (
-      <div className="flex items-center justify-center min-h-screen w-full p-4 bg-gray-50/50">
-        <div className="animate-in fade-in-0 zoom-in-95 flex flex-col border bg-background shadow-xl rounded-xl max-w-xl w-full overflow-hidden">
-          <div className="flex flex-col gap-2 p-8 border-b bg-white">
-            <div className="flex items-center gap-3">
-              <div className="bg-indigo-600 p-2 rounded-lg">
-                <Settings2 className="size-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">
-                  Configuração do Agent
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Ajuste a conexão com o Vectora Agent.
-                </p>
+      <div className="flex items-center justify-center min-h-screen w-full p-4 bg-gray-50/50 dark:bg-gray-950">
+        <div className="animate-in fade-in-0 zoom-in-95 flex flex-col border dark:border-gray-800 bg-background shadow-xl rounded-xl max-w-xl w-full overflow-hidden">
+          <div className="flex flex-col gap-2 p-8 border-b dark:border-gray-800 bg-white dark:bg-gray-900">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-indigo-600 p-2 rounded-lg">
+                  <Settings2 className="size-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                    Configuração do Agent
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Ajuste a conexão com o Vectora Agent.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -198,16 +206,16 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
 
               form.reset();
             }}
-            className="flex flex-col gap-6 p-8"
+            className="flex flex-col gap-6 p-8 bg-white dark:bg-gray-900"
           >
             <div className="flex flex-col gap-2">
-              <Label htmlFor="apiUrl" className="text-sm font-semibold">
+              <Label htmlFor="apiUrl" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 URL de Deployment<span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="apiUrl"
                 name="apiUrl"
-                className="bg-background"
+                className="bg-background border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
                 defaultValue={apiUrl || DEFAULT_API_URL}
                 placeholder="http://localhost:2024"
                 required
@@ -218,13 +226,13 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="assistantId" className="text-sm font-semibold">
+              <Label htmlFor="assistantId" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Graph ID / Assistant ID<span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="assistantId"
                 name="assistantId"
-                className="bg-background"
+                className="bg-background border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
                 defaultValue={assistantId || DEFAULT_ASSISTANT_ID}
                 placeholder="vectora"
                 required
@@ -235,27 +243,34 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="apiKey" className="text-sm font-semibold text-gray-400">
+              <Label
+                htmlFor="apiKey"
+                className="text-sm font-semibold text-gray-400"
+              >
                 LangSmith API Key (opcional)
               </Label>
               <PasswordInput
                 id="apiKey"
                 name="apiKey"
                 defaultValue={apiKey ?? ""}
-                className="bg-background border-dashed"
+                className="bg-background border-dashed border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
                 placeholder="lsv2_pt_..."
               />
             </div>
 
             <div className="flex justify-between items-center mt-4">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowConfig(null)}
                 className="text-sm text-muted-foreground hover:text-indigo-600 transition-colors"
               >
                 Pular
               </button>
-              <Button type="submit" size="lg" className="px-8 bg-indigo-600 hover:bg-indigo-700 shadow-md">
+              <Button
+                type="submit"
+                size="lg"
+                className="px-8 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
+              >
                 Conectar
                 <ArrowRight className="size-4 ml-2" />
               </Button>
@@ -267,7 +282,11 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   }
 
   return (
-    <StreamSession apiKey={apiKey} apiUrl={finalApiUrl} assistantId={finalAssistantId}>
+    <StreamSession
+      apiKey={apiKey}
+      apiUrl={finalApiUrl}
+      assistantId={finalAssistantId}
+    >
       {children}
     </StreamSession>
   );

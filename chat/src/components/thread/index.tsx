@@ -23,12 +23,16 @@ import {
   Network,
   MessageSquare,
   BarChart2,
+  Sun,
+  Moon,
+  Info,
 } from "lucide-react";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useTheme } from "next-themes";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
 import {
@@ -44,22 +48,32 @@ import { MetricsPanel, MetricsBadges } from "./MetricsPanel";
 
 function VectoraLogo({ size = 32 }: { size?: number }) {
   return (
-    <svg
+    <img
+      src="/vectora.svg"
+      alt="Vectora Logo"
       width={size}
       height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+      className="rounded-lg shadow-sm"
+    />
+  );
+}
+
+// ── Theme Toggle ──────────────────────────────────────────────────────────────
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <div className="p-2 w-9 h-9" />;
+
+  return (
+    <button
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="p-2 rounded-md transition-colors text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-400"
     >
-      <rect width="32" height="32" rx="8" fill="#4F46E5" />
-      <path
-        d="M8 10L13 22L16 15L19 22L24 10"
-        stroke="white"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </button>
   );
 }
 
@@ -171,6 +185,47 @@ export function Thread() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+
+    // ── Slash commands support ──────────────────────────────────────────────
+    if (input.startsWith("/")) {
+      const parts = input.trim().split(" ");
+      const cmd = parts[0].toLowerCase();
+      
+      if (cmd === "/help" || cmd === "/list") {
+        toast.info("Comandos do Vectora", {
+          description: (
+            <div className="text-xs space-y-1 mt-2">
+              <p><strong>/help</strong>, <strong>/list</strong> — mostra esta lista</p>
+              <p><strong>/new</strong> — inicia uma nova conversa</p>
+              <p><strong>/clear</strong> — limpa o ID da sessão atual</p>
+              <p><strong>/model</strong> — abre configurações de modelo</p>
+              <p><strong>/rag</strong> — informações sobre a base de conhecimento</p>
+            </div>
+          ),
+          duration: 5000,
+        });
+        setInput("");
+        return;
+      }
+      
+      if (cmd === "/new" || cmd === "/clear") {
+        setThreadId(null);
+        setInput("");
+        toast.success("Sessão reiniciada");
+        return;
+      }
+
+      if (cmd === "/model") {
+        // Force setup screen to show
+        const url = new URL(window.location.href);
+        url.searchParams.set("setup", "true");
+        window.history.pushState({}, "", url.toString());
+        // For immediate effect we'll reload or use a simpler trick
+        window.location.search = "?setup=true";
+        return;
+      }
+    }
+
     setFirstTokenReceived(false);
 
     const newHumanMessage: Message = {
@@ -270,13 +325,13 @@ export function Thread() {
         )}
 
         {chatStarted && (
-          <div className="flex items-center justify-between gap-3 p-2 z-10 relative border-b border-gray-100">
+          <div className="flex items-center justify-between gap-3 p-2 z-10 relative border-b border-gray-100 dark:border-gray-800">
             {/* Left: history toggle + branding */}
             <div className="flex items-center justify-start gap-2 relative">
               <div className="absolute left-0 z-10">
                 {(!chatHistoryOpen || !isLargeScreen) && (
                   <Button
-                    className="hover:bg-gray-100"
+                    className="hover:bg-gray-100 dark:hover:bg-gray-800"
                     variant="ghost"
                     onClick={() => setChatHistoryOpen((p) => !p)}
                   >
@@ -295,21 +350,21 @@ export function Thread() {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               >
                 <VectoraLogo size={28} />
-                <span className="text-lg font-semibold tracking-tight text-indigo-700">
+                <span className="text-lg font-semibold tracking-tight text-indigo-700 dark:text-indigo-400">
                   Vectora
                 </span>
               </motion.button>
             </div>
 
             {/* Center: tabs Chat | Graph */}
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
               <button
                 onClick={() => setActiveTab("chat")}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                   activeTab === "chat"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700",
+                    ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300",
                 )}
               >
                 <MessageSquare className="size-4" />
@@ -320,8 +375,8 @@ export function Thread() {
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                   activeTab === "graph"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700",
+                    ? "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300",
                 )}
               >
                 <Network className="size-4" />
@@ -331,6 +386,8 @@ export function Thread() {
 
             {/* Right: metrics + new thread */}
             <div className="flex items-center gap-2">
+              <ThemeToggle />
+              
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -339,8 +396,8 @@ export function Thread() {
                       className={cn(
                         "p-2 rounded-md transition-colors",
                         metricsOpen
-                          ? "bg-indigo-50 text-indigo-600"
-                          : "text-gray-500 hover:bg-gray-100",
+                          ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                          : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800",
                       )}
                     >
                       <BarChart2 className="size-4" />
@@ -381,7 +438,7 @@ export function Thread() {
               animate={{ width: 220, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="border-r border-gray-100 overflow-y-auto shrink-0"
+              className="border-r border-gray-100 dark:border-gray-800 overflow-y-auto shrink-0 bg-white dark:bg-gray-950"
             >
               <MetricsPanel />
             </motion.div>
@@ -389,24 +446,24 @@ export function Thread() {
 
           {/* Graph tab */}
           {activeTab === "graph" && (
-            <div className="flex-1 h-full hidden md:block">
+            <div className="flex-1 h-full hidden md:block bg-white dark:bg-gray-950">
               <GraphView assistantId={assistantId} apiUrl={apiUrl} />
             </div>
           )}
 
           {/* Graph not available on mobile */}
           {activeTab === "graph" && !isLargeScreen && (
-            <div className="flex-1 flex items-center justify-center text-sm text-gray-400 p-8 text-center">
+            <div className="flex-1 flex items-center justify-center text-sm text-gray-400 p-8 text-center bg-white dark:bg-gray-950">
               Visualização do grafo disponível apenas em telas maiores.
             </div>
           )}
 
           {/* Chat tab */}
           {activeTab === "chat" && (
-            <StickToBottom className="relative flex-1 overflow-hidden">
+            <StickToBottom className="relative flex-1 overflow-hidden bg-white dark:bg-gray-950">
               <StickyToBottomContent
                 className={cn(
-                  "absolute px-4 inset-0 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent",
+                  "absolute px-4 inset-0 overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-track]:bg-transparent",
                   !chatStarted && "flex flex-col items-stretch mt-[25vh]",
                   chatStarted && "grid grid-rows-[1fr_auto]",
                 )}
@@ -445,11 +502,11 @@ export function Thread() {
                   </>
                 }
                 footer={
-                  <div className="sticky flex flex-col items-center gap-8 bottom-0 bg-white">
+                  <div className="sticky flex flex-col items-center gap-8 bottom-0 bg-white dark:bg-gray-950">
                     {!chatStarted && (
                       <div className="flex gap-3 items-center">
                         <VectoraLogo size={40} />
-                        <h1 className="text-2xl font-semibold tracking-tight text-indigo-700">
+                        <h1 className="text-2xl font-semibold tracking-tight text-indigo-700 dark:text-indigo-400">
                           Vectora Chat
                         </h1>
                       </div>
@@ -457,7 +514,7 @@ export function Thread() {
 
                     <ScrollToBottom className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 animate-in fade-in-0 zoom-in-95" />
 
-                    <div className="bg-muted rounded-2xl border shadow-xs mx-auto mb-8 w-full max-w-3xl relative z-10">
+                    <div className="bg-muted dark:bg-gray-900 rounded-2xl border dark:border-gray-800 shadow-xs mx-auto mb-8 w-full max-w-3xl relative z-10">
                       <form
                         onSubmit={handleSubmit}
                         className="grid grid-rows-[1fr_auto] gap-2 max-w-3xl mx-auto"
@@ -479,7 +536,7 @@ export function Thread() {
                             }
                           }}
                           placeholder="Digite sua mensagem… (Enter para enviar, Shift+Enter para nova linha)"
-                          className="p-3.5 pb-0 border-none bg-transparent field-sizing-content shadow-none ring-0 outline-none focus:outline-none focus:ring-0 resize-none"
+                          className="p-3.5 pb-0 border-none bg-transparent field-sizing-content shadow-none ring-0 outline-none focus:outline-none focus:ring-0 resize-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
                         />
 
                         <div className="flex items-center justify-between p-2 pt-4">
@@ -491,20 +548,20 @@ export function Thread() {
                             />
                             <Label
                               htmlFor="render-tool-calls"
-                              className="text-sm text-gray-600"
+                              className="text-sm text-gray-600 dark:text-gray-400"
                             >
                               Ocultar tool calls
                             </Label>
                           </div>
                           {stream.isLoading ? (
-                            <Button key="stop" onClick={() => stream.stop()}>
-                              <LoaderCircle className="w-4 h-4 animate-spin" />
+                            <Button key="stop" onClick={() => stream.stop()} variant="outline">
+                              <LoaderCircle className="w-4 h-4 animate-spin mr-2" />
                               Cancelar
                             </Button>
                           ) : (
                             <Button
                               type="submit"
-                              className="bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md"
+                              className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-all shadow-md text-white"
                               disabled={isLoading || !input.trim()}
                             >
                               Enviar
