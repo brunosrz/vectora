@@ -16,7 +16,12 @@ export const metadata: Metadata = {
   title: "Vectora Chat",
   description: "Vectora — Agente de IA com RAG, busca vetorial e sub-agentes",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/vectora.png", sizes: "32x32", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/vectora.png",
   },
 };
 

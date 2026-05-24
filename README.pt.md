@@ -197,40 +197,45 @@ Além do CLI, você pode usar o **Vectora Chat**, uma interface web moderna para
 
 ## Referência de CLI
 
-```
-vectora [opções]               Iniciar chat (retoma última sessão do diretório)
-vectora mcp-server             Iniciar servidor MCP (stdio)
-vectora traces                 Ver traces de observabilidade
-vectora sessions               Listar todas as sessões salvas
-vectora config                 Ver configuração atual
-vectora config --set KEY=VALUE Editar uma configuração
+### Agente (Core)
 
-Opções:
-  --model MODEL        Trocar modelo LLM (provider detectado automaticamente). Persiste.
-  --ollama             Forçar provider Ollama (para nomes de modelos locais arbitrários)
-  --session ID         Retomar sessão específica pelo ID de 6 dígitos
-  --new                Forçar nova sessão
-  --verbosity N        Nível de verbosidade 0–5 (0=silencioso, 5=painel debug). Persiste.
-  --version            Exibir versão
+O ponto de entrada principal para o CLI do Vectora é o comando `vectora`.
+
+```bash
+vectora [comando] [opções]
 ```
 
----
+| Comando      | Descrição                                                               |
+| :----------- | :---------------------------------------------------------------------- |
+| `(padrão)`   | Inicia a interface de chat interativa (retoma a última sessão).         |
+| `mcp-server` | Inicia o servidor MCP (stdio JSON-RPC) para integração com IDEs.        |
+| `traces`     | Exibe os rastros internos de observabilidade de `~/.vectora/traces.db`. |
+| `sessions`   | Lista todas as sessões de chat salvas.                                  |
+| `config`     | Exibe ou atualiza a configuração em `~/.vectora/settings.json`.         |
 
-## Comandos do Chat
+**Opções Globais:**
 
-| Comando         | Descrição                                                                         |
-| --------------- | --------------------------------------------------------------------------------- |
-| `/help`         | Mostra uma ajuda rápida                                                           |
-| `/list`         | Lista todos os comandos disponíveis                                               |
-| `/tools`        | Lista todas as ferramentas disponíveis                                            |
-| `/model`        | Lista ou alterna entre os modelos de linguagem                                    |
-| `/debug [0-5]`  | Define nível de verbosidade (chamadas de ferramentas, roteamento, painel de logs) |
-| `/new`          | Inicia uma nova sessão de conversa                                                |
-| `/sessions`     | Lista todas as sessões anteriores                                                 |
-| `/session <id>` | Alterna para uma sessão específica pelo ID                                        |
-| `/quit`         | Encerra a aplicação                                                               |
+- `--model <nome>`: Altera o provedor/modelo de LLM (ex: `gemini-3.5-flash`, `command-a-03-2025`).
+- `--new`: Força uma nova sessão de conversa.
+- `--session <id>`: Retoma uma sessão específica.
+- `--verbosity <0-5>`: Ajusta o nível de detalhe da saída no console.
+- `--quit`: Encerra automaticamente após 10 segundos.
 
-**Atalhos de teclado:** `Enter` envia, `Alt+Enter` ou `Shift+Enter` insere quebra de linha.
+### Chat (Web UI)
+
+O comando `vectora-chat` unifica o frontend e o backend do agente.
+
+```bash
+vectora-chat
+```
+
+| Comando  | Descrição                                                            |
+| :------- | :------------------------------------------------------------------- |
+| `/help`  | Exibe o menu de comandos dentro do chat.                             |
+| `/new`   | Limpa a thread atual e inicia uma nova sessão.                       |
+| `/clear` | Reinicia o ID da thread atual.                                       |
+| `/model` | Abre a tela de configuração para atualizar as definições de conexão. |
+| `/rag`   | Exibe informações sobre a base de conhecimento e workspace.          |
 
 ---
 

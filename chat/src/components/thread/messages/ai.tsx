@@ -22,7 +22,7 @@ function CustomComponent({
   thread: ReturnType<typeof useStreamContext>;
 }) {
   const { values } = useStreamContext();
-  const customComponents = values.ui?.filter(
+  const customComponents = (Array.isArray(values.ui) ? values.ui : []).filter(
     (ui) => ui.metadata?.message_id === message.id,
   );
 

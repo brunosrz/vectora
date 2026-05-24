@@ -15,7 +15,7 @@
       "transport": {
         "type": "stdio",
         "command": "vectora",
-        "args": ["mcp-server"]
+        "args": ["server", "--mode", "stdio"]
       },
       "environmentVariables": [
         {

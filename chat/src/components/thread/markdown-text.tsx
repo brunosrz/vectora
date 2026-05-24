@@ -105,13 +105,19 @@ const defaultComponents: any = {
   ),
   h6: ({ className, ...props }: { className?: string }) => (
     <h6
-      className={cn("my-4 font-semibold first:mt-0 last:mb-0 text-gray-900 dark:text-gray-100", className)}
+      className={cn(
+        "my-4 font-semibold first:mt-0 last:mb-0 text-gray-900 dark:text-gray-100",
+        className,
+      )}
       {...props}
     />
   ),
   p: ({ className, ...props }: { className?: string }) => (
     <p
-      className={cn("mb-5 mt-5 leading-7 first:mt-0 last:mb-0 text-gray-700 dark:text-gray-300", className)}
+      className={cn(
+        "mb-5 mt-5 leading-7 first:mt-0 last:mb-0 text-gray-700 dark:text-gray-300",
+        className,
+      )}
       {...props}
     />
   ),
@@ -126,24 +132,39 @@ const defaultComponents: any = {
   ),
   blockquote: ({ className, ...props }: { className?: string }) => (
     <blockquote
-      className={cn("border-l-2 border-indigo-500 dark:border-indigo-400 pl-6 italic text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-gray-900/50 py-2 rounded-r-md", className)}
+      className={cn(
+        "border-l-2 border-indigo-500 dark:border-indigo-400 pl-6 italic text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-gray-900/50 py-2 rounded-r-md",
+        className,
+      )}
       {...props}
     />
   ),
   ul: ({ className, ...props }: { className?: string }) => (
     <ul
-      className={cn("my-5 ml-6 list-disc [&>li]:mt-2 text-gray-700 dark:text-gray-300", className)}
+      className={cn(
+        "my-5 ml-6 list-disc [&>li]:mt-2 text-gray-700 dark:text-gray-300",
+        className,
+      )}
       {...props}
     />
   ),
   ol: ({ className, ...props }: { className?: string }) => (
     <ol
-      className={cn("my-5 ml-6 list-decimal [&>li]:mt-2 text-gray-700 dark:text-gray-300", className)}
+      className={cn(
+        "my-5 ml-6 list-decimal [&>li]:mt-2 text-gray-700 dark:text-gray-300",
+        className,
+      )}
       {...props}
     />
   ),
   hr: ({ className, ...props }: { className?: string }) => (
-    <hr className={cn("my-5 border-b border-gray-200 dark:border-gray-800", className)} {...props} />
+    <hr
+      className={cn(
+        "my-5 border-b border-gray-200 dark:border-gray-800",
+        className,
+      )}
+      {...props}
+    />
   ),
   table: ({ className, ...props }: { className?: string }) => (
     <table

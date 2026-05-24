@@ -174,7 +174,10 @@ export function GraphView({
   }
 
   return (
-    <div style={{ height: "100%", width: "100%" }} className="bg-white dark:bg-gray-950">
+    <div
+      style={{ height: "100%", width: "100%" }}
+      className="bg-white dark:bg-gray-950"
+    >
       <ReactFlow
         nodes={styledNodes}
         edges={edges}
@@ -185,8 +188,15 @@ export function GraphView({
         elementsSelectable={false}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="currentColor" className="text-gray-100 dark:text-gray-900" gap={20} />
-        <Controls showInteractive={false} className="dark:bg-gray-900 dark:border-gray-800" />
+        <Background
+          color="currentColor"
+          className="text-gray-100 dark:text-gray-900"
+          gap={20}
+        />
+        <Controls
+          showInteractive={false}
+          className="dark:bg-gray-900 dark:border-gray-800"
+        />
       </ReactFlow>
     </div>
   );

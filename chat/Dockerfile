@@ -1,20 +1,22 @@
 # Vectora Chat Dockerfile
 FROM node:20-alpine AS base
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Dependências
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package.json package-lock.json* ./
-# Use npm ci quando houver lockfile, fallback para npm install caso contrário
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
 
 # Builder
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Runner
 FROM base AS runner

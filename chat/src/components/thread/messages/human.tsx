@@ -62,7 +62,10 @@ export function HumanMessage({
 
           return {
             ...values,
-            messages: [...(values.messages ?? []), newMessage],
+            messages: [
+              ...(Array.isArray(values.messages) ? values.messages : []),
+              newMessage,
+            ],
           };
         },
       },

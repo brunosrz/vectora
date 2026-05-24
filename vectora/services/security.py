@@ -40,7 +40,7 @@ def is_safe_file_path(path: str, allowed_dirs: list[str] | None = None) -> bool:
             return False
 
         return True
-    except (ValueError, OSError):
+    except ValueError, OSError:
         return False
 
 

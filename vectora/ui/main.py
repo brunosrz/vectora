@@ -53,7 +53,9 @@ class VectoraLayout:
             f"[#FFFFFF]Thread: {thread_id}[/#FFFFFF] | "
             f"[#FFFFFF]Messages: {message_count}[/#FFFFFF]"
         )
-        self.layout["header"].update(Panel(header_text, style="on #4F46E5", expand=False))
+        self.layout["header"].update(
+            Panel(header_text, style="on #4F46E5", expand=False)
+        )
 
     def update_body(self, content: str | Panel | Table) -> None:
         """Update main body with chat or content."""
@@ -325,7 +327,7 @@ class ToolCallPanel:
         if isinstance(tool_args, dict):
             try:
                 args_repr = json.dumps(tool_args, indent=2, ensure_ascii=False)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 args_repr = str(tool_args)
         elif tool_args is None:
             args_repr = "{}"

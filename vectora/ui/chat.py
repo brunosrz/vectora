@@ -1070,12 +1070,14 @@ async def run_chat(
 
         # Set up auto-quit event
         quit_event = asyncio.Event()
+        auto_quit_task: asyncio.Task[None] | None = None
         if quit_after:
-            async def _auto_quit():
+            async def _auto_quit() -> None:
                 await asyncio.sleep(10)
                 quit_event.set()
                 logger.info("Auto-quit timer triggered")
-            asyncio.create_task(_auto_quit())
+            auto_quit_task = asyncio.create_task(_auto_quit())  # noqa: RUF006
+
 
         # Get LLM provider from settings
         provider = settings.get_llm_provider() if settings else "unset"
@@ -1101,11 +1103,11 @@ async def run_chat(
             async with Checkpointer(settings.db_dsn) as checkpointer:
                 graph = build_graph(checkpointer)
                 await chat_loop(
-                    graph, 
-                    checkpointer, 
-                    context, 
-                    provider=provider, 
-                    quit_event=quit_event
+                    graph,
+                    checkpointer,
+                    context,
+                    provider=provider,
+                    quit_event=quit_event,
                 )
         except Exception as e:
             error_panel = Panel(

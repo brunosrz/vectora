@@ -25,7 +25,7 @@ def test_context_immutable():
     try:
         ctx.user_type = "plus"  # type: ignore[misc]  # ty: ignore[invalid-assignment]
         pytest.fail("should be immutable")
-    except (TypeError, dataclasses.FrozenInstanceError, AttributeError):
+    except TypeError, dataclasses.FrozenInstanceError, AttributeError:
         pass  # esperado — frozen dataclass
 
 

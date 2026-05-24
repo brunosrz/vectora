@@ -20,7 +20,7 @@ const agentProcess = spawn("langgraph", ["dev"], {
 // Aguarda 3 segundos para garantir que o servidor suba
 setTimeout(() => {
   console.log("🚀 Iniciando Vectora Chat...");
-  
+
   // Inicia o Next.js
   const chatProcess = spawn("npm", ["start"], {
     cwd: join(__dirname, ".."),

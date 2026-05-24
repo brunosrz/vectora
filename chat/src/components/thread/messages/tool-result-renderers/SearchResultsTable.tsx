@@ -50,7 +50,10 @@ export function SearchResultsTable({
     <div className="rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden text-sm bg-white dark:bg-gray-900/50">
       {query && (
         <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 text-xs text-gray-500 dark:text-gray-400">
-          Query: <span className="font-medium text-gray-700 dark:text-gray-300">{query}</span>
+          Query:{" "}
+          <span className="font-medium text-gray-700 dark:text-gray-300">
+            {query}
+          </span>
           <span className="ml-2 text-gray-400 dark:text-gray-500">
             — {results.length} resultado(s)
           </span>
@@ -80,7 +83,10 @@ export function SearchResultsTable({
                       {collection}
                     </span>
                   ) : null}
-                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate" title={src}>
+                  <span
+                    className="text-xs text-gray-500 dark:text-gray-400 truncate"
+                    title={src}
+                  >
                     {src}
                   </span>
                 </div>

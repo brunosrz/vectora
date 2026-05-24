@@ -2,7 +2,7 @@
   "mcpServers": {
     "Vectora": {
       "command": "vectora",
-      "args": ["mcp-server"]
+      "args": ["server", "--mode", "stdio"]
     }
   }
 }

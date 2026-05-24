@@ -39,20 +39,14 @@ type FileDiffProps = { diff: string; file_path?: string };
 type SearchTableProps = { results: SearchResult[]; query?: string };
 type WebResultsProps = { results: WebSearchResult[] };
 
-const UI_COMPONENTS: {
-  file_diff: React.ComponentType<FileDiffProps>;
-  search_table: React.ComponentType<SearchTableProps>;
-  web_results: React.ComponentType<WebResultsProps>;
-} = {
+const UI_COMPONENTS: Record<string, React.ComponentType<any>> = {
   file_diff: ({ diff, file_path }) => (
     <FileDiffViewer content={diff} fileName={file_path} />
   ),
   search_table: ({ results, query }) => (
     <SearchResultsTable results={results} query={query} />
   ),
-  web_results: ({ results }) => (
-    <WebResultsCard results={results} />
-  ),
+  web_results: ({ results }) => <WebResultsCard results={results} />,
 };
 
 // ---------------------------------------------------------------------------

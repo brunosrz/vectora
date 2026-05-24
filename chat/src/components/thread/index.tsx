@@ -72,7 +72,11 @@ function ThemeToggle() {
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="p-2 rounded-md transition-colors text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-400"
     >
-      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      {theme === "dark" ? (
+        <Sun className="size-4" />
+      ) : (
+        <Moon className="size-4" />
+      )}
     </button>
   );
 }
@@ -190,16 +194,27 @@ export function Thread() {
     if (input.startsWith("/")) {
       const parts = input.trim().split(" ");
       const cmd = parts[0].toLowerCase();
-      
+
       if (cmd === "/help" || cmd === "/list") {
         toast.info("Comandos do Vectora", {
           description: (
             <div className="text-xs space-y-1 mt-2">
-              <p><strong>/help</strong>, <strong>/list</strong> — mostra esta lista</p>
-              <p><strong>/new</strong> — inicia uma nova conversa</p>
-              <p><strong>/clear</strong> — limpa o ID da sessão atual</p>
-              <p><strong>/model</strong> — abre configurações de modelo</p>
-              <p><strong>/rag</strong> — informações sobre a base de conhecimento</p>
+              <p>
+                <strong>/help</strong>, <strong>/list</strong> — mostra esta
+                lista
+              </p>
+              <p>
+                <strong>/new</strong> — inicia uma nova conversa
+              </p>
+              <p>
+                <strong>/clear</strong> — limpa o ID da sessão atual
+              </p>
+              <p>
+                <strong>/model</strong> — abre configurações de modelo
+              </p>
+              <p>
+                <strong>/rag</strong> — informações sobre a base de conhecimento
+              </p>
             </div>
           ),
           duration: 5000,
@@ -207,7 +222,7 @@ export function Thread() {
         setInput("");
         return;
       }
-      
+
       if (cmd === "/new" || cmd === "/clear") {
         setThreadId(null);
         setInput("");
@@ -242,7 +257,7 @@ export function Thread() {
         optimisticValues: (prev) => ({
           ...prev,
           messages: [
-            ...(prev.messages ?? []),
+            ...(Array.isArray(prev.messages) ? prev.messages : []),
             ...toolMessages,
             newHumanMessage,
           ],
@@ -387,7 +402,7 @@ export function Thread() {
             {/* Right: metrics + new thread */}
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -554,7 +569,11 @@ export function Thread() {
                             </Label>
                           </div>
                           {stream.isLoading ? (
-                            <Button key="stop" onClick={() => stream.stop()} variant="outline">
+                            <Button
+                              key="stop"
+                              onClick={() => stream.stop()}
+                              variant="outline"
+                            >
                               <LoaderCircle className="w-4 h-4 animate-spin mr-2" />
                               Cancelar
                             </Button>

@@ -46,7 +46,7 @@ async function checkGraphStatus(
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), 5000);
-    
+
     const res = await fetch(`${apiUrl}/info`, {
       signal: controller.signal,
       ...(apiKey && {
@@ -101,8 +101,9 @@ const StreamSession = ({
         toast.error("Erro de conexão", {
           description: () => (
             <p>
-              Não foi possível conectar ao servidor Vectora em <code>{apiUrl}</code>. 
-              Certifique-se de que o agent está rodando (<code>uv run vectora</code>).
+              Não foi possível conectar ao servidor Vectora em{" "}
+              <code>{apiUrl}</code>. Certifique-se de que o agent está rodando (
+              <code>uv run vectora</code>).
             </p>
           ),
           duration: 15000,
@@ -209,7 +210,10 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
             className="flex flex-col gap-6 p-8 bg-white dark:bg-gray-900"
           >
             <div className="flex flex-col gap-2">
-              <Label htmlFor="apiUrl" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              <Label
+                htmlFor="apiUrl"
+                className="text-sm font-semibold text-gray-900 dark:text-gray-100"
+              >
                 URL de Deployment<span className="text-rose-500">*</span>
               </Label>
               <Input
@@ -226,7 +230,10 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="assistantId" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              <Label
+                htmlFor="assistantId"
+                className="text-sm font-semibold text-gray-900 dark:text-gray-100"
+              >
                 Graph ID / Assistant ID<span className="text-rose-500">*</span>
               </Label>
               <Input

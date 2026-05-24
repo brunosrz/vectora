@@ -131,15 +131,23 @@ def _build_parser() -> argparse.ArgumentParser:
 
     sub = parser.add_subparsers(dest="command", metavar="subcommand")
 
-    # mcp-server
-    sub.add_parser(
-        "mcp-server",
-        help="Start the MCP server (stdio JSON-RPC)",
+    # server (unifica mcp-server e sse)
+    server_p = sub.add_parser(
+        "server",
+        help="Start the MCP server (stdio or sse)",
         description=(
-            "Start Vectora as an MCP server so Claude Desktop, Claude Code, "
-            "or other MCP clients can invoke Vectora tools."
+            "Start Vectora as an MCP server. Use --mode stdio for local clients "
+            "(Claude Desktop/Code) or --mode sse for remote agents (Paperclip, etc.)."
         ),
     )
+    server_p.add_argument(
+        "--mode",
+        choices=["stdio", "sse"],
+        required=True,
+        help="MCP transport mode: stdio (local) or sse (remote agents).",
+    )
+    server_p.add_argument("--host", default="0.0.0.0", help="Host for SSE mode")  # noqa: S104
+    server_p.add_argument("--port", type=int, default=8000, help="Port for SSE mode")
 
     # traces
     traces_p = sub.add_parser(
@@ -547,8 +555,14 @@ def run() -> None:
 
     command = getattr(args, "command", None)
 
-    # ── mcp-server ────────────────────────────────────────────────────────────
-    if command == "mcp-server":
+    # ── server ────────────────────────────────────────────────────────────
+    if command == "server":
+        # Passar argumentos para o servidor MCP via variáveis de ambiente
+        # que o vectora/mcp/server.py lê no seu run()
+        os.environ["MCP_TRANSPORT"] = args.mode
+        os.environ["MCP_HOST"] = args.host
+        os.environ["MCP_PORT"] = str(args.port)
+
         from vectora.mcp.server import run as mcp_run
 
         mcp_run()

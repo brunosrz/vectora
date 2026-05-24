@@ -22,6 +22,7 @@ export interface StateType {
   ui?: UIMessage[];
   /** Métricas de observabilidade — atualizadas pelos nós do grafo */
   ui_metrics?: UIMetrics;
+  [key: string]: unknown;
 }
 
 /** Configuração do Agent — parâmetros de conexão */
@@ -70,10 +71,13 @@ export interface QueueProgress {
     | "processing"
     | "completed"
     | "error"
-    | "quota_error";
+    | "quota_error"
+    | "queued";
   queue_id?: string;
+  id?: string;
   queue_ids?: string[];
   total?: number;
+  count?: number;
   processed?: number;
   success_count?: number;
   message?: string;
@@ -88,6 +92,7 @@ export interface WorkspaceDescribeResult {
   name?: string;
   manifest?: string;
   summary?: string;
+  content?: string;
   message?: string;
 }
 
