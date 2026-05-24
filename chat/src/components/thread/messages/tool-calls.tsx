@@ -31,26 +31,26 @@ import {
   type QueueProgress,
   type WorkspaceDescribeResult,
 } from "@/types/agent";
-
 // ---------------------------------------------------------------------------
 // Generative UI — registra componentes indexados por ui_component string
 // ---------------------------------------------------------------------------
 
-const UI_COMPONENTS: Record<
-  string,
-  React.ComponentType<any> // eslint-disable-line @typescript-eslint/no-explicit-any
-> = {
-  file_diff: ({ diff, file_path }: { diff: string; file_path?: string }) => (
+type FileDiffProps = { diff: string; file_path?: string };
+type SearchTableProps = { results: SearchResult[]; query?: string };
+type WebResultsProps = { results: WebSearchResult[] };
+
+const UI_COMPONENTS: {
+  file_diff: React.ComponentType<FileDiffProps>;
+  search_table: React.ComponentType<SearchTableProps>;
+  web_results: React.ComponentType<WebResultsProps>;
+} = {
+  file_diff: ({ diff, file_path }) => (
     <FileDiffViewer content={diff} fileName={file_path} />
   ),
-  search_table: ({
-    results,
-    query,
-  }: {
-    results: SearchResult[];
-    query?: string;
-  }) => <SearchResultsTable results={results} query={query} />,
-  web_results: ({ results }: { results: WebSearchResult[] }) => (
+  search_table: ({ results, query }) => (
+    <SearchResultsTable results={results} query={query} />
+  ),
+  web_results: ({ results }) => (
     <WebResultsCard results={results} />
   ),
 };

@@ -121,6 +121,11 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Force a new session instead of resuming the last one.",
     )
+    parser.add_argument(
+        "--quit",
+        action="store_true",
+        help="Automatically quit Vectora after 10 seconds.",
+    )
 
     # ── Subcommands ──────────────────────────────────────────────────────────
 
@@ -315,6 +320,7 @@ async def _run_chat_async(args: argparse.Namespace) -> None:
         settings=settings,
         force_new=args.new,
         session_id=args.session,
+        quit_after=args.quit,
     )
 
 

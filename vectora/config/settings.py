@@ -363,7 +363,7 @@ class Settings(BaseSettings):
                         key, value = stripped.split("=", 1)
                         os.environ.setdefault(key.strip(), value.strip())
             logger.debug("Loaded defaults.env from package")
-        except FileNotFoundError, TypeError, ModuleNotFoundError, AttributeError:
+        except (FileNotFoundError, TypeError, ModuleNotFoundError, AttributeError):
             logger.debug("defaults.env not found (normal for development)")
 
         # Level 3: Load ~/.vectora/settings.json (preferências de runtime não-secretas)

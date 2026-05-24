@@ -4,30 +4,37 @@ import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
-// O type module exige essa gambiarra para ter o __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const projectRoot = join(__dirname, "..", ".."); // Ajustado para a raiz do monorepo/projeto
 
-// O app reside na raiz do pacote instalado (um nível acima do bin)
-const appDir = join(__dirname, "..");
+console.log("🚀 Iniciando Vectora Agent (LangGraph)...");
 
-console.log("🚀 Iniciando Vectora Chat...");
-
-// Inicia o processo Next.js em modo de producao usando o npm local
-const child = spawn("npm", ["start"], {
-  cwd: appDir,
-  stdio: "inherit",
+// Inicia o servidor LangGraph em background
+const agentProcess = spawn("langgraph", ["dev"], {
+  cwd: projectRoot,
+  stdio: "ignore", // Oculta logs do servidor para não poluir o terminal
   shell: true,
 });
 
-child.on("error", (err) => {
-  console.error("❌ Falha ao iniciar o chat:", err);
-  process.exit(1);
-});
+// Aguarda 3 segundos para garantir que o servidor suba
+setTimeout(() => {
+  console.log("🚀 Iniciando Vectora Chat...");
+  
+  // Inicia o Next.js
+  const chatProcess = spawn("npm", ["start"], {
+    cwd: join(__dirname, ".."),
+    stdio: "inherit",
+    shell: true,
+  });
 
-child.on("exit", (code) => {
-  if (code !== 0) {
-    console.error(`❌ O processo encerrou com código ${code}`);
-  }
-  process.exit(code || 0);
+  chatProcess.on("exit", (code) => {
+    agentProcess.kill(); // Mata o agente ao fechar o chat
+    process.exit(code || 0);
+  });
+}, 3000);
+
+agentProcess.on("error", (err) => {
+  console.error("❌ Falha ao iniciar o agente:", err);
+  process.exit(1);
 });

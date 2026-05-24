@@ -32,6 +32,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph.state import CompiledStateGraph, RunnableConfig
 from langgraph.types import Command
+from prompt_toolkit import PromptSession
 from rich.console import Console
 from rich.panel import Panel
 
@@ -709,6 +710,7 @@ async def chat_loop(
     checkpointer: AsyncSqliteSaver,
     context: Context,
     provider: str = "unset",
+    quit_event: asyncio.Event | None = None,
 ) -> None:
     """Chat loop with dashboard layout and live rendering."""
     from vectora.ui.commands import _load_debug_config
@@ -821,6 +823,9 @@ async def chat_loop(
 
     # Main chat loop
     while True:
+        if quit_event and quit_event.is_set():
+            console.print("\n[yellow][!] Auto-quit timer triggered.[/yellow]")
+            break
         try:
             user_input = await _read_multiline_input()
 
@@ -1033,6 +1038,7 @@ async def run_chat(
     *,
     force_new: bool = False,
     session_id: str | None = None,
+    quit_after: bool = False,
 ) -> None:
     """Run the chat dashboard.
 
@@ -1040,6 +1046,7 @@ async def run_chat(
         settings: Settings instance. If None, loads fresh from config.
         force_new: If True, always create a new session (--new flag).
         session_id: If given, resume this specific session ID (--session flag).
+        quit_after: If True, automatically quit after 10 seconds.
     """
     from vectora.config.settings import Settings as SettingsClass
 
@@ -1060,6 +1067,15 @@ async def run_chat(
 
     async with async_lifespan():
         console.print("[green][*][/green] System initialized successfully\n")
+
+        # Set up auto-quit event
+        quit_event = asyncio.Event()
+        if quit_after:
+            async def _auto_quit():
+                await asyncio.sleep(10)
+                quit_event.set()
+                logger.info("Auto-quit timer triggered")
+            asyncio.create_task(_auto_quit())
 
         # Get LLM provider from settings
         provider = settings.get_llm_provider() if settings else "unset"
@@ -1084,7 +1100,13 @@ async def run_chat(
 
             async with Checkpointer(settings.db_dsn) as checkpointer:
                 graph = build_graph(checkpointer)
-                await chat_loop(graph, checkpointer, context, provider=provider)
+                await chat_loop(
+                    graph, 
+                    checkpointer, 
+                    context, 
+                    provider=provider, 
+                    quit_event=quit_event
+                )
         except Exception as e:
             error_panel = Panel(
                 f"[red]Critical error: {e!s}[/red]",

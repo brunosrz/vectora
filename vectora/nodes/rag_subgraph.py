@@ -75,13 +75,13 @@ def _result_score(r: dict[str, Any]) -> float | None:
     if rel is not None:
         try:
             return float(rel)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
     dist = r.get("score")
     if dist is not None:
         try:
             return 1.0 / (1.0 + float(dist))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
     return None
 

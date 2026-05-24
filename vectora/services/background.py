@@ -135,7 +135,7 @@ class _CohereRateLimitInterceptor(logging.Handler):
     formatada via /rag — sem bloquear o fluxo async nem corromper o prompt.
     """
 
-    def __init__(self, worker: BackgroundEmbeddingWorker) -> None:
+    def __init__(self, worker: "BackgroundEmbeddingWorker") -> None:
         super().__init__(level=logging.WARNING)
         self.worker = worker
 

@@ -46,7 +46,7 @@ def _parse_metadata(raw: object) -> dict[str, Any]:
     try:
         parsed = json.loads(raw)
         return parsed if isinstance(parsed, dict) else {}
-    except json.JSONDecodeError, ValueError:
+    except (json.JSONDecodeError, ValueError):
         return {}
 
 
