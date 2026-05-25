@@ -1,0 +1,13 @@
+version: v2
+plugins:
+  # Python stubs (grpcio-tools)
+  - plugin: buf.build/protocolbuffers/python
+    out: ../gen
+  - plugin: buf.build/grpc/python
+    out: ../gen
+  # TypeScript (ES modules + ConnectRPC)
+  - plugin: buf.build/bufbuild/es
+    out: ../../../chat/frontend/lib/gen
+  - plugin: buf.build/connectrpc/es
+    out: ../../../chat/frontend/lib/gen
+    opt: target=ts

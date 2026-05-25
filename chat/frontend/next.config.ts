@@ -6,16 +6,21 @@ import { fileURLToPath } from "node:url";
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  // Static export: gera HTML/JS/CSS estáticos em /out/
+  // Serve pelo `vectora server chat` (FastAPI StaticFiles) — sem Node.js runtime.
+  output: "export",
+
   turbopack: {
     root: rootDir,
   },
   // Strip console calls in production builds
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production"
-      ? {
-          exclude: ["error", "warn"], // Keep errors and warnings for critical issues
-        }
-      : false,
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? {
+            exclude: ["error", "warn"], // Keep errors and warnings for critical issues
+          }
+        : false,
   },
   async headers() {
     return [

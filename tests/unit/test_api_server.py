@@ -1,0 +1,140 @@
+"""Testes unitários para vectora/api/server.py e handlers.
+
+Valida:
+- Criação da FastAPI app em modo headless
+- Rota /health responde OK
+- Rota /metrics responde lista
+- Rotas dos handlers estão registradas
+- GetTools retorna lista (sem erros de importação)
+"""
+
+from __future__ import annotations
+
+import pytest
+from fastapi.testclient import TestClient
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def headless_app():
+    """App FastAPI em modo headless (sem static files)."""
+    from vectora.api.server import create_app
+
+    return create_app(serve_static=False)
+
+
+@pytest.fixture(scope="module")
+def client(headless_app):
+    return TestClient(headless_app, raise_server_exceptions=False)
+
+
+# ---------------------------------------------------------------------------
+# /health
+# ---------------------------------------------------------------------------
+
+
+class TestHealth:
+    def test_health_ok(self, client):
+        response = client.get("/health")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "ok"
+        assert "version" in body
+
+    def test_health_version_non_empty(self, client):
+        response = client.get("/health")
+        assert response.json()["version"] != ""
+
+
+# ---------------------------------------------------------------------------
+# /metrics
+# ---------------------------------------------------------------------------
+
+
+class TestMetrics:
+    def test_metrics_returns_list(self, client):
+        response = client.get("/metrics")
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
+
+
+# ---------------------------------------------------------------------------
+# Rotas registradas
+# ---------------------------------------------------------------------------
+
+
+class TestRoutes:
+    def _route_paths(self, app) -> list[str]:
+        return [r.path for r in app.routes]
+
+    def test_stream_chat_route_exists(self, headless_app):
+        paths = self._route_paths(headless_app)
+        assert "/vectora.chat.v1.ChatService/StreamChat" in paths
+
+    def test_resume_chat_route_exists(self, headless_app):
+        paths = self._route_paths(headless_app)
+        assert "/vectora.chat.v1.ChatService/ResumeChat" in paths
+
+    def test_get_tools_route_exists(self, headless_app):
+        paths = self._route_paths(headless_app)
+        assert "/vectora.chat.v1.ChatService/GetTools" in paths
+
+    def test_thread_routes_exist(self, headless_app):
+        paths = self._route_paths(headless_app)
+        for route in (
+            "/vectora.chat.v1.ThreadService/CreateThread",
+            "/vectora.chat.v1.ThreadService/GetThread",
+            "/vectora.chat.v1.ThreadService/ListThreads",
+            "/vectora.chat.v1.ThreadService/DeleteThread",
+            "/vectora.chat.v1.ThreadService/GetHistory",
+        ):
+            assert route in paths, f"Rota ausente: {route}"
+
+
+# ---------------------------------------------------------------------------
+# GetTools (endpoint síncrono — pode testar sem graph)
+# ---------------------------------------------------------------------------
+
+
+class TestGetTools:
+    def test_get_tools_returns_200(self, client):
+        response = client.get("/vectora.chat.v1.ChatService/GetTools")
+        assert response.status_code == 200
+
+    def test_get_tools_has_tools_key(self, client):
+        response = client.get("/vectora.chat.v1.ChatService/GetTools")
+        body = response.json()
+        assert "tools" in body
+        assert isinstance(body["tools"], list)
+
+    def test_get_tools_each_has_name(self, client):
+        response = client.get("/vectora.chat.v1.ChatService/GetTools")
+        tools = response.json()["tools"]
+        if tools:  # pode ser vazia em ambiente de teste sem ALL_TOOLS
+            for t in tools:
+                assert "name" in t
+                assert "render_hint" in t
+
+
+# ---------------------------------------------------------------------------
+# Modo chat sem static dir não levanta exceção
+# ---------------------------------------------------------------------------
+
+
+class TestChatModeWithoutStaticDir:
+    def test_chat_mode_without_static_dir(self, tmp_path, monkeypatch):
+        """create_app(serve_static=True) sem vectora/chat_static/ não deve explodir."""
+        import vectora.api.server as server_module
+
+        # Aponta _CHAT_STATIC_DIR para pasta inexistente
+        monkeypatch.setattr(server_module, "_CHAT_STATIC_DIR", tmp_path / "nao_existe")
+
+        from vectora.api.server import create_app
+
+        app = create_app(serve_static=True)
+        c = TestClient(app, raise_server_exceptions=False)
+        resp = c.get("/health")
+        assert resp.status_code == 200

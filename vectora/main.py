@@ -9,7 +9,10 @@ Usage:
     vectora --model ollama:llama3.2         Ollama model (prefix required)
     vectora --ollama --model llama3.2       Alias for ollama
     vectora --verbosity 3                   Set verbosity level (persists)
-    vectora mcp-server                      Start MCP server
+    vectora server mcp --transport stdio    Start MCP server (stdio)
+    vectora server mcp --transport sse      Start MCP server (SSE, port 8000)
+    vectora server chat                     Start web chat server (FastAPI + UI, port 8080)
+    vectora server headless                 Start API only, no UI (port 8080)
     vectora traces [--session] [--last N]   View observability traces
     vectora sessions                        List all sessions
     vectora config [--set KEY=VALUE ...]    Show or edit settings
@@ -67,7 +70,10 @@ def _build_parser() -> argparse.ArgumentParser:
   vectora --ollama --model llama3.2    alias: --ollama sets provider to ollama
   vectora --model gpt-5.5 --new        switch model AND start fresh session
   vectora --verbosity 3                set verbosity 0-5 (persists)
-  vectora mcp-server                   start MCP server (stdio)
+  vectora server mcp --transport stdio  start MCP server (stdio, local)
+  vectora server mcp --transport sse   start MCP server (SSE, port 8000)
+  vectora server chat                  start web chat (FastAPI + UI, port 8080)
+  vectora server headless              start API only (no UI, port 8080)
   vectora traces                       show last 50 traces
   vectora traces --session 042731 --last 100
   vectora traces --clear               delete all traces
@@ -131,23 +137,48 @@ def _build_parser() -> argparse.ArgumentParser:
 
     sub = parser.add_subparsers(dest="command", metavar="subcommand")
 
-    # server (unifica mcp-server e sse)
+    # server — MCP (stdio/sse) + chat/headless (FastAPI)
     server_p = sub.add_parser(
         "server",
-        help="Start the MCP server (stdio or sse)",
+        help="Start a Vectora server (mcp, chat, or headless)",
         description=(
-            "Start Vectora as an MCP server. Use --mode stdio for local clients "
-            "(Claude Desktop/Code) or --mode sse for remote agents (Paperclip, etc.)."
+            "Modos disponíveis:\n"
+            "  mcp      — MCP server (stdio ou sse) para Claude Desktop/Code e agentes externos\n"
+            "  chat     — FastAPI + frontend web compilado (chat web em http://host:port)\n"
+            "  headless — FastAPI sem frontend (integração com Paperclip e terceiros)\n"
         ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     server_p.add_argument(
-        "--mode",
-        choices=["stdio", "sse"],
-        required=True,
-        help="MCP transport mode: stdio (local) or sse (remote agents).",
+        "mode",
+        nargs="?",
+        default=None,
+        choices=["mcp", "chat", "headless", "stdio", "sse"],
+        help=(
+            "Modo do servidor. 'mcp' inicia o MCP server (requer --transport). "
+            "'chat' e 'headless' iniciam a API FastAPI."
+        ),
     )
-    server_p.add_argument("--host", default="0.0.0.0", help="Host for SSE mode")  # noqa: S104
-    server_p.add_argument("--port", type=int, default=8000, help="Port for SSE mode")
+    # MCP-specific flags (compatibilidade com uso anterior)
+    server_p.add_argument(
+        "--mode",
+        dest="transport",
+        choices=["stdio", "sse"],
+        help="[MCP] Transporte: stdio (local) ou sse (remoto). Equivalente a `server mcp --transport`.",
+    )
+    server_p.add_argument(
+        "--transport",
+        choices=["stdio", "sse"],
+        default="stdio",
+        help="[MCP] Transporte MCP: stdio (default) ou sse.",
+    )
+    server_p.add_argument("--host", default="0.0.0.0", help="Host (chat/headless/sse)")  # noqa: S104  # nosec B104
+    server_p.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Porta (mcp sse=8000, chat/headless=8080)",
+    )
 
     # traces
     traces_p = sub.add_parser(
@@ -557,16 +588,44 @@ def run() -> None:
 
     # ── server ────────────────────────────────────────────────────────────
     if command == "server":
-        # Passar argumentos para o servidor MCP via variáveis de ambiente
-        # que o vectora/mcp/server.py lê no seu run()
-        os.environ["MCP_TRANSPORT"] = args.mode
-        os.environ["MCP_HOST"] = args.host
-        os.environ["MCP_PORT"] = str(args.port)
+        mode = getattr(args, "mode", None)
+        transport = getattr(args, "transport", "stdio") or "stdio"
 
-        from vectora.mcp.server import run as mcp_run
+        # Compatibilidade retroativa: --mode stdio/sse (flag antigo do MCP)
+        # era obrigatório; agora o modo é posicional.
+        if mode in ("stdio", "sse"):
+            transport = mode
+            mode = "mcp"
 
-        mcp_run()
-        return
+        # Default: sem modo posicional → mcp (comportamento original)
+        if mode is None:
+            mode = "mcp"
+
+        if mode == "mcp":
+            os.environ["MCP_TRANSPORT"] = transport
+            os.environ["MCP_HOST"] = args.host
+            os.environ["MCP_PORT"] = str(args.port or 8000)
+            from vectora.mcp.server import run as mcp_run
+
+            mcp_run()
+            return
+
+        if mode in ("chat", "headless"):
+            import uvicorn
+
+            from vectora.api.server import create_app
+
+            serve_static = mode == "chat"
+            port = args.port or 8080
+            app = create_app(serve_static=serve_static)
+            logger.info(
+                "Iniciando Vectora %s server em http://%s:%d",
+                mode,
+                args.host,
+                port,
+            )
+            uvicorn.run(app, host=args.host, port=port, log_level="info")
+            return
 
     # ── traces ────────────────────────────────────────────────────────────────
     if command == "traces":
