@@ -60,6 +60,18 @@ repos:
         stages: [pre-commit]
 
   # ==========================================
+  # Python Syntax Check (stdlib compileall)
+  # Roda antes do ruff — rejeita SyntaxErrors imediatamente.
+  # ==========================================
+  - repo: local
+    hooks:
+      - id: compileall
+        name: Python Syntax (compileall)
+        entry: uv run python -m compileall -q -j0
+        language: system
+        types: [python]
+
+  # ==========================================
   # Python Validation
   # ==========================================
   - repo: https://github.com/astral-sh/ruff-pre-commit
