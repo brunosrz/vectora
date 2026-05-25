@@ -327,7 +327,7 @@ class ToolCallPanel:
         if isinstance(tool_args, dict):
             try:
                 args_repr = json.dumps(tool_args, indent=2, ensure_ascii=False)
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 args_repr = str(tool_args)
         elif tool_args is None:
             args_repr = "{}"

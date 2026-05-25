@@ -79,7 +79,7 @@ exclude = ["chat"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py314"
+target-version = "py313"
 fix = true
 show-fixes = true
 indent-width = 4

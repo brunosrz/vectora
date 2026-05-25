@@ -52,7 +52,7 @@ async def prompt_for_api_key(provider: str, key_env: str, console: Any) -> str |
 
     try:
         key = await asyncio.to_thread(getpass.getpass, f"  {display} API key: ")
-    except KeyboardInterrupt, EOFError:
+    except (KeyboardInterrupt, EOFError):
         console.print("[dim]Cancelado.[/dim]")
         return None
 
