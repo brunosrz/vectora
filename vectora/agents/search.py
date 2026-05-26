@@ -126,7 +126,12 @@ async def search_finalize(state: State) -> dict:
     - `confidence`      → 0.8 com fontes, 0.5 sem
     - `summary`         → último AIMessage do search sem tool_calls
 
-    O resultado fica em `state["search_result"]` para o orchestrator sintetizar.
+    Quando `rag_pending=True` (search foi invocado pelo pipeline RAG com score
+    baixo), converte o resultado em `rag_docs` e limpa o flag — o grafo então
+    roteia para `rag_inject` em vez do orchestrator.
+
+    O resultado fica em `state["search_result"]` para o orchestrator sintetizar
+    (caminho normal) ou em `state["rag_docs"]` para o rag_inject (caminho RAG).
     """
     messages = list(state.get("messages", []))
 
@@ -145,7 +150,6 @@ async def search_finalize(state: State) -> dict:
             args = tc.get("args", {}) if isinstance(tc, dict) else {}
             if name in _web_ops:
                 web_search_used = True
-                # Para fetch_url coleta a URL direto; web_search usa a query
                 url = str(args.get("url") or args.get("query", "")).strip()
                 if url and url not in sources:
                     sources.append(url)
@@ -165,10 +169,33 @@ async def search_finalize(state: State) -> dict:
     )
 
     logger.info(
-        "search_finalize: %d fontes, web=%s",
+        "search_finalize: %d fontes, web=%s, rag_pending=%s",
         len(sources),
         web_search_used,
+        bool(state.get("rag_pending")),
     )
+
+    if state.get("rag_pending"):
+        # Converte o resultado do search em rag_docs para o rag_inject processar.
+        # O summary do search agent vira o page_content do documento de contexto.
+        from vectora.state import Document
+
+        doc: Document = {
+            "page_content": summary or "Pesquisa web concluída sem resultado textual.",
+            "metadata": {
+                "source": ", ".join(sources) if sources else "web_search",
+                "origin": "web_search",
+                "confidence": result.confidence,
+            },
+            "relevance_score": result.confidence,
+        }
+        existing = list(state.get("rag_docs") or [])
+        return {
+            "search_result": result,
+            "rag_docs": existing + [doc],
+            "rag_pending": False,  # limpa o flag
+        }
+
     return {"search_result": result}
 
 

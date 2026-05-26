@@ -99,6 +99,10 @@ class State(TypedDict):
     web_search_triggered: NotRequired[
         bool | None
     ]  # Flag: web_search foi acionado no ciclo atual
+    rag_pending: NotRequired[
+        bool | None
+    ]  # Flag: search foi invocado pelo pipeline RAG (score baixo)
+    # Quando True, search_finalize roteia para rag_inject em vez do orchestrator.
 
     # Artifacts gerados na sessão (planos, specs, guias)
     # Persistidos em ~/.vectora/artifacts/{session_id}/{slug}.md

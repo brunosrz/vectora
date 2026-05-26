@@ -47,8 +47,6 @@ graph TD;
 	rag_retrieve(rag_retrieve)
 	rag_decide_node(rag_decide_node)
 	rag_rerank(rag_rerank)
-	rag_websearch(rag_websearch)
-	rag_search_audit(rag_search_audit)
 	rag_inject(rag_inject)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> orchestrator;
@@ -67,16 +65,15 @@ graph TD;
 	process_retrieval --> search;
 	rag_decide_node -.-> rag_inject;
 	rag_decide_node -.-> rag_rerank;
-	rag_decide_node -.-> rag_websearch;
+	rag_decide_node -.-> search;
 	rag_expand_query --> rag_retrieve;
 	rag_inject --> orchestrator;
-	rag_rerank --> rag_search_audit;
+	rag_rerank --> rag_inject;
 	rag_retrieve --> rag_decide_node;
-	rag_search_audit --> rag_inject;
-	rag_websearch --> rag_search_audit;
 	search -.-> search_finalize;
 	search -.-> search_tools;
-	search_finalize --> orchestrator;
+	search_finalize -.-> orchestrator;
+	search_finalize -.-> rag_inject;
 	search_tools --> process_retrieval;
 	classDef default fill:#f2f0ff,color:#1a1a1a,line-height:1.2
 	classDef first fill:#7c3aed,color:#ffffff,stroke:#7c3aed
@@ -94,13 +91,13 @@ graph TD;
 
 Quando o Orchestrator roteia para `rag`, um subgrafo dedicado executa o pipeline completo de recuperação:
 
-| Score   | Caminho                                                           |
-| ------- | ----------------------------------------------------------------- |
-| ≥ 0.7   | `rag_inject` direto — alta confiança, sem processamento adicional |
-| 0.4–0.7 | `rag_rerank` → `rag_search_audit` → `rag_inject`                  |
-| < 0.4   | `rag_websearch` → `rag_search_audit` → `rag_inject`               |
+| Score   | Caminho                                                              |
+| ------- | -------------------------------------------------------------------- |
+| ≥ 0.7   | `rag_inject` direto — alta confiança                                 |
+| 0.4–0.7 | `rag_rerank` → `rag_inject`                                          |
+| < 0.4   | `search` (com `rag_pending=True`) → `search_finalize` → `rag_inject` |
 
-**`rag_search_audit`** é um mini loop do Search Agent (máx 3 iterações) que roda após o reranker. Ele pode apagar entradas incorretas (`manage_retriever`), buscar a fonte canônica (`fetch_url`) e indexá-la no bucket dedicado `search` — mantendo a base de conhecimento precisa sem intervenção do usuário.
+Com score baixo, `rag_decide_node` seta `rag_pending=True` e delega para o `search` real — o mesmo agente usado para buscas diretas, com acesso completo a todas as ferramentas (`web_search`, `vector_search`, `manage_retriever`, `fetch_url`). Após `search_finalize`, o resultado é roteado para `rag_inject` em vez do orchestrator.
 
 Os resultados são injetados como `SystemMessage` no contexto. O Orchestrator então sintetiza a resposta final inline, sem um hop de agente separado.
 

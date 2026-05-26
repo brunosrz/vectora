@@ -29,17 +29,17 @@ def test_graph_has_expected_nodes():
         "search",
         "coder",
         "process_retrieval",
-        # RAG pipeline achatado — sem rag_subgraph
+        # RAG pipeline achatado — sem rag_subgraph, rag_websearch, rag_search_audit
         "rag_expand_query",
         "rag_retrieve",
         "rag_decide_node",
         "rag_rerank",
-        "rag_websearch",
-        "rag_search_audit",
         "rag_inject",
     }
     assert expected.issubset(nodes)
     assert "rag_subgraph" not in nodes
+    assert "rag_websearch" not in nodes
+    assert "rag_search_audit" not in nodes
 
 
 class TestOrchestratorRoute:

@@ -78,11 +78,12 @@ class TestRagDecide:
     def test_medium_score_rerank(self):
         assert rag_decide(_state(rag_docs=[_doc(0.55)])) == "rag_rerank"
 
-    def test_low_score_websearch(self):
-        assert rag_decide(_state(rag_docs=[_doc(0.2)])) == "rag_websearch"
+    def test_low_score_routes_to_search(self):
+        # score baixo → delega para o search real (rag_pending=True)
+        assert rag_decide(_state(rag_docs=[_doc(0.2)])) == "search"
 
-    def test_empty_docs_websearch(self):
-        assert rag_decide(_state(rag_docs=[])) == "rag_websearch"
+    def test_empty_docs_routes_to_search(self):
+        assert rag_decide(_state(rag_docs=[])) == "search"
 
     def test_exactly_high_threshold(self):
         assert rag_decide(_state(rag_docs=[_doc(_SCORE_HIGH)])) == "rag_inject"
@@ -472,8 +473,14 @@ class TestRagRerank:
 
 class TestRagDecideNode:
     @pytest.mark.asyncio
-    async def test_returns_empty_dict(self):
-        result = await _rag_decide_node(_state())
+    async def test_low_score_sets_rag_pending(self):
+        # score baixo → seta rag_pending=True para search_finalize rotear para rag_inject
+        result = await _rag_decide_node(_state(rag_docs=[_doc(0.2)]))
+        assert result == {"rag_pending": True}
+
+    @pytest.mark.asyncio
+    async def test_high_score_no_rag_pending(self):
+        result = await _rag_decide_node(_state(rag_docs=[_doc(0.9)]))
         assert result == {}
 
     def test_route_after_decide_delegates_to_rag_decide(self):

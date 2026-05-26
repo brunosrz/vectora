@@ -47,8 +47,6 @@ graph TD;
 	rag_retrieve(rag_retrieve)
 	rag_decide_node(rag_decide_node)
 	rag_rerank(rag_rerank)
-	rag_websearch(rag_websearch)
-	rag_search_audit(rag_search_audit)
 	rag_inject(rag_inject)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> orchestrator;
@@ -67,16 +65,15 @@ graph TD;
 	process_retrieval --> search;
 	rag_decide_node -.-> rag_inject;
 	rag_decide_node -.-> rag_rerank;
-	rag_decide_node -.-> rag_websearch;
+	rag_decide_node -.-> search;
 	rag_expand_query --> rag_retrieve;
 	rag_inject --> orchestrator;
-	rag_rerank --> rag_search_audit;
+	rag_rerank --> rag_inject;
 	rag_retrieve --> rag_decide_node;
-	rag_search_audit --> rag_inject;
-	rag_websearch --> rag_search_audit;
 	search -.-> search_finalize;
 	search -.-> search_tools;
-	search_finalize --> orchestrator;
+	search_finalize -.-> orchestrator;
+	search_finalize -.-> rag_inject;
 	search_tools --> process_retrieval;
 	classDef default fill:#f2f0ff,color:#1a1a1a,line-height:1.2
 	classDef first fill:#7c3aed,color:#ffffff,stroke:#7c3aed
@@ -94,13 +91,13 @@ graph TD;
 
 When the orchestrator routes to `rag`, a dedicated subgraph runs the full retrieval pipeline before synthesis:
 
-| Score   | Path                                                           |
-| ------- | -------------------------------------------------------------- |
-| ≥ 0.7   | `rag_inject` directly — high confidence, no further processing |
-| 0.4–0.7 | `rag_rerank` → `rag_search_audit` → `rag_inject`               |
-| < 0.4   | `rag_websearch` → `rag_search_audit` → `rag_inject`            |
+| Score   | Path                                                                  |
+| ------- | --------------------------------------------------------------------- |
+| ≥ 0.7   | `rag_inject` directly — high confidence                               |
+| 0.4–0.7 | `rag_rerank` → `rag_inject`                                           |
+| < 0.4   | `search` (with `rag_pending=True`) → `search_finalize` → `rag_inject` |
 
-**`rag_search_audit`** is a mini Search Agent loop (max 3 iterations) that runs after the reranker. It can delete incorrect entries (`manage_retriever`), fetch canonical sources (`fetch_url`), and index them into the dedicated `search` bucket — keeping the knowledge base accurate without user intervention.
+When score is low, `rag_decide_node` sets `rag_pending=True` and delegates to the real `search` node — the same agent used for direct search queries, with full access to all tools (`web_search`, `vector_search`, `manage_retriever`, `fetch_url`). After `search_finalize`, the result is routed back to `rag_inject` instead of the orchestrator.
 
 Results are injected as a `SystemMessage` into context. The Orchestrator then synthesizes the final answer inline, without a separate agent hop.
 

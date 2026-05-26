@@ -41,8 +41,6 @@ from vectora.nodes.rag_subgraph import (
     rag_inject,
     rag_rerank,
     rag_retrieve,
-    rag_search_audit,
-    rag_websearch,
 )
 from vectora.nodes.tools import ALL_TOOLS
 from vectora.state import State
@@ -178,12 +176,13 @@ def build_graph(
     builder.add_node("parallel_dispatch", parallel_dispatch)
 
     # Nós RAG — pipeline achatado no grafo principal
+    # Score baixo → search (com rag_pending=True) → rag_inject
+    # Score médio → rag_rerank → rag_inject
+    # Score alto  → rag_inject direto
     builder.add_node("rag_expand_query", rag_expand_query)
     builder.add_node("rag_retrieve", rag_retrieve)
     builder.add_node("rag_decide_node", _rag_decide_node)
     builder.add_node("rag_rerank", rag_rerank)
-    builder.add_node("rag_websearch", rag_websearch)
-    builder.add_node("rag_search_audit", rag_search_audit)
     builder.add_node("rag_inject", rag_inject)
 
     # --- Edges ---
@@ -214,14 +213,12 @@ def build_graph(
         "rag_decide_node",
         _route_after_decide,
         {
-            "rag_inject": "rag_inject",
-            "rag_rerank": "rag_rerank",
-            "rag_websearch": "rag_websearch",
+            "rag_inject": "rag_inject",  # score alto → direto
+            "rag_rerank": "rag_rerank",  # score médio → rerank
+            "search": "search",  # score baixo → search real (rag_pending=True)
         },
     )
-    builder.add_edge("rag_rerank", "rag_search_audit")
-    builder.add_edge("rag_websearch", "rag_search_audit")
-    builder.add_edge("rag_search_audit", "rag_inject")
+    builder.add_edge("rag_rerank", "rag_inject")
     builder.add_edge("rag_inject", "orchestrator")
 
     # search → search_tools → process_retrieval → search (loop)
@@ -235,7 +232,13 @@ def build_graph(
     )
     builder.add_edge("search_tools", "process_retrieval")
     builder.add_edge("process_retrieval", "search")
-    builder.add_edge("search_finalize", "orchestrator")
+    # search_finalize → orchestrator (caminho normal)
+    #                 → rag_inject   (quando rag_pending=True — search foi invocado pelo RAG)
+    builder.add_conditional_edges(
+        "search_finalize",
+        lambda s: "rag_inject" if s.get("rag_pending") else "orchestrator",
+        {"rag_inject": "rag_inject", "orchestrator": "orchestrator"},
+    )
 
     # coder: tem tool_calls → hitl_check (HITL gate) → coder_tools → coder
     # Sem tool_calls → coder_finalize → orchestrator (síntese estruturada)

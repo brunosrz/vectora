@@ -517,9 +517,13 @@ async def rag_expand_query(state: State) -> dict:
 
 
 def rag_decide(state: State) -> str:
-    """Nó 4: Decide o próximo passo com base na qualidade dos resultados.
+    """Decide o próximo passo com base na qualidade dos resultados.
 
     Retorna o nome do próximo nó (usado como valor em add_conditional_edges).
+
+    score ≥ 0.7 → rag_inject  (alta confiança — injeta direto)
+    score ≥ 0.4 → rag_rerank  (média confiança — rerank antes de injetar)
+    score < 0.4 → search      (baixa confiança — delega para o search real com rag_pending=True)
     """
     docs = state.get("rag_docs") or []
     score = _best_score(docs)
@@ -531,8 +535,8 @@ def rag_decide(state: State) -> str:
         logger.debug("rag_decide: score=%.3f → rag_rerank", score)
         return "rag_rerank"
 
-    logger.debug("rag_decide: score=%.3f → rag_websearch", score)
-    return "rag_websearch"
+    logger.debug("rag_decide: score=%.3f → search (rag_pending)", score)
+    return "search"
 
 
 async def rag_rerank(state: State) -> dict:
@@ -919,7 +923,14 @@ def build_rag_subgraph():  # type: ignore[return]  # noqa: ANN201
 
 # Wrapper síncrono para o nó decide (LangGraph exige que nós retornem dict)
 async def _rag_decide_node(state: State) -> dict:
-    """Nó de decisão — não altera estado, apenas serve de pivot para conditional_edges."""
+    """Nó de decisão — seta rag_pending quando score é baixo (roteamento para search)."""
+    docs = state.get("rag_docs") or []
+    score = _best_score(docs)
+    # Quando score < _SCORE_LOW, _route_after_decide retorna "search".
+    # Precisamos marcar rag_pending=True para que search_finalize saiba
+    # que deve retornar para rag_inject em vez do orchestrator.
+    if score < _SCORE_LOW:
+        return {"rag_pending": True}
     return {}
 
 
