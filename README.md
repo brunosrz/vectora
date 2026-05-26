@@ -80,9 +80,9 @@ graph TD;
 	rag_subgraph:rag_search_audit --> rag_subgraph:rag_inject;
 	rag_subgraph:rag_websearch --> rag_subgraph:rag_search_audit;
 	end
-	classDef default fill:#f2f0ff,line-height:1.2
+	classDef default fill:#f2f0ff,color:#1a1a1a,line-height:1.2
 	classDef first fill-opacity:0
-	classDef last fill:#bfb6fc
+	classDef last fill:#7c3aed,color:#ffffff,stroke:#7c3aed
 ```
 
 | Agent            | Responsibility                                                                       | Tools                                                                          |
