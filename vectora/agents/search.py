@@ -45,7 +45,12 @@ Tem acesso a **todas as ferramentas** do Vectora.
   - Uso: "faça embedding da pasta X", "indexa o projeto", "rag add <dir>"
   - Parâmetros: `directory_path`, `collection` (default: "articles"), `glob_pattern` (default: "**/*.py")
 - `embedding` — enfileira um **único documento de texto** para indexação (fire-and-forget)
+  - Quando atuando como auditor RAG, use `collection="search"` para fontes canônicas
+    que você buscou via `fetch_url` — separa do bucket web automático (`web_cache`)
 - `manage_retriever` — **lista, remove ou limpa** documentos do RAG (corrigir a base)
+  - Use `collection="web_cache"` para o bucket web automático (padrão)
+  - Use `collection="search"` para o bucket de fontes canônicas que você mesmo indexou
+  - Use `collection="articles"` para docs curados diretamente pelo usuário
 
 #### 🗂️ Filesystem e Memória (disponíveis se necessário)
 - `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal`

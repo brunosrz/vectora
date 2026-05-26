@@ -222,6 +222,12 @@ class Settings(BaseSettings):
     Separada do bucket curado para audit, observabilidade e purge cirúrgico —
     web é a única superfície de contaminação do RAG."""
 
+    rag_collection_search: str = "search"
+    """Coleção LanceDB para conteúdo curado pelo Search Agent.
+    Conteúdo indexado pelo search agent após auditoria do RAG — maior confiança
+    que web_cache, menor que articles (curado pelo usuário diretamente).
+    Ex: fonte canônica fornecida pelo usuário durante uma correção de RAG."""
+
     web_curation_enabled: bool = True
     """Liga o gate de curadoria (reranker + LLM judge) antes de persistir
     resultados web. Se False, volta ao comportamento legado (indexa tudo)."""

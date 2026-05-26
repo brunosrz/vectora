@@ -627,6 +627,172 @@ async def rag_websearch(state: State) -> dict:
     }
 
 
+_AUDIT_TOOLS = None
+
+
+def _get_audit_tools() -> list:
+    """Ferramentas disponíveis para o auditor RAG (subconjunto de ALL_TOOLS)."""
+    global _AUDIT_TOOLS
+    if _AUDIT_TOOLS is None:
+        from vectora.nodes.tools import ALL_TOOLS
+
+        _audit_names = frozenset(
+            {
+                "manage_retriever",
+                "fetch_url",
+                "embedding",
+                "web_search",
+                "vector_search",
+            }
+        )
+        _AUDIT_TOOLS = [t for t in ALL_TOOLS if t.name in _audit_names]
+        logger.debug("audit tools: %s", [t.name for t in _AUDIT_TOOLS])
+    return _AUDIT_TOOLS
+
+
+_audit_llm = None
+
+
+def _get_audit_llm():
+    """LLM singleton do auditor RAG, com ferramentas de auditoria."""
+    global _audit_llm
+    if _audit_llm is None:
+        from vectora.services.utils import load_llm
+
+        _audit_llm = load_llm().bind_tools(_get_audit_tools())  # type: ignore[attr-defined]
+        logger.debug("audit LLM inicializado")
+    return _audit_llm
+
+
+async def rag_search_audit(state: State) -> dict:
+    """Nó de auditoria pós-rerank: Search Agent valida e corrige os docs recuperados.
+
+    Roda após `rag_rerank` (score médio) e após `rag_websearch` (score baixo) —
+    nos dois caminhos onde há maior chance de conteúdo errado ou homônimo.
+
+    Fluxo interno (mini agent loop, máx 3 iterações):
+      audit_llm → [tool_calls?] → ToolNode → audit_llm → ... → done
+
+    Ferramentas disponíveis para o auditor:
+    - `manage_retriever action="delete"` — remove fonte errada do bucket
+    - `manage_retriever action="list"`  — inspeciona o que está indexado
+    - `fetch_url`    — busca fonte canônica fornecida pelo usuário
+    - `embedding`    — indexa conteúdo correto no bucket `search`
+    - `web_search`   — busca adicional quando necessário
+    - `vector_search` — verifica o que já está no RAG
+
+    Conteúdo novo vai para `settings.rag_collection_search` ("search") —
+    separado de `articles` (usuário) e `web_cache` (web automático).
+
+    Não re-executa o pipeline RAG completo. Conteúdo indexado agora aparece
+    na próxima query. O valor imediato é a limpeza de entradas erradas.
+    """
+    import asyncio
+
+    from langchain_core.messages import (
+        AIMessage,
+        HumanMessage,
+        SystemMessage,
+        ToolMessage,
+    )
+    from langgraph.prebuilt.tool_node import ToolNode
+
+    docs = state.get("rag_docs") or []
+    query = state.get("rag_query") or _extract_query(state)
+
+    if not query or not docs:
+        return {}
+
+    # Monta sumário dos docs recuperados para o auditor avaliar
+    doc_summary_lines = []
+    for i, doc in enumerate(docs[:5], 1):
+        meta = doc.get("metadata") or {}
+        source = meta.get("source", "")
+        score = doc.get("relevance_score")
+        preview = (doc.get("page_content") or "")[:200].replace("\n", " ")
+        score_str = f" (score={score:.3f})" if score is not None else ""
+        doc_summary_lines.append(f"[{i}]{score_str} {source}\n  {preview}")
+    doc_summary = "\n".join(doc_summary_lines)
+
+    # Extrai mensagens recentes do usuário para detectar URLs canônicas fornecidas
+    recent_human = ""
+    for msg in reversed(state.get("messages", [])[-6:]):
+        if isinstance(msg, HumanMessage):
+            recent_human = str(msg.content)[:500]
+            break
+
+    audit_system = f"""Você é o **Search Agent** do Vectora no papel de auditor do RAG.
+
+O pipeline RAG acabou de recuperar e reranquear documentos para a query abaixo.
+Sua tarefa é validar se esses documentos são genuinamente relevantes.
+
+**Ações disponíveis:**
+1. Se um doc é claramente de projeto errado ou homônimo → `manage_retriever action="delete"` com o source.
+2. Se o usuário forneceu uma URL canônica recentemente → `fetch_url` + `embedding` no bucket `{settings.rag_collection_search}`.
+3. Se os docs parecem corretos → responda "OK" sem chamar tools.
+
+**Regras:**
+- Não chame `vector_search` para re-buscar — o pipeline já fez isso.
+- Conteúdo indexado agora aparece em queries futuras, não nesta.
+- Seja cirúrgico: delete apenas o que é **claramente** errado.
+- Máximo 2 ações de tool por auditoria.
+
+**Query:** {query}
+**Mensagem recente do usuário:** {recent_human or "(nenhuma)"}
+
+**Documentos recuperados ({len(docs)}):**
+{doc_summary}
+"""
+
+    audit_messages = [
+        SystemMessage(content=audit_system),
+        HumanMessage(content=f"Audite os documentos para a query: {query}"),
+    ]
+
+    audit_tools = _get_audit_tools()
+    audit_tool_node = ToolNode(tools=audit_tools)
+    llm = _get_audit_llm()
+
+    # Mini agent loop — máx 3 iterações para evitar loop infinito
+    MAX_AUDIT_STEPS = 3
+    for step in range(MAX_AUDIT_STEPS):
+        try:
+            response = await llm.ainvoke(audit_messages)  # type: ignore[attr-defined]
+            audit_messages.append(response)
+
+            tool_calls = getattr(response, "tool_calls", None) or []
+            if not tool_calls:
+                # Sem tool_calls — auditoria concluída
+                logger.info(
+                    "rag_search_audit: concluída em %d iteração(ões) — %s",
+                    step + 1,
+                    str(getattr(response, "content", ""))[:80],
+                )
+                break
+
+            # Executa as tool_calls via ToolNode
+            tool_input: State = {"messages": audit_messages}  # type: ignore[assignment]
+            tool_output = await asyncio.to_thread(
+                lambda: audit_tool_node.invoke(tool_input)
+            )
+            tool_msgs = tool_output.get("messages", [])
+            # Adiciona apenas as ToolMessages novas (não re-adiciona as anteriores)
+            new_tool_msgs = [m for m in tool_msgs if isinstance(m, ToolMessage)]
+            audit_messages.extend(new_tool_msgs)
+
+            logger.debug(
+                "rag_search_audit step %d: %d tool_calls executadas",
+                step + 1,
+                len(tool_calls),
+            )
+
+        except Exception:
+            logger.exception("rag_search_audit: falha na iteração %d", step + 1)
+            break
+
+    return {}
+
+
 async def rag_inject(state: State) -> dict:
     """Nó 4: Injeta os documentos RAG como contexto para o call_llm.
 
@@ -698,14 +864,19 @@ async def rag_inject(state: State) -> dict:
 
 
 def build_rag_subgraph():  # type: ignore[return]  # noqa: ANN201
-    """Constrói e compila o subgrafo RAG com C1/C2/C3.
+    """Constrói e compila o subgrafo RAG com C1/C2/C3 + auditoria pós-rerank.
 
     Fluxo:
       START → rag_expand_query (C2) → rag_retrieve (C1+C3) → rag_decide_node
-                → rag_inject (score alto)
-                → rag_rerank → rag_inject (score médio)
-                → rag_websearch → rag_inject (score baixo)
+                → rag_inject                      (score alto  ≥ 0.7 — alta confiança)
+                → rag_rerank → rag_search_audit → rag_inject  (score médio ≥ 0.4)
+                → rag_websearch → rag_search_audit → rag_inject (score baixo < 0.4)
               → END
+
+    `rag_search_audit` (Search Agent) roda após o reranker nos caminhos de
+    menor confiança. Pode chamar manage_retriever/fetch_url/embedding para
+    corrigir a base antes do inject. Score alto vai direto — já tem confiança
+    suficiente para não precisar de auditoria.
 
     Returns:
         CompiledStateGraph pronto para ser usado como nó no grafo principal.
@@ -719,6 +890,7 @@ def build_rag_subgraph():  # type: ignore[return]  # noqa: ANN201
     builder.add_node("rag_decide_node", _rag_decide_node)  # wrapper para nó síncrono
     builder.add_node("rag_rerank", rag_rerank)
     builder.add_node("rag_websearch", rag_websearch)
+    builder.add_node("rag_search_audit", rag_search_audit)  # Search Agent pós-rerank
     builder.add_node("rag_inject", rag_inject)
 
     builder.add_edge(START, "rag_expand_query")
@@ -730,14 +902,16 @@ def build_rag_subgraph():  # type: ignore[return]  # noqa: ANN201
         "rag_decide_node",
         _route_after_decide,
         {
-            "rag_inject": "rag_inject",
-            "rag_rerank": "rag_rerank",
-            "rag_websearch": "rag_websearch",
+            "rag_inject": "rag_inject",  # score alto → injeta direto
+            "rag_rerank": "rag_rerank",  # score médio → rerank → audit
+            "rag_websearch": "rag_websearch",  # score baixo → web → audit
         },
     )
 
-    builder.add_edge("rag_rerank", "rag_inject")
-    builder.add_edge("rag_websearch", "rag_inject")
+    # Ambos os caminhos de menor confiança passam pelo Search Agent auditor
+    builder.add_edge("rag_rerank", "rag_search_audit")
+    builder.add_edge("rag_websearch", "rag_search_audit")
+    builder.add_edge("rag_search_audit", "rag_inject")
     builder.add_edge("rag_inject", END)
 
     return builder.compile()
