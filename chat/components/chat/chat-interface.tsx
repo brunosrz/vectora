@@ -23,11 +23,9 @@ import { getHistory } from "@/lib/api/vectora-client";
 const readRun = async (_runId: string) => null;
 const shareRun = async (_runId: string): Promise<string> => "";
 import {
-  IMAGE_UNSUPPORTED_MODEL_MESSAGE,
   INPUT_TOO_LONG_MESSAGE,
   MAX_INPUT_CHARS,
 } from "@/lib/constants/features";
-import { MODELS } from "@/lib/config/deployment-config";
 
 // Enhanced scrollbar styles with smooth transitions
 const scrollbarStyles = `
@@ -126,7 +124,7 @@ export function ChatInterface({
     setUploadError,
   } = useFileUpload({
     getInputLength: () => inputLengthRef.current,
-    disableImageUploads: agentConfig?.model === MODELS["glm-5"].id,
+    disableImageUploads: false,
   });
   const attachedTextLength = attachedFiles.reduce((total, file) => {
     if (file.mimeType?.startsWith("image/")) return total;
@@ -601,14 +599,6 @@ export function ChatInterface({
     }
 
     if (!userId) {
-      return;
-    }
-
-    if (
-      agentConfig?.model === MODELS["glm-5"].id &&
-      attachedFiles.some((file) => file.mimeType?.startsWith("image/"))
-    ) {
-      setUploadError(IMAGE_UNSUPPORTED_MODEL_MESSAGE);
       return;
     }
 
