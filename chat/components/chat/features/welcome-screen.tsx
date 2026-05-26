@@ -114,13 +114,12 @@ export function WelcomeScreen({
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mb-6 flex justify-center">
-            <Image
-              src="/assets/images/LangChain_Symbol_LightBlue.svg"
-              alt="LangChain"
-              width={68}
-              height={68}
-              priority
-            />
+            <span
+              className="text-5xl sm:text-6xl font-bold tracking-tight text-primary"
+              style={{ fontFamily: "JetBrains Mono, monospace" }}
+            >
+              Vectora
+            </span>
           </div>
           <h2
             className="text-2xl sm:text-4xl font-semibold text-white mb-2"
@@ -209,9 +208,7 @@ export function WelcomeScreen({
                 onPaste={onPaste}
                 maxLength={MAX_INPUT_CHARS}
                 placeholder={
-                  userId
-                    ? "Ask me anything about LangChain..."
-                    : "Initializing..."
+                  userId ? "O que posso fazer por você?" : "Initializing..."
                 }
                 className="relative z-10 min-h-[48px] max-h-[240px] resize-none bg-transparent border-0 w-full px-3 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200 break-words custom-scrollbar"
                 disabled={isLoading || !userId}

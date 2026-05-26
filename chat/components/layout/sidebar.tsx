@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Thread } from "@/lib/hooks/threads";
-import Image from "next/image";
 
 // Add custom scrollbar styles - overlay scrollbar that doesn't affect layout
 const scrollbarStyles = `
@@ -22,7 +21,7 @@ const scrollbarStyles = `
     scrollbar-color: transparent transparent;
   }
   .custom-scrollbar:hover {
-    scrollbar-color: var(--langchain-blue, #7FC8FF) transparent;
+    scrollbar-color: var(--sidebar-primary, #7FC8FF) transparent;
   }
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
@@ -35,10 +34,10 @@ const scrollbarStyles = `
     border-radius: 3px;
   }
   .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: var(--langchain-blue, #7FC8FF);
+    background: var(--sidebar-primary, #7FC8FF);
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--langchain-blue, #99D3FF);
+    background: var(--sidebar-primary, #99D3FF);
   }
 `;
 
@@ -301,51 +300,7 @@ export const Sidebar = memo(function Sidebar({
 
         <div className="bg-gradient-to-t from-sidebar-accent/10 via-sidebar-accent/5 to-transparent pt-2 pb-0 space-y-0">
           <a
-            href="https://smith.langchain.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground transition-all duration-300 ease-out hover:bg-sidebar-accent/10 group"
-          >
-            <div className="h-6 w-6 flex items-center justify-center shrink-0">
-              <Image
-                src="/assets/images/Assistant Icon.png"
-                alt="LangSmith"
-                width={24}
-                height={24}
-                className="object-contain"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium leading-tight transition-colors duration-300 group-hover:text-sidebar-primary/90">
-                LangSmith
-              </div>
-              <div className="text-[10px] text-muted-foreground leading-tight transition-colors duration-300 group-hover:text-muted-foreground/80">
-                Monitoring & Tracing
-              </div>
-            </div>
-          </a>
-
-          <a
-            href="https://forum.langchain.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground transition-all duration-300 ease-out hover:bg-sidebar-accent/10 group"
-          >
-            <div className="h-6 w-6 rounded-full bg-sidebar-primary/20 flex items-center justify-center shadow-sm shrink-0">
-              <MessageSquare className="w-3 h-3 text-sidebar-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium leading-tight transition-colors duration-300 group-hover:text-sidebar-primary/90">
-                Community Forum
-              </div>
-              <div className="text-[10px] text-muted-foreground leading-tight transition-colors duration-300 group-hover:text-muted-foreground/80">
-                Join the Discussion
-              </div>
-            </div>
-          </a>
-
-          <a
-            href="https://docs.langchain.com/oss/python/langchain/overview"
+            href="https://github.com/brunosrz/vectora"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground transition-all duration-300 ease-out hover:bg-sidebar-accent/10 group"
@@ -355,10 +310,29 @@ export const Sidebar = memo(function Sidebar({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium leading-tight transition-colors duration-300 group-hover:text-sidebar-primary/90">
-                Documentation
+                Documentação
               </div>
               <div className="text-[10px] text-muted-foreground leading-tight transition-colors duration-300 group-hover:text-muted-foreground/80">
-                LangChain Docs
+                GitHub · Vectora
+              </div>
+            </div>
+          </a>
+
+          <a
+            href="https://github.com/brunosrz/vectora/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground transition-all duration-300 ease-out hover:bg-sidebar-accent/10 group"
+          >
+            <div className="h-6 w-6 rounded-full bg-sidebar-primary/20 flex items-center justify-center shadow-sm shrink-0">
+              <MessageSquare className="w-3 h-3 text-sidebar-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium leading-tight transition-colors duration-300 group-hover:text-sidebar-primary/90">
+                Feedback
+              </div>
+              <div className="text-[10px] text-muted-foreground leading-tight transition-colors duration-300 group-hover:text-muted-foreground/80">
+                Reportar problema
               </div>
             </div>
           </a>

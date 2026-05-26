@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, Settings } from "lucide-react";
-import Image from "next/image";
+
 import { AgentSettings, type AgentConfig } from "./agent-settings";
 
 interface HeaderProps {
@@ -30,16 +30,13 @@ export function Header({
   return (
     <header className="border-b border-border/60 bg-background h-16 flex items-center">
       <div className="flex items-center justify-between w-full px-4 sm:px-6">
-        <div className="flex items-center">
-          <Image
-            src="/assets/images/ChatLangChain-logo.svg"
-            alt="Chat LangChain"
-            width={200}
-            height={32}
-            className="object-contain"
-            style={{ width: "200px", height: "32px" }}
-            priority
-          />
+        <div className="flex items-center gap-2">
+          <span
+            className="text-xl font-semibold tracking-tight text-foreground"
+            style={{ fontFamily: "JetBrains Mono, monospace" }}
+          >
+            Vectora
+          </span>
         </div>
 
         <div className="flex items-center gap-3">

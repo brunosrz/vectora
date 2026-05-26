@@ -16,8 +16,8 @@ const inconsolata = Inconsolata({
 });
 
 export const metadata: Metadata = {
-  title: "Chat LangChain",
-  description: "AI-powered guide to the LangChain ecosystem",
+  title: "Vectora",
+  description: "Vectora — seu agente de IA local com RAG nativo",
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
