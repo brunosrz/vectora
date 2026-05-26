@@ -63,7 +63,7 @@ graph TD;
 	search -.-> search_tools;
 	search_finalize --> orchestrator;
 	search_tools --> process_retrieval;
-	subgraph rag_subgraph
+	subgraph rag_subgraph[" "]
 	rag_subgraph:rag_expand_query(rag_expand_query)
 	rag_subgraph:rag_retrieve(rag_retrieve)
 	rag_subgraph:rag_decide_node(rag_decide_node)
@@ -80,8 +80,9 @@ graph TD;
 	rag_subgraph:rag_search_audit --> rag_subgraph:rag_inject;
 	rag_subgraph:rag_websearch --> rag_subgraph:rag_search_audit;
 	end
+	style rag_subgraph fill:none,stroke:#6366f1,stroke-dasharray:5
 	classDef default fill:#f2f0ff,color:#1a1a1a,line-height:1.2
-	classDef first fill-opacity:0
+	classDef first fill:#7c3aed,color:#ffffff,stroke:#7c3aed
 	classDef last fill:#7c3aed,color:#ffffff,stroke:#7c3aed
 ```
 
