@@ -25,13 +25,64 @@ At its core, Vectora solves the **knowledge gap problem**: LLMs don't know your 
 
 Every message enters through a single entry point and is routed by the **Orchestrator** to the right specialized agent:
 
-```
-START
-  └─► orchestrator (responds inline OR delegates with task_query)
-        ├─► [respond]      → END
-        ├─► [search]       → search → search_tools → process_retrieval ↻ → END
-        ├─► [coder]        → coder → coder_tools ↻ → END
-        └─► [rag_subgraph] → rag_subgraph → orchestrator (synthesis) → END
+```mermaid
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	orchestrator(orchestrator)
+	search(search)
+	search_tools(search_tools)
+	search_finalize(search_finalize)
+	coder(coder)
+	hitl_check(hitl_check)
+	coder_tools(coder_tools)
+	coder_finalize(coder_finalize)
+	process_retrieval(process_retrieval)
+	parallel_dispatch(parallel_dispatch)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> orchestrator;
+	coder -.-> coder_finalize;
+	coder -.-> hitl_check;
+	coder_finalize --> orchestrator;
+	coder_tools --> coder;
+	hitl_check -.-> coder;
+	hitl_check -.-> coder_tools;
+	orchestrator -.-> __end__;
+	orchestrator -.-> coder;
+	orchestrator -.-> parallel_dispatch;
+	orchestrator -.-> rag_subgraph:rag_expand_query;
+	orchestrator -.-> search;
+	parallel_dispatch --> orchestrator;
+	process_retrieval --> search;
+	rag_subgraph:rag_inject --> orchestrator;
+	search -.-> search_finalize;
+	search -.-> search_tools;
+	search_finalize --> orchestrator;
+	search_tools --> process_retrieval;
+	subgraph rag_subgraph
+	rag_subgraph:rag_expand_query(rag_expand_query)
+	rag_subgraph:rag_retrieve(rag_retrieve)
+	rag_subgraph:rag_decide_node(rag_decide_node)
+	rag_subgraph:rag_rerank(rag_rerank)
+	rag_subgraph:rag_websearch(rag_websearch)
+	rag_subgraph:rag_search_audit(rag_search_audit)
+	rag_subgraph:rag_inject(rag_inject)
+	rag_subgraph:rag_decide_node -.-> rag_subgraph:rag_inject;
+	rag_subgraph:rag_decide_node -.-> rag_subgraph:rag_rerank;
+	rag_subgraph:rag_decide_node -.-> rag_subgraph:rag_websearch;
+	rag_subgraph:rag_expand_query --> rag_subgraph:rag_retrieve;
+	rag_subgraph:rag_rerank --> rag_subgraph:rag_search_audit;
+	rag_subgraph:rag_retrieve --> rag_subgraph:rag_decide_node;
+	rag_subgraph:rag_search_audit --> rag_subgraph:rag_inject;
+	rag_subgraph:rag_websearch --> rag_subgraph:rag_search_audit;
+	end
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
 ```
 
 | Agent            | Responsibility                                                                       | Tools                                                                          |
@@ -45,13 +96,13 @@ START
 
 When the orchestrator routes to `rag`, a dedicated subgraph runs the full retrieval pipeline before synthesis:
 
-```
-rag_retrieve (vector_search)
-  └─► rag_decide (score threshold)
-        ├─► rag_inject     (score ≥ 0.7 — high confidence, inject directly)
-        ├─► rag_rerank     (score 0.4–0.7 — rerank with Cohere before inject)
-        └─► rag_websearch  (score < 0.4 — fall back to web + auto-embed results)
-```
+| Score   | Path                                                           |
+| ------- | -------------------------------------------------------------- |
+| ≥ 0.7   | `rag_inject` directly — high confidence, no further processing |
+| 0.4–0.7 | `rag_rerank` → `rag_search_audit` → `rag_inject`               |
+| < 0.4   | `rag_websearch` → `rag_search_audit` → `rag_inject`            |
+
+**`rag_search_audit`** is a mini Search Agent loop (max 3 iterations) that runs after the reranker. It can delete incorrect entries (`manage_retriever`), fetch canonical sources (`fetch_url`), and index them into the dedicated `search` bucket — keeping the knowledge base accurate without user intervention.
 
 Results are injected as a `SystemMessage` into context. The Orchestrator then synthesizes the final answer inline, without a separate agent hop.
 
