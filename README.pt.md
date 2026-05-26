@@ -43,6 +43,13 @@ graph TD;
 	coder_finalize(coder_finalize)
 	process_retrieval(process_retrieval)
 	parallel_dispatch(parallel_dispatch)
+	rag_expand_query(rag_expand_query)
+	rag_retrieve(rag_retrieve)
+	rag_decide_node(rag_decide_node)
+	rag_rerank(rag_rerank)
+	rag_websearch(rag_websearch)
+	rag_search_audit(rag_search_audit)
+	rag_inject(rag_inject)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> orchestrator;
 	coder -.-> coder_finalize;
@@ -54,33 +61,23 @@ graph TD;
 	orchestrator -.-> __end__;
 	orchestrator -.-> coder;
 	orchestrator -.-> parallel_dispatch;
-	orchestrator -.-> rag_subgraph:rag_expand_query;
+	orchestrator -.-> rag_expand_query;
 	orchestrator -.-> search;
 	parallel_dispatch --> orchestrator;
 	process_retrieval --> search;
-	rag_subgraph:rag_inject --> orchestrator;
+	rag_decide_node -.-> rag_inject;
+	rag_decide_node -.-> rag_rerank;
+	rag_decide_node -.-> rag_websearch;
+	rag_expand_query --> rag_retrieve;
+	rag_inject --> orchestrator;
+	rag_rerank --> rag_search_audit;
+	rag_retrieve --> rag_decide_node;
+	rag_search_audit --> rag_inject;
+	rag_websearch --> rag_search_audit;
 	search -.-> search_finalize;
 	search -.-> search_tools;
 	search_finalize --> orchestrator;
 	search_tools --> process_retrieval;
-	subgraph rag_subgraph[" "]
-	rag_subgraph:rag_expand_query(rag_expand_query)
-	rag_subgraph:rag_retrieve(rag_retrieve)
-	rag_subgraph:rag_decide_node(rag_decide_node)
-	rag_subgraph:rag_rerank(rag_rerank)
-	rag_subgraph:rag_websearch(rag_websearch)
-	rag_subgraph:rag_search_audit(rag_search_audit)
-	rag_subgraph:rag_inject(rag_inject)
-	rag_subgraph:rag_decide_node -.-> rag_subgraph:rag_inject;
-	rag_subgraph:rag_decide_node -.-> rag_subgraph:rag_rerank;
-	rag_subgraph:rag_decide_node -.-> rag_subgraph:rag_websearch;
-	rag_subgraph:rag_expand_query --> rag_subgraph:rag_retrieve;
-	rag_subgraph:rag_rerank --> rag_subgraph:rag_search_audit;
-	rag_subgraph:rag_retrieve --> rag_subgraph:rag_decide_node;
-	rag_subgraph:rag_search_audit --> rag_subgraph:rag_inject;
-	rag_subgraph:rag_websearch --> rag_subgraph:rag_search_audit;
-	end
-	style rag_subgraph fill:none,stroke:#6366f1,stroke-dasharray:5
 	classDef default fill:#f2f0ff,color:#1a1a1a,line-height:1.2
 	classDef first fill:#7c3aed,color:#ffffff,stroke:#7c3aed
 	classDef last fill:#7c3aed,color:#ffffff,stroke:#7c3aed
