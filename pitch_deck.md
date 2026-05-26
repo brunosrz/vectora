@@ -64,6 +64,27 @@ busca com relevância semântica — **eles delegam para o Vectora**.
 **Nossos concorrentes viram usuários do Vectora.**  
 Não substituímos o fluxo de trabalho existente. Nós o estendemos.
 
+### Uma Comparação Honesta: O Perssua
+
+Quando falamos de IAs brasileiras no desktop, o [Perssua](https://perssua.com) inevitavelmente aparece — e merece ser mencionado com respeito.
+
+O Perssua é um assistente de reuniões desenvolvido por uma única pessoa (Lucas Montano, ex-líder de desenvolvimento Android na Disney+). Ele diferencia falantes numa reunião, transcreve em tempo real, gera resumos, traduz ao vivo, tem modo stealth (visível só para você, mesmo que sua tela esteja sendo compartilhada), suporte a chat por texto, voz e captura de tela, e um gerenciador de LLMs locais via llama.cpp com otimização TurboQuant. É um produto impressionante.
+
+**Mas Vectora e Perssua não competem.** São propostas completamente diferentes:
+
+|                    | Vectora                                         | Perssua                                    |
+| ------------------ | ----------------------------------------------- | ------------------------------------------ |
+| Para quem          | Desenvolvedores e times técnicos                | Profissionais em reuniões                  |
+| Foco central       | Agente de desenvolvimento com RAG               | Assistente de reuniões com transcrição     |
+| Forma de acesso    | CLI, chat web, futuramente desktop              | App desktop exclusivo                      |
+| RAG                | Pilar central — indexa código e docs do projeto | Presente mas não divulgado publicamente    |
+| Áudio / voz        | ❌ não implementado (roadmap)                   | ✅ diferenciação por falante em tempo real |
+| Execução de código | ✅ terminal, edição de arquivos                 | ❌ não é o foco                            |
+| Modo MCP           | ✅ parceiro de outros agentes                   | ❌                                         |
+| Self-hosted        | ✅ roda na sua infra                            | ❌ app desktop local                       |
+
+Rivalizamos muito mais com Claude Code, Codex, OpenCode e Hermes do que com o Perssua. São iniciativas complementares — um dev pode usar o Perssua em reuniões e o Vectora no seu terminal sem nenhum conflito.
+
 ## Por Que Agora
 
 O mercado de agentes de IA para desenvolvimento explodiu — mas todas as soluções, cloud ou self-hosted, resolvem o mesmo problema: escrever e executar código com um LLM bom. Nenhuma resolve o problema adjacente e mais difícil: **fazer o agente conhecer de verdade o seu projeto.**
@@ -126,11 +147,10 @@ porque ele leu o projeto antes de tocar nele.
 
 ── RECUPERAÇÃO (Vectora RAG Agent) ───────────────────────────────────────
           ↓
-  [ Expand Query ]         ← LLM gera N reformulações da query (multi-query C2)
+  [ Expand Query ]         ← LLM gera N reformulações da query (multi-query)
           ↓
    [ Vector Search ]       ← Dense (Cohere embeddings) + BM25 esparso,
-                              fundidos via Reciprocal Rank Fusion (C1)
-                              + HyDE se score inicial baixo (C3)
+                              fundidos via Reciprocal Rank Fusion
           ↓
   [ Decisão de qualidade ] ← avalia score dos resultados
      ├── score alto  → injeta direto no contexto
@@ -143,7 +163,7 @@ porque ele leu o projeto antes de tocar nele.
        [ LLM ]             ← responde com base no contexto auditado
 ```
 
-O Vectora RAG Agent é o subgrafo inteiro — da expansão da query até a injeção do contexto. Ele não é um wrapper em volta de um modelo: é um pipeline de recuperação com múltiplos estágios de qualidade. O score decide o caminho; nenhum resultado chega ao LLM sem passar pelo filtro de relevância. Quando a busca local falha, a web é consultada e o conteúdo passa por um gate de curadoria (reranker + LLM judge) antes de ser persistido — separando o que é lixo do que é conhecimento real.
+O Vectora RAG Agent é o pipeline inteiro — da expansão da query até a injeção do contexto. Ele não é um wrapper em volta de um modelo: é um pipeline de recuperação com múltiplos estágios de qualidade. O score decide o caminho; nenhum resultado chega ao LLM sem passar pelo filtro de relevância. Quando a busca local falha, a web é consultada e o conteúdo passa por um gate de curadoria (reranker + LLM judge) antes de ser persistido — separando o que é lixo do que é conhecimento real.
 
 **Na prática:** você aponta o Vectora para a documentação ou o código-base do seu projeto.  
 Ele indexa tudo. A partir daí, ele responde com base no que está lá —  
@@ -153,16 +173,102 @@ sem retreinamento, sem fine-tuning.
 
 Além dos agentes, o Vectora disponibiliza conjuntos de ferramentas especializadas:
 
-| Grupo           | O que faz                                                      |
-| --------------- | -------------------------------------------------------------- |
-| **File System** | Leitura, escrita, edição e navegação de arquivos e pastas      |
-| **Web**         | Busca na internet, extração de conteúdo, validação de links    |
-| **RAG**         | Embedding, busca vetorial, reranking, ingestão de documentos   |
-| **Workspace**   | Contexto do projeto ativo, manifests, isolamento por workspace |
-| **Memory**      | Memória episódica persistente entre sessões                    |
-| **MCP**         | Delegação e recebimento de tarefas via protocolo MCP           |
+| Grupo             | O que faz                                                      | Status                |
+| ----------------- | -------------------------------------------------------------- | --------------------- |
+| **File System**   | Leitura, escrita, edição e navegação de arquivos e pastas      | ✅ Disponível         |
+| **Web**           | Busca na internet, extração de conteúdo, validação de links    | ✅ Disponível         |
+| **RAG**           | Embedding, busca vetorial, reranking, ingestão de documentos   | ✅ Disponível         |
+| **Workspace**     | Contexto do projeto ativo, manifests, isolamento por workspace | 🔄 Em desenvolvimento |
+| **Memory**        | Memória episódica persistente entre sessões                    | ✅ Disponível         |
+| **MCP**           | Delegação e recebimento de tarefas via protocolo MCP           | ✅ Disponível         |
+| **Git**           | Commits, branches, pull requests, code review assistido        | 📋 Roadmap            |
+| **Office**        | Documentos Word, planilhas Excel, apresentações PowerPoint     | 📋 Roadmap            |
+| **Database**      | Consultas SQL, migrações, análise exploratória                 | 📋 Roadmap            |
+| **Communication** | Slack, e-mail, tickets (Linear, Jira, GitHub Issues)           | 📋 Roadmap            |
 
-**Em desenvolvimento:** Git, Office (documentos, planilhas, apresentações) e mais.
+## Como Usar o Vectora
+
+O Vectora está disponível hoje em **dois modos de acesso**. Um terceiro está em desenvolvimento.
+
+### CLI / TUI — disponível agora
+
+```bash
+uv tool install vectora-agent
+vectora chat
+```
+
+Interface de texto no terminal — Rich TUI com comandos `/rag`, `/workspaces`, `/traces`, `/memory`. Ideal para quem já vive no terminal.
+
+### Chat Web — disponível agora
+
+```bash
+vectora server chat    # sobe o agent + interface web na porta 8080
+```
+
+Acesse pelo browser em qualquer dispositivo na rede. Renderização de tool calls, diff de arquivos, progresso de ingestão — tudo no browser sem instalar nada nos clientes. Para times em VPS.
+
+### App Desktop — roadmap v0.5
+
+App nativo (`.exe` / `.app` / `.deb` / AppImage) construído em **Flet** (Python sobre Flutter).
+
+Dois modos no mesmo binário:
+
+- **Embedded** — agent roda in-process, SQLite + LanceDB. Instala e usa offline.
+- **Connected** — conecta a um `vectora server` remoto via ConnectRPC. Ideal para times.
+
+Notificações nativas, system tray, drag-and-drop de arquivos para indexação, visualização de tool calls igual ao chat web. E porque usa Flutter como target: o mesmo código-fonte gera `.apk` e `.ipa` para Android e iOS (connected mode apenas — mobile exige server remoto).
+
+**Não há áudio/voz no Vectora** — nem TTS nem STT estão no roadmap atual. Para essas necessidades, o Perssua é a referência brasileira correta.
+
+## Stack Tecnológica
+
+O Vectora tem dois perfis de deploy — mesma interface, infraestrutura diferente.
+
+### Stack Econômica (default — zero configuração extra)
+
+Para uso pessoal, solo dev ou times pequenos. Roda em qualquer máquina sem serviços externos de infra.
+
+| Camada                            | Tecnologia                   |
+| --------------------------------- | ---------------------------- |
+| Checkpoints / histórico de sessão | SQLite (`AsyncSqliteSaver`)  |
+| Vector store (RAG)                | LanceDB (arquivo local)      |
+| Cache                             | sem cache (direto nas APIs)  |
+| Fila de embedding                 | SQLite (embutido no Vectora) |
+| Requisitos mínimos                | 2 núcleos / 4 GB RAM         |
+
+### Stack Alto Desempenho (opt-in — roadmap v0.4)
+
+Para times maiores, VPS compartilhada ou quando a carga justifica serviços dedicados. Ativado via config (`CHECKPOINT_BACKEND`, `VECTOR_BACKEND`, `CACHE_BACKEND`) — zero breaking change para quem usa a stack econômica.
+
+| Camada                            | Tecnologia                                             |
+| --------------------------------- | ------------------------------------------------------ |
+| Checkpoints / histórico de sessão | **PostgreSQL** (`AsyncPostgresSaver`)                  |
+| Vector store (RAG)                | **Qdrant** (servidor dedicado, sparse vectors nativos) |
+| Cache                             | **Redis** (embedding cache + LLM response cache)       |
+| Fila de embedding                 | PostgreSQL / Redis                                     |
+| Requisitos sugeridos              | 8+ núcleos / 16+ GB RAM + serviços externos            |
+
+**Por que PostgreSQL?** Concurrent writes, connection pool, durabilidade production-grade. SQLite é ótimo para um usuário; com múltiplos usuários simultâneos escrevendo checkpoints, PostgreSQL escala sem atrito.
+
+**Por que Qdrant?** Sparse vectors nativos (BM42), UI web própria, filtros avançados por metadata, e performance superior em coleções grandes. LanceDB é excelente file-based; Qdrant é a escolha quando o volume de indexação cresce além de dezenas de milhares de documentos.
+
+**Por que Redis?** Evitar re-embeddar o mesmo conteúdo (embedding cache por hash) e reutilizar respostas LLM idênticas. Em VPS com múltiplos usuários consultando a mesma base, o ganho em latência e custo de tokens é significativo.
+
+## Comparativo de Interfaces
+
+| Característica       | CLI (TUI)              | Chat Web                | Desktop (roadmap)                             |
+| -------------------- | ---------------------- | ----------------------- | --------------------------------------------- |
+| Status               | ✅ Disponível          | ✅ Disponível           | 📋 Roadmap v0.5                               |
+| Plataforma           | Terminal (qualquer OS) | Qualquer browser        | Win / macOS / Linux + Android/iOS (connected) |
+| Instalação           | `uv tool install`      | Agent rodando + browser | Instalador nativo (.exe / .app / .deb / .apk) |
+| Modo offline         | ✅                     | ✅ (agent local)        | ✅ embedded / ❌ connected                    |
+| Notificações nativas | ❌                     | Toast browser           | ✅ OS nativo                                  |
+| System tray          | ❌                     | ❌                      | ✅                                            |
+| Background mode      | Sessão tmux            | Aba aberta              | ✅ nativo                                     |
+| Drag-and-drop        | ❌                     | Parcial                 | ✅ nativo                                     |
+| Mobile               | ❌                     | Responsivo              | ✅ roadmap (.apk / .ipa — connected only)     |
+| Áudio / voz          | ❌                     | ❌                      | ❌                                            |
+| Auto-update          | `uv tool upgrade`      | Recarregar              | Popup nativo                                  |
 
 ## Vectora para Empresas
 
@@ -201,33 +307,69 @@ Dois modos de integração, um único Vectora:
 
 ## Diferenciais em Resumo
 
-|                                       | Vectora | Claude Code | OpenCode |  Codex  | Hermes  |
-| ------------------------------------- | :-----: | :---------: | :------: | :-----: | :-----: |
-| Self-hosted                           |   ✅    |     ❌      |    ✅    |   ❌    |   ✅    |
-| Base de conhecimento local (RAG)      |   ✅    |     ❌      |    ❌    |   ❌    |   ❌    |
-| Suporte a múltiplos LLMs              |   ✅    |     ❌      |    ✅    | Parcial |   ✅    |
-| Agente RAG dedicado                   |   ✅    |     ❌      |    ❌    |   ❌    |   ❌    |
-| Modo MCP (parceiro de outros agentes) |   ✅    |     ❌      |    ❌    |   ❌    |   ❌    |
-| Multi-agente especializado            |   ✅    |     ❌      |    ❌    | Parcial | Parcial |
-| App web para times (VPS)              |   ✅    |     ❌      |    ❌    |   ❌    |   ❌    |
-| Custo por usuário                     |   ❌    |     ✅      |    ❌    |   ✅    |   ❌    |
-| Open-source (auditável)               |   ✅    |     ❌      |    ✅    |   ❌    |   ✅    |
+|                                       | Vectora | Claude Code | OpenCode |  Codex  | Hermes  |      Perssua       |
+| ------------------------------------- | :-----: | :---------: | :------: | :-----: | :-----: | :----------------: |
+| Self-hosted                           |   ✅    |     ❌      |    ✅    |   ❌    |   ✅    |     ✅ (local)     |
+| Base de conhecimento local (RAG)      |   ✅    |     ❌      |    ❌    |   ❌    |   ❌    |     ✅ (docs)      |
+| Suporte a múltiplos LLMs              |   ✅    |     ❌      |    ✅    | Parcial |   ✅    | ✅ (via llama.cpp) |
+| Agente RAG dedicado                   |   ✅    |     ❌      |    ❌    |   ❌    |   ❌    |         ❌         |
+| Modo MCP (parceiro de outros agentes) |   ✅    |     ❌      |    ❌    |   ❌    |   ❌    |         ❌         |
+| Multi-agente especializado            |   ✅    |     ❌      |    ❌    | Parcial | Parcial |         ❌         |
+| App web para times (VPS)              |   ✅    |     ❌      |    ❌    |   ❌    |   ❌    |         ❌         |
+| App desktop nativo                    | 📋 v0.5 |     ❌      |    ❌    |   ❌    |   ❌    |         ✅         |
+| Áudio / voz                           |   ❌    |     ❌      |    ❌    |   ❌    |   ❌    |         ✅         |
+| Transcrição de reuniões               |   ❌    |     ❌      |    ❌    |   ❌    |   ❌    |         ✅         |
+| Foco em desenvolvimento               |   ✅    |     ✅      |    ✅    |   ✅    |   ✅    |      Parcial       |
+| CLI / terminal                        |   ✅    |     ✅      |    ✅    |   ✅    |   ✅    |         ❌         |
+| Custo por usuário                     |   ❌    |     ✅      |    ❌    |   ✅    |   ❌    |         ✅         |
+| Open-source (auditável)               |   ✅    |     ❌      |    ✅    |   ❌    |   ✅    |         ❌         |
+
+> **Nota sobre o Perssua:** incluímos na tabela para referência, mas não rivaliza com o Vectora. São ferramentas com propósitos completamente distintos — um dev pode usar os dois sem nenhum conflito.
 
 ## Roadmap
 
 O Vectora nasce com foco em desenvolvimento de software — mas a visão é mais ampla.
 
-**Próximos grupos de ferramentas:**
+### v0.1.0 — Estabilidade e Controle
 
-- **Git** — commits, branches, pull requests, code review assistido
-- **Office** — documentos, planilhas, apresentações diretamente no fluxo de trabalho
-- **Database** — consultas, migrações, análise de dados
-- **Communication** — Slack, e-mail, tickets de suporte
+- Human-in-the-loop (HITL): aprovação antes de ações destrutivas (terminal, edição de arquivos)
+- Workspaces por projeto: isolamento de conhecimento RAG por diretório de trabalho
+- Manifests de workspace: o agente sabe o que está indexado e responde direto do manifest quando possível
 
-**Novos agentes especializados** seguirão cada domínio que o Vectora expandir.
+### v0.2.0 — RAG Avançado
 
-A arquitetura foi desenhada para crescer: adicionar um agente novo é adicionar uma especialidade nova.  
-O orquestrador já sabe como delegar. Você só precisa construir quem executa.
+- Hybrid RAG: busca densa (embeddings) + esparsa (BM25) fundidas por Reciprocal Rank Fusion
+- Multi-query retrieval: N reformulações da query para maximizar recall
+- LangGraph Store para memória semântica namespaceada por workspace
+
+### v0.3.0 — Migração para Deep Agents + Novos Domínios
+
+- Migração do grafo para o framework Deep Agents
+- **Git Agent**: commits, branches, PRs, code review
+- **Office Agent**: documentos, planilhas, apresentações
+- **Database Agent**: queries SQL, schema, migrações, análise
+- **Communication Agent**: Slack, e-mail, tickets (via MCP ou integração nativa)
+
+### v0.4.0 — Stack Alto Desempenho (opt-in)
+
+- PostgreSQL como checkpointer (concurrent writes, durabilidade production-grade)
+- Qdrant como vector store (sparse vectors nativos, performance em escala)
+- Redis como cache distribuído (embedding cache + LLM response cache)
+- Servidor multi-tenant com RBAC
+
+### v0.5.0 — App Desktop
+
+- App nativo (Flet / Flutter) para Windows, macOS e Linux
+- Modo embedded: agent in-process, SQLite + LanceDB, funciona offline
+- Modo connected: aponta para `vectora server` remoto (ideal para times)
+- Notificações nativas, system tray, drag-and-drop
+- Roadmap mobile: Android e iOS em connected mode
+
+### Futuro
+
+- ACP Protocol: integração nativa com Zed, JetBrains, VS Code, Neovim
+- A2A Protocol: Vectora como sub-agente de outros agentes via LangSmith
+- Áudio / voz: TTS e STT não estão no roadmap atual — não é o foco do Vectora
 
 ## Contato
 

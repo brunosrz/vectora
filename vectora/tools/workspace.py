@@ -40,7 +40,14 @@ def _resolve_workspace(
     return workspace_registry.get_or_create()
 
 
-@tool(extras={"render_hint": "markdown"})
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "workspace",
+        "destructive": False,
+        "icon": "layout-dashboard",
+    }
+)
 async def workspace_describe(
     workspace_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,
@@ -90,7 +97,14 @@ async def workspace_describe(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@tool(extras={"render_hint": "table"})
+@tool(
+    extras={
+        "render_hint": "table",
+        "category": "workspace",
+        "destructive": False,
+        "icon": "list",
+    }
+)
 async def workspace_list() -> str:
     """Lista todos os workspaces Vectora registrados.
 
@@ -120,7 +134,14 @@ async def workspace_list() -> str:
     return json.dumps({"status": "success", "workspaces": items, "count": len(items)})
 
 
-@tool(extras={"render_hint": "markdown"})
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "workspace",
+        "destructive": False,
+        "icon": "database",
+    }
+)
 async def bucket_summary(
     bucket: str,
     workspace_id: str | None = None,

@@ -61,7 +61,14 @@ async def _embed_for_memory(text: str) -> list[float] | None:
         return None
 
 
-@tool
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "memory",
+        "destructive": False,
+        "icon": "bookmark",
+    }
+)
 async def save_memory(
     key: str,
     content: str,
@@ -127,7 +134,14 @@ async def save_memory(
         return json.dumps({"status": "failed", "error": str(e), "key": key})
 
 
-@tool
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "memory",
+        "destructive": False,
+        "icon": "bookmark-check",
+    }
+)
 async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
     """Recupera memórias persistentes salvas na sessão atual.
 
@@ -200,7 +214,14 @@ async def get_memory(config: RunnableConfig, key: str | None = None) -> str:
         return json.dumps({"status": "failed", "error": str(e)})
 
 
-@tool
+@tool(
+    extras={
+        "render_hint": "search_results",
+        "category": "memory",
+        "destructive": False,
+        "icon": "search-check",
+    }
+)
 async def search_memory(query: str, config: RunnableConfig, limit: int = 5) -> str:
     """Busca semântica em memórias — encontra memórias relevantes por similaridade (C4).
 
@@ -315,7 +336,14 @@ async def search_memory(query: str, config: RunnableConfig, limit: int = 5) -> s
         return json.dumps({"status": "failed", "error": str(e)})
 
 
-@tool
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "memory",
+        "destructive": True,
+        "icon": "bookmark-x",
+    }
+)
 async def delete_memory(key: str, config: RunnableConfig) -> str:
     """Deleta uma memória persistente da sessão atual.
 

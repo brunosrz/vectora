@@ -1,139 +1,157 @@
-# Chat LangChain
+# <img src="../assets/vectora.svg" width="28" height="28"> Vectora Chat
 
-> A simple documentation assistant built with LangGraph.
+Interface web do **Vectora Agent** — construída com Next.js + Hono (TypeScript) e conectada ao agente via ConnectRPC.
 
-[![LangGraph](https://img.shields.io/badge/Built%20with-LangGraph-blue)](https://langchain-ai.github.io/langgraph/)
-[![Python](https://img.shields.io/badge/Python-3.11+-green)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+> **Origem:** fork do [chat-langchain](https://github.com/langchain-ai/chat-langchain) (LangChain AI). O backend Python original (LangGraph Cloud + LangSmith + FastAPI) foi removido integralmente e substituído por um backend TypeScript com Hono integrado ao Next.js, que se conecta ao Vectora Agent via `vectora server`.
 
-## Overview
+---
 
-This is a documentation assistant agent that helps answer questions about LangChain, LangGraph, and LangSmith. It demonstrates how to build a production-ready agent using:
+## Arquitetura
 
-- **LangGraph** - For agent orchestration and state management
-- **LangChain Agents** - For agent creation with middleware support
-- **Guardrails** - To keep conversations on-topic
+```
+Browser
+  ↓ HTTP (Server-Sent Events)
+Next.js App (chat/)
+  ├── app/              — UI React + App Router
+  └── app/api/**        — Hono backend (mesmo processo, mesma porta)
+        ↓ ConnectRPC (server-streaming)
+  Vectora Agent (vectora server chat | headless)
+        ↓ LangGraph
+  graph.py:build_graph()
+```
 
-The repo also includes a Next.js frontend in `frontend/` for the public chat UI.
+O Hono roda como um route handler do App Router (`app/api/[[...route]]/route.ts`), eliminando a necessidade de servidor separado.
 
-## Features
+---
 
-- **Documentation Search** - Searches official LangChain docs
-- **Support KB** - Searches the Pylon knowledge base for known issues
-- **Link Validation** - Verifies URLs before including in responses
-- **Guardrails** - Filters off-topic queries
+## Pré-requisitos
 
-## Quick Start
+- [Node.js 20+](https://nodejs.org/) e [pnpm](https://pnpm.io/)
+- Vectora Agent rodando (`vectora server chat` ou `vectora server headless`)
 
-### Prerequisites
+---
 
-- Python 3.11+
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
-
-### Installation
+## Desenvolvimento
 
 ```bash
-# Clone the repository
-git clone https://github.com/langchain-ai/chat-langchain.git
-cd chat-langchain
+# 1. Instale as dependências
+pnpm install
 
-# Install dependencies with uv
-uv sync
+# 2. Configure o ambiente
+cp .env.example .env.local
+# NEXT_PUBLIC_VECTORA_API_URL=http://localhost:8080
 
-# Or with pip
-pip install -e . "langgraph-cli[inmem]"
+# 3. Inicie o Vectora Agent em outro terminal
+vectora server headless   # ou: uv run vectora server headless
+
+# 4. Inicie o chat
+pnpm dev
 ```
 
-### Configuration
+Acesse `http://localhost:3000`.
 
-```bash
-# Copy environment template
-cp .env.example .env
+---
 
-# Edit .env with your API keys
+## Estrutura do Projeto
+
+```
+chat/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx                   # entrada principal
+│   └── api/
+│       └── [[...route]]/
+│           └── route.ts           # mount do Hono app
+├── server/                        # backend Hono (TypeScript)
+│   ├── index.ts                   # Hono app factory
+│   └── routes/
+│       ├── chat.ts                # proxy ConnectRPC → vectora/api
+│       ├── threads.ts             # CRUD de threads
+│       └── health.ts              # /health + /metrics
+├── lib/
+│   ├── types/                     # módulo de tipos (espelha o proto + schema do agente)
+│   │   ├── events.ts              # StreamEvent (union discriminada)
+│   │   ├── messages.ts            # MessageSchema
+│   │   ├── tools.ts               # ToolSchema, ToolCallSchema
+│   │   ├── render.ts              # RenderHint, ToolCategory
+│   │   └── thread.ts              # Thread, HistoryMessage
+│   ├── gen/                       # stubs ConnectRPC gerados (build-time, não commitado)
+│   ├── hooks/
+│   │   ├── chat/
+│   │   └── threads/
+│   └── utils/
+├── components/
+│   ├── message/
+│   │   └── Message.tsx            # componente único — adapta por role
+│   ├── tool-call/
+│   │   └── ToolCall.tsx           # dispatch por render_hint
+│   ├── chat/
+│   ├── layout/
+│   └── ui/                        # Radix UI / shadcn
+├── public/
+├── next.config.ts
+└── package.json
 ```
 
-#### Required Environment Variables
+---
 
-| Variable | Description |
-|----------|-------------|
-| `ANTHROPIC_API_KEY` | Anthropic API key (or use another provider) |
-| `MINTLIFY_API_URL` | Mintlify API base URL for docs search (e.g. `https://api-dsc.mintlify.com/v1/search/docs.langchain.com`) |
-| `MINTLIFY_API_KEY` | Mintlify API key for docs search |
-| `PYLON_API_KEY` | Pylon API key for support KB |
-| `PYLON_KB_ID` | Pylon knowledge base ID for support articles |
-| `USE_LOCAL_PROMPTS` | Optional. Set to `true` to use local prompt files instead of pulling Prompt Hub prompts |
+## Schema-driven rendering
 
-### Running Locally
+O Vectora Agent expõe um endpoint `/api/tools/schema` com os metadados de cada tool:
 
-#### Backend
-
-```bash
-# Start LangGraph development server
-uv run langgraph dev
-
-# Or with pip
-langgraph dev
+```json
+{
+  "tools": [
+    {
+      "name": "file_edit",
+      "render_hint": "diff",
+      "category": "filesystem",
+      "destructive": true,
+      "icon": "file-edit"
+    }
+  ]
+}
 ```
 
-Open LangGraph Studio: <https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024>
+O chat usa esses metadados para renderizar cada tool call sem componentes hardcoded por nome. Um único `<ToolCall>` despacha para o renderer correto via `render_hint`:
 
-#### Frontend
+| render_hint       | Renderer        | Usado por                              |
+| ----------------- | --------------- | -------------------------------------- |
+| `diff`            | `DiffViewer`    | `file_edit`, `git_diff`                |
+| `code_block`      | `CodeBlock`     | `file_read`, `file_write`              |
+| `terminal_output` | `TerminalBlock` | `terminal`                             |
+| `search_results`  | `SearchResults` | `vector_search`, `web_search`          |
+| `table`           | `DataTable`     | `grep`, `list_dir`, `manage_retriever` |
+| `queue_progress`  | `QueueProgress` | `ingest_docs`                          |
+| `artifact`        | `ArtifactCard`  | `create_artifact`                      |
+| `json`            | `JsonViewer`    | fallback universal                     |
 
-```bash
-cd frontend
-npm ci
-npm run dev:local
-```
+Adicionar uma nova tool no agente com `metadata={"render_hint": "table"}` funciona no chat sem nenhuma mudança no TypeScript.
 
-The frontend expects the LangGraph server at `http://127.0.0.1:2024` by default. If you want trace sharing from the UI, set `LANGSMITH_API_KEY` in `frontend/.env.local`.
+---
 
-## Project Structure
+## Variáveis de Ambiente
 
-```txt
-├── src/
-│   ├── agent/
-│   │   ├── docs_graph.py      # Main docs agent
-│   │   └── config.py          # Model configuration
-│   ├── tools/
-│   │   ├── docs_tools.py      # Documentation search
-│   │   ├── pylon_tools.py     # Support KB tools
-│   │   └── link_check_tools.py # URL validation
-│   ├── prompts/
-│   │   └── docs_agent_prompt.py
-│   └── middleware/
-│       ├── guardrails_middleware.py
-│       └── retry_middleware.py
-├── frontend/                  # Next.js public chat UI
-├── langgraph.json             # LangGraph configuration
-└── pyproject.toml             # Python project config
-```
+| Variável                      | Descrição            | Padrão                  |
+| ----------------------------- | -------------------- | ----------------------- |
+| `NEXT_PUBLIC_VECTORA_API_URL` | URL do Vectora Agent | `http://localhost:8080` |
 
-## How It Works
+---
 
-The agent uses a docs-first research strategy:
+## Tecnologias
 
-1. **Guardrails Check** - Validates the query is LangChain-related
-2. **Documentation Search** - Searches official docs via Mintlify
-3. **Knowledge Base** - Searches Pylon for known issues/solutions
-4. **Link Validation** - Verifies any URLs before including them
-5. **Response Generation** - Synthesizes a helpful answer
+| Camada           | Tecnologia                                                                       |
+| ---------------- | -------------------------------------------------------------------------------- |
+| Framework        | [Next.js 16](https://nextjs.org/) (App Router)                                   |
+| Backend TS       | [Hono](https://hono.dev/) (integrado ao Next.js)                                 |
+| Protocolo        | [ConnectRPC](https://connectrpc.com/) (server-streaming)                         |
+| UI               | [Radix UI](https://www.radix-ui.com/) + [Tailwind CSS](https://tailwindcss.com/) |
+| Geração de tipos | [buf](https://buf.build/) (proto → TypeScript)                                   |
 
-## Deployment
+---
 
-### LangGraph Cloud
+## Relacionado
 
-1. Push to GitHub
-2. Connect repository in [LangSmith](https://smith.langchain.com/)
-3. Configure environment variables
-4. Deploy
-
-## Resources
-
-- [LangChain Documentation](https://docs.langchain.com/oss/python/langchain/overview)
-- [LangGraph Documentation](https://docs.langchain.com/oss/python/langgraph/overview)
-- [LangSmith Documentation](https://docs.langchain.com/langsmith/home)
-
-## License
-
-MIT
+- [Vectora Agent](../README.md) — o agente que o chat consome
+- `vectora server chat` — serve agent + chat estático em um único processo
+- `vectora server headless` — serve só o agent (sem static files)

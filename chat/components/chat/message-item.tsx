@@ -6,8 +6,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   MessageSquare,
-  ExternalLink,
 } from "lucide-react";
+import { ToolCallRenderer } from "./tool-call-renderer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ReactMarkdown from "react-markdown";
@@ -699,18 +699,14 @@ export const MessageItem = memo(
                     ) : null}
                   </div>
 
-                  {/* Metadata in bottom right of message box */}
-                  {!message.isThinking && message.runId && (
-                    <div className="flex items-center justify-end gap-2 mt-3 text-xs text-white font-mono font-medium">
-                      {/* Check if all metadata is loaded - use != null to handle 0 values */}
-                      {message.thinkingDuration &&
-                      message.usageMetadata?.total_tokens &&
-                      message.usageMetadata?.total_cost != null &&
-                      message.shareUrl ? (
+                  {/* Metadata — duração e tokens quando disponível */}
+                  {!message.isThinking && message.thinkingDuration != null && (
+                    <div className="flex items-center justify-end gap-2 mt-3 text-xs text-muted-foreground font-mono">
+                      <span>
+                        {(message.thinkingDuration / 1000).toFixed(1)}s
+                      </span>
+                      {message.usageMetadata?.total_tokens && (
                         <>
-                          <span>
-                            {(message.thinkingDuration / 1000).toFixed(1)}s
-                          </span>
                           <span>•</span>
                           <span>
                             {(
@@ -718,80 +714,7 @@ export const MessageItem = memo(
                             ).toFixed(1)}
                             k tokens
                           </span>
-                          {message.usageMetadata.total_cost > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>
-                                ${message.usageMetadata.total_cost.toFixed(4)}
-                              </span>
-                            </>
-                          )}
-                          <a
-                            href={message.shareUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-0.5 text-xs font-medium transition-colors ml-1"
-                            style={{
-                              color: "#7FC8FF",
-                              textDecorationColor: "#7FC8FF",
-                            }}
-                          >
-                            View trace
-                            <ExternalLink className="h-2.5 w-2.5" />
-                          </a>
                         </>
-                      ) : (
-                        <span className="font-sans font-medium inline-flex items-center gap-0 relative">
-                          <span className="thinking-text-base">
-                            Loading Trace
-                          </span>
-                          <span className="inline-flex thinking-text-base">
-                            <span
-                              className="animate-bounce-dot"
-                              style={{ animationDelay: "1.3s" }}
-                            >
-                              .
-                            </span>
-                            <span
-                              className="animate-bounce-dot"
-                              style={{ animationDelay: "1.45s" }}
-                            >
-                              .
-                            </span>
-                            <span
-                              className="animate-bounce-dot"
-                              style={{ animationDelay: "1.6s" }}
-                            >
-                              .
-                            </span>
-                          </span>
-                          <span
-                            className="thinking-gradient-overlay"
-                            aria-hidden="true"
-                          >
-                            <span>Loading Trace</span>
-                            <span className="inline-flex">
-                              <span
-                                className="animate-bounce-dot"
-                                style={{ animationDelay: "1.3s" }}
-                              >
-                                .
-                              </span>
-                              <span
-                                className="animate-bounce-dot"
-                                style={{ animationDelay: "1.45s" }}
-                              >
-                                .
-                              </span>
-                              <span
-                                className="animate-bounce-dot"
-                                style={{ animationDelay: "1.6s" }}
-                              >
-                                .
-                              </span>
-                            </span>
-                          </span>
-                        </span>
                       )}
                     </div>
                   )}
@@ -842,77 +765,75 @@ export const MessageItem = memo(
                     </>
                   )}
 
-                  {!message.isThinking &&
-                    message.runId &&
-                    (message.shareUrl || message.usageMetadata) && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            onFeedback(
-                              message.id,
-                              "positive",
-                              feedbackComment[message.id],
-                            )
-                          }
-                          aria-pressed={message.feedback === "positive"}
-                          className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${
+                  {!message.isThinking && message.runId && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          onFeedback(
+                            message.id,
+                            "positive",
+                            feedbackComment[message.id],
+                          )
+                        }
+                        aria-pressed={message.feedback === "positive"}
+                        className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${
+                          message.feedback === "positive"
+                            ? "text-white"
+                            : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"
+                        }`}
+                      >
+                        <ThumbsUp
+                          className="w-3 h-3 mr-1 transition-transform duration-150"
+                          aria-hidden="true"
+                          fill={
                             message.feedback === "positive"
-                              ? "text-white"
-                              : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"
-                          }`}
-                        >
-                          <ThumbsUp
-                            className="w-3 h-3 mr-1 transition-transform duration-150"
-                            aria-hidden="true"
-                            fill={
-                              message.feedback === "positive"
-                                ? "currentColor"
-                                : "none"
-                            }
-                          />
-                          Good
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            onFeedback(
-                              message.id,
-                              "negative",
-                              feedbackComment[message.id],
-                            )
+                              ? "currentColor"
+                              : "none"
                           }
-                          aria-pressed={message.feedback === "negative"}
-                          className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${
+                        />
+                        Good
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          onFeedback(
+                            message.id,
+                            "negative",
+                            feedbackComment[message.id],
+                          )
+                        }
+                        aria-pressed={message.feedback === "negative"}
+                        className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${
+                          message.feedback === "negative"
+                            ? "text-white"
+                            : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"
+                        }`}
+                      >
+                        <ThumbsDown
+                          className="w-3 h-3 mr-1 transition-transform duration-150"
+                          aria-hidden="true"
+                          fill={
                             message.feedback === "negative"
-                              ? "text-white"
-                              : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"
-                          }`}
-                        >
-                          <ThumbsDown
-                            className="w-3 h-3 mr-1 transition-transform duration-150"
-                            aria-hidden="true"
-                            fill={
-                              message.feedback === "negative"
-                                ? "currentColor"
-                                : "none"
-                            }
-                          />
-                          Bad
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onToggleComment(message.id)}
-                          className="h-8 px-2 text-xs rounded-md transition-colors duration-150 ease-out text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"
-                        >
-                          <MessageSquare className="w-3 h-3 mr-1" />
-                          Feedback
-                        </Button>
-                      </>
-                    )}
+                              ? "currentColor"
+                              : "none"
+                          }
+                        />
+                        Bad
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onToggleComment(message.id)}
+                        className="h-8 px-2 text-xs rounded-md transition-colors duration-150 ease-out text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"
+                      >
+                        <MessageSquare className="w-3 h-3 mr-1" />
+                        Feedback
+                      </Button>
+                    </>
+                  )}
                 </div>
 
                 {showCommentInput === message.id && (
@@ -955,38 +876,11 @@ export const MessageItem = memo(
                   message.toolCalls.length > 0 && (
                     <div className="mt-3 space-y-2">
                       {message.toolCalls.map((tool) => (
-                        <div
+                        <ToolCallRenderer
                           key={tool.id}
-                          className="px-3 py-2 rounded-lg border border-border bg-muted/50 text-xs"
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-primary">
-                              Tool: {tool.name}
-                            </span>
-                          </div>
-                          <div className="text-xs font-mono text-muted-foreground">
-                            <details>
-                              <summary className="cursor-pointer hover:opacity-80">
-                                View arguments
-                              </summary>
-                              <pre className="mt-1 whitespace-pre-wrap break-words text-[10px]">
-                                {JSON.stringify(tool.args, null, 2)}
-                              </pre>
-                            </details>
-                            {tool.output && (
-                              <details className="mt-2">
-                                <summary className="cursor-pointer hover:opacity-80">
-                                  View output
-                                </summary>
-                                <pre className="mt-1 whitespace-pre-wrap break-words text-[10px]">
-                                  {typeof tool.output === "string"
-                                    ? tool.output
-                                    : JSON.stringify(tool.output, null, 2)}
-                                </pre>
-                              </details>
-                            )}
-                          </div>
-                        </div>
+                          tool={tool}
+                          isStreaming={message.isThinking}
+                        />
                       ))}
                     </div>
                   )}

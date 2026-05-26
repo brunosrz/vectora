@@ -164,7 +164,14 @@ async def _get_mcp_tools() -> dict[str, Any]:
     return _mcp_tools_by_name
 
 
-@tool
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "mcp",
+        "destructive": False,
+        "icon": "share-2",
+    }
+)
 async def call_mcp_tool(tool_name: str, arguments: str) -> str:
     """Invoca uma ferramenta de outro servidor MCP via Model Context Protocol.
 

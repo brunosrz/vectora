@@ -29,23 +29,35 @@ from vectora.api.schemas import (
 
 logger = logging.getLogger(__name__)
 
-# Mapeamento de nome de tool → render_hint (lido dos metadados da tool).
-# Populado lazily pelo loader de tools — evita importar ALL_TOOLS no startup.
-_render_hint_cache: dict[str, str] = {}
+# Cache de metadados de tool: nome → dict com render_hint, category, destructive, icon.
+# Populado lazily para evitar importar ALL_TOOLS no startup.
+_tool_meta_cache: dict[str, dict] = {}
+
+_DEFAULT_META = {
+    "render_hint": "json",
+    "category": "general",
+    "destructive": False,
+    "icon": "tool",
+}
 
 
-def _get_render_hint(tool_name: str) -> str:
-    """Retorna o render_hint registrado para a tool, ou 'json' como fallback."""
-    if not _render_hint_cache:
+def _get_tool_meta(tool_name: str) -> dict:
+    """Retorna metadados de UI da tool (render_hint, category, destructive, icon)."""
+    if not _tool_meta_cache:
         try:
             from vectora.nodes.tools import ALL_TOOLS
 
             for t in ALL_TOOLS:
-                hint = (getattr(t, "metadata", None) or {}).get("render_hint", "json")
-                _render_hint_cache[t.name] = hint
+                meta = getattr(t, "extras", None) or getattr(t, "metadata", None) or {}
+                _tool_meta_cache[t.name] = {
+                    "render_hint": meta.get("render_hint", "json"),
+                    "category": meta.get("category", "general"),
+                    "destructive": bool(meta.get("destructive", False)),
+                    "icon": meta.get("icon", "tool"),
+                }
         except Exception:
             pass
-    return _render_hint_cache.get(tool_name, "json")
+    return _tool_meta_cache.get(tool_name, _DEFAULT_META)
 
 
 # ---------------------------------------------------------------------------
@@ -97,11 +109,15 @@ def langgraph_event_to_payload(
         )
         # tool_call_id pode estar nos metadados ou no run_id
         call_id: str = event.get("run_id", "")
+        meta = _get_tool_meta(name)
         return ToolCallEvent(
             tool_name=name,
             tool_call_id=call_id,
             args_json=args_json,
-            render_hint=_get_render_hint(name),
+            render_hint=meta["render_hint"],
+            category=meta["category"],
+            destructive=meta["destructive"],
+            icon=meta["icon"],
         )
 
     # ── Resultado de tool ─────────────────────────────────────────────────

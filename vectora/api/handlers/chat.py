@@ -178,7 +178,7 @@ async def get_tools() -> GetToolsResponse:
 
     tools: list[ToolSchema] = []
     for t in ALL_TOOLS:
-        meta = getattr(t, "metadata", None) or {}
+        meta = getattr(t, "extras", None) or getattr(t, "metadata", None) or {}
         render_hint = meta.get("render_hint", "json")
 
         args_schema = "{}"
@@ -193,6 +193,9 @@ async def get_tools() -> GetToolsResponse:
                 name=t.name,
                 description=t.description or "",
                 render_hint=render_hint,
+                category=meta.get("category", "general"),
+                destructive=bool(meta.get("destructive", False)),
+                icon=meta.get("icon", "tool"),
                 args_schema_json=args_schema,
             )
         )

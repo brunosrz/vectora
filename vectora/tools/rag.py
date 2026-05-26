@@ -63,7 +63,14 @@ def _is_cohere_quota_error(err: str) -> bool:
     )
 
 
-@tool(extras={"render_hint": "queue_badge"})
+@tool(
+    extras={
+        "render_hint": "queue_badge",
+        "category": "rag",
+        "destructive": False,
+        "icon": "layers",
+    }
+)
 async def embedding(
     text: str, collection: str = "articles", metadata: dict[str, Any] | None = None
 ) -> str:
@@ -154,7 +161,14 @@ async def embedding(
         )
 
 
-@tool(extras={"render_hint": "search_results"})
+@tool(
+    extras={
+        "render_hint": "search_results",
+        "category": "rag",
+        "destructive": False,
+        "icon": "database",
+    }
+)
 async def vector_search(
     query: str, collection: str = "articles", limit: int = 5
 ) -> str:
@@ -306,7 +320,14 @@ async def vector_search(
         return json.dumps({"status": "failed", "error": err or "Vector search failed"})
 
 
-@tool(extras={"render_hint": "queue_progress"})
+@tool(
+    extras={
+        "render_hint": "queue_progress",
+        "category": "rag",
+        "destructive": False,
+        "icon": "upload",
+    }
+)
 async def ingest_docs(
     directory_path: str,
     collection: str = "articles",
@@ -482,7 +503,14 @@ async def ingest_docs(
     )
 
 
-@tool(extras={"render_hint": "table"})
+@tool(
+    extras={
+        "render_hint": "table",
+        "category": "rag",
+        "destructive": True,
+        "icon": "settings",
+    }
+)
 async def manage_retriever(
     action: Literal["list", "delete", "purge"],
     collection: str = "web_cache",

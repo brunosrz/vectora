@@ -80,6 +80,9 @@ class ToolCallEvent(BaseModel):
     tool_call_id: str
     args_json: str
     render_hint: str = "json"
+    category: str = "general"
+    destructive: bool = False
+    icon: str = "tool"
 
 
 class ToolResultEvent(BaseModel):
@@ -194,6 +197,9 @@ class ToolSchema(BaseModel):
     name: str
     description: str
     render_hint: str = "json"
+    category: str = "general"
+    destructive: bool = False
+    icon: str = "tool"
     args_schema_json: str = "{}"
 
 
