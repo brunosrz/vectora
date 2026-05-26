@@ -3,8 +3,17 @@
 import { History, GitBranch, Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Checkpoint } from "@/lib/hooks/threads";
 import { formatDistanceToNow } from "date-fns";
+
+interface Checkpoint {
+  config?: { configurable?: { checkpoint_id?: string } };
+  metadata?: {
+    checkpoint_id?: string;
+    step?: number;
+    writes?: Record<string, unknown>;
+  };
+  created_at?: string;
+}
 
 interface TimeTravelPanelProps {
   checkpoints: Checkpoint[];

@@ -559,8 +559,7 @@ export function ChatInterface({
       !trimmedMessage ||
       uiState.hasAutoSent ||
       uiState.isLoadingThread ||
-      !userId ||
-      !client
+      !userId
     ) {
       return;
     }
@@ -590,7 +589,6 @@ export function ChatInterface({
     uiState.hasAutoSent,
     uiState.isLoadingThread,
     userId,
-    client,
     setLimitedInput,
     uiDispatch,
     processMessage,
@@ -602,7 +600,7 @@ export function ChatInterface({
       return;
     }
 
-    if (!userId || !client) {
+    if (!userId) {
       return;
     }
 
@@ -656,7 +654,6 @@ export function ChatInterface({
     uiState.isRegenerating,
     attachedFiles,
     userId,
-    client,
     agentConfig?.model,
     setInput,
     setUploadError,

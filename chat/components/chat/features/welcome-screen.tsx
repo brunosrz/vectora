@@ -51,9 +51,9 @@ interface WelcomeScreenProps {
   onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
   onRemoveFile: (fileId: string) => void;
   onFileButtonClick: (e: React.MouseEvent) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  textareaRef?: React.RefObject<HTMLTextAreaElement>;
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
 
   // Voice input
   isVoiceListening?: boolean;

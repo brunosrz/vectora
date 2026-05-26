@@ -79,8 +79,15 @@ export function useStreamHandler({
       abortRef.current = abort
 
       // Garante que a mensagem do assistente existe no estado
+      const baseAssistantMessage: Message = {
+        id: assistantMessageId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+        isThinking: true,
+      }
       setMessages((prev) =>
-        ensureMessageExists(prev, assistantMessageId, "assistant", "")
+        ensureMessageExists(prev, assistantMessageId, baseAssistantMessage)
       )
 
       let assistantContent = ""

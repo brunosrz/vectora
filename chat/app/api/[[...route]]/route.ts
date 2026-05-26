@@ -10,4 +10,9 @@ import app from "@/server";
 
 export const runtime = "nodejs";
 
-export const { GET, POST, DELETE, PATCH } = handle(app);
+const handler = handle(app);
+
+export const GET = handler;
+export const POST = handler;
+export const DELETE = handler;
+export const PATCH = handler;
