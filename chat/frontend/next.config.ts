@@ -6,9 +6,10 @@ import { fileURLToPath } from "node:url";
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
-  // Static export: gera HTML/JS/CSS estáticos em /out/
-  // Serve pelo `vectora server chat` (FastAPI StaticFiles) — sem Node.js runtime.
-  output: "export",
+  // Standalone: bundla o servidor Next.js com deps mínimas.
+  // Necessário para suportar auth server-side (middleware, API routes, cookies).
+  // Distribuído junto ao chat/src/ backend como pacote próprio.
+  output: "standalone",
 
   turbopack: {
     root: rootDir,
