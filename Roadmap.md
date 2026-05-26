@@ -20,47 +20,195 @@ Após leitura completa das docs do LangChain, LangGraph, Deep Agents, Tavily, Co
 
 ## DIRETIVA PERMANENTE — Sistema de Tipos (Type Safety)
 
-> **Esta diretiva rege a manutenção e evolução da arquitetura de tipos do projeto.**
+> **Esta diretiva se aplica a todos os blocos, presentes e futuros.**
 
-### Regras Obrigatórias para Evolução
+### Regras Obrigatórias
 
-1. **Centralização em `vectora/types/`**: Todo novo modelo de dados (estado intermediário, resultado de agente, métrica, ou schema) deve ser adicionado exclusivamente em `vectora/types/`. Módulos de domínio (`agents/`, `nodes/`, `services/`) contêm apenas lógica de execução — jamais definições de tipos complexos.
+1. **Centralização em `vectora/types/`**: Todo modelo de dados complexo (estado intermediário, resultado de agente, schema de curadoria, métricas) deve residir em `vectora/types/`. Módulos de domínio (agents/, nodes/, services/) definem lógica — não tipos.
 
-2. **Pydantic como padrão**: Todos os modelos de dados devem herdar de `pydantic.BaseModel`. O uso de `TypedDict` é restrito apenas à definição de `State` para compatibilidade estrita com o LangGraph.
+2. **Pydantic como base**: Todos os modelos de dados devem herdar de `pydantic.BaseModel`. TypedDicts são permitidos apenas como anotação de estado LangGraph (onde o próprio framework exige dict-like serialization).
 
-3. **Sintaxe moderna (PEP 585 / PEP 604)**:
+3. **PEP 585 / PEP 604 — Sintaxe moderna obrigatória**:
 
-   - Use `list[str]`, `dict[str, Any]`, `str | None`.
-   - É proibido importar coleções básicas (`List`, `Dict`, `Optional`, etc.) do módulo `typing`. Use tipos nativos sempre.
+   - `list[str]` em vez de `List[str]`
+   - `str | None` em vez de `Optional[str]`
+   - `dict[str, Any]` em vez de `Dict[str, Any]`
+   - Zero imports de `typing` para primitivos (`List`, `Dict`, `Optional`, `Tuple`, `Set`) — apenas `Annotated`, `Literal`, `NotRequired`, `TYPE_CHECKING` quando necessários
 
-4. **Contratos de Interface**: Mantenha o `state.py` como a camada de "bridge". Campos de estado que representam resultados ou decisões de agentes devem ser obrigatoriamente tipados pelos modelos Pydantic definidos em `vectora/types/`, garantindo a validação no fluxo de execução.
+4. **Contratos de interface**: `state.py` importa os tipos de `vectora/types/`. Os campos de estado que referenciam resultados de agentes usam os modelos Pydantic (`CoderResult | None`, `SearchResult | None`, `SubTask`, etc.) e não `dict | None`.
 
-5. **Vectora Chat (TypeScript)**: A mesma rigorosidade se aplica ao frontend. Todos os dados vindos do agente devem ser mapeados em interfaces centralizadas em `chat/src/types/`. Evite `any` a todo custo, utilizando as interfaces definidas para garantir que a UI reflita fielmente o estado do grafo.
+5. **Lógica pura + decoradores de infra**: Funções de nó implementam apenas a lógica de negócio. Preocupações transversais (tracing, observabilidade, awareness de workspace) são aplicadas via decoradores (`@trace_node`, `@workspace_aware`).
 
-6. **Infraestrutura via Decoradores**: A lógica de infraestrutura (tracing, observabilidade, contexto de workspace, HITL) deve ser aplicada de forma transparente via decoradores (`@trace_node`, `@workspace_aware`, etc.), mantendo a lógica de negócio dos nós limpa e legível.
+### Estrutura `vectora/types/`
 
-### Estrutura do Catálogo (`vectora/types/`)
+```
+vectora/types/
+├── __init__.py        # re-export de todos os tipos públicos
+├── documents.py       # Document, ArtifactMetadata
+├── agents.py          # AgentName, SubTask, OrchestratorDecision,
+│                      # CoderResult, SearchResult, ParallelResult, UIMetrics
+├── curation.py        # WebResultVerdict, CurationDecision
+├── session.py         # SessionMetadata
+└── workspace.py       # Workspace (Pydantic)
+```
 
-A pasta `vectora/types/` é a fonte única da verdade para a estrutura de dados. Ao adicionar novas funcionalidades, siga o arquivo correspondente:
+### Estado atual da tipagem (inventário)
 
-- `agents.py`: Decisões do orquestrador e resultados de agentes.
-- `documents.py`: Estruturas de documentos e artifacts.
-- `curation.py`: Schemas para julgamento de conteúdo.
-- `session.py`: Metadados persistentes de sessão.
-- `workspace.py`: Definições de workspaces e estados de projeto.
-- `metrics.py`: Schemas para observabilidade via `ui_metrics`.
-
-### Manutenção e Expansão
-
-- **Ao criar uma nova Tool**: Adicione o `metadata={"render_hint": "..."}` ao decorador `@tool` para permitir a autodescoberta pela Web UI (D1.1).
-- **Ao modificar nós**: Certifique-se de que o contrato de entrada/saída (via `State`) respeita os tipos Pydantic definidos em `types/`.
-- **Linting**: O projeto segue _Strict Typing_. Qualquer novo código deve passar na validação de tipo sem o uso de `Any` explícito, priorizando o uso de `Union` ou `Discriminated Unions` quando a estrutura for variável.
+| Modelo                                       | Local atual                    | Tipo atual             | Ação                                                                        |
+| -------------------------------------------- | ------------------------------ | ---------------------- | --------------------------------------------------------------------------- |
+| `OrchestratorDecision`, `SubTask`            | `agents/orchestrator.py`       | Pydantic ✓             | Mover para `types/agents.py`                                                |
+| `CoderResult`, `SearchResult`                | `agents/results.py`            | Pydantic ✓             | Mover para `types/agents.py`                                                |
+| `WebResultVerdict`, `CurationDecision`       | `nodes/web_curation.py`        | Pydantic ✓             | Mover para `types/curation.py`                                              |
+| `Document`, `SessionMetadata`                | `state.py`                     | TypedDict              | Criar Pydantic em `types/`; manter TypedDict em state por compat. LangGraph |
+| `ArtifactMetadata`                           | `messages.py`                  | TypedDict              | Criar Pydantic em `types/documents.py`                                      |
+| `Workspace`                                  | `services/workspace.py`        | Dataclass              | Migrar para Pydantic em `types/workspace.py`                                |
+| `UIMetrics`                                  | `providers/Stream.tsx` (só TS) | —                      | Criar Pydantic em `types/metrics.py`                                        |
+| `ParallelResult`                             | (não existe)                   | —                      | Criar em `types/agents.py`                                                  |
+| `EmbeddingQueueRecord`                       | `services/queue.py`            | SQLAlchemy ORM         | Manter como ORM (não Pydantic)                                              |
+| `Context`, `UserPreferences`, `FeatureFlags` | `context.py`                   | Dataclass frozen+slots | Manter como dataclass (frozen+slots sem equivalente Pydantic trivial)       |
 
 ---
 
 ## PARTE 1 — PRÉ-DEEP AGENTS
 
 Tudo nesta seção é implementável com **LangGraph + LangChain puros**, sem nenhuma dependência do Deep Agents framework. Organizado por blocos de lançamento (rc3 → rc4 → v0.1.0 → v0.2.x).
+
+---
+
+### BLOCO T — Type System (implementar imediatamente — paralelo ao rc4)
+
+Implementação da diretiva de tipos definida acima. Todos os modelos já implementados migram para `vectora/types/`. Zero breaking changes — os módulos originais re-exportam de `vectora/types/`.
+
+#### T1 — Criar módulos em `vectora/types/`
+
+**`vectora/types/agents.py`** — move de `agents/orchestrator.py` e `agents/results.py`:
+
+```python
+AgentName = Literal["coder", "search", "rag"]
+
+class SubTask(BaseModel):
+    agent: AgentName
+    task_query: str
+    reason: str = ""
+
+class OrchestratorDecision(BaseModel):
+    action: Literal["respond", "delegate", "parallel"]
+    response: str | None = None
+    delegate_to: AgentName | None = None
+    task_query: str | None = None
+    parallel_tasks: list[SubTask] | None = None
+    reason: str
+
+class CoderResult(BaseModel):
+    summary: str
+    files_changed: list[str] = []
+    tests_run: bool = False
+    success: bool = True
+    next_steps: str | None = None
+
+class SearchResult(BaseModel):
+    summary: str
+    sources: list[str] = []
+    confidence: float = Field(default=0.7, ge=0.0, le=1.0)
+    web_search_used: bool = False
+
+class ParallelResult(BaseModel):
+    agent: AgentName
+    task: str
+    response: str
+    success: bool = True
+
+class UIMetrics(BaseModel):
+    last_node: str | None = None
+    last_node_ms: float | None = None
+    total_tokens_session: int = 0
+    rag_hits: int = 0
+    rag_misses: int = 0
+    tool_calls: dict[str, int] = {}
+    workspace_id: str | None = None
+    manifest_version: int = 0
+```
+
+**`vectora/types/curation.py`** — move de `nodes/web_curation.py`:
+
+```python
+class WebResultVerdict(BaseModel):
+    index: int
+    keep: bool
+    reason: str
+
+class CurationDecision(BaseModel):
+    verdicts: list[WebResultVerdict]
+```
+
+**`vectora/types/documents.py`** — Pydantic equivalente ao TypedDict de `state.py`:
+
+```python
+class Document(BaseModel):
+    page_content: str
+    metadata: dict[str, Any] = {}
+    relevance_score: float | None = None
+
+class ArtifactMetadata(BaseModel):
+    title: str
+    path: str
+    session_id: str
+    created_at: str
+    content_preview: str | None = None
+```
+
+**`vectora/types/session.py`**:
+
+```python
+class SessionMetadata(BaseModel):
+    thread_id: str
+    user_type: str = "human"
+    created_at: str
+    llm_provider: str = ""
+    llm_model: str = ""
+    workspace_id: str | None = None
+    manifest_version: int = 0
+```
+
+**`vectora/types/workspace.py`** — migra de dataclass `services/workspace.py`:
+
+```python
+class Workspace(BaseModel):
+    id: str
+    name: str
+    cwd: str
+    created_at: str
+    bucket_names: list[str] = []
+    manifest_version: int = 0
+```
+
+**`vectora/types/__init__.py`** — re-export público:
+
+```python
+from vectora.types.agents import (AgentName, SubTask, OrchestratorDecision,
+    CoderResult, SearchResult, ParallelResult, UIMetrics)
+from vectora.types.curation import WebResultVerdict, CurationDecision
+from vectora.types.documents import Document, ArtifactMetadata
+from vectora.types.session import SessionMetadata
+from vectora.types.workspace import Workspace
+```
+
+#### T2 — Atualizar módulos consumidores
+
+- **`agents/orchestrator.py`**: remove definições locais de `SubTask`, `OrchestratorDecision`; importa de `vectora.types`
+- **`agents/results.py`**: remove definições locais de `CoderResult`, `SearchResult`; importa de `vectora.types`
+- **`nodes/web_curation.py`**: remove definições locais de `WebResultVerdict`, `CurationDecision`; importa de `vectora.types`
+- **`services/workspace.py`**: substitui `@dataclass` `Workspace` por `from vectora.types import Workspace`; ajusta `asdict()` para `.model_dump()`
+- **`messages.py`**: importa `ArtifactMetadata` de `vectora.types`
+- **`state.py`**: campos `coder_result`, `search_result`, `parallel_tasks`, `parallel_results` tipados com os modelos Pydantic (usando `| None` para compat. de serialização LangGraph)
+
+#### T3 — Verificação
+
+- `tests/unit/test_types.py` (novo): valida criação, serialização e `model_dump()` de cada modelo
+- `uv run pytest tests/unit/ -x -q` — suite completa verde
+- `uv run python -c "from vectora.types import *; print('OK')"` — importação limpa
+
+Impacto: `vectora/types/` (5 novos módulos), `agents/orchestrator.py`, `agents/results.py`, `nodes/web_curation.py`, `services/workspace.py`, `messages.py`, `state.py`
 
 ---
 
@@ -1148,9 +1296,571 @@ Impacto: `vectora/agents/orchestrator.py`, `vectora/graph.py`, `vectora/state.py
 
 ---
 
-### BLOCO D — v0.2.x (UI & Observabilidade)
+### BLOCO D — v0.2.x (API + Chat Web)
 
-#### D1 — Vectora Web UI (Next.js + Agent Chat UI)
+> **Contexto da reescrita:** O Bloco D original usava `langgraph dev` + `@langchain/langgraph-sdk` no frontend. Isso foi descartado em favor de uma stack própria: **FastAPI + ConnectRPC** no backend, **Next.js → static export** no frontend, distribuição unificada via `uv tool install vectora-agent`. A pasta `vectora/web/` foi renomeada para `chat/` e evoluiu para a base do chat-langchain; esta seção descreve a migração completa.
+
+---
+
+#### D1 — `vectora/api/` — FastAPI + ConnectRPC
+
+**O que muda:** Criar `vectora/api/` como a camada de API pública do Vectora. Expõe o grafo LangGraph via ConnectRPC (server-streaming RPC), gerencia threads via REST/RPC e serve o frontend compilado. Substitui o acesso direto ao `langgraph dev`.
+
+**Três modos de servidor** (todos via `vectora server <modo>`):
+
+| Modo       | Porta default | O que serve                                                               |
+| ---------- | ------------- | ------------------------------------------------------------------------- |
+| `mcp`      | 8000          | MCP server existente (`vectora/mcp/server.py`) — sem mudanças             |
+| `chat`     | 8080          | FastAPI + ConnectRPC + static files do chat frontend                      |
+| `headless` | 8080          | FastAPI + ConnectRPC só (sem static files) — para Paperclip e integrações |
+
+---
+
+##### D1.1 — Proto service design
+
+**Arquivo:** `vectora/api/protos/vectora/chat/v1/chat.proto`
+
+```proto
+syntax = "proto3";
+package vectora.chat.v1;
+
+// Streaming de chat (server-streaming RPC)
+service ChatService {
+  rpc StreamChat(StreamChatRequest)  returns (stream StreamChatEvent);
+  rpc ResumeChat(ResumeChatRequest) returns (stream StreamChatEvent);
+  rpc GetTools(GetToolsRequest)     returns (GetToolsResponse);
+}
+
+// Gerenciamento de threads (checkpointer wrapper)
+service ThreadService {
+  rpc CreateThread(CreateThreadRequest)   returns (Thread);
+  rpc GetThread(GetThreadRequest)         returns (Thread);
+  rpc ListThreads(ListThreadsRequest)     returns (ListThreadsResponse);
+  rpc DeleteThread(DeleteThreadRequest)   returns (DeleteThreadResponse);
+  rpc GetHistory(GetHistoryRequest)       returns (GetHistoryResponse);
+}
+
+// ── request/response ─────────────────────────────────────────────
+
+message StreamChatRequest {
+  string thread_id       = 1;  // vazio = auto-criar
+  string content         = 2;  // mensagem do usuário
+  ChatConfig config      = 3;
+}
+
+message ChatConfig {
+  string model           = 1;
+  string llm_provider    = 2;
+  int32  recursion_limit = 3;
+  string workspace_id    = 4;
+}
+
+message ResumeChatRequest {
+  string thread_id    = 1;
+  string interrupt_id = 2;
+  string decision     = 3;  // "approve" | "reject" | "edit:<json>"
+}
+
+// ── eventos de streaming ─────────────────────────────────────────
+
+message StreamChatEvent {
+  oneof event {
+    ThreadEvent    thread     = 1;   // thread_id criado (1º evento)
+    TokenEvent     token      = 2;   // chunk de texto do LLM
+    ToolCallEvent  tool_call  = 3;   // tool foi invocada
+    ToolResultEvent tool_result = 4; // resultado da tool
+    NodeEvent      node       = 5;   // nó do grafo iniciou/terminou
+    UIMetricsEvent ui_metrics = 6;   // métricas para MetricsPanel
+    HITLEvent      hitl       = 7;   // pausa aguardando aprovação humana
+    ErrorEvent     error      = 8;
+    DoneEvent      done       = 9;
+  }
+}
+
+message ThreadEvent     { string thread_id = 1; }
+message TokenEvent      { string content = 1; string node = 2; }
+message ToolCallEvent   { string tool_name = 1; string tool_call_id = 2;
+                          string args_json = 3; string render_hint = 4; }
+message ToolResultEvent { string tool_call_id = 1; string content_json = 2;
+                          bool is_error = 3; }
+message NodeEvent       { string node = 1; string status = 2;
+                          int64 duration_ms = 3; }  // status: started|finished
+message UIMetricsEvent  { string last_node = 1; int64 last_node_ms = 2;
+                          int64 rag_hits = 3; int64 rag_misses = 4;
+                          map<string, int64> tool_calls = 5; }
+message HITLEvent       { string tool_name = 1; string args_json = 2;
+                          string interrupt_id = 3; }
+message ErrorEvent      { string message = 1; string code = 2; }
+message DoneEvent       { string thread_id = 1; string run_id = 2; }
+
+// ── thread management ────────────────────────────────────────────
+
+message Thread          { string id = 1; string created_at = 2;
+                          string updated_at = 3; string title = 4; }
+message HistoryMessage  { string role = 1; string content = 2;
+                          string created_at = 3; }
+message CreateThreadRequest  {}
+message GetThreadRequest     { string thread_id = 1; }
+message ListThreadsRequest   { int32 limit = 1; }
+message ListThreadsResponse  { repeated Thread threads = 1; }
+message DeleteThreadRequest  { string thread_id = 1; }
+message DeleteThreadResponse {}
+message GetHistoryRequest    { string thread_id = 1; }
+message GetHistoryResponse   { repeated HistoryMessage messages = 1; }
+
+// ── tools schema ─────────────────────────────────────────────────
+
+message GetToolsRequest  {}
+message GetToolsResponse { repeated ToolSchema tools = 1; }
+message ToolSchema       { string name = 1; string description = 2;
+                           string render_hint = 3; string args_schema_json = 4; }
+```
+
+---
+
+##### D1.2 — Estrutura `vectora/api/`
+
+```
+vectora/api/
+├── __init__.py
+├── protos/
+│   └── vectora/chat/v1/
+│       └── chat.proto
+├── gen/                        # gerado por buf (commitar NÃO — build-time)
+│   └── vectora_chat_v1/
+│       ├── chat_pb2.py
+│       ├── chat_pb2_grpc.py
+│       └── chat_connect.py     # ConnectRPC servicer base classes
+├── handlers/
+│   ├── __init__.py
+│   ├── chat.py                 # ChatServiceHandler (wraps graph.astream_events)
+│   └── threads.py              # ThreadServiceHandler (wraps AsyncSqliteSaver)
+├── adapters.py                 # LangGraph event → StreamChatEvent proto
+├── schemas.py                  # Pydantic models extras (REST /health, /metrics)
+└── server.py                   # FastAPI app factory
+```
+
+**`vectora/api/server.py`:**
+
+```python
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from connectrpc.asgi import ConnectMiddleware
+from pathlib import Path
+
+from .handlers.chat import ChatServiceHandler
+from .handlers.threads import ThreadServiceHandler
+
+def create_app(serve_static: bool = True) -> FastAPI:
+    app = FastAPI(title="Vectora API", version="0.1.0")
+
+    # ConnectRPC services montados via middleware ASGI
+    app.add_middleware(ConnectMiddleware, services=[
+        ChatServiceHandler(),
+        ThreadServiceHandler(),
+    ])
+
+    @app.get("/health")
+    async def health(): return {"status": "ok", "version": settings.version}
+
+    @app.get("/metrics")
+    async def metrics(): return await tracer.get_recent(n=50)
+
+    if serve_static:
+        static = Path(__file__).parent.parent / "chat_static"
+        if static.exists():
+            app.mount("/", StaticFiles(directory=static, html=True), name="chat")
+
+    return app
+```
+
+**`vectora/api/handlers/chat.py`:**
+
+```python
+class ChatServiceHandler:
+    async def stream_chat(self, request, context):
+        thread_id = request.thread_id or str(uuid4())
+        yield StreamChatEvent(thread=ThreadEvent(thread_id=thread_id))
+
+        async for event in graph.astream_events(
+            {"messages": [HumanMessage(request.content)]},
+            config={"configurable": {"thread_id": thread_id}, "recursion_limit": 50},
+            version="v2",
+        ):
+            proto_event = adapters.langgraph_to_proto(event)
+            if proto_event:
+                yield proto_event
+
+        yield StreamChatEvent(done=DoneEvent(thread_id=thread_id))
+```
+
+---
+
+##### D1.3 — Codegen Makefile
+
+**`Makefile` na raiz do projeto:**
+
+```makefile
+.PHONY: gen-proto build-chat
+
+# Gera Python stubs + TypeScript clients a partir dos .proto
+gen-proto:
+    cd vectora/api/protos && buf generate
+    @echo "✓ Stubs Python em vectora/api/gen/"
+    @echo "✓ Clients TypeScript em chat/frontend/lib/gen/"
+
+# Build do Next.js frontend + copia para vectora/chat_static/
+build-chat:
+    cd chat/frontend && pnpm install && pnpm build
+    rm -rf vectora/chat_static
+    mkdir -p vectora/chat_static
+    cp -r chat/frontend/out/* vectora/chat_static/
+    @echo "✓ Frontend compilado em vectora/chat_static/"
+```
+
+**`vectora/api/protos/buf.yaml`:**
+
+```yaml
+version: v2
+modules:
+  - path: .
+```
+
+**`vectora/api/protos/buf.gen.yaml`:**
+
+```yaml
+version: v2
+plugins:
+  - plugin: buf.build/protocolbuffers/python
+    out: ../gen
+  - plugin: buf.build/grpc/python
+    out: ../gen
+  - plugin: buf.build/connectrpc/python
+    out: ../gen
+  # TypeScript para o frontend
+  - plugin: buf.build/bufbuild/es
+    out: ../../../chat/frontend/lib/gen
+  - plugin: buf.build/connectrpc/es
+    out: ../../../chat/frontend/lib/gen
+```
+
+---
+
+##### D1.4 — CLI: `vectora server`
+
+**`vectora/main.py`** — novo subcomando:
+
+```python
+@app.command("server")
+def server_cmd(
+    mode: Annotated[str, typer.Argument(help="mcp | chat | headless")] = "chat",
+    host: str = "0.0.0.0",
+    port: int = 8080,
+):
+    """Inicia um servidor Vectora.
+
+    Modos:
+      mcp      — MCP server (ferramentas para IAs externas), porta 8000
+      chat     — FastAPI + ConnectRPC + frontend compilado, porta 8080
+      headless — FastAPI + ConnectRPC sem UI (para Paperclip/integrações)
+    """
+    if mode == "mcp":
+        from vectora.mcp.server import run
+        run()
+    elif mode in ("chat", "headless"):
+        import uvicorn
+        from vectora.api.server import create_app
+        serve_static = (mode == "chat")
+        uvicorn.run(create_app(serve_static=serve_static), host=host, port=port)
+    else:
+        raise typer.BadParameter(f"modo desconhecido: {mode}")
+```
+
+---
+
+##### D1.5 — Novas deps Python
+
+```toml
+# pyproject.toml — adicionar
+[project.dependencies]
+fastapi = ">=0.115"
+uvicorn = { version = ">=0.34", extras = ["standard"] }
+connectrpc = ">=0.1"          # ConnectRPC ASGI
+grpcio = ">=1.73"
+grpcio-tools = ">=1.73"
+```
+
+---
+
+#### D2 — Frontend Migration (`chat/frontend/`)
+
+**O que muda:** Substituir `@langchain/langgraph-sdk` por clientes ConnectRPC gerados. Todos os componentes de UI ficam intactos — apenas a camada de rede é trocada.
+
+---
+
+##### D2.1 — Deps: remover LangGraph SDK, adicionar ConnectRPC
+
+```json
+// chat/frontend/package.json — remover:
+"@langchain/langgraph-sdk": "...",
+"langsmith": "...",
+
+// adicionar:
+"@connectrpc/connect": "^2.0",
+"@connectrpc/connect-web": "^2.0",
+"@bufbuild/protobuf": "^2.0"
+```
+
+---
+
+##### D2.2 — Cliente ConnectRPC
+
+**Novo `chat/frontend/lib/api/vectora-client.ts`** (substitui `langgraph-client.ts`):
+
+```typescript
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import {
+  ChatService,
+  ThreadService,
+} from "@/lib/gen/vectora/chat/v1/chat_connect";
+
+const VECTORA_API_URL =
+  process.env.NEXT_PUBLIC_VECTORA_API_URL ?? "http://localhost:8080";
+
+const transport = createConnectTransport({
+  baseUrl: VECTORA_API_URL,
+});
+
+export const chatClient = createClient(ChatService, transport);
+export const threadClient = createClient(ThreadService, transport);
+```
+
+---
+
+##### D2.3 — Hook de streaming
+
+**Novo `chat/frontend/lib/hooks/chat/use-stream-handler.ts`** (substitui 873 linhas do LangGraph SDK):
+
+```typescript
+export function useStreamHandler() {
+  const streamChat = useCallback(
+    async (threadId: string, content: string, config: ChatConfig) => {
+      for await (const event of chatClient.streamChat({
+        threadId,
+        content,
+        config,
+      })) {
+        switch (event.event.case) {
+          case "thread":
+            onThreadCreated(event.event.value.threadId);
+            break;
+          case "token":
+            appendToken(event.event.value.content);
+            break;
+          case "toolCall":
+            addToolCall(event.event.value);
+            break;
+          case "toolResult":
+            updateToolResult(event.event.value);
+            break;
+          case "hitl":
+            showHITLPanel(event.event.value);
+            break;
+          case "uiMetrics":
+            updateMetrics(event.event.value);
+            break;
+          case "done":
+            finalize(event.event.value);
+            break;
+          case "error":
+            handleError(event.event.value);
+            break;
+        }
+      }
+    },
+    [],
+  );
+  return { streamChat };
+}
+```
+
+---
+
+##### D2.4 — Thread management
+
+**Novo `chat/frontend/lib/hooks/threads/use-threads.ts`** (substitui LangGraph SDK threads):
+
+```typescript
+export function useThreads() {
+  const createThread = () => threadClient.createThread({});
+  const listThreads = () => threadClient.listThreads({ limit: 50 });
+  const deleteThread = (id: string) =>
+    threadClient.deleteThread({ threadId: id });
+  const getHistory = (id: string) => threadClient.getHistory({ threadId: id });
+  // ...
+}
+```
+
+---
+
+##### D2.5 — Static export (Next.js)
+
+**`chat/frontend/next.config.ts`** — adicionar `output: 'export'`:
+
+```typescript
+const config: NextConfig = {
+  output: "export", // ← static files em /out/
+  // ...resto da config
+};
+```
+
+Remove dependência de Node.js runtime no end-user. O `vectora server chat` serve os arquivos estáticos diretamente via FastAPI `StaticFiles`.
+
+**Remover** (não compatíveis com static export):
+
+- `chat/frontend/app/api/tools/schema/route.ts` (proxy server-side → não necessário, browser chama FastAPI direto)
+
+**Atualizar** `chat/frontend/.env.example`:
+
+```env
+# URL do servidor Vectora (vectora server chat / headless)
+NEXT_PUBLIC_VECTORA_API_URL=http://localhost:8080
+
+# Removidos (não mais necessários):
+# NEXT_PUBLIC_LANGGRAPH_API_URL
+# LANGSMITH_API_KEY
+```
+
+---
+
+#### D3 — Unificação e Distribuição
+
+**O que muda:** Distribuição unificada via `uv tool install vectora-agent`. End-user não precisa de Node.js.
+
+---
+
+##### D3.1 — Limpeza da pasta `chat/`
+
+Deletar (não pertencem ao Vectora):
+
+- `chat/src/` — backend Python do chat-langchain (docs_agent, guardrails, etc.)
+- `chat/langgraph.json` — deployment config LangGraph Cloud
+- `chat/pyproject.toml` — deps Python do chat-langchain
+
+Manter:
+
+- `chat/frontend/` — o frontend Next.js (nossa UI)
+
+---
+
+##### D3.2 — Bundling no pacote Python
+
+**`pyproject.toml`:**
+
+```toml
+[tool.hatch.build.targets.wheel]
+include = [
+  "vectora/**",
+  "vectora/chat_static/**",  # ← Next.js compilado
+]
+
+[tool.uv.build]
+include-package-data = true
+```
+
+**`MANIFEST.in`:**
+
+```
+recursive-include vectora/chat_static *
+```
+
+Fluxo de release:
+
+```
+make gen-proto   # gera stubs Python + TypeScript
+make build-chat  # npm build → vectora/chat_static/
+uv build         # inclui chat_static no wheel
+uv publish       # versão final disponível em PyPI
+```
+
+---
+
+##### D3.3 — Observabilidade integrada
+
+O `VectoraTracer` é integrado ao ConnectRPC handler:
+
+- Cada `StreamChat` abre um span `tracer.span("api", "stream_chat", session_id)`
+- `NodeEvent` atualiza `ui_metrics` em tempo real
+- `/metrics` REST endpoint expõe `get_recent(n=50)` para dashboards externos
+- `vectora server headless` é a interface para Paperclip: sem frontend, só API ConnectRPC
+
+---
+
+#### D4 — Deletar referências ao `langgraph dev`
+
+Arquivos a remover/atualizar:
+
+| Arquivo                                                     | Ação                                                                 |
+| ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| `langgraph.json` (raiz do projeto)                          | Deletar — era para `langgraph dev`, substituído por `vectora server` |
+| `vectora/web/`                                              | Já renomeado para `chat/` — remover qualquer referência obsoleta     |
+| `chat/frontend/lib/api/langgraph-client.ts`                 | Deletar (substituído por `vectora-client.ts`)                        |
+| `chat/frontend/lib/api/langsmith.ts`                        | Deletar (sem LangSmith no novo stack)                                |
+| `chat/frontend/lib/hooks/threads/use-checkpoint-history.ts` | Deletar (LangGraph-specific)                                         |
+
+Dependências Python a remover de `pyproject.toml`:
+
+- Nenhuma necessária imediatamente — `langgraph` permanece (grafo continua usando LangGraph); apenas o `langgraph dev` é abandonado
+
+---
+
+#### Verificação completa do Bloco D
+
+1. `make gen-proto` → arquivos Python em `vectora/api/gen/`, TypeScript em `chat/frontend/lib/gen/`
+2. `uv run vectora server chat` → inicia em `localhost:8080`
+3. `curl localhost:8080/health` → `{"status": "ok"}`
+4. `cd chat/frontend && pnpm dev` → chat disponível em `localhost:3000`, chama `localhost:8080`
+5. Enviar mensagem → recebe `ThreadEvent` → `TokenEvent`s → `DoneEvent` via ConnectRPC streaming
+6. HITL: tool destrutiva → `HITLEvent` chega no frontend → painel de aprovação → `ResumeChat`
+7. `make build-chat` → gera `vectora/chat_static/`
+8. `uv run vectora server chat` → `localhost:8080` serve tanto a API quanto o frontend (um único servidor)
+9. `uv tool install vectora-agent` (após publish) → usuário sem Node.js consegue usar o chat web
+10. `uv run vectora server headless` → só API ConnectRPC, sem static files → Paperclip conecta aqui
+11. `uv run vectora server mcp` → MCP server intacto na 8000, sem mudanças
+12. `uv run pytest tests/unit/test_api_chat.py tests/unit/test_api_threads.py -q` → verde
+
+---
+
+#### Arquivos críticos do Bloco D
+
+| Arquivo                                              | Tipo              | Mudança                                    |
+| ---------------------------------------------------- | ----------------- | ------------------------------------------ |
+| `vectora/api/__init__.py`                            | novo              | pacote                                     |
+| `vectora/api/protos/vectora/chat/v1/chat.proto`      | novo              | definição dos serviços                     |
+| `vectora/api/gen/`                                   | novo (build-time) | stubs gerados pelo buf                     |
+| `vectora/api/handlers/chat.py`                       | novo              | ChatServiceHandler                         |
+| `vectora/api/handlers/threads.py`                    | novo              | ThreadServiceHandler                       |
+| `vectora/api/adapters.py`                            | novo              | LangGraph event → proto                    |
+| `vectora/api/server.py`                              | novo              | FastAPI app factory                        |
+| `vectora/main.py`                                    | atualizado        | subcomando `server mcp/chat/headless`      |
+| `pyproject.toml`                                     | atualizado        | +fastapi, +uvicorn, +connectrpc, +grpcio   |
+| `Makefile`                                           | novo              | `gen-proto`, `build-chat`                  |
+| `buf.yaml` / `buf.gen.yaml`                          | novo              | configuração buf                           |
+| `chat/src/`                                          | deletado          | backend do chat-langchain                  |
+| `chat/langgraph.json`                                | deletado          | LangGraph Cloud config                     |
+| `chat/frontend/lib/api/vectora-client.ts`            | novo              | ConnectRPC transport                       |
+| `chat/frontend/lib/api/langgraph-client.ts`          | deletado          | substituído                                |
+| `chat/frontend/lib/hooks/chat/use-stream-handler.ts` | reescrito         | ConnectRPC streaming                       |
+| `chat/frontend/lib/hooks/threads/use-threads.ts`     | reescrito         | ConnectRPC threads                         |
+| `chat/frontend/lib/gen/`                             | novo (build-time) | stubs TypeScript gerados                   |
+| `chat/frontend/next.config.ts`                       | atualizado        | `output: 'export'`                         |
+| `langgraph.json` (raiz)                              | deletado          | `vectora server` substitui `langgraph dev` |
+| `vectora/chat_static/`                               | novo (build-time) | Next.js compilado bundled no package       |
+| `tests/unit/test_api_chat.py`                        | novo              | testa StreamChat handler                   |
+| `tests/unit/test_api_threads.py`                     | novo              | testa ThreadService                        |
+
+---
 
 **O que está hoje:** TUI Rich exclusiva. Sem interface web de nenhum tipo.
 
@@ -1804,57 +2514,11 @@ Expostos via `/rag` status no TUI e endpoint `/metrics` no MCP server.
 
 Impacto: `vectora/services/tracer.py`, `vectora/ui/commands/debug.py`
 
-#### D4 — Vectora Chat Self-Hosted & Distribuição npm
-
-Com a evolução do Vectora como uma solução de RAG e agentes self-hosted de alta performance, a interface gráfica de chat também precisa seguir o mesmo modelo de implantação autônoma e descentralizada. Para garantir que o chat possa rodar de forma opcional e isolada, a estrutura foi desacoplada fisicamente do backend em Python.
-
-**O que está hoje:** A interface Web (Vectora Web UI) foi originalmente planejada na pasta interna `vectora/web/` como um subdiretório do projeto Python, misturando o ciclo de vida e a publicação do pacote Python com a aplicação Next.js.
-
-**O que muda:** O projeto frontend Next.js é movido para a raiz do repositório, renomeado para a pasta `chat/`. Essa pasta opera de forma totalmente independente e desacoplada do backend Python, permitindo que a interface Web seja publicada e consumida de forma isolada do pacote principal.
-
-##### Empacotamento e Publicação (vectora-chat no npm)
-
-Para disponibilizar o frontend de forma modular para a comunidade e usuários self-hosted, ele é configurado para ser distribuído como um pacote npm autônomo sob a identidade `vectora-chat`:
-
-1. **Nome do Pacote:** O `package.json` do frontend foi renomeado de `vectora-web` para `vectora-chat` e o sinalizador `"private": true` foi removido para permitir a sua publicação pública.
-2. **Distribuição Standalone & NPM:** O chat em Next.js é configurado para compilar em produção de forma independente. O executável global (`bin/vectora-chat.js`) permite iniciar o servidor Next.js em produção (`next start`) com uma única chamada após ser instalado via `npm install -g vectora-chat`.
-3. **Distribuição Docker & Compose:** Para implantações em servidores reais (VPS), um `Dockerfile` multi-stage com `output: 'standalone'` foi implementado, e o fluxo CI/CD foi ajustado para buildar a imagem `vectora-chat:latest`.
-4. **Infraestrutura com Traefik:** O `docker-compose.traefik.yml` gerencia o tráfego em rede, unificando os dois contêineres sob o mesmo domínio (ex: `chat.seudominio.com`). O front assume o tráfego da raiz e as rotas `/api` e `/sse` são encaminhadas diretamente ao LangGraph (motor Python).
-
-Fluxo de Execução Pública NPM:
-
-```bash
-# Instalação global do chat via npm
-npm install -g vectora-chat
-
-# Execução direta
-vectora-chat
-```
-
-Essa arquitetura garante que novos desenvolvedores e empresas possam usar o Vectora Python puro (com MCP e RAG local no terminal) ou subir sua stack completa visual nativamente (NPM ou Docker).
-
-Impacto: `chat/package.json` (renomeação e remoção de private), `.gitignore` da raiz (ajuste de caminhos de exclusão de artefatos).
-
 ---
 
 ### BLOCO E — v0.2.x (Robustez e qualidade)
 
-#### E1 — Reflection pattern (auto-crítica)
-
-**O que está hoje:** Orchestrator responde inline, sem revisão.
-**O que muda:** Nó de reflexão opcional entre resposta do agente e entrega ao usuário.
-
-```
-orchestrator → [reflect] → END
-               (compara resposta com task_query,
-                avalia completude, retorna se necessário)
-```
-
-Configurável: ativo apenas para `delegate_to="coder"` e `delegate_to="search"`, não para `respond` inline.
-
-Impacto: novo `vectora/nodes/reflect.py`, `vectora/graph.py`
-
-#### E2 — EmbeddingStatus Enum + índice SQLite
+#### E1 — EmbeddingStatus Enum + índice SQLite
 
 **O que está hoje:** Magic strings "pending"/"processing"/"success"/"failed"/"dlq" em `queue.py`.
 **O que muda:**
@@ -1872,14 +2536,14 @@ class EmbeddingStatus(str, Enum):
 
 Impacto: `vectora/services/queue.py`
 
-#### E3 — DLQ cleanup automático
+#### E2 — DLQ cleanup automático
 
 **O que está hoje:** Items em DLQ acumulam indefinidamente.
 **O que muda:** `cleanup_old_records(days=30)` executado na startup do worker.
 
 Impacto: `vectora/services/queue.py`, `vectora/services/background.py`
 
-#### E4 — Background embedding backoff adaptativo
+#### E3 — Background embedding backoff adaptativo
 
 **O que está hoje:** Polling fixo a cada 5s mesmo quando fila vazia.
 **O que muda:** Backoff exponencial quando fila vazia (5s → 10s → 30s, máx 60s). Reset ao encontrar items.
@@ -1983,27 +2647,7 @@ set_llm_cache(RedisCache(redis_url=REDIS_URL))
 
 ---
 
-### F5 — Sandbox backends para terminal
-
-**Gated:** após F1.
-
-Substitui a blacklist-based security atual por execução em ambiente isolado:
-
-```python
-agent = create_deep_agent(
-    ...,
-    sandbox=ModalSandbox(image="python:3.14-slim"),  # ou DaytonaSandbox / DenoSandbox
-)
-```
-
-- O terminal roda dentro do sandbox, não na máquina host
-- Sem necessidade de blacklist — isolamento por design
-- Cada sessão recebe sandbox efêmero
-- Suporte a imagens Docker customizadas
-
----
-
-### F6 — Skills system (SKILL.md)
+### F5 — Skills system (SKILL.md)
 
 **Gated:** após F1.
 
@@ -2023,7 +2667,7 @@ Cada skill é carregada sob demanda apenas quando relevante → economiza tokens
 
 ---
 
-### F7 — ACP Protocol (integração com editores)
+### F6 — ACP Protocol (integração com editores)
 
 **Gated:** após F1.
 
@@ -2042,7 +2686,7 @@ Diferença de MCP: MCP é agentes chamando ferramentas externas. ACP é editores
 
 ---
 
-### F8 — Multi-tenant production server
+### F7 — Multi-tenant production server
 
 **Gated:** após F1.
 
@@ -2058,7 +2702,7 @@ Substitui o MCP SSE server atual para cenários multi-tenant.
 
 ---
 
-### F9 — LangSmith A2A Protocol
+### F8 — LangSmith A2A Protocol
 
 **Gated:** após F1 + dois pré-requisitos concretos:
 
@@ -2076,7 +2720,7 @@ GET  /a2a/{vectora_id}/tasks/{task_id}  ← status assíncrono
 
 ---
 
-### F10 — Background memory consolidation
+### F9 — Background memory consolidation
 
 **Gated:** após F1 + F2 (PostgreSQL).
 
@@ -2090,23 +2734,25 @@ Agente separado que processa conversas entre sessões. O mecanismo de trigger pr
 - **Não bloqueia o usuário** — o chat encerra normalmente; a consolidação roda de forma assíncrona. O usuário pode abrir uma nova sessão imediatamente.
 - **Idempotente**: re-rodar para a mesma sessão sobrescreve, não duplica.
 
-Sem o mecanismo de trigger implementado, F10 é apenas código morto — o agente existe mas nunca é chamado.
+Sem o mecanismo de trigger implementado, F9 é apenas código morto — o agente existe mas nunca é chamado.
 
 ---
 
 ## Ordem de implementação sugerida
 
 ```
-rc3:  A1 (MCP adapters) → A2 (Cohere input_type) → A3 (Tavily v2) → A4 (Studio)
-      → A5 (anti-contaminação RAG: bucket web + gate reranker/judge + manage_retriever)
-rc4:  E2 (EmbeddingStatus enum) → E3 (DLQ cleanup) → E4 (backoff) → B1 (HITL)
-v0.1.0 stable: B2 (structured outputs) → B3 (ToolRuntime)
-                → B5 (workspaces por folder) → B6 (manifests) → B7 (context loading) → B4 (RAG curator)
-v0.2.0: C1 (Hybrid RAG) → C2 (multi-query) → C4 (Store memory) → C5 (parallel)
-v0.2.1: D1 (Web UI) → D2 (SSE heartbeat) → D3 (métricas) → E1 (reflection)
-v0.3.0: F1 (Deep Agents migration) → F5 (sandbox) → F6 (skills) → F7 (ACP)
-v0.4.0: F2 (PostgreSQL) + F3 (Qdrant) + F4 (Redis) → F8 (multi-tenant)
-v0.5.0: F9 (A2A) → F10 (memory consolidation)
+[CONCLUÍDO]
+  rc3:  A1 → A2 → A3 → A4 → A5 → A6 (hotfixes RAG)
+  rc4:  D1 (vectora/api FastAPI+ConnectRPC) → D2 (frontend migration, remove LangGraph SDK) → D3 (cleanup+bundling) → D4 (delete langgraph.json)
+
+[PRÓXIMOS]
+  rc4:  types/ (Pydantic types system) → E1 (EmbeddingStatus enum) → E2 (DLQ cleanup) → E3 (backoff) → B1 (HITL)
+  v0.1.0: B2 (structured outputs) → B3 (ToolRuntime)
+           → B5 (workspaces por folder) → B6 (manifests) → B7 (context loading) → B4 (RAG curator)
+  v0.2.0: C1 (Hybrid RAG) → C2 (multi-query) → C4 (Store memory) → C5 (parallel)
+  v0.3.0: F1 (Deep Agents migration) → F5 (skills) → F6 (ACP)
+  v0.4.0: F2 (PostgreSQL) + F3 (Qdrant) + F4 (Redis) → F7 (multi-tenant)
+  v0.5.0: F8 (A2A) → F9 (memory consolidation)
 ```
 
 ---
@@ -2125,25 +2771,28 @@ v0.5.0: F9 (A2A) → F10 (memory consolidation)
 
 ## Arquivos críticos por bloco
 
-| Bloco | Arquivos impactados                                                                                                                                                                                                   |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A1    | `vectora/tools/mcp.py`, `vectora/mcp/server.py`                                                                                                                                                                       |
-| A2    | `vectora/tools/rag.py`, `vectora/nodes/retrieval.py`                                                                                                                                                                  |
-| A3    | `vectora/tools/web.py`, `pyproject.toml`                                                                                                                                                                              |
-| A4    | `langgraph.json` (novo)                                                                                                                                                                                               |
-| A5    | `vectora/nodes/web_curation.py` (novo), `vectora/nodes/engine.py`, `vectora/nodes/rag_subgraph.py`, `vectora/tools/rag.py`, `vectora/nodes/tools.py`, `vectora/config/settings.py`, `vectora/mcp/server.py`           |
-| B1    | `vectora/graph.py`, `vectora/ui/chat.py`, `vectora/nodes/hitl.py` (novo)                                                                                                                                              |
-| B2    | `vectora/agents/coder.py`, `vectora/agents/search.py`, `vectora/agents/orchestrator.py`                                                                                                                               |
-| B3    | `vectora/tools/memory.py`, `vectora/tools/rag.py`                                                                                                                                                                     |
-| B4    | `vectora/services/background.py` (hook pós-batch), `vectora/agents/rag.py` (curator), `vectora/services/memory.py`                                                                                                    |
-| B5    | `vectora/services/workspace.py` (novo), `vectora/nodes/rag_subgraph.py`, `vectora/tools/rag.py`, `vectora/ui/commands/workspaces.py` (novo), `vectora/ui/commands/rag.py`, `vectora/context.py`, `vectora/ui/chat.py` |
-| B6    | `vectora/tools/workspace.py` (novo), `vectora/services/workspace.py` (manifest I/O), `vectora/nodes/tools.py`, `vectora/mcp/server.py`                                                                                |
-| B7    | `vectora/agents/orchestrator.py` (`_load_session_context`), `vectora/tools/memory.py` (namespace), `vectora/services/workspace.py` (manifest read)                                                                    |
-| C1    | `vectora/nodes/retrieval.py`, `vectora/nodes/rag_subgraph.py`                                                                                                                                                         |
-| C2    | `vectora/nodes/rag_subgraph.py`                                                                                                                                                                                       |
-| C4    | `vectora/tools/memory.py`, `vectora/state.py`                                                                                                                                                                         |
-| C5    | `vectora/agents/orchestrator.py`, `vectora/graph.py`                                                                                                                                                                  |
-| E1    | `vectora/nodes/reflect.py` (novo), `vectora/graph.py`                                                                                                                                                                 |
-| E2-E4 | `vectora/services/queue.py`, `vectora/services/background.py`                                                                                                                                                         |
-| F1    | `vectora/graph.py` (rewrite), `pyproject.toml` (add deepagents)                                                                                                                                                       |
-| F2-F4 | `pyproject.toml`, `vectora/services/checkpoint.py`, `vectora/services/embedding.py`                                                                                                                                   |
+| Bloco  | Arquivos impactados                                                                                                                                                                                                                                                    |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1     | `vectora/tools/mcp.py`, `vectora/mcp/server.py`                                                                                                                                                                                                                        |
+| A2     | `vectora/tools/rag.py`, `vectora/nodes/retrieval.py`                                                                                                                                                                                                                   |
+| A3     | `vectora/tools/web.py`, `pyproject.toml`                                                                                                                                                                                                                               |
+| A4     | `langgraph.json` (novo)                                                                                                                                                                                                                                                |
+| A5     | `vectora/nodes/web_curation.py` (novo), `vectora/nodes/engine.py`, `vectora/nodes/rag_subgraph.py`, `vectora/tools/rag.py`, `vectora/nodes/tools.py`, `vectora/config/settings.py`, `vectora/mcp/server.py`                                                            |
+| B1     | `vectora/graph.py`, `vectora/ui/chat.py`, `vectora/nodes/hitl.py` (novo)                                                                                                                                                                                               |
+| B2     | `vectora/agents/coder.py`, `vectora/agents/search.py`, `vectora/agents/orchestrator.py`                                                                                                                                                                                |
+| B3     | `vectora/tools/memory.py`, `vectora/tools/rag.py`                                                                                                                                                                                                                      |
+| B4     | `vectora/services/background.py` (hook pós-batch), `vectora/agents/rag.py` (curator), `vectora/services/memory.py`                                                                                                                                                     |
+| B5     | `vectora/services/workspace.py` (novo), `vectora/nodes/rag_subgraph.py`, `vectora/tools/rag.py`, `vectora/ui/commands/workspaces.py` (novo), `vectora/ui/commands/rag.py`, `vectora/context.py`, `vectora/ui/chat.py`                                                  |
+| B6     | `vectora/tools/workspace.py` (novo), `vectora/services/workspace.py` (manifest I/O), `vectora/nodes/tools.py`, `vectora/mcp/server.py`                                                                                                                                 |
+| B7     | `vectora/agents/orchestrator.py` (`_load_session_context`), `vectora/tools/memory.py` (namespace), `vectora/services/workspace.py` (manifest read)                                                                                                                     |
+| C1     | `vectora/nodes/retrieval.py`, `vectora/nodes/rag_subgraph.py`                                                                                                                                                                                                          |
+| C2     | `vectora/nodes/rag_subgraph.py`                                                                                                                                                                                                                                        |
+| C4     | `vectora/tools/memory.py`, `vectora/state.py`                                                                                                                                                                                                                          |
+| C5     | `vectora/agents/orchestrator.py`, `vectora/graph.py`                                                                                                                                                                                                                   |
+| types/ | `vectora/types/__init__.py`, `types/agents.py`, `types/documents.py`, `types/curation.py`, `types/session.py`, `types/workspace.py` (novos); `state.py`, `agents/orchestrator.py`, `agents/results.py`, `nodes/web_curation.py`, `services/workspace.py` (atualizados) |
+| D1     | `vectora/web/` (Next.js), `vectora/tools/*.py` (`extras=`), `vectora/mcp/server.py` (`/api/tools/schema`), `vectora/state.py` (`ui_metrics`)                                                                                                                           |
+| D2     | `vectora/mcp/server.py` (SSE heartbeat)                                                                                                                                                                                                                                |
+| D3     | `vectora/services/tracer.py`, `vectora/ui/commands/traces.py`, `vectora/mcp/server.py`                                                                                                                                                                                 |
+| E1-E3  | `vectora/services/queue.py`, `vectora/services/background.py`                                                                                                                                                                                                          |
+| F1     | `vectora/graph.py` (rewrite), `pyproject.toml` (add deepagents)                                                                                                                                                                                                        |
+| F2-F4  | `pyproject.toml`, `vectora/services/checkpoint.py`, `vectora/services/embedding.py`                                                                                                                                                                                    |
