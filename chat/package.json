@@ -1,11 +1,12 @@
 {
-  "name": "chat-langchain",
+  "name": "vectora-chat",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.2.2",
   "scripts": {
-    "dev": "next dev",
-    "dev:local": "cross-env VECTORA_API_URL=http://127.0.0.1:8080 NEXT_PUBLIC_VECTORA_API_URL=http://127.0.0.1:8080 next dev",
-    "dev:remote": "next dev -p 3001",
+    "dev": "next dev --turbopack",
+    "dev:local": "cross-env VECTORA_API_URL=http://127.0.0.1:8080 NEXT_PUBLIC_VECTORA_API_URL=http://127.0.0.1:8080 next dev --turbopack",
+    "dev:remote": "next dev --turbopack -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
