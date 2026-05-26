@@ -1,19 +1,21 @@
-"""LangGraph Construction — Orchestrator + Sub-agents + RAG Subgraph.
+"""LangGraph Construction — Orchestrator + Sub-agents + RAG Pipeline.
 
 Topologia:
   START → orchestrator
-            ├── [respond]       → END
-            ├── [coder]         → coder → (hitl_check →) coder_tools ↻
-            │                           → coder_finalize → orchestrator (síntese)
-            ├── [search]        → search → search_tools → process_retrieval ↻
-            │                           → search_finalize → orchestrator (síntese)
-            └── [rag_subgraph]  → rag_subgraph → orchestrator (síntese inline)
+            ├── [respond]   → END
+            ├── [coder]     → coder → (hitl_check →) coder_tools ↻
+            │                       → coder_finalize → orchestrator (síntese)
+            ├── [search]    → search → search_tools → process_retrieval ↻
+            │                       → search_finalize → orchestrator (síntese)
+            ├── [parallel]  → parallel_dispatch → orchestrator (síntese)
+            └── [rag]       → rag_expand_query → rag_retrieve → rag_decide_node
+                                  ├── (score ≥ 0.7) → rag_inject
+                                  ├── (score ≥ 0.4) → rag_rerank → rag_search_audit → rag_inject
+                                  └── (score < 0.4) → rag_websearch → rag_search_audit → rag_inject
+                                                     → orchestrator (síntese inline)
 
-O orchestrator decide em: respond (inline) | coder | search | rag.
-Quando delega, injeta orchestrator_task no state para o sub-agent executar
-com instrução clara, sem depender de inferência do histórico bruto.
-Após o sub-agent concluir, o finalize node extrai um resultado estruturado
-e o orchestrator é acionado novamente para sintetizar a resposta final.
+O orchestrator decide em: respond | coder | search | rag | parallel.
+Os nós RAG são nós convencionais do grafo principal — sem subgrafo separado.
 """
 
 from __future__ import annotations
@@ -32,7 +34,16 @@ from vectora.context import Context
 from vectora.nodes.debug import DiagnosticToolNode
 from vectora.nodes.engine import process_retrieval
 from vectora.nodes.hitl import hitl_check
-from vectora.nodes.rag_subgraph import build_rag_subgraph
+from vectora.nodes.rag_subgraph import (
+    _rag_decide_node,
+    _route_after_decide,
+    rag_expand_query,
+    rag_inject,
+    rag_rerank,
+    rag_retrieve,
+    rag_search_audit,
+    rag_websearch,
+)
 from vectora.nodes.tools import ALL_TOOLS
 from vectora.state import State
 
@@ -57,7 +68,7 @@ def _orchestrator_route(state: State) -> str:
         "respond": END,  # AIMessage já injetado pelo orchestrator
         "search": "search",
         "coder": "coder",
-        "rag": "rag_subgraph",
+        "rag": "rag_expand_query",
         "parallel": "parallel_dispatch",  # C5
         "tools": "search",
     }
@@ -138,7 +149,7 @@ def build_graph(
     argumentos e injeta a própria camada de persistência — por isso o default
     é None. `compile(checkpointer=None)` é válido e não persiste nada.
     """
-    logger.info("Building LangGraph: orchestrator + subagents topology")
+    logger.info("Building LangGraph: orchestrator + subagents + RAG pipeline")
 
     builder = StateGraph(  # type: ignore[type-arg,arg-type]
         state_schema=State,  # ty: ignore[invalid-argument-type]
@@ -147,16 +158,12 @@ def build_graph(
         output_schema=State,  # ty: ignore[invalid-argument-type]
     )
 
-    # Subgrafo RAG compilado como nó atômico
-    rag_subgraph = build_rag_subgraph()
-
     # ToolNodes com diagnóstico
     search_tools_node = DiagnosticToolNode(tools=ALL_TOOLS)
     coder_tools_node = DiagnosticToolNode(tools=ALL_TOOLS)
 
     # --- Nós ---
     builder.add_node("orchestrator", orchestrator)
-    builder.add_node("rag_subgraph", rag_subgraph)
 
     builder.add_node("search", search)
     builder.add_node("search_tools", search_tools_node)
@@ -168,7 +175,16 @@ def build_graph(
     builder.add_node("coder_finalize", coder_finalize)
 
     builder.add_node("process_retrieval", process_retrieval)
-    builder.add_node("parallel_dispatch", parallel_dispatch)  # C5
+    builder.add_node("parallel_dispatch", parallel_dispatch)
+
+    # Nós RAG — pipeline achatado no grafo principal
+    builder.add_node("rag_expand_query", rag_expand_query)
+    builder.add_node("rag_retrieve", rag_retrieve)
+    builder.add_node("rag_decide_node", _rag_decide_node)
+    builder.add_node("rag_rerank", rag_rerank)
+    builder.add_node("rag_websearch", rag_websearch)
+    builder.add_node("rag_search_audit", rag_search_audit)
+    builder.add_node("rag_inject", rag_inject)
 
     # --- Edges ---
 
@@ -180,19 +196,33 @@ def build_graph(
         "orchestrator",
         _orchestrator_route,
         {
-            END: END,  # respond inline
+            END: END,
             "search": "search",
             "coder": "coder",
-            "rag_subgraph": "rag_subgraph",
-            "parallel_dispatch": "parallel_dispatch",  # C5
+            "rag_expand_query": "rag_expand_query",
+            "parallel_dispatch": "parallel_dispatch",
         },
     )
 
-    # RAG subgraph → orchestrator para síntese inline
-    builder.add_edge("rag_subgraph", "orchestrator")
-
     # C5 — parallel_dispatch → orchestrator para síntese dos resultados paralelos
     builder.add_edge("parallel_dispatch", "orchestrator")
+
+    # RAG pipeline achatado
+    builder.add_edge("rag_expand_query", "rag_retrieve")
+    builder.add_edge("rag_retrieve", "rag_decide_node")
+    builder.add_conditional_edges(
+        "rag_decide_node",
+        _route_after_decide,
+        {
+            "rag_inject": "rag_inject",
+            "rag_rerank": "rag_rerank",
+            "rag_websearch": "rag_websearch",
+        },
+    )
+    builder.add_edge("rag_rerank", "rag_search_audit")
+    builder.add_edge("rag_websearch", "rag_search_audit")
+    builder.add_edge("rag_search_audit", "rag_inject")
+    builder.add_edge("rag_inject", "orchestrator")
 
     # search → search_tools → process_retrieval → search (loop)
     # ao terminar → search_finalize → orchestrator (síntese estruturada)
@@ -224,5 +254,7 @@ def build_graph(
     builder.add_edge("coder_finalize", "orchestrator")
 
     compiled = builder.compile(checkpointer=checkpointer)
-    logger.info("Graph compiled: orchestrator + search/coder agents + RAG subgraph")
+    logger.info(
+        "Graph compiled: orchestrator + search/coder agents + RAG pipeline (flat)"
+    )
     return compiled  # type: ignore[return-value]  # ty: ignore[invalid-return-type]

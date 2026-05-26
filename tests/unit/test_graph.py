@@ -28,10 +28,18 @@ def test_graph_has_expected_nodes():
         "orchestrator",
         "search",
         "coder",
-        "rag_subgraph",
         "process_retrieval",
+        # RAG pipeline achatado — sem rag_subgraph
+        "rag_expand_query",
+        "rag_retrieve",
+        "rag_decide_node",
+        "rag_rerank",
+        "rag_websearch",
+        "rag_search_audit",
+        "rag_inject",
     }
     assert expected.issubset(nodes)
+    assert "rag_subgraph" not in nodes
 
 
 class TestOrchestratorRoute:
@@ -47,8 +55,8 @@ class TestOrchestratorRoute:
     def test_coder_routes_to_coder(self):
         assert _orchestrator_route(self._state("coder")) == "coder"
 
-    def test_rag_routes_to_rag_subgraph(self):
-        assert _orchestrator_route(self._state("rag")) == "rag_subgraph"
+    def test_rag_routes_to_rag_expand_query(self):
+        assert _orchestrator_route(self._state("rag")) == "rag_expand_query"
 
     def test_none_defaults_to_end(self):
         state: State = {"messages": [], "session_metadata": {}}
