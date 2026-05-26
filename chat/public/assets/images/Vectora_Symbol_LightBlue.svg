@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Blue bird logo">
-  <rect width="256" height="256" fill="#000000"/>
+  <rect width="256" height="256" fill="#ffffff00"/>
   <defs>
     <linearGradient id="blue" x1="48" y1="48" x2="208" y2="208" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#3AA7FF"/>

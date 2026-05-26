@@ -470,8 +470,8 @@ export const MessageItem = memo(
             <div className="w-8 h-8 rounded-full flex items-center justify-center">
               {message.role === "assistant" ? (
                 <Image
-                  src="/assets/images/Assistant Icon.png"
-                  alt="Assistant Logo"
+                  src="/assets/images/Assistant Icon.svg"
+                  alt="Vectora Assistant"
                   width={32}
                   height={32}
                   className="object-contain"
