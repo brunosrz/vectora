@@ -10,15 +10,14 @@ export {
   createUserMessage,
   updateMessageInList,
   ensureMessageExists,
-} from "./message-helpers"
+} from "./message-helpers";
 
 // Content helpers
-export { extractTextFromContent } from "./content-helpers"
+export { extractTextFromContent } from "./content-helpers";
 
 // Validation
 export {
   fileToBase64,
   createImageAttachment,
   validateImageFile,
-} from "./validation"
-
+} from "./validation";

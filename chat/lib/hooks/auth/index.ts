@@ -2,7 +2,6 @@
  * Authentication-related hooks
  */
 
-export { useUserId } from "./use-user-id"
+export { useUserId } from "./use-user-id";
 
-export { useClientProfile } from "./use-client-profile"
-
+export { useClientProfile } from "./use-client-profile";

@@ -4,23 +4,23 @@
  * Functions for creating and updating messages in chat conversations.
  */
 
-import type { Message } from "../../types"
+import type { Message } from "../../types";
 
 // ============================================================================
 // Message ID Generation
 // ============================================================================
 
-let messageIdCounter = 0
+let messageIdCounter = 0;
 
 /**
  * Generate a unique message ID.
  * Uses timestamp + counter to ensure uniqueness even for rapid message creation.
  */
 export const generateMessageId = (): string => {
-  const timestamp = Date.now()
-  const counter = messageIdCounter++
-  return `${timestamp}-${counter}`
-}
+  const timestamp = Date.now();
+  const counter = messageIdCounter++;
+  return `${timestamp}-${counter}`;
+};
 
 // ============================================================================
 // Message Creation
@@ -34,7 +34,7 @@ export const createUserMessage = (content: string): Message => ({
   role: "user",
   content,
   timestamp: new Date(),
-})
+});
 
 // ============================================================================
 // Message List Manipulation
@@ -47,14 +47,14 @@ export const createUserMessage = (content: string): Message => ({
 export const updateMessageInList = (
   messages: Message[],
   messageId: string,
-  updates: Partial<Message> | ((m: Message) => Partial<Message>)
+  updates: Partial<Message> | ((m: Message) => Partial<Message>),
 ): Message[] => {
   return messages.map((m) => {
-    if (m.id !== messageId) return m
-    const patch = typeof updates === "function" ? updates(m) : updates
-    return { ...m, ...patch }
-  })
-}
+    if (m.id !== messageId) return m;
+    const patch = typeof updates === "function" ? updates(m) : updates;
+    return { ...m, ...patch };
+  });
+};
 
 /**
  * Ensure a message exists in the list.
@@ -63,9 +63,8 @@ export const updateMessageInList = (
 export const ensureMessageExists = (
   messages: Message[],
   messageId: string,
-  baseMessage: Message
+  baseMessage: Message,
 ): Message[] => {
-  const existing = messages.find((m) => m.id === messageId)
-  return existing ? messages : [...messages, baseMessage]
-}
-
+  const existing = messages.find((m) => m.id === messageId);
+  return existing ? messages : [...messages, baseMessage];
+};

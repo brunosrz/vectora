@@ -1052,7 +1052,7 @@ def run() -> None:
     from rich.panel import Panel
 
     transport = os.getenv("MCP_TRANSPORT", "stdio").lower()
-    host = os.getenv("MCP_HOST", "0.0.0.0")  # noqa: S104
+    host = os.getenv("MCP_HOST", "0.0.0.0")  # noqa: S104  # nosec B104
     port = int(os.getenv("MCP_PORT", "8000"))
 
     # stderr é seguro — em stdio, stdout é reservado ao JSON-RPC

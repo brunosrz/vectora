@@ -1,18 +1,17 @@
 /**
  * Custom Hooks
- * 
+ *
  * Centralized exports for all custom hooks, organized by domain
  */
 
 // Chat hooks
-export * from "./chat"
+export * from "./chat";
 
 // Thread hooks
-export * from "./threads"
+export * from "./threads";
 
 // File hooks
-export * from "./files"
+export * from "./files";
 
 // Auth hooks
-export * from "./auth"
-
+export * from "./auth";

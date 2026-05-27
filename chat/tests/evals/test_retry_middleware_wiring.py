@@ -1,7 +1,6 @@
 # tests/evals/test_retry_middleware_wiring.py
 import pytest
 from langsmith import testing as t
-
 from src.agent import config
 from src.agent.docs_graph import docs_agent
 from src.middleware.retry_middleware import ModelRetryMiddleware

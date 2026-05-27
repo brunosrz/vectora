@@ -21,10 +21,11 @@
 
 // Captura ``````markdown\n...\n`````` (com fechamento, tolerante a CRLF/trailing space).
 // Lazy quantifier no corpo + final opcional para suportar streaming parcial.
-const FULL_ENVELOPE_RE = /^[\t ]*``````\s*markdown[\t ]*\r?\n([\s\S]*?)\r?\n[\t ]*``````[\t ]*\s*$/
+const FULL_ENVELOPE_RE =
+  /^[\t ]*``````\s*markdown[\t ]*\r?\n([\s\S]*?)\r?\n[\t ]*``````[\t ]*\s*$/;
 
 // Apenas a abertura — usado quando o stream ainda está chegando.
-const OPEN_ENVELOPE_RE = /^[\t ]*``````\s*markdown[\t ]*\r?\n/
+const OPEN_ENVELOPE_RE = /^[\t ]*``````\s*markdown[\t ]*\r?\n/;
 
 /**
  * Remove o envelope ``````markdown ... `````` se presente.
@@ -35,23 +36,23 @@ const OPEN_ENVELOPE_RE = /^[\t ]*``````\s*markdown[\t ]*\r?\n/
  * - Conteúdo vazio ou não-string → retorna inalterado
  */
 export function stripMarkdownEnvelope(content: string): string {
-  if (!content) return content
+  if (!content) return content;
 
-  const trimmed = content.trimStart()
+  const trimmed = content.trimStart();
 
   // Caso 1: envelope completo (abre + corpo + fecha)
-  const full = trimmed.match(FULL_ENVELOPE_RE)
-  if (full) return full[1] ?? ""
+  const full = trimmed.match(FULL_ENVELOPE_RE);
+  if (full) return full[1] ?? "";
 
   // Caso 2: apenas a abertura chegou (token streaming parcial)
   if (OPEN_ENVELOPE_RE.test(trimmed)) {
-    let body = trimmed.replace(OPEN_ENVELOPE_RE, "")
+    let body = trimmed.replace(OPEN_ENVELOPE_RE, "");
     // Se o fecho ainda não chegou mas o stream terminou com `````` no final,
     // remove o fechamento parcial também.
-    body = body.replace(/\r?\n[\t ]*``````[\t ]*\s*$/, "")
-    return body
+    body = body.replace(/\r?\n[\t ]*``````[\t ]*\s*$/, "");
+    return body;
   }
 
   // Caso 3: sem envelope — retorna como veio
-  return content
+  return content;
 }

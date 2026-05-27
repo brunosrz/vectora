@@ -28,6 +28,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from vectora.api.handlers.auth import router as auth_router
 from vectora.api.handlers.chat import router as chat_router
 from vectora.api.handlers.threads import router as thread_router
 
@@ -79,6 +80,21 @@ async def _lifespan(app: FastAPI):  # noqa: ARG001 — assinatura do FastAPI
     não-daemon de libs externas (langsmith, httpx, cohere) que ignoram cancel.
     """
     logger.info("api/server: startup")
+
+    # C14 — Setup wizard: avisa o operador se ainda não há usuários cadastrados
+    try:
+        from vectora.services.auth import has_users as _has_users
+
+        if not await _has_users():
+            logger.warning(
+                "\n\n"
+                "  ✨  Vectora aguardando setup inicial.\n"
+                "      Abra o chat no browser e crie o primeiro usuário.\n"
+                "      O primeiro usuário se torna root automaticamente.\n"
+            )
+    except Exception:
+        pass  # Não bloqueia o startup se o DB ainda não estiver criado
+
     if _WARMUP_GRAPH:
         from vectora.api.handlers.chat import awarm_graph
 
@@ -132,17 +148,37 @@ def create_app(*, serve_static: bool = True) -> FastAPI:
         redoc_url=None,
     )
 
+    # ── Auth middleware ───────────────────────────────────────────────────────
+    from vectora.api.middleware.auth import AuthMiddleware
+
+    app.add_middleware(AuthMiddleware)
+
+    # ── Rate limiting ─────────────────────────────────────────────────────────
+    from vectora.api.middleware.rate_limit import attach_limiter
+
+    attach_limiter(app)
+
     # ── CORS ──────────────────────────────────────────────────────────────────
     # Permite que o frontend Next.js (localhost:3000 em dev) chame a API.
+    # Em produção, restringir CORS_ORIGINS ao domínio real do frontend.
+    # Com allow_credentials=True, allow_origins não pode ser "*" — precisamos
+    # de origens explícitas quando cookies httpOnly são usados.
+    _cors_origins_env = os.environ.get("VECTORA_CORS_ORIGINS", "")
+    _cors_origins = (
+        [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
+        if _cors_origins_env
+        else ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"]
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Em produção, restringir ao domínio do frontend
+        allow_origins=_cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
     # ── Routers ───────────────────────────────────────────────────────────────
+    app.include_router(auth_router)
     app.include_router(chat_router)
     app.include_router(thread_router)
 

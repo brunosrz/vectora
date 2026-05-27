@@ -5,4 +5,4 @@
  * O LangGraph SDK e o LangSmith foram removidos.
  */
 
-export * from "./vectora-client"
+export * from "./vectora-client";

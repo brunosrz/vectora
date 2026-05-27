@@ -139,7 +139,7 @@ async def _export_audit(
         # Clear terminal
         import os
 
-        os.system("cls" if os.name == "nt" else "clear")  # noqa: S605 ASYNC221
+        os.system("cls" if os.name == "nt" else "clear")  # noqa: S605 ASYNC221  # nosec B605
 
         try:
             console.print("\n")
@@ -1072,12 +1072,13 @@ async def run_chat(
         quit_event = asyncio.Event()
         auto_quit_task: asyncio.Task[None] | None = None
         if quit_after:
+
             async def _auto_quit() -> None:
                 await asyncio.sleep(10)
                 quit_event.set()
                 logger.info("Auto-quit timer triggered")
-            auto_quit_task = asyncio.create_task(_auto_quit())  # noqa: RUF006
 
+            auto_quit_task = asyncio.create_task(_auto_quit())  # noqa: RUF006
 
         # Get LLM provider from settings
         provider = settings.get_llm_provider() if settings else "unset"

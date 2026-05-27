@@ -49,7 +49,7 @@ class TestVectorSearch:
 
         with patch("vectora.tools.rag.settings") as ms:
             ms.get_cohere_api_key.return_value = "test-key"
-            ms.lancedb_dir = "/tmp/lancedb"
+            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
             ms.embedding_model = "embed-english-v3.0"
             ms.reranker_type = "none"
             with patch("vectora.tools.rag.lancedb", mock_lancedb):
@@ -85,7 +85,7 @@ class TestVectorSearch:
 
         with patch("vectora.tools.rag.settings") as ms:
             ms.get_cohere_api_key.return_value = "test-key"
-            ms.lancedb_dir = "/tmp/lancedb"
+            ms.lancedb_dir = "/tmp/lancedb"  # nosec B108
             ms.embedding_model = "embed-english-v3.0"
             with patch("vectora.tools.rag.lancedb", mock_lancedb):
                 with patch("vectora.tools.rag.CohereEmbeddings", mock_embeddings):

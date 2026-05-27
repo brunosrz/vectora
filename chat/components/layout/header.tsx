@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ChevronDown, Settings } from "lucide-react";
 
 import { AgentSettings, type AgentConfig } from "./agent-settings";
+import { UserMenu } from "./user-menu";
 
 interface HeaderProps {
   showToolCalls?: boolean;
@@ -49,6 +50,7 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-3">
+          <UserMenu />
           {agentConfig && onAgentConfigChange && (
             <AgentSettings
               config={agentConfig}

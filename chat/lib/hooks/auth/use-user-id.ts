@@ -4,15 +4,15 @@
  * Public Chat LangChain uses an anonymous browser UUID persisted in localStorage.
  */
 
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const USER_ID_KEY = 'langgraph-user-id'
+const USER_ID_KEY = "langgraph-user-id";
 
 // ============================================================================
 // Hook Implementation
@@ -31,25 +31,25 @@ const USER_ID_KEY = 'langgraph-user-id'
  * return <ChatInterface userId={userId} />
  */
 export function useUserId(): string | null {
-  const [userId, setUserId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     // Skip during SSR
-    if (typeof window === 'undefined') return
+    if (typeof window === "undefined") return;
 
-    let id = localStorage.getItem(USER_ID_KEY)
+    let id = localStorage.getItem(USER_ID_KEY);
 
     if (!id) {
       // Generate new ID using crypto.randomUUID()
-      id = `user-${crypto.randomUUID()}`
-      localStorage.setItem(USER_ID_KEY, id)
-      console.info('Generated new browser user ID:', id)
+      id = `user-${crypto.randomUUID()}`;
+      localStorage.setItem(USER_ID_KEY, id);
+      console.info("Generated new browser user ID:", id);
     } else {
-      console.info('Loaded existing browser user ID:', id)
+      console.info("Loaded existing browser user ID:", id);
     }
 
-    setUserId(id)
-  }, [])
+    setUserId(id);
+  }, []);
 
-  return userId
+  return userId;
 }

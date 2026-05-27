@@ -9,10 +9,10 @@
  * Retrieved from LangSmith run metadata.
  */
 export interface UsageMetadata {
-  input_tokens?: number
-  output_tokens?: number
-  total_tokens?: number
-  input_cost?: number
-  output_cost?: number
-  total_cost?: number
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  input_cost?: number;
+  output_cost?: number;
+  total_cost?: number;
 }

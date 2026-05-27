@@ -4,8 +4,8 @@
  * General-purpose utility functions used throughout the application.
  */
 
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 // ============================================================================
 // Styling Utilities
@@ -26,7 +26,7 @@ import { twMerge } from "tailwind-merge"
  * cn({ "bg-gray-100": isHovered, "bg-white": !isHovered }) // Conditional classes
  */
 export function cn(...inputs: ClassValue[]): string {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 // ============================================================================
@@ -34,10 +34,10 @@ export function cn(...inputs: ClassValue[]): string {
 // ============================================================================
 
 // Chat utilities
-export * from "./chat"
+export * from "./chat";
 
 // String utilities
-export * from "./string"
+export * from "./string";
 
 // Logger
-export { logger } from "./logger"
+export { logger } from "./logger";

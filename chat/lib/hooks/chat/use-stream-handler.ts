@@ -13,21 +13,18 @@
  * - error      → propaga erro ao caller
  */
 
-"use client"
+"use client";
 
-import { useCallback, useRef } from "react"
-import type { Message, ToolCall } from "../../types"
+import { useCallback, useRef } from "react";
+import type { Message, ToolCall } from "../../types";
 import {
   streamChat,
   resumeChat,
   type StreamEvent,
   type ChatConfig,
-} from "../../api/vectora-client"
-import {
-  ensureMessageExists,
-  updateMessageInList,
-} from "../../utils/chat"
-import type { AgentConfig } from "@/components/layout/agent-settings"
+} from "../../api/vectora-client";
+import { ensureMessageExists, updateMessageInList } from "../../utils/chat";
+import type { AgentConfig } from "@/components/layout/agent-settings";
 
 // ============================================================================
 // Types
@@ -35,23 +32,23 @@ import type { AgentConfig } from "@/components/layout/agent-settings"
 
 interface UseStreamHandlerProps {
   /** Não utilizado (mantido para compatibilidade com chat-interface.tsx) */
-  client?: unknown
-  threadId: string
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>
-  agentConfig?: AgentConfig
-  shouldInterruptRef?: React.MutableRefObject<boolean>
+  client?: unknown;
+  threadId: string;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  agentConfig?: AgentConfig;
+  shouldInterruptRef?: React.MutableRefObject<boolean>;
   /** Não utilizado (LangSmith removido) */
-  userId?: string | null
-  userEmail?: string | null
-  userName?: string | null
+  userId?: string | null;
+  userEmail?: string | null;
+  userName?: string | null;
 }
 
 interface UseStreamHandlerReturn {
   processStream: (
     userContent: string,
     assistantMessageId: string,
-    images?: unknown[]
-  ) => Promise<{ assistantContent: string; runId: string | undefined }>
+    images?: unknown[],
+  ) => Promise<{ assistantContent: string; runId: string | undefined }>;
 }
 
 // ============================================================================
@@ -65,21 +62,21 @@ export function useStreamHandler({
   shouldInterruptRef,
 }: UseStreamHandlerProps): UseStreamHandlerReturn {
   // AbortController para interromper o stream quando shouldInterruptRef === true
-  const abortRef = useRef<AbortController | null>(null)
+  const abortRef = useRef<AbortController | null>(null);
 
   const processStream = useCallback(
     async (
       userContent: string,
       assistantMessageId: string,
-      _images?: unknown[]
+      _images?: unknown[],
     ): Promise<{ assistantContent: string; runId: string | undefined }> => {
       // Cancela stream anterior se ainda em andamento
-      abortRef.current?.abort()
-      const abort = new AbortController()
-      abortRef.current = abort
+      abortRef.current?.abort();
+      const abort = new AbortController();
+      abortRef.current = abort;
 
       // Garante que a mensagem do assistente existe no estado
-      const thinkingStartTime = Date.now()
+      const thinkingStartTime = Date.now();
       const baseAssistantMessage: Message = {
         id: assistantMessageId,
         role: "assistant",
@@ -87,17 +84,17 @@ export function useStreamHandler({
         timestamp: new Date(),
         isThinking: true,
         thinkingStartTime,
-      }
+      };
       setMessages((prev) =>
-        ensureMessageExists(prev, assistantMessageId, baseAssistantMessage)
-      )
+        ensureMessageExists(prev, assistantMessageId, baseAssistantMessage),
+      );
 
-      let assistantContent = ""
-      let resolvedRunId: string | undefined
+      let assistantContent = "";
+      let resolvedRunId: string | undefined;
 
       // Monta config da request
-      const config: ChatConfig = {}
-      if (agentConfig?.model) config.model = agentConfig.model
+      const config: ChatConfig = {};
+      if (agentConfig?.model) config.model = agentConfig.model;
 
       try {
         const events = streamChat(
@@ -106,26 +103,26 @@ export function useStreamHandler({
             content: userContent,
             config,
           },
-          abort.signal
-        )
+          abort.signal,
+        );
 
         for await (const event of events) {
           // Interrupção solicitada pelo usuário
           if (shouldInterruptRef?.current) {
-            abort.abort()
-            break
+            abort.abort();
+            break;
           }
 
           await handleEvent(event, assistantMessageId, setMessages, (text) => {
-            assistantContent += text
-          })
+            assistantContent += text;
+          });
 
           if (event.type === "done") {
-            resolvedRunId = event.run_id || undefined
-            break
+            resolvedRunId = event.run_id || undefined;
+            break;
           }
           if (event.type === "error") {
-            throw new Error(event.message || "Stream error")
+            throw new Error(event.message || "Stream error");
           }
         }
       } catch (err: unknown) {
@@ -139,10 +136,10 @@ export function useStreamHandler({
                 m.thinkingStartTime !== undefined
                   ? Date.now() - m.thinkingStartTime
                   : undefined,
-            }))
-          )
+            })),
+          );
         } else {
-          const msg = err instanceof Error ? err.message : String(err)
+          const msg = err instanceof Error ? err.message : String(err);
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
               ...m,
@@ -152,8 +149,8 @@ export function useStreamHandler({
                 m.thinkingStartTime !== undefined
                   ? Date.now() - m.thinkingStartTime
                   : undefined,
-            }))
-          )
+            })),
+          );
         }
       } finally {
         // Defesa em profundidade: garante que o spinner sempre encerra
@@ -168,17 +165,17 @@ export function useStreamHandler({
                       ? Date.now() - m.thinkingStartTime
                       : undefined,
                 }
-              : m
-          )
-        )
+              : m,
+          ),
+        );
       }
 
-      return { assistantContent, runId: resolvedRunId }
+      return { assistantContent, runId: resolvedRunId };
     },
-    [threadId, setMessages, agentConfig, shouldInterruptRef]
-  )
+    [threadId, setMessages, agentConfig, shouldInterruptRef],
+  );
 
-  return { processStream }
+  return { processStream };
 }
 
 // ============================================================================
@@ -189,27 +186,27 @@ async function handleEvent(
   event: StreamEvent,
   assistantMessageId: string,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  onToken: (text: string) => void
+  onToken: (text: string) => void,
 ): Promise<void> {
   switch (event.type) {
     case "token": {
-      onToken(event.content)
+      onToken(event.content);
       setMessages((prev) =>
         updateMessageInList(prev, assistantMessageId, (m) => ({
           ...m,
           content:
             (typeof m.content === "string" ? m.content : "") + event.content,
-        }))
-      )
-      break
+        })),
+      );
+      break;
     }
 
     case "tool_call": {
-      let args: Record<string, unknown> = {}
+      let args: Record<string, unknown> = {};
       try {
-        args = JSON.parse(event.args_json)
+        args = JSON.parse(event.args_json);
       } catch {
-        args = { _raw: event.args_json }
+        args = { _raw: event.args_json };
       }
 
       const toolCall: ToolCall = {
@@ -221,23 +218,23 @@ async function handleEvent(
         category: (event.category as ToolCall["category"]) ?? "general",
         destructive: event.destructive ?? false,
         icon: event.icon ?? "tool",
-      }
+      };
 
       setMessages((prev) =>
         updateMessageInList(prev, assistantMessageId, (m) => ({
           ...m,
           toolCalls: [...(m.toolCalls ?? []), toolCall],
-        }))
-      )
-      break
+        })),
+      );
+      break;
     }
 
     case "tool_result": {
-      let output: unknown
+      let output: unknown;
       try {
-        output = JSON.parse(event.content_json)
+        output = JSON.parse(event.content_json);
       } catch {
-        output = event.content_json
+        output = event.content_json;
       }
 
       setMessages((prev) =>
@@ -246,20 +243,20 @@ async function handleEvent(
           toolCalls: (m.toolCalls ?? []).map((tc) =>
             tc.id === event.tool_call_id
               ? { ...tc, output, isError: event.is_error }
-              : tc
+              : tc,
           ),
-        }))
-      )
-      break
+        })),
+      );
+      break;
     }
 
     // node / ui_metrics / hitl: atualmente apenas loggados
     case "node":
     case "ui_metrics":
     case "hitl":
-      break
+      break;
 
     default:
-      break
+      break;
   }
 }

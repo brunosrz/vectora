@@ -237,6 +237,28 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    # auth — autenticação (login, logout, whoami, etc.)
+    auth_p = sub.add_parser(
+        "auth",
+        help="Gerenciar autenticação no servidor Vectora",
+        description=(
+            "Comandos de autenticação:\n"
+            "  signup   — cria nova conta no servidor configurado\n"
+            "  login    — autentica com email + senha\n"
+            "  logout   — invalida sessão + limpa tokens locais\n"
+            "  whoami   — mostra usuário ativo + role + servidor\n"
+            "  refresh  — força rotação dos tokens (debug)\n\n"
+            "Sem login, o CLI opera como root local (acesso via filesystem)."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    auth_p.add_argument(
+        "action",
+        nargs="?",
+        choices=["signup", "login", "logout", "whoami", "refresh"],
+        help="Ação de autenticação a executar.",
+    )
+
     return parser
 
 
@@ -627,9 +649,7 @@ def run() -> None:
             # log_level do uvicorn afeta logs do próprio uvicorn (Started server,
             # Application startup, etc.). Ruído em dev — usar "warning" como
             # padrão e permitir override via env para depuração.
-            uvicorn_log_level = os.environ.get(
-                "VECTORA_UVICORN_LOG_LEVEL", "warning"
-            )
+            uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
             uvicorn.run(
                 app,
                 host=args.host,
@@ -662,6 +682,34 @@ def run() -> None:
     if command == "config":
         _run_config(args)
         return
+
+    # ── auth ──────────────────────────────────────────────────────────────────
+    if command == "auth":
+        from vectora.cli.auth import (
+            cmd_login,
+            cmd_logout,
+            cmd_refresh,
+            cmd_signup,
+            cmd_whoami,
+        )
+
+        action = getattr(args, "action", None)
+        handlers = {
+            "signup": cmd_signup,
+            "login": cmd_login,
+            "logout": cmd_logout,
+            "whoami": cmd_whoami,
+            "refresh": cmd_refresh,
+        }
+        handler = handlers.get(action or "")
+        if handler is None:
+            print(
+                "Uso: vectora auth <ação>\n"
+                "Ações disponíveis: signup | login | logout | whoami | refresh\n"
+                "Exemplo: vectora auth login"
+            )
+            sys.exit(1)
+        sys.exit(handler(args))
 
     # ── chat (default, no subcommand) ─────────────────────────────────────────
     _apply_global_overrides(args)

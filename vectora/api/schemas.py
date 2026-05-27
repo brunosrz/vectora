@@ -205,3 +205,85 @@ class ToolSchema(BaseModel):
 
 class GetToolsResponse(BaseModel):
     tools: list[ToolSchema]
+
+
+# ---------------------------------------------------------------------------
+# Auth schemas (Bloco C)
+# ---------------------------------------------------------------------------
+
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+
+
+class SigninRequest(BaseModel):
+    email: str
+    password: str
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str = ""
+
+
+class SignoutRequest(BaseModel):
+    refresh_token: str = ""
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    role: str
+    created_at: str
+    last_login_at: str | None = None
+
+    @classmethod
+    def from_user(cls, user: Any) -> "UserResponse":
+        return cls(
+            id=user.id,
+            email=user.email,
+            role=user.role,
+            created_at=user.created_at,
+            last_login_at=getattr(user, "last_login_at", None),
+        )
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+class HasUsersResponse(BaseModel):
+    exists: bool
+
+
+class UserListResponse(BaseModel):
+    users: list[UserResponse]
+
+
+class UpdateRoleRequest(BaseModel):
+    role: str
+
+
+class AuditEntry(BaseModel):
+    id: str
+    user_id: str | None = None
+    action: str
+    target_type: str | None = None
+    target_id: str | None = None
+    timestamp: str
+    ip: str = ""
+    success: bool = True
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class EnvOverrideRequest(BaseModel):
+    key: str
+    value: str

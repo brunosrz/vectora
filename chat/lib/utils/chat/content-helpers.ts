@@ -12,15 +12,14 @@
  * - Mixed content types
  */
 export const extractTextFromContent = (content: any): string => {
-  if (typeof content === "string") return content
+  if (typeof content === "string") return content;
 
   if (Array.isArray(content)) {
     return content
       .filter((c: any) => typeof c === "string" || c?.type === "text")
       .map((c: any) => (typeof c === "string" ? c : c.text || ""))
-      .join("\n\n")
+      .join("\n\n");
   }
 
-  return ""
-}
-
+  return "";
+};

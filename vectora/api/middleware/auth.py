@@ -1,0 +1,112 @@
+"""Middleware de autenticação para a API FastAPI do Vectora.
+
+Injeta `request.state.user` (User | None) em cada request.
+Retorna 401 se o endpoint requer auth e o token está ausente/inválido.
+
+Rotas EXCLUÍDAS da autenticação obrigatória:
+- /health, /docs, /openapi.json
+- /auth/*  (signup, signin, refresh, signout, has-users)
+- arquivos estáticos (extensão de arquivo presente na path)
+"""
+
+from __future__ import annotations
+
+import logging
+
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+
+logger = logging.getLogger(__name__)
+
+# Prefixos de rota que NUNCA exigem autenticação
+_PUBLIC_PREFIXES: tuple[str, ...] = (
+    "/auth/",
+    "/health",
+    "/docs",
+    "/openapi.json",
+    "/redoc",
+    "/favicon",
+)
+
+# VECTORA_AUTH_REQUIRED=false desabilita auth (modo dev local / CLI)
+import os as _os
+
+_AUTH_ENABLED = _os.getenv("VECTORA_AUTH_REQUIRED", "true").lower() not in {
+    "false",
+    "0",
+    "no",
+}
+
+
+def _is_public_route(path: str) -> bool:
+    """True se a rota é pública (não requer token)."""
+    # Arquivos estáticos (extensão presente) são sempre públicos
+    last_segment = path.split("/")[-1]
+    if "." in last_segment:
+        return True
+    return any(path.startswith(p) for p in _PUBLIC_PREFIXES)
+
+
+async def _extract_user(request: Request):
+    """Tenta extrair e validar o usuário do token JWT.
+
+    Aceita:
+    1. Header ``Authorization: Bearer <token>``
+    2. Cookie ``vectora_access``
+
+    Retorna User ou None.
+    """
+    from jose import JWTError
+
+    from vectora.services.auth import decode_access_token, get_user_by_id
+
+    token: str | None = None
+
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+    elif "vectora_access" in request.cookies:
+        token = request.cookies["vectora_access"]
+
+    if not token:
+        return None
+
+    try:
+        payload = decode_access_token(token)
+        user_id: str = payload.get("sub", "")
+        if not user_id:
+            return None
+        return await get_user_by_id(user_id)
+    except JWTError:
+        return None
+    except Exception as exc:
+        logger.debug("auth middleware: erro ao validar token: %s", exc)
+        return None
+
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    """Middleware que injeta request.state.user e protege rotas privadas."""
+
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
+        path = request.url.path
+
+        if not _AUTH_ENABLED or _is_public_route(path):
+            request.state.user = None
+            return await call_next(request)
+
+        user = await _extract_user(request)
+        request.state.user = user
+
+        # Rotas privadas exigem usuário autenticado
+        if user is None:
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
+                {"detail": "Não autenticado. Forneça um Bearer token válido."},
+                status_code=401,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        return await call_next(request)

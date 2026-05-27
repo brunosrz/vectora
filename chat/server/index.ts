@@ -7,12 +7,14 @@
  */
 
 import { Hono } from "hono";
+import authRoutes from "./routes/auth";
 import chatRoutes from "./routes/chat";
-import threadRoutes from "./routes/threads";
 import healthRoutes from "./routes/health";
+import threadRoutes from "./routes/threads";
 
 const app = new Hono().basePath("/api");
 
+app.route("/auth", authRoutes);
 app.route("/chat", chatRoutes);
 app.route("/threads", threadRoutes);
 app.route("/health", healthRoutes);

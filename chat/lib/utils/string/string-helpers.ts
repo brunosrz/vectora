@@ -9,7 +9,7 @@
  * Appends "..." if truncated.
  */
 export const truncate = (text: string, max: number): string =>
-  text.length > max ? `${text.slice(0, max)}...` : text
+  text.length > max ? `${text.slice(0, max)}...` : text;
 
 /**
  * Thread Title Generation
@@ -25,18 +25,18 @@ export const truncate = (text: string, max: number): string =>
 // Constants
 // ============================================================================
 
-import { DEFAULT_TITLE_MAX_LENGTH } from "../../constants/features"
+import { DEFAULT_TITLE_MAX_LENGTH } from "../../constants/features";
 
-const DEFAULT_MAX_LENGTH = DEFAULT_TITLE_MAX_LENGTH
+const DEFAULT_MAX_LENGTH = DEFAULT_TITLE_MAX_LENGTH;
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface TitleGenerationOptions {
-  userMessage: string
-  assistantResponse?: string
-  maxLength?: number
+  userMessage: string;
+  assistantResponse?: string;
+  maxLength?: number;
 }
 
 // ============================================================================
@@ -53,7 +53,7 @@ export async function generateThreadTitle({
   userMessage,
   maxLength = DEFAULT_MAX_LENGTH,
 }: TitleGenerationOptions): Promise<string> {
-  return truncateTitle(userMessage, maxLength)
+  return truncateTitle(userMessage, maxLength);
 }
 
 // ============================================================================
@@ -68,36 +68,38 @@ export async function generateThreadTitle({
  * @returns A heuristic-based title
  */
 export function generateQuickTitle(userMessage: string): string {
-  const message = userMessage.trim().toLowerCase()
+  const message = userMessage.trim().toLowerCase();
 
   // Pattern: "How to..." questions
   if (message.match(/^(how do i|how to|how can i)/i)) {
-    const extracted = message.replace(/^(how do i|how to|how can i)\s+/i, "")
-    return `How to ${extracted.slice(0, 45)}`
+    const extracted = message.replace(/^(how do i|how to|how can i)\s+/i, "");
+    return `How to ${extracted.slice(0, 45)}`;
   }
 
   // Pattern: "What is..." questions
   if (message.match(/^(what is|what are|what's)/i)) {
-    const extracted = message.replace(/^(what is|what are|what's)\s+/i, "")
-    return `About ${extracted.slice(0, 50)}`
+    const extracted = message.replace(/^(what is|what are|what's)\s+/i, "");
+    return `About ${extracted.slice(0, 50)}`;
   }
 
   // Pattern: Other question words
   if (message.match(/^(why|when|where)/i)) {
-    return truncateTitle(message, 60)
+    return truncateTitle(message, 60);
   }
 
   // Pattern: Error/issue mentions
   if (message.match(/error|issue|problem|bug/i)) {
-    const errorMatch = message.match(/(error|issue|problem|bug)[:\s]+([^.!?]+)/i)
+    const errorMatch = message.match(
+      /(error|issue|problem|bug)[:\s]+([^.!?]+)/i,
+    );
     if (errorMatch) {
-      return `Error: ${errorMatch[2].slice(0, 50)}`
+      return `Error: ${errorMatch[2].slice(0, 50)}`;
     }
-    return "Error Investigation"
+    return "Error Investigation";
   }
 
   // Default: truncate
-  return truncateTitle(userMessage, 60)
+  return truncateTitle(userMessage, 60);
 }
 
 // ============================================================================
@@ -111,23 +113,23 @@ export function generateQuickTitle(userMessage: string): string {
  * - Truncates to max length
  */
 function truncateTitle(message: string, maxLength: number): string {
-  let title = message.trim()
+  let title = message.trim();
 
   // Remove common prefixes
   title = title.replace(
     /^(how do i|how to|can you|please|help me with|i need help with)\s+/i,
-    ""
-  )
+    "",
+  );
 
   // Capitalize first letter
   if (title) {
-    title = title.charAt(0).toUpperCase() + title.slice(1)
+    title = title.charAt(0).toUpperCase() + title.slice(1);
   }
 
   // Truncate if needed
   if (title.length > maxLength) {
-    title = title.slice(0, maxLength - 3) + "..."
+    title = title.slice(0, maxLength - 3) + "...";
   }
 
-  return title
+  return title;
 }

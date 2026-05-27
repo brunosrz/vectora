@@ -12,7 +12,6 @@ Fix: use path.lstrip('/') with an explicit slash in the f-string.
 from unittest.mock import patch
 
 import pytest
-
 from src.tools.docs_tools import _format_search_results
 
 BASE_URL = "https://docs.langchain.com"

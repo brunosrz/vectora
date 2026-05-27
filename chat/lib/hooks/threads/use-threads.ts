@@ -10,43 +10,43 @@
  * - Updates otimistas para UX instantânea
  */
 
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   listThreads,
   getThread as fetchThread,
   deleteThread as deleteThreadApi,
   type Thread as VectoraThread,
-} from "../../api/vectora-client"
-import { logger } from "../../utils/logger"
-import { THREAD_FETCH_LIMIT } from "../../constants/features"
+} from "../../api/vectora-client";
+import { logger } from "../../utils/logger";
+import { THREAD_FETCH_LIMIT } from "../../constants/features";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface ClientProfile {
-  id: string
-  label?: string
-  avatarColor?: string
+  id: string;
+  label?: string;
+  avatarColor?: string;
 }
 
 export interface ThreadMetadata {
-  user_id: string
-  title?: string
-  lastMessage?: string
-  client?: ClientProfile
-  [key: string]: unknown
+  user_id: string;
+  title?: string;
+  lastMessage?: string;
+  client?: ClientProfile;
+  [key: string]: unknown;
 }
 
 /** Thread no formato esperado pelos componentes (compatível com a API antiga). */
 export interface Thread {
-  thread_id: string
-  created_at: string
-  updated_at: string
-  metadata: ThreadMetadata
-  values?: Record<string, unknown>
+  thread_id: string;
+  created_at: string;
+  updated_at: string;
+  metadata: ThreadMetadata;
+  values?: Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------
@@ -59,7 +59,7 @@ function toThread(t: VectoraThread, userId: string): Thread {
     created_at: t.created_at,
     updated_at: t.updated_at,
     metadata: { user_id: userId, title: t.title ?? "" },
-  }
+  };
 }
 
 // ============================================================================
@@ -67,48 +67,48 @@ function toThread(t: VectoraThread, userId: string): Thread {
 // ============================================================================
 
 export function useThreads(userId: string | undefined) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [threads, setThreads] = useState<Thread[]>([])
+  const [isLoading, setIsLoading] = useState(false);
+  const [threads, setThreads] = useState<Thread[]>([]);
 
   // Auto-carrega threads quando userId estiver disponível
   useEffect(() => {
-    if (typeof window === "undefined" || !userId) return
-    getUserThreads(userId)
+    if (typeof window === "undefined" || !userId) return;
+    getUserThreads(userId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId])
+  }, [userId]);
 
   // --------------------------------------------------------------------------
   // Fetch
   // --------------------------------------------------------------------------
 
   const getUserThreads = async (id: string, silent = false): Promise<void> => {
-    if (!silent) setIsLoading(true)
+    if (!silent) setIsLoading(true);
     try {
-      const { threads: raw } = await listThreads(THREAD_FETCH_LIMIT)
-      const mapped = raw.map((t) => toThread(t, id))
-      setThreads(mapped)
+      const { threads: raw } = await listThreads(THREAD_FETCH_LIMIT);
+      const mapped = raw.map((t) => toThread(t, id));
+      setThreads(mapped);
     } catch (error) {
-      logger.error("useThreads: erro ao buscar threads:", error)
-      setThreads([])
+      logger.error("useThreads: erro ao buscar threads:", error);
+      setThreads([]);
     } finally {
-      if (!silent) setIsLoading(false)
+      if (!silent) setIsLoading(false);
     }
-  }
+  };
 
   const getThreadById = async (id: string): Promise<Thread | null> => {
     try {
-      const t = await fetchThread(id)
-      return toThread(t, userId ?? "")
+      const t = await fetchThread(id);
+      return toThread(t, userId ?? "");
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error)
+      const msg = error instanceof Error ? error.message : String(error);
       if (msg.includes("404")) {
-        logger.debug(`useThreads: thread ${id} não encontrada (404)`)
-        return null
+        logger.debug(`useThreads: thread ${id} não encontrada (404)`);
+        return null;
       }
-      logger.error("useThreads: erro ao buscar thread:", error)
-      return null
+      logger.error("useThreads: erro ao buscar thread:", error);
+      return null;
     }
-  }
+  };
 
   // --------------------------------------------------------------------------
   // Update metadata (otimista, sem persistência extra — título fica local)
@@ -116,7 +116,7 @@ export function useThreads(userId: string | undefined) {
 
   const updateThreadMetadata = async (
     threadId: string,
-    metadata: Partial<ThreadMetadata>
+    metadata: Partial<ThreadMetadata>,
   ): Promise<void> => {
     setThreads((prev) =>
       prev.map((t) =>
@@ -126,11 +126,11 @@ export function useThreads(userId: string | undefined) {
               updated_at: new Date().toISOString(),
               metadata: { ...t.metadata, ...metadata },
             }
-          : t
-      )
-    )
+          : t,
+      ),
+    );
     // Sem endpoint de update de metadata no Vectora por ora (título é local)
-  }
+  };
 
   // --------------------------------------------------------------------------
   // Optimistic add
@@ -138,10 +138,10 @@ export function useThreads(userId: string | undefined) {
 
   const addOptimisticThread = (thread: Thread): void => {
     setThreads((prev) => {
-      if (prev.some((t) => t.thread_id === thread.thread_id)) return prev
-      return [thread, ...prev]
-    })
-  }
+      if (prev.some((t) => t.thread_id === thread.thread_id)) return prev;
+      return [thread, ...prev];
+    });
+  };
 
   // --------------------------------------------------------------------------
   // Delete
@@ -149,23 +149,23 @@ export function useThreads(userId: string | undefined) {
 
   const deleteThread = async (
     id: string,
-    onDeleteCurrent?: () => void
+    onDeleteCurrent?: () => void,
   ): Promise<void> => {
     // Update otimista
-    setThreads((prev) => prev.filter((t) => t.thread_id !== id))
+    setThreads((prev) => prev.filter((t) => t.thread_id !== id));
 
     try {
-      await deleteThreadApi(id)
-      logger.info("useThreads: thread deletada:", id)
-      onDeleteCurrent?.()
+      await deleteThreadApi(id);
+      logger.info("useThreads: thread deletada:", id);
+      onDeleteCurrent?.();
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error)
-      if (msg.includes("404")) return // Já deletada
-      logger.error("useThreads: erro ao deletar thread:", error)
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes("404")) return; // Já deletada
+      logger.error("useThreads: erro ao deletar thread:", error);
       // Reverte update otimista
-      if (userId) await getUserThreads(userId)
+      if (userId) await getUserThreads(userId);
     }
-  }
+  };
 
   // --------------------------------------------------------------------------
   // Return
@@ -180,5 +180,5 @@ export function useThreads(userId: string | undefined) {
     updateThreadMetadata,
     deleteThread,
     addOptimisticThread,
-  }
+  };
 }

@@ -48,7 +48,7 @@ async def handle_new_session(context: Any, console: Any) -> Any:
         # Fallback: gera ID de 6 dígitos aleatório (sem DB)
         import random
 
-        new_thread_id = f"{random.randint(0, 999_999):06d}"  # noqa: S311
+        new_thread_id = f"{random.randint(0, 999_999):06d}"  # noqa: S311  # nosec B311
         logger.warning(
             "SessionService unavailable, using fallback thread_id=%s", new_thread_id
         )
