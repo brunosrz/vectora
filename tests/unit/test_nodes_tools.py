@@ -66,6 +66,6 @@ def test_search_memory_registered():
 
 
 def test_all_tools_count():
-    # 20 tools após o Bloco C4 (19 + search_memory).
+    # 37 tools após o Bloco G3 (20 anteriores + 17 git/gh tools).
     # Guarda contra perda acidental de registro de ferramentas.
-    assert len(ALL_TOOLS) == 20
+    assert len(ALL_TOOLS) == 37

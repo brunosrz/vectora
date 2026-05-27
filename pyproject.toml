@@ -152,6 +152,7 @@ addopts = "-s --color=yes --tb=short"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+timeout = 120  # LanceDB background threads demoram ~30s para fechar
 filterwarnings = [
     # asyncio.iscoroutinefunction está deprecado em Python 3.12 e será removido no futuro.
     # Esses avisos vêm de libs externas (cohere-sdk, langchain-core) — não do nosso código.
