@@ -100,6 +100,38 @@ async def hitl_check(state: State) -> dict[str, Any]:
         logger.info("HITL: ações aprovadas pelo usuário")
         return {"hitl_cancelled": False}
 
+    if action == "edit":
+        # Usuário editou os args da primeira tool sensível antes de aprovar.
+        # Recria a AIMessage com os args atualizados para que coder_tools
+        # execute a versão editada pelo usuário.
+        new_args = decision.get("args") if isinstance(decision, dict) else {}
+        logger.info("HITL: args editados pelo usuário: %s", new_args)
+        try:
+            import copy
+
+            from langchain_core.messages import AIMessage
+
+            last_msg = state["messages"][-1]
+            target_id = sensitive[0]["id"]
+            new_tool_calls = copy.deepcopy(
+                list(getattr(last_msg, "tool_calls", []) or [])
+            )
+            for tc in new_tool_calls:
+                if tc.get("id") == target_id:
+                    tc["args"] = new_args or {}
+                    break
+            updated_msg = AIMessage(
+                content=getattr(last_msg, "content", ""),
+                id=getattr(last_msg, "id", None),
+                tool_calls=new_tool_calls,
+            )
+            return {"messages": [updated_msg], "hitl_cancelled": False}
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "HITL: falha ao aplicar edit, aprovando com args originais: %s", exc
+            )
+            return {"hitl_cancelled": False}
+
     # Rejeitado — injeta ToolMessages de cancelamento para cada tool sensível.
     # O coder recebe essas mensagens e sabe que a ação não foi executada,
     # podendo informar o usuário ou propor alternativas.

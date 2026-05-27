@@ -19,6 +19,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { ThinkingTimer } from "./animations/thinking-timer";
 import { AnimatedThinking } from "./animations/animated-thinking";
+import { HITLPanel } from "./features/hitl-panel";
 import type { Message } from "@/lib/types";
 import {
   INPUT_TOO_LONG_MESSAGE,
@@ -321,6 +322,14 @@ interface MessageItemProps {
   >;
   /** D4 — modo dev (?dev=1 na URL): exibe campos extras do ThinkingBlock */
   isDevMode?: boolean;
+  /** E2 — HITL: callback disparado quando o usuário aprova/rejeita/edita */
+  onHitlDecision?: (
+    messageId: string,
+    interruptId: string,
+    decision: "approve" | "reject" | `edit:${string}`,
+  ) => void;
+  /** E2 — threadId necessário para contextualizar o painel HITL */
+  threadId?: string;
 }
 
 export const MessageItem = memo(
@@ -341,6 +350,8 @@ export const MessageItem = memo(
     onToggleComment,
     setFeedbackComment,
     isDevMode = false,
+    onHitlDecision,
+    threadId = "",
   }: MessageItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(
@@ -1073,6 +1084,16 @@ export const MessageItem = memo(
                       </details>
                     </div>
                   )}
+
+                {/* E2 — Painel HITL (aprovação humana antes de ação destrutiva) */}
+                {message.hitlPending && onHitlDecision && (
+                  <HITLPanel
+                    messageId={message.id}
+                    pending={message.hitlPending}
+                    threadId={threadId}
+                    onDecision={onHitlDecision}
+                  />
+                )}
               </>
             )}
           </div>

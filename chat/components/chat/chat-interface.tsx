@@ -255,7 +255,7 @@ export function ChatInterface({
   // Custom Hooks
   // ============================================================================
 
-  const { processStream } = useStreamHandler({
+  const { processStream, processResume } = useStreamHandler({
     threadId,
     setMessages,
     agentConfig,
@@ -264,6 +264,35 @@ export function ChatInterface({
     userEmail,
     userName,
   });
+
+  // E2 — HITL: retoma execução pausada após decisão do usuário
+  const handleHitlDecision = useCallback(
+    async (
+      messageId: string,
+      interruptId: string,
+      decision: "approve" | "reject" | `edit:${string}`,
+    ) => {
+      uiDispatch({ type: "START_SEND" });
+      try {
+        const { assistantContent } = await processResume(
+          { thread_id: threadId, interrupt_id: interruptId, decision },
+          messageId,
+        );
+        if (assistantContent && onThreadUpdate) {
+          onThreadUpdate(
+            threadId,
+            customTitle || "Continuação",
+            truncate(assistantContent, 100),
+          );
+        }
+      } catch (error) {
+        console.error("Erro ao retomar após HITL:", error);
+      } finally {
+        uiDispatch({ type: "FINISH_SEND" });
+      }
+    },
+    [processResume, threadId, onThreadUpdate, customTitle, uiDispatch],
+  );
 
   const {
     feedbackComment,
@@ -910,6 +939,8 @@ export function ChatInterface({
           onCancelComment={handleCancelComment}
           onToggleComment={handleToggleComment}
           setFeedbackComment={setFeedbackComment}
+          onHitlDecision={handleHitlDecision}
+          threadId={threadId}
         />
 
         {isNewChat ? (

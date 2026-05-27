@@ -25,6 +25,13 @@ interface MessageListProps {
   setFeedbackComment: React.Dispatch<
     React.SetStateAction<{ [messageId: string]: string }>
   >;
+  /** E2 — HITL */
+  onHitlDecision?: (
+    messageId: string,
+    interruptId: string,
+    decision: "approve" | "reject" | `edit:${string}`,
+  ) => void;
+  threadId?: string;
 }
 
 export const MessageList = memo(function MessageList({
@@ -42,6 +49,8 @@ export const MessageList = memo(function MessageList({
   onCancelComment,
   onToggleComment,
   setFeedbackComment,
+  onHitlDecision,
+  threadId,
 }: MessageListProps) {
   // D4 — dev mode: detectado uma vez por render de lista, passado para cada item
   const searchParams = useSearchParams();
@@ -426,6 +435,8 @@ export const MessageList = memo(function MessageList({
                   onToggleComment={onToggleComment}
                   setFeedbackComment={setFeedbackComment}
                   isDevMode={isDevMode}
+                  onHitlDecision={onHitlDecision}
+                  threadId={threadId}
                 />
               </div>
             );

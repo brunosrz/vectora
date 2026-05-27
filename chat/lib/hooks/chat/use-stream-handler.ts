@@ -22,6 +22,7 @@ import {
   resumeChat,
   type StreamEvent,
   type ChatConfig,
+  type ResumeChatRequest,
 } from "../../api/vectora-client";
 import { ensureMessageExists, updateMessageInList } from "../../utils/chat";
 import type { AgentConfig } from "@/components/layout/agent-settings";
@@ -49,6 +50,11 @@ interface UseStreamHandlerReturn {
     assistantMessageId: string,
     images?: unknown[],
   ) => Promise<{ assistantContent: string; runId: string | undefined }>;
+  /** Retoma uma execução pausada por HITL (approve / reject / edit:<json>). */
+  processResume: (
+    request: ResumeChatRequest,
+    assistantMessageId: string,
+  ) => Promise<{ assistantContent: string }>;
 }
 
 // ============================================================================
@@ -175,7 +181,77 @@ export function useStreamHandler({
     [threadId, setMessages, agentConfig, shouldInterruptRef],
   );
 
-  return { processStream };
+  // ---------------------------------------------------------------------------
+  // processResume — retoma stream após aprovação/rejeição HITL
+  // ---------------------------------------------------------------------------
+  const processResume = useCallback(
+    async (
+      request: ResumeChatRequest,
+      assistantMessageId: string,
+    ): Promise<{ assistantContent: string }> => {
+      // Limpa hitlPending e reativa o spinner de thinking
+      setMessages((prev) =>
+        updateMessageInList(prev, assistantMessageId, (m) => ({
+          ...m,
+          hitlPending: undefined,
+          isThinking: true,
+          thinkingStartTime: Date.now(),
+        })),
+      );
+
+      let assistantContent = "";
+
+      try {
+        const events = resumeChat(request, abortRef.current?.signal);
+
+        for await (const event of events) {
+          if (shouldInterruptRef?.current) {
+            abortRef.current?.abort();
+            break;
+          }
+
+          await handleEvent(event, assistantMessageId, setMessages, (text) => {
+            assistantContent += text;
+          });
+
+          if (event.type === "done") break;
+          if (event.type === "error")
+            throw new Error(event.message || "Resume error");
+        }
+      } catch (err: unknown) {
+        if ((err as { name?: string }).name !== "AbortError") {
+          const msg = err instanceof Error ? err.message : String(err);
+          setMessages((prev) =>
+            updateMessageInList(prev, assistantMessageId, (m) => ({
+              ...m,
+              content: assistantContent || `Erro ao retomar: ${msg}`,
+              isThinking: false,
+            })),
+          );
+        }
+      } finally {
+        setMessages((prev) =>
+          updateMessageInList(prev, assistantMessageId, (m) =>
+            m.isThinking
+              ? {
+                  ...m,
+                  isThinking: false,
+                  thinkingDuration:
+                    m.thinkingStartTime !== undefined
+                      ? Date.now() - m.thinkingStartTime
+                      : undefined,
+                }
+              : m,
+          ),
+        );
+      }
+
+      return { assistantContent };
+    },
+    [threadId, setMessages, shouldInterruptRef],
+  );
+
+  return { processStream, processResume };
 }
 
 // ============================================================================
@@ -299,8 +375,27 @@ async function handleEvent(
     }
 
     case "ui_metrics":
-    case "hitl":
       break;
+
+    // E1 — HITLEvent: pausa do stream para aprovação humana
+    case "hitl": {
+      setMessages((prev) =>
+        updateMessageInList(prev, assistantMessageId, (m) => ({
+          ...m,
+          isThinking: false,
+          thinkingDuration:
+            m.thinkingStartTime !== undefined
+              ? Date.now() - m.thinkingStartTime
+              : undefined,
+          hitlPending: {
+            toolName: event.tool_name,
+            argsJson: event.args_json,
+            interruptId: event.interrupt_id,
+          },
+        })),
+      );
+      break;
+    }
 
     default:
       break;

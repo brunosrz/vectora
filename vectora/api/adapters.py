@@ -19,6 +19,7 @@ from vectora.api.node_labels import get_node_label
 from vectora.api.schemas import (
     DoneEvent,
     ErrorEvent,
+    HITLEvent,
     NodeEvent,
     StreamChatEventPayload,
     ThinkingEvent,
@@ -262,6 +263,33 @@ def adapt_stream(
                 # Rastreia tempo de início dos nós para calcular duration_ms
                 if kind == "on_chain_start":
                     node_start_times[name] = time.monotonic()
+
+                # Extrai data uma vez para o bloco HITL + orchestrator abaixo
+                data = event.get("data", {})
+
+                # ── HITL: interrupt() chamado em algum nó ────────────────────
+                # Quando hitl_check chama interrupt(payload), o LangGraph emite
+                # um on_chain_stream com "__interrupt__" no chunk. Detectamos
+                # esse sentinel e traduzimos para HITLEvent antes do DoneEvent.
+                if kind == "on_chain_stream":
+                    chunk = data.get("chunk", {})
+                    if isinstance(chunk, dict) and "__interrupt__" in chunk:
+                        raw_interrupts = chunk["__interrupt__"]
+                        for intr in raw_interrupts:
+                            intr_val = getattr(intr, "value", None)
+                            if not isinstance(intr_val, list) or not intr_val:
+                                continue
+                            first = intr_val[0]
+                            yield encode_event(
+                                HITLEvent(
+                                    tool_name=first.get("name", "unknown"),
+                                    args_json=json.dumps(first.get("args", {})),
+                                    interrupt_id=first.get("id", ""),
+                                )
+                            )
+                        # Stream encerra aqui — cliente exibirá o painel HITL
+                        # e chamará ResumeChat para continuar.
+                        return
 
                 # Caso especial: orchestrator decidiu "respond" — extrai a
                 # `response` do AIMessage emitido pelo Command e envia como

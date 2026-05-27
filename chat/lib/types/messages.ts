@@ -58,4 +58,12 @@ export interface Message {
 
   // Interruption tracking
   wasInterrupted?: boolean;
+
+  // Bloco E — HITL em Chat
+  /** Preenchido quando o stream pausa para aprovação humana. */
+  hitlPending?: {
+    toolName: string;
+    argsJson: string;
+    interruptId: string;
+  };
 }
