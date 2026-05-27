@@ -624,8 +624,27 @@ def run() -> None:
                 args.host,
                 port,
             )
-            uvicorn.run(app, host=args.host, port=port, log_level="info")
-            return
+            # log_level do uvicorn afeta logs do próprio uvicorn (Started server,
+            # Application startup, etc.). Ruído em dev — usar "warning" como
+            # padrão e permitir override via env para depuração.
+            uvicorn_log_level = os.environ.get(
+                "VECTORA_UVICORN_LOG_LEVEL", "warning"
+            )
+            uvicorn.run(
+                app,
+                host=args.host,
+                port=port,
+                log_level=uvicorn_log_level,
+                access_log=False,  # access logs já são filtrados via log_setup
+            )
+            # uvicorn.run() retorna após o lifespan completar o shutdown.
+            # No Windows, threads não-daemon de libs externas (langsmith,
+            # httpx, SQLite do tracer, Cohere rate limiter) mantêm o
+            # interpreter vivo indefinidamente — `os._exit` ignora elas e
+            # libera o terminal. Os recursos críticos (checkpointer SQLite,
+            # background worker) já foram fechados no lifespan.
+            logger.info("Vectora server: encerrando processo")
+            os._exit(0)
 
     # ── traces ────────────────────────────────────────────────────────────────
     if command == "traces":

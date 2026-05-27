@@ -21,6 +21,7 @@ import {
   INPUT_TOO_LONG_MESSAGE,
   MAX_INPUT_CHARS,
 } from "@/lib/constants/features";
+import { stripMarkdownEnvelope } from "@/lib/utils/string";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
 import Image from "next/image";
 
@@ -694,7 +695,7 @@ export const MessageItem = memo(
                         remarkPlugins={[remarkGfm]}
                         components={markdownComponents}
                       >
-                        {message.content}
+                        {stripMarkdownEnvelope(message.content)}
                       </ReactMarkdown>
                     ) : null}
                   </div>

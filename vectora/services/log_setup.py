@@ -72,12 +72,20 @@ class _BackgroundConsoleFilter(logging.Filter):
     Loggers bloqueados no console (WARNING+ ainda passam):
     - vectora.services.background  (worker de embedding)
     - vectora.services.queue       (fila de embedding)
+    - vectora.graph                (build/compile do grafo — repete por request)
+    - vectora.agents.orchestrator  (session_context + decisão de routing)
+    - vectora.tools                (tools initialized)
+    - vectora.api.handlers.chat    (graph inicializado)
     """
 
     _CONSOLE_NOISY: frozenset[str] = frozenset(
         {
             "vectora.services.background",
             "vectora.services.queue",
+            "vectora.graph",
+            "vectora.agents.orchestrator",
+            "vectora.tools",
+            "vectora.api.handlers.chat",
         }
     )
 
@@ -169,6 +177,14 @@ def setup_logging(
             "huggingface_hub",
             "huggingface_hub.utils",
             "huggingface_hub.utils._http",
+            # LangSmith — rate-limit 429 quando o plano gratuito atinge o teto
+            # mensal; o trace não é crítico para a operação do agente.
+            "langsmith",
+            "langsmith.client",
+            # uvicorn — access logs (200 OK por request) são ruído em dev.
+            # uvicorn.error mantém erros reais (5xx, exceptions no startup).
+            "uvicorn.access",
+            "fastapi",
         ]
         for logger_name in silent_loggers:
             logging.getLogger(logger_name).setLevel(logging.CRITICAL)

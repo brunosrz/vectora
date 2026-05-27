@@ -177,19 +177,17 @@ async def delete_thread(request: DeleteThreadRequest) -> dict:
 
 @router.post("/vectora.chat.v1.ThreadService/GetHistory")
 async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
-    """Retorna o histórico de mensagens de uma thread via checkpointer LangGraph."""
+    """Retorna o histórico de mensagens de uma thread via checkpointer LangGraph.
+
+    Reusa o singleton do grafo (mesmo que o handler de chat) — evita rebuild
+    do grafo + abertura de uma nova connection SQLite a cada request.
+    """
     try:
-        from pathlib import Path
+        from vectora.api.handlers.chat import _get_graph
 
-        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-
-        from vectora.graph import build_graph
-
-        db_path = str(Path.home() / ".vectora" / "checkpoints.db")
-        async with AsyncSqliteSaver.from_conn_string(db_path) as checkpointer:
-            graph = build_graph(checkpointer)
-            config = {"configurable": {"thread_id": request.thread_id}}
-            state = await graph.aget_state(config)
+        graph = await _get_graph()
+        config = {"configurable": {"thread_id": request.thread_id}}
+        state = await graph.aget_state(config)
 
         if state is None or not state.values:
             return GetHistoryResponse(messages=[])

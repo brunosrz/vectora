@@ -18,6 +18,8 @@ import { ChatInput } from "./chat-input";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { VECTORA_API_URL } from "@/lib/constants/api";
 import { getHistory } from "@/lib/api/vectora-client";
+import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
+import { useThreadsStore } from "@/lib/stores/threads-store";
 
 // Stubs de compatibilidade — LangSmith removido
 const readRun = async (_runId: string) => null;
@@ -98,7 +100,8 @@ export function ChatInterface({
   // State Management
   // ============================================================================
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Cached por threadId via Zustand — switching back não causa flash vazio.
+  const [messages, setMessages] = useThreadMessages(threadId);
 
   // UI state with reducer
   const {
@@ -384,9 +387,18 @@ export function ChatInterface({
       }
     };
 
-    // Start loading state
     console.log("Thread ID changed to:", threadId);
-    uiDispatch({ type: "SET_LOADING_THREAD", payload: true });
+
+    // Stale-while-revalidate: se já temos cache pra esta thread, renderiza
+    // instantâneo e refetch em background SEM loading state (evita flash vazio).
+    // Sem cache: comportamento legacy (loading + fetch).
+    //
+    // IMPORTANTE: lemos o cache via `getState()` (não reativo) para não
+    // adicionar `hasCachedMessages` como dep — caso contrário o effect
+    // re-roda toda vez que o cache muda, causando re-fetch em loop.
+    const hasCached =
+      (useThreadsStore.getState().cache[threadId]?.messages.length ?? 0) > 0;
+    uiDispatch({ type: "SET_LOADING_THREAD", payload: !hasCached });
 
     // Clear the "sent message" flag if we're switching to a completely different thread
     // (but keep it if it's the same thread - that's the case we want to skip reload)

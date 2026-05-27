@@ -19,7 +19,9 @@ Endpoints registrados:
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -35,42 +37,77 @@ logger = logging.getLogger(__name__)
 _CHAT_STATIC_DIR = Path(__file__).parent.parent / "chat_static"
 
 
+# Tempo máximo total para o shutdown — depois disso, `os._exit` em main.py
+# encerra o processo de qualquer jeito. Configurável via env.
+_SHUTDOWN_TIMEOUT_S = float(os.environ.get("VECTORA_SHUTDOWN_TIMEOUT_S", "10"))
+
+# Pré-aquecer o grafo no startup. Reduz latência da 1ª request (~3-5s) em troca
+# de inicialização mais lenta. Default desligado (dev-friendly).
+_WARMUP_GRAPH = os.environ.get("VECTORA_WARMUP_GRAPH", "0").lower() in {
+    "1",
+    "true",
+    "yes",
+}
+
+
+async def _stop_background_worker() -> None:
+    """Para o background embedding worker se estiver rodando. Idempotente."""
+    from vectora.services import background as bg
+
+    worker = bg._worker
+    if worker is None:
+        return
+    bg._worker = None
+    try:
+        await worker.stop(timeout_seconds=5)
+        logger.info("api/server: background worker parado")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("api/server: erro ao parar background worker: %s", exc)
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):  # noqa: ARG001 — assinatura do FastAPI
     """Startup / shutdown da aplicação.
 
-    Responsabilidade principal: fechar recursos async-with longos (checkpointer
-    SQLite, background workers) corretamente quando o uvicorn recebe SIGINT,
-    para que ``Ctrl+C`` derrube o processo sem deixar threads/conexões penduradas.
+    **Startup**: opcionalmente pré-aquece o grafo (``VECTORA_WARMUP_GRAPH=1``).
+
+    **Shutdown**: fecha recursos async-with longos (background worker primeiro,
+    depois checkpointer SQLite) **em paralelo**, com timeout global. Recursos
+    independentes não precisam esperar uns aos outros.
+
+    O hard-exit final (``os._exit(0)`` em ``main.py``) cobre o caso de threads
+    não-daemon de libs externas (langsmith, httpx, cohere) que ignoram cancel.
     """
     logger.info("api/server: startup")
+    if _WARMUP_GRAPH:
+        from vectora.api.handlers.chat import awarm_graph
+
+        await awarm_graph()
+
     try:
         yield
     finally:
         logger.info("api/server: shutdown — fechando recursos")
+        from vectora.api.handlers.chat import aclose_graph
 
-        # 1) Fecha o AsyncSqliteSaver mantido vivo pelo handler de chat
+        # Ordem lógica: parar workers que podem estar usando o grafo ANTES de
+        # fechar o checkpointer. Mas como ambos têm `try/except` internos e são
+        # independentes na prática, rodamos em paralelo via `gather` para
+        # encurtar o tempo total de shutdown.
         try:
-            from vectora.api.handlers import chat as chat_handler
-
-            if chat_handler._checkpointer_ctx is not None:
-                await chat_handler._checkpointer_ctx.__aexit__(None, None, None)
-                chat_handler._checkpointer_ctx = None
-                chat_handler._graph = None
-                logger.info("api/server: checkpointer SQLite fechado")
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("api/server: erro ao fechar checkpointer: %s", exc)
-
-        # 2) Para o background embedding worker (se rodando)
-        try:
-            from vectora.services import background as bg
-
-            if bg._worker is not None:
-                await bg._worker.stop(timeout_seconds=5)
-                bg._worker = None
-                logger.info("api/server: background worker parado")
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("api/server: background worker não estava ativo: %s", exc)
+            await asyncio.wait_for(
+                asyncio.gather(
+                    _stop_background_worker(),
+                    aclose_graph(),
+                    return_exceptions=True,
+                ),
+                timeout=_SHUTDOWN_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                "api/server: shutdown excedeu %.1fs — hard-exit cuidará do resto",
+                _SHUTDOWN_TIMEOUT_S,
+            )
 
 
 def create_app(*, serve_static: bool = True) -> FastAPI:

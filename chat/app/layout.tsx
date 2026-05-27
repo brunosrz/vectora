@@ -23,15 +23,15 @@ export const metadata: Metadata = {
       { url: "/vectora.ico", sizes: "any" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/vectora.png", sizes: "600x600", type: "image/png" },
+      { url: "/favicon-600x600.png", sizes: "600x600", type: "image/png" },
     ],
     shortcut: "/vectora.ico",
-    apple: "/vectora.png",
+    apple: "/favicon-600x600.png",
   },
   openGraph: {
     title: "Vectora",
     description: "Vectora — seu agente de IA local com RAG nativo",
-    images: ["/vectora.png"],
+    images: ["/favicon-600x600.png"],
   },
 };
 

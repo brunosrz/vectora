@@ -8,6 +8,7 @@ import { ChatInterface } from "@/components/chat/chat-interface";
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog";
 import { useThreads, type ClientProfile } from "@/lib/hooks/threads";
 import { useUserId, useClientProfile } from "@/lib/hooks/auth";
+import { useThreadsStore } from "@/lib/stores/threads-store";
 import { resolveClientProfile } from "@/lib/config/client-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { generateQuickTitle, generateThreadTitle } from "@/lib/utils/string";
@@ -119,8 +120,11 @@ function DashboardContent() {
   };
 
   // Delete a thread
+  const invalidateThreadCache = useThreadsStore((s) => s.invalidate);
   const handleDeleteThread = (threadIdToDelete: string) => {
     deleteThread(threadIdToDelete, () => {
+      // Invalida o cache local (Zustand) para não restaurar mensagens "fantasma".
+      invalidateThreadCache(threadIdToDelete);
       // If deleting current thread, create a new one
       if (threadIdToDelete === threadId) {
         const newThreadId = crypto.randomUUID();

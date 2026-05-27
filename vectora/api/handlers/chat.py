@@ -50,8 +50,8 @@ async def _get_graph() -> Any:
     """Obtém o grafo LangGraph compilado (singleton).
 
     O ``AsyncSqliteSaver`` é um async context manager — abrimos uma vez na primeira
-    chamada e mantemos a referência no módulo. O processo lifecycle cuida do
-    fechamento na finalização do servidor.
+    chamada e mantemos a referência no módulo. ``aclose_graph()`` fecha tudo no
+    shutdown do servidor.
     """
     global _graph, _checkpointer_ctx
     if _graph is not None:
@@ -70,6 +70,39 @@ async def _get_graph() -> Any:
         _graph = build_graph(checkpointer)
         logger.info("api/chat: grafo LangGraph inicializado (db=%s)", db_path)
     return _graph
+
+
+async def aclose_graph() -> None:
+    """Fecha o grafo + checkpointer SQLite. Idempotente.
+
+    Deve ser chamado no shutdown do FastAPI (lifespan). Encapsula o estado
+    privado do módulo (``_graph``, ``_checkpointer_ctx``) — o resto da app
+    nunca toca nesses globals diretamente.
+    """
+    global _graph, _checkpointer_ctx
+    async with _graph_lock:
+        if _checkpointer_ctx is None:
+            return
+        ctx = _checkpointer_ctx
+        _checkpointer_ctx = None
+        _graph = None
+        try:
+            await ctx.__aexit__(None, None, None)
+            logger.info("api/chat: checkpointer SQLite fechado")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("api/chat: erro ao fechar checkpointer: %s", exc)
+
+
+async def awarm_graph() -> None:
+    """Inicializa o grafo eagerly no startup (opt-in).
+
+    Evita que a primeira request pague o custo de compilação (~3-5s).
+    Falhas aqui não derrubam o servidor — apenas logam aviso.
+    """
+    try:
+        await _get_graph()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("api/chat: warmup do grafo falhou (continuando): %s", exc)
 
 
 # ---------------------------------------------------------------------------
