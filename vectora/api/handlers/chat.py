@@ -133,12 +133,6 @@ async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
         "recursion_limit": request.config.recursion_limit or 50,
     }
 
-    # Sobrescreve modelo/provider se fornecido na request
-    if request.config.llm_provider:
-        config["configurable"]["active_provider"] = request.config.llm_provider
-    if request.config.model:
-        config["configurable"]["active_model"] = request.config.model
-
     events = graph.astream_events(
         {"messages": [HumanMessage(content=request.content)]},
         config=config,

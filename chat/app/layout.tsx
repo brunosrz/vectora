@@ -18,7 +18,6 @@ const inconsolata = Inconsolata({
 
 export const metadata: Metadata = {
   title: "Vectora",
-  description: "Vectora — seu agente de IA local com RAG nativo",
   icons: {
     icon: [
       { url: "/vectora.ico", sizes: "any" },
@@ -29,10 +28,10 @@ export const metadata: Metadata = {
     shortcut: "/vectora.ico",
     apple: "/favicon-600x600.png",
   },
-  openGraph: {
-    title: "Vectora",
-    description: "Vectora — seu agente de IA local com RAG nativo",
-    images: ["/favicon-600x600.png"],
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
   },
 };
 

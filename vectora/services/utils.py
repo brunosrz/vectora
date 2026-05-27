@@ -74,7 +74,7 @@ def load_llm() -> BaseLanguageModel:
                 model_provider="google-genai",
                 api_key=get_env("GOOGLE_API_KEY"),
                 temperature=temperature,
-                configurable_fields="any",
+                configurable_fields=["model"],
             ),
         )
 
@@ -93,7 +93,7 @@ def load_llm() -> BaseLanguageModel:
                     "OLLAMA_BASE_URL", "http://127.0.0.1:11434"
                 ),
                 temperature=temperature,
-                configurable_fields="any",
+                configurable_fields=["model"],
             ),
         )
 
@@ -110,7 +110,7 @@ def load_llm() -> BaseLanguageModel:
                 model_provider="openai",
                 api_key=get_env("OPENAI_API_KEY"),
                 temperature=temperature,
-                configurable_fields="any",
+                configurable_fields=["model"],
             ),
         )
 
@@ -127,7 +127,7 @@ def load_llm() -> BaseLanguageModel:
                 model_provider="anthropic",
                 api_key=get_env("ANTHROPIC_API_KEY"),
                 temperature=temperature,
-                configurable_fields="any",
+                configurable_fields=["model"],
             ),
         )
 

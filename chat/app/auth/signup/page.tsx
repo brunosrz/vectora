@@ -111,7 +111,7 @@ export default function SignUpPage() {
           />
           <h1
             className="text-2xl font-semibold tracking-tight text-foreground"
-            style={{ fontFamily: "JetBrains Mono, monospace" }}
+            style={{ fontFamily: "var(--font-aeonik-mono)" }}
           >
             Vectora
           </h1>

@@ -43,7 +43,7 @@ export function Header({
           />
           <span
             className="text-xl font-semibold tracking-tight text-foreground"
-            style={{ fontFamily: "JetBrains Mono, monospace" }}
+            style={{ fontFamily: "var(--font-aeonik-mono)" }}
           >
             Vectora
           </span>

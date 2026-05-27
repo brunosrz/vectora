@@ -124,14 +124,14 @@ export function WelcomeScreen({
             />
             <span
               className="text-5xl sm:text-6xl font-bold tracking-tight text-primary"
-              style={{ fontFamily: "JetBrains Mono, monospace" }}
+              style={{ fontFamily: "var(--font-aeonik-mono)" }}
             >
               Vectora
             </span>
           </div>
           <h2
             className="text-2xl sm:text-4xl font-semibold text-white mb-2"
-            style={{ fontFamily: "JetBrains Mono, monospace" }}
+            style={{ fontFamily: "var(--font-aeonik-mono)" }}
           >
             What can I help with?
           </h2>

@@ -99,7 +99,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         if not _auth_enabled() or _is_public_route(path):
-            request.state.user = None
+            # Rotas públicas não bloqueiam, mas tentamos extrair o usuário
+            # para que handlers como /auth/me possam verificar autenticação.
+            request.state.user = await _extract_user(request)
             return await call_next(request)
 
         user = await _extract_user(request)
