@@ -13,9 +13,11 @@ Formato de resposta:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import uuid
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -40,18 +42,33 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 _graph: Any = None
+_checkpointer_ctx: Any = None  # mantém o AsyncSqliteSaver vivo durante todo o processo
+_graph_lock = asyncio.Lock()
 
 
-def _get_graph() -> Any:
-    """Obtém o grafo LangGraph compilado (singleton)."""
-    global _graph
-    if _graph is None:
+async def _get_graph() -> Any:
+    """Obtém o grafo LangGraph compilado (singleton).
+
+    O ``AsyncSqliteSaver`` é um async context manager — abrimos uma vez na primeira
+    chamada e mantemos a referência no módulo. O processo lifecycle cuida do
+    fechamento na finalização do servidor.
+    """
+    global _graph, _checkpointer_ctx
+    if _graph is not None:
+        return _graph
+    async with _graph_lock:
+        if _graph is not None:  # double-check após o lock
+            return _graph
+        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
         from vectora.graph import build_graph
-        from vectora.services.session import get_checkpointer_sync
 
-        checkpointer = get_checkpointer_sync()
+        db_path = str(Path.home() / ".vectora" / "checkpoints.db")
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
+        checkpointer = await _checkpointer_ctx.__aenter__()
         _graph = build_graph(checkpointer)
-        logger.info("api/chat: grafo LangGraph inicializado")
+        logger.info("api/chat: grafo LangGraph inicializado (db=%s)", db_path)
     return _graph
 
 
@@ -71,7 +88,7 @@ async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
     thread_id = request.thread_id or str(uuid.uuid4())
 
     try:
-        graph = _get_graph()
+        graph = await _get_graph()
     except Exception as exc:
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -122,7 +139,7 @@ async def resume_chat(request: ResumeChatRequest) -> StreamingResponse:
     from langgraph.types import Command
 
     try:
-        graph = _get_graph()
+        graph = await _get_graph()
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

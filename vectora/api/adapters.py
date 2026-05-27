@@ -61,15 +61,57 @@ def _get_tool_meta(tool_name: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Nós que emitem tokens (sub-grafos podem ter nomes diferentes)
+# Nós que emitem tokens user-facing (sub-grafos podem ter nomes diferentes)
 # ---------------------------------------------------------------------------
 _STREAMING_NODES = {
     "invoke_llm",
-    "orchestrator",
     "search_agent",
     "coder_agent",
     "rag_agent",
 }
+
+# Nós cuja saída do LLM é JSON estruturado (Pydantic) — não é prosa pro usuário.
+# Os tokens emitidos durante a decisão estruturada são filtrados; o conteúdo final
+# (campo `response` da decisão "respond") é emitido como TokenEvent único no
+# `on_chain_end` do nó orchestrator (ver adapt_stream).
+_STRUCTURED_OUTPUT_NODES = {"orchestrator"}
+
+
+def _extract_orchestrator_response(event: dict[str, Any]) -> str | None:
+    """Extrai o texto da resposta direta do orchestrator (action="respond").
+
+    O orchestrator retorna ``Command(goto=END, update={"messages": [AIMessage(content=...)]})``.
+    No evento ``on_chain_end`` do nó, o ``data.output`` contém esse update.
+    Quando o orchestrator delega (não responde direto), não há AIMessage com
+    conteúdo de texto — retorna None.
+    """
+    data = event.get("data", {}) or {}
+    output = data.get("output", None)
+    if output is None:
+        return None
+
+    # output pode ser Command, dict, ou objeto com atributo .update
+    messages: list | None = None
+    if isinstance(output, dict):
+        # Estado dict — `messages` em raiz, ou em "update"
+        messages = output.get("messages")
+        if messages is None and isinstance(output.get("update"), dict):
+            messages = output["update"].get("messages")
+    elif hasattr(output, "update"):
+        upd = getattr(output, "update", None)
+        if isinstance(upd, dict):
+            messages = upd.get("messages")
+
+    if not messages:
+        return None
+
+    last = messages[-1]
+    content = getattr(last, "content", None)
+    if content is None and isinstance(last, dict):
+        content = last.get("content")
+    if not content or not isinstance(content, str):
+        return None
+    return content
 
 
 def langgraph_event_to_payload(
@@ -86,6 +128,13 @@ def langgraph_event_to_payload(
 
     # ── Tokens de texto do LLM ────────────────────────────────────────────
     if kind == "on_chat_model_stream":
+        # Filtrar saída de nós com structured output (Pydantic) — esses tokens
+        # são JSON cru da decisão estruturada, não user-facing.
+        md = event.get("metadata", {}) or {}
+        lg_node = md.get("langgraph_node", "")
+        if lg_node in _STRUCTURED_OUTPUT_NODES:
+            return None
+
         chunk = data.get("chunk")
         if chunk is None:
             return None
@@ -96,8 +145,6 @@ def langgraph_event_to_payload(
             content = "".join(b.get("text", "") for b in content if isinstance(b, dict))
         if not content:
             return None
-        # Filtrar nós que não deveriam emitir tokens pro cliente
-        # (ex.: chamadas LLM internas de julgamento/curadoria)
         run_name: str = event.get("run_name", "")
         return TokenEvent(content=content, node=run_name or name)
 
@@ -181,6 +228,17 @@ def adapt_stream(
                 # Rastreia tempo de início dos nós para calcular duration_ms
                 if kind == "on_chain_start":
                     node_start_times[name] = time.monotonic()
+
+                # Caso especial: orchestrator decidiu "respond" — extrai a
+                # `response` do AIMessage emitido pelo Command e envia como
+                # TokenEvent único (já que os tokens do LLM foram filtrados
+                # acima por serem JSON estruturado).
+                if kind == "on_chain_end" and name == "orchestrator":
+                    response_text = _extract_orchestrator_response(event)
+                    if response_text:
+                        yield encode_event(
+                            TokenEvent(content=response_text, node="orchestrator")
+                        )
 
                 payload = langgraph_event_to_payload(event)
                 if payload is None:

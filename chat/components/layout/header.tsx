@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ChevronDown, Settings } from "lucide-react";
 
 import { AgentSettings, type AgentConfig } from "./agent-settings";
@@ -31,6 +32,14 @@ export function Header({
     <header className="border-b border-border/60 bg-background h-16 flex items-center">
       <div className="flex items-center justify-between w-full px-4 sm:px-6">
         <div className="flex items-center gap-2">
+          <Image
+            src="/vectora.svg"
+            alt="Vectora"
+            width={28}
+            height={28}
+            priority
+            className="h-7 w-7"
+          />
           <span
             className="text-xl font-semibold tracking-tight text-foreground"
             style={{ fontFamily: "JetBrains Mono, monospace" }}

@@ -20,6 +20,7 @@ Endpoints registrados:
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -32,6 +33,44 @@ logger = logging.getLogger(__name__)
 
 # Pasta onde o `make build-chat` deposita o build Next.js
 _CHAT_STATIC_DIR = Path(__file__).parent.parent / "chat_static"
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):  # noqa: ARG001 — assinatura do FastAPI
+    """Startup / shutdown da aplicação.
+
+    Responsabilidade principal: fechar recursos async-with longos (checkpointer
+    SQLite, background workers) corretamente quando o uvicorn recebe SIGINT,
+    para que ``Ctrl+C`` derrube o processo sem deixar threads/conexões penduradas.
+    """
+    logger.info("api/server: startup")
+    try:
+        yield
+    finally:
+        logger.info("api/server: shutdown — fechando recursos")
+
+        # 1) Fecha o AsyncSqliteSaver mantido vivo pelo handler de chat
+        try:
+            from vectora.api.handlers import chat as chat_handler
+
+            if chat_handler._checkpointer_ctx is not None:
+                await chat_handler._checkpointer_ctx.__aexit__(None, None, None)
+                chat_handler._checkpointer_ctx = None
+                chat_handler._graph = None
+                logger.info("api/server: checkpointer SQLite fechado")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("api/server: erro ao fechar checkpointer: %s", exc)
+
+        # 2) Para o background embedding worker (se rodando)
+        try:
+            from vectora.services import background as bg
+
+            if bg._worker is not None:
+                await bg._worker.stop(timeout_seconds=5)
+                bg._worker = None
+                logger.info("api/server: background worker parado")
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("api/server: background worker não estava ativo: %s", exc)
 
 
 def create_app(*, serve_static: bool = True) -> FastAPI:
@@ -50,6 +89,7 @@ def create_app(*, serve_static: bool = True) -> FastAPI:
             "API de chat do Vectora — streaming via SSE, gerenciamento de threads, "
             "autodescoberta de ferramentas."
         ),
+        lifespan=_lifespan,
         # Desabilita docs interativas em produção (opcional)
         docs_url="/docs",
         redoc_url=None,

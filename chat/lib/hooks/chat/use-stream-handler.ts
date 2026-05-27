@@ -79,12 +79,14 @@ export function useStreamHandler({
       abortRef.current = abort
 
       // Garante que a mensagem do assistente existe no estado
+      const thinkingStartTime = Date.now()
       const baseAssistantMessage: Message = {
         id: assistantMessageId,
         role: "assistant",
         content: "",
         timestamp: new Date(),
         isThinking: true,
+        thinkingStartTime,
       }
       setMessages((prev) =>
         ensureMessageExists(prev, assistantMessageId, baseAssistantMessage)
@@ -128,16 +130,47 @@ export function useStreamHandler({
         }
       } catch (err: unknown) {
         if ((err as { name?: string }).name === "AbortError") {
-          // Interrompido pelo usuário — não é um erro
+          // Interrompido pelo usuário — não é um erro; encerra o thinking timer
+          setMessages((prev) =>
+            updateMessageInList(prev, assistantMessageId, (m) => ({
+              ...m,
+              isThinking: false,
+              thinkingDuration:
+                m.thinkingStartTime !== undefined
+                  ? Date.now() - m.thinkingStartTime
+                  : undefined,
+            }))
+          )
         } else {
           const msg = err instanceof Error ? err.message : String(err)
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
               ...m,
               content: assistantContent || `Erro no stream: ${msg}`,
+              isThinking: false,
+              thinkingDuration:
+                m.thinkingStartTime !== undefined
+                  ? Date.now() - m.thinkingStartTime
+                  : undefined,
             }))
           )
         }
+      } finally {
+        // Defesa em profundidade: garante que o spinner sempre encerra
+        setMessages((prev) =>
+          updateMessageInList(prev, assistantMessageId, (m) =>
+            m.isThinking
+              ? {
+                  ...m,
+                  isThinking: false,
+                  thinkingDuration:
+                    m.thinkingStartTime !== undefined
+                      ? Date.now() - m.thinkingStartTime
+                      : undefined,
+                }
+              : m
+          )
+        )
       }
 
       return { assistantContent, runId: resolvedRunId }

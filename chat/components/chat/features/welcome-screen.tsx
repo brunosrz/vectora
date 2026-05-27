@@ -113,7 +113,15 @@ export function WelcomeScreen({
       <div className="w-full max-w-3xl -mt-10 sm:-mt-20">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="mb-6 flex justify-center">
+          <div className="mb-6 flex items-center justify-center gap-3 sm:gap-4">
+            <Image
+              src="/vectora.svg"
+              alt="Vectora"
+              width={64}
+              height={64}
+              priority
+              className="h-12 w-12 sm:h-16 sm:w-16"
+            />
             <span
               className="text-5xl sm:text-6xl font-bold tracking-tight text-primary"
               style={{ fontFamily: "JetBrains Mono, monospace" }}

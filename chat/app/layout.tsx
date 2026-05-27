@@ -20,11 +20,18 @@ export const metadata: Metadata = {
   description: "Vectora — seu agente de IA local com RAG nativo",
   icons: {
     icon: [
+      { url: "/vectora.ico", sizes: "any" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/vectora.png", sizes: "600x600", type: "image/png" },
     ],
-    shortcut: "/favicon-32x32.png",
-    apple: "/favicon-32x32.png",
+    shortcut: "/vectora.ico",
+    apple: "/vectora.png",
+  },
+  openGraph: {
+    title: "Vectora",
+    description: "Vectora — seu agente de IA local com RAG nativo",
+    images: ["/vectora.png"],
   },
 };
 

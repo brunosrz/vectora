@@ -14,19 +14,17 @@ export const truncate = (text: string, max: number): string =>
 /**
  * Thread Title Generation
  *
- * Generates concise, descriptive titles for conversation threads by calling
- * the backend API endpoint which uses Google Gemini for AI-powered titles.
+ * Generates concise, descriptive titles for conversation threads.
+ * Atualmente usa truncate da primeira mensagem do usuário.
  *
- * - Backend title generation (secure, server-side API key)
- * - Heuristic-based quick titles (instant, no API call)
- * - Fallback truncation (when API is unavailable)
+ * TODO: implementar endpoint /generate-title no backend Vectora
+ * (gerar título via LLM a partir das primeiras 2-3 mensagens da thread).
  */
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-import { VECTORA_API_URL as LANGGRAPH_API_URL } from "../../constants/api"
 import { DEFAULT_TITLE_MAX_LENGTH } from "../../constants/features"
 
 const DEFAULT_MAX_LENGTH = DEFAULT_TITLE_MAX_LENGTH
@@ -41,65 +39,21 @@ interface TitleGenerationOptions {
   maxLength?: number
 }
 
-interface TitleGenerationResponse {
-  title: string
-}
-
 // ============================================================================
-// Backend API Title Generation
+// Title Generation (truncate-based; AI endpoint TODO)
 // ============================================================================
 
 /**
- * Generate a smart title for a conversation thread using backend API.
- * Falls back to truncated user message if API fails or is unavailable.
- *
- * The backend uses Google Gemini for AI-powered title generation,
- * keeping API keys secure on the server side.
+ * Generate a thread title. Currently uses truncate fallback.
  *
  * @param options - Configuration for title generation
- * @returns A concise, descriptive title (max 60 chars by default)
+ * @returns A concise title (max 60 chars by default)
  */
 export async function generateThreadTitle({
   userMessage,
-  assistantResponse,
   maxLength = DEFAULT_MAX_LENGTH,
 }: TitleGenerationOptions): Promise<string> {
-  // Fallback: use truncated message if no API URL configured
-  if (!LANGGRAPH_API_URL) {
-    console.warn("No LangGraph API URL configured, using fallback title")
-    return truncateTitle(userMessage, maxLength)
-  }
-
-  try {
-    const response = await fetch(`${LANGGRAPH_API_URL}/generate-title`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userMessage,
-        assistantResponse,
-        maxLength,
-      }),
-    })
-
-    if (!response.ok) {
-      console.error("Title generation API error:", response.status)
-      return truncateTitle(userMessage, maxLength)
-    }
-
-    const data: TitleGenerationResponse = await response.json()
-    const generatedTitle = data.title?.trim()
-
-    if (!generatedTitle) {
-      return truncateTitle(userMessage, maxLength)
-    }
-
-    return generatedTitle
-  } catch (error) {
-    console.error("Error generating title:", error)
-    return truncateTitle(userMessage, maxLength)
-  }
+  return truncateTitle(userMessage, maxLength)
 }
 
 // ============================================================================
