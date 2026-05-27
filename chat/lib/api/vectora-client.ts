@@ -92,36 +92,82 @@ export interface HistoryMessage {
 }
 
 // ============================================================================
+// Token refresh automático
+// ============================================================================
+
+/**
+ * Tenta renovar o access token via /api/auth/refresh (proxy Hono).
+ *
+ * Chamado automaticamente quando qualquer endpoint retorna 401.
+ * O proxy Hono repassa os cookies corretamente, garantindo que o
+ * refresh token seja enviado ao backend e que os novos cookies sejam
+ * definidos no browser antes de retornar.
+ *
+ * @returns true se o refresh foi bem-sucedido
+ */
+async function _tryRefreshToken(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({}),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Redireciona para login quando o refresh falha.
+ * No-op em SSR (sem window).
+ */
+function _redirectToLogin(): void {
+  if (typeof window !== "undefined") {
+    window.location.href = "/auth/signin";
+  }
+}
+
+// ============================================================================
 // Chat streaming
 // ============================================================================
 
 /**
  * Inicia ou continua um chat via SSE streaming.
  *
- * @yields StreamEvent — eventos tipados (token, tool_call, done, etc.)
+ * Se o backend retornar 401 (token expirado), renova o access token
+ * automaticamente via /api/auth/refresh e retenta uma vez antes de
+ * redirecionar para /auth/signin.
  *
- * @example
- * ```ts
- * for await (const event of streamChat({ content: "Olá", thread_id: "abc" })) {
- *   if (event.type === "token") appendText(event.content)
- *   if (event.type === "done") break
- * }
- * ```
+ * @yields StreamEvent — eventos tipados (token, tool_call, done, etc.)
  */
 export async function* streamChat(
   request: StreamChatRequest,
   signal?: AbortSignal,
 ): AsyncGenerator<StreamEvent> {
-  const response = await fetch(
-    `${VECTORA_API_URL}/vectora.chat.v1.ChatService/StreamChat`,
-    {
+  const url = `${VECTORA_API_URL}/vectora.chat.v1.ChatService/StreamChat`;
+
+  const doFetch = () =>
+    fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(request),
       signal,
-    },
-  );
+    });
+
+  let response = await doFetch();
+
+  // Refresh automático quando o access token expira (TTL: 15 min)
+  if (response.status === 401) {
+    const refreshed = await _tryRefreshToken();
+    if (!refreshed) {
+      _redirectToLogin();
+      throw new Error("StreamChat: sessão expirada. Faça login novamente.");
+    }
+    response = await doFetch();
+  }
 
   if (!response.ok || !response.body) {
     const text = await response.text().catch(() => "");
@@ -138,16 +184,27 @@ export async function* resumeChat(
   request: ResumeChatRequest,
   signal?: AbortSignal,
 ): AsyncGenerator<StreamEvent> {
-  const response = await fetch(
-    `${VECTORA_API_URL}/vectora.chat.v1.ChatService/ResumeChat`,
-    {
+  const url = `${VECTORA_API_URL}/vectora.chat.v1.ChatService/ResumeChat`;
+
+  const doFetch = () =>
+    fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(request),
       signal,
-    },
-  );
+    });
+
+  let response = await doFetch();
+
+  if (response.status === 401) {
+    const refreshed = await _tryRefreshToken();
+    if (!refreshed) {
+      _redirectToLogin();
+      throw new Error("ResumeChat: sessão expirada. Faça login novamente.");
+    }
+    response = await doFetch();
+  }
 
   if (!response.ok || !response.body) {
     const text = await response.text().catch(() => "");
@@ -161,13 +218,23 @@ export async function* resumeChat(
 // Thread management
 // ============================================================================
 
-async function _post<T>(path: string, body: object): Promise<T> {
+async function _post<T>(
+  path: string,
+  body: object,
+  isRetry = false,
+): Promise<T> {
   const response = await fetch(`${VECTORA_API_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(body),
   });
+  if (response.status === 401 && !isRetry) {
+    const refreshed = await _tryRefreshToken();
+    if (refreshed) return _post(path, body, true);
+    _redirectToLogin();
+    throw new Error(`${path}: sessão expirada. Faça login novamente.`);
+  }
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new Error(`${path} failed (${response.status}): ${text}`);

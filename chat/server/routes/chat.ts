@@ -21,7 +21,11 @@ chat.post("/stream", async (c) => {
     `${VECTORA_API_URL}/vectora.chat.v1.ChatService/StreamChat`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // Repassa cookies do browser → backend para validação de auth
+        ...(c.req.header("Cookie") ? { Cookie: c.req.header("Cookie")! } : {}),
+      },
       body,
     },
   );
@@ -56,7 +60,10 @@ chat.post("/resume", async (c) => {
     `${VECTORA_API_URL}/vectora.chat.v1.ChatService/ResumeChat`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(c.req.header("Cookie") ? { Cookie: c.req.header("Cookie")! } : {}),
+      },
       body,
     },
   );
