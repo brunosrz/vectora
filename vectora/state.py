@@ -151,3 +151,9 @@ class State(TypedDict):
     #   workspace_id: workspace ativo (espelha session_metadata.workspace_id)
     #   manifest_version: versão do manifest carregado (espelha session_metadata)
     ui_metrics: NotRequired[UIMetrics | None]
+
+    # Bloco D — Reasoning Reveal
+    # Raciocínio do orchestrator para o turno atual.
+    # Escrito pelo nó orchestrator antes de retornar; consumido por adapt_stream
+    # para emitir ThinkingEvent via SSE.  Zerado a cada turno.
+    thinking: NotRequired[dict | None]

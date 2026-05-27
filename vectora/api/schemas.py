@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 # ---------------------------------------------------------------------------
 # Config
@@ -95,6 +95,24 @@ class NodeEvent(BaseModel):
     node: str
     status: Literal["started", "finished"]
     duration_ms: int = 0
+    node_label: str = ""
+
+    @model_validator(mode="after")
+    def _fill_node_label(self) -> "NodeEvent":
+        if not self.node_label and self.node:
+            from vectora.api.node_labels import get_node_label
+
+            self.node_label = get_node_label(self.node)
+        return self
+
+
+class ThinkingEvent(BaseModel):
+    """Raciocínio do orchestrator — visível para o usuário como bloco 'Thinking'."""
+
+    reason: str
+    action: str = "respond"
+    delegate_to: str | None = None
+    task_query: str | None = None
 
 
 class UIMetricsEvent(BaseModel):
@@ -136,6 +154,7 @@ StreamChatEventPayload = (
     | NodeEvent
     | UIMetricsEvent
     | HITLEvent
+    | ThinkingEvent
     | ErrorEvent
     | DoneEvent
 )
@@ -148,6 +167,7 @@ _TYPE_MAP: dict[type, str] = {
     NodeEvent: "node",
     UIMetricsEvent: "ui_metrics",
     HITLEvent: "hitl",
+    ThinkingEvent: "thinking",
     ErrorEvent: "error",
     DoneEvent: "done",
 }

@@ -15,11 +15,13 @@ import json
 import logging
 from typing import Any
 
+from vectora.api.node_labels import get_node_label
 from vectora.api.schemas import (
     DoneEvent,
     ErrorEvent,
     NodeEvent,
     StreamChatEventPayload,
+    ThinkingEvent,
     TokenEvent,
     ToolCallEvent,
     ToolResultEvent,
@@ -114,6 +116,39 @@ def _extract_orchestrator_response(event: dict[str, Any]) -> str | None:
     return content
 
 
+def _extract_orchestrator_thinking(event: dict[str, Any]) -> dict[str, Any] | None:
+    """Extrai dados de raciocínio do orchestrator do evento on_chain_end.
+
+    O nó orchestrator grava um dict `thinking` no state update com:
+      reason, action, delegate_to, task_query
+
+    Retorna None se não for evento do orchestrator ou se não houver thinking.
+    """
+    if event.get("name") != "orchestrator":
+        return None
+    data = event.get("data", {}) or {}
+    output = data.get("output")
+    if output is None:
+        return None
+
+    # output pode ser dict (estado direto) ou Command(update={...})
+    candidate: dict | None = None
+    if isinstance(output, dict):
+        candidate = output
+    elif hasattr(output, "update") and isinstance(
+        getattr(output, "update", None), dict
+    ):
+        candidate = output.update  # type: ignore[union-attr]
+
+    if candidate is None:
+        return None
+
+    thinking = candidate.get("thinking")
+    if isinstance(thinking, dict) and "reason" in thinking:
+        return thinking
+    return None
+
+
 def langgraph_event_to_payload(
     event: dict[str, Any],
 ) -> StreamChatEventPayload | None:
@@ -192,11 +227,10 @@ def langgraph_event_to_payload(
 
     # ── Início / fim de nó do grafo ───────────────────────────────────────
     if kind == "on_chain_start" and name not in ("", "LangGraph"):
-        return NodeEvent(node=name, status="started")
+        return NodeEvent(node=name, status="started", node_label=get_node_label(name))
 
     if kind == "on_chain_end" and name not in ("", "LangGraph"):
-        # duration_ms não vem direto no evento; calculado pelo handler
-        return NodeEvent(node=name, status="finished")
+        return NodeEvent(node=name, status="finished", node_label=get_node_label(name))
 
     return None
 
@@ -234,6 +268,16 @@ def adapt_stream(
                 # TokenEvent único (já que os tokens do LLM foram filtrados
                 # acima por serem JSON estruturado).
                 if kind == "on_chain_end" and name == "orchestrator":
+                    thinking = _extract_orchestrator_thinking(event)
+                    if thinking:
+                        yield encode_event(
+                            ThinkingEvent(
+                                reason=thinking["reason"],
+                                action=thinking.get("action", "respond"),
+                                delegate_to=thinking.get("delegate_to"),
+                                task_query=thinking.get("task_query"),
+                            )
+                        )
                     response_text = _extract_orchestrator_response(event)
                     if response_text:
                         yield encode_event(

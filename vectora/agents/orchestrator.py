@@ -1065,6 +1065,14 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
             logger.warning("orchestrator LLM falhou, respondendo diretamente: %s", e)
             response = "Desculpe, ocorreu um erro interno. Tente novamente."
 
+    # Raciocínio para Bloco D — gravado no state para que adapt_stream emita ThinkingEvent
+    thinking_data: dict = {
+        "reason": reason,
+        "action": action,
+        "delegate_to": delegate_to,
+        "task_query": task_query,
+    }
+
     # Determinar destino e update do state
     if action == "respond":
         agent_label = "direct (inline)"
@@ -1073,6 +1081,7 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
             **state_update_extra,
             "routing_decision": "respond",
             "messages": [AIMessage(content=response)],
+            "thinking": thinking_data,
         }
     elif action == "parallel" and parallel_tasks:
         # C5 — fan-out para parallel_dispatch
@@ -1083,6 +1092,7 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
             "routing_decision": "parallel",
             "parallel_tasks": parallel_tasks,
             "parallel_results": None,  # limpa resultados anteriores
+            "thinking": thinking_data,
         }
     else:
         # delegate
@@ -1093,6 +1103,7 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
             **state_update_extra,
             "routing_decision": delegate_to or "respond",
             "orchestrator_task": task_query,
+            "thinking": thinking_data,
         }
 
     logger.info(
