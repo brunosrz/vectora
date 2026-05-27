@@ -120,6 +120,18 @@ async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
     """
     thread_id = request.thread_id or str(uuid.uuid4())
 
+    # Registra thread em vectora_sessions para que ListThreads a inclua
+    # mesmo após reinicialização do servidor (o checkpointer LangGraph persiste
+    # separadamente e não é consultado pelo endpoint de listagem).
+    try:
+        from vectora.api.handlers.threads import _upsert_session
+
+        await _upsert_session(thread_id)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
+        )
+
     try:
         graph = await _get_graph()
     except Exception as exc:

@@ -49,6 +49,15 @@ threads.post("/delete", async (c) => {
   return c.json(await res.json(), res.status as 200);
 });
 
+threads.post("/update", async (c) => {
+  const body = await c.req.json();
+  const res = await proxyPost(
+    "/vectora.chat.v1.ThreadService/UpdateThread",
+    body,
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
 threads.post("/history", async (c) => {
   const body = await c.req.json();
   const res = await proxyPost(

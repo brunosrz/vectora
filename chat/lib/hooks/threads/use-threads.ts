@@ -17,6 +17,7 @@ import {
   listThreads,
   getThread as fetchThread,
   deleteThread as deleteThreadApi,
+  updateThread as updateThreadApi,
   type Thread as VectoraThread,
 } from "../../api/vectora-client";
 import { logger } from "../../utils/logger";
@@ -118,6 +119,7 @@ export function useThreads(userId: string | undefined) {
     threadId: string,
     metadata: Partial<ThreadMetadata>,
   ): Promise<void> => {
+    // Update otimista imediato
     setThreads((prev) =>
       prev.map((t) =>
         t.thread_id === threadId
@@ -129,7 +131,14 @@ export function useThreads(userId: string | undefined) {
           : t,
       ),
     );
-    // Sem endpoint de update de metadata no Vectora por ora (título é local)
+    // Persiste title no backend para sobreviver a restarts
+    if (metadata.title !== undefined) {
+      try {
+        await updateThreadApi(threadId, { title: metadata.title });
+      } catch (error) {
+        logger.error("useThreads: erro ao persistir title da thread:", error);
+      }
+    }
   };
 
   // --------------------------------------------------------------------------

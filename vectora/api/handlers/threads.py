@@ -31,6 +31,7 @@ from vectora.api.schemas import (
     ListThreadsRequest,
     ListThreadsResponse,
     Thread,
+    UpdateThreadRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -91,6 +92,38 @@ def _row_to_thread(row: tuple) -> Thread:
         updated_at=last_activity,
         title=title,
     )
+
+
+# ---------------------------------------------------------------------------
+# _upsert_session — registra/atualiza thread em vectora_sessions
+# ---------------------------------------------------------------------------
+
+
+async def _upsert_session(thread_id: str, title: str = "") -> None:
+    """Garante que thread_id existe em vectora_sessions (cria ou atualiza).
+
+    Chamado por stream_chat() para que threads criadas via chat normal
+    apareçam em ListThreads após reinicialização do servidor.
+
+    O campo extra é preservado em updates: se já houver outros dados em extra,
+    apenas o title é sobrescrito.
+    """
+    db = await _get_db()
+    now = datetime.now(UTC).isoformat()
+    extra = json.dumps({"title": title})
+    # ON CONFLICT preserva created_at original; atualiza last_activity e extra.
+    await db.execute(
+        """
+        INSERT INTO vectora_sessions
+            (thread_id, created_at, last_activity, message_count, extra)
+        VALUES (?, ?, ?, 0, ?)
+        ON CONFLICT(thread_id) DO UPDATE SET
+            last_activity = excluded.last_activity,
+            extra        = excluded.extra
+        """,
+        (thread_id, now, now, extra),
+    )
+    await db.commit()
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +201,46 @@ async def delete_thread(request: DeleteThreadRequest) -> dict:
     )
     await db.commit()
     return {}
+
+
+# ---------------------------------------------------------------------------
+# UpdateThread
+# ---------------------------------------------------------------------------
+
+
+@router.post("/vectora.chat.v1.ThreadService/UpdateThread")
+async def update_thread(request: UpdateThreadRequest) -> Thread:
+    """Atualiza metadados (title) de uma thread existente."""
+    db = await _get_db()
+    async with db.execute(
+        "SELECT thread_id, user_type, created_at, last_activity, message_count, extra "
+        "FROM vectora_sessions WHERE thread_id = ?",
+        (request.thread_id,),
+    ) as cur:
+        row = await cur.fetchone()
+    if row is None:
+        raise HTTPException(
+            status_code=404, detail=f"Thread {request.thread_id!r} not found"
+        )
+    thread = _row_to_thread(row)
+    # Merge title no extra existente
+    try:
+        extra = json.loads(row[5] or "{}")
+    except Exception:
+        extra = {}
+    extra["title"] = request.title
+    now = datetime.now(UTC).isoformat()
+    await db.execute(
+        "UPDATE vectora_sessions SET extra = ?, last_activity = ? WHERE thread_id = ?",
+        (json.dumps(extra), now, request.thread_id),
+    )
+    await db.commit()
+    return Thread(
+        id=thread.id,
+        created_at=thread.created_at,
+        updated_at=now,
+        title=request.title,
+    )
 
 
 # ---------------------------------------------------------------------------

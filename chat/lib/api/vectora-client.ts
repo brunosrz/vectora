@@ -187,6 +187,15 @@ export const listThreads = (limit = 50): Promise<{ threads: Thread[] }> =>
 export const deleteThread = (thread_id: string): Promise<{}> =>
   _post("/vectora.chat.v1.ThreadService/DeleteThread", { thread_id });
 
+export const updateThread = (
+  thread_id: string,
+  updates: { title?: string },
+): Promise<Thread> =>
+  _post("/vectora.chat.v1.ThreadService/UpdateThread", {
+    thread_id,
+    title: updates.title ?? "",
+  });
+
 export const getHistory = (
   thread_id: string,
 ): Promise<{ messages: HistoryMessage[] }> =>

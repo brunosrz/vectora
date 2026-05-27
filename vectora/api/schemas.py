@@ -57,6 +57,11 @@ class DeleteThreadRequest(BaseModel):
     thread_id: str
 
 
+class UpdateThreadRequest(BaseModel):
+    thread_id: str
+    title: str = ""
+
+
 class GetHistoryRequest(BaseModel):
     thread_id: str
 
