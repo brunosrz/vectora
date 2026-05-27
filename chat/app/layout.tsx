@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { SegmentProvider } from "@/components/providers/segment-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -65,11 +66,13 @@ analytics.page();
         className={`${inter.variable} ${inconsolata.variable} antialiased`}
         suppressHydrationWarning
       >
-        <AuthProvider>
-          <SegmentProvider>
-            <NuqsAdapter>{children}</NuqsAdapter>
-          </SegmentProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <SegmentProvider>
+              <NuqsAdapter>{children}</NuqsAdapter>
+            </SegmentProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
