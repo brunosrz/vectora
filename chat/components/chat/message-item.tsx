@@ -6,6 +6,9 @@ import {
   ThumbsUp,
   ThumbsDown,
   MessageSquare,
+  Brain,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { Button } from "@/components/ui/button";
@@ -202,6 +205,98 @@ const CodeBlock = memo(
   },
 );
 
+// ============================================================================
+// D1 — ThinkingBlock: raciocínio colapsável do orchestrator
+// ============================================================================
+
+interface ThinkingBlockProps {
+  thinking: {
+    reason: string;
+    action: string;
+    delegate_to?: string | null;
+    task_query?: string | null;
+  };
+  isStreaming: boolean;
+  isDevMode: boolean;
+}
+
+const ThinkingBlock = memo(function ThinkingBlock({
+  thinking,
+  isStreaming,
+  isDevMode,
+}: ThinkingBlockProps) {
+  const [open, setOpen] = useState(!isStreaming);
+
+  // Abre enquanto está em streaming, fecha sozinho ao terminar
+  useEffect(() => {
+    if (!isStreaming) setOpen(false);
+  }, [isStreaming]);
+
+  const actionLabel: Record<string, string> = {
+    respond: "Resposta direta",
+    delegate: "Delegando para agente",
+    search: "Busca na web",
+    rag: "Consulta de documentos",
+    code: "Escrevendo código",
+  };
+
+  return (
+    <div className="mb-3 rounded-md border border-border/50 bg-muted/30 overflow-hidden text-xs">
+      <button
+        className="w-full flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-left"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <Brain className="w-3 h-3 flex-shrink-0 text-primary/70" />
+        <span className="font-medium flex-1">Raciocínio</span>
+        {thinking.action && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary/80 font-mono">
+            {actionLabel[thinking.action] ?? thinking.action}
+          </span>
+        )}
+        {isStreaming && (
+          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+        )}
+        {open ? (
+          <ChevronDown className="w-3 h-3 flex-shrink-0" />
+        ) : (
+          <ChevronRight className="w-3 h-3 flex-shrink-0" />
+        )}
+      </button>
+
+      {open && (
+        <div className="px-3 pb-3 space-y-2">
+          <p className="text-muted-foreground leading-relaxed">
+            {thinking.reason}
+          </p>
+
+          {/* D4 — Dev mode: campos extras */}
+          {isDevMode && (
+            <div className="mt-2 pt-2 border-t border-border/30 space-y-1 font-mono text-[10px] text-muted-foreground/70">
+              <div>
+                <span className="text-primary/60">action:</span>{" "}
+                {thinking.action}
+              </div>
+              {thinking.delegate_to && (
+                <div>
+                  <span className="text-primary/60">delegate_to:</span>{" "}
+                  {thinking.delegate_to}
+                </div>
+              )}
+              {thinking.task_query && (
+                <div>
+                  <span className="text-primary/60">task_query:</span>{" "}
+                  {thinking.task_query}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});
+
 interface MessageItemProps {
   message: Message;
   showToolCalls?: boolean;
@@ -224,6 +319,8 @@ interface MessageItemProps {
   setFeedbackComment: React.Dispatch<
     React.SetStateAction<{ [messageId: string]: string }>
   >;
+  /** D4 — modo dev (?dev=1 na URL): exibe campos extras do ThinkingBlock */
+  isDevMode?: boolean;
 }
 
 export const MessageItem = memo(
@@ -243,6 +340,7 @@ export const MessageItem = memo(
     onCancelComment,
     onToggleComment,
     setFeedbackComment,
+    isDevMode = false,
   }: MessageItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(
@@ -500,7 +598,16 @@ export const MessageItem = memo(
                 contain: "layout style paint",
               }}
             >
-              {/* Thinking indicator - only for assistant messages */}
+              {/* D1 — ThinkingBlock: raciocínio colapsável do orchestrator */}
+              {message.role === "assistant" && message.thinking && (
+                <ThinkingBlock
+                  thinking={message.thinking}
+                  isStreaming={!!message.isThinking}
+                  isDevMode={isDevMode}
+                />
+              )}
+
+              {/* D2 — Progress semântico durante streaming */}
               {message.role === "assistant" &&
                 (message.isThinking ||
                   message.thinkingStartTime ||
@@ -513,7 +620,13 @@ export const MessageItem = memo(
                       )}
                       <span>
                         {message.isThinking ? (
-                          <AnimatedThinking />
+                          message.currentNodeLabel ? (
+                            <span className="text-muted-foreground">
+                              {message.currentNodeLabel}
+                            </span>
+                          ) : (
+                            <AnimatedThinking />
+                          )
                         ) : (
                           <span className="font-medium">Agent steps</span>
                         )}{" "}
@@ -700,7 +813,29 @@ export const MessageItem = memo(
                     ) : null}
                   </div>
 
-                  {/* Metadata — duração e tokens quando disponível */}
+                  {/* D3 — badges de duração por nó */}
+                  {!message.isThinking &&
+                    message.nodeDurations &&
+                    message.nodeDurations.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        {message.nodeDurations.map((nd, i) => (
+                          <span
+                            key={`${nd.node}-${i}`}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-muted-foreground bg-muted/60 border border-border/50"
+                            title={nd.node}
+                          >
+                            {nd.label.replace(/[…\.]+$/, "")}{" "}
+                            <span className="text-primary/70">
+                              {nd.duration_ms >= 1000
+                                ? `${(nd.duration_ms / 1000).toFixed(1)}s`
+                                : `${nd.duration_ms}ms`}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                  {/* Metadata — duração total e tokens */}
                   {!message.isThinking && message.thinkingDuration != null && (
                     <div className="flex items-center justify-end gap-2 mt-3 text-xs text-muted-foreground font-mono">
                       <span>
@@ -973,7 +1108,8 @@ export const MessageItem = memo(
     const otherPropsChanged =
       prevProps.showToolCalls !== nextProps.showToolCalls ||
       prevProps.isRegenerating !== nextProps.isRegenerating ||
-      prevProps.isLastAssistant !== nextProps.isLastAssistant;
+      prevProps.isLastAssistant !== nextProps.isLastAssistant ||
+      prevProps.isDevMode !== nextProps.isDevMode;
 
     // Re-render if any relevant prop changed
     if (

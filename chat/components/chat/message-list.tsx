@@ -1,4 +1,5 @@
 import { memo, useMemo, useEffect, useRef, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Message } from "@/lib/types";
 import { MessageItem } from "./message-item";
 import { ArrowDown } from "lucide-react";
@@ -42,6 +43,10 @@ export const MessageList = memo(function MessageList({
   onToggleComment,
   setFeedbackComment,
 }: MessageListProps) {
+  // D4 — dev mode: detectado uma vez por render de lista, passado para cada item
+  const searchParams = useSearchParams();
+  const isDevMode = searchParams?.get("dev") === "1";
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const shouldAutoScrollRef = useRef(true);
@@ -420,6 +425,7 @@ export const MessageList = memo(function MessageList({
                   onCancelComment={onCancelComment}
                   onToggleComment={onToggleComment}
                   setFeedbackComment={setFeedbackComment}
+                  isDevMode={isDevMode}
                 />
               </div>
             );

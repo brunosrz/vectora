@@ -250,8 +250,54 @@ async function handleEvent(
       break;
     }
 
-    // node / ui_metrics / hitl: atualmente apenas loggados
-    case "node":
+    // D1 — ThinkingEvent: raciocínio do orchestrator
+    case "thinking": {
+      setMessages((prev) =>
+        updateMessageInList(prev, assistantMessageId, (m) => ({
+          ...m,
+          thinking: {
+            reason: event.reason,
+            action: event.action,
+            delegate_to: event.delegate_to ?? null,
+            task_query: event.task_query ?? null,
+          },
+        })),
+      );
+      break;
+    }
+
+    // D2/D3 — NodeEvent: label semântico + duração por nó
+    case "node": {
+      if (event.status === "started" && event.node_label) {
+        setMessages((prev) =>
+          updateMessageInList(prev, assistantMessageId, (m) => ({
+            ...m,
+            currentNodeLabel: event.node_label,
+          })),
+        );
+      } else if (
+        event.status === "finished" &&
+        event.duration_ms != null &&
+        event.duration_ms > 0
+      ) {
+        setMessages((prev) =>
+          updateMessageInList(prev, assistantMessageId, (m) => ({
+            ...m,
+            currentNodeLabel: undefined,
+            nodeDurations: [
+              ...(m.nodeDurations ?? []),
+              {
+                node: event.node,
+                label: event.node_label ?? event.node,
+                duration_ms: event.duration_ms!,
+              },
+            ],
+          })),
+        );
+      }
+      break;
+    }
+
     case "ui_metrics":
     case "hitl":
       break;

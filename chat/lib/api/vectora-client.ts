@@ -53,10 +53,18 @@ export type StreamEvent =
       is_error?: boolean;
     }
   | {
+      type: "thinking";
+      reason: string;
+      action: string;
+      delegate_to?: string | null;
+      task_query?: string | null;
+    }
+  | {
       type: "node";
       node: string;
       status: "started" | "finished";
       duration_ms?: number;
+      node_label?: string;
     }
   | {
       type: "ui_metrics";
