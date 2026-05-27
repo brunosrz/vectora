@@ -31,11 +31,17 @@ _PUBLIC_PREFIXES: tuple[str, ...] = (
 # VECTORA_AUTH_REQUIRED=false desabilita auth (modo dev local / CLI)
 import os as _os
 
-_AUTH_ENABLED = _os.getenv("VECTORA_AUTH_REQUIRED", "true").lower() not in {
-    "false",
-    "0",
-    "no",
-}
+
+def _auth_enabled() -> bool:
+    """Lê VECTORA_AUTH_REQUIRED em tempo de request (não em import-time).
+
+    Isso permite que testes unitários definam a variável antes de criar o app.
+    """
+    return _os.getenv("VECTORA_AUTH_REQUIRED", "true").lower() not in {
+        "false",
+        "0",
+        "no",
+    }
 
 
 def _is_public_route(path: str) -> bool:
@@ -92,7 +98,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         path = request.url.path
 
-        if not _AUTH_ENABLED or _is_public_route(path):
+        if not _auth_enabled() or _is_public_route(path):
             request.state.user = None
             return await call_next(request)
 

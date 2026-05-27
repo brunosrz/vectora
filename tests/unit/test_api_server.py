@@ -10,6 +10,8 @@ Valida:
 
 from __future__ import annotations
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -20,7 +22,12 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="module")
 def headless_app():
-    """App FastAPI em modo headless (sem static files)."""
+    """App FastAPI em modo headless (sem static files).
+
+    Auth é desabilitada via env var para que os testes unitários não
+    dependam de um banco de dados de usuários real.
+    """
+    os.environ.setdefault("VECTORA_AUTH_REQUIRED", "false")
     from vectora.api.server import create_app
 
     return create_app(serve_static=False)
