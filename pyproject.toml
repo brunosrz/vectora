@@ -65,6 +65,7 @@ dependencies = [
     "slowapi>=0.1.9",
     "keyring>=25.0",
     "pykeepass>=4.1",
+    "gitpython>=3.1.50",
 ]
 
 [project.scripts]

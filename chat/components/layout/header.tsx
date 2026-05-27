@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ChevronDown, Settings } from "lucide-react";
 
 import { AgentSettings, type AgentConfig } from "./agent-settings";
+import { GitStatusBadge } from "./git-status-badge";
 import { UserMenu } from "./user-menu";
 
 interface HeaderProps {
@@ -50,6 +51,7 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-3">
+          <GitStatusBadge />
           <UserMenu />
           {agentConfig && onAgentConfigChange && (
             <AgentSettings

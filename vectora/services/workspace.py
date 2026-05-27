@@ -77,21 +77,41 @@ class WorkspaceRegistry:
             logger.warning("Falha ao salvar workspaces.json", exc_info=True)
 
     def get_or_create(self, cwd: str | None = None) -> Workspace:
-        """Retorna workspace existente ou cria um novo para o diretório."""
+        """Retorna workspace existente ou cria um novo para o diretório.
+
+        Ao criar, detecta automaticamente se o diretório contém um repositório
+        git e preenche os campos is_git_repo, git_remote e git_current_branch.
+        """
         self._load()
         resolved = str(Path(cwd).resolve() if cwd else Path.cwd())
         wid = self.derive_id(resolved)
         if wid not in self._workspaces:
             name = Path(resolved).name or "workspace"
+            # G7 — auto-detecção de git
+            git_info: dict = {}
+            try:
+                from vectora.tools.git import detect_git_info
+
+                git_info = detect_git_info(resolved)
+            except Exception:
+                pass
             ws = Workspace(
                 id=wid,
                 name=name,
                 cwd=resolved,
                 created_at=datetime.now(UTC).isoformat(),
+                is_git_repo=git_info.get("is_git_repo", False),
+                git_remote=git_info.get("git_remote"),
+                git_current_branch=git_info.get("git_current_branch"),
             )
             self._workspaces[wid] = ws
             self._save()
-            logger.info("Workspace criado: %s (%s)", name, wid)
+            logger.info(
+                "Workspace criado: %s (%s) git=%s",
+                name,
+                wid,
+                ws.is_git_repo,
+            )
         return self._workspaces[wid]
 
     def get(self, workspace_id: str) -> Workspace | None:

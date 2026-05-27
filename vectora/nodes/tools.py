@@ -23,6 +23,27 @@ from vectora.tools.fs import (
     list_dir,
     terminal,
 )
+from vectora.tools.gh import (
+    gh_issue_comment,
+    gh_issue_create,
+    gh_issue_list,
+    gh_issue_view,
+    gh_pr_create,
+    gh_pr_list,
+    gh_pr_merge,
+    gh_pr_view,
+)
+from vectora.tools.git import (
+    git_branch,
+    git_checkout,
+    git_commit,
+    git_diff,
+    git_log,
+    git_pull,
+    git_push,
+    git_stash,
+    git_status,
+)
 from vectora.tools.memory import delete_memory, get_memory, save_memory, search_memory
 from vectora.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
 from vectora.tools.web import fetch_url, web_search
@@ -67,6 +88,27 @@ WORKSPACE_TOOLS: list[BaseTool] = [workspace_describe, workspace_list, bucket_su
 #: Ferramentas RAG de ingestão e gestão
 RAG_TOOLS: list[BaseTool] = [vector_search, embedding, ingest_docs, manage_retriever]
 
+#: Ferramentas git e GitHub CLI (G3)
+GIT_TOOLS: list[BaseTool] = [
+    git_status,
+    git_log,
+    git_diff,
+    git_branch,
+    git_checkout,
+    git_commit,
+    git_push,
+    git_pull,
+    git_stash,
+    gh_pr_list,
+    gh_pr_create,
+    gh_pr_view,
+    gh_pr_merge,
+    gh_issue_list,
+    gh_issue_create,
+    gh_issue_view,
+    gh_issue_comment,
+]
+
 # ---------------------------------------------------------------------------
 # ALL_TOOLS — lista canônica usada por TODOS os agentes
 # ---------------------------------------------------------------------------
@@ -96,6 +138,24 @@ for _t in [
     workspace_describe,
     workspace_list,
     bucket_summary,
+    # G3 — Git + GitHub CLI
+    git_status,
+    git_log,
+    git_diff,
+    git_branch,
+    git_checkout,
+    git_commit,
+    git_push,
+    git_pull,
+    git_stash,
+    gh_pr_list,
+    gh_pr_create,
+    gh_pr_view,
+    gh_pr_merge,
+    gh_issue_list,
+    gh_issue_create,
+    gh_issue_view,
+    gh_issue_comment,
 ]:
     _all[_t.name] = _t
 
@@ -123,6 +183,7 @@ logger.debug(
 __all__ = [
     "ALL_TOOLS",
     "FS_TOOLS",
+    "GIT_TOOLS",
     "MEMORY_TOOLS",
     "RAG_TOOLS",
     "SEARCH_TOOLS",

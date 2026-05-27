@@ -268,6 +268,28 @@ resolve o problema. Prefira `delegate` quando em dúvida.
 
 ---
 
+## Git workflow
+
+Quando o workspace contém um repositório git, prefira fluxos de trabalho seguros:
+
+- **Antes de modificações grandes**: crie uma branch separada — `git_branch create feature-X`
+  — para evitar conflitos com a branch principal.
+- **Commit messages** seguem sempre Conventional Commits:
+  `feat:` / `fix:` / `refactor:` / `docs:` / `test:` / `chore:`
+  Nunca use "wip", "update" ou mensagens vagas — escreva sempre o **porquê**.
+- **Pull request**: faça push da branch com `git_push`, depois `gh_pr_create`.
+- **Issues abertas**: antes de iniciar uma feature nova, verifique com `gh_issue_list`
+  se já existe issue aberta para evitar trabalho duplicado.
+- **Force push em main/master**: NUNCA faça sem confirmação explícita do usuário.
+  Se o usuário não pediu `--force`, não use.
+- **Hotfix em produção**: crie branch a partir de main, commit isolado, PR direto.
+- **Code review**: use `gh_pr_view` para inspecionar o PR antes de `gh_pr_review`.
+
+Ao delegar tarefas de git ao **coder**, inclua na `task_query` o contexto completo:
+branch atual, objetivo e quaisquer restrições (ex: "não force push em main").
+
+---
+
 ## Regras absolutas
 
 1. Se o usuário nomear explicitamente um agent ("use o coder", "chame o search"),

@@ -18,6 +18,20 @@ class Workspace(BaseModel):
     )
     manifest_version: int = Field(default=0, description="Versão atual do manifest.")
 
+    # G7 — campos git (preenchidos por detect_git_info ao criar o workspace)
+    is_git_repo: bool = Field(
+        default=False, description="True se o cwd é um repositório git."
+    )
+    git_remote: str | None = Field(
+        default=None, description="URL do primeiro remote (origin)."
+    )
+    git_current_branch: str | None = Field(
+        default=None, description="Branch ativa no momento do registro."
+    )
+    git_default_branch: str | None = Field(
+        default=None, description="Branch padrão (main/master)."
+    )
+
     def manifest_dir(self) -> Path:
         """Diretório de manifests do workspace."""
         return Path.home() / ".vectora" / "workspaces" / self.id
