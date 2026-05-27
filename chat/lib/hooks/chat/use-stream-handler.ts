@@ -16,7 +16,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import type { Message, ToolCall } from "../../types";
+import type { Message, ToolCall, ImageAttachment } from "../../types";
 import {
   streamChat,
   resumeChat,
@@ -24,7 +24,11 @@ import {
   type ChatConfig,
   type ResumeChatRequest,
 } from "../../api/vectora-client";
-import { ensureMessageExists, updateMessageInList } from "../../utils/chat";
+import {
+  ensureMessageExists,
+  updateMessageInList,
+  toApiAttachments,
+} from "../../utils/chat";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 
 // ============================================================================
@@ -48,7 +52,7 @@ interface UseStreamHandlerReturn {
   processStream: (
     userContent: string,
     assistantMessageId: string,
-    images?: unknown[],
+    images?: ImageAttachment[],
   ) => Promise<{ assistantContent: string; runId: string | undefined }>;
   /** Retoma uma execução pausada por HITL (approve / reject / edit:<json>). */
   processResume: (
@@ -74,7 +78,7 @@ export function useStreamHandler({
     async (
       userContent: string,
       assistantMessageId: string,
-      _images?: unknown[],
+      images?: ImageAttachment[],
     ): Promise<{ assistantContent: string; runId: string | undefined }> => {
       // Cancela stream anterior se ainda em andamento
       abortRef.current?.abort();
@@ -102,12 +106,17 @@ export function useStreamHandler({
       const config: ChatConfig = {};
       if (agentConfig?.model) config.model = agentConfig.model;
 
+      // Converte ImageAttachment[] → Attachment[] para a API (F1)
+      const attachments =
+        images && images.length > 0 ? toApiAttachments(images) : undefined;
+
       try {
         const events = streamChat(
           {
             thread_id: threadId,
             content: userContent,
             config,
+            ...(attachments && attachments.length > 0 && { attachments }),
           },
           abort.signal,
         );

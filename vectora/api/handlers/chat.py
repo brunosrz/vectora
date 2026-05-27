@@ -14,6 +14,7 @@ Formato de resposta:
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import uuid
@@ -25,6 +26,8 @@ from fastapi.responses import StreamingResponse
 
 from vectora.api.adapters import adapt_stream
 from vectora.api.schemas import (
+    Attachment,
+    AttachmentKind,
     ErrorEvent,
     GetToolsResponse,
     ResumeChatRequest,
@@ -36,6 +39,102 @@ from vectora.api.schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# ---------------------------------------------------------------------------
+# F1 — Helpers de attachments multimodais
+# ---------------------------------------------------------------------------
+
+#: Mapa extensão → linguagem para injeção em blocos de código
+_EXT_TO_LANG: dict[str, str] = {
+    "py": "python",
+    "js": "javascript",
+    "jsx": "javascript",
+    "ts": "typescript",
+    "tsx": "typescript",
+    "json": "json",
+    "md": "markdown",
+    "sh": "bash",
+    "bash": "bash",
+    "zsh": "bash",
+    "html": "html",
+    "css": "css",
+    "scss": "css",
+    "sql": "sql",
+    "yaml": "yaml",
+    "yml": "yaml",
+    "toml": "toml",
+    "rs": "rust",
+    "go": "go",
+    "java": "java",
+    "c": "c",
+    "cpp": "cpp",
+    "h": "c",
+    "rb": "ruby",
+    "php": "php",
+    "swift": "swift",
+    "kt": "kotlin",
+    "scala": "scala",
+    "r": "r",
+    "tf": "hcl",
+    "xml": "xml",
+}
+
+
+def _mime_to_lang(mime_type: str, filename: str) -> str:
+    """Detecta a linguagem de programação pela extensão do arquivo.
+
+    Retorna string vazia se não reconhecido (ex: PDF, binários).
+    """
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    return _EXT_TO_LANG.get(ext, "")
+
+
+def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
+    """Constrói HumanMessage com suporte a conteúdo multimodal.
+
+    - Sem attachments → ``HumanMessage(content=str)`` simples
+    - Imagem → content list com ``type=image_url`` (formato OpenAI)
+    - Código/PDF/texto → injetado como bloco de código ou texto no content list
+
+    O formato de ``content`` como lista é compatível com a maioria dos provedores
+    multimodais (OpenAI, Anthropic, Google Gemini via LangChain).
+    """
+    from langchain_core.messages import HumanMessage
+
+    if not attachments:
+        return HumanMessage(content=content)
+
+    parts: list[dict[str, Any]] = [{"type": "text", "text": content}]
+
+    for att in attachments:
+        if att.kind == AttachmentKind.IMAGE:
+            parts.append(
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{att.mime_type};base64,{att.base64_data}"
+                    },
+                }
+            )
+        else:
+            # Código, PDF ou texto — decodifica e injeta como texto
+            try:
+                decoded = base64.b64decode(att.base64_data).decode(
+                    "utf-8", errors="replace"
+                )
+            except Exception:
+                decoded = "[conteúdo não pôde ser decodificado]"
+
+            lang = _mime_to_lang(att.mime_type, att.name)
+            if lang:
+                block = f"\n[Arquivo: {att.name}]\n```{lang}\n{decoded}\n```"
+            else:
+                block = f"\n[Arquivo: {att.name}]\n{decoded}"
+
+            parts.append({"type": "text", "text": block})
+
+    return HumanMessage(content=parts)
+
 
 # ---------------------------------------------------------------------------
 # Lazy graph loader
@@ -138,15 +237,15 @@ async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    from langchain_core.messages import HumanMessage
-
     config: dict[str, Any] = {
         "configurable": {"thread_id": thread_id},
         "recursion_limit": request.config.recursion_limit or 50,
     }
 
+    human_msg = _build_human_message(request.content, request.attachments)
+
     events = graph.astream_events(
-        {"messages": [HumanMessage(content=request.content)]},
+        {"messages": [human_msg]},
         config=config,
         version="v2",
     )

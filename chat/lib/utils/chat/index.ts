@@ -21,3 +21,6 @@ export {
   createImageAttachment,
   validateImageFile,
 } from "./validation";
+
+// Attachments (F1 — multimodal)
+export { toApiAttachments } from "./attachments";

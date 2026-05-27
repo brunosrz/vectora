@@ -20,10 +20,26 @@ export interface ChatConfig {
   workspace_id?: string;
 }
 
+/** Tipo semântico do attachment — espelha AttachmentKind do backend. */
+export type AttachmentKind = "image" | "pdf" | "code" | "text";
+
+/**
+ * Arquivo anexado a uma mensagem.
+ * ``base64_data`` é o conteúdo puro em base64, sem prefixo data URL.
+ */
+export interface Attachment {
+  kind: AttachmentKind;
+  name: string;
+  mime_type: string;
+  base64_data: string;
+}
+
 export interface StreamChatRequest {
   thread_id?: string;
   content: string;
   config?: ChatConfig;
+  /** Arquivos anexados à mensagem (F1 — multimodal). */
+  attachments?: Attachment[];
 }
 
 export interface ResumeChatRequest {

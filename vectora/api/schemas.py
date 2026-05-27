@@ -8,6 +8,7 @@ de build-time durante desenvolvimento.
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -25,6 +26,33 @@ class ChatConfig(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Attachments (F1 — File Handling)
+# ---------------------------------------------------------------------------
+
+
+class AttachmentKind(str, Enum):
+    """Tipo semântico do attachment — determina como o backend o injeta na mensagem."""
+
+    IMAGE = "image"  # imagem → image_url part (multimodal)
+    PDF = "pdf"  # PDF → texto decodificado
+    CODE = "code"  # código → bloco de código com linguagem detectada
+    TEXT = "text"  # texto genérico → injetado como texto
+
+
+class Attachment(BaseModel):
+    """Arquivo anexado a uma mensagem pelo usuário.
+
+    ``base64_data`` armazena o conteúdo em base64 puro (sem prefixo data URL).
+    O frontend usa ``fileToBase64()`` que já remove o prefixo ``data:...;base64,``.
+    """
+
+    kind: AttachmentKind
+    name: str
+    mime_type: str
+    base64_data: str
+
+
+# ---------------------------------------------------------------------------
 # Requests
 # ---------------------------------------------------------------------------
 
@@ -33,6 +61,7 @@ class StreamChatRequest(BaseModel):
     thread_id: str = ""  # vazio → cria nova thread
     content: str
     config: ChatConfig = Field(default_factory=ChatConfig)
+    attachments: list[Attachment] = Field(default_factory=list)
 
 
 class ResumeChatRequest(BaseModel):
