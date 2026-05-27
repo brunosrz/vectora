@@ -109,6 +109,7 @@ export async function* streamChat(
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(request),
       signal,
     },
@@ -134,6 +135,7 @@ export async function* resumeChat(
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(request),
       signal,
     },
@@ -155,6 +157,7 @@ async function _post<T>(path: string, body: object): Promise<T> {
   const response = await fetch(`${VECTORA_API_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(body),
   });
   if (!response.ok) {

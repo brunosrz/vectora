@@ -1,14 +1,14 @@
 /**
- * Next.js Edge Middleware — proteção de rotas + refresh automático de token.
+ * Next.js Edge Proxy — proteção de rotas + refresh automático de token.
  *
  * Comportamento:
  * 1. Rotas /auth/* são sempre públicas.
  * 2. Outras rotas: se não houver vectora_access, redireciona para /auth/signin
  *    (quando auth está habilitado via VECTORA_AUTH_REQUIRED != "false").
- * 3. Se o acesso chegar com cookie mas o backend retornar 401, o middleware
+ * 3. Se o acesso chegar com cookie mas o backend retornar 401, o proxy
  *    tenta refresh automático via /api/auth/refresh antes de redirecionar.
  *
- * VECTORA_AUTH_REQUIRED=false → middleware não redireciona (modo dev local).
+ * VECTORA_AUTH_REQUIRED=false → proxy não redireciona (modo dev local).
  */
 
 import { NextResponse } from "next/server";
@@ -31,7 +31,7 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Auth desabilitado (modo dev/local) — passa direto
@@ -98,7 +98,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Aplica o middleware em todas as rotas EXCETO:
+     * Aplica o proxy em todas as rotas EXCETO:
      * - _next/static (assets estáticos compilados)
      * - _next/image (imagens otimizadas)
      * - favicon.ico

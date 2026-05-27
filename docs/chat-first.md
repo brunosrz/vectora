@@ -369,46 +369,78 @@ trabalha em suas próprias branches/PRs (G6).
 - Trade-off: troca de password obriga re-criptografar todos os envs
   (`POST /auth/change-password` faz isso atomicamente)
 
-### C11 — Provider de keystore externo (opt-in)
+### C11 — Provider de keystore: KeePassXC `.kdbx` embarcado
 
-Default: SQLite + PyNaCl interno (C10) — autossuficiente, sem dependências.
+**Decisão arquitetural.** Vectora é self-hosted, single-binary friendly —
+nada de daemons externos. KeePassXC é GUI, mas o **formato `.kdbx`** é
+padrão aberto e o Python tem `pykeepass` que lê/escreve `.kdbx` direto,
+sem precisar do KeePassXC instalado.
 
-**Integrações opt-in** (avaliadas):
+Mesmo padrão do SQLite (checkpointer) e LanceDB (vector store):
+**um arquivo no disco, sem serviço**.
 
-| Provider                                | Self-hosted | API stability           | Recomendação                                |
-| --------------------------------------- | ----------- | ----------------------- | ------------------------------------------- |
-| **Vaultwarden**                         | ✅          | ✅ Bitwarden-compatible | **Primeira escolha**                        |
-| **Bitwarden RS** (legacy → Vaultwarden) | ✅          | ✅                      | (deprecated upstream; use Vaultwarden)      |
-| **Bitwarden Cloud**                     | ❌          | ✅                      | Boa pra dev solo; viola "self-hosted-first" |
-| **Proton Pass**                         | ❌          | ⚠️ Limitada             | Pula                                        |
-| **KeePassXC**                           | Local-only  | ✅ via plugin           | Não serve para server multi-user            |
-| **HashiCorp Vault**                     | ✅          | ✅                      | Overkill para o perfil; futura integração   |
+**Por que `.kdbx`** em vez do PyNaCl interno (C10):
 
-**Vaultwarden** (`bitwardenrs/server`) é o melhor match:
+- Formato auditável e padronizado (KDBX4: AES-256-CBC + ChaCha20 + Argon2id KDF)
+- Usuário pode abrir o `.kdbx` no KeePassXC desktop / mobile (KeePass2Android,
+  Strongbox iOS) para ver/editar fora do Vectora se quiser
+- Mesma chave protege múltiplas entries — não há "uma chave por env var"
+- `pykeepass` é maduro, em produção desde 2018, pure-Python, sem deps nativas
 
-- Self-hostable (containers Docker), alinhado com perfil VPS-self-hosted do Vectora
-- Compatível com clients Bitwarden oficiais (CLI, browser ext, mobile) —
-  power-users já têm UI familiar
-- API REST estável, autenticação por master password derivada
-- Setup: container ao lado do Vectora, share secret via API
+**Layout** (`~/.vectora/secrets/`):
+
+```
+~/.vectora/secrets/
+├── system.kdbx           # envs do root/sistema (criado on first run)
+└── users/
+    ├── <user_id_1>.kdbx  # envs por usuário
+    ├── <user_id_2>.kdbx
+    └── ...
+```
+
+**Lifecycle**:
+
+- Master password do `.kdbx` derivado do password do user (PBKDF2 a partir
+  do mesmo password de login → não precisa de senha extra)
+- Login bem-sucedido → handle do `.kdbx` aberto em memory, mantido na session
+- Logout → handle descarregado; arquivo `.kdbx` segue criptografado em repouso
+- Change password (C9) → re-criptografa `.kdbx` com nova chave (atomic via tempfile + rename)
 
 **Config** (`~/.vectora/secrets.toml`):
 
 ```toml
-provider = "internal"  # ou "vaultwarden"
+provider = "keepass"   # default. Reservado: "internal" (PyNaCl puro, sem .kdbx)
 
-[vaultwarden]
-url = "https://vault.empresa.com"
-org_id = "..."             # opcional, para shared collections
-client_id = "..."
-client_secret = "..."
+[keepass]
+dir = "~/.vectora/secrets"   # path base — override pra montar em volume diferente
+kdf_iterations = 60          # Argon2id rounds (default seguro)
 ```
 
-`vectora/services/secrets/` (novo módulo):
+**Módulo** `vectora/services/secrets/`:
 
-- `base.py`: `SecretsProvider` Protocol (`get(user, key)`, `set(user, key, value)`, `list(user)`, `delete(user, key)`)
-- `internal.py`: implementação SQLite + PyNaCl (default)
-- `vaultwarden.py`: cliente HTTP para Vaultwarden API
+- `base.py`: Protocol `SecretsProvider` — `get(user, key)`, `set(user, key, value)`, `list(user)`, `delete(user, key)`, `unlock(user, password)`, `lock(user)`
+- `keepass.py`: implementação via `pykeepass.PyKeePass`; cria `<user_id>.kdbx`
+  na primeira chamada de `unlock()` para um user novo
+- `internal.py`: fallback PyNaCl (SQLite + SecretBox) — útil para testes
+  unitários e ambientes ultraminimalistas
+
+**Vantagens operacionais**:
+
+- Backup trivial: copiar a pasta `~/.vectora/secrets/`
+- Migração entre máquinas: mover os `.kdbx` (a senha de cada user mantém a chave)
+- Auditoria offline: admin pode abrir `system.kdbx` no KeePassXC desktop
+  para inspecionar entries de sistema (read-only se quiser)
+
+**Trade-off conhecido**: cada user adiciona um `.kdbx`. Para 100+ users isso
+ainda é file system trivial (cada `.kdbx` típico tem ~10KB). Se virar
+problema, futura otimização: shared `.kdbx` com groups por user_id —
+mas adiciona complexidade que não justifica em hoje.
+
+### Dependência adicional (`pyproject.toml`)
+
+```toml
+pykeepass = ">=4.1"
+```
 
 ### C12 — Audit log
 

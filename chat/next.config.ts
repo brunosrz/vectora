@@ -7,7 +7,7 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   // Standalone: bundla o servidor Next.js com deps mínimas.
-  // Necessário para suportar auth server-side (middleware, API routes, cookies).
+  // Necessário para suportar auth server-side (proxy, API routes, cookies).
   // Distribuído junto ao chat/src/ backend como pacote próprio.
   output: "standalone",
 
