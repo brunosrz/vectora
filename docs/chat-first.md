@@ -27,7 +27,7 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 | ----- | --------------------------------------------- | -------------------------------------------- |
 | **A** | Chat Foundations                              | ✅ Concluído                                 |
 | **B** | Polish, Bugfixes & Infra                      | ✅ Concluído                                 |
-| **C** | **Authentication & RBAC**                     | 🎯 **Prioridade atual**                      |
+| **C** | Authentication & RBAC                         | ✅ Concluído                                 |
 | **D** | Reasoning Reveal & Thinking UX                | ⏳ Próximo                                   |
 | **E** | HITL em Chat                                  | ⏳ Bloqueado por `interrupt_before` no graph |
 | **F** | File Handling Completo                        | ⏳ Independente                              |
@@ -36,14 +36,18 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 | **I** | Conversation Features (search, export, share) | ⏳ Power-user                                |
 | **J** | Mobile & PWA                                  | ⏳ Pré-mobile native                         |
 | **K** | Live Metrics Dashboard                        | ⏳ Observabilidade                           |
-| **L** | Settings & Customization                      | ⏳ Continuous                                |
+| **L** | **Settings Architecture**                     | 🎯 **Prioridade imediata**                   |
 | **M** | Performance & UX Polish                       | ⏳ Continuous                                |
+| **N** | Per-User Memory                               | ⏳ Depende de L                              |
+| **O** | Workspace Integrations (OAuth + API keys)     | ⏳ Depende de L                              |
+| **P** | Root Admin Panel (RBAC/ABAC global)           | ⏳ Depende de C+O                            |
 
-**Ordem sugerida pós-conclusão de C:**
-`C → D → F → G → E → L → H → I → J → K → M`
+**Ordem sugerida:**
+`L → N → D → F → O → G → E → H → I → P → J → K → M`
 
-C é prioridade pois desbloqueia uso multi-usuário em VPS corporativa — sem
-auth, o `vectora server` não pode ser exposto publicamente.
+L (Settings Architecture) é prioridade imediata — define a estrutura de UI
+que N (memória por usuário) e O (integrações) precisam para existir.
+C (Auth & RBAC) está concluído e libera uso multi-usuário.
 
 ---
 
@@ -488,8 +492,8 @@ pynacl = ">=1.5"              # secrets crypto
 slowapi = ">=0.1.9"           # rate limiting
 keyring = ">=25.0"            # OS keyring no CLI
 
-# Opcional (gated):
-httpx = "*"                   # já presente — usado pelo Vaultwarden client
+# Secrets keystore (C11):
+pykeepass = ">=4.1"           # KeePassXC .kdbx embarcado, pure-Python
 ```
 
 ### Arquivos críticos (Bloco C)
@@ -503,7 +507,7 @@ httpx = "*"                   # já presente — usado pelo Vaultwarden client
 | C6-C7   | —                                                                                                              | `vectora/main.py` (subcomando `auth`), `vectora/cli/auth.py` (novo)                                                    |
 | C8      | `chat/app/auth/signin/page.tsx`, `chat/app/auth/signup/page.tsx`, `chat/middleware.ts` (refresh) — todos novos | `/auth/has-users` endpoint                                                                                             |
 | C9      | `chat/components/layout/user-menu.tsx`, `chat/lib/stores/auth-store.ts` — novos                                | —                                                                                                                      |
-| C10-C11 | `chat/components/layout/settings-dialog/envs-tab.tsx` (novo)                                                   | `vectora/services/secrets/{base,internal,vaultwarden}.py` (novos)                                                      |
+| C10-C11 | `chat/components/layout/settings-dialog/envs-tab.tsx` (novo)                                                   | `vectora/services/secrets/{base,internal,keepass}.py` (novos), dep `pykeepass>=4.1`                                    |
 | C12     | `chat/components/layout/settings-dialog/audit-tab.tsx` (novo, admin)                                           | `vectora/api/handlers/audit.py` (novo), tabela `audit`                                                                 |
 | C13     | —                                                                                                              | `vectora/api/middleware/rate_limit.py` (novo)                                                                          |
 | C14     | first-run banner no `/auth/signup`                                                                             | `vectora/main.py` (banner log)                                                                                         |
@@ -944,38 +948,110 @@ Slash commands tornam ações de power-user descobríveis e rápidas.
 
 ---
 
-## BLOCO L — Settings & Customization
+## BLOCO L — Settings Architecture 🎯 [PRIORIDADE IMEDIATA]
 
-### N1 — Settings panel completo
+**Contexto.** O `AgentSettings` atual tem Agent Type e Recursion Limit (itens
+a remover) e o Model Selector (que já existe no chat input). O componente
+ficou vazio de propósito. Em paralelo, o UserMenu tem "Configurações" como
+botão morto (TODO). Este bloco define onde cada coisa vive — a arquitetura
+de settings que N (memória) e O (integrações) precisam para existir.
 
-- Hoje: dialog mínimo via `AgentSettings`
-- Expandir com abas:
-  - **Account** — email, password change (C9)
-  - **Envs** — env vars do user (C10)
-  - **Audit** — admin/root only (C12)
-  - **Modelos** — selector por kind (LLM, TTS, ASR, Image, Embedding, Reranker)
-  - **Workspace** — workspace ativo + criar/deletar
-  - **Aparência** — tema, font size, density
-  - **Comportamento** — HITL configuration (E4), verbosity, system prompt custom
-  - **Privacy** — clear all threads, export all data, LangSmith on/off
+### Arquitetura de Settings
 
-### N2 — Tema (dark/light/system)
+```
+⚙️ Header → "Chat Settings" (escopo: sessão/chat atual)
+  ┌────────────────────────────────────┐
+  │ Chat Settings                      │
+  ├────────────────────────────────────┤
+  │ FERRAMENTAS                        │
+  │  □ Mostrar tool calls no chat      │
+  │  □ Confirmar ações destrutivas     │
+  │    (filesystem, terminal, RAG)     │
+  │                                    │
+  │ RESPOSTA                           │
+  │  ○ Concisa  ● Normal  ○ Detalhada  │
+  │                                    │
+  │ ──────────────────────────────     │
+  │ ⌨ Atalhos de teclado               │
+  └────────────────────────────────────┘
 
-- Hoje: dark hardcoded
-- Toggle via shadcn theme provider
-- Persist em `localStorage` + sync com `prefers-color-scheme`
+Avatar → Configurações → Settings Dialog (escopo: usuário)
+  Abas: [Conta] [Memória] [Integrações] [Envs] [Preferências]
+  [Root/Admin] + aba [Administração]
 
-### N3 — System prompt custom por workspace
+  Conta:        email atual, botão mudar senha
+  Memória:      lista de memórias salvas (N1) — placeholder inicialmente
+  Integrações:  GitHub, OpenAI, Anthropic, etc. (O1) — placeholder inicialmente
+  Envs:         tabela de env var overrides do user (C10)
+  Preferências: tema (dark/light), limite de histórico, idioma
+  Administração (root/admin):
+    - Controle global de agents/tools habilitados
+    - RBAC/ABAC por usuário (quais workspaces acessa, nível de permissão)
+    - Métricas de uso por usuário
+    - Configurações globais do servidor
+```
 
-- Field em `Workspace` no backend: `custom_system_prompt: str | None`
-- Editor markdown no settings → injetado no `_load_session_context` do orchestrator
+### L1 — Redesign do Agent Settings → "Chat Settings"
 
-### N4 — Verbosity slider (terse / normal / verbose)
+**Remover:** Agent Type, Recursion Limit
+**Adicionar:**
 
-- 0-5 escala que mapeia pra system prompt do orchestrator
-- 0: respostas de 1 frase; 5: respostas longas com fontes
+- Toggle "Mostrar tool calls" (persiste por user em localStorage)
+- Toggle "Confirmar ações destrutivas" (HITL E4 antecipado como toggle simples)
+- Selector verbosity: Concisa / Normal / Detalhada (persiste por user)
+  **Manter:** View Keyboard Shortcuts
 
-**Arquivos críticos:** `chat/components/layout/settings-dialog/` (novo módulo), `chat/lib/stores/settings-store.ts` (novo Zustand), `chat/components/providers/theme-provider.tsx` (novo)
+Arquivo: `chat/components/layout/agent-settings.tsx` (modificar)
+Store: `chat/lib/stores/settings-store.ts` (novo Zustand, persiste por user_id)
+
+### L2 — Settings Dialog completo (UserMenu → Configurações)
+
+Novo módulo `chat/components/layout/settings-dialog/`:
+
+```
+settings-dialog/
+├── index.tsx           (Dialog raiz com tabs, abre do UserMenu)
+├── tabs/
+│   ├── conta-tab.tsx   (email, change password)
+│   ├── memoria-tab.tsx (placeholder → N2 depois)
+│   ├── integracoes-tab.tsx (placeholder com cards → O depois)
+│   ├── envs-tab.tsx    (C10 — env vars por user)
+│   └── preferencias-tab.tsx (tema, histórico limit)
+└── admin/
+    └── admin-tab.tsx   (root/admin only — P1 depois)
+```
+
+UserMenu: o botão "Configurações" abre este dialog.
+Zustand: `chat/lib/stores/settings-store.ts` — persiste `{ showToolCalls, requireHitl, verbosity, historyLimit, theme }` no localStorage **prefixado por user_id**.
+
+### L3 — Tema (dark/light/system)
+
+- Toggle no tab Preferências
+- `chat/components/providers/theme-provider.tsx` (novo)
+- Persiste em `localStorage["theme-{user_id}"]`
+
+### L4 — System prompt custom (Preferências avançadas)
+
+- Campo textarea "Instrução personalizada" → prefixado ao system prompt
+- Persistido por user em `~/.vectora/config.toml` via endpoint `PATCH /auth/preferences`
+
+**Arquivos críticos:**
+
+- `chat/components/layout/agent-settings.tsx` — simplificar para Chat Settings
+- `chat/components/layout/user-menu.tsx` — ligar "Configurações" ao novo dialog
+- `chat/components/layout/settings-dialog/` — novo módulo completo
+- `chat/lib/stores/settings-store.ts` — novo Zustand store
+- `chat/components/providers/theme-provider.tsx` — novo
+
+**Verificação:**
+
+- ⚙️ abre "Chat Settings" sem Agent Type/Recursion Limit; toggles funcionam
+- Avatar → Configurações abre dialog com abas; aba Conta mostra email do user
+- Aba Preferências: toggle tema dark→light funciona imediatamente
+- Aba Envs: add/edit/delete env vars do user (testar com `GH_TOKEN`)
+- Aba Memória: mostra placeholder "Em breve" (N2)
+- Aba Integrações: mostra cards placeholder (O)
+- Root: aba Administração aparece; non-root: aba não aparece
 
 ---
 
@@ -1013,28 +1089,238 @@ Slash commands tornam ações de power-user descobríveis e rápidas.
 
 ---
 
+## BLOCO N — Per-User Memory
+
+**Contexto.** O Vectora Agent tem hoje apenas memória global (`memory` tool).
+Em contexto corporativo multi-usuário, as memórias precisam ser escopadas por
+usuário — o agente aprende sobre Bruno, sobre Maria — e nunca vazar entre eles.
+O usuário também precisa poder auditar e editar o que o agente sabe sobre ele.
+
+### N1 — Backend: memória isolada por usuário
+
+- `vectora/tools/memory.py`: todas as operações de memória usam
+  `namespace = f"user:{user_id}"` quando rodando com usuário autenticado
+  (fallback para namespace global quando CLI local sem auth)
+- `vectora/api/handlers/memory.py` (novo): endpoints REST
+  - `GET /memory` → lista memórias do user atual (paginado)
+  - `DELETE /memory/{memory_id}` → deleta memória específica
+  - `PUT /memory/{memory_id}` → edita conteúdo de uma memória
+  - `DELETE /memory` → limpa todas as memórias do user
+- `vectora/api/server.py`: registrar router
+- Middleware de auth já injeta `request.state.user` → handlers usam `user.id`
+
+### N2 — Frontend: aba Memória no Settings Dialog
+
+- `chat/components/layout/settings-dialog/tabs/memoria-tab.tsx`:
+  - Lista de memórias do user (fetch `GET /api/memory`)
+  - Cada memória: texto truncado + data + botão Editar + botão Deletar
+  - Botão "Limpar toda memória" (com confirmação)
+  - Inline editor ao clicar Editar (textarea + salvar/cancelar)
+  - Empty state: "O Vectora ainda não salvou memórias sobre você"
+- Hono proxy: `chat/server/routes/memory.ts` (novo)
+- `GET /api/memory` etc. forwarded para `VECTORA_API_URL/memory`
+
+### N3 — Indicador de contexto no chat
+
+- Integrado com HITL (Bloco E) — quando agente carrega memórias na chain,
+  emite `NodeEvent` com `node="memory_load"` e `metadata.memories_loaded=N`
+- Chat mostra badge discreto "🧠 N memórias carregadas" por mensagem
+- Clicável → expande lista das memórias usadas naquela resposta
+
+**Arquivos críticos:**
+
+- `vectora/tools/memory.py` — adicionar `user_id` no namespace
+- `vectora/api/handlers/memory.py` — novo router
+- `chat/server/routes/memory.ts` — novo proxy Hono
+- `chat/components/layout/settings-dialog/tabs/memoria-tab.tsx` — novo
+- `chat/components/chat/message-item.tsx` — badge de memórias (N3)
+
+---
+
+## BLOCO O — Workspace Integrations (OAuth + API Keys)
+
+**Contexto.** Vectora é self-hosted e multi-usuário. Cada developer precisa
+usar suas próprias credenciais (GitHub token, OpenAI key etc.) sem compartilhar
+com o admin ou outros usuários. As API keys ficam no vault KeePassXC do user
+(C11). OAuth (GitHub) permite fluxo de autenticação delegada, sem o user
+precisar criar e gerenciar tokens manualmente.
+
+### O1 — API Key integrations (simples — apenas API key)
+
+Integrações sem OAuth — user insere a chave, fica no vault KeePass dele.
+O agente usa `user.env_overrides` (C10) que já é mergeado no `effective_env`.
+
+| Integração  | Env var               | Onde usar no agente                   |
+| ----------- | --------------------- | ------------------------------------- |
+| OpenAI      | `OPENAI_API_KEY`      | LLM (GPT-4.x, o3/o4) + embeddings     |
+| Anthropic   | `ANTHROPIC_API_KEY`   | LLM (Claude 4.x)                      |
+| Cohere      | `COHERE_API_KEY`      | Reranker + LLM (Command)              |
+| Tavily      | `TAVILY_API_KEY`      | Web search tool                       |
+| Groq        | `GROQ_API_KEY`        | LLM ultrafast (Llama, Mixtral)        |
+| HuggingFace | `HUGGINGFACE_API_KEY` | Modelos open source via Inference API |
+| Perplexity  | `PERPLEXITY_API_KEY`  | Busca com citações                    |
+
+**UI** (aba Integrações no Settings Dialog):
+
+- Cards por integração: logo + nome + status (✓ Conectado / − Não configurado)
+- Click → inline form: input de API key (masked) + botão Salvar/Remover
+- Key é salva via `POST /api/auth/envs` (endpoint C10 já existe) com a env var correta
+- "Verificar" button: faz chamada de teste (ex: `GET /v1/models` na OpenAI) e mostra ✓/✗
+
+### O2 — GitHub OAuth
+
+**Modelo:** Vectora é registrado como GitHub OAuth App (não GitHub App).
+Mais simples que GitHub App — não requer instalação no repositório.
+
+**Fluxo:**
+
+1. User clica "Conectar GitHub" na aba Integrações
+2. Redirect para `https://github.com/login/oauth/authorize?client_id=...&scope=repo,user`
+3. GitHub redireciona para `vectora server: /auth/github/callback?code=...`
+4. Backend troca `code` por `access_token` (POST para GitHub)
+5. Token armazenado no KeePass vault do user como `GITHUB_TOKEN`
+6. Tools `git_push`, `gh_pr_create` etc. (G3) usam `user.env_overrides["GITHUB_TOKEN"]`
+
+**Backend** (`vectora/api/handlers/oauth.py` novo):
+
+- `GET /auth/github` → redirect para GitHub OAuth
+- `GET /auth/github/callback` → troca code por token, salva no vault, redirect chat
+- `DELETE /auth/github` → revoga e remove token
+- `GET /auth/github/status` → `{connected: bool, username: str | None}`
+
+**Configuração** (`~/.vectora/config.toml`):
+
+```toml
+[integrations.github]
+client_id = "..."
+client_secret = "..."   # armazenado em system.kdbx (root)
+redirect_uri = "http://localhost:8080/auth/github/callback"
+```
+
+**Frontend:**
+
+- Card GitHub: status badge + botão "Conectar" (redirect) ou "Desconectar"
+- Após OAuth: mostra avatar + username do GitHub conectado
+- `chat/server/routes/oauth.ts` (novo): proxy para endpoints OAuth
+
+### O3 — Google OAuth (futuramente)
+
+Mesmo padrão de O2, mas com scopes Google Drive + Gmail.
+`GOOGLE_ACCESS_TOKEN` no vault → `drive_read`, `drive_write` tools.
+
+### O4 — Notion OAuth (futuramente)
+
+API Token (simples, como O1) ou OAuth App.
+`NOTION_API_KEY` → tool `notion_search` para RAG de knowledge bases.
+
+### O5 — Linear OAuth (futuramente)
+
+`LINEAR_API_KEY` (simples, como O1) → tools `linear_issue_create`, `linear_issue_list`.
+
+**Arquivos críticos:**
+
+- `vectora/api/handlers/oauth.py` — novo (GitHub OAuth flow)
+- `vectora/services/secrets/keepass.py` — já existe, usar para armazenar tokens
+- `chat/components/layout/settings-dialog/tabs/integracoes-tab.tsx` — cards com status
+- `chat/server/routes/oauth.ts` — proxy Hono para OAuth endpoints
+- `vectora/tools/git.py`, `vectora/tools/gh.py` — já planejados em G3
+
+**Verificação O1:**
+
+- User insere `OPENAI_API_KEY` → salvo via `/api/auth/envs` → chat usa GPT-4.x com tokens do user
+- User B não vê key do User A (isolamento via vault)
+- Root não tem o token do user: `GET /auth/envs` de outro user retorna 403
+
+**Verificação O2:**
+
+- Fresh install, registrar Vectora como GitHub OAuth App no github.com/settings/developers
+- Click "Conectar GitHub" → redirect para GitHub → authorize → retorna ao chat com status "Conectado como @brunosrz"
+- Pedir pro agente fazer um commit → usa GITHUB_TOKEN do user → PR criado no name dele
+
+---
+
+## BLOCO P — Root Admin Panel (RBAC/ABAC Global)
+
+**Contexto.** O root do Vectora precisa de uma visão administrativa para
+gerenciar quem acessa o quê. Isso vai além das permissões básicas do Bloco C
+(roles) — permite controle fino de quais agents/tools cada user pode usar,
+quais workspaces acessa e com que nível.
+
+### P1 — Aba Administração no Settings Dialog (root/admin only)
+
+Sub-abas dentro de Administração:
+
+**Usuários:**
+
+- Tabela: email | role | último acesso | status
+- Click → drawer com detalhes: mudar role, resetar senha, ver workspaces, ver envs (masked)
+- Botão "Convidar usuário" → gera link de signup válido por 24h
+
+**Agents & Tools:**
+
+- Checklist de agents disponíveis: quais estão habilitados globalmente
+- Por agent: quais tools estão habilitadas
+- ABAC: override por usuário ("User X não pode usar terminal")
+- Persistido em `~/.vectora/config.toml` → lido pelo `vectora/graph.py` ao buildar graph
+
+**Workspaces:**
+
+- Lista de todos os workspaces no servidor
+- Assign: `user_id → workspace_id → role` (owner, writer, reader)
+- Tabela: Workspace | Usuários com acesso | Tools liberadas
+
+**Sistema:**
+
+- Versão do Vectora Agent + chat
+- Status dos serviços (LanceDB, SQLite, MCP servers ativos)
+- Métricas de uso: requests/min, tokens/user/day, top tools usadas
+- Configurações globais: `allow_public_signup`, `default_model`, `max_recursion`
+
+### P2 — Backend: endpoints de admin
+
+- `GET /admin/users` → lista usuários com stats (já existe como `GET /auth/users`)
+- `POST /admin/users/{id}/tools` → override de tools por user
+- `GET /admin/workspaces` → todos os workspaces com assignees
+- `POST /admin/workspaces/{id}/assign` → atribuir user a workspace
+- `GET /admin/system` → versão, health, métricas
+- `PATCH /admin/config` → atualizar `allow_public_signup`, `default_model` etc.
+
+**Arquivos críticos:**
+
+- `chat/components/layout/settings-dialog/admin/admin-tab.tsx` — novo
+- `chat/components/layout/settings-dialog/admin/users-panel.tsx` — novo
+- `chat/components/layout/settings-dialog/admin/tools-panel.tsx` — novo
+- `vectora/api/handlers/admin.py` — novo router (todos os endpoints exigem root/admin)
+- `vectora/services/permissions.py` — ampliar com `can_override_tools(user, target_user_id)`
+
+---
+
 ## Ordem de implementação sugerida
 
 ```
 [CONCLUÍDOS]
   Bloco A — Chat Foundations
   Bloco B — Polish, Bugfixes & Infra
-
-[v0.1-chat — PRIORIDADE: desbloqueio multi-usuário]
   Bloco C — Authentication & RBAC
-  (sem isso, vectora server não pode ser exposto publicamente)
 
-[v0.2-chat — UX imediato]
-  Bloco D (reasoning reveal) → Bloco F (file handling)
+[v0.2-chat — Settings Architecture + UX imediato]
+  Bloco L — Settings Architecture (⚙️ Chat Settings + Configurações dialog)
+  Bloco D — Reasoning Reveal & Thinking UX
+  Bloco F — File Handling
 
-[v0.3-chat — projeto-first]
-  Bloco G (workspaces + git) ← depende do backend de workspaces (B5-B7 roadmap principal)
+[v0.3-chat — Memória + Integrações]
+  Bloco N — Per-User Memory (isolamento + UI de edição)
+  Bloco O — Workspace Integrations (API keys O1 primeiro, GitHub OAuth O2 depois)
+
+[v0.4-chat — projeto-first]
+  Bloco G (workspaces + git) ← O2 desbloqueia G3 (git tools com GITHUB_TOKEN)
   Bloco E (HITL) ← depende de interrupt_before no graph
 
-[v0.4-chat — power-user]
-  Bloco H (slash commands) → Bloco I (search/export/share) → Bloco L (settings)
+[v0.5-chat — power-user]
+  Bloco H (slash commands) → Bloco I (search/export/share)
 
-[v0.5-chat — mobile + observability]
+[v0.6-chat — admin + mobile + observability]
+  Bloco P — Root Admin Panel
   Bloco J (mobile/PWA) → Bloco K (metrics dashboard)
 
 [contínuo]
@@ -1087,7 +1373,7 @@ Slash commands tornam ações de power-user descobríveis e rápidas.
 - **C**: setup wizard fresh → signup → root criado; second user member;
   member tenta ler thread de root → 403; rate limit 6º signin attempt → 429;
   user customiza GH_TOKEN próprio → comandos git usam dele; admin vê audit;
-  Vaultwarden opt-in via config → secrets migram pra ele
+  KeePassXC kdbx criado em ~/.vectora/secrets/users/<user_id>.kdbx no signin; abrir no KeePassXC desktop confirma encriptação correta
 - **D**: enviar pergunta complexa → ver `Thinking` colapsado com reason →
   expandir → ver decisão de routing
 - **E**: pedir `terminal ls` → modal HITL aparece → Approve → resultado renderiza

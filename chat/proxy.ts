@@ -84,7 +84,7 @@ export async function proxy(request: NextRequest) {
         return response;
       }
     } catch {
-      // Falha no refresh → redireciona para signin
+      // Falha no refresh (servidor offline etc.) → redireciona para signin
     }
 
     const signinUrl = new URL("/auth/signin", request.url);
@@ -92,7 +92,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(signinUrl);
   }
 
-  return NextResponse.next();
+  // Segurança: sem tokens válidos → redireciona sempre
+  const signinUrl = new URL("/auth/signin", request.url);
+  signinUrl.searchParams.set("from", pathname);
+  return NextResponse.redirect(signinUrl);
 }
 
 export const config = {
