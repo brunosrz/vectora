@@ -45,6 +45,21 @@ memory.get("/:key", async (c) => {
   }
 });
 
+/** POST /api/memory — cria nova memória */
+memory.post("/", async (c) => {
+  const body = await c.req.json();
+  try {
+    const res = await fetch(`${VECTORA_API_URL}/memory`, {
+      method: "POST",
+      headers: baseHeaders(c.req.header("Cookie")),
+      body: JSON.stringify(body),
+    });
+    return c.json(await res.json(), res.status as 201);
+  } catch (err) {
+    return c.json({ error: String(err) }, 502);
+  }
+});
+
 /** PUT /api/memory/:key */
 memory.put("/:key", async (c) => {
   const key = c.req.param("key");

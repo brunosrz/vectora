@@ -41,6 +41,17 @@ class ListMemoriesResponse(BaseModel):
     total: int
 
 
+class CreateMemoryRequest(BaseModel):
+    key: str
+    content: str
+    metadata: dict[str, Any] = {}
+
+
+class CreateMemoryResponse(BaseModel):
+    status: str
+    key: str
+
+
 class UpdateMemoryRequest(BaseModel):
     content: str
     metadata: dict[str, Any] = {}
@@ -77,6 +88,39 @@ def _get_user_id(request: Request) -> str:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+
+@router.post("", response_model=CreateMemoryResponse, status_code=201)
+async def create_memory(
+    request: Request,
+    body: CreateMemoryRequest,
+) -> CreateMemoryResponse:
+    """Cria uma nova memória manualmente (pelo painel de configurações)."""
+    try:
+        from vectora.services.memory import get_memory_store
+
+        namespace = _get_user_id(request)
+        store = await get_memory_store()
+
+        existing = await store.get(namespace, body.key)
+        if existing is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Memória '{body.key}' já existe. Use PUT para editar.",
+            )
+
+        await store.save(
+            user_id=namespace,
+            key=body.key,
+            content=body.content,
+            metadata=body.metadata,
+        )
+        return CreateMemoryResponse(status="created", key=body.key)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("create_memory failed: key=%s", body.key)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get("", response_model=ListMemoriesResponse)
