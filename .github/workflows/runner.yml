@@ -169,8 +169,10 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 11.2.2
-      - name: Build Chat (make build-chat)
-        run: make build-chat
+      - name: Install frontend dependencies
+        run: cd chat && pnpm install --frozen-lockfile
+      - name: Build frontend
+        run: cd chat && pnpm build
 
   # ── 4a. Unit Tests ──────────────────────────────────────────────────────
   test-unit:
