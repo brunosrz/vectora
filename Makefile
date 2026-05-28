@@ -10,8 +10,8 @@
 #   make dev          # atalho: inicia backend (8080) + frontend dev (3000)
 #   make clean-static # remove vectora/chat_static/
 #
-# Windows: SHELL = caminho completo do Git Bash (rm -rf, cp -r, mkdir -p, kill)
 SHELL = "C:/Program Files/Git/usr/bin/bash.exe"
+BASH  = "C:/Program Files/Git/usr/bin/bash.exe"
 
 .PHONY: gen-proto build-chat dev clean-static
 
@@ -44,23 +44,15 @@ build-chat:
 	@echo ">> Compilando Next.js (standalone)..."
 	cd chat && pnpm build
 	@echo ">> Copiando para vectora/chat_static/..."
-	rm -rf vectora/chat_static
-	mkdir -p vectora/chat_static
-	cp -r chat/.next/standalone/. vectora/chat_static/
-	mkdir -p vectora/chat_static/.next/static
-	cp -r chat/.next/static/. vectora/chat_static/.next/static/
-	mkdir -p vectora/chat_static/public
-	cp -r chat/public/. vectora/chat_static/public/
+	$(BASH) -c "rm -rf vectora/chat_static && mkdir -p vectora/chat_static && cp -r chat/.next/standalone/. vectora/chat_static/ && mkdir -p vectora/chat_static/.next/static && cp -r chat/.next/static/. vectora/chat_static/.next/static/ && mkdir -p vectora/chat_static/public && cp -r chat/public/. vectora/chat_static/public/"
 	@echo ">> Garantindo @swc/helpers no standalone (Windows/pnpm)..."
-	rm -rf vectora/chat_static/node_modules/@swc/helpers
-	mkdir -p vectora/chat_static/node_modules/@swc
-	cp -rL chat/node_modules/.pnpm/@swc+helpers@*/node_modules/@swc/helpers vectora/chat_static/node_modules/@swc/helpers
+	$(BASH) -c "rm -rf vectora/chat_static/node_modules/@swc/helpers && mkdir -p vectora/chat_static/node_modules/@swc && cp -rL chat/node_modules/.pnpm/@swc+helpers@*/node_modules/@swc/helpers vectora/chat_static/node_modules/@swc/helpers"
 	@echo "OK Frontend compilado em vectora/chat_static/"
 	@echo "  Inicie com: uv run vectora server chat"
 
 # ── Limpar static build ───────────────────────────────────────────────────────
 clean-static:
-	rm -rf vectora/chat_static
+	$(BASH) -c "rm -rf vectora/chat_static"
 	@echo "OK vectora/chat_static/ removido"
 
 # ── Dev: backend headless + frontend dev ─────────────────────────────────────
