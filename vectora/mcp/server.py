@@ -676,12 +676,7 @@ async def vectora_metrics(
     return json.dumps(result, ensure_ascii=False)
 
 
-logger.info(
-    "18 tools registered: web_search, fetch_url, vector_search, embedding, ingest_docs, "
-    "manage_retriever, workspace_describe, workspace_list, bucket_summary, "
-    "file_read, file_edit, file_write, grep, list_dir, terminal, "
-    "call_mcp_tool, delegate_task_to_vectora, vectora_metrics"
-)
+logger.info("18 tools registered in MCP server")
 
 
 # ============================================================================
@@ -847,6 +842,7 @@ async def get_server_status() -> str:
     """
     logger.info("Resource: get_server_status")
 
+    tools_count = len(mcp._tool_manager.list_tools())
     return json.dumps(
         {
             "server": "Vectora",
@@ -857,7 +853,7 @@ async def get_server_status() -> str:
                 "mcp_enabled": settings.enable_mcp,
                 "embedding_queue_enabled": settings.embedding_queue_enabled,
             },
-            "tools_count": 14,
+            "tools_count": tools_count,
             "resources_count": 4,
         }
     )

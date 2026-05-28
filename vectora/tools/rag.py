@@ -195,19 +195,11 @@ async def vector_search(
                 {"status": "failed", "error": "COHERE_API_KEY not configured"}
             )
 
-        # NOTE: do NOT wrap in SecretStr here.
-        # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
-        # not the actual value, causing a 401 from Cohere.
-        embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
-            model=settings.embedding_model,
-        )
-
-        # embed_query → input_type="search_query" (Cohere v3 assimétrico).
-        # Os documentos são indexados com embed_documents → "search_document"
-        # no background worker. Não trocar por embed_documents aqui.
-        query_vector = embeddings_model.embed_query(query)
-
+        # Verificar existência da coleção ANTES de fazer embedding.
+        # embed_query() é síncrono e usa tenacity com time.sleep() em retry,
+        # o que bloqueia o event loop indefinidamente se a API Cohere falhar.
+        # Ao checar o LanceDB primeiro, evitamos qualquer chamada à API para
+        # coleções que não existem.
         db = await lancedb.connect_async(str(settings.lancedb_dir))
 
         try:
@@ -226,6 +218,19 @@ async def vector_search(
                     "message": f"Collection '{collection}' not found or empty",
                 }
             )
+
+        # NOTE: do NOT wrap in SecretStr here.
+        # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
+        # not the actual value, causing a 401 from Cohere.
+        embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
+            cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
+            model=settings.embedding_model,
+        )
+
+        # embed_query → input_type="search_query" (Cohere v3 assimétrico).
+        # Os documentos são indexados com embed_documents → "search_document"
+        # no background worker. Não trocar por embed_documents aqui.
+        query_vector = embeddings_model.embed_query(query)
 
         try:
             async with asyncio.timeout(10):
