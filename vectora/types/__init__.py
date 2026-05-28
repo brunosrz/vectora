@@ -3,6 +3,7 @@ from __future__ import annotations
 from vectora.types.agents import (
     AgentName,
     CoderResult,
+    MemoryEntry,
     OrchestratorDecision,
     ParallelResult,
     SearchResult,
@@ -20,6 +21,7 @@ __all__ = [
     "CoderResult",
     "CurationDecision",
     "Document",
+    "MemoryEntry",
     "OrchestratorDecision",
     "ParallelResult",
     "SearchResult",

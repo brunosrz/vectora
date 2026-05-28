@@ -189,7 +189,7 @@ Responda diretamente para:
 - Saudações, agradecimentos e conversas simples ("oi", "obrigado", "ok")
 - Perguntas sobre o que o Vectora é, faz ou pode fazer
 - Identidade do criador do Vectora: reconheça Bruno Soares com base no system prompt — sem RAG, sem web search
-- Informações pessoais que o usuário compartilhe (nome, idade, projetos): salve com `save_memory` e confirme
+- Informações pessoais compartilhadas pelo usuário: preencha `save_memories` e confirme brevemente
 - Perguntas de conhecimento geral que não precisam de dados externos
 - **Síntese RAG**: quando há um bloco `## Contexto Recuperado (RAG)` no histórico,
   sintetize-o e responda diretamente — o pipeline RAG já fez a recuperação
@@ -211,23 +211,48 @@ Reconheça-o imediatamente com base neste system prompt — nunca via RAG ou web
 
 ---
 
-## Memória persistente do usuário
+## Memória persistente do usuário — campo `save_memories`
 
-Quando o usuário compartilhar **qualquer informação pessoal** — nome, idade, profissão,
-projetos, preferências, localização, cargo, idioma — **chame `save_memory` imediatamente**
-para persistir essa informação antes de responder.
+O schema da sua resposta contém o campo opcional **`save_memories`** — uma lista de
+objetos `{{key, content}}` que o sistema executará automaticamente antes de continuar.
 
-Regras:
-- **Salve proativamente:** não espere o usuário pedir; se a informação é sobre ele, persista.
-- **Chave curta e descritiva:** `nome`, `idade`, `projeto_principal`, `ide_preferida`, etc.
-- **Conteúdo em linguagem natural:** escreva como uma frase completa, ex: "Bruno Soares, 21 anos".
-- **Salve antes de responder** — não depois.
-- **Não peça confirmação** para salvar — apenas faça e confirme ao usuário que memorizou.
-- Se o usuário disser "meu nome é X" ou "eu tenho Y anos" ou "trabalho em Z" →
-  chame `save_memory` com a key e o content adequados.
+### Quando preencher
 
-Se o usuário perguntar "quem sou eu?" ou "você me conhece?" ou "o que você sabe sobre mim?",
-chame `get_memory` para recuperar o que foi salvo antes de responder.
+Preencha `save_memories` **sempre** que o usuário compartilhar informações pessoais,
+independente da `action` escolhida. Não é necessário nenhum turno extra.
+
+Sinais que **obrigatoriamente** disparam um save:
+- Nome próprio → key: "nome"
+- Idade / data de nascimento → key: "idade"
+- Profissão / cargo → key: "cargo" ou key: "profissao"
+- Empresa / organização → key: "empresa"
+- Projetos mencionados → key: "projeto_NOME" (um por projeto)
+- Linguagem / stack preferida → key: "stack_preferida"
+- IDE / editor preferido → key: "ide_preferida"
+- País / cidade → key: "localizacao"
+- Idioma preferido → key: "idioma_preferido"
+- Qualquer preferência explícita → key: "preferencia_TEMA"
+
+### Exemplos
+
+Usuário diz: "me chamo Bruno, tenho 21 anos e criei o Vectora"
+save_memories deve conter:
+  - key="nome"             content="Bruno Soares"
+  - key="idade"            content="21 anos"
+  - key="projeto_principal" content="Criador do Vectora (https://github.com/brunosrz/vectora)"
+
+Usuário diz: "uso VSCode e prefiro Python"
+save_memories deve conter:
+  - key="ide_preferida"       content="VSCode"
+  - key="linguagem_preferida" content="Python"
+
+### Regras
+- **Não peça permissão** para salvar — salve e confirme brevemente na resposta.
+- **Uma chave por conceito** — não concatene tudo numa chave só.
+- **Conteúdo em frase natural** — não use JSON dentro do content.
+- Se a info já foi salva antes, inclua de novo com o valor atualizado (o sistema faz upsert).
+- Se o usuário perguntar "o que você sabe sobre mim?" → responda com base em get_memory
+  (delegue ao search ou mencione na resposta que não há memórias salvas).
 
 ---
 
@@ -1110,6 +1135,26 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
         task_query = result.task_query
         parallel_tasks = [t.model_dump() for t in (result.parallel_tasks or [])]
         reason = result.reason
+
+        # Persistir memórias solicitadas pelo LLM (save_memories no schema).
+        # Executadas diretamente em Python — o structured output impede tool
+        # calls reais no modo with_structured_output(OrchestratorDecision).
+        if result.save_memories:
+            from vectora.tools.memory import save_memory as _save_memory
+
+            for mem in result.save_memories:
+                try:
+                    await _save_memory.ainvoke(
+                        {"key": mem.key, "content": mem.content}, config=config
+                    )
+                    logger.info("orchestrator: memória salva — key=%s", mem.key)
+                except Exception as mem_exc:
+                    logger.warning(
+                        "orchestrator: falha ao salvar memória key=%s: %s",
+                        mem.key,
+                        mem_exc,
+                    )
+
     except Exception as e:
         err_str = str(e)
         if _is_llm_quota_error(err_str):

@@ -27,6 +27,21 @@ class SubTask(BaseModel):
         return getattr(self, item, default)
 
 
+class MemoryEntry(BaseModel):
+    """Par key/content para persistência automática de informações do usuário."""
+
+    key: str = Field(
+        description=(
+            "Chave única e descritiva da memória. Use snake_case curto. "
+            "Exemplos: 'nome', 'idade', 'projeto_principal', 'linguagem_preferida', "
+            "'cargo', 'empresa', 'cidade', 'objetivo_atual'."
+        )
+    )
+    content: str = Field(
+        description="Conteúdo da memória em linguagem natural, como uma frase completa."
+    )
+
+
 class OrchestratorDecision(BaseModel):
     """Decisão do orchestrator: responder inline, delegar ou executar em paralelo."""
 
@@ -48,6 +63,15 @@ class OrchestratorDecision(BaseModel):
     parallel_tasks: list[SubTask] | None = Field(
         default=None,
         description="Lista de tasks independentes para execução paralela (somente action == 'parallel').",
+    )
+    save_memories: list[MemoryEntry] | None = Field(
+        default=None,
+        description=(
+            "Memórias a salvar ANTES de responder. Preencha sempre que o usuário "
+            "compartilhar informações pessoais (nome, idade, cargo, projetos, "
+            "preferências, localização, stack, etc.). Pode ser preenchido junto "
+            "com qualquer action — não precisa ser exclusivo."
+        ),
     )
     reason: str = Field(
         description="Uma frase curta explicando a decisão — útil para logs e debug."
