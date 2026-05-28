@@ -15,7 +15,7 @@ class TestAdminHandlerExists:
     """vectora/api/handlers/admin.py deve existir com os endpoints esperados."""
 
     def test_module_exists(self):
-        import vectora.api.handlers.admin as mod  # noqa: F401
+        import vectora.api.handlers.admin as mod
 
         assert mod is not None
 
@@ -66,7 +66,9 @@ class TestAdminRequiresAdminRole:
         mock_user = MagicMock()
         mock_user.role = "member"
 
-        with pytest.raises(Exception):
+        from fastapi import HTTPException
+
+        with pytest.raises(HTTPException):
             require_admin(mock_user)
 
     def test_require_admin_passes_for_root(self):

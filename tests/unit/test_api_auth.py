@@ -44,7 +44,7 @@ def app_and_db(tmp_path_factory):
 
     # Reset estado global
     auth_mod._db_conn = None
-    _TEST_SECRET = "api-test-secret-key-fixed-abcdef"
+    _TEST_SECRET = "api-test-secret-key-fixed-abcdef"  # noqa: S105
     # Patcha _get_secret como função para que o módulo todo use este secret
     auth_mod._get_secret = lambda: _TEST_SECRET
 

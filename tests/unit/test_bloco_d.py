@@ -26,7 +26,7 @@ class TestThinkingEventSchema:
     """ThinkingEvent deve existir em schemas.py com os campos corretos."""
 
     def test_thinking_event_importable(self):
-        from vectora.api.schemas import ThinkingEvent  # noqa: F401
+        from vectora.api.schemas import ThinkingEvent
 
     def test_thinking_event_has_reason(self):
         from vectora.api.schemas import ThinkingEvent
@@ -194,14 +194,12 @@ class TestAdaptStreamThinkingEvent:
             for e in events:
                 yield e
 
-        lines = []
-        async for line in adapt_stream(_fake_events(), "t-1"):
-            lines.append(line)
+        lines = [line async for line in adapt_stream(_fake_events(), "t-1")]
 
         payloads = [
-            json.loads(l.removeprefix("data: ").strip())
-            for l in lines
-            if l.startswith("data: ")
+            json.loads(ln.removeprefix("data: ").strip())
+            for ln in lines
+            if ln.startswith("data: ")
         ]
         thinking_events = [p for p in payloads if p["type"] == "thinking"]
         assert len(thinking_events) >= 1
@@ -238,14 +236,12 @@ class TestAdaptStreamThinkingEvent:
             for e in events:
                 yield e
 
-        lines = []
-        async for line in adapt_stream(_fake_events(), "t-1"):
-            lines.append(line)
+        lines = [line async for line in adapt_stream(_fake_events(), "t-1")]
 
         payloads = [
-            json.loads(l.removeprefix("data: ").strip())
-            for l in lines
-            if l.startswith("data: ")
+            json.loads(ln.removeprefix("data: ").strip())
+            for ln in lines
+            if ln.startswith("data: ")
         ]
         thinking_events = [p for p in payloads if p["type"] == "thinking"]
         assert len(thinking_events) == 0
@@ -260,7 +256,7 @@ class TestNodeLabels:
     """node_labels.py mapeia nome interno de nó para label legível."""
 
     def test_node_labels_module_importable(self):
-        from vectora.api import node_labels  # noqa: F401
+        from vectora.api import node_labels
 
     def test_get_node_label_returns_string(self):
         from vectora.api.node_labels import get_node_label
@@ -717,7 +713,7 @@ class TestAdaptersRegression:
 
         async def _failing():
             raise RuntimeError("erro simulado")
-            yield  # noqa
+            yield
 
         payloads = []
         async for line in adapt_stream(_failing(), "t-err"):

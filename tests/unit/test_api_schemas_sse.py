@@ -273,7 +273,7 @@ class TestAuthSchemas:
     def test_signup_request(self):
         from vectora.api.schemas import SignupRequest
 
-        r = SignupRequest(email="a@b.com", password="pass")
+        r = SignupRequest(email="a@b.com", password="pass")  # noqa: S106
         assert r.email == "a@b.com"
 
     def test_user_response_from_user(self):
@@ -295,12 +295,12 @@ class TestAuthSchemas:
         from vectora.api.schemas import TokenResponse, UserResponse
 
         tr = TokenResponse(
-            access_token="acc",
-            refresh_token="ref",
+            access_token="acc",  # noqa: S106
+            refresh_token="ref",  # noqa: S106
             user=UserResponse(id="u", email="e@e.com", role="root", created_at="2024"),
         )
-        assert tr.token_type == "bearer"
-        assert tr.access_token == "acc"
+        assert tr.token_type == "bearer"  # noqa: S105
+        assert tr.access_token == "acc"  # noqa: S105
 
     def test_has_users_response(self):
         from vectora.api.schemas import HasUsersResponse
