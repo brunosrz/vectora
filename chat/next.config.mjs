@@ -1,11 +1,15 @@
-// next.config.ts
-import type { NextConfig } from "next";
+// next.config.mjs
+// Arquivo em ESM puro (sem TypeScript) para evitar o uso de jiti durante o
+// build — jiti@2.x chama module.register() do Node.js, que foi deprecada
+// no Node.js 24 (DEP0205). Usando .mjs o Next.js carrega o arquivo
+// diretamente via import() nativo, sem transpilação.
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // Standalone: bundla o servidor Next.js com deps mínimas.
   // Necessário para suportar auth server-side (proxy, API routes, cookies).
   // Distribuído junto ao chat/src/ backend como pacote próprio.

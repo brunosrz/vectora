@@ -115,7 +115,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: getStorageKey(), // Chave default; re-hidratada ao chamar loadUserSettings()
       storage: createJSONStorage(() =>
-        typeof localStorage !== "undefined"
+        typeof window !== "undefined"
           ? localStorage
           : {
               getItem: () => null,
