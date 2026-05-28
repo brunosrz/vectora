@@ -44,13 +44,14 @@ def _gh_run(
     """
     cmd = ["gh", *args]
     try:
-        result = subprocess.run(  # nosec B603
+        result = subprocess.run(  # noqa: S603  # nosec B603
             cmd,
             cwd=cwd,
             capture_output=True,
             text=True,
             input=input_data,
             timeout=30,
+            check=False,
         )
     except FileNotFoundError:
         return {

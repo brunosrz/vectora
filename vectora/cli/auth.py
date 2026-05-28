@@ -17,9 +17,11 @@ não requer autenticação para acessar o filesystem do servidor.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +48,8 @@ def _save_session(session: dict) -> None:
     # Fallback: arquivo JSON com permissão restrita
     _AUTH_FILE.parent.mkdir(parents=True, exist_ok=True)
     _AUTH_FILE.write_text(json.dumps(session, indent=2))
-    try:
+    with contextlib.suppress(AttributeError, NotImplementedError):
         _AUTH_FILE.chmod(0o600)
-    except (AttributeError, NotImplementedError):
-        pass
 
 
 def _load_session() -> dict | None:
@@ -117,10 +117,10 @@ def _prompt_server_url() -> str:
     """Pede a URL do servidor ao usuário."""
     default = "http://localhost:8080"
     raw = input(f"URL do servidor Vectora [{default}]: ").strip()
-    return raw if raw else default
+    return raw or default
 
 
-def cmd_signup(args) -> int:
+def cmd_signup(args: Any) -> int:
     """Cria uma nova conta no servidor Vectora configurado."""
     import getpass
 
@@ -171,7 +171,7 @@ def cmd_signup(args) -> int:
     return 0
 
 
-def cmd_login(args) -> int:
+def cmd_login(args: Any) -> int:
     """Autentica com email e senha no servidor Vectora."""
     import getpass
 
@@ -211,7 +211,7 @@ def cmd_login(args) -> int:
     return 0
 
 
-def cmd_logout(args) -> int:
+def cmd_logout(args: Any) -> int:
     """Invalida o refresh token no servidor e limpa a sessão local."""
     import requests
 
@@ -224,21 +224,19 @@ def cmd_logout(args) -> int:
     refresh_token = session.get("refresh_token", "")
 
     if refresh_token:
-        try:
+        with contextlib.suppress(Exception):
             requests.post(
                 f"{server}/auth/signout",
                 json={"refresh_token": refresh_token},
                 timeout=10,
             )
-        except Exception:
-            pass  # Falha silenciosa — o important é limpar localmente
 
     _clear_session()
     print("✅ Logout realizado.")
     return 0
 
 
-def cmd_whoami(args) -> int:
+def cmd_whoami(args: Any) -> int:
     """Mostra o usuário autenticado atual."""
     session = _load_session()
     if not session:
@@ -250,7 +248,7 @@ def cmd_whoami(args) -> int:
     return 0
 
 
-def cmd_refresh(args) -> int:
+def cmd_refresh(args: Any) -> int:
     """Força rotação de tokens (útil para debug)."""
     import requests
 

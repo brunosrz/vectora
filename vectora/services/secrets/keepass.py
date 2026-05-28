@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ def _db_path(user_id: str) -> Path:
     return _SECRETS_DIR / f"{user_id}.kdbx"
 
 
-def _get_vault(user_id: str):
+def _get_vault(user_id: str) -> Any:
     """Retorna o vault aberto para o usuário, ou levanta RuntimeError."""
     vault = _open_vaults.get(user_id)
     if vault is None:
@@ -89,7 +90,7 @@ class KeePassSecretsProvider:
             _open_vaults[user_id] = vault
             logger.debug("secrets/keepass: vault aberto para user_id=%s", user_id)
         except Exception as exc:
-            logger.error("secrets/keepass: falha ao abrir vault: %s", exc)
+            logger.exception("secrets/keepass: falha ao abrir vault: %s", exc)
             raise
 
     async def lock(self, user_id: str) -> None:

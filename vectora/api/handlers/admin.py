@@ -274,14 +274,14 @@ async def system_info(request: Request) -> dict:
     # Status dos serviços
     services: dict[str, str] = {}
     try:
-        import aiosqlite  # noqa: F401
+        import aiosqlite
 
         services["sqlite"] = "ok"
     except Exception:
         services["sqlite"] = "unavailable"
 
     try:
-        import lancedb  # noqa: F401
+        import lancedb
 
         services["lancedb"] = "ok"
     except Exception:

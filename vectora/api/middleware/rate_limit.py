@@ -15,6 +15,7 @@ são protegidos pela autenticação obrigatória.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import FastAPI, Request
 
@@ -45,6 +46,6 @@ def attach_limiter(app: FastAPI) -> None:
         logger.warning("rate_limit: slowapi não disponível: %s", exc)
 
 
-def get_limiter(request: Request):
+def get_limiter(request: Request) -> Any:
     """Retorna o limiter do state do app (helper para handlers)."""
     return getattr(request.app.state, "limiter", None)

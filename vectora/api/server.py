@@ -65,12 +65,12 @@ async def _stop_background_worker() -> None:
     try:
         await worker.stop(timeout_seconds=5)
         logger.info("api/server: background worker parado")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("api/server: erro ao parar background worker: %s", exc)
 
 
 @asynccontextmanager
-async def _lifespan(app: FastAPI):  # noqa: ARG001 — assinatura do FastAPI
+async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     """Startup / shutdown da aplicação.
 
     **Startup**: opcionalmente pré-aquece o grafo (``VECTORA_WARMUP_GRAPH=1``).
@@ -122,7 +122,7 @@ async def _lifespan(app: FastAPI):  # noqa: ARG001 — assinatura do FastAPI
                 ),
                 timeout=_SHUTDOWN_TIMEOUT_S,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "api/server: shutdown excedeu %.1fs — hard-exit cuidará do resto",
                 _SHUTDOWN_TIMEOUT_S,

@@ -15,7 +15,7 @@ class TestOAuthHandlerExists:
     """vectora/api/handlers/oauth.py deve existir com os endpoints esperados."""
 
     def test_module_exists(self):
-        import vectora.api.handlers.oauth as mod  # noqa: F401
+        import vectora.api.handlers.oauth as mod
 
         assert mod is not None
 

@@ -12,6 +12,7 @@ Rotas EXCLUÍDAS da autenticação obrigatória:
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -47,13 +48,13 @@ def _auth_enabled() -> bool:
 def _is_public_route(path: str) -> bool:
     """True se a rota é pública (não requer token)."""
     # Arquivos estáticos (extensão presente) são sempre públicos
-    last_segment = path.split("/")[-1]
+    last_segment = path.rsplit("/", maxsplit=1)[-1]
     if "." in last_segment:
         return True
     return any(path.startswith(p) for p in _PUBLIC_PREFIXES)
 
 
-async def _extract_user(request: Request):
+async def _extract_user(request: Request) -> Any:
     """Tenta extrair e validar o usuário do token JWT.
 
     Aceita:

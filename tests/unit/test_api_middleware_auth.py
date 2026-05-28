@@ -104,7 +104,7 @@ class TestAuthEnabled:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def auth_client(tmp_path, monkeypatch):
     """App com auth habilitada e banco temporário."""
     os.environ["VECTORA_AUTH_REQUIRED"] = "true"

@@ -340,7 +340,7 @@ async def get_envs(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Não autenticado.")
     overrides = await auth_svc.get_env_overrides(user.id)
     # Mascara valores para exibição — nunca retorna o valor real para o cliente
-    masked = {k: "••••••••" for k in overrides}
+    masked = dict.fromkeys(overrides, "••••••••")
     return {"envs": masked, "keys": list(overrides.keys())}
 
 

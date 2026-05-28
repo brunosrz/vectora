@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import json
 import logging
 import uuid
@@ -344,10 +345,8 @@ async def get_tools() -> GetToolsResponse:
 
         args_schema = "{}"
         if hasattr(t, "args_schema") and t.args_schema:
-            try:
+            with contextlib.suppress(Exception):
                 args_schema = json.dumps(t.args_schema.model_json_schema())
-            except Exception:
-                pass
 
         tools.append(
             ToolSchema(

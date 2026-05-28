@@ -54,7 +54,7 @@ async def _collect(gen: Any) -> list[dict]:
 
 class TestHITLEventSchema:
     def test_hitl_event_importable(self) -> None:
-        from vectora.api.schemas import HITLEvent  # noqa: F401
+        from vectora.api.schemas import HITLEvent
 
     def test_hitl_event_has_tool_name(self) -> None:
         from vectora.api.schemas import HITLEvent

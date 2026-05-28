@@ -192,7 +192,7 @@ async def search_finalize(state: State) -> dict:
         existing = list(state.get("rag_docs") or [])
         return {
             "search_result": result,
-            "rag_docs": existing + [doc],
+            "rag_docs": [*existing, doc],
             "rag_pending": False,  # limpa o flag
         }
 

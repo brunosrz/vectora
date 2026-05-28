@@ -657,7 +657,7 @@ def _get_audit_tools() -> list:
 _audit_llm = None
 
 
-def _get_audit_llm():
+def _get_audit_llm() -> object:
     """LLM singleton do auditor RAG, com ferramentas de auditoria."""
     global _audit_llm
     if _audit_llm is None:
@@ -758,8 +758,8 @@ Sua tarefa é validar se esses documentos são genuinamente relevantes.
     llm = _get_audit_llm()
 
     # Mini agent loop — máx 3 iterações para evitar loop infinito
-    MAX_AUDIT_STEPS = 3
-    for step in range(MAX_AUDIT_STEPS):
+    max_audit_steps = 3
+    for step in range(max_audit_steps):
         try:
             response = await llm.ainvoke(audit_messages)  # type: ignore[attr-defined]
             audit_messages.append(response)
@@ -777,7 +777,7 @@ Sua tarefa é validar se esses documentos são genuinamente relevantes.
             # Executa as tool_calls via ToolNode
             tool_input: State = {"messages": audit_messages}  # type: ignore[assignment]
             tool_output = await asyncio.to_thread(
-                lambda: audit_tool_node.invoke(tool_input)
+                lambda ti=tool_input: audit_tool_node.invoke(ti)
             )
             tool_msgs = tool_output.get("messages", [])
             # Adiciona apenas as ToolMessages novas (não re-adiciona as anteriores)

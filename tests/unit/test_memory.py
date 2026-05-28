@@ -99,7 +99,7 @@ class TestMemoryHandlerExists:
     """vectora/api/handlers/memory.py deve existir com os endpoints esperados."""
 
     def test_memory_handler_module_exists(self):
-        import vectora.api.handlers.memory as mem_mod  # noqa: F401
+        import vectora.api.handlers.memory as mem_mod
 
         assert mem_mod is not None
 

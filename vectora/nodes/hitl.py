@@ -126,7 +126,7 @@ async def hitl_check(state: State) -> dict[str, Any]:
                 tool_calls=new_tool_calls,
             )
             return {"messages": [updated_msg], "hitl_cancelled": False}
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning(
                 "HITL: falha ao aplicar edit, aprovando com args originais: %s", exc
             )

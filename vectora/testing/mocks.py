@@ -80,7 +80,7 @@ class MockLLM(BaseLLM):
         """Async version of _generate."""
         return self._generate(messages, stop, **kwargs)
 
-    def bind_tools(self, tools: list[Any], **kwargs: Any) -> MockLLM:
+    def bind_tools(self, tools: list[Any], **kwargs: Any) -> Self:
         """Bind tools to this mock LLM.
 
         Required by LangChain interface. Returns self for chaining.

@@ -206,7 +206,7 @@ async def verify_integration(request: Request, integration_id: str) -> dict:
         return {"ok": False, "message": str(exc)}
 
 
-async def _verify_apikey(integration_id: str, token: str) -> tuple[bool, str]:
+async def _verify_apikey(integration_id: str, token: str) -> tuple[bool, str]:  # noqa: PLR0911
     """Faz uma chamada mínima para validar a chave de cada provedor."""
     import httpx
 
@@ -337,7 +337,7 @@ async def github_oauth_callback(
         await auth_svc.set_env_override(user_id, "GITHUB_TOKEN", access_token)
         logger.info("GitHub OAuth: token salvo para user_id=%s", user_id)
     except Exception as exc:
-        logger.error("GitHub OAuth: falha ao salvar token: %s", exc)
+        logger.exception("GitHub OAuth: falha ao salvar token: %s", exc)
         return RedirectResponse(url="/?oauth_error=github_save_failed", status_code=302)
 
     return RedirectResponse(url="/?oauth_success=github", status_code=302)

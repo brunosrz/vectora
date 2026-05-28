@@ -150,7 +150,7 @@ def _extract_orchestrator_thinking(event: dict[str, Any]) -> dict[str, Any] | No
     return None
 
 
-def langgraph_event_to_payload(
+def langgraph_event_to_payload(  # noqa: PLR0911
     event: dict[str, Any],
 ) -> StreamChatEventPayload | None:
     """Converte um evento LangGraph em nosso StreamChatEventPayload.

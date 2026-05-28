@@ -35,16 +35,16 @@ class _CursorProxy:
     Espelha o comportamento do aiosqlite._AioContextManager.
     """
 
-    def __init__(self, cursor: "FakeCursor") -> None:
+    def __init__(self, cursor: FakeCursor) -> None:
         self._cursor = cursor
 
     def __await__(self):  # type: ignore[override]
-        async def _inner() -> "FakeCursor":
+        async def _inner() -> FakeCursor:
             return self._cursor
 
         return _inner().__await__()
 
-    async def __aenter__(self) -> "FakeCursor":
+    async def __aenter__(self) -> FakeCursor:
         return self._cursor
 
     async def __aexit__(self, *_: object) -> None:
@@ -146,7 +146,7 @@ class TestUpsertSession:
     @pytest.mark.asyncio
     async def test_upsert_session_exists(self):
         """_upsert_session deve ser importável de vectora.api.handlers.threads."""
-        from vectora.api.handlers.threads import _upsert_session  # noqa: F401
+        from vectora.api.handlers.threads import _upsert_session
 
     @pytest.mark.asyncio
     async def test_upsert_creates_row(self):
@@ -161,9 +161,8 @@ class TestUpsertSession:
 
         assert len(db.sql_calls) >= 1
         sql_used = " ".join(s for s, _ in db.sql_calls).upper()
-        assert "INSERT" in sql_used and (
-            "ON CONFLICT" in sql_used or "OR REPLACE" in sql_used
-        )
+        assert "INSERT" in sql_used
+        assert "ON CONFLICT" in sql_used or "OR REPLACE" in sql_used
 
     @pytest.mark.asyncio
     async def test_upsert_stores_thread_id(self):

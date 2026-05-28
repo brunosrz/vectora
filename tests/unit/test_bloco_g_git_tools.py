@@ -22,7 +22,7 @@ import pytest
 # ===========================================================================
 
 
-@pytest.fixture()
+@pytest.fixture
 def empty_repo(tmp_path: Path) -> git.Repo:
     """Repo git vazio (sem commits)."""
     repo = git.Repo.init(tmp_path)
@@ -31,7 +31,7 @@ def empty_repo(tmp_path: Path) -> git.Repo:
     return repo
 
 
-@pytest.fixture()
+@pytest.fixture
 def repo_with_commit(tmp_path: Path) -> git.Repo:
     """Repo com um commit inicial."""
     repo = git.Repo.init(tmp_path)
@@ -45,7 +45,7 @@ def repo_with_commit(tmp_path: Path) -> git.Repo:
     return repo
 
 
-@pytest.fixture()
+@pytest.fixture
 def dirty_repo(tmp_path: Path) -> git.Repo:
     """Repo com arquivo modificado e arquivo untracked."""
     repo = git.Repo.init(tmp_path)

@@ -8,7 +8,7 @@ de build-time durante desenvolvimento.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -31,7 +31,7 @@ class ChatConfig(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-class AttachmentKind(str, Enum):
+class AttachmentKind(StrEnum):
     """Tipo semântico do attachment — determina como o backend o injeta na mensagem."""
 
     IMAGE = "image"  # imagem → image_url part (multimodal)
@@ -311,7 +311,7 @@ class UserResponse(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
+    token_type: str = "bearer"  # noqa: S105
     user: UserResponse
 
 

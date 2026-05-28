@@ -12,6 +12,7 @@ Banco de dados: ~/.vectora/checkpoints.db (mesmo que checkpointer LangGraph)
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import logging
 import os
@@ -62,7 +63,7 @@ class UserInDB(User):
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
+    token_type: str = "bearer"  # noqa: S105
     user: User
 
 
@@ -87,10 +88,8 @@ def _load_or_create_secret_key() -> str:
         return _SECRET_KEY_PATH.read_text().strip()
     key = secrets.token_hex(64)  # 512 bits
     _SECRET_KEY_PATH.write_text(key)
-    try:
-        _SECRET_KEY_PATH.chmod(0o600)
-    except (AttributeError, NotImplementedError):
-        pass  # Windows — sem suporte a chmod
+    with contextlib.suppress(AttributeError, NotImplementedError):
+        _SECRET_KEY_PATH.chmod(0o600)  # Windows — sem suporte a chmod
     logger.info("auth: nova chave JWT gerada em %s", _SECRET_KEY_PATH)
     return key
 
@@ -252,10 +251,8 @@ def _row_to_user(row: Any) -> UserInDB:
     import json
 
     env = {}
-    try:
+    with contextlib.suppress(Exception):
         env = json.loads(row["env_overrides_json"] or "{}")
-    except Exception:
-        pass
     return UserInDB(
         id=row["id"],
         email=row["email"],

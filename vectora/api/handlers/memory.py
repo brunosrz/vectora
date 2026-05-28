@@ -14,7 +14,7 @@ O user_id é extraído de ``request.state.user.id``.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -82,8 +82,8 @@ def _get_user_id(request: Request) -> str:
 @router.get("", response_model=ListMemoriesResponse)
 async def list_memories(
     request: Request,
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ListMemoriesResponse:
     """Lista memórias do usuário autenticado, ordenadas por data de atualização."""
     try:

@@ -17,15 +17,12 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Any
 
 import git
 from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +32,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _resolve_workspace(workspace_id: str | None, config: RunnableConfig | None):
+def _resolve_workspace(workspace_id: str | None, config: RunnableConfig | None) -> Any:
     """Resolve workspace → Workspace (mesmo padrão de workspace.py)."""
     from vectora.services.workspace import workspace_registry
 
@@ -49,7 +46,7 @@ def _resolve_workspace(workspace_id: str | None, config: RunnableConfig | None):
     return workspace_registry.get_or_create()
 
 
-def _open_repo(workspace_id: str | None, config: RunnableConfig | None):
+def _open_repo(workspace_id: str | None, config: RunnableConfig | None) -> Any:
     """Abre git.Repo para o workspace ativo.
 
     Retorna (repo, None) em sucesso ou (None, error_json_str) em falha.
@@ -149,10 +146,7 @@ def _git_log_impl(repo: git.Repo, n: int = 10, branch: str | None = None) -> dic
 def _git_diff_impl(repo: git.Repo, ref: str | None = None) -> dict:
     """Retorna diff do working tree (ou em relação a ref)."""
     try:
-        if ref:
-            diff_text = repo.git.diff(ref)
-        else:
-            diff_text = repo.git.diff()
+        diff_text = repo.git.diff(ref) if ref else repo.git.diff()
         return {"status": "ok", "diff": diff_text}
     except git.GitCommandError as exc:
         return {"status": "error", "message": str(exc)}
@@ -302,7 +296,7 @@ def _git_stash_impl(
     if action == "list":
         try:
             out = repo.git.stash("list")
-            entries = [l.strip() for l in out.splitlines() if l.strip()]
+            entries = [ln.strip() for ln in out.splitlines() if ln.strip()]
             return {"status": "ok", "action": "list", "entries": entries}
         except git.GitCommandError as exc:
             return {"status": "error", "message": str(exc)}
