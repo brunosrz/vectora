@@ -6,6 +6,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { SegmentProvider } from "@/components/providers/segment-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { I18nProvider } from "@/lib/i18n";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -44,7 +45,7 @@ export default function RootLayout({
   const segmentWriteKey = process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY;
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Segment Analytics */}
         {segmentWriteKey && (
@@ -67,11 +68,13 @@ analytics.page();
         suppressHydrationWarning
       >
         <ThemeProvider>
-          <AuthProvider>
-            <SegmentProvider>
-              <NuqsAdapter>{children}</NuqsAdapter>
-            </SegmentProvider>
-          </AuthProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <SegmentProvider>
+                <NuqsAdapter>{children}</NuqsAdapter>
+              </SegmentProvider>
+            </AuthProvider>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

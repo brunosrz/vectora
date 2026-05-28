@@ -268,6 +268,77 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 # ---------------------------------------------------------------------------
+# Standalone chat helper
+# ---------------------------------------------------------------------------
+
+
+def _run_standalone_chat(
+    host: str,
+    frontend_port: int,
+    api_port: int,
+    uvicorn_log_level: str,
+    standalone_js: "Path",
+    static_dir: "Path",
+) -> None:
+    """Inicia Next.js standalone (Node.js) + FastAPI em paralelo.
+
+    O Node.js escuta na porta ``frontend_port`` (exposta ao usuário) e
+    usa ``VECTORA_API_URL`` para proxiar chamadas de API ao FastAPI, que
+    escuta em ``127.0.0.1:api_port`` (porta interna, não exposta).
+
+    Fluxo de portas:
+        Browser → Node.js :frontend_port → FastAPI 127.0.0.1:api_port
+    """
+    import shutil
+    import subprocess  # nosec B404
+
+    import uvicorn
+
+    from vectora.api.server import create_app
+
+    api_url = f"http://127.0.0.1:{api_port}"
+
+    # Env para o Node.js standalone: porta + URL interna da API Python
+    node_env = {
+        **os.environ,
+        "PORT": str(frontend_port),
+        "HOSTNAME": host,
+        "VECTORA_API_URL": api_url,
+    }
+
+    logger.info(
+        "Iniciando Vectora chat server — frontend: http://%s:%d  API interna: :%d",
+        host,
+        frontend_port,
+        api_port,
+    )
+
+    node_cmd = shutil.which("node") or "node"
+    node_proc = subprocess.Popen(  # noqa: S603  # nosec B603
+        [node_cmd, str(standalone_js)],
+        env=node_env,
+        cwd=str(static_dir),
+    )
+
+    try:
+        # FastAPI em modo headless — porta interna, acessível só via Node.js
+        app = create_app(serve_static=False)
+        uvicorn.run(
+            app,
+            host="127.0.0.1",
+            port=api_port,
+            log_level=uvicorn_log_level,
+            access_log=False,
+        )
+    finally:
+        node_proc.terminate()
+        try:
+            node_proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            node_proc.kill()
+
+
+# ---------------------------------------------------------------------------
 # Model → provider resolution
 # ---------------------------------------------------------------------------
 
@@ -639,6 +710,28 @@ def run() -> None:
 
             serve_static = mode == "chat"
             port = args.port or 8080
+            uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
+
+            # ── Modo chat com build standalone ──────────────────────────────
+            # Se `make build-chat` já foi executado e gerou vectora/chat_static/server.js,
+            # inicia o Next.js standalone + FastAPI em paralelo (Node.js na porta
+            # exposta, FastAPI na porta interna port+1).
+            if serve_static:
+                _static_dir = Path(__file__).parent / "chat_static"
+                _standalone_js = _static_dir / "server.js"
+                if _standalone_js.exists():
+                    _run_standalone_chat(
+                        host=args.host,
+                        frontend_port=port,
+                        api_port=port + 1,
+                        uvicorn_log_level=uvicorn_log_level,
+                        standalone_js=_standalone_js,
+                        static_dir=_static_dir,
+                    )
+                    logger.info("Vectora server: encerrando processo")
+                    os._exit(0)
+
+            # ── Fallback: FastAPI direto (headless ou sem build) ─────────────
             app = create_app(serve_static=serve_static)
             logger.info(
                 "Iniciando Vectora %s server em http://%s:%d",
@@ -649,7 +742,6 @@ def run() -> None:
             # log_level do uvicorn afeta logs do próprio uvicorn (Started server,
             # Application startup, etc.). Ruído em dev — usar "warning" como
             # padrão e permitir override via env para depuração.
-            uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
             uvicorn.run(
                 app,
                 host=args.host,

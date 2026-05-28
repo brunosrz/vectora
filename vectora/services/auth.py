@@ -547,7 +547,7 @@ async def list_users() -> list[User]:
             role=r["role"],
             env_overrides={},
             created_at=r["created_at"],
-            last_login_at=r.get("last_login_at"),
+            last_login_at=r["last_login_at"],
         )
         for r in rows
     ]
