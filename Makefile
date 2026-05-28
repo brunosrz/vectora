@@ -52,6 +52,10 @@ build-chat:
 	cp -r chat/.next/static/. vectora/chat_static/.next/static/
 	mkdir -p vectora/chat_static/public
 	cp -r chat/public/. vectora/chat_static/public/
+	@echo ">> Garantindo @swc/helpers no standalone (Windows/pnpm)..."
+	rm -rf vectora/chat_static/node_modules/@swc/helpers
+	mkdir -p vectora/chat_static/node_modules/@swc
+	cp -rL chat/node_modules/.pnpm/@swc+helpers@*/node_modules/@swc/helpers vectora/chat_static/node_modules/@swc/helpers
 	@echo "OK Frontend compilado em vectora/chat_static/"
 	@echo "  Inicie com: uv run vectora server chat"
 

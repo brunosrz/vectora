@@ -57,8 +57,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
 
   getById: (id) => get().workspaces.find((w) => w.id === id) ?? null,
 
-  setWorkspaces: (list, activeId) =>
-    set({ workspaces: list, active_id: activeId, fetchedAt: Date.now() }),
+  setWorkspaces: (list, activeId) => set({ workspaces: list, active_id: activeId, fetchedAt: Date.now() }),
 
   setActive: (id) => set({ active_id: id }),
 

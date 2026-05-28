@@ -29,20 +29,7 @@ export interface ChatUIState {
 /**
  * Actions for updating chat state.
  */
-export type ChatUIAction =
-  | { type: "SET_INPUT"; payload: string }
-  | { type: "SET_COPIED_ID"; payload: string | null }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_LOADING_THREAD"; payload: boolean }
-  | { type: "SET_REGENERATING"; payload: boolean }
-  | { type: "SET_STOPPING"; payload: boolean }
-  | { type: "SET_AUTO_SENT"; payload: boolean }
-  | { type: "SET_ERROR"; payload: string | null }
-  | { type: "RESET_INPUT" }
-  | { type: "START_SEND" }
-  | { type: "FINISH_SEND" }
-  | { type: "START_REGENERATE" }
-  | { type: "FINISH_REGENERATE" };
+export type ChatUIAction = { type: "SET_INPUT"; payload: string } | { type: "SET_COPIED_ID"; payload: string | null } | { type: "SET_LOADING"; payload: boolean } | { type: "SET_LOADING_THREAD"; payload: boolean } | { type: "SET_REGENERATING"; payload: boolean } | { type: "SET_STOPPING"; payload: boolean } | { type: "SET_AUTO_SENT"; payload: boolean } | { type: "SET_ERROR"; payload: string | null } | { type: "RESET_INPUT" } | { type: "START_SEND" } | { type: "FINISH_SEND" } | { type: "START_REGENERATE" } | { type: "FINISH_REGENERATE" };
 
 // ============================================================================
 // Reducer
@@ -138,12 +125,7 @@ function chatUIReducer(state: ChatUIState, action: ChatUIAction): ChatUIState {
  */
 export function useChatState(threadId: string) {
   // Initialize input from localStorage if available
-  const initialInput =
-    typeof window !== "undefined"
-      ? (
-          localStorage.getItem(`${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`) || ""
-        ).slice(0, MAX_INPUT_CHARS)
-      : "";
+  const initialInput = typeof window !== "undefined" ? (localStorage.getItem(`${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`) || "").slice(0, MAX_INPUT_CHARS) : "";
 
   const [state, dispatch] = useReducer(chatUIReducer, {
     input: initialInput,
@@ -167,10 +149,7 @@ export function useChatState(threadId: string) {
       // Auto-save draft to localStorage
       if (typeof window !== "undefined") {
         if (cappedValue) {
-          localStorage.setItem(
-            `${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`,
-            cappedValue,
-          );
+          localStorage.setItem(`${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`, cappedValue);
         } else {
           localStorage.removeItem(`${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`);
         }

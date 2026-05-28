@@ -36,12 +36,8 @@ function JsonViewer({ data, label }: { data: unknown; label: string }) {
   const text = typeof data === "string" ? data : JSON.stringify(data, null, 2);
   return (
     <details className="mt-1">
-      <summary className="cursor-pointer text-[11px] text-muted-foreground hover:opacity-80">
-        {label}
-      </summary>
-      <pre className="mt-1 text-[10px] font-mono whitespace-pre-wrap break-words max-h-48 overflow-y-auto rounded bg-muted/60 p-2">
-        {text}
-      </pre>
+      <summary className="cursor-pointer text-[11px] text-muted-foreground hover:opacity-80">{label}</summary>
+      <pre className="mt-1 text-[10px] font-mono whitespace-pre-wrap break-words max-h-48 overflow-y-auto rounded bg-muted/60 p-2">{text}</pre>
     </details>
   );
 }
@@ -52,18 +48,9 @@ function DiffViewer({ content }: { content: string }) {
   return (
     <div className="mt-1 font-mono text-[11px] rounded border border-border overflow-hidden max-h-64 overflow-y-auto">
       {lines.map((line, i) => {
-        const bg = line.startsWith("+")
-          ? "bg-green-500/10 text-green-400"
-          : line.startsWith("-")
-            ? "bg-red-500/10 text-red-400"
-            : line.startsWith("@@")
-              ? "bg-blue-500/10 text-blue-300"
-              : "text-muted-foreground";
+        const bg = line.startsWith("+") ? "bg-green-500/10 text-green-400" : line.startsWith("-") ? "bg-red-500/10 text-red-400" : line.startsWith("@@") ? "bg-blue-500/10 text-blue-300" : "text-muted-foreground";
         return (
-          <div
-            key={i}
-            className={`px-3 py-px whitespace-pre-wrap break-all ${bg}`}
-          >
+          <div key={i} className={`px-3 py-px whitespace-pre-wrap break-all ${bg}`}>
             {line || " "}
           </div>
         );
@@ -116,11 +103,7 @@ function CodeBlockViewer({ content, name }: { content: string; name: string }) {
 
 /** Saída de terminal — fundo preto */
 function TerminalBlock({ content }: { content: string }) {
-  return (
-    <pre className="mt-1 text-[11px] font-mono bg-zinc-950 text-zinc-200 rounded p-3 max-h-52 overflow-y-auto whitespace-pre-wrap break-words border border-zinc-800">
-      {typeof content === "string" ? content : JSON.stringify(content, null, 2)}
-    </pre>
-  );
+  return <pre className="mt-1 text-[11px] font-mono bg-zinc-950 text-zinc-200 rounded p-3 max-h-52 overflow-y-auto whitespace-pre-wrap break-words border border-zinc-800">{typeof content === "string" ? content : JSON.stringify(content, null, 2)}</pre>;
 }
 
 /** Cards de resultados de busca — web_search, vector_search, search_memory */
@@ -134,51 +117,27 @@ function SearchResultsViewer({ results }: { results: unknown }) {
   }> = [];
   try {
     const parsed = typeof results === "string" ? JSON.parse(results) : results;
-    items = Array.isArray(parsed)
-      ? parsed
-      : (parsed?.memories ?? parsed?.results ?? []);
+    items = Array.isArray(parsed) ? parsed : (parsed?.memories ?? parsed?.results ?? []);
   } catch {
     return <JsonViewer data={results} label="Ver resultados" />;
   }
 
   if (!items.length) {
-    return (
-      <p className="text-[11px] text-muted-foreground mt-1 italic">
-        Nenhum resultado.
-      </p>
-    );
+    return <p className="text-[11px] text-muted-foreground mt-1 italic">Nenhum resultado.</p>;
   }
 
   return (
     <div className="mt-1 space-y-1.5 max-h-52 overflow-y-auto">
       {items.slice(0, 8).map((item, i) => (
-        <div
-          key={i}
-          className="rounded border border-border bg-muted/30 px-2 py-1.5 text-[11px]"
-        >
-          <div className="font-medium text-foreground truncate">
-            {item.title ?? item.key ?? `Resultado ${i + 1}`}
-          </div>
+        <div key={i} className="rounded border border-border bg-muted/30 px-2 py-1.5 text-[11px]">
+          <div className="font-medium text-foreground truncate">{item.title ?? item.key ?? `Resultado ${i + 1}`}</div>
           {item.url && (
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:underline truncate block text-[10px]"
-            >
+            <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate block text-[10px]">
               {item.url}
             </a>
           )}
-          {item.content && (
-            <p className="text-muted-foreground mt-0.5 line-clamp-2">
-              {item.content}
-            </p>
-          )}
-          {item.score != null && (
-            <span className="text-[10px] text-muted-foreground">
-              score: {item.score.toFixed(3)}
-            </span>
-          )}
+          {item.content && <p className="text-muted-foreground mt-0.5 line-clamp-2">{item.content}</p>}
+          {item.score != null && <span className="text-[10px] text-muted-foreground">score: {item.score.toFixed(3)}</span>}
         </div>
       ))}
     </div>
@@ -191,11 +150,7 @@ function TableViewer({ data }: { data: unknown }) {
   let text = "";
   try {
     const parsed = typeof data === "string" ? JSON.parse(data) : data;
-    if (
-      Array.isArray(parsed) &&
-      parsed.length &&
-      typeof parsed[0] === "object"
-    ) {
+    if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === "object") {
       rows = parsed;
     } else if (typeof parsed === "string") {
       text = parsed;
@@ -207,19 +162,10 @@ function TableViewer({ data }: { data: unknown }) {
   }
 
   if (text) {
-    return (
-      <pre className="mt-1 text-[11px] font-mono bg-muted/40 rounded p-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">
-        {text}
-      </pre>
-    );
+    return <pre className="mt-1 text-[11px] font-mono bg-muted/40 rounded p-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words">{text}</pre>;
   }
 
-  if (!rows.length)
-    return (
-      <p className="text-[11px] text-muted-foreground mt-1 italic">
-        Sem dados.
-      </p>
-    );
+  if (!rows.length) return <p className="text-[11px] text-muted-foreground mt-1 italic">Sem dados.</p>;
 
   const cols = Object.keys(rows[0]);
   return (
@@ -228,10 +174,7 @@ function TableViewer({ data }: { data: unknown }) {
         <thead>
           <tr>
             {cols.map((c) => (
-              <th
-                key={c}
-                className="border border-border px-2 py-1 bg-muted/50 text-left font-medium"
-              >
+              <th key={c} className="border border-border px-2 py-1 bg-muted/50 text-left font-medium">
                 {c}
               </th>
             ))}
@@ -241,10 +184,7 @@ function TableViewer({ data }: { data: unknown }) {
           {rows.slice(0, 50).map((row, i) => (
             <tr key={i} className="even:bg-muted/20">
               {cols.map((c) => (
-                <td
-                  key={c}
-                  className="border border-border px-2 py-0.5 truncate max-w-[200px]"
-                >
+                <td key={c} className="border border-border px-2 py-0.5 truncate max-w-[200px]">
                   {String(row[c] ?? "")}
                 </td>
               ))}
@@ -260,10 +200,7 @@ function TableViewer({ data }: { data: unknown }) {
 function QueueBadge({ data }: { data: unknown }) {
   let info: Record<string, unknown> = {};
   try {
-    info =
-      typeof data === "string"
-        ? JSON.parse(data)
-        : ((data as Record<string, unknown>) ?? {});
+    info = typeof data === "string" ? JSON.parse(data) : ((data as Record<string, unknown>) ?? {});
   } catch {
     /* usa {} */
   }
@@ -282,10 +219,7 @@ function QueueBadge({ data }: { data: unknown }) {
 function QueueProgress({ data }: { data: unknown }) {
   let info: Record<string, unknown> = {};
   try {
-    info =
-      typeof data === "string"
-        ? JSON.parse(data)
-        : ((data as Record<string, unknown>) ?? {});
+    info = typeof data === "string" ? JSON.parse(data) : ((data as Record<string, unknown>) ?? {});
   } catch {
     /* usa {} */
   }
@@ -295,19 +229,12 @@ function QueueProgress({ data }: { data: unknown }) {
   return (
     <div className="mt-1 space-y-1">
       <div className="flex justify-between text-[10px] text-muted-foreground">
-        <span>
-          {info.message
-            ? String(info.message)
-            : `${done} / ${total || "?"} docs`}
-        </span>
+        <span>{info.message ? String(info.message) : `${done} / ${total || "?"} docs`}</span>
         {total > 0 && <span>{pct}%</span>}
       </div>
       {total > 0 && (
         <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-300"
-            style={{ width: `${pct}%` }}
-          />
+          <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
         </div>
       )}
     </div>
@@ -318,10 +245,7 @@ function QueueProgress({ data }: { data: unknown }) {
 function ArtifactCard({ data }: { data: unknown }) {
   let info: Record<string, unknown> = {};
   try {
-    info =
-      typeof data === "string"
-        ? JSON.parse(data)
-        : ((data as Record<string, unknown>) ?? {});
+    info = typeof data === "string" ? JSON.parse(data) : ((data as Record<string, unknown>) ?? {});
   } catch {
     /* usa {} */
   }
@@ -331,16 +255,8 @@ function ArtifactCard({ data }: { data: unknown }) {
   return (
     <div className="mt-1 rounded border border-border bg-muted/30 px-3 py-2 text-[12px]">
       <div className="font-semibold text-foreground">{title}</div>
-      {type && (
-        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
-          {type}
-        </div>
-      )}
-      {path && (
-        <div className="text-[10px] font-mono text-muted-foreground mt-0.5 break-all">
-          {path}
-        </div>
-      )}
+      {type && <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{type}</div>}
+      {path && <div className="text-[10px] font-mono text-muted-foreground mt-0.5 break-all">{path}</div>}
     </div>
   );
 }
@@ -373,39 +289,18 @@ const RENDERERS: Record<RenderHint, RendererFn> = {
 // Componente principal
 // ============================================================================
 
-export const ToolCallRenderer = memo(function ToolCallRenderer({
-  tool,
-  isStreaming,
-}: ToolCallRendererProps) {
+export const ToolCallRenderer = memo(function ToolCallRenderer({ tool, isStreaming }: ToolCallRendererProps) {
   const hint: RenderHint = tool.renderHint ?? "json";
   const renderer = RENDERERS[hint] ?? RENDERERS.json;
 
   return (
-    <div
-      className={`px-3 py-2 rounded-lg border text-xs ${
-        tool.destructive
-          ? "border-destructive/40 bg-destructive/5"
-          : "border-border bg-muted/50"
-      }`}
-    >
+    <div className={`px-3 py-2 rounded-lg border text-xs ${tool.destructive ? "border-destructive/40 bg-destructive/5" : "border-border bg-muted/50"}`}>
       {/* Cabeçalho */}
       <div className="flex items-center gap-2 mb-1">
         <span className="font-semibold text-primary">{tool.name}</span>
-        {tool.destructive && (
-          <span className="text-[10px] text-destructive/80 border border-destructive/40 rounded-sm px-1">
-            destrutivo
-          </span>
-        )}
-        {tool.category && tool.category !== "general" && (
-          <span className="text-[10px] text-muted-foreground border border-border rounded-sm px-1">
-            {tool.category}
-          </span>
-        )}
-        {isStreaming && !tool.output && (
-          <span className="ml-auto text-[10px] text-muted-foreground animate-pulse">
-            executando…
-          </span>
-        )}
+        {tool.destructive && <span className="text-[10px] text-destructive/80 border border-destructive/40 rounded-sm px-1">destrutivo</span>}
+        {tool.category && tool.category !== "general" && <span className="text-[10px] text-muted-foreground border border-border rounded-sm px-1">{tool.category}</span>}
+        {isStreaming && !tool.output && <span className="ml-auto text-[10px] text-muted-foreground animate-pulse">executando…</span>}
       </div>
 
       {/* Argumentos */}
@@ -420,11 +315,7 @@ export const ToolCallRenderer = memo(function ToolCallRenderer({
       )}
 
       {/* Output — renderizado pelo renderer do hint */}
-      {tool.output != null && (
-        <div className="mt-1.5 border-t border-border/40 pt-1.5">
-          {renderer(tool.output, tool.name)}
-        </div>
-      )}
+      {tool.output != null && <div className="mt-1.5 border-t border-border/40 pt-1.5">{renderer(tool.output, tool.name)}</div>}
     </div>
   );
 });

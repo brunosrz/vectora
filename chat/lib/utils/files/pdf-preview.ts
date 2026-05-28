@@ -44,10 +44,7 @@ function _base64ToUint8Array(base64: string): Uint8Array {
  * @param scale  - Escala de renderização (default: 0.6 → ~tamanho de thumbnail)
  * @returns data URL da imagem PNG da primeira página
  */
-export async function renderPdfFirstPage(
-  base64: string,
-  scale = 0.6,
-): Promise<string> {
+export async function renderPdfFirstPage(base64: string, scale = 0.6): Promise<string> {
   const pdfjs = await _ensureWorker();
 
   const data = _base64ToUint8Array(base64);

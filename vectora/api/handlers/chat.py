@@ -22,7 +22,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from vectora.api.adapters import adapt_stream
@@ -210,8 +210,24 @@ async def awarm_graph() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _user_id_from_request(http_request: Request) -> str:
+    """Extrai o user_id do request autenticado para o namespace de memória.
+
+    O AuthMiddleware injeta ``request.state.user`` quando o token é válido.
+    Sem usuário (modo CLI/root local), usa ``"local"`` — espelhando o
+    fallback de ``handlers/memory.py::_get_user_id``, garantindo que as
+    memórias gravadas pelo agente apareçam na aba Memória.
+    """
+    user = getattr(http_request.state, "user", None)
+    if user is not None and getattr(user, "id", None):
+        return str(user.id)
+    return "local"
+
+
 @router.post("/vectora.chat.v1.ChatService/StreamChat")
-async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
+async def stream_chat(
+    request: StreamChatRequest, http_request: Request
+) -> StreamingResponse:
     """Inicia ou continua uma conversa — retorna SSE stream.
 
     Se `thread_id` estiver vazio, cria uma nova thread e emite o ThreadEvent
@@ -238,7 +254,13 @@ async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    configurable: dict[str, Any] = {"thread_id": thread_id}
+    configurable: dict[str, Any] = {
+        "thread_id": thread_id,
+        # user_id alimenta o namespace de memória (user:<id>) — precisa bater
+        # com o namespace lido por GET /memory (handlers/memory.py). Sem isso,
+        # save_memory caía em session_<thread_id> e a aba Memória ficava vazia.
+        "user_id": _user_id_from_request(http_request),
+    }
     if request.config.workspace_id:
         configurable["workspace_id"] = request.config.workspace_id
     if request.config.custom_system_prompt:
@@ -273,7 +295,9 @@ async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
 
 
 @router.post("/vectora.chat.v1.ChatService/ResumeChat")
-async def resume_chat(request: ResumeChatRequest) -> StreamingResponse:
+async def resume_chat(
+    request: ResumeChatRequest, http_request: Request
+) -> StreamingResponse:
     """Retoma uma execução pausada por HITL.
 
     `decision` pode ser:
@@ -289,7 +313,10 @@ async def resume_chat(request: ResumeChatRequest) -> StreamingResponse:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     config: dict[str, Any] = {
-        "configurable": {"thread_id": request.thread_id},
+        "configurable": {
+            "thread_id": request.thread_id,
+            "user_id": _user_id_from_request(http_request),
+        },
         "recursion_limit": 50,
     }
 

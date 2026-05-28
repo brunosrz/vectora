@@ -26,14 +26,11 @@ function cookieHeader(cookies?: string): Record<string, string> {
 
 workspaces.get("/", async (c) => {
   try {
-    const res = await fetch(
-      backendUrl("/vectora.workspace.v1.WorkspaceService/ListWorkspaces"),
-      {
-        headers: {
-          ...cookieHeader(c.req.header("Cookie")),
-        },
+    const res = await fetch(backendUrl("/vectora.workspace.v1.WorkspaceService/ListWorkspaces"), {
+      headers: {
+        ...cookieHeader(c.req.header("Cookie")),
       },
-    );
+    });
     const data = await res.json();
     return c.json(data, res.status as 200);
   } catch {
@@ -43,12 +40,9 @@ workspaces.get("/", async (c) => {
 
 workspaces.get("/active", async (c) => {
   try {
-    const res = await fetch(
-      backendUrl("/vectora.workspace.v1.WorkspaceService/GetActiveWorkspace"),
-      {
-        headers: cookieHeader(c.req.header("Cookie")),
-      },
-    );
+    const res = await fetch(backendUrl("/vectora.workspace.v1.WorkspaceService/GetActiveWorkspace"), {
+      headers: cookieHeader(c.req.header("Cookie")),
+    });
     const data = await res.json();
     return c.json(data, res.status as 200);
   } catch {
@@ -59,17 +53,14 @@ workspaces.get("/active", async (c) => {
 workspaces.post("/set-active", async (c) => {
   const body = await c.req.json();
   try {
-    const res = await fetch(
-      backendUrl("/vectora.workspace.v1.WorkspaceService/SetActiveWorkspace"),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...cookieHeader(c.req.header("Cookie")),
-        },
-        body: JSON.stringify(body),
+    const res = await fetch(backendUrl("/vectora.workspace.v1.WorkspaceService/SetActiveWorkspace"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...cookieHeader(c.req.header("Cookie")),
       },
-    );
+      body: JSON.stringify(body),
+    });
     const data = await res.json();
     return c.json(data, res.status as 200);
   } catch {

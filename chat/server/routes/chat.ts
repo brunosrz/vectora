@@ -17,18 +17,15 @@ const chat = new Hono();
 chat.post("/stream", async (c) => {
   const body = await c.req.text();
 
-  const upstream = await fetch(
-    `${VECTORA_API_URL}/vectora.chat.v1.ChatService/StreamChat`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Repassa cookies do browser → backend para validação de auth
-        ...(c.req.header("Cookie") ? { Cookie: c.req.header("Cookie")! } : {}),
-      },
-      body,
+  const upstream = await fetch(`${VECTORA_API_URL}/vectora.chat.v1.ChatService/StreamChat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // Repassa cookies do browser → backend para validação de auth
+      ...(c.req.header("Cookie") ? { Cookie: c.req.header("Cookie")! } : {}),
     },
-  );
+    body,
+  });
 
   if (!upstream.ok || !upstream.body) {
     return c.json({ error: "Upstream error", status: upstream.status }, 502);
@@ -56,17 +53,14 @@ chat.post("/stream", async (c) => {
 chat.post("/resume", async (c) => {
   const body = await c.req.text();
 
-  const upstream = await fetch(
-    `${VECTORA_API_URL}/vectora.chat.v1.ChatService/ResumeChat`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(c.req.header("Cookie") ? { Cookie: c.req.header("Cookie")! } : {}),
-      },
-      body,
+  const upstream = await fetch(`${VECTORA_API_URL}/vectora.chat.v1.ChatService/ResumeChat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(c.req.header("Cookie") ? { Cookie: c.req.header("Cookie")! } : {}),
     },
-  );
+    body,
+  });
 
   if (!upstream.ok || !upstream.body) {
     return c.json({ error: "Upstream error", status: upstream.status }, 502);
@@ -92,9 +86,7 @@ chat.post("/resume", async (c) => {
 
 /** Proxy para GetTools (autodescoberta de schema) */
 chat.get("/tools", async (c) => {
-  const upstream = await fetch(
-    `${VECTORA_API_URL}/vectora.chat.v1.ChatService/GetTools`,
-  );
+  const upstream = await fetch(`${VECTORA_API_URL}/vectora.chat.v1.ChatService/GetTools`);
   if (!upstream.ok) {
     return c.json({ tools: [] });
   }

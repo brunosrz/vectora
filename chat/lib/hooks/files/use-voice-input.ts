@@ -69,11 +69,7 @@ export interface UseVoiceInputReturn {
  * })
  * ```
  */
-export function useVoiceInput({
-  onTranscript,
-}: {
-  onTranscript: (text: string) => void;
-}): UseVoiceInputReturn {
+export function useVoiceInput({ onTranscript }: { onTranscript: (text: string) => void }): UseVoiceInputReturn {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(false);
@@ -90,10 +86,7 @@ export function useVoiceInput({
 
   // Check for browser support on mount
   useEffect(() => {
-    const SpeechRecognitionAPI =
-      typeof window !== "undefined"
-        ? window.SpeechRecognition || window.webkitSpeechRecognition
-        : null;
+    const SpeechRecognitionAPI = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 
     setIsSupported(!!SpeechRecognitionAPI);
 
@@ -157,12 +150,10 @@ export function useVoiceInput({
             errorMessage = "No microphone found. Please check your microphone.";
             break;
           case "not-allowed":
-            errorMessage =
-              "Microphone access denied. Please allow microphone access.";
+            errorMessage = "Microphone access denied. Please allow microphone access.";
             break;
           case "network":
-            errorMessage =
-              "Speech recognition unavailable. Try Chrome or Edge, or check browser privacy settings.";
+            errorMessage = "Speech recognition unavailable. Try Chrome or Edge, or check browser privacy settings.";
             break;
           default:
             errorMessage = `Error: ${event.error}`;

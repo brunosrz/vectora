@@ -29,8 +29,7 @@ app.route("/workspaces", workspacesRoutes);
 
 // Métricas: proxy para o endpoint /metrics do FastAPI
 app.get("/metrics", async (c) => {
-  const VECTORA_API_URL =
-    process.env.VECTORA_API_URL ?? "http://localhost:8080";
+  const VECTORA_API_URL = process.env.VECTORA_API_URL ?? "http://localhost:8080";
   try {
     const res = await fetch(`${VECTORA_API_URL}/metrics`);
     if (!res.ok) return c.json({ spans: [] });

@@ -1521,8 +1521,7 @@ chatRoutes.post("/stream", async (c) => {
   const { thread_id, content, config } = await c.req.json();
   const stream = connectClient.streamChat({ thread_id, content, config });
   return streamSSE(c, async (sse) => {
-    for await (const event of stream)
-      await sse.writeSSE({ data: JSON.stringify(event) });
+    for await (const event of stream) await sse.writeSSE({ data: JSON.stringify(event) });
   });
 });
 ```
@@ -1550,23 +1549,9 @@ chat/lib/types/
 **`types/render.ts`:**
 
 ```typescript
-export type RenderHint =
-  | "diff"
-  | "code_block"
-  | "terminal_output"
-  | "search_results"
-  | "table"
-  | "queue_progress"
-  | "queue_badge"
-  | "artifact"
-  | "json";
+export type RenderHint = "diff" | "code_block" | "terminal_output" | "search_results" | "table" | "queue_progress" | "queue_badge" | "artifact" | "json";
 
-export type ToolCategory =
-  | "filesystem"
-  | "web"
-  | "rag"
-  | "memory"
-  | "artifacts";
+export type ToolCategory = "filesystem" | "web" | "rag" | "memory" | "artifacts";
 ```
 
 **`types/events.ts`:**
@@ -1640,10 +1625,7 @@ export function Message({ msg }: { msg: MessageSchema }) {
 
 ```tsx
 // components/tool-call/ToolCall.tsx
-const RENDERERS: Record<
-  RenderHint,
-  React.ComponentType<{ call: ToolCallSchema }>
-> = {
+const RENDERERS: Record<RenderHint, React.ComponentType<{ call: ToolCallSchema }>> = {
   diff: DiffViewer, // react-diff-viewer-continued
   code_block: CodeBlock, // react-syntax-highlighter
   terminal_output: TerminalBlock, // styled pre dark
@@ -1658,17 +1640,8 @@ const RENDERERS: Record<
 export function ToolCall({ call }: { call: ToolCallSchema }) {
   const Renderer = RENDERERS[call.render_hint] ?? RENDERERS.json;
   return (
-    <div
-      className={cn(
-        "border rounded",
-        call.destructive && "border-destructive/50",
-      )}
-    >
-      <ToolCallHeader
-        name={call.tool_name}
-        category={call.category}
-        icon={call.icon}
-      />
+    <div className={cn("border rounded", call.destructive && "border-destructive/50")}>
+      <ToolCallHeader name={call.tool_name} category={call.category} icon={call.icon} />
       <Renderer call={call} />
     </div>
   );
@@ -2036,13 +2009,9 @@ grpcio-tools = ">=1.73"
 ```typescript
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import {
-  ChatService,
-  ThreadService,
-} from "@/lib/gen/vectora/chat/v1/chat_connect";
+import { ChatService, ThreadService } from "@/lib/gen/vectora/chat/v1/chat_connect";
 
-const VECTORA_API_URL =
-  process.env.NEXT_PUBLIC_VECTORA_API_URL ?? "http://localhost:8080";
+const VECTORA_API_URL = process.env.NEXT_PUBLIC_VECTORA_API_URL ?? "http://localhost:8080";
 
 const transport = createConnectTransport({
   baseUrl: VECTORA_API_URL,
@@ -2060,43 +2029,40 @@ export const threadClient = createClient(ThreadService, transport);
 
 ```typescript
 export function useStreamHandler() {
-  const streamChat = useCallback(
-    async (threadId: string, content: string, config: ChatConfig) => {
-      for await (const event of chatClient.streamChat({
-        threadId,
-        content,
-        config,
-      })) {
-        switch (event.event.case) {
-          case "thread":
-            onThreadCreated(event.event.value.threadId);
-            break;
-          case "token":
-            appendToken(event.event.value.content);
-            break;
-          case "toolCall":
-            addToolCall(event.event.value);
-            break;
-          case "toolResult":
-            updateToolResult(event.event.value);
-            break;
-          case "hitl":
-            showHITLPanel(event.event.value);
-            break;
-          case "uiMetrics":
-            updateMetrics(event.event.value);
-            break;
-          case "done":
-            finalize(event.event.value);
-            break;
-          case "error":
-            handleError(event.event.value);
-            break;
-        }
+  const streamChat = useCallback(async (threadId: string, content: string, config: ChatConfig) => {
+    for await (const event of chatClient.streamChat({
+      threadId,
+      content,
+      config,
+    })) {
+      switch (event.event.case) {
+        case "thread":
+          onThreadCreated(event.event.value.threadId);
+          break;
+        case "token":
+          appendToken(event.event.value.content);
+          break;
+        case "toolCall":
+          addToolCall(event.event.value);
+          break;
+        case "toolResult":
+          updateToolResult(event.event.value);
+          break;
+        case "hitl":
+          showHITLPanel(event.event.value);
+          break;
+        case "uiMetrics":
+          updateMetrics(event.event.value);
+          break;
+        case "done":
+          finalize(event.event.value);
+          break;
+        case "error":
+          handleError(event.event.value);
+          break;
       }
-    },
-    [],
-  );
+    }
+  }, []);
   return { streamChat };
 }
 ```
@@ -2111,8 +2077,7 @@ export function useStreamHandler() {
 export function useThreads() {
   const createThread = () => threadClient.createThread({});
   const listThreads = () => threadClient.listThreads({ limit: 50 });
-  const deleteThread = (id: string) =>
-    threadClient.deleteThread({ threadId: id });
+  const deleteThread = (id: string) => threadClient.deleteThread({ threadId: id });
   const getHistory = (id: string) => threadClient.getHistory({ threadId: id });
   // ...
 }

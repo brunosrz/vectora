@@ -2,26 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 
-const thinkingWords = [
-  "Thinking...",
-  "Noodling...",
-  "Percolating...",
-  "Marinating...",
-  "Brewing...",
-  "Tinkering...",
-  "Skedaddling...",
-  "Sashaying...",
-  "Boogying...",
-  "Bopping...",
-  "Getting Jiggy...",
-  "Frolicking...",
-  "Cooking...",
-  "Doodling...",
-  "Pondering...",
-  "Conjuring...",
-  "Gallivanting...",
-  "Grooving...",
-];
+const thinkingWords = ["Thinking...", "Noodling...", "Percolating...", "Marinating...", "Brewing...", "Tinkering...", "Skedaddling...", "Sashaying...", "Boogying...", "Bopping...", "Getting Jiggy...", "Frolicking...", "Cooking...", "Doodling...", "Pondering...", "Conjuring...", "Gallivanting...", "Grooving..."];
 
 // Fisher-Yates shuffle algorithm
 function shuffleArray<T>(array: T[]): T[] {
@@ -62,45 +43,28 @@ export function AnimatedThinking() {
 
   return (
     <span className="font-medium inline-flex items-center gap-0 relative">
-      <span className="thinking-text-base">
-        {shuffledWords[wordIndex].replace("...", "")}
-      </span>
+      <span className="thinking-text-base">{shuffledWords[wordIndex].replace("...", "")}</span>
       <span className="inline-flex thinking-text-base">
         <span className="animate-bounce-dot" style={{ animationDelay: "0ms" }}>
           .
         </span>
-        <span
-          className="animate-bounce-dot"
-          style={{ animationDelay: "150ms" }}
-        >
+        <span className="animate-bounce-dot" style={{ animationDelay: "150ms" }}>
           .
         </span>
-        <span
-          className="animate-bounce-dot"
-          style={{ animationDelay: "300ms" }}
-        >
+        <span className="animate-bounce-dot" style={{ animationDelay: "300ms" }}>
           .
         </span>
       </span>
       <span className="thinking-gradient-overlay" aria-hidden="true">
         <span>{shuffledWords[wordIndex].replace("...", "")}</span>
         <span className="inline-flex">
-          <span
-            className="animate-bounce-dot"
-            style={{ animationDelay: "0ms" }}
-          >
+          <span className="animate-bounce-dot" style={{ animationDelay: "0ms" }}>
             .
           </span>
-          <span
-            className="animate-bounce-dot"
-            style={{ animationDelay: "150ms" }}
-          >
+          <span className="animate-bounce-dot" style={{ animationDelay: "150ms" }}>
             .
           </span>
-          <span
-            className="animate-bounce-dot"
-            style={{ animationDelay: "300ms" }}
-          >
+          <span className="animate-bounce-dot" style={{ animationDelay: "300ms" }}>
             .
           </span>
         </span>

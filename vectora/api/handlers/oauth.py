@@ -83,15 +83,6 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "icon": "groq",
     },
     {
-        "id": "huggingface",
-        "name": "HuggingFace",
-        "env_var": "HUGGINGFACE_API_KEY",
-        "kind": "apikey",
-        "description": "Modelos open source via Inference API",
-        "docs_url": "https://huggingface.co/settings/tokens",
-        "icon": "huggingface",
-    },
-    {
         "id": "perplexity",
         "name": "Perplexity",
         "env_var": "PERPLEXITY_API_KEY",
@@ -104,9 +95,13 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "id": "github",
         "name": "GitHub",
         "env_var": "GITHUB_TOKEN",
-        "kind": "oauth",
-        "description": "Acesso a repositórios, PRs e issues",
-        "docs_url": "https://docs.github.com/en/apps/oauth-apps",
+        # híbrido: aceita OAuth (delegado) OU um Personal Access Token colado
+        # manualmente. Ambos gravam GITHUB_TOKEN nos env_overrides do user —
+        # o `gh` CLI e as git tools leem essa env. Permite quem não quer
+        # registrar um OAuth App usar só um PAT.
+        "kind": "hybrid",
+        "description": "Acesso a repositórios, PRs e issues (OAuth ou token)",
+        "docs_url": "https://github.com/settings/tokens",
         "icon": "github",
         "oauth_scopes": ["repo", "user:email", "read:org"],
     },

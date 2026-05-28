@@ -137,12 +137,8 @@ describe("useSettingsStore — mutações de estado", () => {
 
   it("setCustomSystemPrompt altera customSystemPrompt", async () => {
     const { useSettingsStore } = await getStore();
-    useSettingsStore
-      .getState()
-      .setCustomSystemPrompt("Responda em bullet points.");
-    expect(useSettingsStore.getState().customSystemPrompt).toBe(
-      "Responda em bullet points.",
-    );
+    useSettingsStore.getState().setCustomSystemPrompt("Responda em bullet points.");
+    expect(useSettingsStore.getState().customSystemPrompt).toBe("Responda em bullet points.");
   });
 });
 

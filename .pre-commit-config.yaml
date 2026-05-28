@@ -94,7 +94,7 @@ repos:
     hooks:
       - id: prettier
         name: Prettier
-        args: ["--write"]
+        args: ["--write", "--print-width", "999"]
         files: \.(ts|tsx|js|jsx|mjs|cjs|json)$
         types_or: [text]
 
@@ -107,7 +107,7 @@ repos:
     hooks:
       - id: prettier
         name: Prettier (markdown + yaml)
-        args: ["--write"]
+        args: ["--write", "--print-width", "999"]
         files: \.(md|yaml|yml|css)$
         types_or: [text]
 

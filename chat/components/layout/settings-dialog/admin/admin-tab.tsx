@@ -10,27 +10,13 @@
  * - Configuração: allow_public_signup, default_model, max_recursion
  */
 
-import {
-  Cpu,
-  Loader2,
-  Settings2,
-  Shield,
-  Trash2,
-  Users,
-  Wrench,
-} from "lucide-react";
+import { Cpu, Loader2, Settings2, Shield, Trash2, Users, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
 // ---------------------------------------------------------------------------
@@ -81,8 +67,7 @@ const api = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
       }),
-    delete: (id: string) =>
-      fetch(`/api/admin/users/${id}`, { method: "DELETE" }),
+    delete: (id: string) => fetch(`/api/admin/users/${id}`, { method: "DELETE" }),
   },
   tools: {
     list: () => fetch("/api/admin/tools").then((r) => r.json()),
@@ -132,9 +117,7 @@ function UsersPanel() {
     setUpdating(userId);
     try {
       await api.users.updateRole(userId, role);
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, role } : u)),
-      );
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
     } finally {
       setUpdating(null);
     }
@@ -161,26 +144,16 @@ function UsersPanel() {
         {users.length !== 1 ? "s" : ""}
       </p>
       {users.map((u) => (
-        <div
-          key={u.id}
-          className="flex items-center gap-3 p-2.5 rounded-lg border bg-card"
-        >
+        <div key={u.id} className="flex items-center gap-3 p-2.5 rounded-lg border bg-card">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{u.email}</p>
             <p className="text-[10px] text-muted-foreground">
               desde {new Date(u.created_at).toLocaleDateString("pt-BR")}
-              {u.last_login_at &&
-                ` · último acesso ${new Date(
-                  u.last_login_at,
-                ).toLocaleDateString("pt-BR")}`}
+              {u.last_login_at && ` · último acesso ${new Date(u.last_login_at).toLocaleDateString("pt-BR")}`}
             </p>
           </div>
 
-          <Select
-            value={u.role}
-            onValueChange={(role) => void handleRoleChange(u.id, role)}
-            disabled={updating === u.id}
-          >
+          <Select value={u.role} onValueChange={(role) => void handleRoleChange(u.id, role)} disabled={updating === u.id}>
             <SelectTrigger className="h-7 w-24 text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -192,12 +165,7 @@ function UsersPanel() {
             </SelectContent>
           </Select>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-            onClick={() => void handleDelete(u.id)}
-          >
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => void handleDelete(u.id)}>
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -224,9 +192,7 @@ function ToolsPanel() {
 
   const handleToggle = async (name: string, enabled: boolean) => {
     await api.tools.toggle(name, enabled);
-    setTools((prev) =>
-      prev.map((t) => (t.name === name ? { ...t, enabled } : t)),
-    );
+    setTools((prev) => prev.map((t) => (t.name === name ? { ...t, enabled } : t)));
   };
 
   if (loading) {
@@ -240,10 +206,7 @@ function ToolsPanel() {
   return (
     <div className="space-y-1.5">
       {tools.map((t) => (
-        <div
-          key={t.name}
-          className="flex items-center gap-3 p-2.5 rounded-lg border bg-card"
-        >
+        <div key={t.name} className="flex items-center gap-3 p-2.5 rounded-lg border bg-card">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-mono font-medium">{t.name}</span>
@@ -253,14 +216,9 @@ function ToolsPanel() {
                 </Badge>
               )}
             </div>
-            <p className="text-[10px] text-muted-foreground truncate">
-              {t.description}
-            </p>
+            <p className="text-[10px] text-muted-foreground truncate">{t.description}</p>
           </div>
-          <Switch
-            checked={t.enabled}
-            onCheckedChange={(v) => void handleToggle(t.name, v)}
-          />
+          <Switch checked={t.enabled} onCheckedChange={(v) => void handleToggle(t.name, v)} />
         </div>
       ))}
     </div>
@@ -310,15 +268,9 @@ function SystemPanel() {
       <div className="space-y-1">
         <p className="text-xs font-medium">Serviços</p>
         {Object.entries(info.services).map(([svc, status]) => (
-          <div
-            key={svc}
-            className="flex items-center justify-between px-2.5 py-1.5 rounded-md border"
-          >
+          <div key={svc} className="flex items-center justify-between px-2.5 py-1.5 rounded-md border">
             <span className="text-xs">{svc}</span>
-            <Badge
-              variant={status === "ok" ? "default" : "destructive"}
-              className="text-[10px] h-4"
-            >
+            <Badge variant={status === "ok" ? "default" : "destructive"} className="text-[10px] h-4">
               {status}
             </Badge>
           </div>
@@ -374,30 +326,14 @@ function ConfigPanel() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium">Signup público</p>
-          <p className="text-xs text-muted-foreground">
-            Permite novos usuários se cadastrarem sem convite
-          </p>
+          <p className="text-xs text-muted-foreground">Permite novos usuários se cadastrarem sem convite</p>
         </div>
-        <Switch
-          checked={config.allow_public_signup}
-          onCheckedChange={(v) =>
-            setConfig((prev) => prev && { ...prev, allow_public_signup: v })
-          }
-        />
+        <Switch checked={config.allow_public_signup} onCheckedChange={(v) => setConfig((prev) => prev && { ...prev, allow_public_signup: v })} />
       </div>
 
       <div className="space-y-1.5">
         <p className="text-sm font-medium">Modelo padrão</p>
-        <Input
-          value={config.default_model}
-          onChange={(e) =>
-            setConfig(
-              (prev) => prev && { ...prev, default_model: e.target.value },
-            )
-          }
-          className="h-8 text-xs font-mono"
-          placeholder="ex: gemini-2.5-flash"
-        />
+        <Input value={config.default_model} onChange={(e) => setConfig((prev) => prev && { ...prev, default_model: e.target.value })} className="h-8 text-xs font-mono" placeholder="ex: gemini-2.5-flash" />
       </div>
 
       <div className="space-y-1.5">
@@ -461,23 +397,13 @@ export function AdminTab() {
       {/* Header com badge de aviso */}
       <div className="flex items-center gap-2">
         <Shield className="w-4 h-4 text-amber-500" />
-        <span className="text-xs text-muted-foreground">
-          Painel de administração — apenas root e admin
-        </span>
+        <span className="text-xs text-muted-foreground">Painel de administração — apenas root e admin</span>
       </div>
 
       {/* Sub-tabs */}
       <div className="flex gap-1 border-b pb-0">
         {SUB_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActive(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-t-md border-b-2 transition-colors ${
-              active === tab.id
-                ? "border-foreground text-foreground font-medium"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
+          <button key={tab.id} onClick={() => setActive(tab.id)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-t-md border-b-2 transition-colors ${active === tab.id ? "border-foreground text-foreground font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             {tab.icon}
             {tab.label}
           </button>

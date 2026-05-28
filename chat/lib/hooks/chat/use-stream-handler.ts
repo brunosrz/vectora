@@ -17,18 +17,8 @@
 
 import { useCallback, useRef } from "react";
 import type { Message, ToolCall, ImageAttachment } from "../../types";
-import {
-  streamChat,
-  resumeChat,
-  type StreamEvent,
-  type ChatConfig,
-  type ResumeChatRequest,
-} from "../../api/vectora-client";
-import {
-  ensureMessageExists,
-  updateMessageInList,
-  toApiAttachments,
-} from "../../utils/chat";
+import { streamChat, resumeChat, type StreamEvent, type ChatConfig, type ResumeChatRequest } from "../../api/vectora-client";
+import { ensureMessageExists, updateMessageInList, toApiAttachments } from "../../utils/chat";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 
@@ -50,37 +40,21 @@ interface UseStreamHandlerProps {
 }
 
 interface UseStreamHandlerReturn {
-  processStream: (
-    userContent: string,
-    assistantMessageId: string,
-    images?: ImageAttachment[],
-  ) => Promise<{ assistantContent: string; runId: string | undefined }>;
+  processStream: (userContent: string, assistantMessageId: string, images?: ImageAttachment[]) => Promise<{ assistantContent: string; runId: string | undefined }>;
   /** Retoma uma execução pausada por HITL (approve / reject / edit:<json>). */
-  processResume: (
-    request: ResumeChatRequest,
-    assistantMessageId: string,
-  ) => Promise<{ assistantContent: string }>;
+  processResume: (request: ResumeChatRequest, assistantMessageId: string) => Promise<{ assistantContent: string }>;
 }
 
 // ============================================================================
 // Hook
 // ============================================================================
 
-export function useStreamHandler({
-  threadId,
-  setMessages,
-  agentConfig,
-  shouldInterruptRef,
-}: UseStreamHandlerProps): UseStreamHandlerReturn {
+export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInterruptRef }: UseStreamHandlerProps): UseStreamHandlerReturn {
   // AbortController para interromper o stream quando shouldInterruptRef === true
   const abortRef = useRef<AbortController | null>(null);
 
   const processStream = useCallback(
-    async (
-      userContent: string,
-      assistantMessageId: string,
-      images?: ImageAttachment[],
-    ): Promise<{ assistantContent: string; runId: string | undefined }> => {
+    async (userContent: string, assistantMessageId: string, images?: ImageAttachment[]): Promise<{ assistantContent: string; runId: string | undefined }> => {
       // Cancela stream anterior se ainda em andamento
       abortRef.current?.abort();
       const abort = new AbortController();
@@ -96,9 +70,7 @@ export function useStreamHandler({
         isThinking: true,
         thinkingStartTime,
       };
-      setMessages((prev) =>
-        ensureMessageExists(prev, assistantMessageId, baseAssistantMessage),
-      );
+      setMessages((prev) => ensureMessageExists(prev, assistantMessageId, baseAssistantMessage));
 
       let assistantContent = "";
       let resolvedRunId: string | undefined;
@@ -110,8 +82,7 @@ export function useStreamHandler({
       if (customSystemPrompt) config.custom_system_prompt = customSystemPrompt;
 
       // Converte ImageAttachment[] → Attachment[] para a API (F1)
-      const attachments =
-        images && images.length > 0 ? toApiAttachments(images) : undefined;
+      const attachments = images && images.length > 0 ? toApiAttachments(images) : undefined;
 
       // M2 — Token buffering: acumula tokens dentro de um animation frame (≤16ms)
       // e faz um único setMessages por frame. Evita layout thrashing em modelos
@@ -204,10 +175,7 @@ export function useStreamHandler({
             updateMessageInList(prev, assistantMessageId, (m) => ({
               ...m,
               isThinking: false,
-              thinkingDuration:
-                m.thinkingStartTime !== undefined
-                  ? Date.now() - m.thinkingStartTime
-                  : undefined,
+              thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
             })),
           );
         } else {
@@ -217,10 +185,7 @@ export function useStreamHandler({
               ...m,
               content: assistantContent || `Erro no stream: ${msg}`,
               isThinking: false,
-              thinkingDuration:
-                m.thinkingStartTime !== undefined
-                  ? Date.now() - m.thinkingStartTime
-                  : undefined,
+              thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
             })),
           );
         }
@@ -232,10 +197,7 @@ export function useStreamHandler({
               ? {
                   ...m,
                   isThinking: false,
-                  thinkingDuration:
-                    m.thinkingStartTime !== undefined
-                      ? Date.now() - m.thinkingStartTime
-                      : undefined,
+                  thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
                 }
               : m,
           ),
@@ -251,10 +213,7 @@ export function useStreamHandler({
   // processResume — retoma stream após aprovação/rejeição HITL
   // ---------------------------------------------------------------------------
   const processResume = useCallback(
-    async (
-      request: ResumeChatRequest,
-      assistantMessageId: string,
-    ): Promise<{ assistantContent: string }> => {
+    async (request: ResumeChatRequest, assistantMessageId: string): Promise<{ assistantContent: string }> => {
       // Limpa hitlPending e reativa o spinner de thinking
       setMessages((prev) =>
         updateMessageInList(prev, assistantMessageId, (m) => ({
@@ -324,8 +283,7 @@ export function useStreamHandler({
           await handleEvent(event, assistantMessageId, setMessages);
 
           if (event.type === "done") break;
-          if (event.type === "error")
-            throw new Error(event.message || "Resume error");
+          if (event.type === "error") throw new Error(event.message || "Resume error");
         }
 
         flushNow();
@@ -347,10 +305,7 @@ export function useStreamHandler({
               ? {
                   ...m,
                   isThinking: false,
-                  thinkingDuration:
-                    m.thinkingStartTime !== undefined
-                      ? Date.now() - m.thinkingStartTime
-                      : undefined,
+                  thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
                 }
               : m,
           ),
@@ -371,11 +326,7 @@ export function useStreamHandler({
 
 // handleEvent processa todos os eventos exceto "token"
 // (tokens são buffered diretamente nos loops de processStream/processResume — M2)
-async function handleEvent(
-  event: StreamEvent,
-  assistantMessageId: string,
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-): Promise<void> {
+async function handleEvent(event: StreamEvent, assistantMessageId: string, setMessages: React.Dispatch<React.SetStateAction<Message[]>>): Promise<void> {
   switch (event.type) {
     case "token":
       // tokens handled by caller (buffered via rAF)
@@ -420,11 +371,7 @@ async function handleEvent(
       setMessages((prev) =>
         updateMessageInList(prev, assistantMessageId, (m) => ({
           ...m,
-          toolCalls: (m.toolCalls ?? []).map((tc) =>
-            tc.id === event.tool_call_id
-              ? { ...tc, output, isError: event.is_error }
-              : tc,
-          ),
+          toolCalls: (m.toolCalls ?? []).map((tc) => (tc.id === event.tool_call_id ? { ...tc, output, isError: event.is_error } : tc)),
         })),
       );
       break;
@@ -455,11 +402,7 @@ async function handleEvent(
             currentNodeLabel: event.node_label,
           })),
         );
-      } else if (
-        event.status === "finished" &&
-        event.duration_ms != null &&
-        event.duration_ms > 0
-      ) {
+      } else if (event.status === "finished" && event.duration_ms != null && event.duration_ms > 0) {
         setMessages((prev) =>
           updateMessageInList(prev, assistantMessageId, (m) => ({
             ...m,
@@ -487,10 +430,7 @@ async function handleEvent(
         updateMessageInList(prev, assistantMessageId, (m) => ({
           ...m,
           isThinking: false,
-          thinkingDuration:
-            m.thinkingStartTime !== undefined
-              ? Date.now() - m.thinkingStartTime
-              : undefined,
+          thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
           hitlPending: {
             toolName: event.tool_name,
             argsJson: event.args_json,

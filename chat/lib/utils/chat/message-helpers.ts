@@ -44,11 +44,7 @@ export const createUserMessage = (content: string): Message => ({
  * Update a specific message in a message list.
  * Returns a new array with the updated message.
  */
-export const updateMessageInList = (
-  messages: Message[],
-  messageId: string,
-  updates: Partial<Message> | ((m: Message) => Partial<Message>),
-): Message[] => {
+export const updateMessageInList = (messages: Message[], messageId: string, updates: Partial<Message> | ((m: Message) => Partial<Message>)): Message[] => {
   return messages.map((m) => {
     if (m.id !== messageId) return m;
     const patch = typeof updates === "function" ? updates(m) : updates;
@@ -60,11 +56,7 @@ export const updateMessageInList = (
  * Ensure a message exists in the list.
  * If the message doesn't exist, appends it to the end.
  */
-export const ensureMessageExists = (
-  messages: Message[],
-  messageId: string,
-  baseMessage: Message,
-): Message[] => {
+export const ensureMessageExists = (messages: Message[], messageId: string, baseMessage: Message): Message[] => {
   const existing = messages.find((m) => m.id === messageId);
   return existing ? messages : [...messages, baseMessage];
 };

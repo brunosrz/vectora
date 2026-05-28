@@ -53,13 +53,7 @@ export function UserMenu() {
     <>
       <div className="relative" ref={menuRef}>
         {/* Avatar circular com inicial do e-mail */}
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 hover:bg-primary/30 text-primary font-semibold text-sm transition-colors select-none"
-          title={user.email}
-          aria-label="Menu do usuário"
-          aria-expanded={open}
-        >
+        <button onClick={() => setOpen((o) => !o)} className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 hover:bg-primary/30 text-primary font-semibold text-sm transition-colors select-none" title={user.email} aria-label="Menu do usuário" aria-expanded={open}>
           {initial}
         </button>
 
@@ -69,16 +63,10 @@ export function UserMenu() {
             {/* Info do usuário */}
             <div className="px-4 py-3 border-b border-border/60">
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/20 text-primary font-semibold text-base select-none">
-                  {initial}
-                </div>
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/20 text-primary font-semibold text-base select-none">{initial}</div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {user.email}
-                  </p>
-                  <p className={`text-xs font-medium ${roleColor}`}>
-                    {roleLabel}
-                  </p>
+                  <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+                  <p className={`text-xs font-medium ${roleColor}`}>{roleLabel}</p>
                 </div>
               </div>
             </div>
@@ -109,10 +97,7 @@ export function UserMenu() {
                 </button>
               )}
 
-              <button
-                className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
-                onClick={handleLogout}
-              >
+              <button className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors text-left" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 shrink-0" />
                 Sair
               </button>

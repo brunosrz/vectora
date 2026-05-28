@@ -13,6 +13,12 @@ const nextConfig = {
   // Standalone: bundla o servidor Next.js com deps mínimas.
   // Necessário para suportar auth server-side (proxy, API routes, cookies).
   // Distribuído junto ao chat/src/ backend como pacote próprio.
+  //
+  // NOTA: NÃO usar outputFileTracingRoot aqui. Em Windows + pnpm ele faz o
+  // Next recriar a árvore de symlinks do store .pnpm no standalone, e
+  // `symlink` exige privilégio elevado → EPERM no build. O default copia
+  // arquivos reais (sem symlink). A dep @swc/helpers, exigida pelo runtime
+  // SWC mas não detectada pelo tracer via pnpm, é copiada no `make build-chat`.
   output: "standalone",
 
   turbopack: {

@@ -2,20 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-const sentences = [
-  "What needs building?",
-  "Drop the prompt",
-  "How can I help?",
-  "Ready when you are...",
-  "What's the vision?",
-  "Let's ship it!",
-  "What's on your mind?",
-  "Your move...",
-  "Type away",
-  "Just say the word...",
-  "Let's get to work!",
-  "Hit me with it!",
-];
+const sentences = ["What needs building?", "Drop the prompt", "How can I help?", "Ready when you are...", "What's the vision?", "Let's ship it!", "What's on your mind?", "Your move...", "Type away", "Just say the word...", "Let's get to work!", "Hit me with it!"];
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -31,9 +18,7 @@ interface AnimatedTechWordProps {
 }
 
 export function AnimatedTechWord({ disabled = false }: AnimatedTechWordProps) {
-  const [shuffledSentences, setShuffledSentences] = useState(() =>
-    shuffleArray(sentences),
-  );
+  const [shuffledSentences, setShuffledSentences] = useState(() => shuffleArray(sentences));
   const [sentenceIndex, setSentenceIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -83,14 +68,7 @@ export function AnimatedTechWord({ disabled = false }: AnimatedTechWordProps) {
     }, typeSpeed);
 
     return () => clearTimeout(timeout);
-  }, [
-    displayText,
-    isDeleting,
-    sentenceIndex,
-    shuffledSentences,
-    isPaused,
-    disabled,
-  ]);
+  }, [displayText, isDeleting, sentenceIndex, shuffledSentences, isPaused, disabled]);
 
   // When disabled, show empty text
   if (disabled) {
@@ -104,9 +82,7 @@ export function AnimatedTechWord({ disabled = false }: AnimatedTechWordProps) {
   return (
     <span className="inline-block whitespace-nowrap">
       <span className="tech-word-text">{displayText}</span>
-      <span className={`tech-word-cursor ${isPaused ? "blinking" : "solid"}`}>
-        &nbsp;
-      </span>
+      <span className={`tech-word-cursor ${isPaused ? "blinking" : "solid"}`}>&nbsp;</span>
     </span>
   );
 }

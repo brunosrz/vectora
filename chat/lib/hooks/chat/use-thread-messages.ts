@@ -20,9 +20,7 @@ type SetMessages = (updater: Updater) => void;
 export function useThreadMessages(threadId: string): [Message[], SetMessages] {
   // Leitura: subscreve apenas ao slice desta thread. Quando o store muda
   // mensagens de outras threads, este componente NÃO re-renderiza.
-  const messages = useThreadsStore(
-    (s) => s.cache[threadId]?.messages ?? EMPTY_ARRAY,
-  );
+  const messages = useThreadsStore((s) => s.cache[threadId]?.messages ?? EMPTY_ARRAY);
 
   const patchMessages = useThreadsStore((s) => s.patchMessages);
   const setMessagesAction = useThreadsStore((s) => s.setMessages);

@@ -15,10 +15,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { ClientProfile } from "../threads";
-import {
-  createClientProfile,
-  resolveClientProfile,
-} from "@/lib/config/client-config";
+import { createClientProfile, resolveClientProfile } from "@/lib/config/client-config";
 import { STORAGE_KEYS } from "../../constants/features";
 
 // ============================================================================
@@ -95,10 +92,7 @@ export function useClientProfile(): UseClientProfileReturn {
     // No stored profile found, persist the initial one
     if (initialRef.current) {
       try {
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(initialRef.current),
-        );
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialRef.current));
       } catch (error) {
         console.error("Failed to persist client identity", error);
       }

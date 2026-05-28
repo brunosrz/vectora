@@ -272,6 +272,31 @@ def _build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------
 
 
+def _find_free_port(preferred: int | None = None) -> int:
+    """Retorna uma porta TCP livre em 127.0.0.1.
+
+    Se ``preferred`` for informado e estiver livre, retorna-a; caso contrário
+    (ou se None), deixa o SO escolher uma porta efêmera livre (bind em :0).
+
+    Evita portas fortemente tipadas: o frontend tolera a porta pedida estar
+    ocupada e a API interna sempre roda numa porta livre descoberta em runtime,
+    repassada ao Node via VECTORA_API_URL.
+    """
+    import socket
+
+    if preferred is not None:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                probe.bind(("127.0.0.1", preferred))
+                return preferred
+            except OSError:
+                pass  # ocupada — cai para porta efêmera abaixo
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
 def _run_standalone_chat(
     host: str,
     frontend_port: int,
@@ -714,16 +739,26 @@ def run() -> None:
 
             # ── Modo chat com build standalone ──────────────────────────────
             # Se `make build-chat` já foi executado e gerou vectora/chat_static/server.js,
-            # inicia o Next.js standalone + FastAPI em paralelo (Node.js na porta
-            # exposta, FastAPI na porta interna port+1).
+            # inicia o Next.js standalone + FastAPI em paralelo. Portas descobertas
+            # em runtime: o frontend usa a porta pedida (ou outra livre se ocupada)
+            # e a API interna roda numa porta livre qualquer, repassada ao Node via
+            # VECTORA_API_URL — nada de porta fortemente tipada/colisão fixa.
             if serve_static:
                 _static_dir = Path(__file__).parent / "chat_static"
                 _standalone_js = _static_dir / "server.js"
                 if _standalone_js.exists():
+                    _frontend_port = _find_free_port(port)
+                    _api_port = _find_free_port()
+                    if _frontend_port != port:
+                        logger.warning(
+                            "Porta %d ocupada — usando %d para o frontend",
+                            port,
+                            _frontend_port,
+                        )
                     _run_standalone_chat(
                         host=args.host,
-                        frontend_port=port,
-                        api_port=port + 1,
+                        frontend_port=_frontend_port,
+                        api_port=_api_port,
                         uvicorn_log_level=uvicorn_log_level,
                         standalone_js=_standalone_js,
                         static_dir=_static_dir,

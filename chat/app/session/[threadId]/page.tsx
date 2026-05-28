@@ -13,15 +13,7 @@ import { useThreadsStore } from "@/lib/stores/threads-store";
 import { resolveClientProfile } from "@/lib/config/client-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { generateQuickTitle, generateThreadTitle } from "@/lib/utils/string";
-import {
-  getAllowedModels,
-  getAllowedAgents,
-  getDefaultModel,
-  getDefaultAgent,
-  CONFIG_STORAGE,
-  type ModelOption,
-  type AgentType,
-} from "@/lib/config/deployment-config";
+import { getAllowedModels, getAllowedAgents, getDefaultModel, getDefaultAgent, CONFIG_STORAGE, type ModelOption, type AgentType } from "@/lib/config/deployment-config";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { markAsNew, isNew } from "@/lib/stores/new-thread-registry";
 
@@ -54,9 +46,7 @@ function SessionContent() {
       if (savedVersion !== CONFIG_STORAGE.version) {
         localStorage.removeItem(CONFIG_STORAGE.key);
         localStorage.setItem(CONFIG_STORAGE.versionKey, CONFIG_STORAGE.version);
-        console.log(
-          `Config version updated to ${CONFIG_STORAGE.version}, resetting to defaults`,
-        );
+        console.log(`Config version updated to ${CONFIG_STORAGE.version}, resetting to defaults`);
       } else {
         const saved = localStorage.getItem(CONFIG_STORAGE.key);
         if (saved) {
@@ -79,13 +69,7 @@ function SessionContent() {
     localStorage.setItem(CONFIG_STORAGE.key, JSON.stringify(agentConfig));
   }, [agentConfig]);
 
-  const {
-    threads,
-    isLoading: threadsLoading,
-    updateThreadMetadata,
-    deleteThread,
-    addOptimisticThread,
-  } = useThreads(userId || undefined);
+  const { threads, isLoading: threadsLoading, updateThreadMetadata, deleteThread, addOptimisticThread } = useThreads(userId || undefined);
 
   const { clientProfile } = useClientProfile();
 
@@ -146,13 +130,7 @@ function SessionContent() {
     router.replace(`/session/${newThreadId}`);
   };
 
-  const handleThreadUpdate = async (
-    currentThreadId: string,
-    title: string,
-    lastMessage: string,
-    client?: ClientProfile,
-    messageCount?: number,
-  ) => {
+  const handleThreadUpdate = async (currentThreadId: string, title: string, lastMessage: string, client?: ClientProfile, messageCount?: number) => {
     if (!userId) return;
 
     if (newThreads.has(currentThreadId)) {
@@ -167,10 +145,7 @@ function SessionContent() {
 
     const existingThread = threads.find((t) => t.thread_id === currentThreadId);
     const isUntitledThread = existingThread?.metadata?.title === "Untitled";
-    const shouldGenerateAITitle =
-      !existingThread ||
-      isUntitledThread ||
-      (messageCount && messageCount > 1 && messageCount % 5 === 0);
+    const shouldGenerateAITitle = !existingThread || isUntitledThread || (messageCount && messageCount > 1 && messageCount % 5 === 0);
 
     if (!existingThread || isUntitledThread) {
       if (!existingThread) {
@@ -330,45 +305,12 @@ function SessionContent() {
 
   return (
     <>
-      <KeyboardShortcutsDialog
-        open={showShortcutsDialog}
-        onOpenChange={setShowShortcutsDialog}
-      />
+      <KeyboardShortcutsDialog open={showShortcutsDialog} onOpenChange={setShowShortcutsDialog} />
       <div className="flex h-screen bg-background">
-        <Sidebar
-          isCollapsed={isSidebarCollapsed}
-          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          threads={threads}
-          currentThreadId={threadId}
-          onSelectThread={handleSelectThread}
-          onDeleteThread={handleDeleteThread}
-          isLoading={threadsLoading}
-        />
+        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} threads={threads} currentThreadId={threadId} onSelectThread={handleSelectThread} onDeleteThread={handleDeleteThread} isLoading={threadsLoading} />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header
-            showToolCalls={showToolCalls}
-            onToggleToolCalls={() => setShowToolCalls(!showToolCalls)}
-            onNewChat={handleNewChat}
-            agentConfig={agentConfig}
-            onAgentConfigChange={setAgentConfig}
-            onShowShortcuts={() => setShowShortcutsDialog(true)}
-            forceShowTooltip={forceShowTooltip}
-            showSettingsDialog={showSettingsDialog}
-            onSettingsDialogChange={setShowSettingsDialog}
-          />
-          <ChatInterface
-            key={threadId}
-            showToolCalls={showToolCalls}
-            threadId={threadId}
-            onThreadUpdate={handleThreadUpdate}
-            onThreadNotFound={handleThreadNotFound}
-            agentConfig={agentConfig}
-            onAgentConfigChange={setAgentConfig}
-            isNewThread={newThreads.has(threadId)}
-            initialMessage={initialPrompt}
-            autoSend={!!initialPrompt}
-            onInitialMessageSent={() => setInitialPrompt(null)}
-          />
+          <Header showToolCalls={showToolCalls} onToggleToolCalls={() => setShowToolCalls(!showToolCalls)} onNewChat={handleNewChat} agentConfig={agentConfig} onAgentConfigChange={setAgentConfig} onShowShortcuts={() => setShowShortcutsDialog(true)} forceShowTooltip={forceShowTooltip} showSettingsDialog={showSettingsDialog} onSettingsDialogChange={setShowSettingsDialog} />
+          <ChatInterface key={threadId} showToolCalls={showToolCalls} threadId={threadId} onThreadUpdate={handleThreadUpdate} onThreadNotFound={handleThreadNotFound} agentConfig={agentConfig} onAgentConfigChange={setAgentConfig} isNewThread={newThreads.has(threadId)} initialMessage={initialPrompt} autoSend={!!initialPrompt} onInitialMessageSent={() => setInitialPrompt(null)} />
         </div>
       </div>
     </>

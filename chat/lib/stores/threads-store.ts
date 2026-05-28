@@ -41,10 +41,7 @@ interface ThreadsState {
   setMessages: (threadId: string, messages: Message[]) => void;
 
   /** Substitui as mensagens via updater function. Use em stream updates. */
-  patchMessages: (
-    threadId: string,
-    updater: (current: Message[]) => Message[],
-  ) => void;
+  patchMessages: (threadId: string, updater: (current: Message[]) => Message[]) => void;
 
   /** Marca/desmarca revalidação em andamento. */
   setRevalidating: (threadId: string, value: boolean) => void;
@@ -109,8 +106,7 @@ export const useThreadsStore = create<ThreadsState>((set, get) => ({
 
   invalidate: (threadId) => {
     set((state) => {
-      if (!(threadId in state.cache) && !(threadId in state.revalidating))
-        return state;
+      if (!(threadId in state.cache) && !(threadId in state.revalidating)) return state;
       const nextCache = { ...state.cache };
       const nextRevalidating = { ...state.revalidating };
       delete nextCache[threadId];

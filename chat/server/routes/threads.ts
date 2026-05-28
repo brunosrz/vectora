@@ -25,61 +25,37 @@ async function proxyPost(path: string, body: unknown, cookies?: string) {
 }
 
 threads.post("/create", async (c) => {
-  const res = await proxyPost(
-    "/vectora.chat.v1.ThreadService/CreateThread",
-    {},
-    c.req.header("Cookie"),
-  );
+  const res = await proxyPost("/vectora.chat.v1.ThreadService/CreateThread", {}, c.req.header("Cookie"));
   return c.json(await res.json(), res.status as 200);
 });
 
 threads.post("/get", async (c) => {
   const body = await c.req.json();
-  const res = await proxyPost(
-    "/vectora.chat.v1.ThreadService/GetThread",
-    body,
-    c.req.header("Cookie"),
-  );
+  const res = await proxyPost("/vectora.chat.v1.ThreadService/GetThread", body, c.req.header("Cookie"));
   return c.json(await res.json(), res.status as 200);
 });
 
 threads.post("/list", async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const res = await proxyPost(
-    "/vectora.chat.v1.ThreadService/ListThreads",
-    body,
-    c.req.header("Cookie"),
-  );
+  const res = await proxyPost("/vectora.chat.v1.ThreadService/ListThreads", body, c.req.header("Cookie"));
   return c.json(await res.json(), res.status as 200);
 });
 
 threads.post("/delete", async (c) => {
   const body = await c.req.json();
-  const res = await proxyPost(
-    "/vectora.chat.v1.ThreadService/DeleteThread",
-    body,
-    c.req.header("Cookie"),
-  );
+  const res = await proxyPost("/vectora.chat.v1.ThreadService/DeleteThread", body, c.req.header("Cookie"));
   return c.json(await res.json(), res.status as 200);
 });
 
 threads.post("/update", async (c) => {
   const body = await c.req.json();
-  const res = await proxyPost(
-    "/vectora.chat.v1.ThreadService/UpdateThread",
-    body,
-    c.req.header("Cookie"),
-  );
+  const res = await proxyPost("/vectora.chat.v1.ThreadService/UpdateThread", body, c.req.header("Cookie"));
   return c.json(await res.json(), res.status as 200);
 });
 
 threads.post("/history", async (c) => {
   const body = await c.req.json();
-  const res = await proxyPost(
-    "/vectora.chat.v1.ThreadService/GetHistory",
-    body,
-    c.req.header("Cookie"),
-  );
+  const res = await proxyPost("/vectora.chat.v1.ThreadService/GetHistory", body, c.req.header("Cookie"));
   return c.json(await res.json(), res.status as 200);
 });
 

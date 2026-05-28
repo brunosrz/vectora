@@ -14,12 +14,7 @@
  *   - Administração — root/admin only (Bloco P)
  */
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { AdminTab } from "./admin/admin-tab";
@@ -43,12 +38,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       <DialogContent className="sm:max-w-[560px] max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Configurações</DialogTitle>
+          <DialogDescription className="sr-only">Gerencie sua conta, preferências, memória, integrações e variáveis de ambiente.</DialogDescription>
         </DialogHeader>
 
-        <Tabs
-          defaultValue="conta"
-          className="flex-1 overflow-hidden flex flex-col"
-        >
+        <Tabs defaultValue="conta" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="flex-wrap h-auto gap-1 justify-start bg-transparent p-0 border-b rounded-none pb-2">
             <TabsTrigger value="conta" className="rounded-md text-xs">
               Conta

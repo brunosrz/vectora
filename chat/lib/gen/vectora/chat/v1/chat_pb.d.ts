@@ -12,11 +12,7 @@
 // vectora/api/schemas.py (equivalente Pydantic). Quando grpcio e buf
 // estiverem disponíveis, `make gen-proto` gera os stubs compilados.
 
-import type {
-  GenFile,
-  GenMessage,
-  GenService,
-} from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
@@ -27,27 +23,26 @@ export declare const file_vectora_chat_v1_chat: GenFile;
 /**
  * @generated from message vectora.chat.v1.StreamChatRequest
  */
-export declare type StreamChatRequest =
-  Message<"vectora.chat.v1.StreamChatRequest"> & {
-    /**
-     * vazio = cria thread nova
-     *
-     * @generated from field: string thread_id = 1;
-     */
-    threadId: string;
+export declare type StreamChatRequest = Message<"vectora.chat.v1.StreamChatRequest"> & {
+  /**
+   * vazio = cria thread nova
+   *
+   * @generated from field: string thread_id = 1;
+   */
+  threadId: string;
 
-    /**
-     * mensagem do usuário
-     *
-     * @generated from field: string content = 2;
-     */
-    content: string;
+  /**
+   * mensagem do usuário
+   *
+   * @generated from field: string content = 2;
+   */
+  content: string;
 
-    /**
-     * @generated from field: vectora.chat.v1.ChatConfig config = 3;
-     */
-    config?: ChatConfig | undefined;
-  };
+  /**
+   * @generated from field: vectora.chat.v1.ChatConfig config = 3;
+   */
+  config?: ChatConfig | undefined;
+};
 
 /**
  * Describes the message vectora.chat.v1.StreamChatRequest.
@@ -89,25 +84,24 @@ export declare const ChatConfigSchema: GenMessage<ChatConfig>;
 /**
  * @generated from message vectora.chat.v1.ResumeChatRequest
  */
-export declare type ResumeChatRequest =
-  Message<"vectora.chat.v1.ResumeChatRequest"> & {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId: string;
+export declare type ResumeChatRequest = Message<"vectora.chat.v1.ResumeChatRequest"> & {
+  /**
+   * @generated from field: string thread_id = 1;
+   */
+  threadId: string;
 
-    /**
-     * @generated from field: string interrupt_id = 2;
-     */
-    interruptId: string;
+  /**
+   * @generated from field: string interrupt_id = 2;
+   */
+  interruptId: string;
 
-    /**
-     * "approve" | "reject" | "edit:<args_json>"
-     *
-     * @generated from field: string decision = 3;
-     */
-    decision: string;
-  };
+  /**
+   * "approve" | "reject" | "edit:<args_json>"
+   *
+   * @generated from field: string decision = 3;
+   */
+  decision: string;
+};
 
 /**
  * Describes the message vectora.chat.v1.ResumeChatRequest.
@@ -118,8 +112,7 @@ export declare const ResumeChatRequestSchema: GenMessage<ResumeChatRequest>;
 /**
  * @generated from message vectora.chat.v1.GetToolsRequest
  */
-export declare type GetToolsRequest =
-  Message<"vectora.chat.v1.GetToolsRequest"> & {};
+export declare type GetToolsRequest = Message<"vectora.chat.v1.GetToolsRequest"> & {};
 
 /**
  * Describes the message vectora.chat.v1.GetToolsRequest.
@@ -130,91 +123,90 @@ export declare const GetToolsRequestSchema: GenMessage<GetToolsRequest>;
 /**
  * @generated from message vectora.chat.v1.StreamChatEvent
  */
-export declare type StreamChatEvent =
-  Message<"vectora.chat.v1.StreamChatEvent"> & {
-    /**
-     * @generated from oneof vectora.chat.v1.StreamChatEvent.event
-     */
-    event:
-      | {
-          /**
-           * thread_id criado (1º evento)
-           *
-           * @generated from field: vectora.chat.v1.ThreadEvent thread = 1;
-           */
-          value: ThreadEvent;
-          case: "thread";
-        }
-      | {
-          /**
-           * chunk de texto do LLM
-           *
-           * @generated from field: vectora.chat.v1.TokenEvent token = 2;
-           */
-          value: TokenEvent;
-          case: "token";
-        }
-      | {
-          /**
-           * tool foi invocada
-           *
-           * @generated from field: vectora.chat.v1.ToolCallEvent tool_call = 3;
-           */
-          value: ToolCallEvent;
-          case: "toolCall";
-        }
-      | {
-          /**
-           * resultado da tool
-           *
-           * @generated from field: vectora.chat.v1.ToolResultEvent tool_result = 4;
-           */
-          value: ToolResultEvent;
-          case: "toolResult";
-        }
-      | {
-          /**
-           * nó do grafo iniciou/terminou
-           *
-           * @generated from field: vectora.chat.v1.NodeEvent node = 5;
-           */
-          value: NodeEvent;
-          case: "node";
-        }
-      | {
-          /**
-           * métricas em tempo real
-           *
-           * @generated from field: vectora.chat.v1.UIMetricsEvent ui_metrics = 6;
-           */
-          value: UIMetricsEvent;
-          case: "uiMetrics";
-        }
-      | {
-          /**
-           * pausa aguardando aprovação humana
-           *
-           * @generated from field: vectora.chat.v1.HITLEvent hitl = 7;
-           */
-          value: HITLEvent;
-          case: "hitl";
-        }
-      | {
-          /**
-           * @generated from field: vectora.chat.v1.ErrorEvent error = 8;
-           */
-          value: ErrorEvent;
-          case: "error";
-        }
-      | {
-          /**
-           * @generated from field: vectora.chat.v1.DoneEvent done = 9;
-           */
-          value: DoneEvent;
-          case: "done";
-        }
-      | { case: undefined; value?: undefined };
-  };
+export declare type StreamChatEvent = Message<"vectora.chat.v1.StreamChatEvent"> & {
+  /**
+   * @generated from oneof vectora.chat.v1.StreamChatEvent.event
+   */
+  event:
+    | {
+        /**
+         * thread_id criado (1º evento)
+         *
+         * @generated from field: vectora.chat.v1.ThreadEvent thread = 1;
+         */
+        value: ThreadEvent;
+        case: "thread";
+      }
+    | {
+        /**
+         * chunk de texto do LLM
+         *
+         * @generated from field: vectora.chat.v1.TokenEvent token = 2;
+         */
+        value: TokenEvent;
+        case: "token";
+      }
+    | {
+        /**
+         * tool foi invocada
+         *
+         * @generated from field: vectora.chat.v1.ToolCallEvent tool_call = 3;
+         */
+        value: ToolCallEvent;
+        case: "toolCall";
+      }
+    | {
+        /**
+         * resultado da tool
+         *
+         * @generated from field: vectora.chat.v1.ToolResultEvent tool_result = 4;
+         */
+        value: ToolResultEvent;
+        case: "toolResult";
+      }
+    | {
+        /**
+         * nó do grafo iniciou/terminou
+         *
+         * @generated from field: vectora.chat.v1.NodeEvent node = 5;
+         */
+        value: NodeEvent;
+        case: "node";
+      }
+    | {
+        /**
+         * métricas em tempo real
+         *
+         * @generated from field: vectora.chat.v1.UIMetricsEvent ui_metrics = 6;
+         */
+        value: UIMetricsEvent;
+        case: "uiMetrics";
+      }
+    | {
+        /**
+         * pausa aguardando aprovação humana
+         *
+         * @generated from field: vectora.chat.v1.HITLEvent hitl = 7;
+         */
+        value: HITLEvent;
+        case: "hitl";
+      }
+    | {
+        /**
+         * @generated from field: vectora.chat.v1.ErrorEvent error = 8;
+         */
+        value: ErrorEvent;
+        case: "error";
+      }
+    | {
+        /**
+         * @generated from field: vectora.chat.v1.DoneEvent done = 9;
+         */
+        value: DoneEvent;
+        case: "done";
+      }
+    | { case: undefined; value?: undefined };
+};
 
 /**
  * Describes the message vectora.chat.v1.StreamChatEvent.
@@ -295,23 +287,22 @@ export declare const ToolCallEventSchema: GenMessage<ToolCallEvent>;
 /**
  * @generated from message vectora.chat.v1.ToolResultEvent
  */
-export declare type ToolResultEvent =
-  Message<"vectora.chat.v1.ToolResultEvent"> & {
-    /**
-     * @generated from field: string tool_call_id = 1;
-     */
-    toolCallId: string;
+export declare type ToolResultEvent = Message<"vectora.chat.v1.ToolResultEvent"> & {
+  /**
+   * @generated from field: string tool_call_id = 1;
+   */
+  toolCallId: string;
 
-    /**
-     * @generated from field: string content_json = 2;
-     */
-    contentJson: string;
+  /**
+   * @generated from field: string content_json = 2;
+   */
+  contentJson: string;
 
-    /**
-     * @generated from field: bool is_error = 3;
-     */
-    isError: boolean;
-  };
+  /**
+   * @generated from field: bool is_error = 3;
+   */
+  isError: boolean;
+};
 
 /**
  * Describes the message vectora.chat.v1.ToolResultEvent.
@@ -350,33 +341,32 @@ export declare const NodeEventSchema: GenMessage<NodeEvent>;
 /**
  * @generated from message vectora.chat.v1.UIMetricsEvent
  */
-export declare type UIMetricsEvent =
-  Message<"vectora.chat.v1.UIMetricsEvent"> & {
-    /**
-     * @generated from field: string last_node = 1;
-     */
-    lastNode: string;
+export declare type UIMetricsEvent = Message<"vectora.chat.v1.UIMetricsEvent"> & {
+  /**
+   * @generated from field: string last_node = 1;
+   */
+  lastNode: string;
 
-    /**
-     * @generated from field: int64 last_node_ms = 2;
-     */
-    lastNodeMs: bigint;
+  /**
+   * @generated from field: int64 last_node_ms = 2;
+   */
+  lastNodeMs: bigint;
 
-    /**
-     * @generated from field: int64 rag_hits = 3;
-     */
-    ragHits: bigint;
+  /**
+   * @generated from field: int64 rag_hits = 3;
+   */
+  ragHits: bigint;
 
-    /**
-     * @generated from field: int64 rag_misses = 4;
-     */
-    ragMisses: bigint;
+  /**
+   * @generated from field: int64 rag_misses = 4;
+   */
+  ragMisses: bigint;
 
-    /**
-     * @generated from field: map<string, int64> tool_calls = 5;
-     */
-    toolCalls: { [key: string]: bigint };
-  };
+  /**
+   * @generated from field: map<string, int64> tool_calls = 5;
+   */
+  toolCalls: { [key: string]: bigint };
+};
 
 /**
  * Describes the message vectora.chat.v1.UIMetricsEvent.
@@ -486,23 +476,22 @@ export declare const ThreadSchema: GenMessage<Thread>;
 /**
  * @generated from message vectora.chat.v1.HistoryMessage
  */
-export declare type HistoryMessage =
-  Message<"vectora.chat.v1.HistoryMessage"> & {
-    /**
-     * @generated from field: string role = 1;
-     */
-    role: string;
+export declare type HistoryMessage = Message<"vectora.chat.v1.HistoryMessage"> & {
+  /**
+   * @generated from field: string role = 1;
+   */
+  role: string;
 
-    /**
-     * @generated from field: string content = 2;
-     */
-    content: string;
+  /**
+   * @generated from field: string content = 2;
+   */
+  content: string;
 
-    /**
-     * @generated from field: string created_at = 3;
-     */
-    createdAt: string;
-  };
+  /**
+   * @generated from field: string created_at = 3;
+   */
+  createdAt: string;
+};
 
 /**
  * Describes the message vectora.chat.v1.HistoryMessage.
@@ -513,8 +502,7 @@ export declare const HistoryMessageSchema: GenMessage<HistoryMessage>;
 /**
  * @generated from message vectora.chat.v1.CreateThreadRequest
  */
-export declare type CreateThreadRequest =
-  Message<"vectora.chat.v1.CreateThreadRequest"> & {};
+export declare type CreateThreadRequest = Message<"vectora.chat.v1.CreateThreadRequest"> & {};
 
 /**
  * Describes the message vectora.chat.v1.CreateThreadRequest.
@@ -525,13 +513,12 @@ export declare const CreateThreadRequestSchema: GenMessage<CreateThreadRequest>;
 /**
  * @generated from message vectora.chat.v1.GetThreadRequest
  */
-export declare type GetThreadRequest =
-  Message<"vectora.chat.v1.GetThreadRequest"> & {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId: string;
-  };
+export declare type GetThreadRequest = Message<"vectora.chat.v1.GetThreadRequest"> & {
+  /**
+   * @generated from field: string thread_id = 1;
+   */
+  threadId: string;
+};
 
 /**
  * Describes the message vectora.chat.v1.GetThreadRequest.
@@ -542,13 +529,12 @@ export declare const GetThreadRequestSchema: GenMessage<GetThreadRequest>;
 /**
  * @generated from message vectora.chat.v1.ListThreadsRequest
  */
-export declare type ListThreadsRequest =
-  Message<"vectora.chat.v1.ListThreadsRequest"> & {
-    /**
-     * @generated from field: int32 limit = 1;
-     */
-    limit: number;
-  };
+export declare type ListThreadsRequest = Message<"vectora.chat.v1.ListThreadsRequest"> & {
+  /**
+   * @generated from field: int32 limit = 1;
+   */
+  limit: number;
+};
 
 /**
  * Describes the message vectora.chat.v1.ListThreadsRequest.
@@ -559,13 +545,12 @@ export declare const ListThreadsRequestSchema: GenMessage<ListThreadsRequest>;
 /**
  * @generated from message vectora.chat.v1.ListThreadsResponse
  */
-export declare type ListThreadsResponse =
-  Message<"vectora.chat.v1.ListThreadsResponse"> & {
-    /**
-     * @generated from field: repeated vectora.chat.v1.Thread threads = 1;
-     */
-    threads: Thread[];
-  };
+export declare type ListThreadsResponse = Message<"vectora.chat.v1.ListThreadsResponse"> & {
+  /**
+   * @generated from field: repeated vectora.chat.v1.Thread threads = 1;
+   */
+  threads: Thread[];
+};
 
 /**
  * Describes the message vectora.chat.v1.ListThreadsResponse.
@@ -576,13 +561,12 @@ export declare const ListThreadsResponseSchema: GenMessage<ListThreadsResponse>;
 /**
  * @generated from message vectora.chat.v1.DeleteThreadRequest
  */
-export declare type DeleteThreadRequest =
-  Message<"vectora.chat.v1.DeleteThreadRequest"> & {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId: string;
-  };
+export declare type DeleteThreadRequest = Message<"vectora.chat.v1.DeleteThreadRequest"> & {
+  /**
+   * @generated from field: string thread_id = 1;
+   */
+  threadId: string;
+};
 
 /**
  * Describes the message vectora.chat.v1.DeleteThreadRequest.
@@ -593,8 +577,7 @@ export declare const DeleteThreadRequestSchema: GenMessage<DeleteThreadRequest>;
 /**
  * @generated from message vectora.chat.v1.DeleteThreadResponse
  */
-export declare type DeleteThreadResponse =
-  Message<"vectora.chat.v1.DeleteThreadResponse"> & {};
+export declare type DeleteThreadResponse = Message<"vectora.chat.v1.DeleteThreadResponse"> & {};
 
 /**
  * Describes the message vectora.chat.v1.DeleteThreadResponse.
@@ -605,13 +588,12 @@ export declare const DeleteThreadResponseSchema: GenMessage<DeleteThreadResponse
 /**
  * @generated from message vectora.chat.v1.GetHistoryRequest
  */
-export declare type GetHistoryRequest =
-  Message<"vectora.chat.v1.GetHistoryRequest"> & {
-    /**
-     * @generated from field: string thread_id = 1;
-     */
-    threadId: string;
-  };
+export declare type GetHistoryRequest = Message<"vectora.chat.v1.GetHistoryRequest"> & {
+  /**
+   * @generated from field: string thread_id = 1;
+   */
+  threadId: string;
+};
 
 /**
  * Describes the message vectora.chat.v1.GetHistoryRequest.
@@ -622,13 +604,12 @@ export declare const GetHistoryRequestSchema: GenMessage<GetHistoryRequest>;
 /**
  * @generated from message vectora.chat.v1.GetHistoryResponse
  */
-export declare type GetHistoryResponse =
-  Message<"vectora.chat.v1.GetHistoryResponse"> & {
-    /**
-     * @generated from field: repeated vectora.chat.v1.HistoryMessage messages = 1;
-     */
-    messages: HistoryMessage[];
-  };
+export declare type GetHistoryResponse = Message<"vectora.chat.v1.GetHistoryResponse"> & {
+  /**
+   * @generated from field: repeated vectora.chat.v1.HistoryMessage messages = 1;
+   */
+  messages: HistoryMessage[];
+};
 
 /**
  * Describes the message vectora.chat.v1.GetHistoryResponse.
@@ -639,13 +620,12 @@ export declare const GetHistoryResponseSchema: GenMessage<GetHistoryResponse>;
 /**
  * @generated from message vectora.chat.v1.GetToolsResponse
  */
-export declare type GetToolsResponse =
-  Message<"vectora.chat.v1.GetToolsResponse"> & {
-    /**
-     * @generated from field: repeated vectora.chat.v1.ToolSchema tools = 1;
-     */
-    tools: ToolSchema[];
-  };
+export declare type GetToolsResponse = Message<"vectora.chat.v1.GetToolsResponse"> & {
+  /**
+   * @generated from field: repeated vectora.chat.v1.ToolSchema tools = 1;
+   */
+  tools: ToolSchema[];
+};
 
 /**
  * Describes the message vectora.chat.v1.GetToolsResponse.

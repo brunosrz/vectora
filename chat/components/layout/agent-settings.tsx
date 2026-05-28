@@ -16,36 +16,12 @@
 import { useEffect, useState } from "react";
 import { Settings, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  getAllowedModels,
-  getModelDisplayName,
-  isModelAllowed,
-  getDefaultModel,
-  type ModelOption,
-} from "@/lib/config/deployment-config";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getAllowedModels, getModelDisplayName, isModelAllowed, getDefaultModel, type ModelOption } from "@/lib/config/deployment-config";
 import { useSettingsStore, type Verbosity } from "@/lib/stores/settings-store";
 
 // ---------------------------------------------------------------------------
@@ -77,24 +53,10 @@ const VERBOSITY_OPTIONS: { value: Verbosity; label: string }[] = [
   { value: "detailed", label: "Detalhada" },
 ];
 
-export function AgentSettings({
-  config,
-  onConfigChange,
-  onShowShortcuts,
-  forceShowTooltip,
-  open,
-  onOpenChange,
-}: AgentSettingsProps) {
+export function AgentSettings({ config, onConfigChange, onShowShortcuts, forceShowTooltip, open, onOpenChange }: AgentSettingsProps) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
 
-  const {
-    showToolCalls,
-    requireHitl,
-    verbosity,
-    setShowToolCalls,
-    setRequireHitl,
-    setVerbosity,
-  } = useSettingsStore();
+  const { showToolCalls, requireHitl, verbosity, setShowToolCalls, setRequireHitl, setVerbosity } = useSettingsStore();
 
   const allowedModels = getAllowedModels();
 
@@ -122,12 +84,7 @@ export function AgentSettings({
         <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hover:bg-muted/70 hover:text-foreground"
-                aria-label="Configurações do chat"
-              >
+              <Button variant="ghost" size="sm" className="hover:bg-muted/70 hover:text-foreground" aria-label="Configurações do chat">
                 <Settings className="w-4 h-4" />
               </Button>
             </DialogTrigger>
@@ -140,19 +97,14 @@ export function AgentSettings({
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Configurações do Chat</DialogTitle>
-            <DialogDescription>
-              Personaliza o comportamento desta sessão de chat.
-            </DialogDescription>
+            <DialogDescription>Personaliza o comportamento desta sessão de chat.</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-5 py-2">
             {/* Modelo */}
             <div className="grid gap-2">
               <Label htmlFor="model">Modelo</Label>
-              <Select
-                value={config.model}
-                onValueChange={(model) => onConfigChange({ ...config, model })}
-              >
+              <Select value={config.model} onValueChange={(model) => onConfigChange({ ...config, model })}>
                 <SelectTrigger id="model">
                   <SelectValue placeholder="Selecionar modelo" />
                 </SelectTrigger>
@@ -169,10 +121,7 @@ export function AgentSettings({
             {/* Verbosidade */}
             <div className="grid gap-2">
               <Label htmlFor="verbosity">Verbosidade das respostas</Label>
-              <Select
-                value={verbosity}
-                onValueChange={(v) => setVerbosity(v as Verbosity)}
-              >
+              <Select value={verbosity} onValueChange={(v) => setVerbosity(v as Verbosity)}>
                 <SelectTrigger id="verbosity">
                   <SelectValue />
                 </SelectTrigger>
@@ -188,49 +137,28 @@ export function AgentSettings({
 
             {/* Ferramentas */}
             <div className="space-y-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Ferramentas
-              </p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ferramentas</p>
 
               {/* Mostrar tool calls */}
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label
-                    htmlFor="show-tool-calls"
-                    className="text-sm font-normal cursor-pointer"
-                  >
+                  <Label htmlFor="show-tool-calls" className="text-sm font-normal cursor-pointer">
                     Mostrar tool calls no chat
                   </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Exibe as chamadas de ferramentas durante a resposta.
-                  </p>
+                  <p className="text-xs text-muted-foreground">Exibe as chamadas de ferramentas durante a resposta.</p>
                 </div>
-                <Switch
-                  id="show-tool-calls"
-                  checked={showToolCalls}
-                  onCheckedChange={setShowToolCalls}
-                />
+                <Switch id="show-tool-calls" checked={showToolCalls} onCheckedChange={setShowToolCalls} />
               </div>
 
               {/* Confirmar ações destrutivas */}
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label
-                    htmlFor="require-hitl"
-                    className="text-sm font-normal cursor-pointer"
-                  >
+                  <Label htmlFor="require-hitl" className="text-sm font-normal cursor-pointer">
                     Confirmar ações destrutivas
                   </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Pede confirmação antes de executar ferramentas irreversíveis
-                    (escrita de arquivo, terminal, etc).
-                  </p>
+                  <p className="text-xs text-muted-foreground">Pede confirmação antes de executar ferramentas irreversíveis (escrita de arquivo, terminal, etc).</p>
                 </div>
-                <Switch
-                  id="require-hitl"
-                  checked={requireHitl}
-                  onCheckedChange={setRequireHitl}
-                />
+                <Switch id="require-hitl" checked={requireHitl} onCheckedChange={setRequireHitl} />
               </div>
             </div>
           </div>
@@ -238,12 +166,7 @@ export function AgentSettings({
           {/* Atalhos */}
           {onShowShortcuts && (
             <div className="border-t pt-3 mt-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-                onClick={onShowShortcuts}
-              >
+              <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground" onClick={onShowShortcuts}>
                 <Keyboard className="w-4 h-4" />
                 Ver atalhos de teclado
               </Button>

@@ -17,10 +17,7 @@ const ROLE_LABELS: Record<string, string> = {
   viewer: "Visualizador",
 };
 
-const ROLE_VARIANTS: Record<
-  string,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
+const ROLE_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   root: "destructive",
   admin: "default",
   member: "secondary",
@@ -33,9 +30,7 @@ export function ContaTab() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          Nenhum usuário autenticado.
-        </p>
+        <p className="text-sm text-muted-foreground">Nenhum usuário autenticado.</p>
       </div>
     );
   }
@@ -46,14 +41,10 @@ export function ContaTab() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-              Email
-            </p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Email</p>
             <p className="text-sm font-mono">{user.email}</p>
           </div>
-          <Badge variant={ROLE_VARIANTS[user.role] ?? "secondary"}>
-            {ROLE_LABELS[user.role] ?? user.role}
-          </Badge>
+          <Badge variant={ROLE_VARIANTS[user.role] ?? "secondary"}>{ROLE_LABELS[user.role] ?? user.role}</Badge>
         </div>
       </div>
 
@@ -61,16 +52,8 @@ export function ContaTab() {
 
       {/* Ações */}
       <div className="space-y-2">
-        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-          Segurança
-        </p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full justify-start"
-          disabled
-          title="Em breve"
-        >
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Segurança</p>
+        <Button variant="outline" size="sm" className="w-full justify-start" disabled title="Em breve">
           Alterar senha
         </Button>
       </div>

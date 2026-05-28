@@ -5,22 +5,13 @@
  */
 
 // Message helpers
-export {
-  generateMessageId,
-  createUserMessage,
-  updateMessageInList,
-  ensureMessageExists,
-} from "./message-helpers";
+export { generateMessageId, createUserMessage, updateMessageInList, ensureMessageExists } from "./message-helpers";
 
 // Content helpers
 export { extractTextFromContent } from "./content-helpers";
 
 // Validation
-export {
-  fileToBase64,
-  createImageAttachment,
-  validateImageFile,
-} from "./validation";
+export { fileToBase64, createImageAttachment, validateImageFile } from "./validation";
 
 // Attachments (F1 — multimodal)
 export { toApiAttachments } from "./attachments";

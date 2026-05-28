@@ -49,17 +49,13 @@
   --popover: oklch(0.15 0 0);
   --popover-foreground: oklch(0.95 0 0);
   --primary: var(--langchain-blue); /* Updated primary color to blue */
-  --primary-foreground: oklch(
-    0.15 0 0
-  ); /* Dark text for better readability on blue */
+  --primary-foreground: oklch(0.15 0 0); /* Dark text for better readability on blue */
   --secondary: oklch(0.22 0 0);
   --secondary-foreground: oklch(0.95 0 0);
   --muted: oklch(0.25 0 0);
   --muted-foreground: oklch(0.6 0 0);
   --accent: var(--langchain-blue); /* Updated accent color to blue */
-  --accent-foreground: oklch(
-    0.15 0 0
-  ); /* Dark text for better readability on blue */
+  --accent-foreground: oklch(0.15 0 0); /* Dark text for better readability on blue */
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.25 0 0);
@@ -71,9 +67,7 @@
   --radius: 0.5rem;
   --sidebar: oklch(0.1 0 0);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: var(
-    --langchain-blue
-  ); /* Updated sidebar primary to blue */
+  --sidebar-primary: var(--langchain-blue); /* Updated sidebar primary to blue */
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.18 0 0);
   --sidebar-accent-foreground: oklch(0.95 0 0);
@@ -341,14 +335,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    transparent 40%,
-    rgba(255, 255, 255, 0.8) 50%,
-    transparent 60%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, transparent 40%, rgba(255, 255, 255, 0.8) 50%, transparent 60%, transparent 100%);
   background-size: 200% 100%;
   background-clip: text;
   -webkit-background-clip: text;

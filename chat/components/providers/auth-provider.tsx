@@ -13,8 +13,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { loadUserSettings } from "@/lib/stores/settings-store";
 
-const AUTH_REQUIRED =
-  process.env.NEXT_PUBLIC_VECTORA_AUTH_REQUIRED?.toLowerCase() !== "false";
+const AUTH_REQUIRED = process.env.NEXT_PUBLIC_VECTORA_AUTH_REQUIRED?.toLowerCase() !== "false";
 
 const PUBLIC_PATHS = ["/auth/signin", "/auth/signup"];
 

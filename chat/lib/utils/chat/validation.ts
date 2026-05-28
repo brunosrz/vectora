@@ -29,9 +29,7 @@ export const fileToBase64 = (file: File): Promise<string> => {
  * Create an ImageAttachment from a File object.
  * Converts the file to base64 and creates a preview URL.
  */
-export const createImageAttachment = async (
-  file: File,
-): Promise<ImageAttachment> => {
+export const createImageAttachment = async (file: File): Promise<ImageAttachment> => {
   const base64 = await fileToBase64(file);
   const url = URL.createObjectURL(file);
 
@@ -49,9 +47,7 @@ export const createImageAttachment = async (
  * Validate if a file is supported and within size limits.
  * Supports images, code files, logs, and text files.
  */
-export const validateImageFile = (
-  file: File,
-): { valid: boolean; error?: string } => {
+export const validateImageFile = (file: File): { valid: boolean; error?: string } => {
   // HAR files can be large network captures — allow up to 50MB.
   // Public CLC does not support HAR analysis; HAR files are ignored before streaming.
   // All other file types retain the original 10MB limit.
@@ -140,9 +136,7 @@ export const validateImageFile = (
   ];
 
   const fileName = file.name.toLowerCase();
-  const hasValidExtension = supportedExtensions.some((ext) =>
-    fileName.endsWith(ext),
-  );
+  const hasValidExtension = supportedExtensions.some((ext) => fileName.endsWith(ext));
   const hasValidMimetype = supportedMimeTypes.includes(file.type);
 
   // Accept if either mimetype or extension is valid
@@ -150,9 +144,7 @@ export const validateImageFile = (
     const ext = fileName.split(".").pop()?.toLowerCase();
     return {
       valid: false,
-      error: `Unsupported file type${
-        ext ? ` (.${ext})` : ""
-      }. Supported: images, code files, logs, configs (see button tooltip for full list)`,
+      error: `Unsupported file type${ext ? ` (.${ext})` : ""}. Supported: images, code files, logs, configs (see button tooltip for full list)`,
     };
   }
 

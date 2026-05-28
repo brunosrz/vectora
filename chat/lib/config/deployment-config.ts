@@ -315,9 +315,7 @@ export function getModelDescription(modelId: ModelOption): string {
   return model?.description ?? "";
 }
 
-export function getModelProvider(
-  modelId: ModelOption,
-): ModelConfig["provider"] {
+export function getModelProvider(modelId: ModelOption): ModelConfig["provider"] {
   const model = Object.values(MODELS).find((m) => m.id === modelId);
   return model?.provider ?? "google-genai";
 }

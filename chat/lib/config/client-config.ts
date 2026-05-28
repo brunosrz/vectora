@@ -37,9 +37,7 @@ function generateClientId(): string {
  * Resolves a partial client profile into a complete ClientProfile object.
  * Fills in missing fields with fallback values and derives a label if needed.
  */
-export function resolveClientProfile(
-  input?: Partial<ClientProfile>,
-): ClientProfile {
+export function resolveClientProfile(input?: Partial<ClientProfile>): ClientProfile {
   if (!input) {
     return { ...FALLBACK_CLIENT };
   }
@@ -59,9 +57,7 @@ export function resolveClientProfile(
  * Creates a new client profile with optional overrides.
  * Generates a random ID if not provided and resolves all fields.
  */
-export function createClientProfile(
-  overrides?: Partial<ClientProfile>,
-): ClientProfile {
+export function createClientProfile(overrides?: Partial<ClientProfile>): ClientProfile {
   const base: Partial<ClientProfile> = {
     id: overrides?.id ?? generateClientId(),
     label: overrides?.label,

@@ -71,25 +71,15 @@ const isInputElement = (element: EventTarget | null): boolean => {
   const tagName = element.tagName.toLowerCase();
   const isContentEditable = element.isContentEditable;
 
-  return (
-    tagName === "input" ||
-    tagName === "textarea" ||
-    tagName === "select" ||
-    isContentEditable
-  );
+  return tagName === "input" || tagName === "textarea" || tagName === "select" || isContentEditable;
 };
 
 /**
  * Checks if a keyboard event matches a shortcut definition
  */
-const matchesShortcut = (
-  event: KeyboardEvent,
-  shortcut: KeyboardShortcut,
-): boolean => {
+const matchesShortcut = (event: KeyboardEvent, shortcut: KeyboardShortcut): boolean => {
   const keyMatches = event.key.toLowerCase() === shortcut.key.toLowerCase();
-  const metaMatches = shortcut.metaKey
-    ? event.metaKey || event.ctrlKey
-    : !event.metaKey && !event.ctrlKey;
+  const metaMatches = shortcut.metaKey ? event.metaKey || event.ctrlKey : !event.metaKey && !event.ctrlKey;
   const shiftMatches = shortcut.shiftKey ? event.shiftKey : !event.shiftKey;
   const altMatches = shortcut.altKey ? event.altKey : !event.altKey;
 
@@ -100,10 +90,7 @@ const matchesShortcut = (
  * Global keyboard shortcuts hook
  * Handles keyboard events and prevents conflicts with input fields
  */
-export const useKeyboardShortcuts = (
-  shortcuts: KeyboardShortcutHandler[],
-  enabled: boolean = true,
-) => {
+export const useKeyboardShortcuts = (shortcuts: KeyboardShortcutHandler[], enabled: boolean = true) => {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (!enabled) return;

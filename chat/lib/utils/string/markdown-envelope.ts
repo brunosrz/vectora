@@ -21,8 +21,7 @@
 
 // Captura ``````markdown\n...\n`````` (com fechamento, tolerante a CRLF/trailing space).
 // Lazy quantifier no corpo + final opcional para suportar streaming parcial.
-const FULL_ENVELOPE_RE =
-  /^[\t ]*``````\s*markdown[\t ]*\r?\n([\s\S]*?)\r?\n[\t ]*``````[\t ]*\s*$/;
+const FULL_ENVELOPE_RE = /^[\t ]*``````\s*markdown[\t ]*\r?\n([\s\S]*?)\r?\n[\t ]*``````[\t ]*\s*$/;
 
 // Apenas a abertura — usado quando o stream ainda está chegando.
 const OPEN_ENVELOPE_RE = /^[\t ]*``````\s*markdown[\t ]*\r?\n/;

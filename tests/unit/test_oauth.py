@@ -82,12 +82,14 @@ class TestIntegrationsRegistry:
             missing = required - set(integration.keys())
             assert not missing, f"Integração {integration.get('id')} falta: {missing}"
 
-    def test_github_is_oauth_kind(self):
+    def test_github_is_hybrid_kind(self):
+        # GitHub aceita OAuth OU Personal Access Token (kind="hybrid").
         from vectora.api.handlers.oauth import INTEGRATIONS_REGISTRY
 
         github = next((i for i in INTEGRATIONS_REGISTRY if i["id"] == "github"), None)
         assert github is not None
-        assert github["kind"] == "oauth"
+        assert github["kind"] == "hybrid"
+        assert github["env_var"] == "GITHUB_TOKEN"
 
     def test_openai_is_apikey_kind(self):
         from vectora.api.handlers.oauth import INTEGRATIONS_REGISTRY

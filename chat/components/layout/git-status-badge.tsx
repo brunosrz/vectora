@@ -80,23 +80,9 @@ export function GitStatusBadge() {
   const { branch, clean, ahead, behind } = gitStatus;
 
   return (
-    <div
-      className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground px-2 py-1 rounded-md hover:bg-muted/50 transition-colors cursor-default select-none"
-      title={`Branch: ${branch}${ahead ? ` · ↑${ahead}` : ""}${
-        behind ? ` ↓${behind}` : ""
-      }${!clean ? " · alterações não commitadas" : ""}`}
-    >
+    <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground px-2 py-1 rounded-md hover:bg-muted/50 transition-colors cursor-default select-none" title={`Branch: ${branch}${ahead ? ` · ↑${ahead}` : ""}${behind ? ` ↓${behind}` : ""}${!clean ? " · alterações não commitadas" : ""}`}>
       {/* Ícone de branch */}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="w-3.5 h-3.5 shrink-0"
-      >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 shrink-0">
         <line x1="6" y1="3" x2="6" y2="15" />
         <circle cx="18" cy="6" r="3" />
         <circle cx="6" cy="18" r="3" />
@@ -111,11 +97,7 @@ export function GitStatusBadge() {
       {behind > 0 && <span>↓{behind}</span>}
 
       {/* Dirty indicator */}
-      <span
-        className={`w-1.5 h-1.5 rounded-full ${
-          clean ? "bg-green-500" : "bg-orange-400"
-        }`}
-      />
+      <span className={`w-1.5 h-1.5 rounded-full ${clean ? "bg-green-500" : "bg-orange-400"}`} />
     </div>
   );
 }

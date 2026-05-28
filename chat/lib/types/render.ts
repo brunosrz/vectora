@@ -18,12 +18,4 @@ export type RenderHint =
   | "json"; // save_memory, get_memory, delete_memory, fallback universal
 
 /** Categoria de uma tool — agrupa tools afins na UI. */
-export type ToolCategory =
-  | "filesystem"
-  | "web"
-  | "rag"
-  | "memory"
-  | "workspace"
-  | "mcp"
-  | "artifacts"
-  | "general";
+export type ToolCategory = "filesystem" | "web" | "rag" | "memory" | "workspace" | "mcp" | "artifacts" | "general";

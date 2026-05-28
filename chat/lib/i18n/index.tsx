@@ -131,10 +131,7 @@ export function I18nProvider({ children }: I18nProviderProps) {
  * Fallback em cascata: idioma atual → inglês → chave literal.
  * Re-renderiza componentes apenas quando o idioma muda.
  */
-export function useT(): (
-  key: string,
-  params?: Record<string, string | number>,
-) => string {
+export function useT(): (key: string, params?: Record<string, string | number>) => string {
   const language = useSettingsStore((s) => s.language);
 
   return useCallback(
@@ -152,9 +149,7 @@ export function useT(): (
 
       if (!params) return str;
       // Interpolação simples: {varName}
-      return str.replace(/\{(\w+)\}/g, (_, k: string) =>
-        String(params[k] ?? `{${k}}`),
-      );
+      return str.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? `{${k}}`));
     },
     [language],
   );
