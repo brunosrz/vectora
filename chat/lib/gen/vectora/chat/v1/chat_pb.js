@@ -12,7 +12,11 @@
 // vectora/api/schemas.py (equivalente Pydantic). Quando grpcio e buf
 // estiverem disponíveis, `make gen-proto` gera os stubs compilados.
 
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import {
+  fileDesc,
+  messageDesc,
+  serviceDesc,
+} from "@bufbuild/protobuf/codegenv2";
 
 /**
  * Describes the file vectora/chat/v1/chat.proto.

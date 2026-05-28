@@ -40,7 +40,7 @@ gen-proto:
 # Inicie com:  PORT=8080 VECTORA_API_URL=http://127.0.0.1:8081 node vectora/chat_static/server.js
 # Ou use:      uv run vectora server chat   (gerencia os dois processos automaticamente)
 build-chat:
-	@echo ">> Instalando dependências do frontend..."
+	@echo ">> Instalando dependencias do frontend..."
 	cd chat && pnpm install --frozen-lockfile
 	@echo ">> Compilando Next.js (standalone)..."
 	cd chat && pnpm build

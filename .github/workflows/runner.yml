@@ -87,6 +87,10 @@ jobs:
             venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
       - name: Sync dependencies
         run: uv sync --frozen --all-extras
+      - name: Install buf CLI
+        uses: bufbuild/buf-setup-action@v1
+      - name: Generate proto stubs (make gen-proto)
+        run: make gen-proto
       - name: Run Ruff check
         run: uv run ruff check vectora tests
 
@@ -151,18 +155,22 @@ jobs:
         run: uv sync --frozen --all-extras
       - name: Compile structure
         run: uv run python -m compileall vectora
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
 
-      # Build Chat (multi-step)
+      # Build Chat using Makefile
+      - name: Install buf CLI
+        uses: bufbuild/buf-setup-action@v1
+      - name: Generate proto stubs (make gen-proto)
+        run: make gen-proto
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
-      - name: Install Chat dependencies
-        working-directory: ./chat
-        run: pnpm install --frozen-lockfile
-      - name: Build Chat
-        working-directory: ./chat
-        run: pnpm run build --turbo
+          version: 11.2.2
+      - name: Build Chat (make build-chat)
+        run: make build-chat
 
   # ── 4a. Unit Tests ──────────────────────────────────────────────────────
   test-unit:

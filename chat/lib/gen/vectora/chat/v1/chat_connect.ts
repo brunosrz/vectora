@@ -13,7 +13,22 @@
 // vectora/api/schemas.py (equivalente Pydantic). Quando grpcio e buf
 // estiverem disponíveis, `make gen-proto` gera os stubs compilados.
 
-import { CreateThreadRequest, DeleteThreadRequest, DeleteThreadResponse, GetHistoryRequest, GetHistoryResponse, GetThreadRequest, GetToolsRequest, GetToolsResponse, ListThreadsRequest, ListThreadsResponse, ResumeChatRequest, StreamChatEvent, StreamChatRequest, Thread } from "./chat_pb.js";
+import {
+  CreateThreadRequest,
+  DeleteThreadRequest,
+  DeleteThreadResponse,
+  GetHistoryRequest,
+  GetHistoryResponse,
+  GetThreadRequest,
+  GetToolsRequest,
+  GetToolsResponse,
+  ListThreadsRequest,
+  ListThreadsResponse,
+  ResumeChatRequest,
+  StreamChatEvent,
+  StreamChatRequest,
+  Thread,
+} from "./chat_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
