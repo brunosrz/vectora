@@ -23,31 +23,24 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 
 ## Sumário (TOC)
 
-| Bloco | Tema                                          | Status                                       |
-| ----- | --------------------------------------------- | -------------------------------------------- |
-| **A** | Chat Foundations                              | ✅ Concluído                                 |
-| **B** | Polish, Bugfixes & Infra                      | ✅ Concluído                                 |
-| **C** | Authentication & RBAC                         | ✅ Concluído                                 |
-| **D** | Reasoning Reveal & Thinking UX                | ⏳ Próximo                                   |
-| **E** | HITL em Chat                                  | ⏳ Bloqueado por `interrupt_before` no graph |
-| **F** | File Handling Completo                        | ⏳ Independente                              |
-| **G** | Workspaces + Git Integration                  | ⏳ Junto com workspaces do backend           |
-| **H** | Slash Commands                                | ⏳ Power-user                                |
-| **I** | Conversation Features (search, export, share) | ⏳ Power-user                                |
-| **J** | Mobile & PWA                                  | ⏳ Pré-mobile native                         |
-| **K** | Live Metrics Dashboard                        | ⏳ Observabilidade                           |
-| **L** | **Settings Architecture**                     | 🎯 **Prioridade imediata**                   |
-| **M** | Performance & UX Polish                       | ⏳ Continuous                                |
-| **N** | Per-User Memory                               | ⏳ Depende de L                              |
-| **O** | Workspace Integrations (OAuth + API keys)     | ⏳ Depende de L                              |
-| **P** | Root Admin Panel (RBAC/ABAC global)           | ⏳ Depende de C+O                            |
-
-**Ordem sugerida:**
-`L → N → D → F → O → G → E → H → I → P → J → K → M`
-
-L (Settings Architecture) é prioridade imediata — define a estrutura de UI
-que N (memória por usuário) e O (integrações) precisam para existir.
-C (Auth & RBAC) está concluído e libera uso multi-usuário.
+| Bloco | Tema                                          | Status       |
+| ----- | --------------------------------------------- | ------------ |
+| **A** | Chat Foundations                              | ✅ Concluído |
+| **B** | Polish, Bugfixes & Infra                      | ✅ Concluído |
+| **C** | Authentication & RBAC                         | ✅ Concluído |
+| **D** | Reasoning Reveal & Thinking UX                | ✅ Concluído |
+| **E** | HITL em Chat                                  | ✅ Concluído |
+| **F** | File Handling Completo                        | ✅ Concluído |
+| **G** | Workspaces + Git Integration                  | ✅ Concluído |
+| **H** | Slash Commands                                | ✅ Concluído |
+| **I** | Conversation Features (search, export, share) | ✅ Concluído |
+| **J** | Mobile & PWA                                  | ✅ Concluído |
+| **K** | Live Metrics Dashboard                        | ✅ Concluído |
+| **L** | Settings Architecture                         | ✅ Concluído |
+| **M** | Performance, UX Polish & i18n/L10n            | ✅ Concluído |
+| **N** | Per-User Memory                               | ✅ Concluído |
+| **O** | Workspace Integrations (OAuth + API keys)     | ✅ Concluído |
+| **P** | Root Admin Panel (RBAC/ABAC global)           | ✅ Concluído |
 
 ---
 
@@ -195,7 +188,7 @@ de bugs reais, fricção de UX e oportunidades de melhoria descobertas em uso.
 
 ---
 
-## BLOCO C — Authentication & RBAC 🎯 [PRIORIDADE ATUAL]
+## BLOCO C — Authentication & RBAC [CONCLUÍDO]
 
 **Contexto.** Vectora não é um chatbot comum — opera com acesso real ao
 filesystem, terminal, RAG indexado, secrets. Empresas instalam em VPS e
@@ -948,7 +941,7 @@ Slash commands tornam ações de power-user descobríveis e rápidas.
 
 ---
 
-## BLOCO L — Settings Architecture 🎯 [PRIORIDADE IMEDIATA]
+## BLOCO L — Settings Architecture [CONCLUÍDO]
 
 **Contexto.** O `AgentSettings` atual tem Agent Type e Recursion Limit (itens
 a remover) e o Model Selector (que já existe no chat input). O componente
@@ -1055,37 +1048,169 @@ Zustand: `chat/lib/stores/settings-store.ts` — persiste `{ showToolCalls, requ
 
 ---
 
-## BLOCO M — Performance & UX Polish
+## BLOCO M — Performance, UX Polish & i18n/L10n [CONCLUÍDO parcial — i18n em andamento]
+
+### ── M1–M5: Performance & UX Polish [CONCLUÍDO] ──────────────────────────────
+
+**Objetivo:** Garantir fluidez visual e responsividade da interface independente do volume de mensagens e velocidade de streaming.
 
 ### M1 — Virtualização de threads longas
 
-- `@tanstack/react-virtual` para `MessageList` quando > 50 mensagens
-- Mantém scroll position ao trocar threads
-- Mensagem ativa (streaming) sempre renderizada
+- `@tanstack/react-virtual` v3 integrado em `chat/components/chat/message-list.tsx`
+- Ativa somente acima de 50 mensagens (`VIRTUALIZE_THRESHOLD = 50`) — abaixo disso, renderização direta é igualmente rápida e mais simples
+- `measureElement` via ResizeObserver mede alturas reais incluindo conteúdo de streaming: sem jitter de scroll com mensagens que crescem dinamicamente
+- `overscan: 4` pré-renderiza itens fora da viewport para rolagem suave
+- Scroll para último item: `virtualizer.scrollToIndex(messages.length - 1, { align: "end" })`
+- Posicionamento: `position: absolute + transform: translateY(${vItem.start}px)` por item
 
 ### M2 — Token-by-token rendering smoothness
 
-- Buffer de N ms (ex: 16ms = 1 frame) antes de re-renderizar
-- Evita layout thrashing em streams rápidos do Gemini Flash
+- `requestAnimationFrame` batching em `chat/lib/hooks/chat/use-stream-handler.ts`
+- Tokens chegam em alta frequência (Gemini Flash pode gerar >200 tokens/s) → acumulados em `pendingTokenBatch: string`
+- `scheduleTokenFlush()` agenda um único `setMessages` por frame (~60fps máximo), eliminando layout thrashing
+- `flushNow()` chamado imediatamente antes de eventos não-token (tool calls, node events, HITL, erros) para garantir ordenação correta do conteúdo
+- Implementado tanto em `processStream` quanto em `processResume`
 
 ### M3 — Auto-scroll inteligente
 
-- Hoje: scroll force-to-bottom no novo token
-- Detecta se usuário scrollou pra cima → para de auto-scrollar; mostra botão
-  "Voltar pro fim"
+- `shouldAutoScrollRef` rastreia intenção do usuário: `true` quando na base da conversa, `false` quando scrollou para cima
+- Detecção de scroll manual: `currentScrollTop < lastScrollTopRef.current` → cancela auto-scroll imediatamente
+- Botão flutuante "Voltar ao fim" (`ArrowDown`) aparece quando `showScrollButton === true`, com animação `slideInButton`
+- Lógica de carga inicial: `MutationObserver` + polling periódico (100ms) garantem scroll até o fim mesmo enquanto imagens e blocos de código renderizam e mudam a altura da página
+- Estabilização: verifica se `scrollHeight` se manteve igual por 5 iterações consecutivas antes de encerrar o auto-scroll inicial
 
 ### M4 — Loading skeletons
 
-- Sidebar threads loading: skeleton 5 rows
-- Message history loading: skeleton de 2-3 messages
-- Tool result pendente: pulse animation no ToolCallRenderer
+- Novo componente `chat/components/chat/message-skeleton.tsx`: 6 mensagens alternadas (user/assistant) com `animate-pulse`, simulando uma thread real durante carregamento
+- Sidebar: 5 skeleton rows com opacidade gradual (`opacity: 1 - i * 0.12`) substituíram o spinner — sem reflow ao carregar threads
+- `ToolCallRenderer`: pulse animation (`h-2.5 rounded-full bg-muted/70 animate-pulse`) enquanto `tool.output == null && isStreaming` — o usuário vê que a tool está em execução mesmo antes do resultado chegar
 
-### M5 — Optimistic UI para envio
+### M5 — Optimistic UI + retry em erros
 
-- User message aparece **imediatamente** ao apertar Enter (antes do POST)
-- Erro no envio → mostra retry inline
+- Campo `isError?: boolean` adicionado ao tipo `Message` em `chat/lib/types/messages.ts`
+- No `catch` do stream em `chat-interface.tsx`: a mensagem de erro é marcada com `isError = true`
+- `MessageItem` renderiza botão "Tentar novamente" (`RefreshCw`) quando `message.isError && onRetry`; o botão dispara `handleRegenerate` para reenviar a última mensagem do usuário
+- Props `onRetry` e `isLoadingThread` propagados: `ChatInterface → MessageList → MessageItem`
 
-**Arquivos críticos:** `chat/components/chat/message-list.tsx` (virtualização), `chat/lib/hooks/chat/use-auto-scroll.ts` (extend), `chat/components/ui/skeleton.tsx` (já existe shadcn — usar)
+---
+
+### ── M6–M10: i18n / L10n [EM ANDAMENTO] ───────────────────────────────────────
+
+**Objetivo:** Internacionalizar toda a interface do chat sem dependências externas. Strings em CSV com colunas por idioma — adicionar idioma = adicionar coluna. Inglês como fallback universal.
+
+**Idiomas suportados inicialmente:** English (`en`), Español (`es`), Português Brasil (`pt-BR`)
+
+### M6 — Infraestrutura de traduções (CSV-driven, zero deps)
+
+**Formato:** CSV com colunas `key,en,es,pt-BR` em `chat/lib/i18n/strings.csv.ts`
+
+- Arquivo `.ts` com template literal no formato CSV — sem necessidade de webpack loader nem build step
+- Comentários com `#` para separar seções (filtrados no parser)
+- Interpolação simples via `{varName}`: `t('time.minutes_ago', { n: 5 })` → `"5 min ago"` / `"hace 5 min"` / `"há 5 min"`
+- Para adicionar idioma: adicionar coluna no CSV + atualizar o tipo `Lang`
+
+**Parser** em `chat/lib/i18n/index.tsx`:
+
+- Parser CSV próprio (20 linhas) — lida com valores entre aspas duplas contendo vírgulas
+- Executa uma única vez no carregamento do módulo → resultado cacheado como constante `TRANSLATIONS`
+- Fallback: `entry[language] ?? entry["en"] ?? key` — nunca quebra com chave inexistente
+
+**Hook `useT()`:**
+
+```ts
+const t = useT();
+t("header.new_chat"); // → "New Chat" / "Nuevo Chat" / "Novo Chat"
+t("time.minutes_ago", { n: 5 }); // → "5 min ago" / "hace 5 min" / "há 5 min"
+```
+
+- Subscreve seletivamente ao campo `language` do settings-store: `useSettingsStore(s => s.language)`
+- `useCallback([language])` → memoizado, re-cria apenas ao trocar idioma
+
+**`I18nProvider`** em `chat/app/layout.tsx`:
+
+- Atualiza `document.documentElement.lang` via `useEffect` ao trocar idioma
+- Sem Context overhead — `useT()` lê diretamente do Zustand store
+
+### M7 — Preferência de idioma no settings-store
+
+Extensão de `chat/lib/stores/settings-store.ts`:
+
+- Campo `language: Lang` — default calculado via `detectLanguage()`:
+  1. `localStorage["vectora-settings-*"]` (persistido entre sessões)
+  2. `navigator.language` → mapeado para `en`/`es`/`pt-BR`
+  3. Fallback: `"en"`
+- Persiste junto com as demais preferências por usuário (`partialize` atualizado)
+- Ação `setLanguage(v: Lang)` adicionada
+
+### M8 — Seletor de idioma na aba Preferências
+
+Em `chat/components/layout/settings-dialog/tabs/preferencias-tab.tsx`:
+
+- Select com 3 opções: `English`, `Español`, `Português (BR)`
+- Labels dos idiomas sempre no próprio idioma (universalmente reconhecíveis)
+- Troca instantânea: toda a UI re-renderiza em ≤1 frame pois `useT()` está subscrito ao store
+
+### M9 — Migração dos componentes para `useT()`
+
+~15 arquivos atualizados para usar `useT()` em vez de strings hardcoded:
+
+| Componente                                                    | Strings migradas                                                      |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `components/layout/header.tsx`                                | New Chat, Vectora                                                     |
+| `components/layout/sidebar.tsx`                               | Threads, Search, grupos temporais, relative time, empty states, links |
+| `components/layout/user-menu.tsx`                             | Menu do usuário, Configurações, Sair                                  |
+| `components/layout/agent-settings.tsx`                        | Todas as labels de configuração do chat                               |
+| `components/layout/settings-dialog/index.tsx`                 | Título, todas as abas                                                 |
+| `components/layout/settings-dialog/tabs/conta-tab.tsx`        | Segurança, roles, labels                                              |
+| `components/layout/settings-dialog/tabs/preferencias-tab.tsx` | Todas as labels + seletor de idioma                                   |
+| `components/layout/keyboard-shortcuts-dialog.tsx`             | Título                                                                |
+| `components/chat/chat-input.tsx`                              | Placeholders, botões Stop/Attach, hints                               |
+| `components/chat/message-item.tsx`                            | Copy, Regenerate, Good/Bad, Feedback, Retry, Thinking                 |
+| `components/chat/message-list.tsx`                            | Voltar ao fim                                                         |
+| `components/chat/features/welcome-screen.tsx`                 | Título principal, placeholder                                         |
+| `components/chat/features/hitl-panel.tsx`                     | Aprovar, Editar, Rejeitar, todos labels                               |
+| `components/chat/features/voice-input-button.tsx`             | Tooltips                                                              |
+| `components/chat/chat-interface.tsx`                          | Mensagens de erro expostas ao usuário                                 |
+
+**Padrão de migração (exemplo):**
+
+```tsx
+// Antes (hardcoded PT-BR ou EN misto)
+<Button>Tentar novamente</Button>;
+
+// Depois
+const t = useT();
+<Button>{t("message.retry")}</Button>;
+```
+
+**Relative time em `sidebar.tsx`:** `getRelativeTime()` recebe `t` como parâmetro → chamado com `t` do hook dentro do componente. Sem perda de memoização.
+
+### M10 — Cobertura de strings (~185 keys)
+
+O CSV cobre todas as seções da UI:
+
+- Layout & navegação (header, sidebar, user-menu)
+- Relative time (just now, minutes, hours, days, weeks, months)
+- Chat input (placeholders, botões, hints de teclado)
+- Mensagens (copy, regenerate, feedback, retry, thinking, subagent)
+- Tool calls (executando…)
+- Scroll (voltar ao fim)
+- Chat settings (modelo, verbosidade, ferramentas)
+- Settings dialog (todas as abas)
+- Conta (roles, segurança)
+- Preferências (tema, limite, instrução personalizada, idioma)
+- HITL panel (aprovar, editar, rejeitar)
+- Autenticação (loading)
+- Atalhos de teclado
+
+**Arquivos críticos (i18n):**
+
+- `chat/lib/i18n/strings.csv.ts` — CSV com ~185 chaves × 3 idiomas (NOVO)
+- `chat/lib/i18n/index.tsx` — parser, `I18nProvider`, `useT()` hook (NOVO)
+- `chat/lib/stores/settings-store.ts` — campo `language: Lang` + `setLanguage()`
+- `chat/app/layout.tsx` — adicionar `<I18nProvider />`
+- `chat/components/layout/settings-dialog/tabs/preferencias-tab.tsx` — seletor de idioma
+- ~14 componentes adicionais — `useT()` em vez de strings hardcoded
 
 ---
 
@@ -1292,40 +1417,6 @@ Sub-abas dentro de Administração:
 - `chat/components/layout/settings-dialog/admin/tools-panel.tsx` — novo
 - `vectora/api/handlers/admin.py` — novo router (todos os endpoints exigem root/admin)
 - `vectora/services/permissions.py` — ampliar com `can_override_tools(user, target_user_id)`
-
----
-
-## Ordem de implementação sugerida
-
-```
-[CONCLUÍDOS]
-  Bloco A — Chat Foundations
-  Bloco B — Polish, Bugfixes & Infra
-  Bloco C — Authentication & RBAC
-
-[v0.2-chat — Settings Architecture + UX imediato]
-  Bloco L — Settings Architecture (⚙️ Chat Settings + Configurações dialog)
-  Bloco D — Reasoning Reveal & Thinking UX
-  Bloco F — File Handling
-
-[v0.3-chat — Memória + Integrações]
-  Bloco N — Per-User Memory (isolamento + UI de edição)
-  Bloco O — Workspace Integrations (API keys O1 primeiro, GitHub OAuth O2 depois)
-
-[v0.4-chat — projeto-first]
-  Bloco G (workspaces + git) ← O2 desbloqueia G3 (git tools com GITHUB_TOKEN)
-  Bloco E (HITL) ← depende de interrupt_before no graph
-
-[v0.5-chat — power-user]
-  Bloco H (slash commands) → Bloco I (search/export/share)
-
-[v0.6-chat — admin + mobile + observability]
-  Bloco P — Root Admin Panel
-  Bloco J (mobile/PWA) → Bloco K (metrics dashboard)
-
-[contínuo]
-  Bloco M — Performance & UX Polish (aplicar incrementalmente)
-```
 
 ---
 

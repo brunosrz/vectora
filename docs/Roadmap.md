@@ -29,7 +29,6 @@ Após leitura completa das docs do LangChain, LangGraph, Deep Agents, Tavily, Co
 2. **Pydantic como base**: Todos os modelos de dados devem herdar de `pydantic.BaseModel`. TypedDicts são permitidos apenas como anotação de estado LangGraph (onde o próprio framework exige dict-like serialization).
 
 3. **PEP 585 / PEP 604 — Sintaxe moderna obrigatória**:
-
    - `list[str]` em vez de `List[str]`
    - `str | None` em vez de `Optional[str]`
    - `dict[str, Any]` em vez de `Dict[str, Any]`
@@ -565,7 +564,6 @@ Dois pontos, ambos necessários:
 2. `orchestrator` (`agents/orchestrator.py`) detecta o modo pós-RAG: se a
    **última** mensagem do estado é `SystemMessage` com `name == "rag_context"`,
    entra num caminho de **síntese pura**:
-
    - Monta um payload com a pergunta do usuário + o bloco `rag_context` + uma
      instrução de síntese ("responda à pergunta com base SÓ neste contexto; se
      não houver resposta nele, diga isso honestamente").
@@ -859,7 +857,6 @@ Mudanças:
 
 - **`vectora/agents/rag.py`** (hoje só wrapper, vira o agent completo). Nova
   função `async def curate_workspace_knowledge(workspace_id: str) -> str`:
-
   1. Lê via LanceDB `where="workspace_id == '<id>' AND indexed_at > <last>'"`
      os docs novos por bucket.
   2. Chama `_get_synthesis_llm()` com prompt: "Você acabou de receber estes
@@ -1112,7 +1109,6 @@ Mudanças:
 
 - **Carregamento**: 1x por sessão (cache em `state["project_context"]` via
   checkpoint). Invalidação por **versão em memória**, sem I/O por turno:
-
   - `WorkspaceRegistry` mantém `manifest_version: int` em memória por
     workspace (incrementado pelo curator quando reescreve o manifest).
     Persistido em `~/.vectora/workspaces.json` no save normal — não há save

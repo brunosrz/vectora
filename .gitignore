@@ -329,3 +329,6 @@ build/
 /.tests
 /company
 /chat/.turbo
+
+# Next.js generated files (in chat/)
+chat/next-env.d.ts

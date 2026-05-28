@@ -13,7 +13,8 @@ exclude: |
     yarn\.lock|
     coverage\..*|
     \.env.*|
-    \.venv/.*
+    \.venv/.*|
+     \.mjs.*
   )$
 
 repos:

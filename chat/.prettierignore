@@ -1,0 +1,3 @@
+# Minified / generated files — do not format
+public/pdf.worker.min.mjs
+.next/
