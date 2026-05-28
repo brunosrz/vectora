@@ -11,6 +11,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { loadUserSettings } from "@/lib/stores/settings-store";
 
 const AUTH_REQUIRED =
   process.env.NEXT_PUBLIC_VECTORA_AUTH_REQUIRED?.toLowerCase() !== "false";
@@ -28,10 +29,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return;
 
     hydrate().then(() => {
-      const authenticated = useAuthStore.getState().isAuthenticated;
-      if (!authenticated) {
+      const { isAuthenticated, user } = useAuthStore.getState();
+      if (!isAuthenticated) {
         router.replace(`/auth/signin?from=${encodeURIComponent(pathname)}`);
+        return;
       }
+      // Carrega preferências do usuário autenticado
+      loadUserSettings(user?.id);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

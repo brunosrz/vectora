@@ -4,11 +4,12 @@
  * ThemeProvider — Bloco L3
  *
  * Envolve o app com o ThemeProvider do next-themes.
- * Lê o tema do settings-store e sincroniza com next-themes ao montar.
+ * ThemeSync sincroniza o tema persistido no settings-store com next-themes
+ * na montagem e sempre que o usuário alterar via PreferenciasTab.
  */
 
-import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useEffect } from "react";
+import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 
 interface ThemeProviderProps {
@@ -16,13 +17,18 @@ interface ThemeProviderProps {
 }
 
 /**
- * Hook interno: sincroniza o tema salvo no Zustand com next-themes.
- * Necessário porque next-themes lê o tema do seu próprio localStorage,
- * enquanto o Vectora persiste no settings-store com prefixo por usuário.
+ * Sincroniza o tema do Zustand settings-store → next-themes.
+ * Deve renderizar dentro do NextThemesProvider para ter acesso ao contexto.
  */
 function ThemeSync() {
+  const { setTheme } = useTheme();
   const theme = useSettingsStore((s) => s.theme);
-  return null; // Efeito via useSettingsStore subscription
+
+  useEffect(() => {
+    setTheme(theme);
+  }, [theme, setTheme]);
+
+  return null;
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {

@@ -29,9 +29,14 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
 
 export function PreferenciasTab() {
   const { setTheme: setNextTheme } = useTheme();
-  const { theme, historyLimit, customSystemPrompt } = useSettingsStore();
-  const { setTheme, setHistoryLimit, setCustomSystemPrompt } =
-    useSettingsStore();
+  const {
+    theme,
+    historyLimit,
+    customSystemPrompt,
+    setTheme,
+    setHistoryLimit,
+    setCustomSystemPrompt,
+  } = useSettingsStore();
 
   const handleThemeChange = (value: Theme) => {
     setTheme(value);

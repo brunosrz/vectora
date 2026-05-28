@@ -87,8 +87,14 @@ export function AgentSettings({
 }: AgentSettingsProps) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
 
-  const { showToolCalls, requireHitl, verbosity } = useSettingsStore();
-  const { setShowToolCalls, setRequireHitl, setVerbosity } = useSettingsStore();
+  const {
+    showToolCalls,
+    requireHitl,
+    verbosity,
+    setShowToolCalls,
+    setRequireHitl,
+    setVerbosity,
+  } = useSettingsStore();
 
   const allowedModels = getAllowedModels();
 
