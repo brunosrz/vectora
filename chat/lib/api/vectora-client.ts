@@ -18,6 +18,8 @@ export interface ChatConfig {
   llm_provider?: string;
   recursion_limit?: number;
   workspace_id?: string;
+  /** L4 — instrução personalizada prefixada ao system prompt */
+  custom_system_prompt?: string;
 }
 
 /** Tipo semântico do attachment — espelha AttachmentKind do backend. */

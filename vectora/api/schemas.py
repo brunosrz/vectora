@@ -23,6 +23,7 @@ class ChatConfig(BaseModel):
     llm_provider: str = ""
     recursion_limit: int = 50
     workspace_id: str = ""
+    custom_system_prompt: str = ""  # L4 — instrução personalizada por usuário
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +133,7 @@ class NodeEvent(BaseModel):
     node_label: str = ""
 
     @model_validator(mode="after")
-    def _fill_node_label(self) -> "NodeEvent":
+    def _fill_node_label(self) -> NodeEvent:
         if not self.node_label and self.node:
             from vectora.api.node_labels import get_node_label
 
@@ -297,7 +298,7 @@ class UserResponse(BaseModel):
     last_login_at: str | None = None
 
     @classmethod
-    def from_user(cls, user: Any) -> "UserResponse":
+    def from_user(cls, user: Any) -> UserResponse:
         return cls(
             id=user.id,
             email=user.email,

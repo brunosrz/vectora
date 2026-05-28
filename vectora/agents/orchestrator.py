@@ -1045,8 +1045,22 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
             last_human_text = str(msg.content)
             break
 
+    # L4 — instrução personalizada do usuário (prefixada ao prompt principal)
+    custom_system_prompt: str = ""
+    with contextlib.suppress(Exception):
+        custom_system_prompt = (config.get("configurable") or {}).get(
+            "custom_system_prompt", ""
+        )
+
     # Montar payload para o LLM
     llm_messages: list = []
+    if custom_system_prompt:
+        llm_messages.append(
+            SystemMessage(
+                content=f"## Instrução personalizada do usuário\n\n{custom_system_prompt}",
+                name="custom_instruction",
+            )
+        )
     if project_context:
         llm_messages.append(
             SystemMessage(

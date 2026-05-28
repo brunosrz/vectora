@@ -188,7 +188,7 @@ async def aclose_graph() -> None:
         try:
             await ctx.__aexit__(None, None, None)
             logger.info("api/chat: checkpointer SQLite fechado")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("api/chat: erro ao fechar checkpointer: %s", exc)
 
 
@@ -200,7 +200,7 @@ async def awarm_graph() -> None:
     """
     try:
         await _get_graph()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("api/chat: warmup do grafo falhou (continuando): %s", exc)
 
 
@@ -226,7 +226,7 @@ async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
         from vectora.api.handlers.threads import _upsert_session
 
         await _upsert_session(thread_id)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning(
             "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
         )
@@ -237,8 +237,14 @@ async def stream_chat(request: StreamChatRequest) -> StreamingResponse:
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    configurable: dict[str, Any] = {"thread_id": thread_id}
+    if request.config.workspace_id:
+        configurable["workspace_id"] = request.config.workspace_id
+    if request.config.custom_system_prompt:
+        configurable["custom_system_prompt"] = request.config.custom_system_prompt
+
     config: dict[str, Any] = {
-        "configurable": {"thread_id": thread_id},
+        "configurable": configurable,
         "recursion_limit": request.config.recursion_limit or 50,
     }
 

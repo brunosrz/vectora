@@ -30,6 +30,7 @@ import {
   toApiAttachments,
 } from "../../utils/chat";
 import type { AgentConfig } from "@/components/layout/agent-settings";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 
 // ============================================================================
 // Types
@@ -105,6 +106,8 @@ export function useStreamHandler({
       // Monta config da request
       const config: ChatConfig = {};
       if (agentConfig?.model) config.model = agentConfig.model;
+      const customSystemPrompt = useSettingsStore.getState().customSystemPrompt;
+      if (customSystemPrompt) config.custom_system_prompt = customSystemPrompt;
 
       // Converte ImageAttachment[] → Attachment[] para a API (F1)
       const attachments =
