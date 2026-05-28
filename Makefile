@@ -10,8 +10,7 @@
 #   make dev          # atalho: inicia backend (8080) + frontend dev (3000)
 #   make clean-static # remove vectora/chat_static/
 #
-# Windows: Make usa cmd.exe por padrao; SHELL = bash forca Git Bash
-# (necessario para rm -rf, cp -r, mkdir -p e kill).
+# Windows: SHELL = bash usa Git Bash (rm -rf, cp -r, mkdir -p, kill)
 SHELL = bash
 
 .PHONY: gen-proto build-chat dev clean-static
