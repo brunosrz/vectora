@@ -6,7 +6,7 @@
 #
 # Uso:
 #   make gen-proto    # gera stubs Python + TypeScript a partir do .proto
-#   make build-chat   # build Next.js → vectora/chat_static/ (standalone)
+#   make build-chat   # build Next.js >> vectora/chat_static/ (standalone)
 #   make dev          # atalho: inicia backend (8080) + frontend dev (3000)
 #   make clean-static # remove vectora/chat_static/
 
@@ -17,10 +17,10 @@
 #   vectora/api/gen/      ← stubs Python (grpcio/protobuf)
 #   chat/lib/gen/         ← stubs TypeScript (ConnectRPC ES)
 gen-proto:
-	@echo "→ Gerando stubs a partir do proto..."
+	@echo ">> Gerando stubs a partir do proto..."
 	cd vectora/api/protos && buf generate
-	@echo "✓ Stubs Python em vectora/api/gen/"
-	@echo "✓ Clients TypeScript em chat/lib/gen/"
+	@echo "OK Stubs Python em vectora/api/gen/"
+	@echo "OK Clients TypeScript em chat/lib/gen/"
 
 # ── Frontend build (Next.js standalone) ──────────────────────────────────────
 # Compila o Next.js com `output: standalone` e copia o resultado para
@@ -36,11 +36,11 @@ gen-proto:
 # Inicie com:  PORT=8080 VECTORA_API_URL=http://127.0.0.1:8081 node vectora/chat_static/server.js
 # Ou use:      uv run vectora server chat   (gerencia os dois processos automaticamente)
 build-chat:
-	@echo "→ Instalando dependências do frontend..."
+	@echo ">> Instalando dependências do frontend..."
 	cd chat && pnpm install --frozen-lockfile
-	@echo "→ Compilando Next.js (standalone)..."
+	@echo ">> Compilando Next.js (standalone)..."
 	cd chat && pnpm build
-	@echo "→ Copiando para vectora/chat_static/..."
+	@echo ">> Copiando para vectora/chat_static/..."
 	rm -rf vectora/chat_static
 	mkdir -p vectora/chat_static
 	cp -r chat/.next/standalone/. vectora/chat_static/
@@ -48,13 +48,13 @@ build-chat:
 	cp -r chat/.next/static/. vectora/chat_static/.next/static/
 	mkdir -p vectora/chat_static/public
 	cp -r chat/public/. vectora/chat_static/public/
-	@echo "✓ Frontend compilado em vectora/chat_static/"
+	@echo "OK Frontend compilado em vectora/chat_static/"
 	@echo "  Inicie com: uv run vectora server chat"
 
 # ── Limpar static build ───────────────────────────────────────────────────────
 clean-static:
 	rm -rf vectora/chat_static
-	@echo "✓ vectora/chat_static/ removido"
+	@echo "OK vectora/chat_static/ removido"
 
 # ── Dev: backend headless + frontend dev ─────────────────────────────────────
 # Dois processos em paralelo: FastAPI headless em 8080, Next.js dev em 3000.
