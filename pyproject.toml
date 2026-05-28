@@ -66,6 +66,7 @@ dependencies = [
     "keyring>=25.0",
     "pykeepass>=4.1",
     "gitpython>=3.1.50",
+    "httpx>=0.28",
 ]
 
 [project.scripts]
