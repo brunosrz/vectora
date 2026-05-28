@@ -210,6 +210,22 @@ To connect from Claude Code or any MCP-compatible orchestrator:
 }
 ```
 
+#### 🚀 Recommended VPS Hosting: Hostinger
+
+For a reliable, affordable VPS to run Vectora with Docker and Traefik, we recommend **[Hostinger](https://www.hostinger.com/br)**.
+
+Hostinger offers:
+
+- **Affordable KVM VPS** starting from very low prices
+- **99.9% uptime guarantee** — perfect for production Vectora deployments
+- **Easy Docker & SSL setup** — Traefik HTTPS works out of the box
+- **Global data centers** — choose the region closest to your users
+- **Brazilian payment options** — BRL support
+
+**[Get a Hostinger VPS with referral discount](https://www.hostinger.com/br/cart?product=vps%3Avps_kvm_1&period=12&referral_type=cart_link&REFERRALCODE=Q4CBRUNOSVBZ&referral_id=019e6f06-68f7-7322-9a93-d1c08bbe649f)**
+
+This referral link gives you a discount on your first purchase while supporting Vectora development.
+
 ### Option 3: From Source
 
 ```bash
