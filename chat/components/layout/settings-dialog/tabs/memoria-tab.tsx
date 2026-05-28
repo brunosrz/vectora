@@ -5,6 +5,7 @@
  *
  * Funcionalidades:
  * - Lista todas as memórias do usuário (fetch GET /api/memory)
+ * - Adiciona memória manualmente (POST /api/memory)
  * - Edita conteúdo de uma memória inline (PUT /api/memory/:key)
  * - Deleta uma memória específica (DELETE /api/memory/:key)
  * - Limpa todas as memórias (DELETE /api/memory) com confirmação
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/lib/i18n";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -94,6 +96,8 @@ async function createMemory(key: string, content: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export function MemoriaTab() {
+  const t = useT();
+
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -122,10 +126,8 @@ export function MemoriaTab() {
       const data = await fetchMemories();
       setMemories(data.memories);
       setTotal(data.total);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao carregar memórias",
-      );
+    } catch {
+      setError(t("memory.error_load"));
     } finally {
       setLoading(false);
     }
@@ -151,8 +153,8 @@ export function MemoriaTab() {
         ),
       );
       setEditingKey(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } catch {
+      setError(t("memory.error_save"));
     } finally {
       setSaving(false);
     }
@@ -164,8 +166,8 @@ export function MemoriaTab() {
       await deleteMemory(key);
       setMemories((prev) => prev.filter((m) => m.key !== key));
       setTotal((prev) => prev - 1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao deletar");
+    } catch {
+      setError(t("memory.error_delete"));
     } finally {
       setDeletingKey(null);
     }
@@ -181,7 +183,7 @@ export function MemoriaTab() {
       setNewKey("");
       setNewContent("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar memória");
+      setError(err instanceof Error ? err.message : t("memory.error_create"));
     } finally {
       setAdding(false);
     }
@@ -194,8 +196,8 @@ export function MemoriaTab() {
       setMemories([]);
       setTotal(0);
       setClearConfirmOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao limpar memórias");
+    } catch {
+      setError(t("memory.error_clear"));
     } finally {
       setClearing(false);
     }
@@ -213,34 +215,35 @@ export function MemoriaTab() {
     );
   }
 
+  const headerTitle =
+    total > 0
+      ? t(total === 1 ? "memory.count_one" : "memory.count_many", { n: total })
+      : t("memory.empty_title");
+
   return (
     <div className="space-y-4">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
-          <p className="text-sm font-medium">
-            {total > 0
-              ? `${total} memória${total > 1 ? "s" : ""}`
-              : "Nenhuma memória salva"}
-          </p>
+          <p className="text-sm font-medium">{headerTitle}</p>
           <p className="text-xs text-muted-foreground">
-            O que o Vectora aprendeu sobre você nessas conversas
+            {t("memory.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
             <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Adicionar
+            {t("memory.add")}
           </Button>
           {memories.length > 0 && (
             <Button
               variant="outline"
               size="sm"
-              className="text-destructive hover:text-destructive"
+              className="text-destructive hover:text-destructive dark:hover:text-destructive"
               onClick={() => setClearConfirmOpen(true)}
             >
               <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-              Limpar tudo
+              {t("memory.clear_all")}
             </Button>
           )}
         </div>
@@ -258,11 +261,10 @@ export function MemoriaTab() {
         <div className="flex flex-col items-center justify-center py-10 text-center space-y-3">
           <Brain className="w-10 h-10 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">
-            O Vectora ainda não salvou memórias sobre você
+            {t("memory.empty_hint")}
           </p>
           <p className="text-xs text-muted-foreground/70 max-w-[260px]">
-            Ao longo das conversas, o agente salva informações relevantes para
-            personalizar futuras respostas.
+            {t("memory.empty_hint2")}
           </p>
         </div>
       )}
@@ -305,7 +307,7 @@ export function MemoriaTab() {
                     {saving && (
                       <Loader2 className="w-3 h-3 animate-spin mr-1" />
                     )}
-                    Salvar
+                    {t("memory.save")}
                   </Button>
                   <Button
                     size="sm"
@@ -314,7 +316,7 @@ export function MemoriaTab() {
                     disabled={saving}
                     className="h-7 text-xs"
                   >
-                    Cancelar
+                    {t("memory.cancel")}
                   </Button>
                 </div>
               </div>
@@ -334,7 +336,7 @@ export function MemoriaTab() {
                   onClick={() => handleEditStart(mem)}
                 >
                   <Edit2 className="w-3 h-3 mr-1" />
-                  Editar
+                  {t("memory.edit")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -348,7 +350,7 @@ export function MemoriaTab() {
                   ) : (
                     <Trash2 className="w-3 h-3 mr-1" />
                   )}
-                  Deletar
+                  {t("memory.delete")}
                 </Button>
               </div>
             )}
@@ -370,19 +372,16 @@ export function MemoriaTab() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Adicionar memória</DialogTitle>
-            <DialogDescription>
-              Crie uma memória manualmente para que o Vectora a use nas próximas
-              conversas.
-            </DialogDescription>
+            <DialogTitle>{t("memory.add_title")}</DialogTitle>
+            <DialogDescription>{t("memory.add_desc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-1">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
-                Chave
+                {t("memory.add_key_label")}
               </label>
               <Input
-                placeholder="ex: nome, idade, projeto_atual"
+                placeholder={t("memory.add_key_placeholder")}
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
                 className="text-sm"
@@ -391,10 +390,10 @@ export function MemoriaTab() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
-                Conteúdo
+                {t("memory.add_content_label")}
               </label>
               <Textarea
-                placeholder="ex: Bruno Soares, 21 anos, criador do Vectora"
+                placeholder={t("memory.add_content_placeholder")}
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 className="text-sm min-h-[80px] resize-none"
@@ -408,14 +407,14 @@ export function MemoriaTab() {
               onClick={() => setAddOpen(false)}
               disabled={adding}
             >
-              Cancelar
+              {t("memory.cancel")}
             </Button>
             <Button
               onClick={handleAddMemory}
               disabled={adding || !newKey.trim() || !newContent.trim()}
             >
               {adding && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Salvar
+              {t("memory.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -425,11 +424,8 @@ export function MemoriaTab() {
       <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Limpar todas as memórias?</DialogTitle>
-            <DialogDescription>
-              Esta ação é irreversível. O Vectora não se lembrará de nada que
-              aprendeu sobre você nas conversas anteriores.
-            </DialogDescription>
+            <DialogTitle>{t("memory.clear_title")}</DialogTitle>
+            <DialogDescription>{t("memory.clear_desc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
@@ -437,7 +433,7 @@ export function MemoriaTab() {
               onClick={() => setClearConfirmOpen(false)}
               disabled={clearing}
             >
-              Cancelar
+              {t("memory.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -445,7 +441,7 @@ export function MemoriaTab() {
               disabled={clearing}
             >
               {clearing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Limpar tudo
+              {t("memory.clear_all")}
             </Button>
           </DialogFooter>
         </DialogContent>

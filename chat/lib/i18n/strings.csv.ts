@@ -185,6 +185,34 @@ auth.loading,Loading...,Cargando...,Carregando...
 # =============================================================================
 voice.stop_listening,Stop listening,Dejar de escuchar,Parar de escutar
 voice.start_listening,Voice input,Entrada de voz,Entrada de voz
+# =============================================================================
+# Memory tab
+# =============================================================================
+memory.empty_title,No memories saved,Sin memorias guardadas,Nenhuma memória salva
+memory.count_one,{n} memory,{n} memoria,{n} memória
+memory.count_many,{n} memories,{n} memorias,{n} memórias
+memory.subtitle,What Vectora learned about you in these conversations,Lo que Vectora aprendió sobre ti en estas conversaciones,O que o Vectora aprendeu sobre você nessas conversas
+memory.add,Add,Añadir,Adicionar
+memory.clear_all,Clear all,Limpiar todo,Limpar tudo
+memory.edit,Edit,Editar,Editar
+memory.save,Save,Guardar,Salvar
+memory.cancel,Cancel,Cancelar,Cancelar
+memory.delete,Delete,Eliminar,Deletar
+memory.empty_hint,Vectora hasn't saved any memories about you yet,Vectora aún no guardó memorias sobre ti,O Vectora ainda não salvou memórias sobre você
+memory.empty_hint2,Throughout conversations the agent saves relevant information to personalize future responses.,A lo largo de las conversaciones el agente guarda información relevante para personalizar futuras respuestas.,Ao longo das conversas o agente salva informações relevantes para personalizar futuras respostas.
+memory.clear_title,Clear all memories?,¿Limpiar todas las memorias?,Limpar todas as memórias?
+memory.clear_desc,This action is irreversible. Vectora won't remember anything it learned about you in previous conversations.,Esta acción es irreversible. Vectora no recordará nada de lo que aprendió sobre ti en conversaciones anteriores.,Esta ação é irreversível. O Vectora não se lembrará de nada que aprendeu sobre você nas conversas anteriores.
+memory.add_title,Add memory,Añadir memoria,Adicionar memória
+memory.add_desc,Create a memory manually for Vectora to use in future conversations.,Crea una memoria manualmente para que Vectora la use en futuras conversaciones.,Crie uma memória manualmente para que o Vectora a use nas próximas conversas.
+memory.add_key_label,Key,Clave,Chave
+memory.add_key_placeholder,"e.g.: name, age, main_project","ej: nombre, edad, proyecto_principal","ex: nome, idade, projeto_atual"
+memory.add_content_label,Content,Contenido,Conteúdo
+memory.add_content_placeholder,"e.g.: Bruno Soares, 21 years old, Vectora creator","ej: Bruno Soares, 21 años, creador de Vectora","ex: Bruno Soares, 21 anos, criador do Vectora"
+memory.error_load,Error loading memories,Error al cargar memorias,Erro ao carregar memórias
+memory.error_save,Error saving,Error al guardar,Erro ao salvar
+memory.error_delete,Error deleting,Error al eliminar,Erro ao deletar
+memory.error_clear,Error clearing memories,Error al limpiar memorias,Erro ao limpar memórias
+memory.error_create,Error creating memory,Error al crear memoria,Erro ao criar memória
 `;
 
 export default CSV;
