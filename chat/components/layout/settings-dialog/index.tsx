@@ -22,11 +22,12 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { AdminTab } from "./admin/admin-tab";
 import { ContaTab } from "./tabs/conta-tab";
-import { PreferenciasTab } from "./tabs/preferencias-tab";
-import { MemoriaTab } from "./tabs/memoria-tab";
-import { IntegracoesTab } from "./tabs/integracoes-tab";
 import { EnvsTab } from "./tabs/envs-tab";
+import { IntegracoesTab } from "./tabs/integracoes-tab";
+import { MemoriaTab } from "./tabs/memoria-tab";
+import { PreferenciasTab } from "./tabs/preferencias-tab";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -89,15 +90,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </TabsContent>
             {isAdminOrRoot && (
               <TabsContent value="admin" className="mt-0">
-                <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Painel de Administração
-                  </p>
-                  <p className="text-xs text-muted-foreground max-w-[260px]">
-                    Gerenciamento de usuários, permissões e configurações do
-                    servidor. Disponível no Bloco P.
-                  </p>
-                </div>
+                <AdminTab />
               </TabsContent>
             )}
           </div>

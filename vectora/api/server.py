@@ -28,6 +28,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from vectora.api.handlers.admin import router as admin_router
 from vectora.api.handlers.auth import router as auth_router
 from vectora.api.handlers.chat import router as chat_router
 from vectora.api.handlers.memory import router as memory_router
@@ -185,6 +186,7 @@ def create_app(*, serve_static: bool = True) -> FastAPI:
     app.include_router(thread_router)
     app.include_router(memory_router)
     app.include_router(oauth_router)
+    app.include_router(admin_router)
 
     # ── Health + Metrics ──────────────────────────────────────────────────────
 

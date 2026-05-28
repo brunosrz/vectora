@@ -534,6 +534,44 @@ async def delete_env_override(user_id: str, key: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# User management (P2 — Admin Panel)
+# ---------------------------------------------------------------------------
+
+
+async def list_users() -> list[User]:
+    """Retorna todos os usuários cadastrados."""
+    db = await _get_db()
+    async with db.execute("SELECT * FROM users ORDER BY created_at") as cur:
+        rows = await cur.fetchall()
+    return [
+        User(
+            id=r["id"],
+            email=r["email"],
+            role=r["role"],
+            env_overrides={},
+            created_at=r["created_at"],
+            last_login_at=r.get("last_login_at"),
+        )
+        for r in rows
+    ]
+
+
+async def update_user_role(user_id: str, role: str) -> None:
+    """Atualiza o role de um usuário."""
+    db = await _get_db()
+    await db.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
+    await db.commit()
+
+
+async def delete_user(user_id: str) -> None:
+    """Remove um usuário e todos os seus refresh tokens."""
+    db = await _get_db()
+    await db.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
+    await db.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    await db.commit()
+
+
+# ---------------------------------------------------------------------------
 # Helpers internos
 # ---------------------------------------------------------------------------
 
