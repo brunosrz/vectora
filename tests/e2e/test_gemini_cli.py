@@ -139,11 +139,13 @@ class TestGeminiCliConfig:
         )
 
     def test_vectora_mcp_command_configured_correctly(self):
-        """O subcomando MCP deve ser 'vectora mcp-server'.
+        """O comando MCP deve iniciar o servidor MCP do vectora.
 
         O único entry-point do pacote é 'vectora' (vectora.main:run).
-        Para iniciar o servidor MCP, o argumento correto é 'mcp-server'.
-        Formato esperado: command='vectora', args=['mcp-server', ...].
+        Para iniciar o servidor MCP, o subcomando correto é 'server mcp'.
+        Formatos aceitos:
+          - command='vectora', args=['server', 'mcp', ...]
+          - command='uv', args=[..., 'vectora', 'server', 'mcp', ...]
         """
         data = json.loads(GEMINI_SETTINGS_PATH.read_text(encoding="utf-8"))
         # Busca a entrada vectora de forma case-insensitive
@@ -156,14 +158,19 @@ class TestGeminiCliConfig:
         cmd = vectora_config["command"]
         args = vectora_config.get("args", [])
 
-        # Formato canônico: command="vectora", args=["mcp-server", ...]
-        # Também aceita via uv: command="uv", args=["run", "vectora", "mcp-server"]
-        is_canonical = cmd == "vectora" and args and args[0] == "mcp-server"
-        is_uv = cmd == "uv" and "vectora" in args and "mcp-server" in args
+        # Formato canônico: command="vectora", args=["server", "mcp", ...]
+        # Também aceita via uv: command="uv", args=[..., "vectora", "server", "mcp", ...]
+        is_canonical = (
+            cmd == "vectora"
+            and len(args) >= 2
+            and args[0] == "server"
+            and args[1] == "mcp"
+        )
+        is_uv = cmd == "uv" and "vectora" in args and "server" in args and "mcp" in args
         assert is_canonical or is_uv, (
             f"Comando inválido: '{cmd}' args={args}. "
-            "Esperado: command='vectora' args=['mcp-server'] "
-            "ou command='uv' com 'vectora' e 'mcp-server' nos args."
+            "Esperado: command='vectora' args=['server', 'mcp', ...] "
+            "ou command='uv' com 'vectora', 'server' e 'mcp' nos args."
         )
 
     def test_vectora_mcp_project_path_exists(self):
@@ -396,27 +403,29 @@ class TestVectoraMcpServerDirectly:
             proc.stdin.flush()
 
             import select
+            import threading
             import time
 
-            # Aguarda até 10s por resposta
-            deadline = time.time() + 10
-            response_line = ""
-            while time.time() < deadline:
-                if sys.platform != "win32":
-                    ready, _, _ = select.select([proc.stdout], [], [], 1.0)
-                    if ready:
-                        response_line = proc.stdout.readline()
-                        break
-                else:
-                    # Windows: tenta ler com poll
-                    import io
+            # Lê a primeira linha do stdout com timeout — compatível com Windows.
+            # readline() é bloqueante em todos os sistemas, incluindo Windows onde
+            # select() não funciona em pipes. Usamos uma thread daemon para não travar.
+            def _readline_with_timeout(stream, timeout: float) -> str:
+                result: list[str] = []
 
+                def _read() -> None:
                     try:
-                        response_line = proc.stdout.readline()
-                        if response_line:
-                            break
+                        line = stream.readline()
+                        result.append(line or "")
                     except Exception:
-                        time.sleep(0.5)
+                        result.append("")
+
+                t = threading.Thread(target=_read, daemon=True)
+                t.start()
+                t.join(timeout=timeout)
+                return result[0] if result else ""
+
+            # Aguarda até 10s por resposta
+            response_line = _readline_with_timeout(proc.stdout, timeout=10)
 
             # O processo não deve ter crashado
             assert (
