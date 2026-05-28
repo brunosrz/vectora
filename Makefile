@@ -11,7 +11,7 @@
 #   make clean-static # remove vectora/chat_static/
 #
 SHELL = "C:/Program Files/Git/usr/bin/bash.exe"
-BASH  = "C:/Program Files/Git/usr/bin/bash.exe"
+BASH  = "C:/Program Files/Git/usr/bin/bash.exe" -l
 
 .PHONY: gen-proto build-chat dev clean-static
 
