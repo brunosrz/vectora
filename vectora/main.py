@@ -272,31 +272,6 @@ def _build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------
 
 
-def _find_free_port(preferred: int | None = None) -> int:
-    """Retorna uma porta TCP livre em 127.0.0.1.
-
-    Se ``preferred`` for informado e estiver livre, retorna-a; caso contrário
-    (ou se None), deixa o SO escolher uma porta efêmera livre (bind em :0).
-
-    Evita portas fortemente tipadas: o frontend tolera a porta pedida estar
-    ocupada e a API interna sempre roda numa porta livre descoberta em runtime,
-    repassada ao Node via VECTORA_API_URL.
-    """
-    import socket
-
-    if preferred is not None:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            try:
-                probe.bind(("127.0.0.1", preferred))
-                return preferred
-            except OSError:
-                pass  # ocupada — cai para porta efêmera abaixo
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        return probe.getsockname()[1]
-
-
 # ---------------------------------------------------------------------------
 # Model → provider resolution
 # ---------------------------------------------------------------------------
@@ -667,11 +642,10 @@ def run() -> None:
 
             from vectora.api.server import create_app
 
-            serve_static = mode == "chat"
             port = args.port or 8080
             uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
 
-            app = create_app(serve_static=serve_static)
+            app = create_app()
             logger.info(
                 "Iniciando Vectora %s server em http://%s:%d",
                 mode,

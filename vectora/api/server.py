@@ -37,10 +37,6 @@ from vectora.api.handlers.threads import router as thread_router
 
 logger = logging.getLogger(__name__)
 
-# Pasta onde o `make build-chat` deposita o build Next.js
-_CHAT_STATIC_DIR = Path(__file__).parent.parent / "chat_static"
-
-
 # Tempo máximo total para o shutdown — depois disso, `os._exit` em main.py
 # encerra o processo de qualquer jeito. Configurável via env.
 _SHUTDOWN_TIMEOUT_S = float(os.environ.get("VECTORA_SHUTDOWN_TIMEOUT_S", "10"))
@@ -129,13 +125,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             )
 
 
-def create_app(*, serve_static: bool = True) -> FastAPI:
-    """Cria e configura a aplicação FastAPI do Vectora.
-
-    Args:
-        serve_static: Se True, serve o frontend compilado em ``/``.
-                      Se False (modo headless), expõe apenas a API.
-    """
+def create_app() -> FastAPI:
+    """Cria e configura a aplicação FastAPI do Vectora."""
     from vectora.version import __version__
 
     app = FastAPI(
@@ -202,27 +193,5 @@ def create_app(*, serve_static: bool = True) -> FastAPI:
             return await tracer.get_recent(n=50)
         except Exception:
             return []
-
-    # ── Static files (frontend compilado) ─────────────────────────────────────
-    if serve_static:
-        if _CHAT_STATIC_DIR.exists():
-            from fastapi.staticfiles import StaticFiles
-
-            # Monta em / — o Next.js static export gera index.html na raiz
-            # O router FastAPI tem prioridade sobre os arquivos estáticos.
-            app.mount(
-                "/",
-                StaticFiles(directory=_CHAT_STATIC_DIR, html=True),
-                name="chat_static",
-            )
-            logger.info(
-                "api/server: frontend estático disponível em /  (dir=%s)",
-                _CHAT_STATIC_DIR,
-            )
-        else:
-            logger.warning(
-                "api/server: modo 'chat' mas chat/.next/ não existe. "
-                "Execute `make build-chat` para compilar o frontend."
-            )
 
     return app
