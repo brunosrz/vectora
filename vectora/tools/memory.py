@@ -15,17 +15,23 @@ logger = logging.getLogger(__name__)
 
 
 def _user_id_from_config(config: RunnableConfig | None) -> str:
-    """Deriva user_id a partir do contexto da sessão LangGraph.
+    """Deriva namespace de memória a partir do contexto da sessão LangGraph.
 
-    Prioridade (B3/B7):
-    1. workspace_<workspace_id> — quando há workspace ativo, memórias seguem
-       o projeto e persistem entre sessões do mesmo diretório.
-    2. session_<thread_id> — fallback para isolamento por sessão simples.
-    3. default_session — quando chamado fora de um grafo LangGraph.
+    Prioridade (N1):
+    1. user:<user_id>         — usuário autenticado; isolamento individual total.
+    2. workspace_<id>         — workspace ativo; memórias seguem o projeto.
+    3. session_<thread_id>    — fallback para isolamento por sessão simples.
+    4. default_session        — chamado fora de um grafo LangGraph.
+
+    O separador ':' em ``user:`` distingue visualmente de ``workspace_`` e
+    ``session_`` (que usam '_') e evita colisões acidentais de namespace.
     """
     if config is None:
         return "default_session"
     configurable = config.get("configurable") or {}
+    user_id = configurable.get("user_id")
+    if user_id:
+        return f"user:{user_id}"
     workspace_id = configurable.get("workspace_id")
     if workspace_id:
         return f"workspace_{workspace_id}"

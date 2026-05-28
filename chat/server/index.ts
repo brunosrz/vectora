@@ -10,6 +10,7 @@ import { Hono } from "hono";
 import authRoutes from "./routes/auth";
 import chatRoutes from "./routes/chat";
 import healthRoutes from "./routes/health";
+import memoryRoutes from "./routes/memory";
 import threadRoutes from "./routes/threads";
 import workspacesRoutes from "./routes/workspaces";
 
@@ -19,6 +20,7 @@ app.route("/auth", authRoutes);
 app.route("/chat", chatRoutes);
 app.route("/threads", threadRoutes);
 app.route("/health", healthRoutes);
+app.route("/memory", memoryRoutes);
 app.route("/workspaces", workspacesRoutes);
 
 // Métricas: proxy para o endpoint /metrics do FastAPI

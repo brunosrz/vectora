@@ -30,6 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from vectora.api.handlers.auth import router as auth_router
 from vectora.api.handlers.chat import router as chat_router
+from vectora.api.handlers.memory import router as memory_router
 from vectora.api.handlers.threads import router as thread_router
 
 logger = logging.getLogger(__name__)
@@ -181,6 +182,7 @@ def create_app(*, serve_static: bool = True) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(chat_router)
     app.include_router(thread_router)
+    app.include_router(memory_router)
 
     # ── Health + Metrics ──────────────────────────────────────────────────────
 
