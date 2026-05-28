@@ -65,8 +65,9 @@ clean-static:
 # O frontend se conecta ao backend via VECTORA_API_URL=http://localhost:8080.
 # Requer: uv, pnpm
 dev:
-	@echo "Iniciando backend headless (porta 8080) e frontend dev (porta 3000)..."
-	@echo "Ctrl+C encerra ambos."
-	@(uv run vectora server headless --port 8080 & \
-	  cd chat && pnpm dev; \
-	  kill %1 2>/dev/null)
+	@echo ">> Backend headless (porta 8080) + frontend dev (porta 3000)"
+	@echo ">> Ctrl+C encerra ambos os processos."
+	@trap 'kill 0' INT TERM; \
+	  uv run vectora server headless --port 8080 & \
+	  ( cd chat && pnpm dev ) & \
+	  wait

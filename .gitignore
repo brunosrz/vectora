@@ -332,3 +332,4 @@ build/
 
 # Next.js generated files (in chat/)
 chat/next-env.d.ts
+/vectora/chat_static

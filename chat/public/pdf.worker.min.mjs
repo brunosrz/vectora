@@ -26228,7 +26228,7 @@ class Type1Parser {
           case "FamilyBlues":
           case "FamilyOtherBlues":
             const e = this.readNumberArray();
-            e.length > 0 && e.length, 0;
+            (e.length > 0 && e.length, 0);
             break;
           case "StemSnapH":
           case "StemSnapV":
@@ -39192,7 +39192,6 @@ class XMLParserBase {
     for (
       ;
       n < e.length && !isWhitespace(e, n) && ">" !== e[n] && "/" !== e[n];
-
     )
       ++n;
     const s = e.substring(t, n);
@@ -39229,7 +39228,6 @@ class XMLParserBase {
       ">" !== e[a] &&
       "?" !== e[a] &&
       "/" !== e[a];
-
     )
       ++a;
     const n = e.substring(t, a);
@@ -39601,7 +39599,7 @@ class StructTreeRoot {
         this.kidRefToPosition =
           e instanceof Dict ? new Map([[e.objId, 0]]) : e ? null : new Map();
     }
-    return this.kidRefToPosition ? this.kidRefToPosition.get(e) ?? NaN : -1;
+    return this.kidRefToPosition ? (this.kidRefToPosition.get(e) ?? NaN) : -1;
   }
   init() {
     this.readRoleMap();
