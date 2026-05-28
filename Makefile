@@ -45,8 +45,9 @@ build-chat:
 	cd chat && pnpm build
 	@echo ">> Copiando para vectora/chat_static/..."
 	$(BASH) -c "rm -rf vectora/chat_static && mkdir -p vectora/chat_static && cp -r chat/.next/standalone/. vectora/chat_static/ && mkdir -p vectora/chat_static/.next/static && cp -r chat/.next/static/. vectora/chat_static/.next/static/ && mkdir -p vectora/chat_static/public && cp -r chat/public/. vectora/chat_static/public/"
-	@echo ">> Garantindo @swc/helpers no standalone (Windows/pnpm)..."
+	@echo ">> Garantindo deps ausentes no standalone (pnpm nao inclui automaticamente)..."
 	$(BASH) -c "rm -rf vectora/chat_static/node_modules/@swc/helpers && mkdir -p vectora/chat_static/node_modules/@swc && cp -rL chat/node_modules/.pnpm/@swc+helpers@*/node_modules/@swc/helpers vectora/chat_static/node_modules/@swc/helpers"
+	$(BASH) -c "rm -rf vectora/chat_static/node_modules/@next/env    && mkdir -p vectora/chat_static/node_modules/@next && cp -rL chat/node_modules/.pnpm/@next+env@*/node_modules/@next/env    vectora/chat_static/node_modules/@next/env"
 	@echo "OK Frontend compilado em vectora/chat_static/"
 	@echo "  Inicie com: uv run vectora server chat"
 
