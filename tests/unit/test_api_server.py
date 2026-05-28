@@ -27,7 +27,7 @@ def headless_app():
     Auth é desabilitada via env var para que os testes unitários não
     dependam de um banco de dados de usuários real.
     """
-    os.environ.setdefault("VECTORA_AUTH_REQUIRED", "false")
+    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
     from vectora.api.server import create_app
 
     return create_app(serve_static=False)

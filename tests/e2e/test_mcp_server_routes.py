@@ -120,7 +120,7 @@ class TestToolDefensiveBehavior:
     async def test_file_read_nonexistent_returns_error_string(self, server):
         """file_read_tool com arquivo inexistente deve retornar string de erro."""
         result = await server.file_read_tool(
-            path="/nonexistent/path/file_xyz_e2e_test.txt"
+            file_path="/nonexistent/path/file_xyz_e2e_test.txt"
         )
         assert isinstance(result, str), "file_read_tool deve retornar string"
         assert len(result) > 0

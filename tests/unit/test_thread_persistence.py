@@ -22,7 +22,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-os.environ.setdefault("VECTORA_AUTH_REQUIRED", "false")
+os.environ["VECTORA_AUTH_REQUIRED"] = "false"
 
 # ---------------------------------------------------------------------------
 # Fake DB para testes unitários
