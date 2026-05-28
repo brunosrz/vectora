@@ -221,7 +221,7 @@ def create_app(*, serve_static: bool = True) -> FastAPI:
             )
         else:
             logger.warning(
-                "api/server: modo 'chat' mas vectora/chat_static/ não existe. "
+                "api/server: modo 'chat' mas chat/.next/ não existe. "
                 "Execute `make build-chat` para compilar o frontend."
             )
 

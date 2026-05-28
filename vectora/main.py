@@ -297,22 +297,17 @@ def _find_free_port(preferred: int | None = None) -> int:
         return probe.getsockname()[1]
 
 
-def _run_standalone_chat(
+def _run_chat_server(
     host: str,
     frontend_port: int,
     api_port: int,
     uvicorn_log_level: str,
-    standalone_js: "Path",
-    static_dir: "Path",
+    chat_dir: "Path",
 ) -> None:
-    """Inicia Next.js standalone (Node.js) + FastAPI em paralelo.
-
-    O Node.js escuta na porta ``frontend_port`` (exposta ao usuário) e
-    usa ``VECTORA_API_URL`` para proxiar chamadas de API ao FastAPI, que
-    escuta em ``127.0.0.1:api_port`` (porta interna, não exposta).
+    """Inicia Next.js (pnpm start) + FastAPI em paralelo.
 
     Fluxo de portas:
-        Browser → Node.js :frontend_port → FastAPI 127.0.0.1:api_port
+        Browser → Next.js :frontend_port → FastAPI 127.0.0.1:api_port
     """
     import shutil
     import subprocess  # nosec B404
@@ -323,7 +318,6 @@ def _run_standalone_chat(
 
     api_url = f"http://127.0.0.1:{api_port}"
 
-    # Env para o Node.js standalone: porta + URL interna da API Python
     node_env = {
         **os.environ,
         "PORT": str(frontend_port),
@@ -338,15 +332,14 @@ def _run_standalone_chat(
         api_port,
     )
 
-    node_cmd = shutil.which("node") or "node"
+    pnpm_cmd = shutil.which("pnpm") or "pnpm"
     node_proc = subprocess.Popen(  # noqa: S603  # nosec B603
-        [node_cmd, str(standalone_js)],
+        [pnpm_cmd, "start"],
         env=node_env,
-        cwd=str(static_dir),
+        cwd=str(chat_dir),
     )
 
     try:
-        # FastAPI em modo headless — porta interna, acessível só via Node.js
         app = create_app(serve_static=False)
         uvicorn.run(
             app,
@@ -737,16 +730,13 @@ def run() -> None:
             port = args.port or 8080
             uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
 
-            # ── Modo chat com build standalone ──────────────────────────────
-            # Se `make build-chat` já foi executado e gerou vectora/chat_static/server.js,
-            # inicia o Next.js standalone + FastAPI em paralelo. Portas descobertas
-            # em runtime: o frontend usa a porta pedida (ou outra livre se ocupada)
-            # e a API interna roda numa porta livre qualquer, repassada ao Node via
-            # VECTORA_API_URL — nada de porta fortemente tipada/colisão fixa.
+            # ── Modo chat: Next.js (pnpm start) + FastAPI em paralelo ──────
+            # Procura chat/.next/ ao lado do repo (uso no clone ou Docker).
+            # Se encontrado, inicia o Next.js via `pnpm start` + FastAPI.
             if serve_static:
-                _static_dir = Path(__file__).parent / "chat_static"
-                _standalone_js = _static_dir / "server.js"
-                if _standalone_js.exists():
+                _chat_dir = Path(__file__).parent.parent / "chat"
+                _next_dir = _chat_dir / ".next"
+                if _next_dir.exists():
                     _frontend_port = _find_free_port(port)
                     _api_port = _find_free_port()
                     if _frontend_port != port:
@@ -755,13 +745,12 @@ def run() -> None:
                             port,
                             _frontend_port,
                         )
-                    _run_standalone_chat(
+                    _run_chat_server(
                         host=args.host,
                         frontend_port=_frontend_port,
                         api_port=_api_port,
                         uvicorn_log_level=uvicorn_log_level,
-                        standalone_js=_standalone_js,
-                        static_dir=_static_dir,
+                        chat_dir=_chat_dir,
                     )
                     logger.info("Vectora server: encerrando processo")
                     os._exit(0)
