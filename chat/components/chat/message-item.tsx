@@ -330,6 +330,8 @@ interface MessageItemProps {
   ) => void;
   /** E2 — threadId necessário para contextualizar o painel HITL */
   threadId?: string;
+  /** M5 — callback de retry para mensagens com isError=true */
+  onRetry?: () => void;
 }
 
 export const MessageItem = memo(
@@ -352,6 +354,7 @@ export const MessageItem = memo(
     isDevMode = false,
     onHitlDecision,
     threadId = "",
+    onRetry,
   }: MessageItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(
@@ -872,7 +875,20 @@ export const MessageItem = memo(
             {message.role === "assistant" && (
               <>
                 <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
-                  {!message.isThinking && (
+                  {/* M5 — Botão de retry para mensagens de erro */}
+                  {message.isError && onRetry && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onRetry}
+                      className="h-8 px-2 text-xs text-destructive hover:text-destructive"
+                    >
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Tentar novamente
+                    </Button>
+                  )}
+
+                  {!message.isThinking && !message.isError && (
                     <>
                       <Button
                         variant="ghost"
@@ -911,6 +927,7 @@ export const MessageItem = memo(
                       )}
                     </>
                   )}
+                  {message.isThinking && <></>}
 
                   {!message.isThinking && message.runId && (
                     <>

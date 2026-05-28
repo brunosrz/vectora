@@ -512,14 +512,15 @@ export function ChatInterface({
         }
       } catch (error) {
         console.error("Error streaming from LangGraph:", error);
-        const errorMessage = createUserMessage(
-          `Error: ${
-            error instanceof Error
-              ? error.message
-              : "Failed to connect to the agent"
-          }`,
-        );
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : "Failed to connect to the agent";
+        const errorMessage = createUserMessage(errorMsg);
         errorMessage.role = "assistant";
+        // M5 — marcado para exibir botão de retry no MessageItem
+        errorMessage.isError = true;
+
         setMessages((prev) => [...prev, errorMessage]);
 
         if (onThreadUpdate) {
@@ -928,6 +929,7 @@ export function ChatInterface({
           messages={messages}
           showToolCalls={showToolCalls}
           isRegenerating={uiState.isRegenerating}
+          isLoadingThread={uiState.isLoadingThread}
           copiedId={uiState.copiedId}
           onCopy={handleCopy}
           onRegenerate={handleRegenerate}
@@ -941,6 +943,7 @@ export function ChatInterface({
           setFeedbackComment={setFeedbackComment}
           onHitlDecision={handleHitlDecision}
           threadId={threadId}
+          onRetry={handleRegenerate}
         />
 
         {isNewChat ? (

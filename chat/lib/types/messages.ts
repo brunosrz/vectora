@@ -59,6 +59,10 @@ export interface Message {
   // Interruption tracking
   wasInterrupted?: boolean;
 
+  // M5 — Optimistic UI / error retry
+  /** Mensagem é uma falha de stream — exibe botão de retry */
+  isError?: boolean;
+
   // Bloco E — HITL em Chat
   /** Preenchido quando o stream pausa para aprovação humana. */
   hitlPending?: {

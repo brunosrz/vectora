@@ -1,13 +1,35 @@
+/**
+ * MessageList — Vectora Chat
+ *
+ * M1: Virtualização com @tanstack/react-virtual quando messages.length > 50.
+ *     Abaixo do threshold, renderização direta (melhor para threads curtas).
+ * M3: Auto-scroll inteligente — cancela ao detectar scroll manual para cima,
+ *     mostra botão "Voltar ao fim" quando o usuário afastou o foco do bottom.
+ * M4: Exibe MessageSkeletons durante isLoadingThread.
+ * M5: Passa onRetry para cada MessageItem (botão de retry em erros).
+ */
+
 import { memo, useMemo, useEffect, useRef, useState, useCallback } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useSearchParams } from "next/navigation";
 import type { Message } from "@/lib/types";
 import { MessageItem } from "./message-item";
+import { MessageSkeletons } from "./message-skeleton";
 import { ArrowDown } from "lucide-react";
+
+// Ativa virtualização quando a thread tem mais que este número de mensagens.
+// Abaixo do threshold, renderização direta é mais simples e igualmente rápida.
+const VIRTUALIZE_THRESHOLD = 50;
+
+// Estimativa de altura por mensagem (será refinada via measureElement).
+const ESTIMATE_SIZE_PX = 180;
 
 interface MessageListProps {
   messages: Message[];
   showToolCalls?: boolean;
   isRegenerating: boolean;
+  /** M4 — exibe skeletons enquanto o histórico está carregando */
+  isLoadingThread?: boolean;
   copiedId: string | null;
   onCopy: (content: string, messageId: string) => void;
   onRegenerate: () => void;
@@ -31,6 +53,8 @@ interface MessageListProps {
     interruptId: string,
     decision: "approve" | "reject" | `edit:${string}`,
   ) => void;
+  /** M5 — retry ao clicar no botão de erro */
+  onRetry?: () => void;
   threadId?: string;
 }
 
@@ -38,6 +62,7 @@ export const MessageList = memo(function MessageList({
   messages,
   showToolCalls,
   isRegenerating,
+  isLoadingThread = false,
   copiedId,
   onCopy,
   onRegenerate,
@@ -50,26 +75,48 @@ export const MessageList = memo(function MessageList({
   onToggleComment,
   setFeedbackComment,
   onHitlDecision,
+  onRetry,
   threadId,
 }: MessageListProps) {
-  // D4 — dev mode: detectado uma vez por render de lista, passado para cada item
+  // D4 — dev mode detectado uma vez por render de lista
   const searchParams = useSearchParams();
   const isDevMode = searchParams?.get("dev") === "1";
 
+  // Scroll container
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Estado do botão "Voltar ao fim" (M3)
   const [showScrollButton, setShowScrollButton] = useState(false);
+
+  // Refs de controle do auto-scroll (M3)
   const shouldAutoScrollRef = useRef(true);
-  const lastMessageCountRef = useRef(0);
-  const lastContentRef = useRef("");
   const isProgrammaticScrollRef = useRef(false);
+  const isAutoScrollingRef = useRef(false);
+  const lastScrollTopRef = useRef(0);
   const firstMessageIdRef = useRef<string | null>(null);
+
+  // Refs para debounce de scroll na thread inicial
   const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const mutationObserverRef = useRef<MutationObserver | null>(null);
   const scrollAttemptsRef = useRef(0);
-  const isAutoScrollingRef = useRef(false);
-  const lastScrollTopRef = useRef(0);
 
-  // Memoize lastAssistantId calculation
+  // M1 — Ativa virtualização somente acima do threshold
+  const shouldVirtualize = messages.length > VIRTUALIZE_THRESHOLD;
+
+  // M1 — Virtualizer (@tanstack/react-virtual)
+  const virtualizer = useVirtualizer({
+    count: shouldVirtualize ? messages.length : 0,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ESTIMATE_SIZE_PX,
+    overscan: 4,
+    // measureElement usa ResizeObserver — mede alturas reais (incluindo streaming)
+    measureElement:
+      typeof window !== "undefined"
+        ? (el) => el?.getBoundingClientRect().height ?? ESTIMATE_SIZE_PX
+        : undefined,
+  });
+
+  // Último ID de mensagem assistant (para controles de ação)
   const lastAssistantId = useMemo(() => {
     const assistantMessages = messages.filter((m) => m.role === "assistant");
     return assistantMessages.length > 0
@@ -77,54 +124,41 @@ export const MessageList = memo(function MessageList({
       : undefined;
   }, [messages]);
 
-  /**
-   * Cancels the auto-scroll process when user manually scrolls up
-   * Cleans up all observers and timeouts
-   */
+  // ──────────────────────────────────────────────────────────────────────────
+  // Helpers de scroll
+  // ──────────────────────────────────────────────────────────────────────────
+
   const cancelAutoScroll = useCallback(() => {
     isAutoScrollingRef.current = false;
     isProgrammaticScrollRef.current = false;
-
-    if (mutationObserverRef.current) {
-      mutationObserverRef.current.disconnect();
-      mutationObserverRef.current = null;
-    }
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
+    mutationObserverRef.current?.disconnect();
+    mutationObserverRef.current = null;
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
   }, []);
 
-  /**
-   * Scrolls to the absolute bottom of the message list instantly
-   * Updates last scroll position to prevent false positive user scroll detection
-   */
   const scrollToAbsoluteBottom = useCallback(() => {
     if (!scrollRef.current) return;
-
     const maxScroll = scrollRef.current.scrollHeight;
     scrollRef.current.scrollTop = maxScroll;
     lastScrollTopRef.current = maxScroll;
   }, []);
 
-  /**
-   * Checks if scroll position is at the absolute bottom (within 5px tolerance)
-   */
   const isAtAbsoluteBottom = useCallback(() => {
     if (!scrollRef.current) return true;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
     return scrollTop >= scrollHeight - clientHeight - 5;
   }, []);
 
-  /**
-   * Auto-scroll to bottom when switching threads or on initial load
-   *
-   * Features:
-   * - Monitors DOM changes with MutationObserver to scroll as content renders
-   * - Detects when content height stabilizes to know when rendering is complete
-   * - Verifies we're actually at bottom before stopping (handles lazy-loaded content)
-   * - Supports very long chats (up to 10 seconds of monitoring)
-   * - Can be cancelled if user scrolls up manually
-   */
+  const isAtBottom = useCallback(() => {
+    if (!scrollRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    return scrollHeight - scrollTop - clientHeight < 1;
+  }, []);
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // M3 — Auto-scroll ao trocar de thread ou load inicial
+  // ──────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!scrollRef.current || messages.length === 0) return;
 
@@ -140,35 +174,23 @@ export const MessageList = memo(function MessageList({
       shouldAutoScrollRef.current = true;
       scrollAttemptsRef.current = 0;
 
-      // Clean up any existing observers/timeouts
-      if (mutationObserverRef.current) {
-        mutationObserverRef.current.disconnect();
-        mutationObserverRef.current = null;
-      }
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
+      mutationObserverRef.current?.disconnect();
+      mutationObserverRef.current = null;
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
 
       const scrollContainer = scrollRef.current;
       let lastScrollHeight = 0;
       let stabilityCheckCount = 0;
-      const MAX_SCROLL_ATTEMPTS = 100; // 10 seconds max (100 × 100ms)
-      const STABILITY_THRESHOLD = 5; // 500ms of no changes required
+      const MAX_SCROLL_ATTEMPTS = 100;
+      const STABILITY_THRESHOLD = 5;
       const CHECK_INTERVAL = 100;
 
-      /**
-       * Continuously scrolls to bottom and checks if content has finished rendering
-       * Stops when: content is stable AND we're at absolute bottom OR user cancels OR max attempts reached
-       */
       const scrollAndCheck = () => {
-        // Stop if user cancelled by scrolling up
         if (!isAutoScrollingRef.current) return;
-
         if (
           !scrollContainer ||
           scrollAttemptsRef.current >= MAX_SCROLL_ATTEMPTS
         ) {
-          // Max attempts reached - perform final cleanup
           scrollToAbsoluteBottom();
           setTimeout(() => {
             scrollToAbsoluteBottom();
@@ -181,24 +203,15 @@ export const MessageList = memo(function MessageList({
 
         scrollAttemptsRef.current++;
         const currentScrollHeight = scrollContainer.scrollHeight;
-
-        // Scroll to current bottom
         scrollToAbsoluteBottom();
 
-        // Check if content height has stabilized
         if (currentScrollHeight === lastScrollHeight) {
           stabilityCheckCount++;
-
           if (stabilityCheckCount >= STABILITY_THRESHOLD) {
-            // Verify we're actually at the bottom before stopping
-            const currentScrollTop = scrollContainer.scrollTop;
             const maxScrollTop =
               scrollContainer.scrollHeight - scrollContainer.clientHeight;
-            const distanceFromBottom = maxScrollTop - currentScrollTop;
-            const isAtBottom = distanceFromBottom <= 10;
-
-            if (isAtBottom) {
-              // Content stable AND at bottom - safe to stop
+            const distanceFromBottom = maxScrollTop - scrollContainer.scrollTop;
+            if (distanceFromBottom <= 10) {
               setTimeout(() => {
                 scrollToAbsoluteBottom();
                 isProgrammaticScrollRef.current = false;
@@ -206,43 +219,32 @@ export const MessageList = memo(function MessageList({
                 mutationObserverRef.current?.disconnect();
               }, 200);
               return;
-            } else {
-              // Not at bottom yet - continue monitoring
-              stabilityCheckCount = 0;
             }
+            stabilityCheckCount = 0;
           }
         } else {
-          // Content height changed - reset stability counter
           stabilityCheckCount = 0;
           lastScrollHeight = currentScrollHeight;
         }
 
-        // Schedule next check
         scrollTimeoutRef.current = setTimeout(scrollAndCheck, CHECK_INTERVAL);
       };
 
-      /**
-       * Set up MutationObserver to detect DOM changes in real-time
-       * Scrolls immediately when new content is added
-       */
       mutationObserverRef.current = new MutationObserver((mutations) => {
         if (mutations.length > 0) {
           scrollToAbsoluteBottom();
-          stabilityCheckCount = 0; // Reset stability counter
+          stabilityCheckCount = 0;
         }
       });
 
       mutationObserverRef.current.observe(scrollContainer, {
-        childList: true, // New elements added/removed
-        subtree: true, // Watch entire DOM tree
-        attributes: true, // Style/class changes
-        characterData: true, // Text content changes
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true,
       });
 
-      // Perform immediate first scroll
       scrollToAbsoluteBottom();
-
-      // Start the monitoring loop after initial render
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           scrollTimeoutRef.current = setTimeout(scrollAndCheck, 150);
@@ -253,61 +255,19 @@ export const MessageList = memo(function MessageList({
     firstMessageIdRef.current = currentFirstMessageId;
   }, [messages, scrollToAbsoluteBottom, isAtAbsoluteBottom]);
 
-  /**
-   * Cleanup observers and timeouts on unmount
-   */
+  // Cleanup ao desmontar
   useEffect(() => {
     return () => {
-      if (mutationObserverRef.current) {
-        mutationObserverRef.current.disconnect();
-      }
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
+      mutationObserverRef.current?.disconnect();
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
   }, []);
 
-  /**
-   * Checks if scroll position is at bottom (within 1px tolerance)
-   */
-  const isAtBottom = useCallback(() => {
-    if (!scrollRef.current) return true;
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    return distanceFromBottom < 1;
-  }, []);
+  // Refs de tracking para o auto-scroll de streaming
+  const lastMessageCountRef = useRef(0);
+  const lastContentRef = useRef("");
 
-  /**
-   * Handles user scroll events
-   * - Detects upward scrolling during auto-scroll and cancels it
-   * - Updates scroll button visibility
-   * - Manages auto-scroll state based on position
-   */
-  const handleScroll = useCallback(() => {
-    if (!scrollRef.current || isProgrammaticScrollRef.current) return;
-
-    const currentScrollTop = scrollRef.current.scrollTop;
-    const atBottom = isAtBottom();
-
-    // Cancel auto-scroll if user scrolls up during auto-scroll
-    if (isAutoScrollingRef.current) {
-      const scrolledUp = currentScrollTop < lastScrollTopRef.current;
-
-      if (scrolledUp) {
-        cancelAutoScroll();
-        shouldAutoScrollRef.current = false;
-      }
-    }
-
-    lastScrollTopRef.current = currentScrollTop;
-    setShowScrollButton(!atBottom);
-    shouldAutoScrollRef.current = atBottom;
-  }, [isAtBottom, cancelAutoScroll]);
-
-  /**
-   * Auto-scroll during message streaming
-   * Only scrolls if user is at bottom and hasn't manually scrolled up
-   */
+  // M3 — Auto-scroll durante streaming (se usuário não scrollou para cima)
   useEffect(() => {
     if (!scrollRef.current) return;
 
@@ -320,10 +280,15 @@ export const MessageList = memo(function MessageList({
     if (shouldAutoScrollRef.current && (isNewMessage || isStreaming)) {
       isProgrammaticScrollRef.current = true;
 
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: isStreaming ? "instant" : "auto",
-      });
+      if (shouldVirtualize) {
+        // Com virtualização: rola para o último item via virtualizer
+        virtualizer.scrollToIndex(messages.length - 1, { align: "end" });
+      } else {
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: isStreaming ? "instant" : "auto",
+        });
+      }
 
       requestAnimationFrame(() => {
         isProgrammaticScrollRef.current = false;
@@ -332,33 +297,79 @@ export const MessageList = memo(function MessageList({
 
     lastMessageCountRef.current = messages.length;
     lastContentRef.current = currentContent;
-  }, [messages]);
+  }, [messages, shouldVirtualize, virtualizer]);
 
-  /**
-   * Scrolls to bottom when user clicks the scroll-to-bottom button
-   * Uses smooth animation for better UX
-   */
+  // M3 — Detecta scroll manual do usuário
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current || isProgrammaticScrollRef.current) return;
+
+    const currentScrollTop = scrollRef.current.scrollTop;
+    const atBottom = isAtBottom();
+
+    // Cancela auto-scroll se usuário scrollou para cima durante streaming
+    if (isAutoScrollingRef.current) {
+      if (currentScrollTop < lastScrollTopRef.current) {
+        cancelAutoScroll();
+        shouldAutoScrollRef.current = false;
+      }
+    }
+
+    lastScrollTopRef.current = currentScrollTop;
+    // M3 — mostra botão "Voltar ao fim"
+    setShowScrollButton(!atBottom);
+    shouldAutoScrollRef.current = atBottom;
+  }, [isAtBottom, cancelAutoScroll]);
+
+  // M3 — Botão "Voltar ao fim"
   const scrollToBottom = useCallback(() => {
     if (!scrollRef.current) return;
     isProgrammaticScrollRef.current = true;
     shouldAutoScrollRef.current = true;
     setShowScrollButton(false);
 
-    const targetScroll =
-      scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
-    scrollRef.current.scrollTo({
-      top: targetScroll,
-      behavior: "smooth",
-    });
+    if (shouldVirtualize) {
+      virtualizer.scrollToIndex(messages.length - 1, { align: "end" });
+    } else {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight - scrollRef.current.clientHeight,
+        behavior: "smooth",
+      });
+    }
 
-    // Final scroll after animation to ensure absolute bottom
     setTimeout(() => {
-      if (scrollRef.current) {
+      if (scrollRef.current)
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
       isProgrammaticScrollRef.current = false;
     }, 400);
-  }, []);
+  }, [shouldVirtualize, virtualizer, messages.length]);
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Props comuns para cada MessageItem
+  // ──────────────────────────────────────────────────────────────────────────
+
+  const commonItemProps = {
+    showToolCalls,
+    isRegenerating,
+    copiedId,
+    onCopy,
+    onRegenerate,
+    onEditAndRerun,
+    feedbackComment,
+    showCommentInput,
+    onFeedback,
+    onSubmitComment,
+    onCancelComment,
+    onToggleComment,
+    setFeedbackComment,
+    isDevMode,
+    onHitlDecision,
+    threadId,
+    onRetry,
+  };
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Render
+  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -371,14 +382,6 @@ export const MessageList = memo(function MessageList({
           to {
             opacity: 1;
             transform: translateY(0) scale(1);
-          }
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
           }
         }
         @keyframes slideInButton {
@@ -395,6 +398,7 @@ export const MessageList = memo(function MessageList({
           animation: slideInButton 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
       `}</style>
+
       <div
         className="flex-1 overflow-y-auto custom-scrollbar relative"
         ref={scrollRef}
@@ -405,54 +409,86 @@ export const MessageList = memo(function MessageList({
           WebkitOverflowScrolling: "touch",
         }}
       >
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-          {messages.map((message, idx) => {
-            const isLastMessage = idx === messages.length - 1;
-            return (
-              <div
-                key={message.id}
-                style={{
-                  animation:
-                    isLastMessage && message.role === "user"
-                      ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
-                      : "none",
-                }}
-              >
-                <MessageItem
-                  message={message}
-                  showToolCalls={showToolCalls}
-                  isLastAssistant={message.id === lastAssistantId}
-                  isRegenerating={isRegenerating}
-                  copiedId={copiedId}
-                  onCopy={onCopy}
-                  onRegenerate={onRegenerate}
-                  onEditAndRerun={onEditAndRerun}
-                  feedbackComment={feedbackComment}
-                  showCommentInput={showCommentInput}
-                  onFeedback={onFeedback}
-                  onSubmitComment={onSubmitComment}
-                  onCancelComment={onCancelComment}
-                  onToggleComment={onToggleComment}
-                  setFeedbackComment={setFeedbackComment}
-                  isDevMode={isDevMode}
-                  onHitlDecision={onHitlDecision}
-                  threadId={threadId}
-                />
-              </div>
-            );
-          })}
-        </div>
+        {/* M4 — Skeletons de carregamento */}
+        {isLoadingThread ? (
+          <MessageSkeletons />
+        ) : shouldVirtualize ? (
+          // M1 — Renderização virtualizada (> 50 mensagens)
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              position: "relative",
+            }}
+          >
+            {virtualizer.getVirtualItems().map((vItem) => {
+              const message = messages[vItem.index]!;
+              const isLastMessage = vItem.index === messages.length - 1;
+              return (
+                <div
+                  key={vItem.key}
+                  data-index={vItem.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${vItem.start}px)`,
+                  }}
+                >
+                  <div
+                    className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-3"
+                    style={{
+                      animation:
+                        isLastMessage && message.role === "user"
+                          ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                          : "none",
+                    }}
+                  >
+                    <MessageItem
+                      message={message}
+                      isLastAssistant={message.id === lastAssistantId}
+                      {...commonItemProps}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          // Renderização direta (≤ 50 mensagens)
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+            {messages.map((message, idx) => {
+              const isLastMessage = idx === messages.length - 1;
+              return (
+                <div
+                  key={message.id}
+                  style={{
+                    animation:
+                      isLastMessage && message.role === "user"
+                        ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                        : "none",
+                  }}
+                >
+                  <MessageItem
+                    message={message}
+                    isLastAssistant={message.id === lastAssistantId}
+                    {...commonItemProps}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {showScrollButton && (
+      {/* M3 — Botão "Voltar ao fim" */}
+      {showScrollButton && !isLoadingThread && (
         <button
           onClick={scrollToBottom}
           className="scroll-button fixed bottom-32 right-4 sm:right-8 p-3 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform z-50"
-          style={{
-            background: "#7FC8FF",
-            color: "white",
-          }}
-          aria-label="Scroll to bottom"
+          style={{ background: "#7FC8FF", color: "white" }}
+          aria-label="Voltar ao fim"
         >
           <ArrowDown className="w-5 h-5" />
         </button>

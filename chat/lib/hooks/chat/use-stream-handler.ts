@@ -113,6 +113,46 @@ export function useStreamHandler({
       const attachments =
         images && images.length > 0 ? toApiAttachments(images) : undefined;
 
+      // M2 — Token buffering: acumula tokens dentro de um animation frame (≤16ms)
+      // e faz um único setMessages por frame. Evita layout thrashing em modelos
+      // rápidos como Gemini Flash (100+ tokens/s → 6+ setMessages por frame sem buffer).
+      let pendingTokenBatch = "";
+      let flushScheduled = false;
+
+      const scheduleTokenFlush = () => {
+        if (flushScheduled) return;
+        flushScheduled = true;
+        requestAnimationFrame(() => {
+          if (!pendingTokenBatch) {
+            flushScheduled = false;
+            return;
+          }
+          const batch = pendingTokenBatch;
+          pendingTokenBatch = "";
+          flushScheduled = false;
+          setMessages((prev) =>
+            updateMessageInList(prev, assistantMessageId, (m) => ({
+              ...m,
+              content: (typeof m.content === "string" ? m.content : "") + batch,
+            })),
+          );
+        });
+      };
+
+      // Flush imediato (antes de eventos não-token, e ao final do stream)
+      const flushNow = () => {
+        if (!pendingTokenBatch) return;
+        const batch = pendingTokenBatch;
+        pendingTokenBatch = "";
+        flushScheduled = false;
+        setMessages((prev) =>
+          updateMessageInList(prev, assistantMessageId, (m) => ({
+            ...m,
+            content: (typeof m.content === "string" ? m.content : "") + batch,
+          })),
+        );
+      };
+
       try {
         const events = streamChat(
           {
@@ -131,9 +171,20 @@ export function useStreamHandler({
             break;
           }
 
-          await handleEvent(event, assistantMessageId, setMessages, (text) => {
-            assistantContent += text;
-          });
+          if (event.type === "token") {
+            // Acumula tokens — serão flushed em batch no próximo animation frame
+            assistantContent += event.content;
+            pendingTokenBatch += event.content;
+            scheduleTokenFlush();
+            continue;
+          }
+
+          // Antes de qualquer evento não-token: flush tokens pendentes
+          // para garantir que o conteúdo de texto está atualizado antes
+          // de eventos que dependem do estado (ex: tool_call, done)
+          flushNow();
+
+          await handleEvent(event, assistantMessageId, setMessages);
 
           if (event.type === "done") {
             resolvedRunId = event.run_id || undefined;
@@ -143,6 +194,9 @@ export function useStreamHandler({
             throw new Error(event.message || "Stream error");
           }
         }
+
+        // Flush final — tokens do último frame ainda pendentes
+        flushNow();
       } catch (err: unknown) {
         if ((err as { name?: string }).name === "AbortError") {
           // Interrompido pelo usuário — não é um erro; encerra o thinking timer
@@ -213,6 +267,43 @@ export function useStreamHandler({
 
       let assistantContent = "";
 
+      // M2 — mesmo buffering de tokens usado em processStream
+      let pendingTokenBatch = "";
+      let flushScheduled = false;
+
+      const scheduleTokenFlush = () => {
+        if (flushScheduled) return;
+        flushScheduled = true;
+        requestAnimationFrame(() => {
+          if (!pendingTokenBatch) {
+            flushScheduled = false;
+            return;
+          }
+          const batch = pendingTokenBatch;
+          pendingTokenBatch = "";
+          flushScheduled = false;
+          setMessages((prev) =>
+            updateMessageInList(prev, assistantMessageId, (m) => ({
+              ...m,
+              content: (typeof m.content === "string" ? m.content : "") + batch,
+            })),
+          );
+        });
+      };
+
+      const flushNow = () => {
+        if (!pendingTokenBatch) return;
+        const batch = pendingTokenBatch;
+        pendingTokenBatch = "";
+        flushScheduled = false;
+        setMessages((prev) =>
+          updateMessageInList(prev, assistantMessageId, (m) => ({
+            ...m,
+            content: (typeof m.content === "string" ? m.content : "") + batch,
+          })),
+        );
+      };
+
       try {
         const events = resumeChat(request, abortRef.current?.signal);
 
@@ -222,14 +313,22 @@ export function useStreamHandler({
             break;
           }
 
-          await handleEvent(event, assistantMessageId, setMessages, (text) => {
-            assistantContent += text;
-          });
+          if (event.type === "token") {
+            assistantContent += event.content;
+            pendingTokenBatch += event.content;
+            scheduleTokenFlush();
+            continue;
+          }
+
+          flushNow();
+          await handleEvent(event, assistantMessageId, setMessages);
 
           if (event.type === "done") break;
           if (event.type === "error")
             throw new Error(event.message || "Resume error");
         }
+
+        flushNow();
       } catch (err: unknown) {
         if ((err as { name?: string }).name !== "AbortError") {
           const msg = err instanceof Error ? err.message : String(err);
@@ -270,24 +369,17 @@ export function useStreamHandler({
 // Event handler
 // ============================================================================
 
+// handleEvent processa todos os eventos exceto "token"
+// (tokens são buffered diretamente nos loops de processStream/processResume — M2)
 async function handleEvent(
   event: StreamEvent,
   assistantMessageId: string,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  onToken: (text: string) => void,
 ): Promise<void> {
   switch (event.type) {
-    case "token": {
-      onToken(event.content);
-      setMessages((prev) =>
-        updateMessageInList(prev, assistantMessageId, (m) => ({
-          ...m,
-          content:
-            (typeof m.content === "string" ? m.content : "") + event.content,
-        })),
-      );
+    case "token":
+      // tokens handled by caller (buffered via rAF)
       break;
-    }
 
     case "tool_call": {
       let args: Record<string, unknown> = {};
