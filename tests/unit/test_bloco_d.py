@@ -299,13 +299,15 @@ class TestNodeLabels:
         from vectora.api.node_labels import get_node_label
 
         label = get_node_label("invoke_llm")
-        assert isinstance(label, str) and len(label) > 0
+        assert isinstance(label, str)
+        assert len(label) > 0
 
     def test_get_node_label_unknown_returns_generic(self):
         from vectora.api.node_labels import get_node_label
 
         label = get_node_label("nó_desconhecido_xyz")
-        assert isinstance(label, str) and len(label) > 0
+        assert isinstance(label, str)
+        assert len(label) > 0
 
     def test_node_labels_dict_exported(self):
         from vectora.api.node_labels import NODE_LABELS
@@ -329,13 +331,15 @@ class TestNodeLabels:
         from vectora.api.node_labels import get_routing_label
 
         label = get_routing_label("rag_agent")
-        assert isinstance(label, str) and len(label) > 0
+        assert isinstance(label, str)
+        assert len(label) > 0
 
     def test_get_routing_label_unknown(self):
         from vectora.api.node_labels import get_routing_label
 
         label = get_routing_label("agente_desconhecido")
-        assert isinstance(label, str) and len(label) > 0
+        assert isinstance(label, str)
+        assert len(label) > 0
 
     def test_node_event_with_label_in_sse(self):
         """NodeEvent com started deve emitir label semântico no campo node_label."""
@@ -380,10 +384,11 @@ class TestNodeEventDuration:
             for e in events:
                 yield e
 
-        payloads = []
-        async for line in adapt_stream(_fake_events(), "t-test"):
-            if line.startswith("data: "):
-                payloads.append(json.loads(line.removeprefix("data: ").strip()))
+        payloads = [
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_fake_events(), "t-test")
+            if line.startswith("data: ")
+        ]
 
         finished = [
             p
@@ -412,10 +417,11 @@ class TestNodeEventDuration:
             for e in events:
                 yield e
 
-        payloads = []
-        async for line in adapt_stream(_fake_events(), "t-test"):
-            if line.startswith("data: "):
-                payloads.append(json.loads(line.removeprefix("data: ").strip()))
+        payloads = [
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_fake_events(), "t-test")
+            if line.startswith("data: ")
+        ]
 
         started = [
             p
@@ -446,10 +452,11 @@ class TestNodeEventDuration:
             for e in events:
                 yield e
 
-        payloads = []
-        async for line in adapt_stream(_fake_events(), "t-test"):
-            if line.startswith("data: "):
-                payloads.append(json.loads(line.removeprefix("data: ").strip()))
+        payloads = [
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_fake_events(), "t-test")
+            if line.startswith("data: ")
+        ]
 
         finished = {
             p["node"]: p["duration_ms"]
@@ -550,10 +557,11 @@ class TestDevModeFields:
             for e in events:
                 yield e
 
-        payloads = []
-        async for line in adapt_stream(_fake_events(), "t-1"):
-            if line.startswith("data: "):
-                payloads.append(json.loads(line.removeprefix("data: ").strip()))
+        payloads = [
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_fake_events(), "t-1")
+            if line.startswith("data: ")
+        ]
 
         thinking_events = [p for p in payloads if p["type"] == "thinking"]
         assert len(thinking_events) >= 1
@@ -683,10 +691,11 @@ class TestAdaptersRegression:
             return
             yield  # make it an async generator
 
-        payloads = []
-        async for line in adapt_stream(_empty(), "t-xyz"):
-            if line.startswith("data: "):
-                payloads.append(json.loads(line.removeprefix("data: ").strip()))
+        payloads = [
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_empty(), "t-xyz")
+            if line.startswith("data: ")
+        ]
 
         assert payloads[0]["type"] == "thread"
         assert payloads[0]["thread_id"] == "t-xyz"
@@ -699,10 +708,11 @@ class TestAdaptersRegression:
             return
             yield
 
-        payloads = []
-        async for line in adapt_stream(_empty(), "t-xyz"):
-            if line.startswith("data: "):
-                payloads.append(json.loads(line.removeprefix("data: ").strip()))
+        payloads = [
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_empty(), "t-xyz")
+            if line.startswith("data: ")
+        ]
 
         assert payloads[-1]["type"] == "done"
         assert payloads[-1]["thread_id"] == "t-xyz"
@@ -715,10 +725,11 @@ class TestAdaptersRegression:
             raise RuntimeError("erro simulado")
             yield
 
-        payloads = []
-        async for line in adapt_stream(_failing(), "t-err"):
-            if line.startswith("data: "):
-                payloads.append(json.loads(line.removeprefix("data: ").strip()))
+        payloads = [
+            json.loads(line.removeprefix("data: ").strip())
+            async for line in adapt_stream(_failing(), "t-err")
+            if line.startswith("data: ")
+        ]
 
         error_events = [p for p in payloads if p["type"] == "error"]
         assert len(error_events) >= 1

@@ -56,7 +56,7 @@ class TestRoleLevel:
 
 class TestHasMinRole:
     @pytest.mark.parametrize(
-        "user_role,min_role,expected",
+        ("user_role", "min_role", "expected"),
         [
             ("root", "root", True),
             ("root", "admin", True),
@@ -229,7 +229,7 @@ class TestCanRunTerminal:
 
 class TestAuditAndUserManagement:
     @pytest.mark.parametrize(
-        "role,expected",
+        ("role", "expected"),
         [
             ("root", True),
             ("admin", True),
@@ -244,7 +244,7 @@ class TestAuditAndUserManagement:
         assert can_read_audit(user) == expected
 
     @pytest.mark.parametrize(
-        "role,expected",
+        ("role", "expected"),
         [
             ("root", True),
             ("admin", False),

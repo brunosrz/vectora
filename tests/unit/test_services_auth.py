@@ -293,7 +293,7 @@ class TestRefreshTokens:
     async def test_refresh_issues_new_pair(self):
         from vectora.services.auth import decode_access_token, refresh_tokens, signup
 
-        _, old_access, old_refresh = await signup(
+        _, _old_access, old_refresh = await signup(
             "refresh@example.com", "senhasegura1234"
         )
         user, new_access, new_refresh = await refresh_tokens(old_refresh)
@@ -450,7 +450,7 @@ class TestEnvOverrides:
         await set_env_override(user.id, "GITHUB_TOKEN", "ghp_test123")
 
         overrides = await get_env_overrides(user.id)
-        assert overrides["GITHUB_TOKEN"] == "ghp_test123"
+        assert overrides["GITHUB_TOKEN"] == "ghp_test123"  # noqa: S105
 
     @pytest.mark.asyncio
     async def test_delete_override(self):

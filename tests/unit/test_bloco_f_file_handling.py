@@ -73,7 +73,9 @@ class TestAttachmentSchema:
         assert att.kind == AttachmentKind.TEXT
 
     def test_invalid_kind_raises(self) -> None:
-        with pytest.raises(Exception):
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
             Attachment(
                 kind="video",  # tipo inválido
                 name="clip.mp4",
