@@ -297,65 +297,6 @@ def _find_free_port(preferred: int | None = None) -> int:
         return probe.getsockname()[1]
 
 
-def _run_chat_server(
-    host: str,
-    frontend_port: int,
-    api_port: int,
-    uvicorn_log_level: str,
-    chat_dir: "Path",
-) -> None:
-    """Inicia Next.js (pnpm start) + FastAPI em paralelo.
-
-    Fluxo de portas:
-        Browser → Next.js :frontend_port → FastAPI 127.0.0.1:api_port
-    """
-    import shutil
-    import subprocess  # nosec B404
-
-    import uvicorn
-
-    from vectora.api.server import create_app
-
-    api_url = f"http://127.0.0.1:{api_port}"
-
-    node_env = {
-        **os.environ,
-        "PORT": str(frontend_port),
-        "HOSTNAME": host,
-        "VECTORA_API_URL": api_url,
-    }
-
-    logger.info(
-        "Iniciando Vectora chat server — frontend: http://%s:%d  API interna: :%d",
-        host,
-        frontend_port,
-        api_port,
-    )
-
-    pnpm_cmd = shutil.which("pnpm") or "pnpm"
-    node_proc = subprocess.Popen(  # noqa: S603  # nosec B603
-        [pnpm_cmd, "start"],
-        env=node_env,
-        cwd=str(chat_dir),
-    )
-
-    try:
-        app = create_app(serve_static=False)
-        uvicorn.run(
-            app,
-            host="127.0.0.1",
-            port=api_port,
-            log_level=uvicorn_log_level,
-            access_log=False,
-        )
-    finally:
-        node_proc.terminate()
-        try:
-            node_proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            node_proc.kill()
-
-
 # ---------------------------------------------------------------------------
 # Model → provider resolution
 # ---------------------------------------------------------------------------
@@ -730,32 +671,6 @@ def run() -> None:
             port = args.port or 8080
             uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
 
-            # ── Modo chat: Next.js (pnpm start) + FastAPI em paralelo ──────
-            # Procura chat/.next/ ao lado do repo (uso no clone ou Docker).
-            # Se encontrado, inicia o Next.js via `pnpm start` + FastAPI.
-            if serve_static:
-                _chat_dir = Path(__file__).parent.parent / "chat"
-                _next_dir = _chat_dir / ".next"
-                if _next_dir.exists():
-                    _frontend_port = _find_free_port(port)
-                    _api_port = _find_free_port()
-                    if _frontend_port != port:
-                        logger.warning(
-                            "Porta %d ocupada — usando %d para o frontend",
-                            port,
-                            _frontend_port,
-                        )
-                    _run_chat_server(
-                        host=args.host,
-                        frontend_port=_frontend_port,
-                        api_port=_api_port,
-                        uvicorn_log_level=uvicorn_log_level,
-                        chat_dir=_chat_dir,
-                    )
-                    logger.info("Vectora server: encerrando processo")
-                    os._exit(0)
-
-            # ── Fallback: FastAPI direto (headless ou sem build) ─────────────
             app = create_app(serve_static=serve_static)
             logger.info(
                 "Iniciando Vectora %s server em http://%s:%d",
