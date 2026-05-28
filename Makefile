@@ -11,7 +11,7 @@
 #   make clean-static # remove vectora/chat_static/
 #
 # Windows: SHELL = caminho completo do Git Bash (rm -rf, cp -r, mkdir -p, kill)
-SHELL = C:/Program\ Files/Git/usr/bin/bash.exe
+SHELL = "C:/Program Files/Git/usr/bin/bash.exe"
 
 .PHONY: gen-proto build-chat dev clean-static
 
