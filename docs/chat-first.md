@@ -23,24 +23,27 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 
 ## Sumário (TOC)
 
-| Bloco | Tema                                          | Status       |
-| ----- | --------------------------------------------- | ------------ |
-| **A** | Chat Foundations                              | ✅ Concluído |
-| **B** | Polish, Bugfixes & Infra                      | ✅ Concluído |
-| **C** | Authentication & RBAC                         | ✅ Concluído |
-| **D** | Reasoning Reveal & Thinking UX                | ✅ Concluído |
-| **E** | HITL em Chat                                  | ✅ Concluído |
-| **F** | File Handling Completo                        | ✅ Concluído |
-| **G** | Workspaces + Git Integration                  | ✅ Concluído |
-| **H** | Slash Commands                                | ✅ Concluído |
-| **I** | Conversation Features (search, export, share) | ✅ Concluído |
-| **J** | Mobile & PWA                                  | ✅ Concluído |
-| **K** | Live Metrics Dashboard                        | ✅ Concluído |
-| **L** | Settings Architecture                         | ✅ Concluído |
-| **M** | Performance, UX Polish & i18n/L10n            | ✅ Concluído |
-| **N** | Per-User Memory                               | ✅ Concluído |
-| **O** | Workspace Integrations (OAuth + API keys)     | ✅ Concluído |
-| **P** | Root Admin Panel (RBAC/ABAC global)           | ✅ Concluído |
+| Bloco | Tema                                                                                 | Status       |
+| ----- | ------------------------------------------------------------------------------------ | ------------ |
+| **A** | Chat Foundations                                                                     | ✅ Concluído |
+| **B** | Polish, Bugfixes & Infra                                                             | ✅ Concluído |
+| **C** | Authentication & RBAC                                                                | ✅ Concluído |
+| **D** | Reasoning Reveal & Thinking UX                                                       | ✅ Concluído |
+| **E** | HITL em Chat                                                                         | ✅ Concluído |
+| **F** | File Handling Completo                                                               | ✅ Concluído |
+| **G** | Workspaces + Git Integration                                                         | ✅ Concluído |
+| **H** | Slash Commands                                                                       | ✅ Concluído |
+| **I** | Conversation Features (search, export, share)                                        | ✅ Concluído |
+| **J** | Mobile & PWA                                                                         | ✅ Concluído |
+| **K** | Live Metrics Dashboard                                                               | ✅ Concluído |
+| **L** | Settings Architecture                                                                | ✅ Concluído |
+| **M** | Performance, UX Polish & i18n/L10n                                                   | ✅ Concluído |
+| **N** | Per-User Memory                                                                      | ✅ Concluído |
+| **O** | Workspace Integrations (OAuth + API keys)                                            | ✅ Concluído |
+| **P** | Root Admin Panel (RBAC/ABAC global)                                                  | ✅ Concluído |
+| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites | ⏳ Planejado |
+| **R** | UX Polish — Command Bar, Permission Modes & Effort/Meter (cont. de M)                | ⏳ Planejado |
+| **S** | Connectors & Plugins Manager (cont. de O)                                            | ⏳ Planejado |
 
 ---
 
@@ -1417,6 +1420,393 @@ Sub-abas dentro de Administração:
 - `chat/components/layout/settings-dialog/admin/tools-panel.tsx` — novo
 - `vectora/api/handlers/admin.py` — novo router (todos os endpoints exigem root/admin)
 - `vectora/services/permissions.py` — ampliar com `can_override_tools(user, target_user_id)`
+
+---
+
+## BLOCO Q — Workspace P2 + Auth Onboarding: Trust Folder, Scope Guard Rails, Worktree & Invites
+
+> **Contexto.** A seleção de workspace **não funciona hoje**. O frontend tem
+> `workspaces-store.ts` e a rota Hono `chat/server/routes/workspaces.ts`, mas
+> elas dão proxy para `/vectora.workspace.v1.WorkspaceService/*` — endpoints
+> que **não existem no backend** (`vectora/api/handlers/` não tem
+> `workspaces.py`). Não há componente de seleção (`workspace-selector.tsx`
+> ausente). E o conceito de "workspace" na prática é apenas o `cwd` do processo
+> onde o `vectora` foi iniciado.
+>
+> Pior: os **guard rails de escopo são fracos**. `vectora/tools/fs.py` usa
+> `is_safe_file_path(path, allowed_dirs=["."])` — onde `.` é o cwd do
+> _processo_, não a pasta escolhida — e a tool `terminal` roda
+> `asyncio.create_subprocess_shell(command)` **sem `cwd=`**, herdando o
+> diretório do servidor sem nenhuma confinação. Não há `git_init` nem
+> `git_worktree` em `vectora/tools/git.py` (G8 nunca foi implementado de fato).
+>
+> **Objetivo do Bloco Q:** transformar workspace num conceito de primeira classe
+> com o modelo _trust folder_ (como editores/IDEs modernos): o usuário escolhe
+> uma pasta, ela é apresentada como pasta confiável, e **a partir daí o Vectora
+> só pode ler/escrever/rodar comandos/usar git dentro dela** (guard rails de
+> escopo reais). Se a pasta não for um repositório git, oferece `git init`.
+> Isso é o que torna seguro o Vectora editar arquivos e rodar comandos. Inclui
+> worktrees para features paralelas.
+>
+> **Adendo (auth onboarding).** Em uso real, a tela de login expõe "Criar conta"
+> mesmo quando já existe usuário, e o primeiro acesso cai no login em vez de ir
+> direto ao setup do root. O backend já fecha o signup público
+> (`/auth/signup` → 403 após o 1º usuário), mas o frontend não roteia
+> corretamente e **não há sistema de convites** (o Bloco P1 planejou "Convidar
+> usuário" mas nunca implementou). Q7–Q8 fecham esse gap: roteamento de
+> onboarding correto + signup por convite com token expirável emitido por
+> root/admin.
+
+### Q1 — `WorkspaceService` backend (o handler que falta)
+
+Novo `vectora/api/handlers/workspaces.py` + registro em `vectora/api/server.py`
+(`app.include_router(workspace_router)`), espelhando os paths que o frontend já
+chama (Connect-style POST/GET sob `/vectora.workspace.v1.WorkspaceService/`):
+
+| Endpoint                    | Ação                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `GET  …/ListWorkspaces`     | lista todos os workspaces do registry (escopado por user quando autenticado) |
+| `GET  …/GetActiveWorkspace` | workspace ativo da sessão atual                                              |
+| `POST …/SetActiveWorkspace` | troca o workspace ativo `{workspace_id}`                                     |
+| `POST …/CreateWorkspace`    | registra pasta `{path, trust: bool, git_init: bool}`                         |
+| `POST …/TrustWorkspace`     | marca workspace como confiável `{workspace_id}`                              |
+| `POST …/GitInitWorkspace`   | roda `git init` na pasta `{workspace_id}`                                    |
+| `GET  …/BrowseDir`          | **directory browser** (Q6): lista subpastas de `{path}`                      |
+
+Reusa o `workspace_registry` singleton (`vectora/services/workspace.py`) e
+`detect_git_info()` (`vectora/tools/git.py:593`). Auth: `Depends(get_current_user)`
+no modo server; root local no CLI (C6).
+
+### Q2 — Estado de "trust" no modelo Workspace
+
+Estende `vectora/types/workspace.py` (`Workspace` Pydantic) com:
+
+- `trusted: bool = False` — pasta confirmada como confiável pelo usuário
+- `trusted_at: str | None` — timestamp ISO da confirmação
+- `trusted_by: str | None` — user_id que confiou (multi-tenant)
+
+`WorkspaceRegistry` ganha `trust(workspace_id, user_id)` + persistência no
+`~/.vectora/workspaces.json`. **Regra cardinal:** tools de escrita/terminal/git
+só executam em workspace `trusted=True`. Workspace não-confiável → modo
+read-only (somente `file_read`, `grep`, `list`).
+
+### Q3 — `git init` automático para pastas sem repositório
+
+- Nova helper `git_init_repo(cwd) -> dict` em `vectora/tools/git.py` (usa
+  `git.Repo.init(cwd)`), e tool `git_init` exposta ao agente
+  (render_hint `code_block`, destructive `false`).
+- No fluxo de criação de workspace (Q1 `CreateWorkspace` com `git_init=True`):
+  se `detect_git_info()` retorna `is_git_repo=False`, roda `git init` e
+  re-detecta. Atualiza `is_git_repo`/`git_current_branch` no registry.
+- UI (Q6) mostra: "Esta pasta não é um repositório git. Inicializar?" no
+  momento do trust.
+
+### Q4 — Scope Guard Rails (confinação real ao workspace ativo)
+
+O coração da segurança. Hoje `allowed_dirs=["."]` e terminal sem `cwd`. Mudar para:
+
+- **Novo helper central** em `vectora/services/security.py`:
+  `resolve_within_workspace(path, workspace_root) -> Path | None` — resolve o
+  path absoluto e garante `resolved.is_relative_to(workspace_root)`; retorna
+  `None` se escapar (bloqueia `..`, symlinks para fora, paths absolutos
+  externos). Substitui o atual `allowed_dirs=["."]`.
+- **`vectora/tools/fs.py`**: `file_read`, `file_write`, `file_edit`, `grep`,
+  `list`, `terminal` passam a resolver o workspace ativo via config
+  (`configurable.workspace_id` → `workspace.cwd`, mesmo padrão de
+  `_resolve_workspace` em `git.py:35`) e validar contra `workspace_root`.
+- **`terminal`**: `create_subprocess_shell(command, cwd=workspace_root, …)` —
+  comandos rodam **dentro** da pasta. Mantém a blacklist atual
+  (`is_safe_shell_command`).
+- Workspace não-`trusted` → tools destrutivas retornam erro pedindo trust.
+- Mensagem de erro clara quando um path escapa: `"Path fora do workspace
+'{root}'. O Vectora só pode acessar arquivos dentro da pasta confiável."`
+
+### Q5 — Git Worktree (G8 real)
+
+- Helpers + tool `git_worktree(action, name?, branch?)` em
+  `vectora/tools/git.py` (`add`/`list`/`remove`); worktrees em
+  `~/.vectora/worktrees/<workspace_id>/<name>` (via `git worktree add`).
+- `thread.metadata.worktree` associa thread ↔ worktree; quando setado, as
+  tools de Q4 confinam ao path da worktree em vez do root principal.
+- Endpoint `…/ListWorktrees` + `…/CreateWorktree` no WorkspaceService (Q1).
+
+### Q6 — Workspace selector + trust UI (frontend)
+
+- **Novo** `chat/components/layout/workspace-selector.tsx` — o chip de pasta
+  (espelha o chip `vectora` da print 1), à esquerda no header. Dropdown:
+  lista de workspaces + "Adicionar pasta…".
+- **Novo** `chat/components/layout/workspace-trust-dialog.tsx` — fluxo trust
+  folder: directory browser (consome `…/BrowseDir`), confirmação "Confio nesta
+  pasta" (explica os guard rails), checkbox "Inicializar git se necessário".
+- **Novo** `chat/server/routes/` já tem `workspaces.ts` — estender com
+  `/browse`, `/create`, `/trust`, `/git-init`, `/worktrees`.
+- `workspaces-store.ts` ganha `trusted` no `WorkspaceInfo` + ações
+  `trust()`, `create()`, `browse()`.
+- Hidrata o store no boot (`chat/app/page.tsx` / provider) e seta
+  `agentConfig.workspace_id` na request (já consumido em
+  `chat/lib/...` → `chat.py:242`).
+
+### Q7 — Onboarding de auth: roteamento de primeiro acesso & signup público fechado
+
+Corrige o fluxo de entrada **sem novo backend** (reusa `GET /auth/has-users`,
+que já existe e retorna `HasUsersResponse(exists)`).
+
+- **`chat/components/providers/auth-provider.tsx`**: quando não autenticado,
+  antes de redirecionar para `/auth/signin`, consultar `GET /api/auth/has-users`.
+  Se `exists=false` → `router.replace("/auth/signup")` (setup do root). Se
+  `exists=true` → `router.replace("/auth/signin?from=…")` (comportamento atual).
+- **`chat/app/auth/signin/page.tsx`**: **remover** o link incondicional
+  "Primeiro acesso? Criar conta". No mount, checar `has-users`; se `false`,
+  redirecionar para `/auth/signup`. Com usuários existentes, a tela de login
+  nunca oferece criação pública.
+- **`chat/app/auth/signup/page.tsx`**: manter o redirect para signin quando
+  `has-users=true` **e** não houver convite válido (ver Q8). Sem convite,
+  signup só é permitido no primeiro acesso.
+- **i18n**: rever strings de auth em `chat/lib/i18n/strings.csv.ts` — remover/
+  ajustar a chave do link "criar conta"; adicionar texto de setup do root.
+
+### Q8 — Signup por convite (link com token)
+
+Implementa o "Convidar usuário" do P1 (nunca construído). Token opaco expirável,
+no padrão dos `refresh_tokens` (hash SHA-256 no DB, nunca em claro).
+
+**Backend — `vectora/services/auth.py`:**
+
+- Nova tabela `invites(token_hash PK, email, role, created_by, expires_at,
+used_at, created_at)` em `_ensure_schema()`.
+- `create_invite(created_by, role="member", email=None, ttl_hours=24) -> str`
+  (gera token via `secrets.token_hex`, persiste hash; reusa `_hash_refresh_token`
+  ou novo `_hash_token`).
+- `validate_invite(token) -> dict | None` (não usado, não expirado; retorna
+  role/email).
+- `consume_invite(token, user_id)` (seta `used_at`; idempotente/atômico).
+- `list_invites()` / `revoke_invite(token)` para o painel admin.
+- `signup(email, password, *, role=None)`: aceitar `role` opcional (quando vindo
+  de convite), mantendo a regra "1º usuário = root".
+
+**Backend — `vectora/api/handlers/auth.py` + `vectora/api/schemas.py`:**
+
+- `SignupRequest` ganha `invite_token: str = ""`.
+- `signup_endpoint`: lógica em camadas —
+  (1) `has_users()==False` → permite (root, como hoje);
+  (2) `invite_token` válido → permite com a role do convite e **consome** o convite;
+  (3) caso contrário → 403 (como hoje).
+- `GET /auth/invite/{token}` (público): valida e retorna `{valid, email?, role}`
+  para a página de signup pré-preencher/verificar.
+
+**Backend — `vectora/api/handlers/admin.py`:**
+
+- `POST /admin/invites` (`require_admin`) → body `{role, email?, ttl_hours}` →
+  retorna `{token, url, expires_at}` (URL = `<frontend>/auth/signup?invite=<token>`).
+- `GET /admin/invites` (`require_admin`) → lista convites pendentes.
+- `DELETE /admin/invites/{token}` (`require_admin`) → revoga.
+
+**Frontend:**
+
+- **`chat/app/auth/signup/page.tsx`**: ler `?invite=<token>` da URL. Se presente,
+  validar via `GET /api/auth/invite/{token}`; em modo convite, **permitir** signup
+  mesmo com `has-users=true`, enviar `invite_token` no POST e exibir contexto
+  ("Convite para função: member"). Token inválido/expirado + usuários existentes →
+  redirecionar para signin com aviso.
+- **`chat/components/layout/settings-dialog/admin/users-panel.tsx`**: botão
+  "Convidar usuário" → dialog (select de role + email opcional + TTL) →
+  `POST /api/admin/invites` → mostra link copiável. Lista de convites pendentes
+  com botão revogar.
+- **Proxies Hono**: `chat/server/routes/auth.ts` (+ `GET /invite/:token`) e a rota
+  admin (+ `/admin/invites` GET/POST/DELETE).
+- **i18n**: novas chaves para o dialog de convite + mensagens de convite
+  inválido/expirado.
+
+### Arquivos críticos (Bloco Q)
+
+| Sub | Arquivos chat                                                                                                                        | Arquivos vectora (Python)                                                                                                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Q1  | `chat/server/routes/workspaces.ts` (estende)                                                                                         | `vectora/api/handlers/workspaces.py` (novo), `vectora/api/server.py` (registrar)                                                                                                                       |
+| Q2  | `chat/lib/stores/workspaces-store.ts` (+`trusted`)                                                                                   | `vectora/types/workspace.py`, `vectora/services/workspace.py` (`trust()`)                                                                                                                              |
+| Q3  | —                                                                                                                                    | `vectora/tools/git.py` (`git_init_repo` + tool)                                                                                                                                                        |
+| Q4  | —                                                                                                                                    | `vectora/services/security.py` (`resolve_within_workspace`), `vectora/tools/fs.py` (todas as tools + `terminal` com `cwd=`)                                                                            |
+| Q5  | secondary worktree selector no header                                                                                                | `vectora/tools/git.py` (`git_worktree`), `vectora/state.py` (`thread.metadata.worktree`)                                                                                                               |
+| Q6  | `workspace-selector.tsx`, `workspace-trust-dialog.tsx` (novos)                                                                       | `…/BrowseDir` endpoint                                                                                                                                                                                 |
+| Q7  | `auth-provider.tsx`, `auth/signin/page.tsx`, `auth/signup/page.tsx`, `i18n/strings.csv.ts`                                           | — (reusa `/auth/has-users`)                                                                                                                                                                            |
+| Q8  | `auth/signup/page.tsx` (modo convite), `admin/users-panel.tsx`, `server/routes/auth.ts` (+`/invite`), rota admin (+`/admin/invites`) | `services/auth.py` (tabela `invites` + funções), `api/handlers/auth.py` (+`invite_token`, `GET /auth/invite/{token}`), `api/handlers/admin.py` (+`/admin/invites`), `api/schemas.py` (+`invite_token`) |
+
+### Verificação (Bloco Q)
+
+- `vectora server chat` → header mostra chip da pasta; clicar → "Adicionar
+  pasta" abre directory browser; navegar e selecionar pasta sem git
+- Diálogo de trust explica guard rails + oferece `git init`; confirmar →
+  workspace `trusted=True`, `git init` rodado, branch detectada
+- Pedir ao agente "crie README.md e rode `ls`" → arquivo criado **dentro** da
+  pasta, `ls` roda com `cwd` = pasta
+- Pedir "leia C:\Windows\system32\drivers\etc\hosts" (fora do workspace) →
+  bloqueado com mensagem de escopo
+- Workspace não-confiável → tentativa de `file_write` retorna pedido de trust
+- Criar worktree `feat-x` → aparece em `~/.vectora/worktrees/…`; abrir thread
+  associada confina as tools à worktree
+- **(Q7)** Fresh install (sem usuários) → abrir `/` redireciona **direto** para
+  criar conta (setup root); a tela de login não aparece
+- **(Q7)** Com usuário existente → `/` cai em login; tela de login **não** mostra
+  "criar conta"
+- **(Q8)** Root abre Admin → "Convidar usuário" (role member, TTL 24h) → recebe
+  link copiável
+- **(Q8)** Abrir o link `/auth/signup?invite=<token>` em janela anônima → cria
+  conta como member; reabrir o mesmo link → recusado (consumido/expirado)
+- **(Q8)** `POST /auth/signup` sem convite e com usuários existentes → 403
+  (inalterado)
+
+---
+
+## BLOCO R — UX Polish: Command Bar, Permission Modes & Effort/Meter
+
+> **Contexto.** Continuação direta do Bloco M (UX polish). As prints enviadas
+> pelo usuário (interface do Claude Code desktop) são a **referência visual**
+> para a área de input do Vectora Chat. Hoje o `chat/components/chat/chat-input.tsx`
+> tem só textarea + anexo + voz + (model selector via `agent-settings`). O
+> objetivo é adotar o layout da referência: uma **command bar** rica com barra
+> de contexto (pasta/branch/worktree), seletor de modo de permissão, menu `+`,
+> seletor de modelo+esforço e medidor de contexto/uso. Decisões confirmadas com
+> o usuário: adotar os 5 modos da print; medidor reflete tokens da thread +
+> rate limit do user.
+
+### R1 — Top context bar (print 1)
+
+Barra de chips acima do textarea, espelhando `Local · vectora · dev · worktree`:
+
+- **`Local`** — indicador de execução (local CLI root vs server autenticado);
+  lê `auth-store` (C9). Tooltip explica o perímetro.
+- **Chip de pasta** — reusa `workspace-selector.tsx` (Q6).
+- **Chip de branch** — reusa/eleva `git-status-badge.tsx` (G5) para um switcher
+  de branch (`git_branch`/`git_checkout`).
+- **Chip de worktree** — seletor de worktree (Q5).
+- **Botão "novo"** — atalho para adicionar pasta (Q6).
+- Componente novo: `chat/components/chat/features/command-bar.tsx`.
+
+### R2 — Seletor de Modo de Permissão (print 2 — 5 modos)
+
+Chip "Modo" (estilo "Ignorar permissões" amarelo) → dropdown com 5 modos,
+mapeando para o HITL existente (Bloco E) + guard rails (Q4):
+
+| Modo                     | Comportamento                                                            |
+| ------------------------ | ------------------------------------------------------------------------ |
+| **Solicitar permissões** | HITL em toda tool destrutiva (filesystem/terminal/git/paga)              |
+| **Aceitar edições**      | auto-aprova `file_edit`/`file_write`; confirma terminal + git destrutivo |
+| **Modo de planejamento** | agente planeja e propõe, **não executa** tools destrutivas (plan-only)   |
+| **Modo automático**      | auto-aprova tudo **dentro** do workspace confiável (Q4 ainda confina)    |
+| **Ignorar permissões**   | full-auto, sem HITL (ainda bounded pelo escopo Q4)                       |
+
+- Persistido por user no `settings-store.ts` (campo `permissionMode`).
+- Backend: enviado em `agentConfig` → `configurable.permission_mode`; consumido
+  por `vectora/graph.py` (mapeia para `interrupt_before` dinâmico) e
+  pelo adapter HITL (Bloco E).
+- Atalho de teclado ⇧Ctrl M (registrar em `keyboard-shortcuts-dialog.tsx`).
+
+### R3 — Menu `+` de anexos (print 3)
+
+Substitui o botão de anexo único por um menu popover:
+
+- **Adicionar arquivos ou fotos** (Ctrl+U) — fluxo de attach atual (Bloco F).
+- **Adicionar pasta** — abre o trust dialog (Q6).
+- **Comandos de barra** — abre o autocomplete de slash commands (Bloco H).
+- **Conectores** → submenu (Bloco S).
+- **Adicionar plugins…** → MCP servers (Bloco S).
+- Componente novo: `chat/components/chat/features/plus-menu.tsx`.
+
+### R4 — Modelos + Esforço (print 4)
+
+Eleva o model selector atual para um dropdown duplo:
+
+- **Modelos** (⇧Ctrl I) — quick switch (já existe em `agent-settings.tsx` /
+  `deployment-config.ts`); marca o ativo.
+- **Esforço** (⇧Ctrl E): Baixa / Média / Alto / Max — mapeia para
+  `reasoning_effort`/thinking budget do modelo (campo novo em `agentConfig`,
+  consumido em `chat.py` → `configurable`). Para modelos sem thinking, cai
+  para verbosity (Bloco L).
+- **Modo rápido** toggle — desliga reasoning/thinking para latência mínima.
+- Persistido por thread em `agentConfig`.
+
+### R5 — Medidor de contexto + uso do plano (print 5)
+
+Rodapé do command bar:
+
+- **Janela de contexto** `164.8k / 200.0k (82%)` — tokens da thread atual vs
+  `MODELS[id].context_window` (campo novo em `deployment-config.ts`). Soma
+  via `UIMetricsEvent`/`metrics-store` (Bloco K).
+- **Uso do plano** — rate limits do usuário (Bloco C13): req/min consumidas,
+  janela de reset. Endpoint `GET /auth/usage` (novo, lê o estado do
+  `rate_limit` middleware).
+- Status inferior: `<modelo> · <esforço>` (espelha "Sonnet 4.6 · Médio").
+- Componentes: `chat/components/chat/features/context-meter.tsx` (novo),
+  `chat/lib/stores/metrics-store.ts` (Bloco K, criar se ainda não existe).
+
+### Arquivos críticos (Bloco R)
+
+| Sub | Arquivos chat                                                                        | Arquivos vectora (Python)                                                                  |
+| --- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| R1  | `command-bar.tsx` (novo), `git-status-badge.tsx` (eleva p/ switcher)                 | —                                                                                          |
+| R2  | `permission-mode-menu.tsx` (novo), `settings-store.ts` (+`permissionMode`)           | `vectora/graph.py` (interrupt_before dinâmico), `vectora/api/adapters.py`                  |
+| R3  | `plus-menu.tsx` (novo), `chat-input.tsx` (integra)                                   | —                                                                                          |
+| R4  | `agent-settings.tsx` (esforço/fast mode), `deployment-config.ts` (+`context_window`) | `vectora/api/handlers/chat.py` (`reasoning_effort` no configurable)                        |
+| R5  | `context-meter.tsx` (novo), `metrics-store.ts`                                       | `vectora/api/handlers/auth.py` (`GET /auth/usage`), `vectora/api/middleware/rate_limit.py` |
+
+### Verificação (Bloco R)
+
+- Command bar mostra `Local · <pasta> · <branch> · <worktree>` e atualiza ao
+  trocar workspace/branch
+- Trocar modo para "Modo de planejamento" → agente propõe mas não executa
+  terminal; "Solicitar permissões" → HITL aparece antes de `file_write`
+- Menu `+` abre com 5 itens; "Adicionar pasta" abre trust dialog (Q6)
+- Trocar Esforço para "Alto" → próxima resposta usa mais thinking; "Modo
+  rápido" → resposta sem reasoning
+- Medidor mostra tokens da thread crescendo e % da janela; painel de uso mostra
+  rate limit do user com tempo de reset
+
+---
+
+## BLOCO S — Connectors & Plugins Manager
+
+> **Contexto.** Continuação direta do Bloco O (integrações). As entradas
+> **"Conectores"** e **"Adicionar plugins…"** do menu `+` (print 3) precisam de
+> destino. Vectora já fala MCP (`vectora/tools/mcp.py`,
+> `langchain-mcp-adapters`) e tem OAuth/API-keys (Bloco O). O Bloco S dá a UI
+> para gerenciar **conectores** (integrações O1/O2 já planejadas) e **plugins
+> MCP** (servidores MCP externos plugáveis) a partir do chat.
+
+### S1 — Connectors submenu (do menu `+` → "Conectores")
+
+- Reusa os cards de integração da aba Integrações (Bloco O,
+  `settings-dialog/tabs/integracoes-tab.tsx`): GitHub OAuth, OpenAI, Anthropic,
+  Cohere, Tavily, etc. — status ✓/− + conectar/desconectar.
+- Atalho a partir do `+` abre direto essa aba (deep-link no settings dialog).
+
+### S2 — Plugins MCP (do menu `+` → "Adicionar plugins…")
+
+- **Novo** `chat/components/layout/settings-dialog/tabs/plugins-tab.tsx`:
+  lista de MCP servers configurados (nome, transporte stdio/sse/http, status),
+  add/edit/remove. Form: comando/URL + env vars (do vault do user, Bloco C11).
+- **Backend** `vectora/api/handlers/plugins.py` (novo): CRUD de configs MCP
+  por user, persistido em `~/.vectora/mcp_servers.json` (ou por-user). Reusa
+  `MultiServerMCPClient` (`vectora/tools/mcp.py`) para health-check.
+- As tools dos MCP servers conectados entram no grafo via o registro de tools
+  existente; aparecem no `GET /tools/schema` (A10) e renderizam schema-driven.
+
+### S3 — Connector/plugin status na command bar
+
+- Indicador discreto (contagem de conectores ativos) acessível pelo menu `+`.
+
+### Arquivos críticos (Bloco S)
+
+| Sub | Arquivos chat                                                                         | Arquivos vectora (Python)                                                |
+| --- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| S1  | `plus-menu.tsx` (deep-link), `integracoes-tab.tsx` (reusa)                            | — (Bloco O)                                                              |
+| S2  | `settings-dialog/tabs/plugins-tab.tsx` (novo), `chat/server/routes/plugins.ts` (novo) | `vectora/api/handlers/plugins.py` (novo), `vectora/tools/mcp.py` (reusa) |
+| S3  | `command-bar.tsx` (indicador)                                                         | —                                                                        |
+
+### Verificação (Bloco S)
+
+- `+` → "Conectores" abre a aba Integrações com cards e status
+- `+` → "Adicionar plugins…" abre aba Plugins; adicionar um MCP server stdio →
+  health-check ✓ → suas tools aparecem em `/tools/schema` e ficam usáveis no chat
+- User B não vê os plugins/conectores de User A (isolamento por user)
 
 ---
 
