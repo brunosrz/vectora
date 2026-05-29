@@ -204,15 +204,28 @@ def create_app() -> FastAPI:
         "VECTORA_FRONTEND_URL", "http://localhost:3000"
     ).rstrip("/")
 
-    # Headers que não devem ser encaminhados para o upstream
-    _PROXY_SKIP_REQ_HEADERS = frozenset({"host", "connection", "transfer-encoding"})
+    # Headers de request que não devem ser encaminhados ao upstream
+    _PROXY_SKIP_REQ_HEADERS = frozenset(
+        {"host", "connection", "transfer-encoding", "accept-encoding"}
+    )
+    # Headers de resposta gerenciados pelo FastAPI/Starlette — não encaminhar
+    # para evitar conflitos (ex: content-length incorreto após descompressão)
     _PROXY_SKIP_RESP_HEADERS = frozenset(
-        {"transfer-encoding", "connection", "content-encoding"}
+        {"transfer-encoding", "connection", "content-encoding", "content-length"}
     )
 
     @app.api_route("/{path:path}", methods=["GET", "HEAD"])
     async def _frontend_proxy(request: Request, path: str) -> FastAPIResponse:
-        """Proxy reverso: encaminha requests não-API para o Next.js frontend."""
+        """Proxy reverso: encaminha requests não-API para o Next.js frontend.
+
+        Notas importantes:
+        - accept-encoding é suprimido para o upstream receber conteúdo plain
+          (sem gzip), evitando mismatch de content-length na resposta.
+        - content-length é omitido da resposta — FastAPI recalcula com base
+          no conteúdo já descomprimido pelo httpx.
+        - Endpoints SSE/streaming do Next.js dev (ex: /_next/webpack-hmr)
+          são redirecionados direto para o frontend, sem buffer.
+        """
         target = f"{_frontend_url}/{path}"
         if request.url.query:
             target = f"{target}?{request.url.query}"
@@ -222,6 +235,9 @@ def create_app() -> FastAPI:
             for k, v in request.headers.items()
             if k.lower() not in _PROXY_SKIP_REQ_HEADERS
         }
+        # Pede conteúdo sem compressão — httpx decodifica gzip mas não atualiza
+        # content-length, causando leitura truncada no browser.
+        fwd_headers["accept-encoding"] = "identity"
 
         try:
             async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
