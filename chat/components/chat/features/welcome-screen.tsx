@@ -11,13 +11,24 @@ import React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FilePreviewGrid } from "./file-preview-grid";
 import { VoiceInputButton } from "./voice-input-button";
 import type { ImageAttachment } from "@/lib/types";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { MAX_INPUT_CHARS } from "@/lib/constants/features";
-import { getAllowedModels, getModelDisplayName, type ModelOption } from "@/lib/config/deployment-config";
+import {
+  getAllowedModels,
+  getModelDisplayName,
+  type ModelOption,
+} from "@/lib/config/deployment-config";
+import { useT } from "@/lib/i18n";
 
 interface WelcomeScreenProps {
   input: string;
@@ -60,8 +71,38 @@ interface WelcomeScreenProps {
  * Welcome screen shown when starting a new chat.
  * Features a centered input box with file upload support.
  */
-export function WelcomeScreen({ input, onInputChange, onBeforeInput, onSend, onKeyDown, isLoading, isStopping, onStop, userId, attachedFiles, uploadError, inputError, isDragging, onDragOver, onDragLeave, onDrop, onPaste, onRemoveFile, onFileButtonClick, fileInputRef, onFileSelect, textareaRef, isVoiceListening, isVoiceSupported, onVoiceToggle, voiceError, agentConfig, onAgentConfigChange }: WelcomeScreenProps) {
+export function WelcomeScreen({
+  input,
+  onInputChange,
+  onBeforeInput,
+  onSend,
+  onKeyDown,
+  isLoading,
+  isStopping,
+  onStop,
+  userId,
+  attachedFiles,
+  uploadError,
+  inputError,
+  isDragging,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onPaste,
+  onRemoveFile,
+  onFileButtonClick,
+  fileInputRef,
+  onFileSelect,
+  textareaRef,
+  isVoiceListening,
+  isVoiceSupported,
+  onVoiceToggle,
+  voiceError,
+  agentConfig,
+  onAgentConfigChange,
+}: WelcomeScreenProps) {
   const allowedModels = getAllowedModels();
+  const t = useT();
 
   const handleModelChange = (model: string) => {
     if (agentConfig && onAgentConfigChange) {
@@ -75,13 +116,26 @@ export function WelcomeScreen({ input, onInputChange, onBeforeInput, onSend, onK
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mb-6 flex items-center justify-center gap-3 sm:gap-4">
-            <Image src="/vectora.svg" alt="Vectora" width={64} height={64} priority className="h-12 w-12 sm:h-16 sm:w-16" />
-            <span className="text-5xl sm:text-6xl font-bold tracking-tight text-primary" style={{ fontFamily: "var(--font-aeonik-mono)" }}>
+            <Image
+              src="/vectora.svg"
+              alt="Vectora"
+              width={64}
+              height={64}
+              priority
+              className="h-12 w-12 sm:h-16 sm:w-16"
+            />
+            <span
+              className="text-5xl sm:text-6xl font-bold tracking-tight text-primary"
+              style={{ fontFamily: "var(--font-aeonik-mono)" }}
+            >
               Vectora
             </span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-semibold text-white mb-2" style={{ fontFamily: "var(--font-aeonik-mono)" }}>
-            What can I help with?
+          <h2
+            className="text-2xl sm:text-4xl font-semibold text-white mb-2"
+            style={{ fontFamily: "var(--font-aeonik-mono)" }}
+          >
+            {t("welcome.title")}
           </h2>
         </div>
 
@@ -89,34 +143,94 @@ export function WelcomeScreen({ input, onInputChange, onBeforeInput, onSend, onK
         <FilePreviewGrid files={attachedFiles} onRemove={onRemoveFile} />
 
         {/* Upload Error */}
-        {uploadError && <div className="mb-3 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{uploadError}</div>}
+        {uploadError && (
+          <div className="mb-3 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+            {uploadError}
+          </div>
+        )}
 
         {/* Voice Error */}
-        {voiceError && <div className="mb-3 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{voiceError}</div>}
+        {voiceError && (
+          <div className="mb-3 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+            {voiceError}
+          </div>
+        )}
 
         {/* Centered Input Container */}
         <div className="relative group">
-          <div className={`relative bg-card border-2 rounded-2xl shadow-2xl transition-all duration-300 border-primary/60 ring-1 ring-primary/20 ${isDragging ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "group-hover:border-primary/80 group-focus-within:border-primary/90 group-focus-within:ring-2 group-focus-within:ring-primary/30"}`} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
+          <div
+            className={`relative border-2 rounded-2xl shadow-2xl transition-all duration-300 border-primary/60 ring-1 ring-primary/20 ${isDragging ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "group-hover:border-primary/80 group-focus-within:border-primary/90 group-focus-within:ring-2 group-focus-within:ring-primary/30"}`}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+          >
             {isDragging && (
               <div className="absolute inset-0 bg-primary/10 rounded-2xl flex items-center justify-center z-20 pointer-events-none">
-                <div className="text-primary font-medium">Drop files here</div>
+                <div className="text-primary font-medium">
+                  {t("welcome.drop_files")}
+                </div>
               </div>
             )}
             <div className="flex items-end gap-2 px-4 py-3">
-              <input ref={fileInputRef} type="file" accept="image/*,.py,.js,.ts,.tsx,.jsx,.java,.cpp,.c,.h,.cs,.go,.rs,.rb,.php,.sh,.bash,.yaml,.yml,.json,.xml,.html,.css,.md,.txt,.log,.sql,.graphql,.r,.swift,.kt,.scala,.har" multiple onChange={onFileSelect} className="hidden" />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.py,.js,.ts,.tsx,.jsx,.java,.cpp,.c,.h,.cs,.go,.rs,.rb,.php,.sh,.bash,.yaml,.yml,.json,.xml,.html,.css,.md,.txt,.log,.sql,.graphql,.r,.swift,.kt,.scala,.har"
+                multiple
+                onChange={onFileSelect}
+                className="hidden"
+              />
 
               {!isLoading && (
-                <Button onClick={onFileButtonClick} variant="ghost" size="sm" disabled={isLoading || !userId} className="group h-10 w-10 p-0 mb-0.5 rounded-full bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary border-0 flex-shrink-0 transition-all duration-200 hover:scale-105 active:scale-95" type="button" title="Attach files (images, code, logs)">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <Button
+                  onClick={onFileButtonClick}
+                  variant="ghost"
+                  size="sm"
+                  disabled={isLoading || !userId}
+                  className="group h-10 w-10 p-0 mb-0.5 rounded-full bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary border-0 flex-shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
+                  type="button"
+                  title={t("input.attach_files")}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-5 h-5"
+                  >
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                   </svg>
                 </Button>
               )}
 
-              <Textarea ref={textareaRef} value={input} onChange={(e) => onInputChange(e.target.value)} onBeforeInput={onBeforeInput} onKeyDown={onKeyDown} onPaste={onPaste} maxLength={MAX_INPUT_CHARS} placeholder={userId ? "O que posso fazer por você?" : "Initializing..."} className="relative z-10 min-h-[48px] max-h-[240px] resize-none bg-transparent border-0 w-full px-3 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200 break-words custom-scrollbar" disabled={isLoading || !userId} rows={1} />
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => onInputChange(e.target.value)}
+                onBeforeInput={onBeforeInput}
+                onKeyDown={onKeyDown}
+                onPaste={onPaste}
+                maxLength={MAX_INPUT_CHARS}
+                placeholder={
+                  userId ? t("welcome.title") : t("input.initializing")
+                }
+                className="relative z-10 min-h-[48px] max-h-[240px] resize-none bg-transparent border-0 w-full px-3 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200 break-words custom-scrollbar"
+                disabled={isLoading || !userId}
+                rows={1}
+              />
 
-              {isVoiceSupported && onVoiceToggle && <VoiceInputButton isListening={isVoiceListening ?? false} disabled={!userId} onClick={onVoiceToggle} size="md" />}
+              {isVoiceSupported && onVoiceToggle && (
+                <VoiceInputButton
+                  isListening={isVoiceListening ?? false}
+                  disabled={!userId}
+                  onClick={onVoiceToggle}
+                  size="md"
+                />
+              )}
 
               {isLoading && (
                 <Button
@@ -131,21 +245,34 @@ export function WelcomeScreen({ input, onInputChange, onBeforeInput, onSend, onK
                     ${isStopping ? "opacity-60 cursor-not-allowed" : ""}
                   `}
                   type="button"
-                  title={isStopping ? "Stopping..." : "Stop generating"}
+                  title={
+                    isStopping
+                      ? t("input.stopping")
+                      : t("input.stop_generating")
+                  }
                 >
-                  <span className="text-sm font-medium">{isStopping ? "Stopping..." : "Stop"}</span>
+                  <span className="text-sm font-medium">
+                    {isStopping ? t("input.stopping") : t("input.stop")}
+                  </span>
                 </Button>
               )}
             </div>
           </div>
 
-          {inputError && <div className="mt-2 px-2 text-sm text-destructive">{inputError}</div>}
+          {inputError && (
+            <div className="mt-2 px-2 text-sm text-destructive">
+              {inputError}
+            </div>
+          )}
 
           {/* Model selector dropdown - positioned underneath chatbox in bottom left */}
           {agentConfig && onAgentConfigChange && (
             <div className="flex justify-start mt-2 px-2">
-              <Select value={agentConfig.model} onValueChange={handleModelChange}>
-                <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:bg-muted/50 px-2 gap-1 w-auto">
+              <Select
+                value={agentConfig.model}
+                onValueChange={handleModelChange}
+              >
+                <SelectTrigger className="h-8 text-sm border-0 bg-transparent hover:text-primary px-2 gap-1 w-auto">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

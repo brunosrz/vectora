@@ -18,8 +18,8 @@ key,en,es,pt
 # Layout / Navegação
 # =============================================================================
 header.new_chat,New Chat,Nuevo Chat,Novo Chat
-sidebar.title,Threads,Conversaciones,Conversas
-sidebar.search_placeholder,Search threads...,Buscar conversaciones...,Buscar conversas...
+sidebar.title,Sessions,Sesiones,Sessões
+sidebar.search_placeholder,Search sessions...,Buscar sesiones...,Buscar sessões...
 sidebar.clear_search,Clear search,Limpiar búsqueda,Limpar busca
 sidebar.group.today,Today,Hoy,Hoje
 sidebar.group.yesterday,Yesterday,Ayer,Ontem
@@ -27,7 +27,7 @@ sidebar.group.last_7_days,Previous 7 Days,Últimos 7 días,Últimos 7 dias
 sidebar.group.older,Older,Anteriores,Mais antigo
 sidebar.new_conversation,New conversation,Nueva conversación,Nova conversa
 sidebar.no_conversations,No conversations yet,Aún no hay conversaciones,Nenhuma conversa ainda
-sidebar.no_conversations_hint,Start chatting to see your threads here!,¡Empieza a chatear para ver tus conversaciones!,Comece a conversar para ver suas threads aqui!
+sidebar.no_conversations_hint,Start chatting to see your sessions here!,¡Empieza a chatear para ver tus sesiones!,Comece a conversar para ver suas sessões aqui!
 sidebar.no_results,No results found,No se encontraron resultados,Nenhum resultado encontrado
 sidebar.no_results_hint,Try a different search term,Intenta con otro término,Tente outro termo de busca
 sidebar.documentation,Documentation,Documentación,Documentação
@@ -185,6 +185,25 @@ auth.loading,Loading...,Cargando...,Carregando...
 # =============================================================================
 voice.stop_listening,Stop listening,Dejar de escuchar,Parar de escutar
 voice.start_listening,Voice input,Entrada de voz,Entrada de voz
+# =============================================================================
+# Envs tab
+# =============================================================================
+envs.title,Environment variables,Variables de entorno,Variáveis de ambiente
+envs.subtitle,API keys and custom environment variables. They override the default values only for your requests.,Claves de API y variables de entorno personalizadas. Sobrescriben los valores predeterminados solo para tus solicitudes.,Chaves de API e variáveis de ambiente personalizadas. Substituem os valores padrão apenas para suas requisições.
+envs.add,Add variable,Añadir variable,Adicionar variável
+envs.empty,No variables configured yet,Aún no hay variables configuradas,Nenhuma variável configurada ainda
+envs.key_label,Key,Clave,Chave
+envs.value_label,Value,Valor,Valor
+envs.key_placeholder,"e.g.: OPENAI_API_KEY","ej: OPENAI_API_KEY","ex: OPENAI_API_KEY"
+envs.value_placeholder,Enter the value,Ingresa el valor,Digite o valor
+envs.save,Save,Guardar,Salvar
+envs.cancel,Cancel,Cancelar,Cancelar
+envs.delete,Delete,Eliminar,Deletar
+envs.add_title,Add environment variable,Añadir variable de entorno,Adicionar variável de ambiente
+envs.add_desc,The value is stored encrypted and never returned to the browser.,El valor se almacena cifrado y nunca se devuelve al navegador.,O valor é armazenado criptografado e nunca retorna ao navegador.
+envs.error_load,Error loading variables,Error al cargar variables,Erro ao carregar variáveis
+envs.error_save,Error saving,Error al guardar,Erro ao salvar
+envs.error_delete,Error deleting,Error al eliminar,Erro ao deletar
 # =============================================================================
 # Memory tab
 # =============================================================================

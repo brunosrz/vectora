@@ -1,28 +1,55 @@
 "use client";
 
 /**
- * AgentSettings → "Chat Settings" — Bloco L1
+ * AgentSettings — dialog "Chat Settings" acessível via ⚙️ no header.
+ * Escopo: sessão/chat atual.
  *
- * Dialog acessível via ⚙️ no header. Escopo: sessão/chat atual.
- *
- * Removidos: Agent Type, Recursion Limit (eram placeholders não funcionais).
- * Adicionados:
- *   - Toggle "Mostrar tool calls no chat"
- *   - Toggle "Confirmar ações destrutivas" (HITL antecipado)
- *   - Seletor de verbosidade: Concisa / Normal / Detalhada
- * Mantidos: seletor de modelo, atalhos de teclado.
+ * Controles: seletor de modelo, verbosidade, tema, idioma,
+ * toggles de tool calls e confirmação de ações destrutivas, atalhos de teclado.
  */
 
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { Settings, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { getAllowedModels, getModelDisplayName, isModelAllowed, getDefaultModel, type ModelOption } from "@/lib/config/deployment-config";
-import { useSettingsStore, type Verbosity } from "@/lib/stores/settings-store";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  getAllowedModels,
+  getModelDisplayName,
+  isModelAllowed,
+  getDefaultModel,
+  type ModelOption,
+} from "@/lib/config/deployment-config";
+import {
+  useSettingsStore,
+  SUPPORTED_LANGS,
+  type Verbosity,
+  type Theme,
+  type Lang,
+} from "@/lib/stores/settings-store";
+import { useT } from "@/lib/i18n";
 
 // ---------------------------------------------------------------------------
 // AgentConfig — mantido para retrocompatibilidade; agentType e recursionLimit
@@ -47,18 +74,40 @@ interface AgentSettingsProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const VERBOSITY_OPTIONS: { value: Verbosity; label: string }[] = [
-  { value: "concise", label: "Concisa" },
-  { value: "normal", label: "Normal" },
-  { value: "detailed", label: "Detalhada" },
-];
+const VERBOSITY_VALUES: Verbosity[] = ["concise", "normal", "detailed"];
+const THEME_VALUES: Theme[] = ["system", "light", "dark"];
 
-export function AgentSettings({ config, onConfigChange, onShowShortcuts, forceShowTooltip, open, onOpenChange }: AgentSettingsProps) {
+export function AgentSettings({
+  config,
+  onConfigChange,
+  onShowShortcuts,
+  forceShowTooltip,
+  open,
+  onOpenChange,
+}: AgentSettingsProps) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const t = useT();
+  const { setTheme: setNextTheme } = useTheme();
 
-  const { showToolCalls, requireHitl, verbosity, setShowToolCalls, setRequireHitl, setVerbosity } = useSettingsStore();
+  const {
+    showToolCalls,
+    requireHitl,
+    verbosity,
+    theme,
+    language,
+    setShowToolCalls,
+    setRequireHitl,
+    setVerbosity,
+    setTheme,
+    setLanguage,
+  } = useSettingsStore();
 
   const allowedModels = getAllowedModels();
+
+  const handleThemeChange = (value: Theme) => {
+    setTheme(value);
+    setNextTheme(value);
+  };
 
   // Força tooltip ao receber forceShowTooltip
   useEffect(() => {
@@ -84,29 +133,41 @@ export function AgentSettings({ config, onConfigChange, onShowShortcuts, forceSh
         <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="hover:bg-muted/70 hover:text-foreground" aria-label="Configurações do chat">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-muted/70 hover:text-foreground"
+                aria-label={t("settings.chat.tooltip")}
+              >
                 <Settings className="w-4 h-4" />
               </Button>
             </DialogTrigger>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p className="text-xs">Configurações do chat</p>
+            <p className="text-xs">{t("settings.chat.tooltip")}</p>
           </TooltipContent>
         </Tooltip>
 
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>Configurações do Chat</DialogTitle>
-            <DialogDescription>Personaliza o comportamento desta sessão de chat.</DialogDescription>
+            <DialogTitle>{t("settings.chat.title")}</DialogTitle>
+            <DialogDescription>
+              {t("settings.chat.description")}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-5 py-2">
             {/* Modelo */}
             <div className="grid gap-2">
-              <Label htmlFor="model">Modelo</Label>
-              <Select value={config.model} onValueChange={(model) => onConfigChange({ ...config, model })}>
+              <Label htmlFor="model">{t("settings.chat.model")}</Label>
+              <Select
+                value={config.model}
+                onValueChange={(model) => onConfigChange({ ...config, model })}
+              >
                 <SelectTrigger id="model">
-                  <SelectValue placeholder="Selecionar modelo" />
+                  <SelectValue
+                    placeholder={t("settings.chat.model_placeholder")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {allowedModels.map((modelId) => (
@@ -120,13 +181,53 @@ export function AgentSettings({ config, onConfigChange, onShowShortcuts, forceSh
 
             {/* Verbosidade */}
             <div className="grid gap-2">
-              <Label htmlFor="verbosity">Verbosidade das respostas</Label>
-              <Select value={verbosity} onValueChange={(v) => setVerbosity(v as Verbosity)}>
+              <Label htmlFor="verbosity">{t("settings.chat.verbosity")}</Label>
+              <Select
+                value={verbosity}
+                onValueChange={(v) => setVerbosity(v as Verbosity)}
+              >
                 <SelectTrigger id="verbosity">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {VERBOSITY_OPTIONS.map(({ value, label }) => (
+                  {VERBOSITY_VALUES.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {t(`settings.chat.verbosity.${value}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tema */}
+            <div className="grid gap-2">
+              <Label htmlFor="chat-theme">{t("prefs.theme")}</Label>
+              <Select value={theme} onValueChange={handleThemeChange}>
+                <SelectTrigger id="chat-theme">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {THEME_VALUES.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {t(`prefs.theme.${value}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Idioma */}
+            <div className="grid gap-2">
+              <Label htmlFor="chat-language">{t("prefs.language")}</Label>
+              <Select
+                value={language}
+                onValueChange={(v) => setLanguage(v as Lang)}
+              >
+                <SelectTrigger id="chat-language">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_LANGS.map(({ value, label }) => (
                     <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>
@@ -137,28 +238,48 @@ export function AgentSettings({ config, onConfigChange, onShowShortcuts, forceSh
 
             {/* Ferramentas */}
             <div className="space-y-3">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Ferramentas</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t("settings.chat.tools_section")}
+              </p>
 
               {/* Mostrar tool calls */}
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label htmlFor="show-tool-calls" className="text-sm font-normal cursor-pointer">
-                    Mostrar tool calls no chat
+                  <Label
+                    htmlFor="show-tool-calls"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {t("settings.chat.show_tool_calls")}
                   </Label>
-                  <p className="text-xs text-muted-foreground">Exibe as chamadas de ferramentas durante a resposta.</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.chat.show_tool_calls_hint")}
+                  </p>
                 </div>
-                <Switch id="show-tool-calls" checked={showToolCalls} onCheckedChange={setShowToolCalls} />
+                <Switch
+                  id="show-tool-calls"
+                  checked={showToolCalls}
+                  onCheckedChange={setShowToolCalls}
+                />
               </div>
 
               {/* Confirmar ações destrutivas */}
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label htmlFor="require-hitl" className="text-sm font-normal cursor-pointer">
-                    Confirmar ações destrutivas
+                  <Label
+                    htmlFor="require-hitl"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {t("settings.chat.confirm_destructive")}
                   </Label>
-                  <p className="text-xs text-muted-foreground">Pede confirmação antes de executar ferramentas irreversíveis (escrita de arquivo, terminal, etc).</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.chat.confirm_destructive_hint")}
+                  </p>
                 </div>
-                <Switch id="require-hitl" checked={requireHitl} onCheckedChange={setRequireHitl} />
+                <Switch
+                  id="require-hitl"
+                  checked={requireHitl}
+                  onCheckedChange={setRequireHitl}
+                />
               </div>
             </div>
           </div>
@@ -166,9 +287,14 @@ export function AgentSettings({ config, onConfigChange, onShowShortcuts, forceSh
           {/* Atalhos */}
           {onShowShortcuts && (
             <div className="border-t pt-3 mt-0">
-              <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground" onClick={onShowShortcuts}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+                onClick={onShowShortcuts}
+              >
                 <Keyboard className="w-4 h-4" />
-                Ver atalhos de teclado
+                {t("settings.chat.keyboard_shortcuts")}
               </Button>
             </div>
           )}

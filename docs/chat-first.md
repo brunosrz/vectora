@@ -23,27 +23,27 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 
 ## Sumário (TOC)
 
-| Bloco | Tema                                                                                 | Status       |
-| ----- | ------------------------------------------------------------------------------------ | ------------ |
-| **A** | Chat Foundations                                                                     | ✅ Concluído |
-| **B** | Polish, Bugfixes & Infra                                                             | ✅ Concluído |
-| **C** | Authentication & RBAC                                                                | ✅ Concluído |
-| **D** | Reasoning Reveal & Thinking UX                                                       | ✅ Concluído |
-| **E** | HITL em Chat                                                                         | ✅ Concluído |
-| **F** | File Handling Completo                                                               | ✅ Concluído |
-| **G** | Workspaces + Git Integration                                                         | ✅ Concluído |
-| **H** | Slash Commands                                                                       | ✅ Concluído |
-| **I** | Conversation Features (search, export, share)                                        | ✅ Concluído |
-| **J** | Mobile & PWA                                                                         | ✅ Concluído |
-| **K** | Live Metrics Dashboard                                                               | ✅ Concluído |
-| **L** | Settings Architecture                                                                | ✅ Concluído |
-| **M** | Performance, UX Polish & i18n/L10n                                                   | ✅ Concluído |
-| **N** | Per-User Memory                                                                      | ✅ Concluído |
-| **O** | Workspace Integrations (OAuth + API keys)                                            | ✅ Concluído |
-| **P** | Root Admin Panel (RBAC/ABAC global)                                                  | ✅ Concluído |
-| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites | ⏳ Planejado |
-| **R** | UX Polish — Command Bar, Permission Modes & Effort/Meter (cont. de M)                | ⏳ Planejado |
-| **S** | Connectors & Plugins Manager (cont. de O)                                            | ⏳ Planejado |
+| Bloco | Tema                                                                                      | Status       |
+| ----- | ----------------------------------------------------------------------------------------- | ------------ |
+| **A** | Chat Foundations                                                                          | ✅ Concluído |
+| **B** | Polish, Bugfixes & Infra                                                                  | ✅ Concluído |
+| **C** | Authentication & RBAC                                                                     | ✅ Concluído |
+| **D** | Reasoning Reveal & Thinking UX                                                            | ✅ Concluído |
+| **E** | HITL em Chat                                                                              | ✅ Concluído |
+| **F** | File Handling Completo                                                                    | ✅ Concluído |
+| **G** | Workspaces + Git Integration                                                              | ✅ Concluído |
+| **H** | Slash Commands                                                                            | ✅ Concluído |
+| **I** | Conversation Features (search, export, share)                                             | ✅ Concluído |
+| **J** | Mobile & PWA                                                                              | ✅ Concluído |
+| **K** | Live Metrics Dashboard                                                                    | ✅ Concluído |
+| **L** | Settings Architecture                                                                     | ✅ Concluído |
+| **M** | Performance, UX Polish & i18n/L10n                                                        | ✅ Concluído |
+| **N** | Per-User Memory                                                                           | ✅ Concluído |
+| **O** | Workspace Integrations (OAuth + API keys)                                                 | ✅ Concluído |
+| **P** | Root Admin Panel (RBAC/ABAC global)                                                       | ✅ Concluído |
+| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites      | ⏳ Planejado |
+| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish | ⏳ Planejado |
+| **S** | Connectors & Plugins Manager (cont. de O)                                                 | ⏳ Planejado |
 
 ---
 
@@ -1667,6 +1667,21 @@ used_at, created_at)` em `_ensure_schema()`.
 > seletor de modelo+esforço e medidor de contexto/uso. Decisões confirmadas com
 > o usuário: adotar os 5 modos da print; medidor reflete tokens da thread +
 > rate limit do user.
+>
+> **Adendo (polish & i18n descoberto em uso).** Em uso real apareceram regressões
+> de polish e cobertura de i18n que entram como R6–R10: várias strings estão
+> **hardcoded** (welcome "What can I help with?", sidebar "Threads/Today/Search",
+> header "New Chat", placeholder legado "Ask me anything about LangChain…") apesar
+> das chaves já existirem em `strings.csv.ts`; **"Threads" deve virar
+> "Sessions/Sessões"**; o **Chat Settings** não permite trocar tema nem idioma
+> (idioma não tem seletor em lugar nenhum); o toggle **"Confirmar ações
+> destrutivas" tem default inseguro `false`** (deveria ser `true`/fallback); a
+> **área de input** tem fundo cinza (`bg-card`) no container e no seletor de
+> modelo que o usuário quer remover; a aba **Envs** é só placeholder (apesar do
+> backend `/auth/envs` + proxy Hono já existirem); e o **Modelo padrão** em Admin →
+> Config é um input de texto que deveria ser o mesmo seletor de modelo do input.
+> **Regra cardinal:** todo texto de UI (componentes, páginas, diálogos) passa por
+> i18n — nada de string hardcoded.
 
 ### R1 — Top context bar (print 1)
 
@@ -1738,15 +1753,102 @@ Rodapé do command bar:
 - Componentes: `chat/components/chat/features/context-meter.tsx` (novo),
   `chat/lib/stores/metrics-store.ts` (Bloco K, criar se ainda não existe).
 
+### R6 — Cobertura i18n completa & rename Threads → Sessions
+
+Todas as strings de UI passam por `useT()` (`chat/lib/i18n/index.tsx`); as chaves
+**já existem** em `chat/lib/i18n/strings.csv.ts` — falta cablear os componentes.
+
+- **`chat/components/layout/sidebar.tsx`**: maior ofensor. Substituir literais
+  por `t('sidebar.title')`, `t('sidebar.search_placeholder')`,
+  `t('sidebar.group.today|yesterday|last_7_days|older')`,
+  `t('sidebar.new_conversation')`, `t('sidebar.no_results*')`,
+  `t('sidebar.documentation*')`, `t('sidebar.feedback')`/`t('sidebar.report_issue')`.
+  `getRelativeTime()` passa a retornar via `t('time.*', { n })` (recebe `t` como
+  argumento ou vira hook interno).
+- **`chat/components/layout/header.tsx`**: `"New Chat"` → `t('header.new_chat')`.
+- **`chat/components/chat/features/welcome-screen.tsx`**: `"What can I help
+with?"` → `t('welcome.title')`; placeholder → `t('input.placeholder')` /
+  `t('input.initializing')`; `"Drop files here"` → `t('welcome.drop_files')`;
+  tooltip de anexo → `t('input.attach_files')`; `"Stop"`/`"Stopping..."`.
+- **`chat/components/chat/chat-input.tsx`**: corrigir o placeholder legado
+  **`"Ask me anything about LangChain..."`** → `t('input.placeholder')`;
+  `"Type your next message..."` → `t('input.loading_placeholder')`;
+  `"Initializing..."`, `"Queued"`, `"Stop"`, e o help text Enter/Shift+Enter
+  (`t('input.send_hint')` / `t('input.new_line_hint')`).
+- **`chat/components/layout/agent-settings.tsx`**: título/descrição, labels e
+  toggles → chaves `settings.chat.*`; `VERBOSITY_OPTIONS` usa
+  `t('settings.chat.verbosity.*')`.
+- **Rename Threads → Sessions/Sessões**: alterar os **valores** (não as chaves)
+  no CSV — `sidebar.title` → `Sessions,Sesiones,Sessões`; ajustar o "thread/
+  threads" remanescente em `sidebar.search_placeholder`,
+  `sidebar.no_conversations_hint` e afins para "session/sessão".
+
+### R7 — Tema & Idioma no Chat Settings + default seguro de HITL
+
+- **`chat/components/layout/agent-settings.tsx`**: adicionar seletor de **Tema**
+  (reusa `THEME_OPTIONS` + `useTheme()` do next-themes — mesmo padrão de
+  `preferencias-tab.tsx:handleThemeChange`, que sincroniza `setTheme` do store +
+  `setNextTheme`) e seletor de **Idioma** (reusa `SUPPORTED_LANGS` +
+  `setLanguage` do `settings-store.ts`). Strings via `prefs.theme*` /
+  `prefs.language*`.
+- **`chat/components/layout/settings-dialog/tabs/preferencias-tab.tsx`**:
+  acrescentar o seletor de **Idioma** que falta (hoje só tem Tema), para
+  consistência — mesmas chaves `prefs.language*`.
+- **`chat/lib/stores/settings-store.ts`**: `DEFAULTS.requireHitl: true`
+  (confirmar ações destrutivas é o fallback seguro). Persistência existente
+  preserva a escolha do usuário; só muda o default de instalações novas.
+
+### R8 — Polish imediato da área de input (fundo cinza)
+
+Correção visual independente do redesign maior de R1/R4 (que depois absorve isto).
+
+- **`chat/components/chat/features/welcome-screen.tsx`**: remover o fundo cinza
+  do container do input (`bg-card` → transparente/sutil, mantendo apenas a borda/
+  ring) e garantir o seletor de modelo **sem fundo** (já `bg-transparent`; remover
+  `hover:bg-muted/50` se ainda destoar).
+- **`chat/components/chat/chat-input.tsx`**: aplicar a mesma limpeza
+  (`bg-card/95` e camadas de `bg-card/*` → transparente/sutil) para consistência
+  entre o estado welcome e o estado de conversa.
+
+### R9 — Aba Envs funcional (backend já existe)
+
+`envs-tab.tsx` hoje é só placeholder. Backend completo já existe:
+`vectora/api/handlers/auth.py` (`GET/POST/DELETE /auth/envs`, valores mascarados)
+e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELETE).
+
+- **`chat/components/layout/settings-dialog/tabs/envs-tab.tsx`**: construir UI —
+  listar (`GET /api/auth/envs` → `{envs: masked, keys}`), adicionar via form
+  key/value (`POST /api/auth/envs`), remover (`DELETE /api/auth/envs/{key}`).
+  Mostra valores mascarados; labels/mensagens via i18n (novas chaves `envs.*`).
+
+### R10 — Admin → Config: seletor de modelo padrão
+
+- **`chat/components/layout/settings-dialog/admin/admin-tab.tsx`** (`ConfigPanel`):
+  trocar o `<Input>` de texto de "Modelo padrão" pelo **mesmo `<Select>`** de
+  modelo usado no `welcome-screen`/`agent-settings`, reusando `getAllowedModels()`
+  e `getModelDisplayName()` (`chat/lib/config/deployment-config.ts`). Mantém o
+  PATCH `/api/admin/config` (`default_model`).
+
+> **Nota de correção ao Q8 (Bloco Q).** O painel de usuários do admin é o
+> `UsersPanel` **inline** em `settings-dialog/admin/admin-tab.tsx` — não existe
+> `users-panel.tsx`. O botão "Convidar usuário" (Q8) deve ser adicionado nesse
+> `UsersPanel`. A funcionalidade de convite (front + back) permanece escopo do
+> Bloco Q/Q8; R apenas aponta o arquivo correto.
+
 ### Arquivos críticos (Bloco R)
 
-| Sub | Arquivos chat                                                                        | Arquivos vectora (Python)                                                                  |
-| --- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| R1  | `command-bar.tsx` (novo), `git-status-badge.tsx` (eleva p/ switcher)                 | —                                                                                          |
-| R2  | `permission-mode-menu.tsx` (novo), `settings-store.ts` (+`permissionMode`)           | `vectora/graph.py` (interrupt_before dinâmico), `vectora/api/adapters.py`                  |
-| R3  | `plus-menu.tsx` (novo), `chat-input.tsx` (integra)                                   | —                                                                                          |
-| R4  | `agent-settings.tsx` (esforço/fast mode), `deployment-config.ts` (+`context_window`) | `vectora/api/handlers/chat.py` (`reasoning_effort` no configurable)                        |
-| R5  | `context-meter.tsx` (novo), `metrics-store.ts`                                       | `vectora/api/handlers/auth.py` (`GET /auth/usage`), `vectora/api/middleware/rate_limit.py` |
+| Sub | Arquivos chat                                                                                                            | Arquivos vectora (Python)                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| R1  | `command-bar.tsx` (novo), `git-status-badge.tsx` (eleva p/ switcher)                                                     | —                                                                                          |
+| R2  | `permission-mode-menu.tsx` (novo), `settings-store.ts` (+`permissionMode`)                                               | `vectora/graph.py` (interrupt_before dinâmico), `vectora/api/adapters.py`                  |
+| R3  | `plus-menu.tsx` (novo), `chat-input.tsx` (integra)                                                                       | —                                                                                          |
+| R4  | `agent-settings.tsx` (esforço/fast mode), `deployment-config.ts` (+`context_window`)                                     | `vectora/api/handlers/chat.py` (`reasoning_effort` no configurable)                        |
+| R5  | `context-meter.tsx` (novo), `metrics-store.ts`                                                                           | `vectora/api/handlers/auth.py` (`GET /auth/usage`), `vectora/api/middleware/rate_limit.py` |
+| R6  | `sidebar.tsx`, `header.tsx`, `welcome-screen.tsx`, `chat-input.tsx`, `agent-settings.tsx`, `i18n/strings.csv.ts`         | —                                                                                          |
+| R7  | `agent-settings.tsx` (tema+idioma), `preferencias-tab.tsx` (+idioma), `settings-store.ts` (`requireHitl` default `true`) | —                                                                                          |
+| R8  | `welcome-screen.tsx`, `chat-input.tsx` (remover `bg-card`)                                                               | —                                                                                          |
+| R9  | `settings-dialog/tabs/envs-tab.tsx` (UI add/list/delete)                                                                 | — (backend `/auth/envs` + proxy Hono já existem)                                           |
+| R10 | `settings-dialog/admin/admin-tab.tsx` (`ConfigPanel` → model `<Select>`), `deployment-config.ts` (reuso)                 | —                                                                                          |
 
 ### Verificação (Bloco R)
 
@@ -1759,6 +1861,19 @@ Rodapé do command bar:
   rápido" → resposta sem reasoning
 - Medidor mostra tokens da thread crescendo e % da janela; painel de uso mostra
   rate limit do user com tempo de reset
+- **(R6)** Trocar idioma para EN/ES/PT → sidebar (título "Sessions/Sessões",
+  busca, grupos "Today/Hoje", tempos relativos), header ("New Chat"), welcome
+  ("What can I help with?") e Chat Settings traduzem **sem** strings hardcoded;
+  o placeholder legado "Ask me anything about LangChain…" some
+- **(R7)** Chat Settings permite trocar **Tema** (claro/escuro/sistema) e
+  **Idioma** e o efeito é imediato; instalação nova já vem com "Confirmar ações
+  destrutivas" **ligado**
+- **(R8)** Área de input (welcome e conversa) **sem** fundo cinza no container e
+  no seletor de modelo
+- **(R9)** Settings → Envs: adicionar `OPENAI_API_KEY=…` → aparece mascarado na
+  lista; deletar remove; persiste no backend (`/auth/envs`)
+- **(R10)** Admin → Config: "Modelo padrão" é um **seletor** com os modelos
+  permitidos (não input de texto) e salva via `/admin/config`
 
 ---
 

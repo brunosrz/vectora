@@ -71,7 +71,7 @@ export interface SettingsState {
 
 const DEFAULTS = {
   showToolCalls: false,
-  requireHitl: false,
+  requireHitl: true,
   verbosity: "normal" as Verbosity,
   theme: "system" as Theme,
   historyLimit: 50,
