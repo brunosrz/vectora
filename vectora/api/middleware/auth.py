@@ -29,6 +29,24 @@ _PUBLIC_PREFIXES: tuple[str, ...] = (
     "/favicon",
 )
 
+# Prefixos exclusivos da API Vectora.
+# Rotas que NÃO batem com nenhum desses prefixos são tratadas como
+# rotas do frontend (proxy reverso) e portanto são públicas — o Next.js
+# cuida da própria autenticação via cookie.
+_API_PREFIXES: tuple[str, ...] = (
+    "/auth/",
+    "/admin",
+    "/memory",
+    "/vectora.",
+    "/oauth",
+    "/health",
+    "/metrics",
+    "/docs",
+    "/openapi.json",
+    "/redoc",
+    "/favicon",
+)
+
 # VECTORA_AUTH_REQUIRED=false desabilita auth (modo dev local / CLI)
 import os as _os
 
@@ -46,7 +64,17 @@ def _auth_enabled() -> bool:
 
 
 def _is_public_route(path: str) -> bool:
-    """True se a rota é pública (não requer token)."""
+    """True se a rota é pública (não requer token).
+
+    Lógica em camadas:
+    1. Se a rota não bate com nenhum prefixo de API, é uma rota do frontend
+       que será proxiada para o Next.js → pública (o frontend cuida da auth).
+    2. Arquivos estáticos (extensão na última parte do path) → públicos.
+    3. Prefixos explicitamente públicos da API (_PUBLIC_PREFIXES).
+    """
+    # Rotas fora da API → proxy para o frontend → pública
+    if not any(path.startswith(p) for p in _API_PREFIXES):
+        return True
     # Arquivos estáticos (extensão presente) são sempre públicos
     last_segment = path.rsplit("/", maxsplit=1)[-1]
     if "." in last_segment:

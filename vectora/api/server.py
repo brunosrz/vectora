@@ -25,8 +25,10 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+import httpx
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response as FastAPIResponse
 
 from vectora.api.handlers.admin import router as admin_router
 from vectora.api.handlers.auth import router as auth_router
@@ -193,5 +195,69 @@ def create_app() -> FastAPI:
             return await tracer.get_recent(n=50)
         except Exception:
             return []
+
+    # ── Frontend proxy (catch-all) ────────────────────────────────────────────
+    # Encaminha qualquer rota não-API para o servidor Next.js.
+    # DEVE ser registrado por último para não sobrepor endpoints reais.
+    # Configurável via VECTORA_FRONTEND_URL (padrão: http://localhost:3000).
+    _frontend_url = os.environ.get(
+        "VECTORA_FRONTEND_URL", "http://localhost:3000"
+    ).rstrip("/")
+
+    # Headers que não devem ser encaminhados para o upstream
+    _PROXY_SKIP_REQ_HEADERS = frozenset({"host", "connection", "transfer-encoding"})
+    _PROXY_SKIP_RESP_HEADERS = frozenset(
+        {"transfer-encoding", "connection", "content-encoding"}
+    )
+
+    @app.api_route("/{path:path}", methods=["GET", "HEAD"])
+    async def _frontend_proxy(request: Request, path: str) -> FastAPIResponse:
+        """Proxy reverso: encaminha requests não-API para o Next.js frontend."""
+        target = f"{_frontend_url}/{path}"
+        if request.url.query:
+            target = f"{target}?{request.url.query}"
+
+        fwd_headers = {
+            k: v
+            for k, v in request.headers.items()
+            if k.lower() not in _PROXY_SKIP_REQ_HEADERS
+        }
+
+        try:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+                upstream = await client.request(
+                    method=request.method,
+                    url=target,
+                    headers=fwd_headers,
+                    content=await request.body(),
+                )
+            resp_headers = {
+                k: v
+                for k, v in upstream.headers.items()
+                if k.lower() not in _PROXY_SKIP_RESP_HEADERS
+            }
+            return FastAPIResponse(
+                content=upstream.content,
+                status_code=upstream.status_code,
+                headers=resp_headers,
+                media_type=upstream.headers.get("content-type"),
+            )
+        except httpx.ConnectError:
+            logger.warning("frontend_proxy: frontend indisponível em %s", _frontend_url)
+            return FastAPIResponse(
+                content=(
+                    b"<html><body><h2>Frontend indispon\xedvel</h2>"
+                    b"<p>Certifique-se que o servidor Next.js est\xe1 rodando.</p></body></html>"
+                ),
+                status_code=502,
+                media_type="text/html; charset=utf-8",
+            )
+        except Exception as exc:
+            logger.warning("frontend_proxy: erro ao encaminhar /%s: %s", path, exc)
+            return FastAPIResponse(
+                content=b'{"detail":"Erro no proxy do frontend"}',
+                status_code=502,
+                media_type="application/json",
+            )
 
     return app
