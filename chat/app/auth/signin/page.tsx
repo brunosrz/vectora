@@ -133,8 +133,19 @@ export default function SignInPage() {
               />
               <button
                 type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                // Mobile: `onPointerDown` + `preventDefault` evita que o tap
+                // mude o foco do input (o que silencia o click em alguns
+                // browsers). Cobre mouse, touch e pen num só handler.
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  setShowPassword((v) => !v);
+                }}
+                onClick={(e) => {
+                  // Fallback para teclado (Enter/Space) — onPointerDown
+                  // não dispara nessas vias.
+                  if (e.detail === 0) setShowPassword((v) => !v);
+                }}
+                className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? (

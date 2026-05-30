@@ -250,8 +250,16 @@ export default function SignUpPage() {
               />
               <button
                 type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                // Mobile: onPointerDown + preventDefault evita roubo de foco
+                // do input que silenciava o click em iOS/Android.
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  setShowPassword((v) => !v);
+                }}
+                onClick={(e) => {
+                  if (e.detail === 0) setShowPassword((v) => !v);
+                }}
+                className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? (
@@ -286,8 +294,14 @@ export default function SignUpPage() {
               />
               <button
                 type="button"
-                onClick={() => setShowConfirm((v) => !v)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  setShowConfirm((v) => !v);
+                }}
+                onClick={(e) => {
+                  if (e.detail === 0) setShowConfirm((v) => !v);
+                }}
+                className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={
                   showConfirm ? "Ocultar confirmação" : "Mostrar confirmação"
                 }

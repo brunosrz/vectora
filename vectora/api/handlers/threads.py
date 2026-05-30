@@ -45,6 +45,27 @@ router = APIRouter()
 _db_conn: Any = None
 
 
+async def _ensure_schema(db: Any) -> None:
+    """Cria a tabela ``vectora_sessions`` se ainda não existir.
+
+    Idempotente. Exportada para que o ``_lifespan`` do server possa chamar
+    no startup, garantindo que a tabela exista antes do primeiro request —
+    evita race com o ``AsyncSqliteSaver`` do LangGraph que abre o mesmo
+    arquivo ``~/.vectora/checkpoints.db``.
+    """
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS vectora_sessions (
+            thread_id     TEXT    PRIMARY KEY,
+            user_type     TEXT    NOT NULL DEFAULT 'human',
+            created_at    TEXT    NOT NULL,
+            last_activity TEXT    NOT NULL,
+            message_count INTEGER NOT NULL DEFAULT 0,
+            extra         TEXT    NOT NULL DEFAULT '{}'
+        )
+    """)
+    await db.commit()
+
+
 async def _get_db() -> Any:
     """Retorna conexão aiosqlite com o banco de checkpoints/sessões."""
     global _db_conn
@@ -57,19 +78,14 @@ async def _get_db() -> Any:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         _db_conn = await aiosqlite.connect(str(db_path))
         await _db_conn.execute("PRAGMA journal_mode=WAL")
-        # Garante que a tabela de sessões existe
-        await _db_conn.execute("""
-            CREATE TABLE IF NOT EXISTS vectora_sessions (
-                thread_id     TEXT    PRIMARY KEY,
-                user_type     TEXT    NOT NULL DEFAULT 'human',
-                created_at    TEXT    NOT NULL,
-                last_activity TEXT    NOT NULL,
-                message_count INTEGER NOT NULL DEFAULT 0,
-                extra         TEXT    NOT NULL DEFAULT '{}'
-            )
-        """)
-        await _db_conn.commit()
+        await _ensure_schema(_db_conn)
     return _db_conn
+
+
+async def ensure_sessions_table() -> None:
+    """Cria a tabela ``vectora_sessions`` ao boot (chamada do lifespan)."""
+    db = await _get_db()
+    await _ensure_schema(db)
 
 
 # ---------------------------------------------------------------------------

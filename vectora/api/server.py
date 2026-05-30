@@ -102,6 +102,17 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception:
         pass  # Não bloqueia o startup se o DB ainda não estiver criado
 
+    # Garante que a tabela vectora_sessions existe antes do primeiro request.
+    # Evita race com AsyncSqliteSaver do LangGraph (mesmo arquivo .db) que
+    # podia fazer o CREATE TABLE silenciar e get_thread/list_threads
+    # retornarem 500 "no such table" até o servidor reiniciar.
+    try:
+        from vectora.api.handlers.threads import ensure_sessions_table
+
+        await ensure_sessions_table()
+    except Exception as exc:
+        logger.warning("api/server: falha ao criar vectora_sessions: %s", exc)
+
     if _WARMUP_GRAPH:
         from vectora.api.handlers.chat import awarm_graph
 
