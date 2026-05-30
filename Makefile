@@ -9,8 +9,17 @@
 #   make dev          # atalho: inicia backend (8080) + frontend dev (3000)
 #   make clean-static # remove vectora/chat_static/
 #
-SHELL = "C:/Program Files/Git/usr/bin/bash.exe"
-BASH  = "C:/Program Files/Git/usr/bin/bash.exe" -l
+# SHELL portátil: no Windows usa o short-name 8.3 (PROGRA~1) para evitar o
+# espaço de "Program Files" — `make` não aceita aspas no valor de SHELL, e
+# espaços não-escapados quebram o exec. Em Linux/macOS (incluindo o GHA
+# Ubuntu) usa /bin/bash diretamente.
+ifeq ($(OS),Windows_NT)
+  SHELL := C:/PROGRA~1/Git/usr/bin/bash.exe
+  BASH  := C:/PROGRA~1/Git/usr/bin/bash.exe -l
+else
+  SHELL := /bin/bash
+  BASH  := /bin/bash -l
+endif
 
 .PHONY: gen-proto dev clean-static
 
