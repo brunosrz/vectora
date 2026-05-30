@@ -247,14 +247,29 @@ def _resolve_workspace_id(requested: str, thread_id: str, user_id: str) -> str:
         return ""
 
 
+def _user_name_from_request(http_request: Request) -> str:
+    """Extrai o nome do usuário autenticado, ou vazio em modo CLI/anônimo."""
+    user = getattr(http_request.state, "user", None)
+    if user is None:
+        return ""
+    return str(getattr(user, "name", "") or "").strip()
+
+
 def _build_configurable(
-    config: ChatConfig, thread_id: str, user_id: str
+    config: ChatConfig,
+    thread_id: str,
+    user_id: str,
+    user_name: str = "",
 ) -> dict[str, Any]:
     """Monta o dict ``configurable`` do RunnableConfig a partir do ChatConfig.
 
     Campos opcionais (workspace, prompt custom, modo de permissão, esforço de
-    raciocínio) só entram quando preenchidos — nós e o ``hitl_check`` aplicam
-    seus defaults quando ausentes.
+    raciocínio, idioma, nome do usuário) só entram quando preenchidos — nós e o
+    ``hitl_check`` aplicam seus defaults quando ausentes.
+
+    O ``user_name`` e ``language`` são consumidos pelo orchestrator para
+    personalizar o system prompt do agente (tratar pelo nome, responder no
+    idioma preferido).
     """
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
@@ -268,6 +283,16 @@ def _build_configurable(
         configurable["permission_mode"] = config.permission_mode
     if config.reasoning_effort:
         configurable["reasoning_effort"] = config.reasoning_effort
+    # Idioma: lido cru do locale do SO (Python `os`/`locale`), repassado
+    # sem normalização. O dict de mapeamento foi removido — modelos
+    # modernos interpretam BCP-47/POSIX nativamente.
+    from vectora.agents._identity import detect_system_language
+
+    sys_lang = detect_system_language()
+    if sys_lang:
+        configurable["language"] = sys_lang
+    if user_name:
+        configurable["user_name"] = user_name
     return configurable
 
 
@@ -314,7 +339,10 @@ async def stream_chat(
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    configurable = _build_configurable(request.config, thread_id, user_id)
+    user_name = _user_name_from_request(http_request)
+    configurable = _build_configurable(
+        request.config, thread_id, user_id, user_name=user_name
+    )
 
     from vectora.services.usage import usage_tracker
 

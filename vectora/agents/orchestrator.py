@@ -38,7 +38,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END
 from langgraph.types import Command
 
-from vectora.agents._identity import VECTORA_IDENTITY
+from vectora.agents._identity import VECTORA_IDENTITY, build_user_context_block
 from vectora.types import (
     AgentName,
     CoderResult,
@@ -732,6 +732,7 @@ async def _synthesize_after_coder(
     state: State,
     session_id: str | None,
     state_update_extra: dict,
+    config: RunnableConfig | None = None,
 ) -> Command:
     """Síntese pós-coder: o coder_finalize produziu um resultado estruturado;
     aqui o orchestrator redige a resposta final e encerra o turno.
@@ -765,7 +766,17 @@ async def _synthesize_after_coder(
     if next_steps:
         result_block += f"**Próximos passos:** {next_steps}\n"
 
-    payload: list = [
+    # Contexto do usuário (nome + idioma do locale do SO) — injetado antes
+    # do prompt principal para que o LLM saiba como tratar e em que
+    # idioma responder.
+    user_ctx_block = build_user_context_block(
+        (config or {}).get("configurable") if config else None
+    )
+
+    payload: list = []
+    if user_ctx_block:
+        payload.append(SystemMessage(content=user_ctx_block, name="user_context"))
+    payload += [
         SystemMessage(content=_CODER_SYNTHESIS_PROMPT),
         SystemMessage(content=result_block),
         HumanMessage(content=user_question or "Resuma o que foi feito."),
@@ -819,6 +830,7 @@ async def _synthesize_after_search(
     state: State,
     session_id: str | None,
     state_update_extra: dict,
+    config: RunnableConfig | None = None,
 ) -> Command:
     """Síntese pós-search: o search_finalize produziu um resultado estruturado;
     aqui o orchestrator redige a resposta final e encerra o turno.
@@ -853,7 +865,14 @@ async def _synthesize_after_search(
         f"**Fontes:**\n{sources_str}\n"
     )
 
-    payload: list = [
+    user_ctx_block = build_user_context_block(
+        (config or {}).get("configurable") if config else None
+    )
+
+    payload: list = []
+    if user_ctx_block:
+        payload.append(SystemMessage(content=user_ctx_block, name="user_context"))
+    payload += [
         SystemMessage(content=_SEARCH_SYNTHESIS_PROMPT),
         SystemMessage(content=result_block),
         HumanMessage(content=user_question or "Resuma o que foi encontrado."),
@@ -905,6 +924,7 @@ async def _synthesize_after_parallel(
     state: State,
     session_id: str | None,
     state_update_extra: dict,
+    config: RunnableConfig | None = None,
 ) -> Command:
     """Síntese pós-parallel (C5): integra resultados de múltiplos agentes paralelos.
 
@@ -931,7 +951,14 @@ async def _synthesize_after_parallel(
         results_block += f"**Instrução:** {task}\n\n"
         results_block += f"{response}\n\n"
 
-    payload: list = [
+    user_ctx_block = build_user_context_block(
+        (config or {}).get("configurable") if config else None
+    )
+
+    payload: list = []
+    if user_ctx_block:
+        payload.append(SystemMessage(content=user_ctx_block, name="user_context"))
+    payload += [
         SystemMessage(content=_PARALLEL_SYNTHESIS_PROMPT),
         SystemMessage(content=results_block),
         HumanMessage(content=user_question or "Integre os resultados acima."),
@@ -1071,15 +1098,21 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
 
     if _is_post_coder(state):
         # coder_finalize escreveu `coder_result` em state — sintetiza.
-        return await _synthesize_after_coder(state, session_id, state_update_extra)
+        return await _synthesize_after_coder(
+            state, session_id, state_update_extra, config=config
+        )
 
     if _is_post_search(state):
         # search_finalize escreveu `search_result` em state — sintetiza.
-        return await _synthesize_after_search(state, session_id, state_update_extra)
+        return await _synthesize_after_search(
+            state, session_id, state_update_extra, config=config
+        )
 
     # C5 — parallel_dispatch escreveu `parallel_results` em state — sintetiza.
     if state.get("parallel_results"):
-        return await _synthesize_after_parallel(state, session_id, state_update_extra)
+        return await _synthesize_after_parallel(
+            state, session_id, state_update_extra, config=config
+        )
 
     context_messages = _select_context_messages(all_messages)
     context_block = _build_context_block(state, session_id)
@@ -1097,8 +1130,16 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
             "custom_system_prompt", ""
         )
 
+    # Contexto do usuário (nome + idioma do locale do SO) — injetado antes
+    # de tudo para que o LLM "saiba com quem fala" desde o primeiro token.
+    user_ctx_block = build_user_context_block(
+        config.get("configurable") if config else None
+    )
+
     # Montar payload para o LLM
     llm_messages: list = []
+    if user_ctx_block:
+        llm_messages.append(SystemMessage(content=user_ctx_block, name="user_context"))
     if custom_system_prompt:
         llm_messages.append(
             SystemMessage(

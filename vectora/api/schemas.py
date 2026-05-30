@@ -26,6 +26,9 @@ class ChatConfig(BaseModel):
     custom_system_prompt: str = ""  # L4 — instrução personalizada por usuário
     permission_mode: str = "ask"  # R2 — ask|accept_edits|plan|auto|bypass
     reasoning_effort: str = ""  # R4 — low|medium|high|max (vazio = default do modelo)
+    # Idioma preferido do usuário (BCP-47 ou código curto: pt, en, es). Quando
+    # vazio, o agente segue a heurística "adapte ao idioma da conversa".
+    language: str = ""
 
 
 # ---------------------------------------------------------------------------
