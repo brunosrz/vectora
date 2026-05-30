@@ -313,3 +313,321 @@ async def create_worktree(body: CreateWorktreeRequest) -> StatusResponse:
     return StatusResponse(
         status=result.get("status", "error"), message=result.get("message", "")
     )
+
+
+# ---------------------------------------------------------------------------
+# Workbench views (Bloco T cont., T6/T7) — REST-style /workspaces/{id}/...
+# ---------------------------------------------------------------------------
+#
+# Endpoints específicos consumidos pelas abas Arquivos e Diff do Workbench.
+# Mantidos num router separado com prefixo /workspaces para conviver com o
+# router Connect-style acima sem colisão.
+
+view_router = APIRouter(prefix="/workspaces", tags=["workspaces-view"])
+
+
+class TreeEntry(BaseModel):
+    name: str
+    path: str  # caminho relativo ao workspace
+    kind: str  # "dir" | "file"
+    size: int | None = None
+
+
+class TreeResponse(BaseModel):
+    path: str
+    entries: list[TreeEntry]
+
+
+class FileResponse(BaseModel):
+    path: str
+    kind: str  # "text" | "binary"
+    content: str | None = None
+    size: int = 0
+    truncated: bool = False
+
+
+class DiffFile(BaseModel):
+    path: str
+    status: str  # "M" | "A" | "D" | "R"
+    additions: int = 0
+    deletions: int = 0
+
+
+class DiffHunk(BaseModel):
+    header: str
+    lines: list[str]
+
+
+class DiffSummary(BaseModel):
+    is_git_repo: bool
+    total_additions: int = 0
+    total_deletions: int = 0
+    files: list[DiffFile]
+
+
+class DiffFileResponse(BaseModel):
+    path: str
+    hunks: list[DiffHunk]
+
+
+# Tamanho máximo lido pela aba Arquivos (previne payload gigante).
+_MAX_FILE_PREVIEW = 256 * 1024  # 256 kB
+
+# Diretórios ignorados por padrão na árvore — reduz ruído típico de projetos.
+_IGNORED_DIR_NAMES = {
+    ".git",
+    ".hg",
+    ".svn",
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".next",
+    ".turbo",
+    ".cache",
+    "dist",
+    "build",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+}
+
+
+def _resolve_inside(workspace_id: str, rel_path: str) -> Path | None:
+    """Resolve ``rel_path`` para um caminho dentro do workspace ou None.
+
+    Reusa o helper de segurança do Bloco Q4 (`resolve_within_workspace`),
+    garantindo que `..` e symlinks para fora não escapem da pasta confiável.
+    """
+    from vectora.services.security import resolve_within_workspace
+    from vectora.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return None
+    base = Path(ws.cwd)
+    candidate = base if not rel_path else base / rel_path
+    return resolve_within_workspace(str(candidate), base)
+
+
+@view_router.get("/{workspace_id}/tree", response_model=TreeResponse)
+async def workspace_tree(
+    workspace_id: str,
+    path: Annotated[str, Query()] = "",
+) -> TreeResponse:
+    """Lista entradas de um diretório dentro do workspace ativo.
+
+    `path` é relativo ao workspace. Sem path → raiz. Diretórios típicos de
+    build/cache são ocultados para enxugar a árvore.
+    """
+    resolved = _resolve_inside(workspace_id, path)
+    if resolved is None or not resolved.exists() or not resolved.is_dir():
+        return TreeResponse(path=path, entries=[])
+
+    from vectora.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    base = Path(ws.cwd) if ws else resolved
+
+    entries: list[TreeEntry] = []
+    try:
+        for item in sorted(
+            resolved.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())
+        ):
+            try:
+                is_dir = item.is_dir()
+            except OSError:
+                continue
+            if is_dir and item.name in _IGNORED_DIR_NAMES:
+                continue
+            try:
+                rel = str(item.relative_to(base))
+            except ValueError:
+                continue
+            size: int | None = None
+            if not is_dir:
+                try:
+                    size = item.stat().st_size
+                except OSError:
+                    size = None
+            entries.append(
+                TreeEntry(
+                    name=item.name,
+                    path=rel.replace("\\", "/"),
+                    kind="dir" if is_dir else "file",
+                    size=size,
+                )
+            )
+    except PermissionError:
+        pass
+
+    return TreeResponse(path=path, entries=entries)
+
+
+@view_router.get("/{workspace_id}/file", response_model=FileResponse)
+async def workspace_file(
+    workspace_id: str,
+    path: Annotated[str, Query()],
+) -> FileResponse:
+    """Lê o conteúdo (texto truncado) de um arquivo dentro do workspace."""
+    resolved = _resolve_inside(workspace_id, path)
+    if resolved is None or not resolved.exists() or not resolved.is_file():
+        return FileResponse(path=path, kind="text", content=None, size=0)
+
+    try:
+        size = resolved.stat().st_size
+    except OSError:
+        size = 0
+
+    # Detecção rudimentar de binário: byte nulo nos primeiros 8 kB.
+    try:
+        with resolved.open("rb") as f:
+            head = f.read(8192)
+    except OSError:
+        return FileResponse(path=path, kind="text", content=None, size=size)
+
+    if b"\x00" in head:
+        return FileResponse(path=path, kind="binary", size=size)
+
+    try:
+        with resolved.open("r", encoding="utf-8", errors="replace") as f:
+            content = f.read(_MAX_FILE_PREVIEW + 1)
+    except OSError:
+        return FileResponse(path=path, kind="text", content=None, size=size)
+
+    truncated = len(content) > _MAX_FILE_PREVIEW
+    if truncated:
+        content = content[:_MAX_FILE_PREVIEW]
+    return FileResponse(
+        path=path,
+        kind="text",
+        content=content,
+        size=size,
+        truncated=truncated,
+    )
+
+
+def _parse_unified_diff(diff_text: str) -> list[DiffHunk]:
+    """Quebra um diff unificado em hunks (sem a linha 'diff --git' inicial)."""
+    hunks: list[DiffHunk] = []
+    current: DiffHunk | None = None
+    for line in diff_text.splitlines():
+        if line.startswith("@@"):
+            if current is not None:
+                hunks.append(current)
+            current = DiffHunk(header=line, lines=[])
+        elif current is not None:
+            current.lines.append(line)
+    if current is not None:
+        hunks.append(current)
+    return hunks
+
+
+@view_router.get("/{workspace_id}/git/diff", response_model=DiffSummary)
+async def workspace_git_diff(workspace_id: str) -> DiffSummary:
+    """Retorna o resumo do diff (uncommitted) do workspace.
+
+    Inclui working tree + staged (HEAD..workdir). Para workspaces não-git
+    retorna ``is_git_repo=False`` e lista vazia.
+    """
+    from vectora.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None or not ws.cwd:
+        return DiffSummary(is_git_repo=False, files=[])
+
+    try:
+        from git import Repo  # type: ignore[import-not-found]
+        from git.exc import (  # type: ignore[import-not-found]
+            InvalidGitRepositoryError,
+            NoSuchPathError,
+        )
+    except Exception:
+        return DiffSummary(is_git_repo=False, files=[])
+
+    try:
+        repo = Repo(ws.cwd, search_parent_directories=False)
+    except (InvalidGitRepositoryError, NoSuchPathError):
+        return DiffSummary(is_git_repo=False, files=[])
+
+    files: list[DiffFile] = []
+    total_add = 0
+    total_del = 0
+
+    # `git diff HEAD` cobre staged + unstaged. Vazio = working tree limpa.
+    try:
+        diff_text = repo.git.diff("HEAD", numstat=True) or ""
+    except Exception:
+        diff_text = ""
+
+    for raw in diff_text.splitlines():
+        parts = raw.split("\t")
+        if len(parts) < 3:
+            continue
+        adds_s, dels_s, path = parts[0], parts[1], parts[2]
+        try:
+            adds = int(adds_s) if adds_s != "-" else 0
+            dels = int(dels_s) if dels_s != "-" else 0
+        except ValueError:
+            adds = dels = 0
+
+        # Status: M/A/D — derivado de name-status (ainda barato).
+        status = "M"
+        try:
+            ns = repo.git.diff("HEAD", "--name-status", path) or ""
+            head = ns.splitlines()[0].split("\t", 1)[0] if ns else "M"
+            status = head[:1] if head else "M"
+        except Exception:
+            status = "M"
+
+        files.append(
+            DiffFile(
+                path=path.replace("\\", "/"),
+                status=status,
+                additions=adds,
+                deletions=dels,
+            )
+        )
+        total_add += adds
+        total_del += dels
+
+    return DiffSummary(
+        is_git_repo=True,
+        total_additions=total_add,
+        total_deletions=total_del,
+        files=files,
+    )
+
+
+@view_router.get("/{workspace_id}/git/diff/file", response_model=DiffFileResponse)
+async def workspace_git_diff_file(
+    workspace_id: str,
+    path: Annotated[str, Query()],
+) -> DiffFileResponse:
+    """Hunks unificados de um arquivo específico (lazy load do diff-tab)."""
+    from vectora.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return DiffFileResponse(path=path, hunks=[])
+
+    try:
+        from git import Repo  # type: ignore[import-not-found]
+        from git.exc import (  # type: ignore[import-not-found]
+            InvalidGitRepositoryError,
+            NoSuchPathError,
+        )
+    except Exception:
+        return DiffFileResponse(path=path, hunks=[])
+
+    try:
+        repo = Repo(ws.cwd, search_parent_directories=False)
+    except (InvalidGitRepositoryError, NoSuchPathError):
+        return DiffFileResponse(path=path, hunks=[])
+
+    try:
+        diff_text = repo.git.diff("HEAD", "--", path) or ""
+    except Exception:
+        diff_text = ""
+
+    return DiffFileResponse(path=path, hunks=_parse_unified_diff(diff_text))

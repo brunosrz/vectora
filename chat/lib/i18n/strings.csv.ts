@@ -376,6 +376,22 @@ terminal.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem wo
 terminal.untrusted_title,Workspace not trusted,Espacio no confiable,Workspace não confiável
 terminal.untrusted_hint,The terminal only opens in folders you marked as trusted.,La terminal solo abre en carpetas marcadas como confiables.,O terminal só abre em pastas marcadas como confiáveis.
 terminal.no_sandbox_warning,Shell sem sandbox: tem o mesmo poder de um terminal local na pasta confiada.,Shell sin sandbox: tiene el mismo poder que un terminal local en la carpeta confiable.,Shell sem sandbox: tem o mesmo poder de um terminal local na pasta confiada.
+# Workbench (Bloco T cont.)
+workbench.toggle,Toggle workbench,Mostrar/ocultar workbench,Mostrar/ocultar workbench
+workbench.close,Close,Cerrar,Fechar
+workbench.tab.terminal,Terminal,Terminal,Terminal
+workbench.tab.files,Files,Archivos,Arquivos
+workbench.tab.diff,Diff,Diff,Diff
+workbench.tab.plan,Plan,Plan,Plano
+workbench.files.filter,Filter files…,Filtrar archivos…,Filtrar arquivos…
+workbench.files.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
+workbench.files.binary,"Binary file ({size} bytes) — preview not shown.","Archivo binario ({size} bytes) — vista previa no disponible.","Arquivo binário ({size} bytes) — preview indisponível."
+workbench.files.truncated,File truncated for preview.,Archivo truncado para vista previa.,Arquivo truncado para preview.
+workbench.diff.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
+workbench.diff.not_git,This folder is not a git repository.,Esta carpeta no es un repositorio git.,Esta pasta não é um repositório git.
+workbench.diff.clean,No pending changes.,Sin cambios pendientes.,Sem mudanças pendentes.
+workbench.diff.summary,"{n} modified files","{n} archivos modificados","{n} arquivos modificados"
+workbench.plan.empty,No plans yet — ask Vectora to draft one.,Sin planes — pídele uno a Vectora.,Sem planos — peça um ao Vectora.
 `;
 
 export default CSV;

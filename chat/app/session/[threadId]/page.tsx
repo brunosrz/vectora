@@ -29,9 +29,8 @@ import {
   Panel,
   Separator as PanelResizeHandle,
 } from "react-resizable-panels";
-import { TerminalSquare } from "lucide-react";
-import { TerminalPanel } from "@/components/terminal/terminal-panel";
-import { useTerminalsStore } from "@/lib/stores/terminals-store";
+import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
+import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 
 function SessionContent() {
   const params = useParams();
@@ -279,9 +278,10 @@ function SessionContent() {
     setForceShowTooltip((prev) => prev + 1);
   };
 
-  // Bloco T — split do terminal
-  const showTerminal = useTerminalsStore((s) => s.isOpen(threadId));
-  const toggleTerminal = useTerminalsStore((s) => s.togglePanel);
+  // Bloco T — split do workbench (Terminal · Arquivos · Diff · Plano)
+  const showWorkbench = useWorkbenchStore((s) => s.isOpen(threadId));
+  const toggleWorkbench = useWorkbenchStore((s) => s.togglePanel);
+  const setActiveTab = useWorkbenchStore((s) => s.setActiveTab);
 
   useKeyboardShortcuts([
     {
@@ -342,10 +342,53 @@ function SessionContent() {
       shortcut: {
         key: "`",
         metaKey: true,
-        description: "Toggle terminal",
+        description: "Toggle workbench (terminal)",
         category: "Navigation",
       },
-      handler: () => toggleTerminal(threadId),
+      handler: () => {
+        setActiveTab(threadId, "terminal");
+        toggleWorkbench(threadId);
+      },
+    },
+    {
+      shortcut: {
+        key: "T",
+        metaKey: true,
+        shiftKey: true,
+        description: "Workbench: Terminal",
+        category: "Workbench",
+      },
+      handler: () => setActiveTab(threadId, "terminal"),
+    },
+    {
+      shortcut: {
+        key: "F",
+        metaKey: true,
+        shiftKey: true,
+        description: "Workbench: Files",
+        category: "Workbench",
+      },
+      handler: () => setActiveTab(threadId, "files"),
+    },
+    {
+      shortcut: {
+        key: "D",
+        metaKey: true,
+        shiftKey: true,
+        description: "Workbench: Diff",
+        category: "Workbench",
+      },
+      handler: () => setActiveTab(threadId, "diff"),
+    },
+    {
+      shortcut: {
+        key: "P",
+        metaKey: true,
+        shiftKey: true,
+        description: "Workbench: Plan",
+        category: "Workbench",
+      },
+      handler: () => setActiveTab(threadId, "plan"),
     },
   ]);
 
@@ -367,7 +410,7 @@ function SessionContent() {
         />
         <div className="flex-1 overflow-hidden relative">
           <PanelGroup orientation="horizontal" className="h-full">
-            <Panel defaultSize={showTerminal ? 60 : 100} minSize={30}>
+            <Panel defaultSize={showWorkbench ? 60 : 100} minSize={30}>
               <div className="h-full flex flex-col">
                 <Header
                   showToolCalls={showToolCalls}
@@ -395,25 +438,15 @@ function SessionContent() {
                 />
               </div>
             </Panel>
-            {showTerminal && (
+            {showWorkbench && (
               <>
                 <PanelResizeHandle className="w-1 bg-border/40 hover:bg-border transition-colors" />
                 <Panel defaultSize={40} minSize={20}>
-                  <TerminalPanel threadId={threadId} />
+                  <WorkbenchPanel threadId={threadId} />
                 </Panel>
               </>
             )}
           </PanelGroup>
-
-          {/* Botão flutuante para abrir/fechar o terminal (atalho Ctrl+`) */}
-          <button
-            onClick={() => toggleTerminal(threadId)}
-            className="absolute bottom-3 right-3 z-40 flex items-center justify-center w-9 h-9 rounded-full bg-background border border-border shadow-md hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors"
-            title="Ctrl+`"
-            aria-label="Terminal"
-          >
-            <TerminalSquare className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </>

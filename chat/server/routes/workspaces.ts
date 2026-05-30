@@ -94,4 +94,47 @@ workspaces.post("/worktrees", async (c) =>
   proxyPost(c, "CreateWorktree", await c.req.json()),
 );
 
+// ─── Workbench views (T6/T7) ────────────────────────────────────────────────
+// Estes endpoints REST batem direto no router REST `/workspaces/{id}/...`,
+// sem passar pelo prefix Connect-style usado nas rotas acima.
+
+async function proxyView(c: any, path: string, search = "") {
+  try {
+    const res = await fetch(`${VECTORA_API_URL}/workspaces${path}${search}`, {
+      headers: cookieHeader(c.req.header("Cookie")),
+    });
+    const data = await res.json();
+    return c.json(data, res.status as 200);
+  } catch {
+    return c.json({ error: "Backend indisponível" }, 503);
+  }
+}
+
+workspaces.get("/:id/tree", (c) => {
+  const id = c.req.param("id");
+  const path = c.req.query("path") ?? "";
+  return proxyView(c, `/${id}/tree`, `?path=${encodeURIComponent(path)}`);
+});
+
+workspaces.get("/:id/file", (c) => {
+  const id = c.req.param("id");
+  const path = c.req.query("path") ?? "";
+  return proxyView(c, `/${id}/file`, `?path=${encodeURIComponent(path)}`);
+});
+
+workspaces.get("/:id/git/diff", (c) => {
+  const id = c.req.param("id");
+  return proxyView(c, `/${id}/git/diff`);
+});
+
+workspaces.get("/:id/git/diff/file", (c) => {
+  const id = c.req.param("id");
+  const path = c.req.query("path") ?? "";
+  return proxyView(
+    c,
+    `/${id}/git/diff/file`,
+    `?path=${encodeURIComponent(path)}`,
+  );
+});
+
 export default workspaces;

@@ -7,6 +7,7 @@ import { AgentSettings, type AgentConfig } from "./agent-settings";
 import { GitStatusBadge } from "./git-status-badge";
 import { UserMenu } from "./user-menu";
 import { WorkspaceSelector } from "./workspace-selector";
+import { WorkbenchToggle } from "@/components/workbench/workbench-toggle";
 import { useT } from "@/lib/i18n";
 
 interface HeaderProps {
@@ -58,6 +59,7 @@ export function Header({
         <div className="flex items-center gap-3">
           <GitStatusBadge />
           <UserMenu />
+          <WorkbenchToggle />
           {agentConfig && onAgentConfigChange && (
             <AgentSettings
               config={agentConfig}

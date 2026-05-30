@@ -31,6 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response as FastAPIResponse
 
 from vectora.api.handlers.admin import router as admin_router
+from vectora.api.handlers.artifacts import router as artifacts_router
 from vectora.api.handlers.auth import router as auth_router
 from vectora.api.handlers.chat import router as chat_router
 from vectora.api.handlers.memory import router as memory_router
@@ -40,6 +41,7 @@ from vectora.api.handlers.terminal import router as terminal_router
 from vectora.api.handlers.threads import router as thread_router
 from vectora.api.handlers.tools import router as tools_router
 from vectora.api.handlers.workspaces import router as workspace_router
+from vectora.api.handlers.workspaces import view_router as workspace_view_router
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +199,8 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(oauth_router)
     app.include_router(admin_router)
     app.include_router(workspace_router)
+    app.include_router(workspace_view_router)
+    app.include_router(artifacts_router)
     app.include_router(plugins_router)
     app.include_router(tools_router)
     app.include_router(terminal_router)

@@ -8,6 +8,7 @@
 
 import { Hono } from "hono";
 import adminRoutes from "./routes/admin";
+import artifactsRoutes from "./routes/artifacts";
 import authRoutes from "./routes/auth";
 import chatRoutes from "./routes/chat";
 import healthRoutes from "./routes/health";
@@ -30,6 +31,7 @@ app.route("/admin", adminRoutes);
 app.route("/workspaces", workspacesRoutes);
 app.route("/plugins", pluginsRoutes);
 app.route("/tools", toolsRoutes);
+app.route("/artifacts", artifactsRoutes);
 
 // Métricas: proxy para o endpoint /metrics do FastAPI
 app.get("/metrics", async (c) => {
