@@ -31,6 +31,7 @@ import {
 } from "react-resizable-panels";
 import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
+import { useHydrated } from "@/lib/hooks/use-hydrated";
 
 function SessionContent() {
   const params = useParams();
@@ -279,7 +280,13 @@ function SessionContent() {
   };
 
   // Bloco T — split do workbench (Terminal · Arquivos · Diff · Plano)
-  const showWorkbench = useWorkbenchStore((s) => s.isOpen(threadId));
+  // `useHydrated` evita hydration mismatch: o store usa persist do Zustand,
+  // então isOpen/splitSize partem do default no SSR e mudam para os valores
+  // do localStorage no primeiro effect. Sem o gate, o PanelGroup ganhava
+  // filhos diferentes entre server e client → "Hydration failed".
+  const hydrated = useHydrated();
+  const showWorkbenchRaw = useWorkbenchStore((s) => s.isOpen(threadId));
+  const showWorkbench = hydrated && showWorkbenchRaw;
   const toggleWorkbench = useWorkbenchStore((s) => s.togglePanel);
   const setActiveTab = useWorkbenchStore((s) => s.setActiveTab);
   const workbenchSplitSize = useWorkbenchStore((s) => s.splitSize);
