@@ -14,7 +14,7 @@ const auth = new Hono();
 /** Proxy genérico que repassa headers de cookie em ambas as direções. */
 async function proxyAuth(
   path: string,
-  method: "GET" | "POST" | "DELETE",
+  method: "GET" | "POST" | "DELETE" | "PATCH",
   body: unknown | null,
   incomingCookies: string,
 ) {
@@ -106,6 +106,17 @@ auth.get("/me", async (c) => {
     "/auth/me",
     "GET",
     null,
+    c.req.header("Cookie") ?? "",
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+auth.patch("/me", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const res = await proxyAuth(
+    "/auth/me",
+    "PATCH",
+    body,
     c.req.header("Cookie") ?? "",
   );
   return c.json(await res.json(), res.status as 200);

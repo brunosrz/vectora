@@ -46,7 +46,10 @@ export function UserMenu() {
     return null;
   }
 
-  const initial = user.email[0]?.toUpperCase() ?? "?";
+  // Nome tem prioridade quando existe; fallback para o e-mail. Inicial usa
+  // a primeira letra "visível" (suporta acentos via codepoints).
+  const displayName = user.name?.trim() || user.email;
+  const initial = Array.from(displayName)[0]?.toUpperCase() ?? "?";
   const roleLabel = ROLE_LABELS[user.role] ?? user.role;
   const roleColor = ROLE_COLORS[user.role] ?? "text-muted-foreground";
 
@@ -57,7 +60,7 @@ export function UserMenu() {
         <button
           onClick={() => setOpen((o) => !o)}
           className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 hover:bg-primary/30 text-primary font-semibold text-sm transition-colors select-none"
-          title={user.email}
+          title={displayName}
           aria-label="Menu do usuário"
           aria-expanded={open}
         >
@@ -75,8 +78,13 @@ export function UserMenu() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {user.email}
+                    {displayName}
                   </p>
+                  {user.name && user.name.trim() && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </p>
+                  )}
                   <p className={`text-xs font-medium ${roleColor}`}>
                     {roleLabel}
                   </p>

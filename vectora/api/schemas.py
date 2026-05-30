@@ -273,6 +273,7 @@ class GetToolsResponse(BaseModel):
 class SignupRequest(BaseModel):
     email: str
     password: str
+    name: str = ""
     invite_token: str = ""
 
 
@@ -329,6 +330,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     role: str
+    name: str = ""
     created_at: str
     last_login_at: str | None = None
 
@@ -338,9 +340,16 @@ class UserResponse(BaseModel):
             id=user.id,
             email=user.email,
             role=user.role,
+            name=getattr(user, "name", "") or "",
             created_at=user.created_at,
             last_login_at=getattr(user, "last_login_at", None),
         )
+
+
+class UpdateProfileRequest(BaseModel):
+    """Atualização parcial de perfil — campos opcionais (PATCH /auth/me)."""
+
+    name: str | None = None
 
 
 class TokenResponse(BaseModel):

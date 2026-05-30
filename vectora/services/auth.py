@@ -48,6 +48,7 @@ class User(BaseModel):
     id: str
     email: str
     role: Role
+    name: str = ""
     env_overrides: dict[str, str] = Field(default_factory=dict)
     created_at: str
     last_login_at: str | None = None
@@ -213,6 +214,7 @@ async def _ensure_schema(db: Any) -> None:
             email              TEXT NOT NULL UNIQUE,
             password_hash      TEXT NOT NULL,
             role               TEXT NOT NULL DEFAULT 'member',
+            name               TEXT NOT NULL DEFAULT '',
             env_overrides_json TEXT NOT NULL DEFAULT '{}',
             created_at         TEXT NOT NULL,
             last_login_at      TEXT
@@ -249,6 +251,11 @@ async def _ensure_schema(db: Any) -> None:
             created_at  TEXT    NOT NULL
         );
     """)
+    # Migrations idempotentes: ALTER TABLE para colunas adicionadas após o
+    # release inicial. SQLite não tem "ADD COLUMN IF NOT EXISTS", então
+    # capturamos o erro de coluna duplicada.
+    with contextlib.suppress(Exception):
+        await db.execute("ALTER TABLE users ADD COLUMN name TEXT NOT NULL DEFAULT ''")
     await db.commit()
 
 
@@ -263,10 +270,17 @@ def _row_to_user(row: Any) -> UserInDB:
     env = {}
     with contextlib.suppress(Exception):
         env = json.loads(row["env_overrides_json"] or "{}")
+    # `name` foi adicionado em migration posterior; usa getattr-style para
+    # tolerar rows antigas no teste/banco que ainda não passou pelo ALTER.
+    try:
+        name = row["name"] or ""
+    except (IndexError, KeyError):
+        name = ""
     return UserInDB(
         id=row["id"],
         email=row["email"],
         role=row["role"],
+        name=name,
         env_overrides=env,
         env_overrides_json=row["env_overrides_json"],
         password_hash=row["password_hash"],
@@ -293,12 +307,19 @@ async def has_users() -> bool:
 
 
 async def signup(
-    email: str, password: str, *, role: Role | None = None
+    email: str,
+    password: str,
+    *,
+    role: Role | None = None,
+    name: str = "",
 ) -> tuple[User, str, str]:
     """Cria um novo usuário.
 
     O primeiro usuário vira root automaticamente. Quando ``role`` é informado
     (signup via convite), usa a role do convite; caso contrário, member.
+
+    ``name`` aceita qualquer caractere UTF-8 imprimível (espaços e
+    acentuação inclusos); limitado a 100 caracteres para evitar abuso.
 
     Returns:
         (user, access_token, refresh_token)
@@ -308,6 +329,9 @@ async def signup(
     """
     if len(password) < 12:
         raise ValueError("Senha deve ter no mínimo 12 caracteres.")
+
+    # Sanitiza o nome: trim, normaliza espaços internos, limita o tamanho.
+    name_clean = " ".join(name.split())[:100]
 
     db = await _get_db()
     count = await _count_users(db)
@@ -322,8 +346,9 @@ async def signup(
 
     try:
         await db.execute(
-            "INSERT INTO users (id, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)",
-            (user_id, email.lower().strip(), ph, role, now),
+            "INSERT INTO users (id, email, password_hash, role, name, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, email.lower().strip(), ph, role, name_clean, now),
         )
         await db.commit()
     except Exception as exc:
@@ -331,7 +356,13 @@ async def signup(
             raise ValueError("E-mail já cadastrado.") from exc
         raise
 
-    user = User(id=user_id, email=email.lower().strip(), role=role, created_at=now)
+    user = User(
+        id=user_id,
+        email=email.lower().strip(),
+        role=role,
+        name=name_clean,
+        created_at=now,
+    )
     access_token = create_access_token(user)
     refresh_token = await _issue_refresh_token(db, user_id)
 
@@ -461,10 +492,34 @@ async def get_user_by_id(user_id: str) -> User | None:
         id=u.id,
         email=u.email,
         role=u.role,
+        name=u.name,
         env_overrides=u.env_overrides,
         created_at=u.created_at,
         last_login_at=u.last_login_at,
     )
+
+
+async def update_profile(user_id: str, *, name: str) -> User:
+    """Atualiza campos do perfil do usuário (atualmente: nome).
+
+    ``name`` aceita UTF-8 livre, espaços, acentos; trim+normalização interna,
+    limite de 100 caracteres.
+
+    Raises:
+        ValueError: usuário não encontrado.
+    """
+    name_clean = " ".join(name.split())[:100]
+    db = await _get_db()
+    cur = await db.execute(
+        "UPDATE users SET name = ? WHERE id = ?", (name_clean, user_id)
+    )
+    await db.commit()
+    if cur.rowcount == 0:
+        raise ValueError("Usuário não encontrado.")
+    updated = await get_user_by_id(user_id)
+    if updated is None:
+        raise ValueError("Usuário não encontrado.")
+    return updated
 
 
 async def change_password(user_id: str, old_password: str, new_password: str) -> None:

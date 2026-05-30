@@ -6,6 +6,8 @@ export interface AuthUser {
   id: string;
   email: string;
   role: Role;
+  /** Nome de exibição do usuário (UTF-8 livre, espaços permitidos). */
+  name?: string;
   created_at: string;
   last_login_at?: string | null;
 }
@@ -20,6 +22,7 @@ export interface TokenResponse {
 export interface SignupPayload {
   email: string;
   password: string;
+  name?: string;
 }
 
 export interface SigninPayload {

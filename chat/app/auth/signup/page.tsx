@@ -12,6 +12,14 @@ import type { AuthUser } from "@/lib/types/auth";
 
 const schema = z
   .object({
+    // Nome aceita qualquer caractere UTF-8 (acentos, espaços, etc.). O
+    // backend trim+normaliza espaços internos e limita a 100 chars; aqui
+    // só exigimos um mínimo razoável.
+    name: z
+      .string()
+      .trim()
+      .min(1, "Informe seu nome.")
+      .max(100, "Nome muito longo (máx. 100 caracteres)."),
     email: z.string().email("E-mail inválido."),
     password: z.string().min(12, "Senha deve ter no mínimo 12 caracteres."),
     confirm: z.string(),
@@ -25,6 +33,7 @@ export default function SignUpPage() {
   const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -86,7 +95,7 @@ export default function SignUpPage() {
     setServerError(null);
     setErrors({});
 
-    const result = schema.safeParse({ email, password, confirm });
+    const result = schema.safeParse({ name, email, password, confirm });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       for (const err of result.error.issues) {
@@ -102,7 +111,12 @@ export default function SignUpPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, invite_token: inviteToken }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email,
+          password,
+          invite_token: inviteToken,
+        }),
       });
 
       const data = await res.json();
@@ -170,6 +184,30 @@ export default function SignUpPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="name"
+            >
+              Nome
+            </label>
+            <input
+              id="name"
+              type="text"
+              // UTF-8 livre — acentos, espaços, ç, traços ('Bruno Soares', 'João D'Ávila' etc.)
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              maxLength={100}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
+              placeholder="Como o Vectora deve te chamar?"
+            />
+            {errors.name && (
+              <p className="text-xs text-destructive">{errors.name}</p>
+            )}
+          </div>
+
           <div className="space-y-1">
             <label
               className="text-sm font-medium text-foreground"

@@ -33,6 +33,7 @@ from vectora.api.schemas import (
     SignoutRequest,
     SignupRequest,
     TokenResponse,
+    UpdateProfileRequest,
     UpdateRoleRequest,
     UserListResponse,
     UserResponse,
@@ -142,7 +143,7 @@ async def signup_endpoint(
 
     try:
         user, access_token, refresh_token = await auth_svc.signup(
-            body.email, body.password, role=invite_role
+            body.email, body.password, role=invite_role, name=body.name
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -232,6 +233,27 @@ async def me_endpoint(request: Request) -> UserResponse:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
+    return UserResponse.from_user(user)
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me_endpoint(
+    body: UpdateProfileRequest, request: Request
+) -> UserResponse:
+    """Atualiza campos do próprio perfil. Atualmente: apenas ``name``."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Não autenticado.")
+
+    from vectora.services import auth as auth_svc
+
+    if body.name is not None:
+        try:
+            updated = await auth_svc.update_profile(user.id, name=body.name)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return UserResponse.from_user(updated)
+
     return UserResponse.from_user(user)
 
 
