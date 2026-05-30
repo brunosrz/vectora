@@ -1,10 +1,15 @@
 "use client";
 
 /**
- * FilesTab (T6) — file tree do workspace ativo.
+ * FilesTab (T6 + T11.2) — file tree do workspace ativo.
  *
- * Pequena árvore lazy-expanded com filtro/busca no topo. Viewer inline
- * read-only para arquivos selecionados (reusa CodeBlockViewer).
+ * Estado vive no workbench-store (slice `files`):
+ *   - árvore expandida e entradas já carregadas → sobrevivem a remount
+ *   - arquivo aberto + conteúdo → mesmo
+ *   - filtro de busca → idem
+ *
+ * SWR via `useWorkbenchSWR`: render imediato do cache + revalidação
+ * silenciosa quando stale. A verdade vive no backend.
  */
 
 import {
@@ -14,48 +19,36 @@ import {
   Loader2,
   Search,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/i18n";
+import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
+import {
+  WORKBENCH_STALE_MS,
+  useWorkbenchStore,
+  type FileContent,
+  type FileEntry,
+} from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
-
-interface Entry {
-  name: string;
-  path: string;
-  kind: "dir" | "file";
-  size?: number;
-}
-
-interface TreeResponse {
-  path: string;
-  entries: Entry[];
-}
-
-interface FileResponse {
-  path: string;
-  kind: "text" | "binary";
-  content?: string;
-  size: number;
-  truncated?: boolean;
-}
 
 async function fetchTree(
   workspaceId: string,
   path: string,
-): Promise<TreeResponse | null> {
+): Promise<FileEntry[] | null> {
   const qs = new URLSearchParams({ path });
   const res = await fetch(
     `/api/workspaces/${encodeURIComponent(workspaceId)}/tree?${qs}`,
   );
   if (!res.ok) return null;
-  return res.json();
+  const data = await res.json();
+  return data.entries ?? [];
 }
 
 async function fetchFile(
   workspaceId: string,
   path: string,
-): Promise<FileResponse | null> {
+): Promise<FileContent | null> {
   const qs = new URLSearchParams({ path });
   const res = await fetch(
     `/api/workspaces/${encodeURIComponent(workspaceId)}/file?${qs}`,
@@ -81,26 +74,30 @@ function DirNode({
   filter,
   onOpenFile,
 }: DirNodeProps) {
-  const [open, setOpen] = useState(depth === 0);
-  const [entries, setEntries] = useState<Entry[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const expanded = useWorkbenchStore((s) =>
+    depth === 0 ? true : s.getFiles(workspaceId).expandedDirs.includes(path),
+  );
+  const entries = useWorkbenchStore(
+    (s) => s.getFiles(workspaceId).entriesByDir[path],
+  );
+  const fetchedAt = useWorkbenchStore(
+    (s) => s.getFiles(workspaceId).fetchedAt[path] ?? 0,
+  );
+  const toggleExpanded = useWorkbenchStore((s) => s.toggleExpanded);
+  const setFilesEntries = useWorkbenchStore((s) => s.setFilesEntries);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const revalidate = useCallback(async () => {
     const data = await fetchTree(workspaceId, path);
-    setEntries(data?.entries ?? []);
-    setLoading(false);
-  }, [workspaceId, path]);
+    if (data) setFilesEntries(workspaceId, path, data);
+  }, [workspaceId, path, setFilesEntries]);
 
-  useEffect(() => {
-    if (open && entries === null) void load();
-  }, [open, entries, load]);
-
-  // refetch quando o workspace muda
-  useEffect(() => {
-    setEntries(null);
-    setOpen(depth === 0);
-  }, [workspaceId, depth]);
+  useWorkbenchSWR({
+    key: `files:${workspaceId}:${path}`,
+    hasCache: Array.isArray(entries),
+    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    revalidate,
+    skip: !expanded,
+  });
 
   const visible = useMemo(() => {
     if (!filter || !entries) return entries ?? [];
@@ -112,30 +109,29 @@ function DirNode({
     <div>
       {depth > 0 && (
         <button
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => toggleExpanded(workspaceId, path)}
           className="w-full flex items-center gap-1 px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm"
           style={{ paddingLeft: 8 + depth * 12 }}
         >
           <ChevronRight
-            className={`w-3 h-3 shrink-0 transition-transform ${open ? "rotate-90" : ""}`}
+            className={`w-3 h-3 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
           />
           <FolderClosed className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">{name}</span>
         </button>
       )}
-      {open && (
+      {expanded && (
         <div>
-          {loading && (
+          {!entries && (
             <div
               className="flex items-center gap-2 text-xs text-muted-foreground py-1"
               style={{ paddingLeft: 8 + (depth + 1) * 12 }}
             >
               <Loader2 className="w-3 h-3 animate-spin" />
-              {/* não traduzido — string interna mínima */}
               <span>…</span>
             </div>
           )}
-          {!loading &&
+          {entries &&
             visible.map((entry) =>
               entry.kind === "dir" ? (
                 <DirNode
@@ -173,20 +169,37 @@ interface FilesTabProps {
 export function FilesTab(_props: FilesTabProps) {
   const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
-  const [filter, setFilter] = useState("");
-  const [openFile, setOpenFile] = useState<FileResponse | null>(null);
-  const [loadingFile, setLoadingFile] = useState(false);
+  const wsId = workspace?.id ?? "";
+
+  const filter = useWorkbenchStore((s) => s.getFiles(wsId).filter);
+  const openPath = useWorkbenchStore((s) => s.getFiles(wsId).openPath);
+  const openContent = useWorkbenchStore((s) =>
+    openPath ? s.getFiles(wsId).contents[openPath] : undefined,
+  );
+  const setFilesFilter = useWorkbenchStore((s) => s.setFilesFilter);
+  const setOpenFile = useWorkbenchStore((s) => s.setOpenFile);
+  const setFileContent = useWorkbenchStore((s) => s.setFileContent);
 
   const handleOpenFile = useCallback(
-    async (path: string) => {
-      if (!workspace) return;
-      setLoadingFile(true);
-      const data = await fetchFile(workspace.id, path);
-      setOpenFile(data);
-      setLoadingFile(false);
+    (path: string) => {
+      if (!wsId) return;
+      setOpenFile(wsId, path);
     },
-    [workspace],
+    [wsId, setOpenFile],
   );
+
+  // Carrega o conteúdo do arquivo aberto via SWR.
+  useWorkbenchSWR({
+    key: `file:${wsId}:${openPath ?? ""}`,
+    hasCache: openContent !== undefined,
+    isStale: false, // conteúdo só revalida via invalidate (T11.5)
+    revalidate: async () => {
+      if (!wsId || !openPath) return;
+      const data = await fetchFile(wsId, openPath);
+      if (data) setFileContent(wsId, openPath, data);
+    },
+    skip: !openPath || !wsId,
+  });
 
   if (!workspace) {
     return (
@@ -196,6 +209,9 @@ export function FilesTab(_props: FilesTabProps) {
     );
   }
 
+  const showViewer = openPath !== null;
+  const loadingFile = showViewer && openContent === undefined;
+
   return (
     <div className="h-full flex flex-col">
       {/* Busca */}
@@ -204,7 +220,7 @@ export function FilesTab(_props: FilesTabProps) {
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
           <Input
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => setFilesFilter(wsId, e.target.value)}
             placeholder={t("workbench.files.filter")}
             className="h-7 text-xs pl-7"
           />
@@ -214,7 +230,7 @@ export function FilesTab(_props: FilesTabProps) {
       {/* Tree */}
       <div className="flex-1 overflow-y-auto py-1">
         <DirNode
-          workspaceId={workspace.id}
+          workspaceId={wsId}
           path=""
           name={workspace.name}
           depth={0}
@@ -224,14 +240,14 @@ export function FilesTab(_props: FilesTabProps) {
       </div>
 
       {/* Viewer */}
-      {(openFile || loadingFile) && (
+      {showViewer && (
         <div className="border-t border-border/60 max-h-[50%] flex flex-col">
           <div className="flex items-center justify-between px-2 py-1 bg-muted/30 text-xs">
             <span className="truncate font-mono text-muted-foreground">
-              {openFile?.path ?? "…"}
+              {openPath ?? "…"}
             </span>
             <button
-              onClick={() => setOpenFile(null)}
+              onClick={() => setOpenFile(wsId, null)}
               className="text-muted-foreground hover:text-foreground px-1"
               title={t("workbench.close")}
             >
@@ -241,16 +257,16 @@ export function FilesTab(_props: FilesTabProps) {
           <div className="flex-1 overflow-auto p-2">
             {loadingFile ? (
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-            ) : openFile?.kind === "binary" ? (
+            ) : openContent?.kind === "binary" ? (
               <p className="text-xs text-muted-foreground">
-                {t("workbench.files.binary", { size: openFile.size })}
+                {t("workbench.files.binary", { size: openContent.size })}
               </p>
             ) : (
               <pre className="text-xs font-mono whitespace-pre-wrap break-all">
-                {openFile?.content ?? ""}
+                {openContent?.content ?? ""}
               </pre>
             )}
-            {openFile?.truncated && (
+            {openContent?.truncated && (
               <p className="text-[10px] text-muted-foreground mt-2">
                 {t("workbench.files.truncated")}
               </p>

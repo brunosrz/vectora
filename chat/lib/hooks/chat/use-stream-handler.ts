@@ -193,7 +193,7 @@ export function useStreamHandler({
           // de eventos que dependem do estado (ex: tool_call, done)
           flushNow();
 
-          await handleEvent(event, assistantMessageId, setMessages);
+          await handleEvent(event, assistantMessageId, setMessages, threadId);
 
           if (event.type === "done") {
             resolvedRunId = event.run_id || undefined;
@@ -330,7 +330,7 @@ export function useStreamHandler({
           }
 
           flushNow();
-          await handleEvent(event, assistantMessageId, setMessages);
+          await handleEvent(event, assistantMessageId, setMessages, threadId);
 
           if (event.type === "done") break;
           if (event.type === "error")
@@ -384,6 +384,7 @@ async function handleEvent(
   event: StreamEvent,
   assistantMessageId: string,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+  threadId?: string,
 ): Promise<void> {
   switch (event.type) {
     case "token":
@@ -415,6 +416,11 @@ async function handleEvent(
           toolCalls: [...(m.toolCalls ?? []), toolCall],
         })),
       );
+
+      // T11.5 — Invalidate cache do workbench quando a tool muda o disco.
+      // Carregamento dinâmico para não acoplar este módulo ao store
+      // (importar topo a topo cria ciclo via providers).
+      void invalidateWorkbenchFor(event.tool_name, threadId);
       break;
     }
 
@@ -512,5 +518,48 @@ async function handleEvent(
 
     default:
       break;
+  }
+}
+
+// ============================================================================
+// Workbench cache invalidation (T11.5)
+// ============================================================================
+//
+// Mapeamento tool_name → caches a invalidar. As tools de filesystem/git/terminal
+// mexem no workspace e podem mudar a árvore, o diff e os arquivos abertos.
+// `create_artifact` mexe nos artifacts da sessão.
+
+const FILES_DIFF_TOOLS = new Set([
+  "file_write",
+  "file_edit",
+  "terminal",
+  "git_commit",
+  "git_checkout",
+  "git_pull",
+  "git_stash",
+  "git_worktree",
+]);
+
+async function invalidateWorkbenchFor(
+  toolName: string,
+  threadId: string | undefined,
+): Promise<void> {
+  // Carregamento dinâmico evita import-order issues entre módulos.
+  const [{ useWorkbenchStore }, { useWorkspacesStore }] = await Promise.all([
+    import("@/lib/stores/workbench-store"),
+    import("@/lib/stores/workspaces-store"),
+  ]);
+
+  if (toolName === "create_artifact" && threadId) {
+    useWorkbenchStore.getState().invalidatePlan(threadId);
+    return;
+  }
+
+  if (FILES_DIFF_TOOLS.has(toolName)) {
+    const ws = useWorkspacesStore.getState().getActive();
+    if (ws) {
+      useWorkbenchStore.getState().invalidateFiles(ws.id);
+      useWorkbenchStore.getState().invalidateDiff(ws.id);
+    }
   }
 }

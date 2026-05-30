@@ -1,27 +1,26 @@
 "use client";
 
 /**
- * PlanTab (T8) — lista de artifacts (planos/specs/guias) da sessão.
+ * PlanTab (T8 + T11.4) — lista de artifacts da sessão.
  *
- * Reusa `ArtifactMetadata` do backend (vectora/types/documents.py). Os
- * artifacts são persistidos pelo agente via `create_artifact` (fs.py) em
- * ~/.vectora/artifacts/<session_id>/<slug>.md.
+ * Estado vive no workbench-store (slice `plan`):
+ *   - lista de artifacts da sessão → cacheada por threadId
+ *   - artifact aberto + conteúdo carregado → idem
+ * SWR via `useWorkbenchSWR`.
  */
 
 import { FileText, Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
 import { useT } from "@/lib/i18n";
+import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
+import {
+  WORKBENCH_STALE_MS,
+  useWorkbenchStore,
+  type PlanItem,
+} from "@/lib/stores/workbench-store";
 
-interface ArtifactItem {
-  title: string;
-  path: string;
-  session_id: string;
-  created_at: string;
-  content_preview?: string | null;
-}
-
-async function fetchArtifacts(threadId: string): Promise<ArtifactItem[]> {
+async function fetchArtifacts(threadId: string): Promise<PlanItem[]> {
   const qs = new URLSearchParams({ session_id: threadId });
   const res = await fetch(`/api/artifacts/?${qs}`);
   if (!res.ok) return [];
@@ -51,39 +50,50 @@ interface PlanTabProps {
 
 export function PlanTab({ threadId }: PlanTabProps) {
   const t = useT();
-  const [items, setItems] = useState<ArtifactItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [openSlug, setOpenSlug] = useState<string | null>(null);
-  const [openContent, setOpenContent] = useState<string>("");
-  const [openLoading, setOpenLoading] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    void fetchArtifacts(threadId).then((list) => {
-      if (!cancelled) {
-        setItems(list);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [threadId]);
-
-  const handleOpen = useCallback(
-    async (item: ArtifactItem) => {
-      const slug = fileSlug(item.path);
-      setOpenSlug(slug);
-      setOpenLoading(true);
-      const content = await fetchArtifactContent(threadId, slug);
-      setOpenContent(content ?? "");
-      setOpenLoading(false);
-    },
-    [threadId],
+  const items = useWorkbenchStore((s) => s.getPlan(threadId).items);
+  const fetchedAt = useWorkbenchStore((s) => s.getPlan(threadId).fetchedAt);
+  const openSlug = useWorkbenchStore((s) => s.getPlan(threadId).openSlug);
+  const openContent = useWorkbenchStore((s) =>
+    openSlug ? s.getPlan(threadId).contentsBySlug[openSlug] : undefined,
   );
 
-  if (loading) {
+  const setPlanItems = useWorkbenchStore((s) => s.setPlanItems);
+  const setPlanOpenSlug = useWorkbenchStore((s) => s.setPlanOpenSlug);
+  const setPlanContent = useWorkbenchStore((s) => s.setPlanContent);
+
+  useWorkbenchSWR({
+    key: `plan:${threadId}`,
+    hasCache: fetchedAt > 0,
+    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    revalidate: async () => {
+      const list = await fetchArtifacts(threadId);
+      setPlanItems(threadId, list);
+    },
+  });
+
+  useWorkbenchSWR({
+    key: `plan-content:${threadId}:${openSlug ?? ""}`,
+    hasCache: openContent !== undefined,
+    isStale: false,
+    revalidate: async () => {
+      if (!openSlug) return;
+      const content = await fetchArtifactContent(threadId, openSlug);
+      if (content !== null) setPlanContent(threadId, openSlug, content);
+    },
+    skip: !openSlug,
+  });
+
+  const handleOpen = useCallback(
+    (item: PlanItem) => {
+      setPlanOpenSlug(threadId, fileSlug(item.path));
+    },
+    [threadId, setPlanOpenSlug],
+  );
+
+  // Estado de loading inicial: ainda não fetchamos uma única vez.
+  const initialLoading = fetchedAt === 0;
+
+  if (initialLoading) {
     return (
       <div className="h-full flex items-center justify-center">
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -101,6 +111,8 @@ export function PlanTab({ threadId }: PlanTabProps) {
       </div>
     );
   }
+
+  const openLoading = openSlug !== null && openContent === undefined;
 
   return (
     <div className="h-full flex flex-col">
@@ -142,7 +154,7 @@ export function PlanTab({ threadId }: PlanTabProps) {
               {openSlug}
             </span>
             <button
-              onClick={() => setOpenSlug(null)}
+              onClick={() => setPlanOpenSlug(threadId, null)}
               className="text-muted-foreground hover:text-foreground px-1"
               title={t("workbench.close")}
             >

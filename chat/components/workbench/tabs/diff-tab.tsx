@@ -1,39 +1,30 @@
 "use client";
 
 /**
- * DiffTab (T7) — diff do workspace ativo.
+ * DiffTab (T7 + T11.3) — diff do workspace ativo.
  *
- * Cabeçalho com contagem +N -M, lista de arquivos modificados com
- * status (M/A/D/R) e expand inline dos hunks.
+ * Estado vive no workbench-store (slice `diff`):
+ *   - resumo (lista de arquivos modificados) → cacheado por workspace
+ *   - arquivos com hunks abertos → idem
+ *   - hunks já carregados → idem
+ * SWR via `useWorkbenchSWR`.
  */
 
 import { ChevronDown, ChevronRight, GitBranch, Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
 import { useT } from "@/lib/i18n";
+import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
+import {
+  WORKBENCH_STALE_MS,
+  useWorkbenchStore,
+  type DiffFile,
+  type DiffHunk,
+  type DiffSummary,
+} from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
-interface DiffHunk {
-  header: string;
-  lines: string[];
-}
-
-interface DiffFile {
-  path: string;
-  status: "M" | "A" | "D" | "R";
-  additions: number;
-  deletions: number;
-  hunks?: DiffHunk[];
-}
-
-interface DiffResponse {
-  is_git_repo: boolean;
-  total_additions: number;
-  total_deletions: number;
-  files: DiffFile[];
-}
-
-async function fetchDiff(workspaceId: string): Promise<DiffResponse | null> {
+async function fetchDiff(workspaceId: string): Promise<DiffSummary | null> {
   const res = await fetch(
     `/api/workspaces/${encodeURIComponent(workspaceId)}/git/diff`,
   );
@@ -90,24 +81,35 @@ function FileRow({
   workspaceId: string;
   file: DiffFile;
 }) {
-  const [open, setOpen] = useState(false);
-  const [hunks, setHunks] = useState<DiffHunk[] | null>(file.hunks ?? null);
-  const [loading, setLoading] = useState(false);
+  const open = useWorkbenchStore((s) =>
+    s.getDiff(workspaceId).openFiles.includes(file.path),
+  );
+  const hunks = useWorkbenchStore(
+    (s) => s.getDiff(workspaceId).hunksByFile[file.path],
+  );
+  const fetchedAt = useWorkbenchStore(
+    (s) => s.getDiff(workspaceId).fileFetchedAt[file.path] ?? 0,
+  );
+  const setDiffOpenFile = useWorkbenchStore((s) => s.setDiffOpenFile);
+  const setDiffHunks = useWorkbenchStore((s) => s.setDiffHunks);
 
-  const handleToggle = useCallback(async () => {
-    setOpen((o) => !o);
-    if (!hunks) {
-      setLoading(true);
-      const h = await fetchDiffFile(workspaceId, file.path);
-      setHunks(h ?? []);
-      setLoading(false);
-    }
-  }, [hunks, workspaceId, file.path]);
+  const revalidate = useCallback(async () => {
+    const h = await fetchDiffFile(workspaceId, file.path);
+    if (h) setDiffHunks(workspaceId, file.path, h);
+  }, [workspaceId, file.path, setDiffHunks]);
+
+  useWorkbenchSWR({
+    key: `diff:${workspaceId}:${file.path}`,
+    hasCache: Array.isArray(hunks),
+    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    revalidate,
+    skip: !open,
+  });
 
   return (
     <div className="border-b border-border/40 last:border-0">
       <button
-        onClick={handleToggle}
+        onClick={() => setDiffOpenFile(workspaceId, file.path, !open)}
         className="w-full flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-muted/30 text-left"
       >
         {open ? (
@@ -126,11 +128,12 @@ function FileRow({
       </button>
       {open && (
         <div className="px-3 pb-2 space-y-1">
-          {loading && (
+          {!hunks && (
             <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
           )}
-          {!loading &&
-            (hunks ?? []).map((h, i) => <HunkView key={i} hunk={h} />)}
+          {hunks?.map((h, i) => (
+            <HunkView key={i} hunk={h} />
+          ))}
         </div>
       )}
     </div>
@@ -144,23 +147,23 @@ interface DiffTabProps {
 export function DiffTab(_props: DiffTabProps) {
   const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
-  const [data, setData] = useState<DiffResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const wsId = workspace?.id ?? "";
 
-  useEffect(() => {
-    if (!workspace) return;
-    let cancelled = false;
-    setLoading(true);
-    void fetchDiff(workspace.id).then((d) => {
-      if (!cancelled) {
-        setData(d);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [workspace]);
+  const summary = useWorkbenchStore((s) => s.getDiff(wsId).summary);
+  const fetchedAt = useWorkbenchStore((s) => s.getDiff(wsId).summaryFetchedAt);
+  const setDiffSummary = useWorkbenchStore((s) => s.setDiffSummary);
+
+  useWorkbenchSWR({
+    key: `diff-summary:${wsId}`,
+    hasCache: summary !== null,
+    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    revalidate: async () => {
+      if (!wsId) return;
+      const data = await fetchDiff(wsId);
+      if (data) setDiffSummary(wsId, data);
+    },
+    skip: !wsId,
+  });
 
   if (!workspace) {
     return (
@@ -170,7 +173,7 @@ export function DiffTab(_props: DiffTabProps) {
     );
   }
 
-  if (loading) {
+  if (!summary) {
     return (
       <div className="h-full flex items-center justify-center">
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -178,7 +181,7 @@ export function DiffTab(_props: DiffTabProps) {
     );
   }
 
-  if (!data?.is_git_repo) {
+  if (!summary.is_git_repo) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
         <GitBranch className="w-6 h-6 text-muted-foreground" />
@@ -189,7 +192,7 @@ export function DiffTab(_props: DiffTabProps) {
     );
   }
 
-  if (data.files.length === 0) {
+  if (summary.files.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
         <p className="text-xs text-muted-foreground">
@@ -203,16 +206,16 @@ export function DiffTab(_props: DiffTabProps) {
     <div className="h-full flex flex-col">
       <div className="px-2 py-1.5 border-b border-border/60 flex items-center justify-between bg-muted/20">
         <span className="text-xs text-muted-foreground">
-          {t("workbench.diff.summary", { n: data.files.length })}
+          {t("workbench.diff.summary", { n: summary.files.length })}
         </span>
         <span className="text-xs font-mono">
-          <span className="text-green-500">+{data.total_additions}</span>{" "}
-          <span className="text-destructive">−{data.total_deletions}</span>
+          <span className="text-green-500">+{summary.total_additions}</span>{" "}
+          <span className="text-destructive">−{summary.total_deletions}</span>
         </span>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {data.files.map((f) => (
-          <FileRow key={f.path} workspaceId={workspace.id} file={f} />
+        {summary.files.map((f) => (
+          <FileRow key={f.path} workspaceId={wsId} file={f} />
         ))}
       </div>
     </div>

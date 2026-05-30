@@ -282,6 +282,8 @@ function SessionContent() {
   const showWorkbench = useWorkbenchStore((s) => s.isOpen(threadId));
   const toggleWorkbench = useWorkbenchStore((s) => s.togglePanel);
   const setActiveTab = useWorkbenchStore((s) => s.setActiveTab);
+  const workbenchSplitSize = useWorkbenchStore((s) => s.splitSize);
+  const setSplitSize = useWorkbenchStore((s) => s.setSplitSize);
 
   useKeyboardShortcuts([
     {
@@ -441,7 +443,11 @@ function SessionContent() {
             {showWorkbench && (
               <>
                 <PanelResizeHandle className="w-1 bg-border/40 hover:bg-border transition-colors" />
-                <Panel defaultSize={40} minSize={20}>
+                <Panel
+                  defaultSize={workbenchSplitSize}
+                  minSize={20}
+                  onResize={(size) => setSplitSize(Number(size))}
+                >
                   <WorkbenchPanel threadId={threadId} />
                 </Panel>
               </>
