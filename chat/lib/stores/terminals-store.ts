@@ -9,6 +9,9 @@
 
 import { create } from "zustand";
 
+/** Referência estável de lista vazia (evita criar novo [] a cada selector). */
+const EMPTY_LIST: TerminalInstance[] = [];
+
 export interface TerminalInstance {
   /** ID do terminal no backend (pty_registry). */
   id: string;
@@ -42,9 +45,9 @@ export const useTerminalsStore = create<TerminalsState>((set, get) => ({
   activeByThread: {},
   panelOpen: {},
 
-  list: (threadId) => get().byThread[threadId] ?? [],
+  list: (threadId) => get().byThread[threadId] ?? EMPTY_LIST,
   active: (threadId) => {
-    const list = get().byThread[threadId] ?? [];
+    const list = get().byThread[threadId] ?? EMPTY_LIST;
     const id = get().activeByThread[threadId];
     return list.find((t) => t.id === id) ?? list[0] ?? null;
   },

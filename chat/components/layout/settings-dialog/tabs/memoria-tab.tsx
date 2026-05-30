@@ -174,10 +174,15 @@ export function MemoriaTab() {
   };
 
   const handleAddMemory = async () => {
-    if (!newKey.trim() || !newContent.trim()) return;
+    if (!newContent.trim()) return;
+    // Memória é "global" do ponto de vista do usuário (como ChatGPT/Claude/Gemini):
+    // não pedimos uma chave. Geramos uma internamente quando o usuário não dá rótulo.
+    const key =
+      newKey.trim() ||
+      `mem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     setAdding(true);
     try {
-      await createMemory(newKey.trim(), newContent.trim());
+      await createMemory(key, newContent.trim());
       await load();
       setAddOpen(false);
       setNewKey("");
@@ -378,27 +383,27 @@ export function MemoriaTab() {
           <div className="space-y-3 py-1">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
-                {t("memory.add_key_label")}
-              </label>
-              <Input
-                placeholder={t("memory.add_key_placeholder")}
-                value={newKey}
-                onChange={(e) => setNewKey(e.target.value)}
-                className="text-sm"
-                autoFocus
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
                 {t("memory.add_content_label")}
               </label>
               <Textarea
                 placeholder={t("memory.add_content_placeholder")}
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
-                className="text-sm min-h-[80px] resize-none"
+                className="text-sm min-h-[100px] resize-none"
+                autoFocus
               />
             </div>
+            <details className="text-xs text-muted-foreground">
+              <summary className="cursor-pointer select-none hover:text-foreground">
+                {t("memory.add_key_label")}
+              </summary>
+              <Input
+                placeholder={t("memory.add_key_placeholder")}
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value)}
+                className="text-sm mt-2"
+              />
+            </details>
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
           <DialogFooter>
@@ -411,7 +416,7 @@ export function MemoriaTab() {
             </Button>
             <Button
               onClick={handleAddMemory}
-              disabled={adding || !newKey.trim() || !newContent.trim()}
+              disabled={adding || !newContent.trim()}
             >
               {adding && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               {t("memory.save")}

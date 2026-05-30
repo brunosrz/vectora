@@ -223,10 +223,10 @@ memory.clear_title,Clear all memories?,¿Limpiar todas las memorias?,Limpar toda
 memory.clear_desc,This action is irreversible. Vectora won't remember anything it learned about you in previous conversations.,Esta acción es irreversible. Vectora no recordará nada de lo que aprendió sobre ti en conversaciones anteriores.,Esta ação é irreversível. O Vectora não se lembrará de nada que aprendeu sobre você nas conversas anteriores.
 memory.add_title,Add memory,Añadir memoria,Adicionar memória
 memory.add_desc,Create a memory manually for Vectora to use in future conversations.,Crea una memoria manualmente para que Vectora la use en futuras conversaciones.,Crie uma memória manualmente para que o Vectora a use nas próximas conversas.
-memory.add_key_label,Key,Clave,Chave
-memory.add_key_placeholder,"e.g.: name, age, main_project","ej: nombre, edad, proyecto_principal","ex: nome, idade, projeto_atual"
-memory.add_content_label,Content,Contenido,Conteúdo
-memory.add_content_placeholder,"e.g.: Bruno Soares, 21 years old, Vectora creator","ej: Bruno Soares, 21 años, creador de Vectora","ex: Bruno Soares, 21 anos, criador do Vectora"
+memory.add_key_label,Optional label (advanced),Etiqueta opcional (avanzado),Rótulo opcional (avançado)
+memory.add_key_placeholder,"e.g.: profession, preferences","ej: profesión, preferencias","ex: profissão, preferências"
+memory.add_content_label,What should Vectora remember?,¿Qué debe recordar Vectora?,O que o Vectora deve lembrar?
+memory.add_content_placeholder,"e.g.: I prefer concise answers; I work with TypeScript; my timezone is America/Sao_Paulo","ej: Prefiero respuestas concisas; trabajo con TypeScript; mi zona horaria es America/Sao_Paulo","ex: Prefiro respostas concisas; trabalho com TypeScript; meu fuso horário é America/Sao_Paulo"
 memory.error_load,Error loading memories,Error al cargar memorias,Erro ao carregar memórias
 memory.error_save,Error saving,Error al guardar,Erro ao salvar
 memory.error_delete,Error deleting,Error al eliminar,Erro ao deletar

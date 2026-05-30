@@ -93,14 +93,12 @@ export function AgentSettings({
 
   const {
     showToolCalls,
-    requireHitl,
     verbosity,
     theme,
     language,
     reasoningEffort,
     fastMode,
     setShowToolCalls,
-    setRequireHitl,
     setVerbosity,
     setTheme,
     setLanguage,
@@ -154,7 +152,7 @@ export function AgentSettings({
           </TooltipContent>
         </Tooltip>
 
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[400px] max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{t("settings.chat.title")}</DialogTitle>
             <DialogDescription>
@@ -162,7 +160,7 @@ export function AgentSettings({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-5 py-2">
+          <div className="grid gap-5 py-2 overflow-y-auto pr-1 flex-1 min-h-0">
             {/* Modelo */}
             <div className="grid gap-2">
               <Label htmlFor="model">{t("settings.chat.model")}</Label>
@@ -304,26 +302,6 @@ export function AgentSettings({
                   id="show-tool-calls"
                   checked={showToolCalls}
                   onCheckedChange={setShowToolCalls}
-                />
-              </div>
-
-              {/* Confirmar ações destrutivas */}
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="require-hitl"
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {t("settings.chat.confirm_destructive")}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.chat.confirm_destructive_hint")}
-                  </p>
-                </div>
-                <Switch
-                  id="require-hitl"
-                  checked={requireHitl}
-                  onCheckedChange={setRequireHitl}
                 />
               </div>
             </div>

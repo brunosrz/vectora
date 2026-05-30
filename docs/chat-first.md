@@ -1291,9 +1291,7 @@ O agente usa `user.env_overrides` (C10) que já é mergeado no `effective_env`.
 | Anthropic   | `ANTHROPIC_API_KEY`   | LLM (Claude 4.x)                      |
 | Cohere      | `COHERE_API_KEY`      | Reranker + LLM (Command)              |
 | Tavily      | `TAVILY_API_KEY`      | Web search tool                       |
-| Groq        | `GROQ_API_KEY`        | LLM ultrafast (Llama, Mixtral)        |
 | HuggingFace | `HUGGINGFACE_API_KEY` | Modelos open source via Inference API |
-| Perplexity  | `PERPLEXITY_API_KEY`  | Busca com citações                    |
 
 **UI** (aba Integrações no Settings Dialog):
 

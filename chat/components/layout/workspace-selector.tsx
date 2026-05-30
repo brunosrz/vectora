@@ -28,6 +28,7 @@ export function WorkspaceSelector() {
   const activeId = useWorkspacesStore((s) => s.active_id);
   const hydrate = useWorkspacesStore((s) => s.hydrate);
   const setActive = useWorkspacesStore((s) => s.setActive);
+  const trust = useWorkspacesStore((s) => s.trust);
 
   const [open, setOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
@@ -116,8 +117,17 @@ export function WorkspaceSelector() {
                       <ShieldCheck className="w-3.5 h-3.5" />
                     </span>
                   ) : (
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {t("workspace.untrusted")}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="text-xs px-2 py-0.5 rounded-md text-primary hover:bg-primary/10 border border-primary/30 shrink-0"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await trust(w.id);
+                      }}
+                      title={t("workspace.trust_confirm")}
+                    >
+                      {t("workspace.trust_confirm")}
                     </span>
                   )}
                 </button>

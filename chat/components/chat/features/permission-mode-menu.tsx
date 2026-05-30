@@ -58,7 +58,7 @@ export function PermissionModeMenu() {
       </button>
 
       {open && (
-        <div className="absolute left-0 bottom-9 z-50 w-72 rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-bottom-2">
+        <div className="absolute right-0 bottom-9 z-50 w-72 max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-y-auto rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-bottom-2">
           <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             {t("permission.title")}
           </div>
