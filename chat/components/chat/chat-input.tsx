@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FilePreviewGrid } from "./features/file-preview-grid";
 import { VoiceInputButton } from "./features/voice-input-button";
+import { CommandBar } from "./features/command-bar";
+import { PlusMenu } from "./features/plus-menu";
+import { ContextMeter } from "./features/context-meter";
+import { SlashCommandMenu } from "./features/slash-command-menu";
+import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { ImageAttachment } from "@/lib/types";
 import { MAX_INPUT_CHARS } from "@/lib/constants/features";
 import { useT } from "@/lib/i18n";
@@ -47,6 +52,10 @@ interface ChatInputProps {
 
   // Queued messages
   queuedMessages?: { content: string; id: string }[];
+
+  // Context meter (R5)
+  tokensUsed?: number;
+  modelId?: string;
 }
 
 /**
@@ -81,6 +90,8 @@ export function ChatInput({
   onVoiceToggle,
   voiceError,
   queuedMessages = [],
+  tokensUsed,
+  modelId,
 }: ChatInputProps) {
   const t = useT();
   return (
@@ -136,7 +147,19 @@ export function ChatInput({
             </div>
           )}
 
+          {/* Barra de contexto (R1) */}
+          <CommandBar />
+
           <div className="relative group">
+            {/* Autocomplete de slash commands (Bloco H) */}
+            <SlashCommandMenu
+              input={input}
+              onSelect={(cmd: SlashCommand) => {
+                onInputChange(cmd.takesArg ? `/${cmd.name} ` : `/${cmd.name}`);
+                textareaRef?.current?.focus();
+              }}
+            />
+
             {/* Multi-layered input container */}
             <div className="relative">
               {/* High-contrast glow layer for visibility */}
@@ -167,31 +190,12 @@ export function ChatInput({
                     className="hidden"
                   />
 
-                  {/* File Upload Button - Stays at bottom as textarea grows */}
+                  {/* Menu + (anexos / pasta / comandos) — R3 */}
                   {!isLoading && (
-                    <Button
-                      onClick={onFileButtonClick}
-                      variant="ghost"
-                      size="sm"
-                      disabled={isLoading || !userId}
-                      className="group h-9 w-9 p-0 mb-0.5 rounded-full bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary border-0 flex-shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
-                      type="button"
-                      title={t("input.attach_files")}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4.5 h-4.5"
-                      >
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
-                    </Button>
+                    <PlusMenu
+                      disabled={!userId}
+                      onAddFiles={onFileButtonClick}
+                    />
                   )}
 
                   <Textarea
@@ -271,6 +275,11 @@ export function ChatInput({
               </kbd>{" "}
               {t("input.new_line_hint")}
             </p>
+
+            {/* Medidor de contexto + uso do plano (R5) */}
+            {modelId && (
+              <ContextMeter tokensUsed={tokensUsed ?? 0} modelId={modelId} />
+            )}
           </div>
         </div>
       </div>

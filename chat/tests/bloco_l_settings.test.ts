@@ -56,10 +56,25 @@ describe("useSettingsStore — valores padrão", () => {
     expect(state.showToolCalls).toBe(false);
   });
 
-  it("requireHitl deve ser false por padrão", async () => {
+  it("requireHitl deve ser true por padrão (fallback seguro — R7)", async () => {
     const { useSettingsStore } = await getStore();
     const state = useSettingsStore.getState();
-    expect(state.requireHitl).toBe(false);
+    expect(state.requireHitl).toBe(true);
+  });
+
+  it("permissionMode deve ser 'ask' por padrão (R2)", async () => {
+    const { useSettingsStore } = await getStore();
+    expect(useSettingsStore.getState().permissionMode).toBe("ask");
+  });
+
+  it("reasoningEffort deve ser 'medium' por padrão (R4)", async () => {
+    const { useSettingsStore } = await getStore();
+    expect(useSettingsStore.getState().reasoningEffort).toBe("medium");
+  });
+
+  it("fastMode deve ser false por padrão (R4)", async () => {
+    const { useSettingsStore } = await getStore();
+    expect(useSettingsStore.getState().fastMode).toBe(false);
   });
 
   it("verbosity deve ser 'normal' por padrão", async () => {
@@ -137,8 +152,36 @@ describe("useSettingsStore — mutações de estado", () => {
 
   it("setCustomSystemPrompt altera customSystemPrompt", async () => {
     const { useSettingsStore } = await getStore();
-    useSettingsStore.getState().setCustomSystemPrompt("Responda em bullet points.");
-    expect(useSettingsStore.getState().customSystemPrompt).toBe("Responda em bullet points.");
+    useSettingsStore
+      .getState()
+      .setCustomSystemPrompt("Responda em bullet points.");
+    expect(useSettingsStore.getState().customSystemPrompt).toBe(
+      "Responda em bullet points.",
+    );
+  });
+
+  it("setPermissionMode aceita 'plan' (R2)", async () => {
+    const { useSettingsStore } = await getStore();
+    useSettingsStore.getState().setPermissionMode("plan");
+    expect(useSettingsStore.getState().permissionMode).toBe("plan");
+  });
+
+  it("setPermissionMode aceita 'bypass' (R2)", async () => {
+    const { useSettingsStore } = await getStore();
+    useSettingsStore.getState().setPermissionMode("bypass");
+    expect(useSettingsStore.getState().permissionMode).toBe("bypass");
+  });
+
+  it("setReasoningEffort aceita 'high' (R4)", async () => {
+    const { useSettingsStore } = await getStore();
+    useSettingsStore.getState().setReasoningEffort("high");
+    expect(useSettingsStore.getState().reasoningEffort).toBe("high");
+  });
+
+  it("setFastMode altera fastMode (R4)", async () => {
+    const { useSettingsStore } = await getStore();
+    useSettingsStore.getState().setFastMode(true);
+    expect(useSettingsStore.getState().fastMode).toBe(true);
   });
 });
 
@@ -158,17 +201,23 @@ describe("useSettingsStore — reset", () => {
     s.setVerbosity("detailed");
     s.setHistoryLimit(200);
     s.setCustomSystemPrompt("Seja breve.");
+    s.setPermissionMode("bypass");
+    s.setReasoningEffort("max");
+    s.setFastMode(true);
 
     // Reset
     useSettingsStore.getState().resetSettings();
 
     const after = useSettingsStore.getState();
     expect(after.showToolCalls).toBe(false);
-    expect(after.requireHitl).toBe(false);
+    expect(after.requireHitl).toBe(true);
     expect(after.verbosity).toBe("normal");
     expect(after.theme).toBe("system");
     expect(after.historyLimit).toBe(50);
     expect(after.customSystemPrompt).toBe("");
+    expect(after.permissionMode).toBe("ask");
+    expect(after.reasoningEffort).toBe("medium");
+    expect(after.fastMode).toBe(false);
   });
 });
 

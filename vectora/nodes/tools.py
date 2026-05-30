@@ -38,11 +38,13 @@ from vectora.tools.git import (
     git_checkout,
     git_commit,
     git_diff,
+    git_init,
     git_log,
     git_pull,
     git_push,
     git_stash,
     git_status,
+    git_worktree,
 )
 from vectora.tools.memory import delete_memory, get_memory, save_memory, search_memory
 from vectora.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
@@ -99,6 +101,8 @@ GIT_TOOLS: list[BaseTool] = [
     git_push,
     git_pull,
     git_stash,
+    git_init,
+    git_worktree,
     gh_pr_list,
     gh_pr_create,
     gh_pr_view,
@@ -148,6 +152,8 @@ for _t in [
     git_push,
     git_pull,
     git_stash,
+    git_init,
+    git_worktree,
     gh_pr_list,
     gh_pr_create,
     gh_pr_view,

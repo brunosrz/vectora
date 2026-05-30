@@ -12,7 +12,30 @@ logger = logging.getLogger(__name__)
 
 
 class DiagnosticToolNode(ToolNode):
-    """ToolNode com logging detalhado para diagnosticar perda de ToolMessages."""
+    """ToolNode com logging detalhado para diagnosticar perda de ToolMessages.
+
+    Resolve o toolset por usuário (built-ins permitidas + MCP) a cada request,
+    a partir do ``user_id`` do RunnableConfig — mantendo o nó (e o grafo) como
+    singleton. Um ToolNode transitório é criado por chamada (sem estado mutável
+    compartilhado, seguro sob concorrência).
+    """
+
+    async def _user_node(self, config: RunnableConfig | None) -> "ToolNode":
+        """ToolNode com as tools efetivas do usuário do config (ou self)."""
+        user_id = None
+        if isinstance(config, dict):
+            configurable = config.get("configurable")
+            if isinstance(configurable, dict):
+                user_id = configurable.get("user_id")
+        try:
+            from vectora.services.tool_resolver import resolve_tools
+
+            return ToolNode(await resolve_tools(user_id))
+        except Exception:
+            logger.warning(
+                "[TOOL_NODE] resolução por usuário falhou — usando toolset base"
+            )
+            return self
 
     async def ainvoke(
         self,
@@ -54,9 +77,11 @@ class DiagnosticToolNode(ToolNode):
                     "[TOOL_NODE] Nenhuma tool_call detectada na última mensagem"
                 )
 
-        # Chama ToolNode original
+        # Resolve o toolset do usuário (built-ins permitidas + MCP) e delega a
+        # um ToolNode transitório. Sem user_id, devolve ALL_TOOLS (modo local).
         try:
-            result = await super().ainvoke(input, config, **kwargs)
+            node = await self._user_node(config)
+            result = await node.ainvoke(input, config, **kwargs)
 
             logger.info(
                 "[TOOL_NODE] SAÍDA",

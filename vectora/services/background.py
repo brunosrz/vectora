@@ -511,7 +511,7 @@ class BackgroundEmbeddingWorker:
         try:
             import json as _json
 
-            meta = _json.loads(record.doc_metadata or "{}")
+            meta = _json.loads(str(record.doc_metadata or "{}"))
             wid = meta.get("workspace_id")
             if wid:
                 self._indexed_workspaces.add(wid)

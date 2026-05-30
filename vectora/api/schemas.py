@@ -24,6 +24,8 @@ class ChatConfig(BaseModel):
     recursion_limit: int = 50
     workspace_id: str = ""
     custom_system_prompt: str = ""  # L4 — instrução personalizada por usuário
+    permission_mode: str = "ask"  # R2 — ask|accept_edits|plan|auto|bypass
+    reasoning_effort: str = ""  # R4 — low|medium|high|max (vazio = default do modelo)
 
 
 # ---------------------------------------------------------------------------
@@ -227,6 +229,7 @@ class Thread(BaseModel):
     created_at: str
     updated_at: str
     title: str = ""
+    workspace_id: str = ""
 
 
 class HistoryMessage(BaseModel):
@@ -270,6 +273,38 @@ class GetToolsResponse(BaseModel):
 class SignupRequest(BaseModel):
     email: str
     password: str
+    invite_token: str = ""
+
+
+class InviteValidationResponse(BaseModel):
+    valid: bool
+    email: str | None = None
+    role: str | None = None
+
+
+class CreateInviteRequest(BaseModel):
+    role: str = "member"
+    email: str | None = None
+    ttl_hours: int = 24
+
+
+class InviteInfo(BaseModel):
+    token_hash: str
+    email: str | None = None
+    role: str
+    created_by: str | None = None
+    expires_at: str
+    created_at: str
+
+
+class CreateInviteResponse(BaseModel):
+    token: str
+    url: str
+    expires_at: str
+
+
+class InviteListResponse(BaseModel):
+    invites: list[InviteInfo]
 
 
 class SigninRequest(BaseModel):

@@ -35,7 +35,7 @@ def _state(**kw) -> State:
         "messages": [HumanMessage(content="como funciona o JWT?")],
         "session_metadata": {},
     }
-    base.update(kw)
+    base.update(kw)  # ty: ignore[invalid-argument-type]
     return base
 
 

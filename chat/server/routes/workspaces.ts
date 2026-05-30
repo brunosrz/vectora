@@ -1,46 +1,33 @@
 /**
- * Rota de workspaces — proxy REST para o WorkspaceService do Vectora (G1).
+ * Rota de workspaces — proxy REST para o WorkspaceService do Vectora.
  *
- * GET  /api/workspaces         → lista todos os workspaces
- * GET  /api/workspaces/active  → workspace ativo (cwd atual do servidor)
+ * GET  /api/workspaces           → lista todos os workspaces
+ * GET  /api/workspaces/active    → workspace ativo
  * POST /api/workspaces/set-active → troca o workspace ativo
+ * POST /api/workspaces/create    → registra pasta como workspace
+ * POST /api/workspaces/trust     → marca workspace como confiável
+ * POST /api/workspaces/git-init  → roda git init na pasta do workspace
+ * GET  /api/workspaces/browse    → lista subpastas de um caminho
+ * GET  /api/workspaces/worktrees → lista worktrees de um workspace
+ * POST /api/workspaces/worktrees → cria worktree
  */
 
 import { Hono } from "hono";
 
 const VECTORA_API_URL = process.env.VECTORA_API_URL ?? "http://localhost:8080";
+const SERVICE = "/vectora.workspace.v1.WorkspaceService";
 
 const workspaces = new Hono();
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-function backendUrl(path: string) {
-  return `${VECTORA_API_URL}${path}`;
-}
-
 function cookieHeader(cookies?: string): Record<string, string> {
   return cookies ? { Cookie: cookies } : {};
 }
 
-// ─── rotas ───────────────────────────────────────────────────────────────────
-
-workspaces.get("/", async (c) => {
+async function proxyGet(c: any, method: string, search = "") {
   try {
-    const res = await fetch(backendUrl("/vectora.workspace.v1.WorkspaceService/ListWorkspaces"), {
-      headers: {
-        ...cookieHeader(c.req.header("Cookie")),
-      },
-    });
-    const data = await res.json();
-    return c.json(data, res.status as 200);
-  } catch {
-    return c.json({ status: "error", message: "Backend indisponível" }, 503);
-  }
-});
-
-workspaces.get("/active", async (c) => {
-  try {
-    const res = await fetch(backendUrl("/vectora.workspace.v1.WorkspaceService/GetActiveWorkspace"), {
+    const res = await fetch(`${VECTORA_API_URL}${SERVICE}/${method}${search}`, {
       headers: cookieHeader(c.req.header("Cookie")),
     });
     const data = await res.json();
@@ -48,12 +35,11 @@ workspaces.get("/active", async (c) => {
   } catch {
     return c.json({ status: "error", message: "Backend indisponível" }, 503);
   }
-});
+}
 
-workspaces.post("/set-active", async (c) => {
-  const body = await c.req.json();
+async function proxyPost(c: any, method: string, body: unknown) {
   try {
-    const res = await fetch(backendUrl("/vectora.workspace.v1.WorkspaceService/SetActiveWorkspace"), {
+    const res = await fetch(`${VECTORA_API_URL}${SERVICE}/${method}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -66,6 +52,46 @@ workspaces.post("/set-active", async (c) => {
   } catch {
     return c.json({ status: "error", message: "Backend indisponível" }, 503);
   }
+}
+
+// ─── rotas ───────────────────────────────────────────────────────────────────
+
+workspaces.get("/", (c) => proxyGet(c, "ListWorkspaces"));
+
+workspaces.get("/active", (c) => proxyGet(c, "GetActiveWorkspace"));
+
+workspaces.post("/set-active", async (c) =>
+  proxyPost(c, "SetActiveWorkspace", await c.req.json()),
+);
+
+workspaces.post("/create", async (c) =>
+  proxyPost(c, "CreateWorkspace", await c.req.json()),
+);
+
+workspaces.post("/trust", async (c) =>
+  proxyPost(c, "TrustWorkspace", await c.req.json()),
+);
+
+workspaces.post("/git-init", async (c) =>
+  proxyPost(c, "GitInitWorkspace", await c.req.json()),
+);
+
+workspaces.get("/browse", (c) => {
+  const path = c.req.query("path") ?? "";
+  return proxyGet(c, "BrowseDir", `?path=${encodeURIComponent(path)}`);
 });
+
+workspaces.get("/worktrees", (c) => {
+  const id = c.req.query("workspace_id") ?? "";
+  return proxyGet(
+    c,
+    "ListWorktrees",
+    `?workspace_id=${encodeURIComponent(id)}`,
+  );
+});
+
+workspaces.post("/worktrees", async (c) =>
+  proxyPost(c, "CreateWorktree", await c.req.json()),
+);
 
 export default workspaces;

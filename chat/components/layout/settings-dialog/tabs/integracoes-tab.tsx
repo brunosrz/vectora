@@ -14,7 +14,16 @@
  * - Para GitHub: botão "Conectar via OAuth" ou "Desconectar"
  */
 
-import { CheckCircle2, ChevronDown, ChevronUp, ExternalLink, GitBranch, KeyRound, Loader2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  GitBranch,
+  KeyRound,
+  Loader2,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +76,9 @@ async function removeApiKey(envVar: string): Promise<void> {
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
-async function verifyIntegration(id: string): Promise<{ ok: boolean; message: string }> {
+async function verifyIntegration(
+  id: string,
+): Promise<{ ok: boolean; message: string }> {
   const res = await fetch(`/api/integrations/${id}/verify`, {
     method: "POST",
   });
@@ -83,7 +94,13 @@ async function disconnectGitBranch(): Promise<void> {
 // Subcomponente: card de integração
 // ---------------------------------------------------------------------------
 
-function IntegrationCard({ integ, onUpdated }: { integ: Integration; onUpdated: () => void }) {
+function IntegrationCard({
+  integ,
+  onUpdated,
+}: {
+  integ: Integration;
+  onUpdated: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [keyValue, setKeyValue] = useState("");
   const [saving, setSaving] = useState(false);
@@ -160,37 +177,77 @@ function IntegrationCard({ integ, onUpdated }: { integ: Integration; onUpdated: 
       {/* Cabeçalho do card */}
       <div className="flex items-center gap-3 p-3">
         {/* Ícone */}
-        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">{isGitBranch ? <GitBranch className="w-4 h-4" /> : <KeyRound className="w-4 h-4 text-muted-foreground" />}</div>
+        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+          {isGitBranch ? (
+            <GitBranch className="w-4 h-4" />
+          ) : (
+            <KeyRound className="w-4 h-4 text-muted-foreground" />
+          )}
+        </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{integ.name}</span>
-            <Badge variant={integ.connected ? "default" : "secondary"} className="text-[10px] h-4 px-1.5">
+            <Badge
+              variant={integ.connected ? "default" : "secondary"}
+              className="text-[10px] h-4 px-1.5"
+            >
               {integ.connected ? "Conectado" : "Não configurado"}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground truncate">{integ.description}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {integ.description}
+          </p>
         </div>
 
         {/* Ações rápidas */}
         <div className="flex items-center gap-1 shrink-0">
           {integ.connected && (
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={handleVerify} disabled={verifyState === "loading"}>
-              {verifyState === "loading" ? <Loader2 className="w-3 h-3 animate-spin" /> : verifyState === "ok" ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : verifyState === "error" ? <XCircle className="w-3 h-3 text-destructive" /> : "Verificar"}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={handleVerify}
+              disabled={verifyState === "loading"}
+            >
+              {verifyState === "loading" ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : verifyState === "ok" ? (
+                <CheckCircle2 className="w-3 h-3 text-green-500" />
+              ) : verifyState === "error" ? (
+                <XCircle className="w-3 h-3 text-destructive" />
+              ) : (
+                "Verificar"
+              )}
             </Button>
           )}
 
           {allowToken && (
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setExpanded((v) => !v)}>
-              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => setExpanded((v) => !v)}
+            >
+              {expanded ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
             </Button>
           )}
         </div>
       </div>
 
       {/* Mensagem de verificação */}
-      {verifyMsg && <div className={`mx-3 mb-2 text-xs px-2 py-1 rounded ${verifyState === "ok" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-destructive/10 text-destructive"}`}>{verifyMsg}</div>}
+      {verifyMsg && (
+        <div
+          className={`mx-3 mb-2 text-xs px-2 py-1 rounded ${verifyState === "ok" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-destructive/10 text-destructive"}`}
+        >
+          {verifyMsg}
+        </div>
+      )}
 
       {/* Expansão para API key (O1) — apikey e hybrid (token manual) */}
       {allowToken && expanded && (
@@ -206,19 +263,35 @@ function IntegrationCard({ integ, onUpdated }: { integ: Integration; onUpdated: 
                 if (e.key === "Enter") void handleSave();
               }}
             />
-            <Button size="sm" className="h-8 shrink-0" onClick={handleSave} disabled={saving || !keyValue.trim()}>
+            <Button
+              size="sm"
+              className="h-8 shrink-0"
+              onClick={handleSave}
+              disabled={saving || !keyValue.trim()}
+            >
               {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Salvar"}
             </Button>
           </div>
 
           <div className="flex items-center justify-between">
             {integ.connected && (
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive" onClick={handleRemove} disabled={removing}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                onClick={handleRemove}
+                disabled={removing}
+              >
                 {removing && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
                 Remover chave
               </Button>
             )}
-            <a href={integ.docs_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground ml-auto">
+            <a
+              href={integ.docs_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground ml-auto"
+            >
               Obter chave
               <ExternalLink className="w-2.5 h-2.5" />
             </a>
@@ -233,16 +306,30 @@ function IntegrationCard({ integ, onUpdated }: { integ: Integration; onUpdated: 
         <div className="px-3 pb-3 border-t pt-3 space-y-2">
           {integ.connected ? (
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Conexão ativa (OAuth ou token)</span>
-              <Button variant="outline" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={handleGitBranchDisconnect} disabled={removing}>
+              <span className="text-xs text-muted-foreground">
+                Conexão ativa (OAuth ou token)
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs text-destructive hover:text-destructive"
+                onClick={handleGitBranchDisconnect}
+                disabled={removing}
+              >
                 {removing && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
                 Desconectar
               </Button>
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Acesso a repos, PRs e issues</span>
-              <Button size="sm" className="h-7 text-xs" onClick={handleGitBranchOAuth}>
+              <span className="text-xs text-muted-foreground">
+                Acesso a repos, PRs e issues
+              </span>
+              <Button
+                size="sm"
+                className="h-7 text-xs"
+                onClick={handleGitBranchOAuth}
+              >
                 <GitBranch className="w-3 h-3 mr-1.5" />
                 Conectar via OAuth
               </Button>
@@ -298,7 +385,10 @@ export function IntegracoesTab() {
   }
 
   // Agrupa: OAuth/híbridos primeiro, depois API keys por ordem de relevância
-  const sorted = [...integrations.filter((i) => i.kind === "oauth" || i.kind === "hybrid"), ...integrations.filter((i) => i.kind === "apikey")];
+  const sorted = [
+    ...integrations.filter((i) => i.kind === "oauth" || i.kind === "hybrid"),
+    ...integrations.filter((i) => i.kind === "apikey"),
+  ];
 
   const connected = sorted.filter((i) => i.connected).length;
 
@@ -306,8 +396,15 @@ export function IntegracoesTab() {
     <div className="space-y-3">
       {/* Sumário */}
       <div className="space-y-0.5">
-        <p className="text-sm font-medium">{connected > 0 ? `${connected} integração${connected > 1 ? "s" : ""} ativa${connected > 1 ? "s" : ""}` : "Nenhuma integração configurada"}</p>
-        <p className="text-xs text-muted-foreground">Chaves são armazenadas de forma privada e nunca compartilhadas com outros usuários.</p>
+        <p className="text-sm font-medium">
+          {connected > 0
+            ? `${connected} integração${connected > 1 ? "s" : ""} ativa${connected > 1 ? "s" : ""}`
+            : "Nenhuma integração configurada"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Chaves são armazenadas de forma privada e nunca compartilhadas com
+          outros usuários.
+        </p>
       </div>
 
       {/* Cards */}

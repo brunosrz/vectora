@@ -46,7 +46,7 @@ def app_and_db(tmp_path_factory):
     auth_mod._db_conn = None
     _TEST_SECRET = "api-test-secret-key-fixed-abcdef"  # noqa: S105
     # Patcha _get_secret como função para que o módulo todo use este secret
-    auth_mod._get_secret = lambda: _TEST_SECRET
+    auth_mod._get_secret = lambda: _TEST_SECRET  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     async def _patched_get_db():
         if auth_mod._db_conn is not None:
@@ -58,7 +58,7 @@ def app_and_db(tmp_path_factory):
         auth_mod._db_conn = conn
         return conn
 
-    auth_mod._get_db = _patched_get_db
+    auth_mod._get_db = _patched_get_db  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     from vectora.api.server import create_app
 
@@ -226,6 +226,79 @@ class TestMeEndpoint:
             "/auth/me", headers={"Authorization": "Bearer token-invalido-qualquer"}
         )
         assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# usage (R5)
+# ---------------------------------------------------------------------------
+
+
+class TestUsageEndpoint:
+    def test_usage_with_valid_token(self, client, root_tokens):
+        access, _, _ = root_tokens
+        r = client.get("/auth/usage", headers={"Authorization": f"Bearer {access}"})
+        assert r.status_code == 200
+        body = r.json()
+        for key in ("used", "limit", "remaining", "window_seconds", "reset_in_seconds"):
+            assert key in body
+
+    def test_usage_without_token_returns_401(self, app_and_db):
+        from fastapi.testclient import TestClient
+
+        app, _ = app_and_db
+        fresh = TestClient(app, raise_server_exceptions=False)
+        r = fresh.get("/auth/usage")
+        assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# tools policy (S5)
+# ---------------------------------------------------------------------------
+
+
+class TestToolsPolicy:
+    def test_get_and_put_policy(self, client, root_tokens, tmp_path, monkeypatch):
+        from vectora.services import tool_policy
+
+        monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tp")
+        access, _, _ = root_tokens
+        headers = {"Authorization": f"Bearer {access}"}
+
+        r = client.get("/tools/policy", headers=headers)
+        assert r.status_code == 200
+        body = r.json()
+        assert body["disabled"] == []
+        assert "terminal" in body["available"]
+
+        r = client.put(
+            "/tools/policy", headers=headers, json={"disabled": ["terminal"]}
+        )
+        assert r.status_code == 200
+        assert r.json()["disabled"] == ["terminal"]
+
+        r = client.get("/tools/policy", headers=headers)
+        assert r.json()["disabled"] == ["terminal"]
+
+    def test_put_unknown_tool_rejected(
+        self, client, root_tokens, tmp_path, monkeypatch
+    ):
+        from vectora.services import tool_policy
+
+        monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tp")
+        access, _, _ = root_tokens
+        r = client.put(
+            "/tools/policy",
+            headers={"Authorization": f"Bearer {access}"},
+            json={"disabled": ["nao_existe"]},
+        )
+        assert r.status_code == 400
+
+    def test_policy_without_token_returns_401(self, app_and_db):
+        from fastapi.testclient import TestClient
+
+        app, _ = app_and_db
+        fresh = TestClient(app, raise_server_exceptions=False)
+        assert fresh.get("/tools/policy").status_code == 401
 
 
 # ---------------------------------------------------------------------------

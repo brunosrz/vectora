@@ -14,11 +14,12 @@ from langchain_core.messages import AIMessage
 from vectora.agents._identity import VECTORA_IDENTITY
 from vectora.nodes.base import invoke_llm
 from vectora.nodes.tools import ALL_TOOLS
+from vectora.services.llm_tools import get_user_bound_llm, user_id_from_config
 from vectora.services.utils import load_llm
 from vectora.types import SearchResult
 
 if TYPE_CHECKING:
-    from langchain_core.runnables import Runnable
+    from langchain_core.runnables import Runnable, RunnableConfig
 
     from vectora.state import State
 
@@ -106,7 +107,7 @@ _search_llm = None
 def _get_search_llm() -> Runnable:
     global _search_llm
     if _search_llm is None:
-        _search_llm = load_llm().bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]
+        _search_llm = load_llm().bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         logger.debug("search_worker LLM inicializado com %d tools", len(ALL_TOOLS))
     return _search_llm
 
@@ -199,21 +200,20 @@ async def search_finalize(state: State) -> dict:
     return {"search_result": result}
 
 
-async def search(state: State) -> dict:
+async def search(state: State, config: RunnableConfig = None) -> dict:  # type: ignore[assignment]  # ty: ignore[invalid-parameter-default]
     """Agent de busca: responde usando web_search, fetch_url e vector_search.
 
     O LLM decide autonomamente quais ferramentas usar com base na pergunta.
     Após as ferramentas executarem (via search_tools node), o resultado é
     processado pelo process_retrieval para cascading automático no LanceDB.
 
-    Quando recebe orchestrator_task, injeta a instrução no topo do system prompt
-    para que o LLM saiba exatamente o que o orchestrator delegou — sem precisar
-    inferir intent do histórico bruto.
+    O LLM é bindado ao toolset do usuário (built-ins permitidas + MCP) a partir
+    do user_id do config. Quando recebe orchestrator_task, injeta a instrução no
+    topo do system prompt.
     """
     task = state.get("orchestrator_task")
     task_block = f"\n\n## Task delegada pelo Orchestrator\n{task}" if task else ""
 
     logger.info("search: processando mensagem%s", " (task delegada)" if task else "")
-    return await invoke_llm(
-        _get_search_llm(), state, system_prompt=SYSTEM_PROMPT + task_block
-    )
+    llm = await get_user_bound_llm(user_id_from_config(config))
+    return await invoke_llm(llm, state, system_prompt=SYSTEM_PROMPT + task_block)

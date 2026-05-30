@@ -4,6 +4,32 @@ import re
 from pathlib import Path
 
 
+def resolve_within_workspace(path: str, workspace_root: str | Path) -> Path | None:
+    """Resolve ``path`` garantindo que ele fique dentro de ``workspace_root``.
+
+    Caminhos relativos são resolvidos a partir da raiz do workspace; caminhos
+    absolutos são aceitos apenas se estiverem dentro dela. Bloqueia ``..``,
+    symlinks que apontam para fora e caminhos absolutos externos.
+
+    Returns:
+        Path absoluto resolvido quando dentro do workspace; ``None`` se escapar.
+    """
+    try:
+        root = Path(workspace_root).resolve()
+        candidate = Path(path)
+        if not candidate.is_absolute():
+            candidate = root / candidate
+        resolved = candidate.resolve()
+    except (ValueError, OSError):
+        return None
+
+    if resolved == root:
+        return resolved
+    if root in resolved.parents:
+        return resolved
+    return None
+
+
 def is_safe_file_path(path: str, allowed_dirs: list[str] | None = None) -> bool:
     """Verifica se um caminho de arquivo é seguro para leitura/edição.
 

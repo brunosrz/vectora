@@ -25,27 +25,85 @@ admin.get("/users", async (c) => {
 });
 
 admin.get("/users/:id", async (c) => {
-  const res = await fetch(`${VECTORA_API_URL}/admin/users/${c.req.param("id")}`, {
-    headers: baseHeaders(c.req.header("Cookie")),
-  });
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/users/${c.req.param("id")}`,
+    {
+      headers: baseHeaders(c.req.header("Cookie")),
+    },
+  );
   return c.json(await res.json(), res.status as 200);
 });
 
 admin.patch("/users/:id/role", async (c) => {
   const body = await c.req.json();
-  const res = await fetch(`${VECTORA_API_URL}/admin/users/${c.req.param("id")}/role`, {
-    method: "PATCH",
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/users/${c.req.param("id")}/role`,
+    {
+      method: "PATCH",
+      headers: baseHeaders(c.req.header("Cookie")),
+      body: JSON.stringify(body),
+    },
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+admin.delete("/users/:id", async (c) => {
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/users/${c.req.param("id")}`,
+    {
+      method: "DELETE",
+      headers: baseHeaders(c.req.header("Cookie")),
+    },
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+admin.get("/users/:id/tools", async (c) => {
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/users/${c.req.param("id")}/tools`,
+    { headers: baseHeaders(c.req.header("Cookie")) },
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+admin.post("/users/:id/tools", async (c) => {
+  const body = await c.req.json();
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/users/${c.req.param("id")}/tools`,
+    {
+      method: "POST",
+      headers: baseHeaders(c.req.header("Cookie")),
+      body: JSON.stringify(body),
+    },
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+admin.get("/invites", async (c) => {
+  const res = await fetch(`${VECTORA_API_URL}/admin/invites`, {
+    headers: baseHeaders(c.req.header("Cookie")),
+  });
+  return c.json(await res.json(), res.status as 200);
+});
+
+admin.post("/invites", async (c) => {
+  const body = await c.req.json();
+  const res = await fetch(`${VECTORA_API_URL}/admin/invites`, {
+    method: "POST",
     headers: baseHeaders(c.req.header("Cookie")),
     body: JSON.stringify(body),
   });
   return c.json(await res.json(), res.status as 200);
 });
 
-admin.delete("/users/:id", async (c) => {
-  const res = await fetch(`${VECTORA_API_URL}/admin/users/${c.req.param("id")}`, {
-    method: "DELETE",
-    headers: baseHeaders(c.req.header("Cookie")),
-  });
+admin.delete("/invites/:token", async (c) => {
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/invites/${c.req.param("token")}`,
+    {
+      method: "DELETE",
+      headers: baseHeaders(c.req.header("Cookie")),
+    },
+  );
   return c.json(await res.json(), res.status as 200);
 });
 
@@ -58,11 +116,14 @@ admin.get("/tools", async (c) => {
 
 admin.post("/tools/:name/toggle", async (c) => {
   const body = await c.req.json();
-  const res = await fetch(`${VECTORA_API_URL}/admin/tools/${c.req.param("name")}/toggle`, {
-    method: "POST",
-    headers: baseHeaders(c.req.header("Cookie")),
-    body: JSON.stringify(body),
-  });
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/tools/${c.req.param("name")}/toggle`,
+    {
+      method: "POST",
+      headers: baseHeaders(c.req.header("Cookie")),
+      body: JSON.stringify(body),
+    },
+  );
   return c.json(await res.json(), res.status as 200);
 });
 

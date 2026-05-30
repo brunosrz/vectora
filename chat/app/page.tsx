@@ -15,7 +15,9 @@ export default function HomePage() {
     const q = new URLSearchParams(window.location.search).get("q");
     const newThreadId = crypto.randomUUID();
     markAsNew(newThreadId);
-    const target = q ? `/session/${newThreadId}?q=${encodeURIComponent(q)}` : `/session/${newThreadId}`;
+    const target = q
+      ? `/session/${newThreadId}?q=${encodeURIComponent(q)}`
+      : `/session/${newThreadId}`;
     router.replace(target);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

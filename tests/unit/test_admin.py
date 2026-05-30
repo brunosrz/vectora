@@ -27,25 +27,25 @@ class TestAdminHandlerExists:
     def test_list_users_route_registered(self):
         from vectora.api.handlers.admin import router
 
-        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]
+        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("users" in p for p in paths)
 
     def test_system_info_route_registered(self):
         from vectora.api.handlers.admin import router
 
-        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]
+        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("system" in p for p in paths)
 
     def test_config_route_registered(self):
         from vectora.api.handlers.admin import router
 
-        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]
+        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("config" in p for p in paths)
 
     def test_tools_override_route_registered(self):
         from vectora.api.handlers.admin import router
 
-        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]
+        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("tools" in p for p in paths)
 
 

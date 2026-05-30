@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterator
 from pathlib import Path
 from unittest.mock import patch
 
@@ -16,7 +17,7 @@ from vectora.services.workspace import Workspace, WorkspaceRegistry
 # ---------------------------------------------------------------------------
 
 
-def _fresh_registry(tmp_path: Path) -> WorkspaceRegistry:
+def _fresh_registry(tmp_path: Path) -> Iterator[WorkspaceRegistry]:
     """Cria um registry novo com workspaces.json em tmp_path."""
     reg = WorkspaceRegistry()
     json_file = tmp_path / "workspaces.json"

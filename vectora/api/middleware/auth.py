@@ -37,6 +37,8 @@ _API_PREFIXES: tuple[str, ...] = (
     "/auth/",
     "/admin",
     "/memory",
+    "/plugins",
+    "/tools",
     "/vectora.",
     "/oauth",
     "/health",

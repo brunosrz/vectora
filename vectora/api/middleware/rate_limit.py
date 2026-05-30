@@ -38,7 +38,7 @@ def attach_limiter(app: FastAPI) -> None:
 
         limiter = Limiter(key_func=get_remote_address)
         app.state.limiter = limiter
-        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
         # Decoramos os endpoints via state — os handlers usam app.state.limiter
         logger.info("rate_limit: slowapi configurado")

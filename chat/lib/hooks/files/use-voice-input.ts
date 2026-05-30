@@ -69,7 +69,14 @@ export interface UseVoiceInputReturn {
  * })
  * ```
  */
-export function useVoiceInput({ onTranscript }: { onTranscript: (text: string) => void }): UseVoiceInputReturn {
+export function useVoiceInput({
+  onTranscript,
+  lang = "en-US",
+}: {
+  onTranscript: (text: string) => void;
+  /** Idioma do reconhecimento em BCP-47 (ex: "pt-BR"). */
+  lang?: string;
+}): UseVoiceInputReturn {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(false);
@@ -84,9 +91,18 @@ export function useVoiceInput({ onTranscript }: { onTranscript: (text: string) =
     onTranscriptRef.current = onTranscript;
   }, [onTranscript]);
 
+  // Idioma via ref — aplicado a cada start, permitindo troca sem recriar o objeto
+  const langRef = useRef(lang);
+  useEffect(() => {
+    langRef.current = lang;
+  }, [lang]);
+
   // Check for browser support on mount
   useEffect(() => {
-    const SpeechRecognitionAPI = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
+    const SpeechRecognitionAPI =
+      typeof window !== "undefined"
+        ? window.SpeechRecognition || window.webkitSpeechRecognition
+        : null;
 
     setIsSupported(!!SpeechRecognitionAPI);
 
@@ -96,7 +112,7 @@ export function useVoiceInput({ onTranscript }: { onTranscript: (text: string) =
       // User can click again to continue recording
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = "en-US";
+      recognition.lang = langRef.current;
       // @ts-expect-error - maxAlternatives exists but not in types
       recognition.maxAlternatives = 1;
 
@@ -150,10 +166,12 @@ export function useVoiceInput({ onTranscript }: { onTranscript: (text: string) =
             errorMessage = "No microphone found. Please check your microphone.";
             break;
           case "not-allowed":
-            errorMessage = "Microphone access denied. Please allow microphone access.";
+            errorMessage =
+              "Microphone access denied. Please allow microphone access.";
             break;
           case "network":
-            errorMessage = "Speech recognition unavailable. Try Chrome or Edge, or check browser privacy settings.";
+            errorMessage =
+              "Speech recognition unavailable. Try Chrome or Edge, or check browser privacy settings.";
             break;
           default:
             errorMessage = `Error: ${event.error}`;
@@ -188,6 +206,8 @@ export function useVoiceInput({ onTranscript }: { onTranscript: (text: string) =
     if (recognitionRef.current && !isListening && !isStartingRef.current) {
       isStartingRef.current = true;
       setError(null);
+      // Reaplica o idioma atual — o usuário pode tê-lo trocado desde o mount.
+      recognitionRef.current.lang = langRef.current;
       try {
         recognitionRef.current.start();
       } catch (err) {

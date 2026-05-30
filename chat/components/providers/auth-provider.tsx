@@ -13,7 +13,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { loadUserSettings } from "@/lib/stores/settings-store";
 
-const AUTH_REQUIRED = process.env.NEXT_PUBLIC_VECTORA_AUTH_REQUIRED?.toLowerCase() !== "false";
+const AUTH_REQUIRED =
+  process.env.NEXT_PUBLIC_VECTORA_AUTH_REQUIRED?.toLowerCase() !== "false";
 
 const PUBLIC_PATHS = ["/auth/signin", "/auth/signup"];
 
@@ -27,10 +28,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!AUTH_REQUIRED) return;
     if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return;
 
-    hydrate().then(() => {
+    hydrate().then(async () => {
       const { isAuthenticated, user } = useAuthStore.getState();
       if (!isAuthenticated) {
-        router.replace(`/auth/signin?from=${encodeURIComponent(pathname)}`);
+        // Primeiro acesso (sem usuários) → setup do root; senão → login
+        let hasUsers = true;
+        try {
+          const res = await fetch("/api/auth/has-users");
+          if (res.ok) hasUsers = Boolean((await res.json()).exists);
+        } catch {
+          // Falha de rede → assume login (signup público fica fechado por padrão)
+        }
+        if (!hasUsers) {
+          router.replace("/auth/signup");
+        } else {
+          router.replace(`/auth/signin?from=${encodeURIComponent(pathname)}`);
+        }
         return;
       }
       // Carrega preferências do usuário autenticado

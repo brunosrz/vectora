@@ -24,7 +24,14 @@ interface TimeTravelPanelProps {
   onClose: () => void;
 }
 
-export function TimeTravelPanel({ checkpoints, currentCheckpointId, onJumpToCheckpoint, onForkFromCheckpoint, isOpen, onClose }: TimeTravelPanelProps) {
+export function TimeTravelPanel({
+  checkpoints,
+  currentCheckpointId,
+  onJumpToCheckpoint,
+  onForkFromCheckpoint,
+  isOpen,
+  onClose,
+}: TimeTravelPanelProps) {
   if (!isOpen) return null;
 
   return (
@@ -40,7 +47,9 @@ export function TimeTravelPanel({ checkpoints, currentCheckpointId, onJumpToChec
             X
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">{checkpoints.length} checkpoints in conversation</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {checkpoints.length} checkpoints in conversation
+        </p>
       </div>
 
       {/* Checkpoint List */}
@@ -48,17 +57,28 @@ export function TimeTravelPanel({ checkpoints, currentCheckpointId, onJumpToChec
         <div className="p-4 space-y-3">
           {checkpoints.map((checkpoint, idx) => {
             // Safely extract checkpoint ID with fallback
-            const checkpointId = checkpoint.config?.configurable?.checkpoint_id || checkpoint.metadata?.checkpoint_id || `checkpoint-${idx}`;
+            const checkpointId =
+              checkpoint.config?.configurable?.checkpoint_id ||
+              checkpoint.metadata?.checkpoint_id ||
+              `checkpoint-${idx}`;
             const isCurrent = checkpointId === currentCheckpointId;
 
             return (
-              <div key={checkpointId} className={`p-3 rounded-lg border ${isCurrent ? "border-primary bg-primary/10" : "border-border bg-muted/30 hover:bg-muted/50"} transition-colors cursor-pointer`} onClick={() => onJumpToCheckpoint(checkpointId)}>
+              <div
+                key={checkpointId}
+                className={`p-3 rounded-lg border ${isCurrent ? "border-primary bg-primary/10" : "border-border bg-muted/30 hover:bg-muted/50"} transition-colors cursor-pointer`}
+                onClick={() => onJumpToCheckpoint(checkpointId)}
+              >
                 {/* Step Info */}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Clock className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-xs font-medium">Step {checkpoint.metadata?.step ?? idx}</span>
-                    {isCurrent && <span className="text-xs text-primary">● Current</span>}
+                    <span className="text-xs font-medium">
+                      Step {checkpoint.metadata?.step ?? idx}
+                    </span>
+                    {isCurrent && (
+                      <span className="text-xs text-primary">● Current</span>
+                    )}
                   </div>
                   <span className="text-xs text-muted-foreground">
                     {checkpoint.created_at &&

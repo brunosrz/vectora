@@ -22,7 +22,12 @@
 /**
  * pdfjsVersion = 5.7.284
  * pdfjsBuild = 7e5b36c2d
- */ const e = !("object" != typeof process || process + "" != "[object process]" || process.versions.nw || (process.versions.electron && process.type && "browser" !== process.type)),
+ */ const e = !(
+    "object" != typeof process ||
+    process + "" != "[object process]" ||
+    process.versions.nw ||
+    (process.versions.electron && process.type && "browser" !== process.type)
+  ),
   t = [1 / 0, 1 / 0, -1 / 0, -1 / 0],
   a = new Float32Array(t),
   n = [0.001, 0, 0, 0.001, 0, 0],
@@ -335,7 +340,8 @@ class AbortException extends aa {
   }
 }
 function bytesToString(e) {
-  ("object" == typeof e && void 0 !== e?.length) || unreachable("Invalid argument for bytesToString");
+  ("object" == typeof e && void 0 !== e?.length) ||
+    unreachable("Invalid argument for bytesToString");
   const t = e.length,
     a = 8192;
   if (t < a) return String.fromCharCode.apply(null, e);
@@ -370,16 +376,32 @@ class FeatureTest {
     );
   }
   static get isOffscreenCanvasSupported() {
-    return shadow(this, "isOffscreenCanvasSupported", "undefined" != typeof OffscreenCanvas);
+    return shadow(
+      this,
+      "isOffscreenCanvasSupported",
+      "undefined" != typeof OffscreenCanvas,
+    );
   }
   static get isImageDecoderSupported() {
-    return shadow(this, "isImageDecoderSupported", "undefined" != typeof ImageDecoder);
+    return shadow(
+      this,
+      "isImageDecoderSupported",
+      "undefined" != typeof ImageDecoder,
+    );
   }
   static get isFloat16ArraySupported() {
-    return shadow(this, "isFloat16ArraySupported", "undefined" != typeof Float16Array);
+    return shadow(
+      this,
+      "isFloat16ArraySupported",
+      "undefined" != typeof Float16Array,
+    );
   }
   static get isSanitizerSupported() {
-    return shadow(this, "isSanitizerSupported", "undefined" != typeof Sanitizer);
+    return shadow(
+      this,
+      "isSanitizerSupported",
+      "undefined" != typeof Sanitizer,
+    );
   }
   static get platform() {
     const { platform: e, userAgent: t } = navigator;
@@ -392,7 +414,11 @@ class FeatureTest {
     });
   }
   static get isCSSRoundSupported() {
-    return shadow(this, "isCSSRoundSupported", globalThis.CSS?.supports?.("width: round(1.5px, 1px)"));
+    return shadow(
+      this,
+      "isCSSRoundSupported",
+      globalThis.CSS?.supports?.("width: round(1.5px, 1px)"),
+    );
   }
   static get isAlphaColorInputSupported() {
     return shadow(
@@ -468,10 +494,24 @@ class Util {
     t[3] += e[5];
   }
   static transform(e, t) {
-    return [e[0] * t[0] + e[2] * t[1], e[1] * t[0] + e[3] * t[1], e[0] * t[2] + e[2] * t[3], e[1] * t[2] + e[3] * t[3], e[0] * t[4] + e[2] * t[5] + e[4], e[1] * t[4] + e[3] * t[5] + e[5]];
+    return [
+      e[0] * t[0] + e[2] * t[1],
+      e[1] * t[0] + e[3] * t[1],
+      e[0] * t[2] + e[2] * t[3],
+      e[1] * t[2] + e[3] * t[3],
+      e[0] * t[4] + e[2] * t[5] + e[4],
+      e[1] * t[4] + e[3] * t[5] + e[5],
+    ];
   }
   static multiplyByDOMMatrix(e, t) {
-    return [e[0] * t.a + e[2] * t.b, e[1] * t.a + e[3] * t.b, e[0] * t.c + e[2] * t.d, e[1] * t.c + e[3] * t.d, e[0] * t.e + e[2] * t.f + e[4], e[1] * t.e + e[3] * t.f + e[5]];
+    return [
+      e[0] * t.a + e[2] * t.b,
+      e[1] * t.a + e[3] * t.b,
+      e[0] * t.c + e[2] * t.d,
+      e[1] * t.c + e[3] * t.d,
+      e[0] * t.e + e[2] * t.f + e[4],
+      e[1] * t.e + e[3] * t.f + e[5],
+    ];
   }
   static applyTransform(e, t, a = 0) {
     const n = e[a],
@@ -540,7 +580,14 @@ class Util {
   }
   static inverseTransform(e) {
     const t = e[0] * e[3] - e[1] * e[2];
-    return [e[3] / t, -e[1] / t, -e[2] / t, e[0] / t, (e[2] * e[5] - e[4] * e[3]) / t, (e[4] * e[1] - e[5] * e[0]) / t];
+    return [
+      e[3] / t,
+      -e[1] / t,
+      -e[2] / t,
+      e[0] / t,
+      (e[2] * e[5] - e[4] * e[3]) / t,
+      (e[4] * e[1] - e[5] * e[0]) / t,
+    ];
   }
   static singularValueDecompose2dScale(e, t) {
     const a = e[0],
@@ -616,11 +663,46 @@ class Util {
     l[1] = Math.min(l[1], t, o);
     l[2] = Math.max(l[2], e, i);
     l[3] = Math.max(l[3], t, o);
-    this.#t(e, a, s, i, t, n, r, o, 3 * (3 * (a - s) - e + i), 6 * (e - 2 * a + s), 3 * (a - e), l);
-    this.#t(e, a, s, i, t, n, r, o, 3 * (3 * (n - r) - t + o), 6 * (t - 2 * n + r), 3 * (n - t), l);
+    this.#t(
+      e,
+      a,
+      s,
+      i,
+      t,
+      n,
+      r,
+      o,
+      3 * (3 * (a - s) - e + i),
+      6 * (e - 2 * a + s),
+      3 * (a - e),
+      l,
+    );
+    this.#t(
+      e,
+      a,
+      s,
+      i,
+      t,
+      n,
+      r,
+      o,
+      3 * (3 * (n - r) - t + o),
+      6 * (t - 2 * n + r),
+      3 * (n - t),
+      l,
+    );
   }
 }
-const na = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 728, 711, 710, 729, 733, 731, 730, 732, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8226, 8224, 8225, 8230, 8212, 8211, 402, 8260, 8249, 8250, 8722, 8240, 8222, 8220, 8221, 8216, 8217, 8218, 8482, 64257, 64258, 321, 338, 352, 376, 381, 305, 322, 339, 353, 382, 0, 8364];
+const na = [
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 728,
+  711, 710, 729, 733, 731, 730, 732, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 8226, 8224, 8225, 8230, 8212, 8211, 402, 8260, 8249, 8250, 8722,
+  8240, 8222, 8220, 8221, 8216, 8217, 8218, 8482, 64257, 64258, 321, 338, 352,
+  376, 381, 305, 322, 339, 353, 382, 0, 8364,
+];
 function stringToPDFString(e, t = !1) {
   if (e[0] >= "ï") {
     let a;
@@ -636,7 +718,9 @@ function stringToPDFString(e, t = !1) {
         const n = new TextDecoder(a, { fatal: !0 }),
           s = stringToBytes(e),
           r = n.decode(s);
-        return t || !r.includes("") ? r : r.replaceAll(/\x1b[^\x1b]*(?:\x1b|$)/g, "");
+        return t || !r.includes("")
+          ? r
+          : r.replaceAll(/\x1b[^\x1b]*(?:\x1b|$)/g, "");
       } catch (e) {
         warn(`stringToPDFString: "${e}".`);
       }
@@ -666,7 +750,14 @@ function isArrayEqual(e, t) {
 }
 function getModificationDate(e = new Date()) {
   e instanceof Date || (e = new Date(e));
-  return [e.getUTCFullYear().toString(), (e.getUTCMonth() + 1).toString().padStart(2, "0"), e.getUTCDate().toString().padStart(2, "0"), e.getUTCHours().toString().padStart(2, "0"), e.getUTCMinutes().toString().padStart(2, "0"), e.getUTCSeconds().toString().padStart(2, "0")].join("");
+  return [
+    e.getUTCFullYear().toString(),
+    (e.getUTCMonth() + 1).toString().padStart(2, "0"),
+    e.getUTCDate().toString().padStart(2, "0"),
+    e.getUTCHours().toString().padStart(2, "0"),
+    e.getUTCMinutes().toString().padStart(2, "0"),
+    e.getUTCSeconds().toString().padStart(2, "0"),
+  ].join("");
 }
 let sa = null,
   ra = null;
@@ -718,7 +809,11 @@ class Dict {
       s = this.#a.get(a);
       void 0 === s && void 0 !== n && (s = this.#a.get(n));
     }
-    return s instanceof Ref && this.xref ? (e ? this.xref.fetchAsync(s, this.suppressEncryption) : this.xref.fetch(s, this.suppressEncryption)) : s;
+    return s instanceof Ref && this.xref
+      ? e
+        ? this.xref.fetchAsync(s, this.suppressEncryption)
+        : this.xref.fetch(s, this.suppressEncryption)
+      : s;
   }
   get(e, t, a) {
     return this.#n(!1, e, t, a);
@@ -730,7 +825,10 @@ class Dict {
     let n = this.#n(!1, e, t, a);
     if (Array.isArray(n)) {
       n = n.slice();
-      for (let e = 0, t = n.length; e < t; e++) n[e] instanceof Ref && this.xref && (n[e] = this.xref.fetch(n[e], this.suppressEncryption));
+      for (let e = 0, t = n.length; e < t; e++)
+        n[e] instanceof Ref &&
+          this.xref &&
+          (n[e] = this.xref.fetch(n[e], this.suppressEncryption));
     }
     return n;
   }
@@ -762,7 +860,9 @@ class Dict {
     null != t && this.set(e, t);
   }
   setIfName(e, t) {
-    "string" == typeof t ? this.set(e, Name.get(t)) : t instanceof Name && this.set(e, t);
+    "string" == typeof t
+      ? this.set(e, Name.get(t))
+      : t instanceof Name && this.set(e, t);
   }
   setIfDict(e, t) {
     t instanceof Dict && this.set(e, t);
@@ -771,7 +871,13 @@ class Dict {
     return this.#a.has(e);
   }
   *[Symbol.iterator]() {
-    for (const [e, t] of this.#a) yield [e, t instanceof Ref && this.xref ? this.xref.fetch(t, this.suppressEncryption) : t];
+    for (const [e, t] of this.#a)
+      yield [
+        e,
+        t instanceof Ref && this.xref
+          ? this.xref.fetch(t, this.suppressEncryption)
+          : t,
+      ];
   }
   static get empty() {
     const e = new Dict(null);
@@ -799,7 +905,8 @@ class Dict {
         continue;
       }
       const s = new Dict(e);
-      for (const e of a) for (const [t, a] of e.getRawEntries()) s.setIfNotExists(t, a);
+      for (const e of a)
+        for (const [t, a] of e.getRawEntries()) s.setIfNotExists(t, a);
       s.size > 0 && n.set(t, s);
     }
     s.clear();
@@ -826,7 +933,9 @@ class Ref {
     const t = ca[e];
     if (t) return t;
     const a = /^(\d+)R(\d*)$/.exec(e);
-    return a && "0" !== a[1] ? (ca[e] = new Ref(parseInt(a[1], 10), a[2] ? parseInt(a[2], 10) : 0)) : null;
+    return a && "0" !== a[1]
+      ? (ca[e] = new Ref(parseInt(a[1], 10), a[2] ? parseInt(a[2], 10) : 0))
+      : null;
   }
   static get(e, t) {
     const a = 0 === t ? `${e}R` : `${e}R${t}`;
@@ -951,7 +1060,12 @@ class BaseStream {
     return -1 === e || -1 === t ? -1 : (e << 8) + t;
   }
   getInt32() {
-    return (this.getByte() << 24) + (this.getByte() << 16) + (this.getByte() << 8) + this.getByte();
+    return (
+      (this.getByte() << 24) +
+      (this.getByte() << 16) +
+      (this.getByte() << 8) +
+      this.getByte()
+    );
   }
   getByteRange(e, t) {
     unreachable("Abstract method `getByteRange` called");
@@ -981,7 +1095,15 @@ class BaseStream {
 const ua = /^[1-9]\.\d$/,
   ma = 2 ** 31 - 1,
   pa = [1, 0, 0, 1, 0, 0],
-  da = ["ColorSpace", "ExtGState", "Font", "Pattern", "Properties", "Shading", "XObject"],
+  da = [
+    "ColorSpace",
+    "ExtGState",
+    "Font",
+    "Pattern",
+    "Properties",
+    "Shading",
+    "XObject",
+  ],
   ga = ["ExtGState", "Font", "Properties", "XObject"];
 function getLookupTableFactory(e) {
   let t;
@@ -1033,10 +1155,16 @@ function arrayBuffersToBytes(e) {
 }
 async function fetchBinaryData(e) {
   const t = await fetch(e);
-  if (!t.ok) throw new Error(`Failed to fetch file "${e}" with "${t.statusText}".`);
+  if (!t.ok)
+    throw new Error(`Failed to fetch file "${e}" with "${t.statusText}".`);
   return t.bytes();
 }
-function getInheritableProperty({ dict: e, key: t, getArray: a = !1, stopWhenFound: n = !0 }) {
+function getInheritableProperty({
+  dict: e,
+  key: t,
+  getArray: a = !1,
+  stopWhenFound: n = !0,
+}) {
   let s;
   const r = new RefSet();
   for (; e instanceof Dict && (!e.objId || !r.has(e.objId)); ) {
@@ -1062,22 +1190,65 @@ function deepCompare(e, t) {
   }
   if (Array.isArray(e) && Array.isArray(t)) {
     if (e.length !== t.length) return !1;
-    for (let a = 0, n = e.length; a < n; a++) if (!deepCompare(e[a], t[a])) return !1;
+    for (let a = 0, n = e.length; a < n; a++)
+      if (!deepCompare(e[a], t[a])) return !1;
     return !0;
   }
   return !1;
 }
-const ba = ["", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM", "", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC", "", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+const ba = [
+  "",
+  "C",
+  "CC",
+  "CCC",
+  "CD",
+  "D",
+  "DC",
+  "DCC",
+  "DCCC",
+  "CM",
+  "",
+  "X",
+  "XX",
+  "XXX",
+  "XL",
+  "L",
+  "LX",
+  "LXX",
+  "LXXX",
+  "XC",
+  "",
+  "I",
+  "II",
+  "III",
+  "IV",
+  "V",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+];
 function toRomanNumerals(e, t = !1) {
-  assert(Number.isInteger(e) && e > 0, "The number should be a positive integer.");
-  const a = "M".repeat((e / 1e3) | 0) + ba[((e % 1e3) / 100) | 0] + ba[10 + (((e % 100) / 10) | 0)] + ba[20 + (e % 10)];
+  assert(
+    Number.isInteger(e) && e > 0,
+    "The number should be a positive integer.",
+  );
+  const a =
+    "M".repeat((e / 1e3) | 0) +
+    ba[((e % 1e3) / 100) | 0] +
+    ba[10 + (((e % 100) / 10) | 0)] +
+    ba[20 + (e % 10)];
   return t ? a.toLowerCase() : a;
 }
 function isWhiteSpace(e) {
   return 32 === e || 9 === e || 13 === e || 10 === e;
 }
 function isNumberArray(e, t) {
-  return Array.isArray(e) ? (null === t || e.length === t) && e.every((e) => "number" == typeof e) : ArrayBuffer.isView(e) && !(e instanceof BigInt64Array || e instanceof BigUint64Array) && (null === t || e.length === t);
+  return Array.isArray(e)
+    ? (null === t || e.length === t) && e.every((e) => "number" == typeof e)
+    : ArrayBuffer.isView(e) &&
+        !(e instanceof BigInt64Array || e instanceof BigUint64Array) &&
+        (null === t || e.length === t);
 }
 function lookupMatrix(e, t) {
   return isNumberArray(e, 6) ? e : t;
@@ -1100,7 +1271,21 @@ function escapePDFName(e) {
   let a = 0;
   for (let n = 0, s = e.length; n < s; n++) {
     const s = e.charCodeAt(n);
-    if (s < 33 || s > 126 || 35 === s || 40 === s || 41 === s || 60 === s || 62 === s || 91 === s || 93 === s || 123 === s || 125 === s || 47 === s || 37 === s) {
+    if (
+      s < 33 ||
+      s > 126 ||
+      35 === s ||
+      40 === s ||
+      41 === s ||
+      60 === s ||
+      62 === s ||
+      91 === s ||
+      93 === s ||
+      123 === s ||
+      125 === s ||
+      47 === s ||
+      37 === s
+    ) {
       a < n && t.push(e.substring(a, n));
       t.push(`#${s.toString(16)}`);
       a = n + 1;
@@ -1111,7 +1296,9 @@ function escapePDFName(e) {
   return t.join("");
 }
 function escapeString(e) {
-  return e.replaceAll(/([()\\\n\r])/g, (e) => ("\n" === e ? "\\n" : "\r" === e ? "\\r" : `\\${e}`));
+  return e.replaceAll(/([()\\\n\r])/g, (e) =>
+    "\n" === e ? "\\n" : "\r" === e ? "\\r" : `\\${e}`,
+  );
 }
 function _collectJS(e, t, a, n) {
   if (!e) return;
@@ -1127,7 +1314,9 @@ function _collectJS(e, t, a, n) {
     if (isName(e.get("S"), "JavaScript")) {
       const t = e.get("JS");
       let n;
-      t instanceof BaseStream ? (n = t.getString()) : "string" == typeof t && (n = t);
+      t instanceof BaseStream
+        ? (n = t.getString())
+        : "string" == typeof t && (n = t);
       n &&= stringToPDFString(n, !0).replaceAll("\0", "");
       n && a.push(n.trim());
     }
@@ -1204,7 +1393,22 @@ function validateFontName(e, t = !1) {
   return !0;
 }
 function validateCSSFont(e) {
-  const t = new Set(["100", "200", "300", "400", "500", "600", "700", "800", "900", "1000", "normal", "bold", "bolder", "lighter"]),
+  const t = new Set([
+      "100",
+      "200",
+      "300",
+      "400",
+      "500",
+      "600",
+      "700",
+      "800",
+      "900",
+      "1000",
+      "normal",
+      "bold",
+      "bolder",
+      "lighter",
+    ]),
     { fontFamily: a, fontWeight: n, italicAngle: s } = e;
   if (!validateFontName(a, !0)) return !1;
   const r = n ? n.toString() : "";
@@ -1214,18 +1418,32 @@ function validateCSSFont(e) {
   return !0;
 }
 function recoverJsURL(e) {
-  const t = new RegExp("^\\s*(" + ["app.launchURL", "window.open", "xfa.host.gotoURL"].join("|").replaceAll(".", "\\.") + ")\\((?:'|\")([^'\"]*)(?:'|\")(?:,\\s*(\\w+)\\)|\\))", "i").exec(e);
-  return t?.[2] ? { url: t[2], newWindow: "app.launchURL" === t[1] && "true" === t[3] } : null;
+  const t = new RegExp(
+    "^\\s*(" +
+      ["app.launchURL", "window.open", "xfa.host.gotoURL"]
+        .join("|")
+        .replaceAll(".", "\\.") +
+      ")\\((?:'|\")([^'\"]*)(?:'|\")(?:,\\s*(\\w+)\\)|\\))",
+    "i",
+  ).exec(e);
+  return t?.[2]
+    ? { url: t[2], newWindow: "app.launchURL" === t[1] && "true" === t[3] }
+    : null;
 }
 function numberToString(e) {
   if (Number.isInteger(e)) return e.toString();
   const t = Math.round(100 * e);
-  return t % 100 == 0 ? (t / 100).toString() : t % 10 == 0 ? e.toFixed(1) : e.toFixed(2);
+  return t % 100 == 0
+    ? (t / 100).toString()
+    : t % 10 == 0
+      ? e.toFixed(1)
+      : e.toFixed(2);
 }
 function getNewAnnotationsMap(e) {
   if (!e) return null;
   const t = new Map();
-  for (const [a, n] of e) a.startsWith(d) && t.getOrInsertComputed(n.pageIndex, makeArr).push(n);
+  for (const [a, n] of e)
+    a.startsWith(d) && t.getOrInsertComputed(n.pageIndex, makeArr).push(n);
   return t.size > 0 ? t : null;
 }
 function stringToAsciiOrUTF16BE(e) {
@@ -1329,7 +1547,13 @@ function __wbg_get_imports() {
       },
       __wbg_copy_result_0d15f3bf9d9012ae: function (e, t) {
         !(function copy_result(e, t) {
-          const { _mustAddAlpha: a, _destBuffer: n, _destOffset: s, _destLength: r, _memoryArray: i } = QCMS;
+          const {
+            _mustAddAlpha: a,
+            _destBuffer: n,
+            _destOffset: s,
+            _destLength: r,
+            _memoryArray: i,
+          } = QCMS;
           if (t !== r)
             if (a)
               for (let a = e, r = e + t, o = s; a < r; a += 3, o += 4) {
@@ -1375,7 +1599,8 @@ function __wbg_get_imports() {
 }
 let ya = null;
 function getUint8ArrayMemory0() {
-  (null !== ya && 0 !== ya.byteLength) || (ya = new Uint8Array(xa.memory.buffer));
+  (null !== ya && 0 !== ya.byteLength) ||
+    (ya = new Uint8Array(xa.memory.buffer));
   return ya;
 }
 function passArray8ToWasm0(e, t) {
@@ -1449,7 +1674,12 @@ class ColorSpace {
     const h = 1 << i,
       u = a !== s || t !== n;
     if (this.isPassthrough(i)) c = o;
-    else if (1 === this.numComps && f > h && "DeviceGray" !== this.name && "DeviceRGB" !== this.name) {
+    else if (
+      1 === this.numComps &&
+      f > h &&
+      "DeviceGray" !== this.name &&
+      "DeviceRGB" !== this.name
+    ) {
       const t = i <= 8 ? new Uint8Array(h) : new Uint16Array(h);
       for (let e = 0; e < h; e++) t[e] = e;
       const a = new Uint8ClampedArray(3 * h);
@@ -1515,7 +1745,8 @@ class ColorSpace {
   }
   static isDefaultDecode(e, t) {
     if (isDefaultDecodeHelper(e, 2 * t)) return !0;
-    for (let t = 0, a = e.length; t < a; t += 2) if (0 !== e[t] || 1 !== e[t + 1]) return !1;
+    for (let t = 0, a = e.length; t < a; t += 2)
+      if (0 !== e[t] || 1 !== e[t + 1]) return !1;
     return !0;
   }
 }
@@ -1556,7 +1787,10 @@ class AlternateCS extends ColorSpace {
     u || l.getRgbBuffer(p, 0, a, n, s, 8, i);
   }
   getOutputLength(e, t) {
-    return this.base.getOutputLength((e * this.base.numComps) / this.numComps, t);
+    return this.base.getOutputLength(
+      (e * this.base.numComps) / this.numComps,
+      t,
+    );
   }
 }
 class PatternCS extends ColorSpace {
@@ -1579,7 +1813,8 @@ class IndexedCS extends ColorSpace {
       const e = a.getBytes(n);
       this.lookup.set(e);
     } else {
-      if ("string" != typeof a) throw new FormatError(`IndexedCS - unrecognized lookup table: ${a}`);
+      if ("string" != typeof a)
+        throw new FormatError(`IndexedCS - unrecognized lookup table: ${a}`);
       for (let e = 0; e < n; ++e) this.lookup[e] = 255 & a.charCodeAt(e);
     }
   }
@@ -1732,9 +1967,55 @@ class DeviceCmykCS extends ColorSpace {
       i = e[t + 1] * a,
       o = e[t + 2] * a,
       l = e[t + 3] * a;
-    n[s] = 255 + r * (-4.387332384609988 * r + 54.48615194189176 * i + 18.82290502165302 * o + 212.25662451639585 * l - 285.2331026137004) + i * (1.7149763477362134 * i - 5.6096736904047315 * o + -17.873870861415444 * l - 5.497006427196366) + o * (-2.5217340131683033 * o - 21.248923337353073 * l + 17.5119270841813) + l * (-21.86122147463605 * l - 189.48180835922747);
-    n[s + 1] = 255 + r * (8.841041422036149 * r + 60.118027045597366 * i + 6.871425592049007 * o + 31.159100130055922 * l - 79.2970844816548) + i * (-15.310361306967817 * i + 17.575251261109482 * o + 131.35250912493976 * l - 190.9453302588951) + o * (4.444339102852739 * o + 9.8632861493405 * l - 24.86741582555878) + l * (-20.737325471181034 * l - 187.80453709719578);
-    n[s + 2] = 255 + r * (0.8842522430003296 * r + 8.078677503112928 * i + 30.89978309703729 * o - 0.23883238689178934 * l - 14.183576799673286) + i * (10.49593273432072 * i + 63.02378494754052 * o + 50.606957656360734 * l - 112.23884253719248) + o * (0.03296041114873217 * o + 115.60384449646641 * l - 193.58209356861505) + l * (-22.33816807309886 * l - 180.12613974708367);
+    n[s] =
+      255 +
+      r *
+        (-4.387332384609988 * r +
+          54.48615194189176 * i +
+          18.82290502165302 * o +
+          212.25662451639585 * l -
+          285.2331026137004) +
+      i *
+        (1.7149763477362134 * i -
+          5.6096736904047315 * o +
+          -17.873870861415444 * l -
+          5.497006427196366) +
+      o *
+        (-2.5217340131683033 * o - 21.248923337353073 * l + 17.5119270841813) +
+      l * (-21.86122147463605 * l - 189.48180835922747);
+    n[s + 1] =
+      255 +
+      r *
+        (8.841041422036149 * r +
+          60.118027045597366 * i +
+          6.871425592049007 * o +
+          31.159100130055922 * l -
+          79.2970844816548) +
+      i *
+        (-15.310361306967817 * i +
+          17.575251261109482 * o +
+          131.35250912493976 * l -
+          190.9453302588951) +
+      o * (4.444339102852739 * o + 9.8632861493405 * l - 24.86741582555878) +
+      l * (-20.737325471181034 * l - 187.80453709719578);
+    n[s + 2] =
+      255 +
+      r *
+        (0.8842522430003296 * r +
+          8.078677503112928 * i +
+          30.89978309703729 * o -
+          0.23883238689178934 * l -
+          14.183576799673286) +
+      i *
+        (10.49593273432072 * i +
+          63.02378494754052 * o +
+          50.606957656360734 * l -
+          112.23884253719248) +
+      o *
+        (0.03296041114873217 * o +
+          115.60384449646641 * l -
+          193.58209356861505) +
+      l * (-22.33816807309886 * l - 180.12613974708367);
   }
   getRgbItem(e, t, a, n) {
     this.#i(e, t, 1, a, n);
@@ -1754,18 +2035,29 @@ class DeviceCmykCS extends ColorSpace {
 class CalGrayCS extends ColorSpace {
   constructor(e, t, a) {
     super("CalGray", 1);
-    if (!e) throw new FormatError("WhitePoint missing - required for color space CalGray");
+    if (!e)
+      throw new FormatError(
+        "WhitePoint missing - required for color space CalGray",
+      );
     [this.XW, this.YW, this.ZW] = e;
     [this.XB, this.YB, this.ZB] = t || [0, 0, 0];
     this.G = a || 1;
-    if (this.XW < 0 || this.ZW < 0 || 1 !== this.YW) throw new FormatError(`Invalid WhitePoint components for ${this.name}, no fallback available`);
+    if (this.XW < 0 || this.ZW < 0 || 1 !== this.YW)
+      throw new FormatError(
+        `Invalid WhitePoint components for ${this.name}, no fallback available`,
+      );
     if (this.XB < 0 || this.YB < 0 || this.ZB < 0) {
       info(`Invalid BlackPoint for ${this.name}, falling back to default.`);
       this.XB = this.YB = this.ZB = 0;
     }
-    (0 === this.XB && 0 === this.YB && 0 === this.ZB) || warn(`${this.name}, BlackPoint: XB: ${this.XB}, YB: ${this.YB}, ZB: ${this.ZB}, only default values are supported.`);
+    (0 === this.XB && 0 === this.YB && 0 === this.ZB) ||
+      warn(
+        `${this.name}, BlackPoint: XB: ${this.XB}, YB: ${this.YB}, ZB: ${this.ZB}, only default values are supported.`,
+      );
     if (this.G < 1) {
-      info(`Invalid Gamma: ${this.G} for ${this.name}, falling back to default.`);
+      info(
+        `Invalid Gamma: ${this.G} for ${this.name}, falling back to default.`,
+      );
       this.G = 1;
     }
   }
@@ -1793,9 +2085,17 @@ class CalGrayCS extends ColorSpace {
   }
 }
 class CalRGBCS extends ColorSpace {
-  static #o = new Float32Array([0.8951, 0.2664, -0.1614, -0.7502, 1.7135, 0.0367, 0.0389, -0.0685, 1.0296]);
-  static #l = new Float32Array([0.9869929, -0.1470543, 0.1599627, 0.4323053, 0.5183603, 0.0492912, -0.0085287, 0.0400428, 0.9684867]);
-  static #f = new Float32Array([3.2404542, -1.5371385, -0.4985314, -0.969266, 1.8760108, 0.041556, 0.0556434, -0.2040259, 1.0572252]);
+  static #o = new Float32Array([
+    0.8951, 0.2664, -0.1614, -0.7502, 1.7135, 0.0367, 0.0389, -0.0685, 1.0296,
+  ]);
+  static #l = new Float32Array([
+    0.9869929, -0.1470543, 0.1599627, 0.4323053, 0.5183603, 0.0492912,
+    -0.0085287, 0.0400428, 0.9684867,
+  ]);
+  static #f = new Float32Array([
+    3.2404542, -1.5371385, -0.4985314, -0.969266, 1.8760108, 0.041556,
+    0.0556434, -0.2040259, 1.0572252,
+  ]);
   static #c = new Float32Array([1, 1, 1]);
   static #h = new Float32Array(3);
   static #u = new Float32Array(3);
@@ -1803,18 +2103,38 @@ class CalRGBCS extends ColorSpace {
   static #p = (24 / 116) ** 3 / 8;
   constructor(e, t, a, n) {
     super("CalRGB", 3);
-    if (!e) throw new FormatError("WhitePoint missing - required for color space CalRGB");
+    if (!e)
+      throw new FormatError(
+        "WhitePoint missing - required for color space CalRGB",
+      );
     const [s, r, i] = (this.whitePoint = e),
       [o, l, f] = (this.blackPoint = t || new Float32Array(3));
     [this.GR, this.GG, this.GB] = a || new Float32Array([1, 1, 1]);
-    [this.MXA, this.MYA, this.MZA, this.MXB, this.MYB, this.MZB, this.MXC, this.MYC, this.MZC] = n || new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
-    if (s < 0 || i < 0 || 1 !== r) throw new FormatError(`Invalid WhitePoint components for ${this.name}, no fallback available`);
+    [
+      this.MXA,
+      this.MYA,
+      this.MZA,
+      this.MXB,
+      this.MYB,
+      this.MZB,
+      this.MXC,
+      this.MYC,
+      this.MZC,
+    ] = n || new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+    if (s < 0 || i < 0 || 1 !== r)
+      throw new FormatError(
+        `Invalid WhitePoint components for ${this.name}, no fallback available`,
+      );
     if (o < 0 || l < 0 || f < 0) {
-      info(`Invalid BlackPoint for ${this.name} [${o}, ${l}, ${f}], falling back to default.`);
+      info(
+        `Invalid BlackPoint for ${this.name} [${o}, ${l}, ${f}], falling back to default.`,
+      );
       this.blackPoint = new Float32Array(3);
     }
     if (this.GR < 0 || this.GG < 0 || this.GB < 0) {
-      info(`Invalid Gamma [${this.GR}, ${this.GG}, ${this.GB}] for ${this.name}, falling back to default.`);
+      info(
+        `Invalid Gamma [${this.GR}, ${this.GG}, ${this.GB}] for ${this.name}, falling back to default.`,
+      );
       this.GR = this.GG = this.GB = 1;
     }
   }
@@ -1834,10 +2154,18 @@ class CalRGBCS extends ColorSpace {
     a[2] = (1.08883 * t[2]) / e[2];
   }
   #w(e) {
-    return e <= 0.0031308 ? MathClamp(12.92 * e, 0, 1) : e >= 0.99554525 ? 1 : MathClamp(1.055 * e ** (1 / 2.4) - 0.055, 0, 1);
+    return e <= 0.0031308
+      ? MathClamp(12.92 * e, 0, 1)
+      : e >= 0.99554525
+        ? 1
+        : MathClamp(1.055 * e ** (1 / 2.4) - 0.055, 0, 1);
   }
   #j(e) {
-    return e < 0 ? -this.#j(-e) : e > 8 ? ((e + 16) / 116) ** 3 : e * CalRGBCS.#p;
+    return e < 0
+      ? -this.#j(-e)
+      : e > 8
+        ? ((e + 16) / 116) ** 3
+        : e * CalRGBCS.#p;
   }
   #k(e, t, a) {
     if (0 === e[0] && 0 === e[1] && 0 === e[2]) {
@@ -1921,11 +2249,17 @@ class CalRGBCS extends ColorSpace {
 class LabCS extends ColorSpace {
   constructor(e, t, a) {
     super("Lab", 3);
-    if (!e) throw new FormatError("WhitePoint missing - required for color space Lab");
+    if (!e)
+      throw new FormatError(
+        "WhitePoint missing - required for color space Lab",
+      );
     [this.XW, this.YW, this.ZW] = e;
     [this.amin, this.amax, this.bmin, this.bmax] = a || [-100, 100, -100, 100];
     [this.XB, this.YB, this.ZB] = t || [0, 0, 0];
-    if (this.XW < 0 || this.ZW < 0 || 1 !== this.YW) throw new FormatError("Invalid WhitePoint components, no fallback available");
+    if (this.XW < 0 || this.ZW < 0 || 1 !== this.YW)
+      throw new FormatError(
+        "Invalid WhitePoint components, no fallback available",
+      );
     if (this.XB < 0 || this.YB < 0 || this.ZB < 0) {
       info("Invalid BlackPoint, falling back to default");
       this.XB = this.YB = this.ZB = 0;
@@ -2033,7 +2367,14 @@ class IccColorSpace extends ColorSpace {
         this.#x = (e, t, a) =>
           (function qcms_convert_four(e, t, a, n, s, r) {
             xa.qcms_convert_four(e, t, a, n, s, r);
-          })(this.#A, 255 * e[t], 255 * e[t + 1], 255 * e[t + 2], 255 * e[t + 3], a);
+          })(
+            this.#A,
+            255 * e[t],
+            255 * e[t + 1],
+            255 * e[t + 2],
+            255 * e[t + 3],
+            a,
+          );
         break;
       default:
         throw new Error(`Unsupported number of components: ${a}`);
@@ -2096,7 +2437,12 @@ class IccColorSpace extends ColorSpace {
         try {
           this._module = (function initSync(e) {
             if (void 0 !== xa) return xa;
-            void 0 !== e && (Object.getPrototypeOf(e) === Object.prototype ? ({ module: e } = e) : console.warn("using deprecated parameters for `initSync()`; pass a single object instead"));
+            void 0 !== e &&
+              (Object.getPrototypeOf(e) === Object.prototype
+                ? ({ module: e } = e)
+                : console.warn(
+                    "using deprecated parameters for `initSync()`; pass a single object instead",
+                  ));
             const t = __wbg_get_imports();
             e instanceof WebAssembly.Module || (e = new WebAssembly.Module(e));
             return __wbg_finalize_init(new WebAssembly.Instance(e, t), e);
@@ -2107,21 +2453,33 @@ class IccColorSpace extends ColorSpace {
         } catch (e) {
           warn(`ICCBased color space: "${e}".`);
         }
-      else warn("No ICC color space support due to missing `wasmUrl` API option");
+      else
+        warn("No ICC color space support due to missing `wasmUrl` API option");
     return shadow(this, "isUsable", e);
   }
 }
 class CmykICCBasedCS extends IccColorSpace {
   static #T;
   constructor() {
-    super(new Uint8Array(fetchSync(`${CmykICCBasedCS.#T}CGATS001Compat-v2-micro.icc`)), "DeviceCMYK", 4);
+    super(
+      new Uint8Array(
+        fetchSync(`${CmykICCBasedCS.#T}CGATS001Compat-v2-micro.icc`),
+      ),
+      "DeviceCMYK",
+      4,
+    );
   }
   static setOptions({ iccUrl: e }) {
     this.#T = e;
   }
   static get isUsable() {
     let e = !1;
-    IccColorSpace.isUsable && (this.#T ? (e = !0) : warn("No CMYK ICC profile support due to missing `iccUrl` API option"));
+    IccColorSpace.isUsable &&
+      (this.#T
+        ? (e = !0)
+        : warn(
+            "No CMYK ICC profile support due to missing `iccUrl` API option",
+          ));
     return shadow(this, "isUsable", e);
   }
 }
@@ -2171,7 +2529,12 @@ class Stream extends BaseStream {
     return new Stream(this.bytes.buffer, e, t, a);
   }
   clone() {
-    return new Stream(this.bytes.buffer, this.start, this.end - this.start, this.dict.clone());
+    return new Stream(
+      this.bytes.buffer,
+      this.start,
+      this.end - this.start,
+      this.dict.clone(),
+    );
   }
 }
 class StringStream extends Stream {
@@ -2196,7 +2559,8 @@ class ChunkedStream extends Stream {
   }
   getMissingChunks() {
     const e = [];
-    for (let t = 0, a = this.numChunks; t < a; ++t) this._loadedChunks.has(t) || e.push(t);
+    for (let t = 0, a = this.numChunks; t < a; ++t)
+      this._loadedChunks.has(t) || e.push(t);
     return e;
   }
   get numChunksLoaded() {
@@ -2209,7 +2573,8 @@ class ChunkedStream extends Stream {
     const a = this.chunkSize;
     if (e % a !== 0) throw new Error(`Bad begin offset: ${e}`);
     const n = e + t.byteLength;
-    if (n % a !== 0 && n !== this.bytes.length) throw new Error(`Bad end offset: ${n}`);
+    if (n % a !== 0 && n !== this.bytes.length)
+      throw new Error(`Bad end offset: ${n}`);
     this.bytes.set(new Uint8Array(t), e);
     const s = Math.floor(e / a),
       r = Math.floor((n - 1) / a) + 1;
@@ -2237,8 +2602,12 @@ class ChunkedStream extends Stream {
     if (t <= this.progressiveDataLength) return;
     const a = Math.floor(e / this.chunkSize);
     if (a > this.numChunks) return;
-    const n = Math.min(Math.floor((t - 1) / this.chunkSize) + 1, this.numChunks);
-    for (let s = a; s < n; ++s) if (!this._loadedChunks.has(s)) throw new MissingDataException(e, t);
+    const n = Math.min(
+      Math.floor((t - 1) / this.chunkSize) + 1,
+      this.numChunks,
+    );
+    for (let s = a; s < n; ++s)
+      if (!this._loadedChunks.has(s)) throw new MissingDataException(e, t);
   }
   nextEmptyChunk(e) {
     const t = this.numChunks;
@@ -2279,7 +2648,9 @@ class ChunkedStream extends Stream {
     return this.bytes.subarray(e, t);
   }
   makeSubStream(e, t, a = null) {
-    t ? e + t > this.progressiveDataLength && this.ensureRange(e, e + t) : e >= this.progressiveDataLength && this.ensureByte(e);
+    t
+      ? e + t > this.progressiveDataLength && this.ensureRange(e, e + t)
+      : e >= this.progressiveDataLength && this.ensureByte(e);
     function ChunkedStreamSubstream() {}
     ChunkedStreamSubstream.prototype = Object.create(this);
     ChunkedStreamSubstream.prototype.getMissingChunks = function () {
@@ -2292,7 +2663,10 @@ class ChunkedStream extends Stream {
     };
     Object.defineProperty(ChunkedStreamSubstream.prototype, "isDataLoaded", {
       get() {
-        return this.numChunksLoaded === this.numChunks || 0 === this.getMissingChunks().length;
+        return (
+          this.numChunksLoaded === this.numChunks ||
+          0 === this.getMissingChunks().length
+        );
       },
       configurable: !0,
     });
@@ -2472,7 +2846,14 @@ function convertToRGBA(e) {
     case F:
       return convertBlackAndWhiteToRGBA(e);
     case T:
-      return (function convertRGBToRGBA({ src: e, srcPos: t = 0, dest: a, destPos: n = 0, width: s, height: r }) {
+      return (function convertRGBToRGBA({
+        src: e,
+        srcPos: t = 0,
+        dest: a,
+        destPos: n = 0,
+        width: s,
+        height: r,
+      }) {
         let i = 0;
         const o = s * r * 3,
           l = o >> 2,
@@ -2488,7 +2869,8 @@ function convertToRGBA(e) {
             a[n + 2] = (t >>> 16) | (s << 16) | c;
             a[n + 3] = (s >>> 8) | c;
           }
-          for (let s = 4 * i, r = t + o; s < r; s += 3) a[n++] = e[s] | (e[s + 1] << 8) | (e[s + 2] << 16) | c;
+          for (let s = 4 * i, r = t + o; s < r; s += 3)
+            a[n++] = e[s] | (e[s + 1] << 8) | (e[s + 2] << 16) | c;
         } else {
           for (; i < l - 2; i += 3, n += 4) {
             const e = f[i],
@@ -2499,14 +2881,23 @@ function convertToRGBA(e) {
             a[n + 2] = (t << 16) | (s >>> 16) | c;
             a[n + 3] = (s << 8) | c;
           }
-          for (let s = 4 * i, r = t + o; s < r; s += 3) a[n++] = (e[s] << 24) | (e[s + 1] << 16) | (e[s + 2] << 8) | c;
+          for (let s = 4 * i, r = t + o; s < r; s += 3)
+            a[n++] = (e[s] << 24) | (e[s + 1] << 16) | (e[s + 2] << 8) | c;
         }
         return { srcPos: t + o, destPos: n };
       })(e);
   }
   return null;
 }
-function convertBlackAndWhiteToRGBA({ src: e, srcPos: t = 0, dest: a, width: n, height: s, nonBlackColor: r = 4294967295, inverseDecode: i = !1 }) {
+function convertBlackAndWhiteToRGBA({
+  src: e,
+  srcPos: t = 0,
+  dest: a,
+  width: n,
+  height: s,
+  nonBlackColor: r = 4294967295,
+  inverseDecode: i = !1,
+}) {
   const o = FeatureTest.isLittleEndian ? 4278190080 : 255,
     [l, f] = i ? [r, o] : [o, r],
     c = n >> 3,
@@ -2541,7 +2932,11 @@ class ImageResizer {
     this._isMask = t;
   }
   static get canUseImageDecoder() {
-    return shadow(this, "canUseImageDecoder", this.#R ? ImageDecoder.isTypeSupported("image/bmp") : Promise.resolve(!1));
+    return shadow(
+      this,
+      "canUseImageDecoder",
+      this.#R ? ImageDecoder.isTypeSupported("image/bmp") : Promise.resolve(!1),
+    );
   }
   static needsToBeResized(e, t) {
     if (e <= this.#O && t <= this.#O) return !1;
@@ -2560,7 +2955,8 @@ class ImageResizer {
   static getReducePowerForJPX(e, t, a) {
     const n = e * t,
       s = 2 ** 30 / (4 * a);
-    if (!this.needsToBeResized(e, t)) return n > s ? Math.ceil(Math.log2(n / s)) : 0;
+    if (!this.needsToBeResized(e, t))
+      return n > s ? Math.ceil(Math.log2(n / s)) : 0;
     const { MAX_DIM: r, MAX_AREA: i } = this,
       o = Math.max(e / r, t / r, Math.sqrt(n / Math.min(s, i)));
     return Math.ceil(Math.log2(o));
@@ -2570,7 +2966,11 @@ class ImageResizer {
   }
   static get MAX_AREA() {
     this._hasMaxArea = !0;
-    return shadow(this, "MAX_AREA", this._guessMax(this.#O, this.MAX_DIM, 128, 0) ** 2);
+    return shadow(
+      this,
+      "MAX_AREA",
+      this._guessMax(this.#O, this.MAX_DIM, 128, 0) ** 2,
+    );
   }
   static set MAX_AREA(e) {
     if (e >= 0) {
@@ -2578,7 +2978,10 @@ class ImageResizer {
       shadow(this, "MAX_AREA", e);
     }
   }
-  static setOptions({ canvasMaxAreaInBytes: e = -1, isImageDecoderSupported: t = !1 }) {
+  static setOptions({
+    canvasMaxAreaInBytes: e = -1,
+    isImageDecoderSupported: t = !1,
+  }) {
     this._hasMaxArea || (this.MAX_AREA = e >> 2);
     this.#R = t;
   }
@@ -2625,7 +3028,9 @@ class ImageResizer {
         .decode()
         .catch((e) => {
           warn(`BMP image decoding failed: ${e}`);
-          return createImageBitmap(new Blob([this._encodeBMP().buffer], { type: "image/bmp" }));
+          return createImageBitmap(
+            new Blob([this._encodeBMP().buffer], { type: "image/bmp" }),
+          );
         })
         .finally(() => {
           s.close();
@@ -2713,7 +3118,11 @@ class ImageResizer {
       return null;
     }
     const b = new OffscreenCanvas(o, l);
-    b.getContext("2d", { willReadFrequently: !0 }).putImageData(new ImageData(new Uint8ClampedArray(u.buffer), o, l), 0, 0);
+    b.getContext("2d", { willReadFrequently: !0 }).putImageData(
+      new ImageData(new Uint8ClampedArray(u.buffer), o, l),
+      0,
+      0,
+    );
     e.data = null;
     e.bitmap = b.transferToImageBitmap();
     e.width = o;
@@ -2730,13 +3139,18 @@ class ImageResizer {
     switch (a) {
       case F: {
         n = 1;
-        r = new Uint8Array(this._isMask ? [255, 255, 255, 255, 0, 0, 0, 0] : [0, 0, 0, 0, 255, 255, 255, 255]);
+        r = new Uint8Array(
+          this._isMask
+            ? [255, 255, 255, 255, 0, 0, 0, 0]
+            : [0, 0, 0, 0, 255, 255, 255, 255],
+        );
         const a = (e + 7) >> 3,
           i = (a + 3) & -4;
         if (a !== i) {
           const e = new Uint8Array(i * t);
           let n = 0;
-          for (let r = 0, o = t * a; r < o; r += a, n += i) e.set(s.subarray(r, r + a), n);
+          for (let r = 0, o = t * a; r < o; r += a, n += i)
+            e.set(s.subarray(r, r + a), n);
           s = e;
         }
         break;
@@ -2988,7 +3402,8 @@ const Ia = async function JBig2(e = {}) {
         }
         const r = a * s,
           i = (t.imageData = new Uint8ClampedArray(r));
-        for (let t = e, s = 0; s < r; t += n, s += a) i.set(o.subarray(t, t + a), s);
+        for (let t = e, s = 0; s < r; t += n, s += a)
+          i.set(o.subarray(t, t + a), s);
       },
       f: function _setLineData(e, a, n) {
         t.imageData.set(o.subarray(e, e + a), n);
@@ -3115,7 +3530,9 @@ class JBig2CCITTFaxImage {
     if (!this.#M) {
       const { promise: e, resolve: t } = Promise.withResolvers(),
         a = [e];
-      this.#C ? a.push(Ia({ warn, instantiateWasm: this.#E.bind(this, t) })) : this.#P(t);
+      this.#C
+        ? a.push(Ia({ warn, instantiateWasm: this.#E.bind(this, t) }))
+        : this.#P(t);
       this.#M = Promise.race(a);
     }
     const r = await this.#M;
@@ -3125,7 +3542,19 @@ class JBig2CCITTFaxImage {
       const l = e.length;
       i = r._malloc(l);
       r.writeArrayToMemory(e, i);
-      if (s) r._ccitt_decode(i, l, t, a, s.K, s.EndOfLine ? 1 : 0, s.EncodedByteAlign ? 1 : 0, s.BlackIs1 ? 1 : 0, s.Columns, s.Rows);
+      if (s)
+        r._ccitt_decode(
+          i,
+          l,
+          t,
+          a,
+          s.K,
+          s.EndOfLine ? 1 : 0,
+          s.EncodedByteAlign ? 1 : 0,
+          s.BlackIs1 ? 1 : 0,
+          s.Columns,
+          s.Rows,
+        );
       else {
         const e = n ? n.length : 0;
         if (e > 0) {
@@ -3197,13 +3626,18 @@ class DecodeStream extends BaseStream {
     return this.buffer.subarray(a, n);
   }
   async getImageData(e, t) {
-    if (!this.canAsyncDecodeImageFromBuffer) return this.isAsyncDecoder ? this.decodeImage(null, e, t) : this.getBytes(e, t);
+    if (!this.canAsyncDecodeImageFromBuffer)
+      return this.isAsyncDecoder
+        ? this.decodeImage(null, e, t)
+        : this.getBytes(e, t);
     const a = await this.stream.asyncGetBytes();
     return this.decodeImage(a, e, t);
   }
   async asyncGetBytesFromDecompressionStream(e) {
     this.stream.reset();
-    const t = this.stream.isAsync ? await this.stream.asyncGetBytes() : this.stream.getBytes();
+    const t = this.stream.isAsync
+      ? await this.stream.asyncGetBytes()
+      : this.stream.getBytes();
     try {
       const { readable: a, writable: n } = new DecompressionStream(e),
         s = n.getWriter();
@@ -3247,14 +3681,20 @@ class DecodeStream extends BaseStream {
   }
   clone() {
     for (; !this.eof; ) this.readBlock();
-    return new Stream(this.buffer, this.start, this.end - this.start, this.dict.clone());
+    return new Stream(
+      this.buffer,
+      this.start,
+      this.end - this.start,
+      this.dict.clone(),
+    );
   }
 }
 class StreamsSequenceStream extends DecodeStream {
   constructor(e, t = null) {
     e = e.filter((e) => e instanceof BaseStream && !e.isImageStream);
     let a = 0;
-    for (const t of e) a += t instanceof DecodeStream ? t._rawMinBufferLength : t.length;
+    for (const t of e)
+      a += t instanceof DecodeStream ? t._rawMinBufferLength : t.length;
     super(a);
     this.streams = e;
     this._onError = t;
@@ -3291,7 +3731,15 @@ class StreamsSequenceStream extends DecodeStream {
   }
 }
 class ColorSpaceUtils {
-  static parse({ cs: e, xref: t, resources: a = null, pdfFunctionFactory: n, globalColorSpaceCache: s, localColorSpaceCache: r, asyncIfNotCached: i = !1 }) {
+  static parse({
+    cs: e,
+    xref: t,
+    resources: a = null,
+    pdfFunctionFactory: n,
+    globalColorSpaceCache: s,
+    localColorSpaceCache: r,
+    asyncIfNotCached: i = !1,
+  }) {
     const o = {
       xref: t,
       resources: a,
@@ -3336,7 +3784,12 @@ class ColorSpaceUtils {
     return s;
   }
   static #_(e, t) {
-    const { xref: a, resources: n, pdfFunctionFactory: s, globalColorSpaceCache: r } = t;
+    const {
+      xref: a,
+      resources: n,
+      pdfFunctionFactory: s,
+      globalColorSpaceCache: r,
+    } = t;
     if ((e = a.fetchIfRef(e)) instanceof Name)
       switch (e.name) {
         case "G":
@@ -3487,7 +3940,12 @@ class EOIMarkerError extends aa {
     super(e, "EOIMarkerError");
   }
 }
-const Ta = new Uint8Array([0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6, 7, 14, 21, 28, 35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51, 58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63]),
+const Ta = new Uint8Array([
+    0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33, 40,
+    48, 41, 34, 27, 20, 13, 6, 7, 14, 21, 28, 35, 42, 49, 56, 57, 50, 43, 36,
+    29, 22, 15, 23, 30, 37, 44, 51, 58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61,
+    54, 47, 55, 62, 63,
+  ]),
   Oa = 4017,
   Ra = 799,
   Ha = 3406,
@@ -3549,13 +4007,23 @@ function decodeScan(e, t, a, n, s, r, i, o, l, f, c = !1) {
           a += 2;
           const e = t.getUint16(a);
           a += 2;
-          if (e > 0 && e !== n.scanLines) throw new DNLMarkerError("Found DNL marker (0xFFDC) while parsing scan data", e);
+          if (e > 0 && e !== n.scanLines)
+            throw new DNLMarkerError(
+              "Found DNL marker (0xFFDC) while parsing scan data",
+              e,
+            );
         } else if (217 === s) {
           if (c) {
             const e = j * (8 === n.precision ? 8 : 0);
-            if (e > 0 && Math.round(n.scanLines / e) >= 5) throw new DNLMarkerError("Found EOI marker (0xFFD9) while parsing scan data, possibly caused by incorrect `scanLines` parameter", e);
+            if (e > 0 && Math.round(n.scanLines / e) >= 5)
+              throw new DNLMarkerError(
+                "Found EOI marker (0xFFD9) while parsing scan data, possibly caused by incorrect `scanLines` parameter",
+                e,
+              );
           }
-          throw new EOIMarkerError("Found EOI marker (0xFFD9) while parsing scan data");
+          throw new EOIMarkerError(
+            "Found EOI marker (0xFFD9) while parsing scan data",
+          );
         }
         throw new JpegError(`unexpected marker ${((p << 8) | s).toString(16)}`);
       }
@@ -3718,7 +4186,8 @@ function decodeScan(e, t, a, n, s, r, i, o, l, f, c = !1) {
       };
   let F,
     T = 0;
-  const O = 1 === k ? s[0].blocksPerLine * s[0].blocksPerColumn : h * n.mcusPerColumn;
+  const O =
+    1 === k ? s[0].blocksPerLine * s[0].blocksPerColumn : h * n.mcusPerColumn;
   let R, H;
   for (; T <= O; ) {
     const n = r ? Math.min(O - T, r) : O;
@@ -3737,7 +4206,8 @@ function decodeScan(e, t, a, n, s, r, i, o, l, f, c = !1) {
             y = s[q];
             R = y.h;
             H = y.v;
-            for (v = 0; v < H; v++) for (S = 0; S < R; S++) decodeMcu(y, C, T, v, S);
+            for (v = 0; v < H; v++)
+              for (S = 0; S < R; S++) decodeMcu(y, C, T, v, S);
           }
           T++;
         }
@@ -3746,7 +4216,9 @@ function decodeScan(e, t, a, n, s, r, i, o, l, f, c = !1) {
     F = findNextFileMarker(e, t, a);
     if (!F) break;
     if (F.invalid) {
-      warn(`decodeScan - ${n > 0 ? "unexpected" : "excessive"} MCU data, current marker is: ${F.invalid}`);
+      warn(
+        `decodeScan - ${n > 0 ? "unexpected" : "excessive"} MCU data, current marker is: ${F.invalid}`,
+      );
       a = F.offset;
     }
     if (!(F.marker >= 65488 && F.marker <= 65495)) break;
@@ -3972,9 +4444,20 @@ class JpegImage {
     e: for (; 65497 !== i; ) {
       switch (i) {
         case 65505:
-          const { appData: t, oldOffset: o, newOffset: l } = readDataBlock(e, a, s);
+          const {
+            appData: t,
+            oldOffset: o,
+            newOffset: l,
+          } = readDataBlock(e, a, s);
           s = l;
-          if (69 === t[0] && 120 === t[1] && 105 === t[2] && 102 === t[3] && 0 === t[4] && 0 === t[5]) {
+          if (
+            69 === t[0] &&
+            120 === t[1] &&
+            105 === t[2] &&
+            102 === t[3] &&
+            0 === t[4] &&
+            0 === t[5]
+          ) {
             if (n) throw new JpegError("Duplicate EXIF-blocks found.");
             n = { exifStart: o + 6, exifEnd: l };
           }
@@ -4184,15 +4667,22 @@ class JpegImage {
         default:
           const M = findNextFileMarker(e, a, i - 2, i - 3);
           if (M?.invalid) {
-            warn("JpegImage.parse - unexpected data, current marker is: " + M.invalid);
+            warn(
+              "JpegImage.parse - unexpected data, current marker is: " +
+                M.invalid,
+            );
             i = M.offset;
             break;
           }
           if (!M || i >= n) {
-            warn("JpegImage.parse - reached the end of the image data without finding an EOI marker (0xFFD9).");
+            warn(
+              "JpegImage.parse - reached the end of the image data without finding an EOI marker (0xFFD9).",
+            );
             break e;
           }
-          throw new JpegError("JpegImage.parse - unknown marker: " + m.toString(16));
+          throw new JpegError(
+            "JpegImage.parse - unknown marker: " + m.toString(16),
+          );
       }
       if (i < n) {
         m = a.getUint16(i);
@@ -4264,12 +4754,25 @@ class JpegImage {
       }
     }
     let v = this._decodeTransform;
-    a || 4 !== b || v || (v = new Int32Array([-256, 255, -256, 255, -256, 255, -256, 255]));
-    if (v) for (h = 0; h < w; ) for (u = 0, m = 0; u < b; u++, h++, m += 2) j[h] = ((j[h] * v[m]) >> 8) + v[m + 1];
+    a ||
+      4 !== b ||
+      v ||
+      (v = new Int32Array([-256, 255, -256, 255, -256, 255, -256, 255]));
+    if (v)
+      for (h = 0; h < w; )
+        for (u = 0, m = 0; u < b; u++, h++, m += 2)
+          j[h] = ((j[h] * v[m]) >> 8) + v[m + 1];
     return j;
   }
   get _isColorConversionNeeded() {
-    return this.adobe ? !!this.adobe.transformCode : 3 === this.numComponents ? 0 !== this._colorTransform && (82 !== this.components[0].index || 71 !== this.components[1].index || 66 !== this.components[2].index) : 1 === this._colorTransform;
+    return this.adobe
+      ? !!this.adobe.transformCode
+      : 3 === this.numComponents
+        ? 0 !== this._colorTransform &&
+          (82 !== this.components[0].index ||
+            71 !== this.components[1].index ||
+            66 !== this.components[2].index)
+        : 1 === this._colorTransform;
   }
   _convertYccToRgb(e) {
     let t, a, n;
@@ -4322,10 +4825,17 @@ class JpegImage {
   }
   _convertCmykToRgba(e) {
     ColorSpaceUtils.cmyk.getRgbBuffer(e, 0, e.length / 4, e, 0, 8, 1);
-    if (ColorSpaceUtils.cmyk instanceof DeviceCmykCS) for (let t = 3, a = e.length; t < a; t += 4) e[t] = 255;
+    if (ColorSpaceUtils.cmyk instanceof DeviceCmykCS)
+      for (let t = 3, a = e.length; t < a; t += 4) e[t] = 255;
     return e;
   }
-  getData({ width: e, height: t, forceRGBA: a = !1, forceRGB: n = !1, isSourcePDF: s = !1 }) {
+  getData({
+    width: e,
+    height: t,
+    forceRGBA: a = !1,
+    forceRGB: n = !1,
+    isSourcePDF: s = !1,
+  }) {
     if (this.numComponents > 4) throw new JpegError("Unsupported color mode");
     const r = this._getLinearizedBlockData(e, t, s);
     if (1 === this.numComponents && (a || n)) {
@@ -4334,8 +4844,12 @@ class JpegImage {
       let n = 0;
       if (a)
         !(function grayToRGBA(e, t) {
-          if (FeatureTest.isLittleEndian) for (let a = 0, n = e.length; a < n; a++) t[a] = (65793 * e[a]) | 4278190080;
-          else for (let a = 0, n = e.length; a < n; a++) t[a] = (16843008 * e[a]) | 255;
+          if (FeatureTest.isLittleEndian)
+            for (let a = 0, n = e.length; a < n; a++)
+              t[a] = (65793 * e[a]) | 4278190080;
+          else
+            for (let a = 0, n = e.length; a < n; a++)
+              t[a] = (16843008 * e[a]) | 255;
         })(r, new Uint32Array(t.buffer));
       else
         for (const e of r) {
@@ -4353,7 +4867,12 @@ class JpegImage {
       return this._convertYccToRgb(r);
     }
     if (4 === this.numComponents) {
-      if (this._isColorConversionNeeded) return a ? this._convertYcckToRgba(r) : n ? this._convertYcckToRgb(r) : this._convertYcckToCmyk(r);
+      if (this._isColorConversionNeeded)
+        return a
+          ? this._convertYcckToRgba(r)
+          : n
+            ? this._convertYcckToRgb(r)
+            : this._convertYcckToCmyk(r);
       if (a) return this._convertCmykToRgba(r);
       if (n) return this._convertCmykToRgb(r);
     }
@@ -4370,7 +4889,13 @@ class JpegStream extends DecodeStream {
     this.params = a;
   }
   static get canUseImageDecoder() {
-    return shadow(this, "canUseImageDecoder", this.#R ? ImageDecoder.isTypeSupported("image/jpeg") : Promise.resolve(!1));
+    return shadow(
+      this,
+      "canUseImageDecoder",
+      this.#R
+        ? ImageDecoder.isTypeSupported("image/jpeg")
+        : Promise.resolve(!1),
+    );
   }
   static setOptions({ isImageDecoderSupported: e = !1 }) {
     this.#R = e;
@@ -4438,7 +4963,10 @@ class JpegStream extends DecodeStream {
     if (e.decodeTransform) return null;
     let t;
     try {
-      const a = (this.canAsyncDecodeImageFromBuffer && (await this.stream.asyncGetBytes())) || this.bytes;
+      const a =
+        (this.canAsyncDecodeImageFromBuffer &&
+          (await this.stream.asyncGetBytes())) ||
+        this.bytes;
       if (!a) return null;
       let n = this.#L(a);
       const s = JpegImage.canUseImageDecoder(n, e.colorTransform);
@@ -4570,7 +5098,9 @@ const Ea = async function OpenJPEG(e = {}) {
           PATH: "/",
           PWD: "/",
           HOME: "/home/web_user",
-          LANG: (globalThis.navigator?.language ?? "C").replace("-", "_") + ".UTF-8",
+          LANG:
+            (globalThis.navigator?.language ?? "C").replace("-", "_") +
+            ".UTF-8",
           _: a || "./this.program",
         };
         for (var t in q) void 0 === q[t] ? delete e[t] : (e[t] = q[t]);
@@ -4637,7 +5167,14 @@ const Ea = async function OpenJPEG(e = {}) {
           var o = 63 & e[t++];
           if (192 != (224 & i)) {
             var l = 63 & e[t++];
-            if ((i = 224 == (240 & i) ? ((15 & i) << 12) | (o << 6) | l : ((7 & i) << 18) | (o << 12) | (l << 6) | (63 & e[t++])) < 65536) r += String.fromCharCode(i);
+            if (
+              (i =
+                224 == (240 & i)
+                  ? ((15 & i) << 12) | (o << 6) | l
+                  : ((7 & i) << 18) | (o << 12) | (l << 6) | (63 & e[t++])) <
+              65536
+            )
+              r += String.fromCharCode(i);
             else {
               var f = i - 65536;
               r += String.fromCharCode(55296 | (f >> 10), 56320 | (1023 & f));
@@ -4766,7 +5303,8 @@ const Ea = async function OpenJPEG(e = {}) {
         return 0;
       },
       n: function _fd_seek(e, t, a, n) {
-        t = (s = t) < -9007199254740992 || s > 9007199254740992 ? NaN : Number(s);
+        t =
+          (s = t) < -9007199254740992 || s > 9007199254740992 ? NaN : Number(s);
         var s;
         return 70;
       },
@@ -4942,11 +5480,21 @@ class JpxImage {
       this.#D = null;
     }
   }
-  static async decode(e, { numComponents: t = 4, isIndexedColormap: a = !1, smaskInData: n = !1, reducePower: s = 0 } = {}) {
+  static async decode(
+    e,
+    {
+      numComponents: t = 4,
+      isIndexedColormap: a = !1,
+      smaskInData: n = !1,
+      reducePower: s = 0,
+    } = {},
+  ) {
     if (!this.#M) {
       const { promise: e, resolve: t } = Promise.withResolvers(),
         a = [e];
-      this.#C ? a.push(Ea({ warn, instantiateWasm: this.#E.bind(this, t) })) : this.#P(t);
+      this.#C
+        ? a.push(Ea({ warn, instantiateWasm: this.#E.bind(this, t) }))
+        : this.#P(t);
       this.#M = Promise.race(a);
     }
     const r = await this.#M;
@@ -5083,7 +5631,11 @@ addState(
     const w = { width: p, height: d };
     if (e.isOffscreenCanvasSupported) {
       const e = new OffscreenCanvas(p, d);
-      e.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(g.buffer), p, d), 0, 0);
+      e.getContext("2d").putImageData(
+        new ImageData(new Uint8ClampedArray(g.buffer), p, d),
+        0,
+        0,
+      );
       w.bitmap = e.transferToImageBitmap();
       w.data = null;
     } else {
@@ -5137,7 +5689,13 @@ addState(
       let e = o + 4;
       for (let t = 1; t < l; t++, f += 4, e += 4) {
         c = n[f];
-        if (n[e][0] !== u || c[0] !== m || c[1] !== p || c[2] !== d || c[3] !== g) {
+        if (
+          n[e][0] !== u ||
+          c[0] !== m ||
+          c[1] !== p ||
+          c[2] !== d ||
+          c[3] !== g
+        ) {
           t < 10 ? (h = !1) : (l = t);
           break;
         }
@@ -5269,7 +5827,15 @@ addState(
     let u = Math.min(Math.floor((t - r) / 5), 1e3);
     if (u < 3) return t - ((t - r) % 5);
     let m = r;
-    if (r >= 4 && a[r - 4] === a[i] && a[r - 3] === a[o] && a[r - 2] === a[l] && a[r - 1] === a[f] && n[r - 4][0] === c && n[r - 4][1] === h) {
+    if (
+      r >= 4 &&
+      a[r - 4] === a[i] &&
+      a[r - 3] === a[o] &&
+      a[r - 2] === a[l] &&
+      a[r - 1] === a[f] &&
+      n[r - 4][0] === c &&
+      n[r - 4][1] === h
+    ) {
       u++;
       m -= 5;
     }
@@ -5288,7 +5854,8 @@ addState(
   (e) => {
     const t = e.argsArray,
       a = t[e.iCurr - 1][0];
-    if (a !== Te && a !== Oe && a !== Be && a !== De && a !== Me && a !== Ne) return !0;
+    if (a !== Te && a !== Oe && a !== Be && a !== De && a !== Me && a !== Ne)
+      return !0;
     const n = t[e.iCurr - 2];
     return 1 === n[0] && 0 === n[1] && 0 === n[2] && 1 === n[3];
   },
@@ -5408,7 +5975,8 @@ class OperatorList {
     this._streamSink = t;
     this.fnArray = [];
     this.argsArray = [];
-    this.optimizer = !t || e & p ? new NullOptimizer(this) : new QueueOptimizer(this);
+    this.optimizer =
+      !t || e & p ? new NullOptimizer(this) : new QueueOptimizer(this);
     this.dependencies = new Set();
     this._totalLength = 0;
     this.weight = 0;
@@ -5429,7 +5997,11 @@ class OperatorList {
   addOp(e, t) {
     this.optimizer.push(e, t);
     this.weight++;
-    this._streamSink && (this.weight >= OperatorList.CHUNK_SIZE || (this.weight >= OperatorList.CHUNK_SIZE_ABOUT && (e === ye || e === Le))) && this.flush();
+    this._streamSink &&
+      (this.weight >= OperatorList.CHUNK_SIZE ||
+        (this.weight >= OperatorList.CHUNK_SIZE_ABOUT &&
+          (e === ye || e === Le))) &&
+      this.flush();
   }
   addImageOps(e, t, a, n = !1) {
     if (n) {
@@ -5453,7 +6025,8 @@ class OperatorList {
   addOpList(e) {
     if (e instanceof OperatorList) {
       for (const t of e.dependencies) this.dependencies.add(t);
-      for (let t = 0, a = e.length; t < a; t++) this.addOp(e.fnArray[t], e.argsArray[t]);
+      for (let t = 0, a = e.length; t < a; t++)
+        this.addOp(e.fnArray[t], e.argsArray[t]);
     } else warn('addOpList - ignoring invalid "opList" parameter.');
   }
   getIR() {
@@ -5584,7 +6157,8 @@ class RadialAxialShading extends BaseShading {
     let i = 0;
     this.shadingType === La ? (i = 4) : this.shadingType === Ua && (i = 6);
     this.coordsArr = e.getArray("Coords");
-    if (!isNumberArray(this.coordsArr, i)) throw new FormatError("RadialAxialShading: Invalid /Coords array.");
+    if (!isNumberArray(this.coordsArr, i))
+      throw new FormatError("RadialAxialShading: Invalid /Coords array.");
     const o = ColorSpaceUtils.parse({
       cs: e.getRaw("CS") || e.getRaw("ColorSpace"),
       xref: t,
@@ -5602,7 +6176,11 @@ class RadialAxialShading extends BaseShading {
       u = !1;
     const m = e.getArray("Extend");
     (function isBooleanArray(e, t) {
-      return Array.isArray(e) && (null === t || e.length === t) && e.every((e) => "boolean" == typeof e);
+      return (
+        Array.isArray(e) &&
+        (null === t || e.length === t) &&
+        e.every((e) => "boolean" == typeof e)
+      );
     })(m, 2) && ([h, u] = m);
     this.extendStart = h;
     this.extendEnd = u;
@@ -5720,7 +6298,8 @@ function buildMeshVertexData(e, t, a) {
   for (const e of a) {
     const t = e.coords,
       a = e.colors;
-    if (e.type === q) for (let e = 0, n = t.length; e < n; e++) addVertex(t[e], a[e]);
+    if (e.type === q)
+      for (let e = 0, n = t.length; e < n; e++) addVertex(t[e], a[e]);
     else if (e.type === v) {
       const n = e.verticesPerRow,
         s = Math.floor(t.length / n) - 1,
@@ -5753,7 +6332,9 @@ class FunctionBasedShading extends BaseShading {
       globalColorSpaceCache: r,
       localColorSpaceCache: i,
     });
-    this.background = e.has("Background") ? o.getRgb(e.get("Background"), 0) : null;
+    this.background = e.has("Background")
+      ? o.getRgb(e.get("Background"), 0)
+      : null;
     const l = e.getRaw("Function");
     if (!l) throw new FormatError("FunctionBasedShading: missing /Function");
     const f = s.create(l, !0),
@@ -5794,10 +6375,16 @@ class FunctionBasedShading extends BaseShading {
     }
     const D = new Uint32Array(k);
     for (let e = 0; e < k; e++) D[e] = e;
-    this.figures = [{ type: v, coords: D, colors: new Uint32Array(D), verticesPerRow: j }];
+    this.figures = [
+      { type: v, coords: D, colors: new Uint32Array(D), verticesPerRow: j },
+    ];
   }
   getIR() {
-    const { posData: e, colData: t, vertexCount: a } = buildMeshVertexData(this.coords, this.colors, this.figures);
+    const {
+      posData: e,
+      colData: t,
+      vertexCount: a,
+    } = buildMeshVertexData(this.coords, this.colors, this.figures);
     return ["Mesh", za, e, t, a, this.bounds, this.bbox, this.background];
   }
 }
@@ -5856,7 +6443,13 @@ class MeshStreamReader {
     return [a * s * (t[1] - t[0]) + t[0], n * s * (t[3] - t[2]) + t[2]];
   }
   readComponents() {
-    const { bitsPerComponent: e, colorFn: t, colorSpace: a, decode: n, numComps: s } = this.context,
+    const {
+        bitsPerComponent: e,
+        colorFn: t,
+        colorSpace: a,
+        decode: n,
+        numComps: s,
+      } = this.context,
       r = e < 32 ? 1 / ((1 << e) - 1) : 2.3283064365386963e-10,
       i = this.tmpCompsBuf;
     for (let t = 0, a = 4; t < s; t++, a += 2) {
@@ -5875,7 +6468,9 @@ function getB(e) {
     for (let a = 0; a <= e; a++) {
       const n = a / e,
         s = 1 - n;
-      t.push(new Float32Array([s ** 3, 3 * n * s ** 2, 3 * n ** 2 * s, n ** 3]));
+      t.push(
+        new Float32Array([s ** 3, 3 * n * s ** 2, 3 * n ** 2 * s, n ** 3]),
+      );
     }
     return t;
   })(e));
@@ -5886,7 +6481,8 @@ class MeshShading extends BaseShading {
   static TRIANGLE_DENSITY = 20;
   constructor(e, t, a, n, s, r) {
     super();
-    if (!(e instanceof BaseStream)) throw new FormatError("Mesh data is not a stream");
+    if (!(e instanceof BaseStream))
+      throw new FormatError("Mesh data is not a stream");
     const i = e.dict;
     this.shadingType = i.get("ShadingType");
     this.bbox = lookupNormalRect(i.getArray("BBox"), null);
@@ -5898,7 +6494,9 @@ class MeshShading extends BaseShading {
       globalColorSpaceCache: s,
       localColorSpaceCache: r,
     });
-    this.background = i.has("Background") ? o.getRgb(i.get("Background"), 0) : null;
+    this.background = i.has("Background")
+      ? o.getRgb(i.get("Background"), 0)
+      : null;
     const l = i.getRaw("Function"),
       f = l ? n.create(l, !0) : null;
     this.coords = [];
@@ -5937,7 +6535,8 @@ class MeshShading extends BaseShading {
     }
     if (u) {
       this._updateBounds();
-      for (let e = 0, t = this.figures.length; e < t; e++) this._buildFigureFromPatch(e);
+      for (let e = 0, t = this.figures.length; e < t; e++)
+        this._buildFigureFromPatch(e);
     }
     this._updateBounds();
     this._packData();
@@ -6007,9 +6606,11 @@ class MeshShading extends BaseShading {
       const r = e.readFlag();
       if (!(0 <= r && r <= 3)) throw new FormatError("Unknown type6 flag");
       const i = t.length;
-      for (let a = 0, n = 0 !== r ? 8 : 12; a < n; a++) t.push(e.readCoordinate());
+      for (let a = 0, n = 0 !== r ? 8 : 12; a < n; a++)
+        t.push(e.readCoordinate());
       const o = a.length;
-      for (let t = 0, n = 0 !== r ? 2 : 4; t < n; t++) a.push(e.readComponents());
+      for (let t = 0, n = 0 !== r ? 2 : 4; t < n; t++)
+        a.push(e.readComponents());
       let l, f, c, h;
       switch (r) {
         case 0:
@@ -6094,13 +6695,65 @@ class MeshShading extends BaseShading {
           s[1] = o + 1;
       }
       n[5] = t.length;
-      t.push([(-4 * t[n[0]][0] - t[n[15]][0] + 6 * (t[n[4]][0] + t[n[1]][0]) - 2 * (t[n[12]][0] + t[n[3]][0]) + 3 * (t[n[13]][0] + t[n[7]][0])) / 9, (-4 * t[n[0]][1] - t[n[15]][1] + 6 * (t[n[4]][1] + t[n[1]][1]) - 2 * (t[n[12]][1] + t[n[3]][1]) + 3 * (t[n[13]][1] + t[n[7]][1])) / 9]);
+      t.push([
+        (-4 * t[n[0]][0] -
+          t[n[15]][0] +
+          6 * (t[n[4]][0] + t[n[1]][0]) -
+          2 * (t[n[12]][0] + t[n[3]][0]) +
+          3 * (t[n[13]][0] + t[n[7]][0])) /
+          9,
+        (-4 * t[n[0]][1] -
+          t[n[15]][1] +
+          6 * (t[n[4]][1] + t[n[1]][1]) -
+          2 * (t[n[12]][1] + t[n[3]][1]) +
+          3 * (t[n[13]][1] + t[n[7]][1])) /
+          9,
+      ]);
       n[6] = t.length;
-      t.push([(-4 * t[n[3]][0] - t[n[12]][0] + 6 * (t[n[2]][0] + t[n[7]][0]) - 2 * (t[n[0]][0] + t[n[15]][0]) + 3 * (t[n[4]][0] + t[n[14]][0])) / 9, (-4 * t[n[3]][1] - t[n[12]][1] + 6 * (t[n[2]][1] + t[n[7]][1]) - 2 * (t[n[0]][1] + t[n[15]][1]) + 3 * (t[n[4]][1] + t[n[14]][1])) / 9]);
+      t.push([
+        (-4 * t[n[3]][0] -
+          t[n[12]][0] +
+          6 * (t[n[2]][0] + t[n[7]][0]) -
+          2 * (t[n[0]][0] + t[n[15]][0]) +
+          3 * (t[n[4]][0] + t[n[14]][0])) /
+          9,
+        (-4 * t[n[3]][1] -
+          t[n[12]][1] +
+          6 * (t[n[2]][1] + t[n[7]][1]) -
+          2 * (t[n[0]][1] + t[n[15]][1]) +
+          3 * (t[n[4]][1] + t[n[14]][1])) /
+          9,
+      ]);
       n[9] = t.length;
-      t.push([(-4 * t[n[12]][0] - t[n[3]][0] + 6 * (t[n[8]][0] + t[n[13]][0]) - 2 * (t[n[0]][0] + t[n[15]][0]) + 3 * (t[n[11]][0] + t[n[1]][0])) / 9, (-4 * t[n[12]][1] - t[n[3]][1] + 6 * (t[n[8]][1] + t[n[13]][1]) - 2 * (t[n[0]][1] + t[n[15]][1]) + 3 * (t[n[11]][1] + t[n[1]][1])) / 9]);
+      t.push([
+        (-4 * t[n[12]][0] -
+          t[n[3]][0] +
+          6 * (t[n[8]][0] + t[n[13]][0]) -
+          2 * (t[n[0]][0] + t[n[15]][0]) +
+          3 * (t[n[11]][0] + t[n[1]][0])) /
+          9,
+        (-4 * t[n[12]][1] -
+          t[n[3]][1] +
+          6 * (t[n[8]][1] + t[n[13]][1]) -
+          2 * (t[n[0]][1] + t[n[15]][1]) +
+          3 * (t[n[11]][1] + t[n[1]][1])) /
+          9,
+      ]);
       n[10] = t.length;
-      t.push([(-4 * t[n[15]][0] - t[n[0]][0] + 6 * (t[n[11]][0] + t[n[14]][0]) - 2 * (t[n[12]][0] + t[n[3]][0]) + 3 * (t[n[2]][0] + t[n[8]][0])) / 9, (-4 * t[n[15]][1] - t[n[0]][1] + 6 * (t[n[11]][1] + t[n[14]][1]) - 2 * (t[n[12]][1] + t[n[3]][1]) + 3 * (t[n[2]][1] + t[n[8]][1])) / 9]);
+      t.push([
+        (-4 * t[n[15]][0] -
+          t[n[0]][0] +
+          6 * (t[n[11]][0] + t[n[14]][0]) -
+          2 * (t[n[12]][0] + t[n[3]][0]) +
+          3 * (t[n[2]][0] + t[n[8]][0])) /
+          9,
+        (-4 * t[n[15]][1] -
+          t[n[0]][1] +
+          6 * (t[n[11]][1] + t[n[14]][1]) -
+          2 * (t[n[12]][1] + t[n[3]][1]) +
+          3 * (t[n[2]][1] + t[n[8]][1])) /
+          9,
+      ]);
       this.figures.push({
         type: S,
         coords: new Int32Array(n),
@@ -6117,9 +6770,11 @@ class MeshShading extends BaseShading {
       const r = e.readFlag();
       if (!(0 <= r && r <= 3)) throw new FormatError("Unknown type7 flag");
       const i = t.length;
-      for (let a = 0, n = 0 !== r ? 12 : 16; a < n; a++) t.push(e.readCoordinate());
+      for (let a = 0, n = 0 !== r ? 12 : 16; a < n; a++)
+        t.push(e.readCoordinate());
       const o = a.length;
-      for (let t = 0, n = 0 !== r ? 2 : 4; t < n; t++) a.push(e.readComponents());
+      for (let t = 0, n = 0 !== r ? 2 : 4; t < n; t++)
+        a.push(e.readComponents());
       let l, f, c, h;
       switch (r) {
         case 0:
@@ -6237,10 +6892,24 @@ class MeshShading extends BaseShading {
       o = Math.min(a[s[0]][1], a[s[3]][1], a[s[12]][1], a[s[15]][1]),
       l = Math.max(a[s[0]][0], a[s[3]][0], a[s[12]][0], a[s[15]][0]),
       f = Math.max(a[s[0]][1], a[s[3]][1], a[s[12]][1], a[s[15]][1]);
-    let c = Math.ceil(((l - i) * MeshShading.TRIANGLE_DENSITY) / (this.bounds[2] - this.bounds[0]));
-    c = MathClamp(c, MeshShading.MIN_SPLIT_PATCH_CHUNKS_AMOUNT, MeshShading.MAX_SPLIT_PATCH_CHUNKS_AMOUNT);
-    let h = Math.ceil(((f - o) * MeshShading.TRIANGLE_DENSITY) / (this.bounds[3] - this.bounds[1]));
-    h = MathClamp(h, MeshShading.MIN_SPLIT_PATCH_CHUNKS_AMOUNT, MeshShading.MAX_SPLIT_PATCH_CHUNKS_AMOUNT);
+    let c = Math.ceil(
+      ((l - i) * MeshShading.TRIANGLE_DENSITY) /
+        (this.bounds[2] - this.bounds[0]),
+    );
+    c = MathClamp(
+      c,
+      MeshShading.MIN_SPLIT_PATCH_CHUNKS_AMOUNT,
+      MeshShading.MAX_SPLIT_PATCH_CHUNKS_AMOUNT,
+    );
+    let h = Math.ceil(
+      ((f - o) * MeshShading.TRIANGLE_DENSITY) /
+        (this.bounds[3] - this.bounds[1]),
+    );
+    h = MathClamp(
+      h,
+      MeshShading.MIN_SPLIT_PATCH_CHUNKS_AMOUNT,
+      MeshShading.MAX_SPLIT_PATCH_CHUNKS_AMOUNT,
+    );
     const u = c + 1,
       m = new Int32Array((h + 1) * u),
       p = new Int32Array((h + 1) * u);
@@ -6336,8 +7005,21 @@ class MeshShading extends BaseShading {
     })(this);
   }
   getIR() {
-    const { posData: e, colData: t, vertexCount: a } = buildMeshVertexData(this.coords, this.colors, this.figures);
-    return ["Mesh", this.shadingType, e, t, a, this.bounds, this.bbox, this.background];
+    const {
+      posData: e,
+      colData: t,
+      vertexCount: a,
+    } = buildMeshVertexData(this.coords, this.colors, this.figures);
+    return [
+      "Mesh",
+      this.shadingType,
+      e,
+      t,
+      a,
+      this.bounds,
+      this.bbox,
+      this.background,
+    ];
   }
 }
 class DummyShading extends BaseShading {
@@ -6348,15 +7030,20 @@ class DummyShading extends BaseShading {
 function getTilingPatternIR(e, t, a, n = !0) {
   const s = lookupMatrix(t.getArray("Matrix"), pa),
     r = lookupNormalRect(t.getArray("BBox"), null);
-  if (!r || r[2] - r[0] === 0 || r[3] - r[1] === 0) throw new FormatError("Invalid getTilingPatternIR /BBox array.");
+  if (!r || r[2] - r[0] === 0 || r[3] - r[1] === 0)
+    throw new FormatError("Invalid getTilingPatternIR /BBox array.");
   const i = t.get("XStep");
-  if ("number" != typeof i) throw new FormatError("Invalid getTilingPatternIR /XStep value.");
+  if ("number" != typeof i)
+    throw new FormatError("Invalid getTilingPatternIR /XStep value.");
   const o = t.get("YStep");
-  if ("number" != typeof o) throw new FormatError("Invalid getTilingPatternIR /YStep value.");
+  if ("number" != typeof o)
+    throw new FormatError("Invalid getTilingPatternIR /YStep value.");
   const l = t.get("PaintType");
-  if (!Number.isInteger(l)) throw new FormatError("Invalid getTilingPatternIR /PaintType value.");
+  if (!Number.isInteger(l))
+    throw new FormatError("Invalid getTilingPatternIR /PaintType value.");
   const f = t.get("TilingType");
-  if (!Number.isInteger(f)) throw new FormatError("Invalid getTilingPatternIR /TilingType value.");
+  if (!Number.isInteger(f))
+    throw new FormatError("Invalid getTilingPatternIR /TilingType value.");
   return ["TilingPattern", a, e, s, r, i, o, l, f, n];
 }
 function hexToInt(e, t) {
@@ -6365,7 +7052,11 @@ function hexToInt(e, t) {
   return a >>> 0;
 }
 function hexToStr(e, t) {
-  return 1 === t ? String.fromCharCode(e[0], e[1]) : 3 === t ? String.fromCharCode(e[0], e[1], e[2], e[3]) : String.fromCharCode(...e.subarray(0, t + 1));
+  return 1 === t
+    ? String.fromCharCode(e[0], e[1])
+    : 3 === t
+      ? String.fromCharCode(e[0], e[1], e[2], e[3])
+      : String.fromCharCode(...e.subarray(0, t + 1));
 }
 function addHex(e, t, a) {
   let n = 0;
@@ -6473,7 +7164,8 @@ class BinaryCMapReader {
       }
       const a = !!(16 & u),
         s = 15 & u;
-      if (s + 1 > $a) throw new Error("BinaryCMapReader.process: Invalid dataSize.");
+      if (s + 1 > $a)
+        throw new Error("BinaryCMapReader.process: Invalid dataSize.");
       const m = 1,
         p = n.readNumber();
       switch (e) {
@@ -6672,15 +7364,34 @@ class AsciiHexStream extends DecodeStream {
   }
 }
 let Ya = (() => {
-  const e = Int32Array.from([256, 402, 436, 468, 500, 534, 566, 598, 630, 662, 694, 726, 758, 790, 822, 854, 886, 920, 952, 984, 1016, 1048, 1080]),
-    t = Int32Array.from([1, 2, 3, 4, 0, 5, 17, 6, 16, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
+  const e = Int32Array.from([
+      256, 402, 436, 468, 500, 534, 566, 598, 630, 662, 694, 726, 758, 790, 822,
+      854, 886, 920, 952, 984, 1016, 1048, 1080,
+    ]),
+    t = Int32Array.from([
+      1, 2, 3, 4, 0, 5, 17, 6, 16, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    ]),
     a = Int32Array.from([0, 3, 2, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3]),
     n = Int32Array.from([0, 0, 0, 0, -1, 1, -2, 2, -3, 3, -1, 1, -2, 2, -3, 3]),
-    s = Int32Array.from([131072, 131076, 131075, 196610, 131072, 131076, 131075, 262145, 131072, 131076, 131075, 196610, 131072, 131076, 131075, 262149]),
-    r = Int32Array.from([1, 5, 9, 13, 17, 25, 33, 41, 49, 65, 81, 97, 113, 145, 177, 209, 241, 305, 369, 497, 753, 1265, 2289, 4337, 8433, 16625]),
-    i = Int32Array.from([2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 7, 8, 9, 10, 11, 12, 13, 24]),
-    o = Int16Array.from([0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 8, 9, 10, 12, 14, 24]),
-    l = Int16Array.from([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 8, 9, 10, 24]),
+    s = Int32Array.from([
+      131072, 131076, 131075, 196610, 131072, 131076, 131075, 262145, 131072,
+      131076, 131075, 196610, 131072, 131076, 131075, 262149,
+    ]),
+    r = Int32Array.from([
+      1, 5, 9, 13, 17, 25, 33, 41, 49, 65, 81, 97, 113, 145, 177, 209, 241, 305,
+      369, 497, 753, 1265, 2289, 4337, 8433, 16625,
+    ]),
+    i = Int32Array.from([
+      2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 7, 8, 9, 10, 11, 12,
+      13, 24,
+    ]),
+    o = Int16Array.from([
+      0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 8, 9, 10, 12, 14,
+      24,
+    ]),
+    l = Int16Array.from([
+      0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 8, 9, 10, 24,
+    ]),
     f = new Int16Array(2816);
   !(function unpackCommandLookupTable(e) {
     const t = new Int32Array(24),
@@ -6756,7 +7467,8 @@ let Ya = (() => {
   }
   function decodeVarLenUnsignedByte(e) {
     if (e.bitOffset >= 16) {
-      e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+      e.accumulator32 =
+        (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
       e.bitOffset -= 16;
     }
     if (0 !== readFewBits(e, 1)) {
@@ -6782,13 +7494,15 @@ let Ya = (() => {
   }
   function readBlockLength(e, t, a) {
     if (a.bitOffset >= 16) {
-      a.accumulator32 = (a.shortBuffer[a.halfOffset++] << 16) | (a.accumulator32 >>> 16);
+      a.accumulator32 =
+        (a.shortBuffer[a.halfOffset++] << 16) | (a.accumulator32 >>> 16);
       a.bitOffset -= 16;
     }
     const n = readSymbol(e, t, a),
       s = i[n];
     if (a.bitOffset >= 16) {
-      a.accumulator32 = (a.shortBuffer[a.halfOffset++] << 16) | (a.accumulator32 >>> 16);
+      a.accumulator32 =
+        (a.shortBuffer[a.halfOffset++] << 16) | (a.accumulator32 >>> 16);
       a.bitOffset -= 16;
     }
     return r[n] + (s <= 16 ? readFewBits(a, s) : readManyBits(a, s));
@@ -6809,7 +7523,8 @@ let Ya = (() => {
       l = readFewBits(s, 2) + 1;
     for (let e = 0; e < l; ++e) {
       if (s.bitOffset >= 16) {
-        s.accumulator32 = (s.shortBuffer[s.halfOffset++] << 16) | (s.accumulator32 >>> 16);
+        s.accumulator32 =
+          (s.shortBuffer[s.halfOffset++] << 16) | (s.accumulator32 >>> 16);
         s.bitOffset -= 16;
       }
       const a = readFewBits(s, o);
@@ -6817,7 +7532,9 @@ let Ya = (() => {
       i[e] = a;
     }
     const f = (function checkDupes(e, t, a) {
-      for (let n = 0; n < a - 1; ++n) for (let s = n + 1; s < a; ++s) if (t[n] === t[s]) return makeError(e, -7);
+      for (let n = 0; n < a - 1; ++n)
+        for (let s = n + 1; s < a; ++s)
+          if (t[n] === t[s]) return makeError(e, -7);
       return 0;
     })(s, i, l);
     if (f < 0) return f;
@@ -6858,7 +7575,8 @@ let Ya = (() => {
     for (let e = a; e < 18; ++e) {
       const a = t[e];
       if (i.bitOffset >= 16) {
-        i.accumulator32 = (i.shortBuffer[i.halfOffset++] << 16) | (i.accumulator32 >>> 16);
+        i.accumulator32 =
+          (i.shortBuffer[i.halfOffset++] << 16) | (i.accumulator32 >>> 16);
         i.bitOffset -= 16;
       }
       const n = (i.accumulator32 >>> i.bitOffset) & 15;
@@ -6886,7 +7604,8 @@ let Ya = (() => {
           if (e < 0) return e;
         }
         if (n.bitOffset >= 16) {
-          n.accumulator32 = (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
+          n.accumulator32 =
+            (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
           n.bitOffset -= 16;
         }
         const e = (n.accumulator32 >>> n.bitOffset) & 31;
@@ -6913,7 +7632,8 @@ let Ya = (() => {
             i <<= e;
           }
           if (n.bitOffset >= 16) {
-            n.accumulator32 = (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
+            n.accumulator32 =
+              (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
             n.bitOffset -= 16;
           }
           i += readFewBits(n, e) + 3;
@@ -6935,11 +7655,14 @@ let Ya = (() => {
       if (e < 0) return e;
     }
     if (s.bitOffset >= 16) {
-      s.accumulator32 = (s.shortBuffer[s.halfOffset++] << 16) | (s.accumulator32 >>> 16);
+      s.accumulator32 =
+        (s.shortBuffer[s.halfOffset++] << 16) | (s.accumulator32 >>> 16);
       s.bitOffset -= 16;
     }
     const r = readFewBits(s, 2);
-    return 1 === r ? readSimpleHuffmanCode(e, t, a, n, s) : readComplexHuffmanCode(t, r, a, n, s);
+    return 1 === r
+      ? readSimpleHuffmanCode(e, t, a, n, s)
+      : readComplexHuffmanCode(t, r, a, n, s);
   }
   function decodeContextMap(t, a, n) {
     let s;
@@ -6953,7 +7676,8 @@ let Ya = (() => {
       return r;
     }
     if (n.bitOffset >= 16) {
-      n.accumulator32 = (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
+      n.accumulator32 =
+        (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
       n.bitOffset -= 16;
     }
     let i = 0;
@@ -6971,7 +7695,8 @@ let Ya = (() => {
         if (s < 0) return s;
       }
       if (n.bitOffset >= 16) {
-        n.accumulator32 = (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
+        n.accumulator32 =
+          (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
         n.bitOffset -= 16;
       }
       const e = readSymbol(f, c, n);
@@ -6980,7 +7705,8 @@ let Ya = (() => {
         h++;
       } else if (e <= i) {
         if (n.bitOffset >= 16) {
-          n.accumulator32 = (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
+          n.accumulator32 =
+            (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
           n.bitOffset -= 16;
         }
         let s = (1 << e) + readFewBits(n, e);
@@ -6996,7 +7722,8 @@ let Ya = (() => {
       }
     }
     if (n.bitOffset >= 16) {
-      n.accumulator32 = (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
+      n.accumulator32 =
+        (n.shortBuffer[n.halfOffset++] << 16) | (n.accumulator32 >>> 16);
       n.bitOffset -= 16;
     }
     1 === readFewBits(n, 1) &&
@@ -7015,7 +7742,8 @@ let Ya = (() => {
     const n = e.rings,
       s = 4 + 2 * t;
     if (e.bitOffset >= 16) {
-      e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+      e.accumulator32 =
+        (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
       e.bitOffset -= 16;
     }
     let r = readSymbol(e.blockTrees, 2 * t, e);
@@ -7027,7 +7755,11 @@ let Ya = (() => {
     return i;
   }
   function decodeLiteralBlockSwitch(e) {
-    e.literalBlockLength = decodeBlockTypeAndLength(e, 0, e.numLiteralBlockTypes);
+    e.literalBlockLength = decodeBlockTypeAndLength(
+      e,
+      0,
+      e.numLiteralBlockTypes,
+    );
     const t = e.rings[5];
     e.contextMapSlice = t << 6;
     e.literalTreeIdx = 255 & e.contextMap[e.contextMapSlice];
@@ -7036,11 +7768,19 @@ let Ya = (() => {
     e.contextLookupOffset2 = e.contextLookupOffset1 + 256;
   }
   function decodeCommandBlockSwitch(e) {
-    e.commandBlockLength = decodeBlockTypeAndLength(e, 1, e.numCommandBlockTypes);
+    e.commandBlockLength = decodeBlockTypeAndLength(
+      e,
+      1,
+      e.numCommandBlockTypes,
+    );
     e.commandTreeIdx = e.rings[7];
   }
   function decodeDistanceBlockSwitch(e) {
-    e.distanceBlockLength = decodeBlockTypeAndLength(e, 2, e.numDistanceBlockTypes);
+    e.distanceBlockLength = decodeBlockTypeAndLength(
+      e,
+      2,
+      e.numDistanceBlockTypes,
+    );
     e.distContextMapSlice = e.rings[9] << 2;
   }
   function readNextMetablockHeader(e) {
@@ -7059,7 +7799,8 @@ let Ya = (() => {
     }
     t = (function decodeMetaBlockLength(e) {
       if (e.bitOffset >= 16) {
-        e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+        e.accumulator32 =
+          (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
         e.bitOffset -= 16;
       }
       e.inputEnd = readFewBits(e, 1);
@@ -7075,7 +7816,8 @@ let Ya = (() => {
         if (0 === t) return 0;
         for (let a = 0; a < t; ++a) {
           if (e.bitOffset >= 16) {
-            e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+            e.accumulator32 =
+              (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
             e.bitOffset -= 16;
           }
           const n = readFewBits(e, 8);
@@ -7085,7 +7827,8 @@ let Ya = (() => {
       } else
         for (let a = 0; a < t; ++a) {
           if (e.bitOffset >= 16) {
-            e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+            e.accumulator32 =
+              (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
             e.bitOffset -= 16;
           }
           const n = readFewBits(e, 4);
@@ -7112,7 +7855,10 @@ let Ya = (() => {
         if (t > e.expectedTotalSize) {
           const a = e.expectedTotalSize;
           for (; t >> 1 > a; ) t >>= 1;
-          0 === e.inputEnd && t < 16384 && e.maxRingBufferSize >= 16384 && (t = 16384);
+          0 === e.inputEnd &&
+            t < 16384 &&
+            e.maxRingBufferSize >= 16384 &&
+            (t = 16384);
         }
         if (t <= e.ringBufferSize) return;
         const a = new Int8Array(t + 37),
@@ -7159,7 +7905,8 @@ let Ya = (() => {
       if (t < 0) return t;
     }
     if (e.bitOffset >= 16) {
-      e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+      e.accumulator32 =
+        (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
       e.bitOffset -= 16;
     }
     e.distancePostfixBits = readFewBits(e, 2);
@@ -7170,7 +7917,8 @@ let Ya = (() => {
       const n = Math.min(a + 96, e.numLiteralBlockTypes);
       for (; a < n; ) {
         if (e.bitOffset >= 16) {
-          e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+          e.accumulator32 =
+            (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
           e.bitOffset -= 16;
         }
         e.contextModes[a] = readFewBits(e, 2);
@@ -7199,14 +7947,35 @@ let Ya = (() => {
     e.literalTreeGroup = new Int32Array(huffmanTreeGroupAllocSize(256, s));
     t = decodeHuffmanTreeGroup(256, 256, s, e, e.literalTreeGroup);
     if (t < 0) return t;
-    e.commandTreeGroup = new Int32Array(huffmanTreeGroupAllocSize(704, e.numCommandBlockTypes));
-    t = decodeHuffmanTreeGroup(704, 704, e.numCommandBlockTypes, e, e.commandTreeGroup);
+    e.commandTreeGroup = new Int32Array(
+      huffmanTreeGroupAllocSize(704, e.numCommandBlockTypes),
+    );
+    t = decodeHuffmanTreeGroup(
+      704,
+      704,
+      e.numCommandBlockTypes,
+      e,
+      e.commandTreeGroup,
+    );
     if (t < 0) return t;
-    let i = calculateDistanceAlphabetSize(e.distancePostfixBits, e.numDirectDistanceCodes, 24),
+    let i = calculateDistanceAlphabetSize(
+        e.distancePostfixBits,
+        e.numDirectDistanceCodes,
+        24,
+      ),
       o = i;
     if (1 === e.isLargeWindow) {
-      i = calculateDistanceAlphabetSize(e.distancePostfixBits, e.numDirectDistanceCodes, 62);
-      t = calculateDistanceAlphabetLimit(e, 2147483644, e.distancePostfixBits, e.numDirectDistanceCodes);
+      i = calculateDistanceAlphabetSize(
+        e.distancePostfixBits,
+        e.numDirectDistanceCodes,
+        62,
+      );
+      t = calculateDistanceAlphabetLimit(
+        e,
+        2147483644,
+        e.distancePostfixBits,
+        e.numDirectDistanceCodes,
+      );
       if (t < 0) return t;
       o = t;
     }
@@ -7284,7 +8053,8 @@ let Ya = (() => {
       if (0 === r) return 0;
       if (halfAvailable(e) > 0) {
         if (e.bitOffset >= 16) {
-          e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+          e.accumulator32 =
+            (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
           e.bitOffset -= 16;
         }
         for (; 0 !== r; ) {
@@ -7317,9 +8087,18 @@ let Ya = (() => {
     return 0;
   }
   function writeRingBuffer(e) {
-    const t = Math.min(e.outputLength - e.outputUsed, e.ringBufferBytesReady - e.ringBufferBytesWritten);
+    const t = Math.min(
+      e.outputLength - e.outputUsed,
+      e.ringBufferBytesReady - e.ringBufferBytesWritten,
+    );
     if (0 !== t) {
-      e.output.set(e.ringBuffer.subarray(e.ringBufferBytesWritten, e.ringBufferBytesWritten + t), e.outputOffset + e.outputUsed);
+      e.output.set(
+        e.ringBuffer.subarray(
+          e.ringBufferBytesWritten,
+          e.ringBufferBytesWritten + t,
+        ),
+        e.outputOffset + e.outputUsed,
+      );
       e.outputUsed += t;
       e.ringBufferBytesWritten += t;
     }
@@ -7340,7 +8119,11 @@ let Ya = (() => {
   }
   function calculateFence(e) {
     let t = e.ringBufferSize;
-    0 !== e.isEager && (t = Math.min(t, e.ringBufferBytesWritten + e.outputLength - e.outputUsed));
+    0 !== e.isEager &&
+      (t = Math.min(
+        t,
+        e.ringBufferBytesWritten + e.outputLength - e.outputUsed,
+      ));
     return t;
   }
   function doUseDictionary(e, t) {
@@ -7469,7 +8252,11 @@ let Ya = (() => {
                 const r = e[t + 1],
                   i = e[t + 2],
                   o = e[t + 3];
-                n += (63 & o) | ((63 & i) << 6) | ((63 & r) << 12) | ((7 & s) << 18);
+                n +=
+                  (63 & o) |
+                  ((63 & i) << 6) |
+                  ((63 & r) << 12) |
+                  ((7 & s) << 18);
                 e[t] = 240 | ((n >> 18) & 7);
                 e[t + 1] = (192 & r) | ((n >> 12) & 63);
                 e[t + 2] = (192 & i) | ((n >> 6) & 63);
@@ -7500,11 +8287,17 @@ let Ya = (() => {
     const n = a;
     for (; e.cdBrLength !== e.cdBrCopied; ) {
       const n = t - a,
-        s = e.cdChunkOffsets[e.cdBrIndex + 1] - e.cdChunkOffsets[e.cdBrIndex] - e.cdBrOffset;
+        s =
+          e.cdChunkOffsets[e.cdBrIndex + 1] -
+          e.cdChunkOffsets[e.cdBrIndex] -
+          e.cdBrOffset;
       let r = e.cdBrLength - e.cdBrCopied;
       r > s && (r = s);
       r > n && (r = n);
-      e.ringBuffer.set(e.cdChunks[e.cdBrIndex].subarray(e.cdBrOffset, e.cdBrOffset + r), a);
+      e.ringBuffer.set(
+        e.cdChunks[e.cdBrIndex].subarray(e.cdBrOffset, e.cdBrOffset + r),
+        a,
+      );
       a += r;
       e.cdBrOffset += r;
       e.cdBrCopied += r;
@@ -7526,7 +8319,8 @@ let Ya = (() => {
         const t = e.isLargeWindow;
         e.isLargeWindow = 0;
         if (e.bitOffset >= 16) {
-          e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+          e.accumulator32 =
+            (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
           e.bitOffset -= 16;
         }
         if (0 === readFewBits(e, 1)) return 16;
@@ -7580,7 +8374,8 @@ let Ya = (() => {
           0 === e.commandBlockLength && decodeCommandBlockSwitch(e);
           e.commandBlockLength--;
           if (e.bitOffset >= 16) {
-            e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+            e.accumulator32 =
+              (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
             e.bitOffset -= 16;
           }
           const o = readSymbol(e.commandTreeGroup, e.commandTreeIdx, e) << 2,
@@ -7589,13 +8384,16 @@ let Ya = (() => {
             u = f[o + 2];
           e.distanceCode = f[o + 3];
           if (e.bitOffset >= 16) {
-            e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+            e.accumulator32 =
+              (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
             e.bitOffset -= 16;
           }
           const m = 255 & l;
-          e.insertLength = c + (m <= 16 ? readFewBits(e, m) : readManyBits(e, m));
+          e.insertLength =
+            c + (m <= 16 ? readFewBits(e, m) : readManyBits(e, m));
           if (e.bitOffset >= 16) {
-            e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+            e.accumulator32 =
+              (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
             e.bitOffset -= 16;
           }
           const p = l >> 8;
@@ -7613,7 +8411,9 @@ let Ya = (() => {
               0 === e.literalBlockLength && decodeLiteralBlockSwitch(e);
               e.literalBlockLength--;
               if (e.bitOffset >= 16) {
-                e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+                e.accumulator32 =
+                  (e.shortBuffer[e.halfOffset++] << 16) |
+                  (e.accumulator32 >>> 16);
                 e.bitOffset -= 16;
               }
               i[e.pos] = readSymbol(e.literalTreeGroup, e.literalTreeIdx, e);
@@ -7634,12 +8434,15 @@ let Ya = (() => {
                 if (t < 0) return t;
               }
               0 === e.literalBlockLength && decodeLiteralBlockSwitch(e);
-              const r = h[e.contextLookupOffset1 + a] | h[e.contextLookupOffset2 + n],
+              const r =
+                  h[e.contextLookupOffset1 + a] | h[e.contextLookupOffset2 + n],
                 o = 255 & e.contextMap[e.contextMapSlice + r];
               e.literalBlockLength--;
               n = a;
               if (e.bitOffset >= 16) {
-                e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+                e.accumulator32 =
+                  (e.shortBuffer[e.halfOffset++] << 16) |
+                  (e.accumulator32 >>> 16);
                 e.bitOffset -= 16;
               }
               a = readSymbol(e.literalTreeGroup, o, e);
@@ -7669,7 +8472,9 @@ let Ya = (() => {
             0 === e.distanceBlockLength && decodeDistanceBlockSwitch(e);
             e.distanceBlockLength--;
             if (e.bitOffset >= 16) {
-              e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+              e.accumulator32 =
+                (e.shortBuffer[e.halfOffset++] << 16) |
+                (e.accumulator32 >>> 16);
               e.bitOffset -= 16;
             }
             const s = 255 & e.distContextMap[e.distContextMapSlice + d];
@@ -7684,7 +8489,9 @@ let Ya = (() => {
               if (e.bitOffset + t <= 32) a = readFewBits(e, t);
               else {
                 if (e.bitOffset >= 16) {
-                  e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+                  e.accumulator32 =
+                    (e.shortBuffer[e.halfOffset++] << 16) |
+                    (e.accumulator32 >>> 16);
                   e.bitOffset -= 16;
                 }
                 a = t <= 16 ? readFewBits(e, t) : readManyBits(e, t);
@@ -7692,7 +8499,10 @@ let Ya = (() => {
               e.distance = e.distOffset[d] + (a << e.distancePostfixBits);
             }
           }
-          e.maxDistance !== e.maxBackwardDistance && e.pos < e.maxBackwardDistance ? (e.maxDistance = e.pos) : (e.maxDistance = e.maxBackwardDistance);
+          e.maxDistance !== e.maxBackwardDistance &&
+          e.pos < e.maxBackwardDistance
+            ? (e.maxDistance = e.pos)
+            : (e.maxDistance = e.maxBackwardDistance);
           if (e.distance > e.maxDistance) {
             e.runningState = 9;
             continue;
@@ -7758,7 +8568,9 @@ let Ya = (() => {
               if (t < 0) return t;
             }
             if (e.bitOffset >= 16) {
-              e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+              e.accumulator32 =
+                (e.shortBuffer[e.halfOffset++] << 16) |
+                (e.accumulator32 >>> 16);
               e.bitOffset -= 16;
             }
             readFewBits(e, 8);
@@ -7777,9 +8589,11 @@ let Ya = (() => {
         case 13:
           t = writeRingBuffer(e);
           if (0 !== t) return t;
-          e.pos >= e.maxBackwardDistance && (e.maxDistance = e.maxBackwardDistance);
+          e.pos >= e.maxBackwardDistance &&
+            (e.maxDistance = e.maxBackwardDistance);
           if (e.pos >= e.ringBufferSize) {
-            e.pos > e.ringBufferSize && i.copyWithin(0, e.ringBufferSize, e.pos);
+            e.pos > e.ringBufferSize &&
+              i.copyWithin(0, e.ringBufferSize, e.pos);
             e.pos = e.pos & r;
             e.ringBufferBytesWritten = 0;
           }
@@ -7817,7 +8631,13 @@ let Ya = (() => {
       35 === n ? (t[o++] = l) : (e[l++] = n);
     }
     for (let e = 0; e < 363; ++e) a[e] = s.charCodeAt(e) - 32;
-  })(c.prefixSuffixStorage, c.prefixSuffixHeads, c.triplets, '# #s #, #e #.# the #.com/#Â # of # and # in # to #"#">#\n#]# for # a # that #. # with #\'# from # by #. The # on # as # is #ing #\n\t#:#ed #(# at #ly #="# of the #. This #,# not #er #al #=\'#ful #ive #less #est #ize #ous #', "     !! ! ,  *!  &!  \" !  ) *   * -  ! # !  #!*!  +  ,$ !  -  %  .  / #   0  1 .  \"   2  3!*   4%  ! # /   5  6  7  8 0  1 &   $   9 +   :  ;  < '  !=  >  ?! 4  @ 4  2  &   A *# (   B  C& ) %  ) !*# *-% A +! *.  D! %'  & E *6  F  G% ! *A *%  H! D  I!+!  J!+   K +- *4! A  L!*4  M  N +6  O!*% +.! K *G  P +%(  ! G *D +D  Q +# *K!*G!+D!+# +G +A +4!+% +K!+4!*D!+K!*K");
+  })(
+    c.prefixSuffixStorage,
+    c.prefixSuffixHeads,
+    c.triplets,
+    '# #s #, #e #.# the #.com/#Â # of # and # in # to #"#">#\n#]# for # a # that #. # with #\'# from # by #. The # on # as # is #ing #\n\t#:#ed #(# at #ly #="# of the #. This #,# not #er #al #=\'#ful #ive #less #est #ize #ous #',
+    "     !! ! ,  *!  &!  \" !  ) *   * -  ! # !  #!*!  +  ,$ !  -  %  .  / #   0  1 .  \"   2  3!*   4%  ! # /   5  6  7  8 0  1 &   $   9 +   :  ;  < '  !=  >  ?! 4  @ 4  2  &   A *# (   B  C& ) %  ) !*# *-% A +! *.  D! %'  & E *6  F  G% ! *A *%  H! D  I!+!  J!+   K +- *4! A  L!*4  M  N +6  O!*% +.! K *G  P +%(  ! G *D +D  Q +# *K!*G!+D!+# +G +A +4!+% +K!+4!*D!+K!*K",
+  );
   function getNextKey(e, t) {
     let a = 1 << (t - 1);
     for (; 0 !== (e & a); ) a >>= 1;
@@ -7891,7 +8711,8 @@ let Ya = (() => {
     return h;
   }
   function readMoreInput(e) {
-    if (0 !== e.endOfStreamReached) return halfAvailable(e) >= -2 ? 0 : makeError(e, -16);
+    if (0 !== e.endOfStreamReached)
+      return halfAvailable(e) >= -2 ? 0 : makeError(e, -16);
     const t = e.halfOffset << 1;
     let a = 4096 - t;
     e.byteBuffer.copyWithin(0, t, 4096);
@@ -7912,14 +8733,19 @@ let Ya = (() => {
       const a = e.byteBuffer,
         n = t >> 1,
         s = e.shortBuffer;
-      for (let e = 0; e < n; ++e) s[e] = (255 & a[2 * e]) | ((255 & a[2 * e + 1]) << 8);
+      for (let e = 0; e < n; ++e)
+        s[e] = (255 & a[2 * e]) | ((255 & a[2 * e + 1]) << 8);
     })(e, a);
     return 0;
   }
   function checkHealth(e, t) {
     if (0 === e.endOfStreamReached) return 0;
     const a = (e.halfOffset << 1) + ((e.bitOffset + 7) >> 3) - 4;
-    return a > e.tailBytes ? makeError(e, -13) : 0 !== t && a !== e.tailBytes ? makeError(e, -17) : 0;
+    return a > e.tailBytes
+      ? makeError(e, -13)
+      : 0 !== t && a !== e.tailBytes
+        ? makeError(e, -17)
+        : 0;
   }
   function readFewBits(e, t) {
     const a = (e.accumulator32 >>> e.bitOffset) & ((1 << t) - 1);
@@ -7928,7 +8754,8 @@ let Ya = (() => {
   }
   function readManyBits(e, t) {
     const a = readFewBits(e, 16);
-    e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+    e.accumulator32 =
+      (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
     e.bitOffset -= 16;
     return a | (readFewBits(e, t - 16) << 16);
   }
@@ -7939,9 +8766,11 @@ let Ya = (() => {
     }
     let t = checkHealth(e, 0);
     if (0 !== t) return t;
-    e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+    e.accumulator32 =
+      (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
     e.bitOffset -= 16;
-    e.accumulator32 = (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
+    e.accumulator32 =
+      (e.shortBuffer[e.halfOffset++] << 16) | (e.accumulator32 >>> 16);
     e.bitOffset -= 16;
     return 0;
   }
@@ -7985,7 +8814,11 @@ let Ya = (() => {
     e[1792] = 0;
     e[2047] = 7;
     for (let t = 0; t < 256; ++t) e[1536 + t] = e[1792 + t] << 3;
-  })(h, "         !!  !                  \"#$##%#$&'##(#)#++++++++++((&*'##,---,---,-----,-----,-----&#'###.///.///./////./////./////&#'# ", "A/*  ':  & : $   @");
+  })(
+    h,
+    "         !!  !                  \"#$##%#$&'##(#)#++++++++++((&*'##,---,---,-----,-----,-----&#'###.///.///./////./////./////&#'# ",
+    "A/*  ':  & : $   @",
+  );
   function State() {
     this.ringBuffer = new Int8Array(0);
     this.contextModes = new Int8Array(0);
@@ -8214,7 +9047,8 @@ class BrotliStream extends DecodeStream {
     return a ? (a.length <= e ? a : a.subarray(0, e)) : this.getBytes(e);
   }
   async asyncGetBytes() {
-    const { decompressed: e, compressed: t } = await this.asyncGetBytesFromDecompressionStream("brotli");
+    const { decompressed: e, compressed: t } =
+      await this.asyncGetBytesFromDecompressionStream("brotli");
     if (e) return e;
     this.#W = !1;
     this.stream = new Stream(t, 0, t.length, this.stream.dict);
@@ -8256,27 +9090,106 @@ class CCITTFaxStream extends DecodeStream {
   }
   async decodeImage(e, t, a) {
     if (this.eof) return this.buffer;
-    e || (e = (this.stream.isAsync && (await this.stream.asyncGetBytes())) || this.bytes);
-    this.buffer = await JBig2CCITTFaxImage.decode(e, this.dict.get("W", "Width"), this.dict.get("H", "Height"), null, this.params);
+    e ||
+      (e =
+        (this.stream.isAsync && (await this.stream.asyncGetBytes())) ||
+        this.bytes);
+    this.buffer = await JBig2CCITTFaxImage.decode(
+      e,
+      this.dict.get("W", "Width"),
+      this.dict.get("H", "Height"),
+      null,
+      this.params,
+    );
     this.bufferLength = this.buffer.length;
     this.eof = !0;
     return this.buffer;
   }
 }
-const Ja = new Int32Array([16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]),
-  Qa = new Int32Array([3, 4, 5, 6, 7, 8, 9, 10, 65547, 65549, 65551, 65553, 131091, 131095, 131099, 131103, 196643, 196651, 196659, 196667, 262211, 262227, 262243, 262259, 327811, 327843, 327875, 327907, 258, 258, 258]),
-  Za = new Int32Array([1, 2, 3, 4, 65541, 65543, 131081, 131085, 196625, 196633, 262177, 262193, 327745, 327777, 393345, 393409, 459009, 459137, 524801, 525057, 590849, 591361, 657409, 658433, 724993, 727041, 794625, 798721, 868353, 876545]),
+const Ja = new Int32Array([
+    16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15,
+  ]),
+  Qa = new Int32Array([
+    3, 4, 5, 6, 7, 8, 9, 10, 65547, 65549, 65551, 65553, 131091, 131095, 131099,
+    131103, 196643, 196651, 196659, 196667, 262211, 262227, 262243, 262259,
+    327811, 327843, 327875, 327907, 258, 258, 258,
+  ]),
+  Za = new Int32Array([
+    1, 2, 3, 4, 65541, 65543, 131081, 131085, 196625, 196633, 262177, 262193,
+    327745, 327777, 393345, 393409, 459009, 459137, 524801, 525057, 590849,
+    591361, 657409, 658433, 724993, 727041, 794625, 798721, 868353, 876545,
+  ]),
   en = [
     new Int32Array([
-      459008, 524368, 524304, 524568, 459024, 524400, 524336, 590016, 459016, 524384, 524320, 589984, 524288, 524416, 524352, 590048, 459012, 524376, 524312, 589968, 459028, 524408, 524344, 590032, 459020, 524392, 524328, 59e4, 524296, 524424, 524360, 590064, 459010, 524372, 524308, 524572, 459026, 524404, 524340, 590024, 459018, 524388, 524324, 589992, 524292, 524420, 524356, 590056, 459014, 524380, 524316, 589976, 459030, 524412, 524348, 590040, 459022, 524396, 524332, 590008, 524300, 524428, 524364, 590072, 459009, 524370, 524306, 524570, 459025, 524402, 524338, 590020, 459017, 524386, 524322, 589988, 524290, 524418, 524354, 590052, 459013, 524378, 524314, 589972, 459029, 524410, 524346, 590036, 459021, 524394, 524330, 590004, 524298, 524426, 524362, 590068, 459011, 524374, 524310, 524574, 459027, 524406, 524342, 590028, 459019, 524390, 524326, 589996, 524294, 524422, 524358, 590060, 459015, 524382, 524318, 589980, 459031, 524414, 524350, 590044, 459023, 524398, 524334, 590012,
-      524302, 524430, 524366, 590076, 459008, 524369, 524305, 524569, 459024, 524401, 524337, 590018, 459016, 524385, 524321, 589986, 524289, 524417, 524353, 590050, 459012, 524377, 524313, 589970, 459028, 524409, 524345, 590034, 459020, 524393, 524329, 590002, 524297, 524425, 524361, 590066, 459010, 524373, 524309, 524573, 459026, 524405, 524341, 590026, 459018, 524389, 524325, 589994, 524293, 524421, 524357, 590058, 459014, 524381, 524317, 589978, 459030, 524413, 524349, 590042, 459022, 524397, 524333, 590010, 524301, 524429, 524365, 590074, 459009, 524371, 524307, 524571, 459025, 524403, 524339, 590022, 459017, 524387, 524323, 589990, 524291, 524419, 524355, 590054, 459013, 524379, 524315, 589974, 459029, 524411, 524347, 590038, 459021, 524395, 524331, 590006, 524299, 524427, 524363, 590070, 459011, 524375, 524311, 524575, 459027, 524407, 524343, 590030, 459019, 524391, 524327, 589998, 524295, 524423, 524359, 590062, 459015, 524383, 524319, 589982, 459031, 524415, 524351, 590046,
-      459023, 524399, 524335, 590014, 524303, 524431, 524367, 590078, 459008, 524368, 524304, 524568, 459024, 524400, 524336, 590017, 459016, 524384, 524320, 589985, 524288, 524416, 524352, 590049, 459012, 524376, 524312, 589969, 459028, 524408, 524344, 590033, 459020, 524392, 524328, 590001, 524296, 524424, 524360, 590065, 459010, 524372, 524308, 524572, 459026, 524404, 524340, 590025, 459018, 524388, 524324, 589993, 524292, 524420, 524356, 590057, 459014, 524380, 524316, 589977, 459030, 524412, 524348, 590041, 459022, 524396, 524332, 590009, 524300, 524428, 524364, 590073, 459009, 524370, 524306, 524570, 459025, 524402, 524338, 590021, 459017, 524386, 524322, 589989, 524290, 524418, 524354, 590053, 459013, 524378, 524314, 589973, 459029, 524410, 524346, 590037, 459021, 524394, 524330, 590005, 524298, 524426, 524362, 590069, 459011, 524374, 524310, 524574, 459027, 524406, 524342, 590029, 459019, 524390, 524326, 589997, 524294, 524422, 524358, 590061, 459015, 524382, 524318, 589981,
-      459031, 524414, 524350, 590045, 459023, 524398, 524334, 590013, 524302, 524430, 524366, 590077, 459008, 524369, 524305, 524569, 459024, 524401, 524337, 590019, 459016, 524385, 524321, 589987, 524289, 524417, 524353, 590051, 459012, 524377, 524313, 589971, 459028, 524409, 524345, 590035, 459020, 524393, 524329, 590003, 524297, 524425, 524361, 590067, 459010, 524373, 524309, 524573, 459026, 524405, 524341, 590027, 459018, 524389, 524325, 589995, 524293, 524421, 524357, 590059, 459014, 524381, 524317, 589979, 459030, 524413, 524349, 590043, 459022, 524397, 524333, 590011, 524301, 524429, 524365, 590075, 459009, 524371, 524307, 524571, 459025, 524403, 524339, 590023, 459017, 524387, 524323, 589991, 524291, 524419, 524355, 590055, 459013, 524379, 524315, 589975, 459029, 524411, 524347, 590039, 459021, 524395, 524331, 590007, 524299, 524427, 524363, 590071, 459011, 524375, 524311, 524575, 459027, 524407, 524343, 590031, 459019, 524391, 524327, 589999, 524295, 524423, 524359, 590063,
-      459015, 524383, 524319, 589983, 459031, 524415, 524351, 590047, 459023, 524399, 524335, 590015, 524303, 524431, 524367, 590079,
+      459008, 524368, 524304, 524568, 459024, 524400, 524336, 590016, 459016,
+      524384, 524320, 589984, 524288, 524416, 524352, 590048, 459012, 524376,
+      524312, 589968, 459028, 524408, 524344, 590032, 459020, 524392, 524328,
+      59e4, 524296, 524424, 524360, 590064, 459010, 524372, 524308, 524572,
+      459026, 524404, 524340, 590024, 459018, 524388, 524324, 589992, 524292,
+      524420, 524356, 590056, 459014, 524380, 524316, 589976, 459030, 524412,
+      524348, 590040, 459022, 524396, 524332, 590008, 524300, 524428, 524364,
+      590072, 459009, 524370, 524306, 524570, 459025, 524402, 524338, 590020,
+      459017, 524386, 524322, 589988, 524290, 524418, 524354, 590052, 459013,
+      524378, 524314, 589972, 459029, 524410, 524346, 590036, 459021, 524394,
+      524330, 590004, 524298, 524426, 524362, 590068, 459011, 524374, 524310,
+      524574, 459027, 524406, 524342, 590028, 459019, 524390, 524326, 589996,
+      524294, 524422, 524358, 590060, 459015, 524382, 524318, 589980, 459031,
+      524414, 524350, 590044, 459023, 524398, 524334, 590012, 524302, 524430,
+      524366, 590076, 459008, 524369, 524305, 524569, 459024, 524401, 524337,
+      590018, 459016, 524385, 524321, 589986, 524289, 524417, 524353, 590050,
+      459012, 524377, 524313, 589970, 459028, 524409, 524345, 590034, 459020,
+      524393, 524329, 590002, 524297, 524425, 524361, 590066, 459010, 524373,
+      524309, 524573, 459026, 524405, 524341, 590026, 459018, 524389, 524325,
+      589994, 524293, 524421, 524357, 590058, 459014, 524381, 524317, 589978,
+      459030, 524413, 524349, 590042, 459022, 524397, 524333, 590010, 524301,
+      524429, 524365, 590074, 459009, 524371, 524307, 524571, 459025, 524403,
+      524339, 590022, 459017, 524387, 524323, 589990, 524291, 524419, 524355,
+      590054, 459013, 524379, 524315, 589974, 459029, 524411, 524347, 590038,
+      459021, 524395, 524331, 590006, 524299, 524427, 524363, 590070, 459011,
+      524375, 524311, 524575, 459027, 524407, 524343, 590030, 459019, 524391,
+      524327, 589998, 524295, 524423, 524359, 590062, 459015, 524383, 524319,
+      589982, 459031, 524415, 524351, 590046, 459023, 524399, 524335, 590014,
+      524303, 524431, 524367, 590078, 459008, 524368, 524304, 524568, 459024,
+      524400, 524336, 590017, 459016, 524384, 524320, 589985, 524288, 524416,
+      524352, 590049, 459012, 524376, 524312, 589969, 459028, 524408, 524344,
+      590033, 459020, 524392, 524328, 590001, 524296, 524424, 524360, 590065,
+      459010, 524372, 524308, 524572, 459026, 524404, 524340, 590025, 459018,
+      524388, 524324, 589993, 524292, 524420, 524356, 590057, 459014, 524380,
+      524316, 589977, 459030, 524412, 524348, 590041, 459022, 524396, 524332,
+      590009, 524300, 524428, 524364, 590073, 459009, 524370, 524306, 524570,
+      459025, 524402, 524338, 590021, 459017, 524386, 524322, 589989, 524290,
+      524418, 524354, 590053, 459013, 524378, 524314, 589973, 459029, 524410,
+      524346, 590037, 459021, 524394, 524330, 590005, 524298, 524426, 524362,
+      590069, 459011, 524374, 524310, 524574, 459027, 524406, 524342, 590029,
+      459019, 524390, 524326, 589997, 524294, 524422, 524358, 590061, 459015,
+      524382, 524318, 589981, 459031, 524414, 524350, 590045, 459023, 524398,
+      524334, 590013, 524302, 524430, 524366, 590077, 459008, 524369, 524305,
+      524569, 459024, 524401, 524337, 590019, 459016, 524385, 524321, 589987,
+      524289, 524417, 524353, 590051, 459012, 524377, 524313, 589971, 459028,
+      524409, 524345, 590035, 459020, 524393, 524329, 590003, 524297, 524425,
+      524361, 590067, 459010, 524373, 524309, 524573, 459026, 524405, 524341,
+      590027, 459018, 524389, 524325, 589995, 524293, 524421, 524357, 590059,
+      459014, 524381, 524317, 589979, 459030, 524413, 524349, 590043, 459022,
+      524397, 524333, 590011, 524301, 524429, 524365, 590075, 459009, 524371,
+      524307, 524571, 459025, 524403, 524339, 590023, 459017, 524387, 524323,
+      589991, 524291, 524419, 524355, 590055, 459013, 524379, 524315, 589975,
+      459029, 524411, 524347, 590039, 459021, 524395, 524331, 590007, 524299,
+      524427, 524363, 590071, 459011, 524375, 524311, 524575, 459027, 524407,
+      524343, 590031, 459019, 524391, 524327, 589999, 524295, 524423, 524359,
+      590063, 459015, 524383, 524319, 589983, 459031, 524415, 524351, 590047,
+      459023, 524399, 524335, 590015, 524303, 524431, 524367, 590079,
     ]),
     9,
   ],
-  tn = [new Int32Array([327680, 327696, 327688, 327704, 327684, 327700, 327692, 327708, 327682, 327698, 327690, 327706, 327686, 327702, 327694, 0, 327681, 327697, 327689, 327705, 327685, 327701, 327693, 327709, 327683, 327699, 327691, 327707, 327687, 327703, 327695, 0]), 5];
+  tn = [
+    new Int32Array([
+      327680, 327696, 327688, 327704, 327684, 327700, 327692, 327708, 327682,
+      327698, 327690, 327706, 327686, 327702, 327694, 0, 327681, 327697, 327689,
+      327705, 327685, 327701, 327693, 327709, 327683, 327699, 327691, 327707,
+      327687, 327703, 327695, 0,
+    ]),
+    5,
+  ];
 class FlateStream extends DecodeStream {
   #W = !0;
   constructor(e, t) {
@@ -8285,10 +9198,16 @@ class FlateStream extends DecodeStream {
     this.dict = e.dict;
     const a = e.getByte(),
       n = e.getByte();
-    if (-1 === a || -1 === n) throw new FormatError(`Invalid header in flate stream: ${a}, ${n}`);
-    if (8 != (15 & a)) throw new FormatError(`Unknown compression method in flate stream: ${a}, ${n}`);
-    if (((a << 8) + n) % 31 != 0) throw new FormatError(`Bad FCHECK in flate stream: ${a}, ${n}`);
-    if (32 & n) throw new FormatError(`FDICT bit set in flate stream: ${a}, ${n}`);
+    if (-1 === a || -1 === n)
+      throw new FormatError(`Invalid header in flate stream: ${a}, ${n}`);
+    if (8 != (15 & a))
+      throw new FormatError(
+        `Unknown compression method in flate stream: ${a}, ${n}`,
+      );
+    if (((a << 8) + n) % 31 != 0)
+      throw new FormatError(`Bad FCHECK in flate stream: ${a}, ${n}`);
+    if (32 & n)
+      throw new FormatError(`FDICT bit set in flate stream: ${a}, ${n}`);
     this.codeSize = 0;
     this.codeBuf = 0;
   }
@@ -8297,7 +9216,8 @@ class FlateStream extends DecodeStream {
     return a ? (a.length <= e ? a : a.subarray(0, e)) : this.getBytes(e);
   }
   async asyncGetBytes() {
-    const { decompressed: e, compressed: t } = await this.asyncGetBytesFromDecompressionStream("deflate");
+    const { decompressed: e, compressed: t } =
+      await this.asyncGetBytesFromDecompressionStream("deflate");
     if (e) return e;
     this.#W = !1;
     this.stream = new Stream(t, 2, t.length, this.stream.dict);
@@ -8313,7 +9233,8 @@ class FlateStream extends DecodeStream {
       n = this.codeSize,
       s = this.codeBuf;
     for (; n < e; ) {
-      if (-1 === (a = t.getByte())) throw new FormatError("Bad encoding in flate stream");
+      if (-1 === (a = t.getByte()))
+        throw new FormatError("Bad encoding in flate stream");
       s |= a << n;
       n += 8;
     }
@@ -8399,7 +9320,8 @@ class FlateStream extends DecodeStream {
         return;
       }
       s |= t << 8;
-      if (s !== (65535 & ~a) && (0 !== a || 0 !== s)) throw new FormatError("Bad uncompressed block length in flate stream");
+      if (s !== (65535 & ~a) && (0 !== a || 0 !== s))
+        throw new FormatError("Bad uncompressed block length in flate stream");
       this.codeBuf = 0;
       this.codeSize = 0;
       const r = this.bufferLength,
@@ -8523,7 +9445,12 @@ class Jbig2Stream extends DecodeStream {
       const e = this.params.get("JBIG2Globals");
       e instanceof BaseStream && (n = e.getBytes());
     }
-    this.buffer = await JBig2CCITTFaxImage.decode(e, this.dict.get("Width"), this.dict.get("Height"), n);
+    this.buffer = await JBig2CCITTFaxImage.decode(
+      e,
+      this.dict.get("Width"),
+      this.dict.get("Height"),
+      n,
+    );
     this.bufferLength = this.buffer.length;
     this.eof = !0;
     return this.buffer;
@@ -8655,7 +9582,10 @@ class LZWStream extends DecodeStream {
         l[i] = l[h] + 1;
         o[i] = u[0];
         i++;
-        c = (i + r) & (i + r - 1) ? c : 0 | Math.min(Math.log(i + r) / 0.6931471805599453 + 1, 12);
+        c =
+          (i + r) & (i + r - 1)
+            ? c
+            : 0 | Math.min(Math.log(i + r) / 0.6931471805599453 + 1, 12);
       }
       h = e;
       p += m;
@@ -8680,7 +9610,8 @@ class PredictorStream extends DecodeStream {
     if (!(a instanceof Dict)) return e;
     const n = (this.predictor = a.get("Predictor") || 1);
     if (n <= 1) return e;
-    if (2 !== n && (n < 10 || n > 15)) throw new FormatError(`Unsupported predictor: ${n}`);
+    if (2 !== n && (n < 10 || n > 15))
+      throw new FormatError(`Unsupported predictor: ${n}`);
     this.readBlock = 2 === n ? this.readBlockTiff : this.readBlockPng;
     this.stream = e;
     this.dict = e.dict;
@@ -8725,7 +9656,11 @@ class PredictorStream extends DecodeStream {
       const t = 2 * s;
       for (i = 0; i < t; ++i) a[h++] = r[i];
       for (; i < e; i += 2) {
-        const e = ((255 & r[i]) << 8) + (255 & r[i + 1]) + ((255 & a[h - t]) << 8) + (255 & a[h - t + 1]);
+        const e =
+          ((255 & r[i]) << 8) +
+          (255 & r[i + 1]) +
+          ((255 & a[h - t]) << 8) +
+          (255 & a[h - t + 1]);
         a[h++] = (e >> 8) & 255;
         a[h++] = 255 & e;
       }
@@ -8850,7 +9785,12 @@ class RunLengthStream extends DecodeStream {
   }
 }
 class Parser {
-  constructor({ lexer: e, xref: t, allowStreams: a = !1, recoveryMode: n = !1 }) {
+  constructor({
+    lexer: e,
+    xref: t,
+    allowStreams: a = !1,
+    recoveryMode: n = !1,
+  }) {
     this.lexer = e;
     this.xref = t;
     this.allowStreams = a;
@@ -8890,7 +9830,8 @@ class Parser {
           return this.makeInlineImage(e);
         case "[":
           const a = [];
-          for (; !isCmd(this.buf1, "]") && this.buf1 !== oa; ) a.push(this.getObj(e));
+          for (; !isCmd(this.buf1, "]") && this.buf1 !== oa; )
+            a.push(this.getObj(e));
           if (this.buf1 === oa) {
             if (this.recoveryMode) return a;
             throw new ParserEOFException("End of file inside array.");
@@ -8914,7 +9855,8 @@ class Parser {
             if (this.recoveryMode) return n;
             throw new ParserEOFException("End of file inside dictionary.");
           }
-          if (isCmd(this.buf2, "stream")) return this.allowStreams ? this.makeStream(n, e) : n;
+          if (isCmd(this.buf2, "stream"))
+            return this.allowStreams ? this.makeStream(n, e) : n;
           this.shift();
           return n;
         default:
@@ -8947,14 +9889,21 @@ class Parser {
         if (0 === i) break;
         for (let e = 0; e < i; e++) {
           n = a[e];
-          if ((0 !== n || 0 === a[e + 1]) && 10 !== n && 13 !== n && (n < 32 || n > 127)) {
+          if (
+            (0 !== n || 0 === a[e + 1]) &&
+            10 !== n &&
+            13 !== n &&
+            (n < 32 || n > 127)
+          ) {
             r = 0;
             break;
           }
         }
         if (2 !== r) continue;
         if (!t) {
-          warn("findDefaultInlineStreamEnd - `lexer.knownCommands` is undefined.");
+          warn(
+            "findDefaultInlineStreamEnd - `lexer.knownCommands` is undefined.",
+          );
           continue;
         }
         const o = new Lexer(new Stream(e.peekBytes(75)), t);
@@ -8981,7 +9930,9 @@ class Parser {
         if (2 === r) break;
       } else r = 0;
     if (-1 === n) {
-      warn("findDefaultInlineStreamEnd: Reached the end of the stream without finding a valid EI marker");
+      warn(
+        "findDefaultInlineStreamEnd: Reached the end of the stream without finding a valid EI marker",
+      );
       if (s) {
         warn('... trying to recover by using the last "EI" occurrence.');
         e.skip(-(e.pos - s));
@@ -9055,7 +10006,9 @@ class Parser {
       }
     const r = e.pos - t;
     if (-1 === a) {
-      warn("Inline DCTDecode image stream: EOI marker not found, searching for /EI/ instead.");
+      warn(
+        "Inline DCTDecode image stream: EOI marker not found, searching for /EI/ instead.",
+      );
       e.skip(-r);
       return this.findDefaultInlineStreamEnd(e);
     }
@@ -9084,7 +10037,9 @@ class Parser {
       }
     const n = e.pos - t;
     if (-1 === a) {
-      warn("Inline ASCII85Decode image stream: EOD marker not found, searching for /EI/ instead.");
+      warn(
+        "Inline ASCII85Decode image stream: EOD marker not found, searching for /EI/ instead.",
+      );
       e.skip(-n);
       return this.findDefaultInlineStreamEnd(e);
     }
@@ -9097,7 +10052,9 @@ class Parser {
     for (; -1 !== (a = e.getByte()) && 62 !== a; );
     const n = e.pos - t;
     if (-1 === a) {
-      warn("Inline ASCIIHexDecode image stream: EOD marker not found, searching for /EI/ instead.");
+      warn(
+        "Inline ASCIIHexDecode image stream: EOD marker not found, searching for /EI/ instead.",
+      );
       e.skip(-n);
       return this.findDefaultInlineStreamEnd(e);
     }
@@ -9118,7 +10075,8 @@ class Parser {
       n = Object.create(null);
     let s;
     for (; !isCmd(this.buf1, "ID") && this.buf1 !== oa; ) {
-      if (!(this.buf1 instanceof Name)) throw new FormatError("Dictionary key must be a name object");
+      if (!(this.buf1 instanceof Name))
+        throw new FormatError("Dictionary key must be a name object");
       const t = this.buf1.name;
       this.shift();
       if (this.buf1 === oa) break;
@@ -9189,7 +10147,11 @@ class Parser {
     t.pos = e;
     const a = new Uint8Array([101, 110, 100]),
       n = a.length,
-      s = [new Uint8Array([115, 116, 114, 101, 97, 109]), new Uint8Array([115, 116, 101, 97, 109]), new Uint8Array([115, 116, 114, 101, 97])],
+      s = [
+        new Uint8Array([115, 116, 114, 101, 97, 109]),
+        new Uint8Array([115, 116, 101, 97, 109]),
+        new Uint8Array([115, 116, 114, 101, 97]),
+      ],
       r = 9 - n;
     for (; t.pos < t.end; ) {
       const i = t.peekBytes(2048),
@@ -9211,7 +10173,9 @@ class Parser {
             }
             if (s >= t) {
               if (isWhiteSpace(i[l + o + s])) {
-                info(`Found "${bytesToString([...a, ...e])}" when searching for endstream command.`);
+                info(
+                  `Found "${bytesToString([...a, ...e])}" when searching for endstream command.`,
+                );
                 n = !0;
               }
               break;
@@ -9259,7 +10223,8 @@ class Parser {
     let n = t.get("F", "Filter"),
       s = t.get("DP", "DecodeParms");
     if (n instanceof Name) {
-      Array.isArray(s) && warn("/DecodeParms should not be an Array, when /Filter is a Name.");
+      Array.isArray(s) &&
+        warn("/DecodeParms should not be an Array, when /Filter is a Name.");
       return this.makeFilter(e, n.name, a, s);
     }
     let r = a;
@@ -9268,7 +10233,8 @@ class Parser {
         a = s;
       for (let i = 0, o = t.length; i < o; ++i) {
         n = this.xref.fetchIfRef(t[i]);
-        if (!(n instanceof Name)) throw new FormatError(`Bad filter name "${n}"`);
+        if (!(n instanceof Name))
+          throw new FormatError(`Bad filter name "${n}"`);
         s = null;
         Array.isArray(a) && i in a && (s = this.xref.fetchIfRef(a[i]));
         e = this.makeFilter(e, n.name, r, s);
@@ -9286,7 +10252,9 @@ class Parser {
       switch (t) {
         case "Fl":
         case "FlateDecode":
-          return n ? new PredictorStream(new FlateStream(e, a), a, n) : new FlateStream(e, a);
+          return n
+            ? new PredictorStream(new FlateStream(e, a), a, n)
+            : new FlateStream(e, a);
         case "LZW":
         case "LZWDecode":
           let t = 1;
@@ -9327,9 +10295,24 @@ class Parser {
     }
   }
 }
-const an = [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const an = [
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
 function toHexDigit(e) {
-  return e >= 48 && e <= 57 ? 15 & e : (e >= 65 && e <= 70) || (e >= 97 && e <= 102) ? 9 + (15 & e) : -1;
+  return e >= 48 && e <= 57
+    ? 15 & e
+    : (e >= 65 && e <= 70) || (e >= 97 && e <= 102)
+      ? 9 + (15 & e)
+      : -1;
 }
 class Lexer {
   constructor(e, t = null) {
@@ -9482,7 +10465,9 @@ class Lexer {
       if (35 === e) {
         e = this.nextChar();
         if (an[e]) {
-          warn("Lexer_getName: NUMBER SIGN (#) should be followed by a hexadecimal number.");
+          warn(
+            "Lexer_getName: NUMBER SIGN (#) should be followed by a hexadecimal number.",
+          );
           a.push("#");
           break;
         }
@@ -9492,7 +10477,9 @@ class Lexer {
           e = this.nextChar();
           const s = toHexDigit(e);
           if (-1 === s) {
-            warn(`Lexer_getName: Illegal digit (${String.fromCharCode(e)}) in hexadecimal number.`);
+            warn(
+              `Lexer_getName: Illegal digit (${String.fromCharCode(e)}) in hexadecimal number.`,
+            );
             a.push("#", String.fromCharCode(t));
             if (an[e]) break;
             a.push(String.fromCharCode(e));
@@ -9501,11 +10488,15 @@ class Lexer {
           a.push(String.fromCharCode((n << 4) | s));
         } else a.push("#", String.fromCharCode(e));
       } else a.push(String.fromCharCode(e));
-    a.length > 127 && warn(`Name token is longer than allowed by the spec: ${a.length}`);
+    a.length > 127 &&
+      warn(`Name token is longer than allowed by the spec: ${a.length}`);
     return Name.get(a.join(""));
   }
   _hexStringWarn(e) {
-    5 !== this._hexStringNumWarn++ ? this._hexStringNumWarn > 5 || warn(`getHexString - ignoring invalid character: ${e}`) : warn("getHexString - ignoring additional invalid characters.");
+    5 !== this._hexStringNumWarn++
+      ? this._hexStringNumWarn > 5 ||
+        warn(`getHexString - ignoring invalid character: ${e}`)
+      : warn("getHexString - ignoring additional invalid characters.");
   }
   getHexString() {
     const e = this.strBuf;
@@ -9609,7 +10600,8 @@ class Lexer {
     for (; (t = this.nextChar()) >= 0 && !an[t]; ) {
       const e = a + String.fromCharCode(t);
       if (s && void 0 === n[e]) break;
-      if (128 === a.length) throw new FormatError(`Command token too long: ${a.length}`);
+      if (128 === a.length)
+        throw new FormatError(`Command token too long: ${a.length}`);
       a = e;
       s = void 0 !== n?.[a];
     }
@@ -9640,7 +10632,9 @@ class Linearization {
     function getInt(e, t, a = !1) {
       const n = e.get(t);
       if (Number.isInteger(n) && (a ? n >= 0 : n > 0)) return n;
-      throw new Error(`The "${t}" parameter in the linearization dictionary is invalid.`);
+      throw new Error(
+        `The "${t}" parameter in the linearization dictionary is invalid.`,
+      );
     }
     const t = new Parser({ lexer: new Lexer(e), xref: null }),
       a = t.getObj(),
@@ -9648,8 +10642,21 @@ class Linearization {
       s = t.getObj(),
       r = t.getObj();
     let i, o;
-    if (!(Number.isInteger(a) && Number.isInteger(n) && isCmd(s, "obj") && r instanceof Dict && "number" == typeof (i = r.get("Linearized")) && i > 0)) return null;
-    if ((o = getInt(r, "L")) !== e.length) throw new Error('The "L" parameter in the linearization dictionary does not equal the stream length.');
+    if (
+      !(
+        Number.isInteger(a) &&
+        Number.isInteger(n) &&
+        isCmd(s, "obj") &&
+        r instanceof Dict &&
+        "number" == typeof (i = r.get("Linearized")) &&
+        i > 0
+      )
+    )
+      return null;
+    if ((o = getInt(r, "L")) !== e.length)
+      throw new Error(
+        'The "L" parameter in the linearization dictionary does not equal the stream length.',
+      );
     return {
       length: o,
       hints: (function getHints(e) {
@@ -9658,11 +10665,16 @@ class Linearization {
         if (Array.isArray(t) && (2 === (a = t.length) || 4 === a)) {
           for (let e = 0; e < a; e++) {
             const a = t[e];
-            if (!(Number.isInteger(a) && a > 0)) throw new Error(`Hint (${e}) in the linearization dictionary is invalid.`);
+            if (!(Number.isInteger(a) && a > 0))
+              throw new Error(
+                `Hint (${e}) in the linearization dictionary is invalid.`,
+              );
           }
           return t;
         }
-        throw new Error("Hint array in the linearization dictionary is invalid.");
+        throw new Error(
+          "Hint array in the linearization dictionary is invalid.",
+        );
       })(r),
       objectNumberFirst: getInt(r, "O"),
       endFirst: getInt(r, "E"),
@@ -9858,20 +10870,28 @@ class CMap {
     this.numCodespaceRanges++;
   }
   mapCidRange(e, t, a) {
-    if (t - e > sn) throw new Error("mapCidRange - ignoring data above MAX_MAP_RANGE.");
+    if (t - e > sn)
+      throw new Error("mapCidRange - ignoring data above MAX_MAP_RANGE.");
     for (; e <= t; ) this._map[e++] = a++;
   }
   mapBfRange(e, t, a) {
-    if (t - e > sn) throw new Error("mapBfRange - ignoring data above MAX_MAP_RANGE.");
+    if (t - e > sn)
+      throw new Error("mapBfRange - ignoring data above MAX_MAP_RANGE.");
     const n = a.length - 1;
     for (; e <= t; ) {
       this._map[e++] = a;
       const t = a.charCodeAt(n) + 1;
-      t > 255 ? (a = a.substring(0, n - 1) + String.fromCharCode(a.charCodeAt(n - 1) + 1) + "\0") : (a = a.substring(0, n) + String.fromCharCode(t));
+      t > 255
+        ? (a =
+            a.substring(0, n - 1) +
+            String.fromCharCode(a.charCodeAt(n - 1) + 1) +
+            "\0")
+        : (a = a.substring(0, n) + String.fromCharCode(t));
     }
   }
   mapBfRangeToArray(e, t, a) {
-    if (t - e > sn) throw new Error("mapBfRangeToArray - ignoring data above MAX_MAP_RANGE.");
+    if (t - e > sn)
+      throw new Error("mapBfRangeToArray - ignoring data above MAX_MAP_RANGE.");
     const n = a.length;
     let s = 0;
     for (; e <= t && s < n; ) {
@@ -9992,10 +11012,12 @@ function strToInt(e) {
   return t >>> 0;
 }
 function expectString(e) {
-  if ("string" != typeof e) throw new FormatError("Malformed CMap: expected string.");
+  if ("string" != typeof e)
+    throw new FormatError("Malformed CMap: expected string.");
 }
 function expectInt(e) {
-  if (!Number.isInteger(e)) throw new FormatError("Malformed CMap: expected int.");
+  if (!Number.isInteger(e))
+    throw new FormatError("Malformed CMap: expected int.");
 }
 function parseBfChar(e, t) {
   for (;;) {
@@ -10097,7 +11119,9 @@ async function parseCMap(e, t, a, n) {
       const a = t.getObj();
       if (a === oa) break;
       if (a instanceof Name) {
-        "WMode" === a.name ? parseWMode(e, t) : "CMapName" === a.name && parseCMapName(e, t);
+        "WMode" === a.name
+          ? parseWMode(e, t)
+          : "CMapName" === a.name && parseCMapName(e, t);
         s = a;
       } else if (a instanceof Cmd)
         switch (a.cmd) {
@@ -10148,7 +11172,8 @@ async function createBuiltInCMap(e, t) {
   if (!t) throw new Error("Built-in CMap parameters are not provided.");
   const { cMapData: a, isCompressed: n } = await t(e),
     s = new CMap(!0);
-  if (n) return new BinaryCMapReader().process(a, s, (e) => extendCMap(s, t, e));
+  if (n)
+    return new BinaryCMapReader().process(a, s, (e) => extendCMap(s, t, e));
   const r = new Lexer(new Stream(a));
   return parseCMap(s, r, t, null);
 }
@@ -10173,7 +11198,18 @@ class SYSTEM_FONT_INFO {
   static strings = ["css", "loadedName", "baseFontName", "src"];
 }
 class FONT_INFO {
-  static bools = ["black", "bold", "disableFontFace", "fontExtraProperties", "isInvalidPDFjsFont", "isType3Font", "italic", "missingFile", "remeasure", "vertical"];
+  static bools = [
+    "black",
+    "bold",
+    "disableFontFace",
+    "fontExtraProperties",
+    "isInvalidPDFjsFont",
+    "isType3Font",
+    "italic",
+    "missingFile",
+    "remeasure",
+    "vertical",
+  ];
   static numbers = ["ascent", "defaultWidth", "descent"];
   static strings = ["fallbackName", "loadedName", "mimetype", "name"];
   static OFFSET_NUMBERS = Math.ceil((2 * this.bools.length) / 8);
@@ -10273,7 +11309,16 @@ function compileFontInfo(e) {
     s[t] = n.encode(e[t]);
     r += 4 + s[t].length;
   }
-  const i = FONT_INFO.OFFSET_STRINGS + 4 + r + 4 + (t?.byteLength ?? 0) + 4 + (a?.byteLength ?? 0) + 4 + (e.data?.length ?? 0),
+  const i =
+      FONT_INFO.OFFSET_STRINGS +
+      4 +
+      r +
+      4 +
+      (t?.byteLength ?? 0) +
+      4 +
+      (a?.byteLength ?? 0) +
+      4 +
+      (e.data?.length ?? 0),
     o = new ArrayBuffer(i),
     l = new Uint8Array(o),
     f = new DataView(o);
@@ -10291,12 +11336,18 @@ function compileFontInfo(e) {
       m = 0;
     }
   }
-  assert(c === FONT_INFO.OFFSET_NUMBERS, "compileFontInfo: Boolean properties offset mismatch");
+  assert(
+    c === FONT_INFO.OFFSET_NUMBERS,
+    "compileFontInfo: Boolean properties offset mismatch",
+  );
   for (const t of FONT_INFO.numbers) {
     f.setFloat64(c, e[t]);
     c += 8;
   }
-  assert(c === FONT_INFO.OFFSET_BBOX, "compileFontInfo: Number properties offset mismatch");
+  assert(
+    c === FONT_INFO.OFFSET_BBOX,
+    "compileFontInfo: Number properties offset mismatch",
+  );
   if (e.bbox) {
     f.setUint8(c++, 4);
     for (const t of e.bbox) {
@@ -10307,7 +11358,10 @@ function compileFontInfo(e) {
     f.setUint8(c++, 0);
     c += 8;
   }
-  assert(c === FONT_INFO.OFFSET_FONT_MATRIX, "compileFontInfo: BBox properties offset mismatch");
+  assert(
+    c === FONT_INFO.OFFSET_FONT_MATRIX,
+    "compileFontInfo: BBox properties offset mismatch",
+  );
   if (e.fontMatrix) {
     f.setUint8(c++, 6);
     for (const t of e.fontMatrix) {
@@ -10318,7 +11372,10 @@ function compileFontInfo(e) {
     f.setUint8(c++, 0);
     c += 48;
   }
-  assert(c === FONT_INFO.OFFSET_DEFAULT_VMETRICS, "compileFontInfo: FontMatrix properties offset mismatch");
+  assert(
+    c === FONT_INFO.OFFSET_DEFAULT_VMETRICS,
+    "compileFontInfo: FontMatrix properties offset mismatch",
+  );
   if (e.defaultVMetrics) {
     f.setUint8(c++, 3);
     for (const t of e.defaultVMetrics) {
@@ -10329,7 +11386,10 @@ function compileFontInfo(e) {
     f.setUint8(c++, 0);
     c += 6;
   }
-  assert(c === FONT_INFO.OFFSET_STRINGS, "compileFontInfo: DefaultVMetrics properties offset mismatch");
+  assert(
+    c === FONT_INFO.OFFSET_STRINGS,
+    "compileFontInfo: DefaultVMetrics properties offset mismatch",
+  );
   f.setUint32(FONT_INFO.OFFSET_STRINGS, 0);
   c += 4;
   for (const e of FONT_INFO.strings) {
@@ -10343,7 +11403,10 @@ function compileFontInfo(e) {
   if (t) {
     const e = t.byteLength;
     f.setUint32(c, e);
-    assert(c + 4 + e <= o.byteLength, "compileFontInfo: Buffer overflow at systemFontInfo");
+    assert(
+      c + 4 + e <= o.byteLength,
+      "compileFontInfo: Buffer overflow at systemFontInfo",
+    );
     l.set(new Uint8Array(t), c + 4);
     c += 4 + e;
   } else {
@@ -10353,7 +11416,10 @@ function compileFontInfo(e) {
   if (a) {
     const e = a.byteLength;
     f.setUint32(c, e);
-    assert(c + 4 + e <= o.byteLength, "compileFontInfo: Buffer overflow at cssFontInfo");
+    assert(
+      c + 4 + e <= o.byteLength,
+      "compileFontInfo: Buffer overflow at cssFontInfo",
+    );
     l.set(new Uint8Array(a), c + 4);
     c += 4 + e;
   } else {
@@ -16837,7 +17903,10 @@ const gn = [
   [44032, 55215],
   [55296, 57343],
   [67840, 67871],
-  [19968, 40959, 11904, 12031, 12032, 12255, 12272, 12287, 13312, 19903, 131072, 173791, 12688, 12703],
+  [
+    19968, 40959, 11904, 12031, 12032, 12255, 12272, 12287, 13312, 19903,
+    131072, 173791, 12688, 12703,
+  ],
   [57344, 63743],
   [12736, 12783, 63744, 64255, 194560, 195103],
   [64256, 64335],
@@ -16905,11 +17974,13 @@ const gn = [
 function getUnicodeRangeFor(e, t = -1) {
   if (-1 !== t) {
     const a = gn[t];
-    for (let n = 0, s = a.length; n < s; n += 2) if (e >= a[n] && e <= a[n + 1]) return t;
+    for (let n = 0, s = a.length; n < s; n += 2)
+      if (e >= a[n] && e <= a[n + 1]) return t;
   }
   for (let t = 0, a = gn.length; t < a; t++) {
     const a = gn[t];
-    for (let n = 0, s = a.length; n < s; n += 2) if (e >= a[n] && e <= a[n + 1]) return t;
+    for (let n = 0, s = a.length; n < s; n += 2)
+      if (e >= a[n] && e <= a[n + 1]) return t;
   }
   return -1;
 }
@@ -18347,7 +19418,23 @@ class CFFParser {
         return (function parseFloatOperand() {
           let t = "";
           const n = 15,
-            s = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "E", "E-", null, "-"],
+            s = [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              ".",
+              "E",
+              "E-",
+              null,
+              "-",
+            ],
             r = e.length;
           for (; a < r; ) {
             const r = e[a++],
@@ -18473,7 +19560,10 @@ class CFFParser {
         i[r] = f - 139;
         r++;
       } else if (f >= 247 && f <= 254) {
-        i[r] = f < 251 ? ((f - 247) << 8) + t[l] + 108 : -((f - 251) << 8) - t[l] - 108;
+        i[r] =
+          f < 251
+            ? ((f - 247) << 8) + t[l] + 108
+            : -((f - 251) << 8) - t[l] - 108;
         l++;
         r++;
       } else if (255 === f) {
@@ -18541,7 +19631,14 @@ class CFFParser {
           }
         }
         if (r < c.min) {
-          warn("Not enough parameters for " + c.id + "; actual: " + r + ", expected: " + c.min);
+          warn(
+            "Not enough parameters for " +
+              c.id +
+              "; actual: " +
+              r +
+              ", expected: " +
+              c.min,
+          );
           if (0 === r) {
             t[l - 1] = 14;
             return !0;
@@ -18551,7 +19648,10 @@ class CFFParser {
         if (e.firstStackClearing && c.stackClearing) {
           e.firstStackClearing = !1;
           r -= c.min;
-          r >= 2 && c.stem ? (r %= 2) : r > 1 && warn("Found too many parameters for stack-clearing command");
+          r >= 2 && c.stem
+            ? (r %= 2)
+            : r > 1 &&
+              warn("Found too many parameters for stack-clearing command");
           r > 0 && (e.width = i[r - 1]);
         }
         if ("stackDelta" in c) {
@@ -18564,7 +19664,14 @@ class CFFParser {
     e.stackSize = r;
     return !0;
   }
-  parseCharStrings({ charStrings: e, localSubrIndex: t, globalSubrIndex: a, fdSelect: n, fdArray: s, privateDict: r }) {
+  parseCharStrings({
+    charStrings: e,
+    localSubrIndex: t,
+    globalSubrIndex: a,
+    fdSelect: n,
+    fdArray: s,
+    privateDict: r,
+  }) {
     const i = [],
       o = [],
       l = e.count;
@@ -18637,7 +19744,8 @@ class CFFParser {
       i = this.parseDict(r),
       o = this.createDict(CFFPrivateDict, i, e.strings);
     e.privateDict = o;
-    0 === o.getByName("ExpansionFactor") && o.setByName("ExpansionFactor", 0.06);
+    0 === o.getByName("ExpansionFactor") &&
+      o.setByName("ExpansionFactor", 0.06);
     if (!o.getByName("Subrs")) return;
     const l = o.getByName("Subrs"),
       f = n + l;
@@ -18756,7 +19864,9 @@ class CFFParser {
         for (r = 0; r < i; ++r) {
           let t = (a[e++] << 8) | a[e++];
           if (0 === r && 0 !== t) {
-            warn("parseFDSelect: The first range must have a first GID of 0 -- trying to recover.");
+            warn(
+              "parseFDSelect: The first range must have a first GID of 0 -- trying to recover.",
+            );
             t = 0;
           }
           const n = a[e++],
@@ -18768,7 +19878,8 @@ class CFFParser {
       default:
         throw new FormatError(`parseFDSelect: Unknown format "${n}".`);
     }
-    if (s.length !== t) throw new FormatError("parseFDSelect: Invalid font data.");
+    if (s.length !== t)
+      throw new FormatError("parseFDSelect: Invalid font data.");
     return new CFFFDSelect(n, s);
   }
 }
@@ -18813,7 +19924,11 @@ class CFFHeader {
 class CFFStrings {
   strings = [];
   get(e) {
-    return e >= 0 && e <= 390 ? Fn[e] : e - Tn <= this.strings.length ? this.strings[e - Tn] : Fn[0];
+    return e >= 0 && e <= 390
+      ? Fn[e]
+      : e - Tn <= this.strings.length
+        ? this.strings[e - Tn]
+        : Fn[0];
   }
   getSID(e) {
     let t = Fn.indexOf(e);
@@ -18871,14 +19986,16 @@ class CFFDict {
     return !0;
   }
   setByName(e, t) {
-    if (!(e in this.nameToKeyMap)) throw new FormatError(`Invalid dictionary name "${e}"`);
+    if (!(e in this.nameToKeyMap))
+      throw new FormatError(`Invalid dictionary name "${e}"`);
     this.values[this.nameToKeyMap[e]] = t;
   }
   hasName(e) {
     return this.nameToKeyMap[e] in this.values;
   }
   getByName(e) {
-    if (!(e in this.nameToKeyMap)) throw new FormatError(`Invalid dictionary name ${e}"`);
+    if (!(e in this.nameToKeyMap))
+      throw new FormatError(`Invalid dictionary name ${e}"`);
     const t = this.nameToKeyMap[e];
     return t in this.values ? this.values[t] : this.defaults[t];
   }
@@ -18921,7 +20038,12 @@ const Hn = [
   [[12, 4], "UnderlineThickness", "num", 50],
   [[12, 5], "PaintType", "num", 0],
   [[12, 6], "CharstringType", "num", 2],
-  [[12, 7], "FontMatrix", ["num", "num", "num", "num", "num", "num"], [0.001, 0, 0, 0.001, 0, 0]],
+  [
+    [12, 7],
+    "FontMatrix",
+    ["num", "num", "num", "num", "num", "num"],
+    [0.001, 0, 0, 0.001, 0, 0],
+  ],
   [13, "UniqueID", "num", null],
   [5, "FontBBox", ["num", "num", "num", "num"], [0, 0, 0, 0]],
   [[12, 8], "StrokeWidth", "num", 0],
@@ -19012,14 +20134,16 @@ class CFFOffsetTracker {
     return e in this.offsets;
   }
   track(e, t) {
-    if (e in this.offsets) throw new FormatError(`Already tracking location of ${e}`);
+    if (e in this.offsets)
+      throw new FormatError(`Already tracking location of ${e}`);
     this.offsets[e] = t;
   }
   offset(e) {
     for (const t in this.offsets) this.offsets[t] += e;
   }
   setEntryLocation(e, t, a) {
-    if (!(e in this.offsets)) throw new FormatError(`Not tracking location of ${e}`);
+    if (!(e in this.offsets))
+      throw new FormatError(`Not tracking location of ${e}`);
     const n = a.data,
       s = this.offsets[e];
     for (let e = 0, a = t.length; e < a; ++e) {
@@ -19028,7 +20152,8 @@ class CFFOffsetTracker {
         i = a + 2,
         o = a + 3,
         l = a + 4;
-      if (29 !== n[a] || 0 !== n[r] || 0 !== n[i] || 0 !== n[o] || 0 !== n[l]) throw new FormatError("writing to an offset that is not empty");
+      if (29 !== n[a] || 0 !== n[r] || 0 !== n[i] || 0 !== n[o] || 0 !== n[l])
+        throw new FormatError("writing to an offset that is not empty");
       const f = t[e];
       n[a] = 29;
       n[r] = (f >> 24) & 255;
@@ -19085,7 +20210,8 @@ class CFFCompiler {
       e.topDict.removeByName("FontMatrix");
       for (const a of e.fdArray) {
         let e = t.slice(0);
-        a.hasName("FontMatrix") && (e = Util.transform(e, a.getByName("FontMatrix")));
+        a.hasName("FontMatrix") &&
+          (e = Util.transform(e, a.getByName("FontMatrix")));
         a.setByName("FontMatrix", e);
       }
     }
@@ -19100,13 +20226,19 @@ class CFFCompiler {
     const l = this.compileIndex(e.globalSubrIndex);
     t.add(l);
     if (e.encoding && e.topDict.hasName("Encoding"))
-      if (e.encoding.predefined) i.setEntryLocation("Encoding", [e.encoding.format], t);
+      if (e.encoding.predefined)
+        i.setEntryLocation("Encoding", [e.encoding.format], t);
       else {
         const a = this.compileEncoding(e.encoding);
         i.setEntryLocation("Encoding", [t.length], t);
         t.add(a);
       }
-    const f = this.compileCharset(e.charset, e.charStrings.count, e.strings, e.isCIDFont);
+    const f = this.compileCharset(
+      e.charset,
+      e.charStrings.count,
+      e.strings,
+      e.isCIDFont,
+    );
     i.setEntryLocation("charset", [t.length], t);
     t.add(f);
     const c = this.compileCharStrings(e.charStrings);
@@ -19130,7 +20262,11 @@ class CFFCompiler {
     return Number.isInteger(e) ? this.encodeInteger(e) : this.encodeFloat(e);
   }
   static get EncodeFloatRegExp() {
-    return shadow(this, "EncodeFloatRegExp", /\.(\d*?)(?:9{5,20}|0{5,20})\d{0,2}(?:e(.+)|$)/);
+    return shadow(
+      this,
+      "EncodeFloatRegExp",
+      /\.(\d*?)(?:9{5,20}|0{5,20})\d{0,2}(?:e(.+)|$)/,
+    );
   }
   encodeFloat(e) {
     let t = e.toString();
@@ -19144,16 +20280,35 @@ class CFFCompiler {
       r = "";
     for (n = 0, s = t.length; n < s; ++n) {
       const e = t[n];
-      r += "e" === e ? ("-" === t[++n] ? "c" : "b") : "." === e ? "a" : "-" === e ? "e" : e;
+      r +=
+        "e" === e
+          ? "-" === t[++n]
+            ? "c"
+            : "b"
+          : "." === e
+            ? "a"
+            : "-" === e
+              ? "e"
+              : e;
     }
     r += 1 & r.length ? "f" : "ff";
     const i = [30];
-    for (n = 0, s = r.length; n < s; n += 2) i.push(parseInt(r.substring(n, n + 2), 16));
+    for (n = 0, s = r.length; n < s; n += 2)
+      i.push(parseInt(r.substring(n, n + 2), 16));
     return i;
   }
   encodeInteger(e) {
     let t;
-    t = e >= -107 && e <= 107 ? [e + 139] : e >= 108 && e <= 1131 ? [247 + ((e -= 108) >> 8), 255 & e] : e >= -1131 && e <= -108 ? [251 + ((e = -e - 108) >> 8), 255 & e] : e >= -32768 && e <= 32767 ? [28, (e >> 8) & 255, 255 & e] : [29, (e >> 24) & 255, (e >> 16) & 255, (e >> 8) & 255, 255 & e];
+    t =
+      e >= -107 && e <= 107
+        ? [e + 139]
+        : e >= 108 && e <= 1131
+          ? [247 + ((e -= 108) >> 8), 255 & e]
+          : e >= -1131 && e <= -108
+            ? [251 + ((e = -e - 108) >> 8), 255 & e]
+            : e >= -32768 && e <= 32767
+              ? [28, (e >> 8) & 255, 255 & e]
+              : [29, (e >> 24) & 255, (e >> 16) & 255, (e >> 8) & 255, 255 & e];
     return t;
   }
   compileHeader(e) {
@@ -19166,7 +20321,19 @@ class CFFCompiler {
       let n = new Array(e);
       for (let t = 0; t < e; t++) {
         let e = a[t];
-        (e < "!" || e > "~" || "[" === e || "]" === e || "(" === e || ")" === e || "{" === e || "}" === e || "<" === e || ">" === e || "/" === e || "%" === e) && (e = "_");
+        (e < "!" ||
+          e > "~" ||
+          "[" === e ||
+          "]" === e ||
+          "(" === e ||
+          ")" === e ||
+          "{" === e ||
+          "}" === e ||
+          "<" === e ||
+          ">" === e ||
+          "/" === e ||
+          "%" === e) &&
+          (e = "_");
         n[t] = e;
       }
       n = n.join("");
@@ -19199,7 +20366,8 @@ class CFFCompiler {
     for (let n = 0, s = e.length; n < s; ++n) {
       const s = e[n],
         r = s.privateDict;
-      if (!r || !s.hasName("Private")) throw new FormatError("There must be a private dictionary.");
+      if (!r || !s.hasName("Private"))
+        throw new FormatError("There must be a private dictionary.");
       const i = new CFFOffsetTracker(),
         o = this.compileDict(r, i);
       let l = a.length;
@@ -19239,7 +20407,8 @@ class CFFCompiler {
             case "array":
             case "delta":
               a.push(...this.encodeNumber(l));
-              for (let e = 1, t = s.length; e < t; ++e) a.push(...this.encodeNumber(s[e]));
+              for (let e = 1, t = s.length; e < t; ++e)
+                a.push(...this.encodeNumber(s[e]));
               break;
             default:
               throw new FormatError(`Unknown data type of ${o}`);
@@ -20321,10 +21490,13 @@ class IdentityToUnicodeMap {
     return this.firstChar <= e && e <= this.lastChar;
   }
   get(e) {
-    if (this.firstChar <= e && e <= this.lastChar) return String.fromCharCode(e);
+    if (this.firstChar <= e && e <= this.lastChar)
+      return String.fromCharCode(e);
   }
   charCodeOf(e) {
-    return Number.isInteger(e) && e >= this.firstChar && e <= this.lastChar ? e : -1;
+    return Number.isInteger(e) && e >= this.firstChar && e <= this.lastChar
+      ? e
+      : -1;
   }
   amend(e) {
     unreachable("Should not call amend()");
@@ -20477,7 +21649,9 @@ function lookupCmap(e, t) {
     const t = (s + r + 1) >> 1;
     a < e[t].start ? (r = t - 1) : (s = t);
   }
-  e[s].start <= a && a <= e[s].end && (n = (e[s].idDelta + (e[s].ids ? e[s].ids[a - e[s].start] : a)) & 65535);
+  e[s].start <= a &&
+    a <= e[s].end &&
+    (n = (e[s].idDelta + (e[s].ids ? e[s].ids[a - e[s].start] : a)) & 65535);
   return { charCode: a, glyphId: n };
 }
 function compileGlyf(e, t, a, n = new Set()) {
@@ -20625,7 +21799,13 @@ function compileGlyf(e, t, a, n = new Set()) {
         else if (1 & s[a + 1].flags) {
           quadraticCurveTo(s[a].x, s[a].y, s[a + 1].x, s[a + 1].y);
           a++;
-        } else quadraticCurveTo(s[a].x, s[a].y, (s[a].x + s[a + 1].x) / 2, (s[a].y + s[a + 1].y) / 2);
+        } else
+          quadraticCurveTo(
+            s[a].x,
+            s[a].y,
+            (s[a].x + s[a + 1].x) / 2,
+            (s[a].y + s[a + 1].y) / 2,
+          );
       u = e + 1;
     }
   }
@@ -20720,7 +21900,8 @@ function compileCharString(e, t, a, n) {
             if (e >= 0 && e < a.fdArray.length) {
               const t = a.fdArray[e];
               let n;
-              t.privateDict?.subrsIndex && (n = t.privateDict.subrsIndex.objects);
+              t.privateDict?.subrsIndex &&
+                (n = t.privateDict.subrsIndex.objects);
               if (n) {
                 b += getSubroutineBias(n);
                 w = n[b];
@@ -20791,7 +21972,9 @@ function compileCharString(e, t, a, n) {
               m = u + s.shift();
               r = h;
               i = m;
-              Math.abs(r - e) > Math.abs(i - t) ? (r += s.shift()) : (i += s.shift());
+              Math.abs(r - e) > Math.abs(i - t)
+                ? (r += s.shift())
+                : (i += s.shift());
               bezierCurveTo(c, u, h, m, r, i);
               break;
             default:
@@ -20806,7 +21989,10 @@ function compileCharString(e, t, a, n) {
             r = s.pop();
             t.save();
             t.translate(r, i);
-            let o = lookupCmap(a.cmap, String.fromCharCode(a.glyphNameMap[fn[e]]));
+            let o = lookupCmap(
+              a.cmap,
+              String.fromCharCode(a.glyphNameMap[fn[e]]),
+            );
             compileCharString(a.glyphs[o.glyphId], t, a, o.glyphId);
             t.restore();
             o = lookupCmap(a.cmap, String.fromCharCode(a.glyphNameMap[fn[n]]));
@@ -20967,7 +22153,9 @@ class Commands {
     this.currentTransform = this.transformStack.pop() || [1, 0, 0, 1, 0, 0];
   }
   getPath() {
-    return FeatureTest.isFloat16ArraySupported ? new Float16Array(this.cmds) : new Float32Array(this.cmds);
+    return FeatureTest.isFloat16ArraySupported
+      ? new Float16Array(this.cmds)
+      : new Float32Array(this.cmds);
   }
 }
 class CompiledFont {
@@ -20977,7 +22165,13 @@ class CompiledFont {
     this.compiledCharCodeToGlyphId = Object.create(null);
   }
   static get NOOP() {
-    return shadow(this, "NOOP", FeatureTest.isFloat16ArraySupported ? new Float16Array(0) : new Float32Array(0));
+    return shadow(
+      this,
+      "NOOP",
+      FeatureTest.isFloat16ArraySupported
+        ? new Float16Array(0)
+        : new Float32Array(0),
+    );
   }
   getPathJs(e) {
     const { charCode: t, glyphId: a } = lookupCmap(this.cmap, e);
@@ -21017,7 +22211,10 @@ class CompiledFont {
   }
   hasBuiltPath(e) {
     const { charCode: t, glyphId: a } = lookupCmap(this.cmap, e);
-    return void 0 !== this.compiledGlyphs[a] && void 0 !== this.compiledCharCodeToGlyphId[t];
+    return (
+      void 0 !== this.compiledGlyphs[a] &&
+      void 0 !== this.compiledCharCodeToGlyphId[t]
+    );
   }
 }
 class TrueTypeCompiled extends CompiledFont {
@@ -24120,7 +25317,12 @@ const Xn = getLookupTableFactory(function (e) {
     };
   });
 class GlyfTable {
-  constructor({ glyfTable: e, isGlyphLocationsLong: t, locaTable: a, numGlyphs: n }) {
+  constructor({
+    glyfTable: e,
+    isGlyphLocationsLong: t,
+    locaTable: a,
+    numGlyphs: n,
+  }) {
     this.glyphs = [];
     const s = new DataView(a.buffer, a.byteOffset, a.byteLength),
       r = new DataView(e.buffer, e.byteOffset, e.byteLength),
@@ -24164,7 +25366,8 @@ class GlyfTable {
     };
   }
   scale(e) {
-    for (let t = 0, a = this.glyphs.length; t < a; t++) this.glyphs[t].scale(e[t]);
+    for (let t = 0, a = this.glyphs.length; t < a; t++)
+      this.glyphs[t].scale(e[t]);
   }
 }
 class Glyph {
@@ -24191,7 +25394,9 @@ class Glyph {
   }
   getSize() {
     if (!this.header) return 0;
-    const e = this.simple ? this.simple.getSize() : Math.sumPrecise(this.composites.map((e) => e.getSize()));
+    const e = this.simple
+      ? this.simple.getSize()
+      : Math.sumPrecise(this.composites.map((e) => e.getSize()));
     return this.header.getSize() + e;
   }
   write(e, t) {
@@ -24394,7 +25599,10 @@ class SimpleGlyph {
     t.setUint16(e, this.instructions.length);
     e += 2;
     if (this.instructions.length) {
-      new Uint8Array(t.buffer, 0, t.buffer.byteLength).set(this.instructions, e);
+      new Uint8Array(t.buffer, 0, t.buffer.byteLength).set(
+        this.instructions,
+        e,
+      );
       e += this.instructions.length;
     }
     for (const a of r) t.setUint8(e++, a);
@@ -24419,11 +25627,21 @@ class SimpleGlyph {
     return e - a;
   }
   scale(e, t) {
-    for (const a of this.contours) if (0 !== a.xCoordinates.length) for (let n = 0, s = a.xCoordinates.length; n < s; n++) a.xCoordinates[n] = Math.round(e + (a.xCoordinates[n] - e) * t);
+    for (const a of this.contours)
+      if (0 !== a.xCoordinates.length)
+        for (let n = 0, s = a.xCoordinates.length; n < s; n++)
+          a.xCoordinates[n] = Math.round(e + (a.xCoordinates[n] - e) * t);
   }
 }
 class CompositeGlyph {
-  constructor({ flags: e, glyphIndex: t, argument1: a, argument2: n, transf: s, instructions: r }) {
+  constructor({
+    flags: e,
+    glyphIndex: t,
+    argument1: a,
+    argument2: n,
+    transf: s,
+    instructions: r,
+  }) {
     this.flags = e;
     this.glyphIndex = t;
     this.argument1 = a;
@@ -24465,7 +25683,12 @@ class CompositeGlyph {
       n.push(t.getUint16(e), t.getUint16(e + 2));
       e += 4;
     } else if (128 & s) {
-      n.push(t.getUint16(e), t.getUint16(e + 2), t.getUint16(e + 4), t.getUint16(e + 6));
+      n.push(
+        t.getUint16(e),
+        t.getUint16(e + 2),
+        t.getUint16(e + 4),
+        t.getUint16(e + 6),
+      );
       e += 8;
     }
     let l = null;
@@ -24491,12 +25714,32 @@ class CompositeGlyph {
     let e = 4 + 2 * this.transf.length;
     256 & this.flags && (e += 2 + this.instructions.length);
     e += 2;
-    2 & this.flags ? (this.argument1 >= -128 && this.argument1 <= 127 && this.argument2 >= -128 && this.argument2 <= 127) || (e += 2) : (this.argument1 >= 0 && this.argument1 <= 255 && this.argument2 >= 0 && this.argument2 <= 255) || (e += 2);
+    2 & this.flags
+      ? (this.argument1 >= -128 &&
+          this.argument1 <= 127 &&
+          this.argument2 >= -128 &&
+          this.argument2 <= 127) ||
+        (e += 2)
+      : (this.argument1 >= 0 &&
+          this.argument1 <= 255 &&
+          this.argument2 >= 0 &&
+          this.argument2 <= 255) ||
+        (e += 2);
     return e;
   }
   write(e, t) {
     const a = e;
-    2 & this.flags ? (this.argument1 >= -128 && this.argument1 <= 127 && this.argument2 >= -128 && this.argument2 <= 127) || (this.flags |= 1) : (this.argument1 >= 0 && this.argument1 <= 255 && this.argument2 >= 0 && this.argument2 <= 255) || (this.flags |= 1);
+    2 & this.flags
+      ? (this.argument1 >= -128 &&
+          this.argument1 <= 127 &&
+          this.argument2 >= -128 &&
+          this.argument2 <= 127) ||
+        (this.flags |= 1)
+      : (this.argument1 >= 0 &&
+          this.argument1 <= 255 &&
+          this.argument2 >= 0 &&
+          this.argument2 <= 255) ||
+        (this.flags |= 1);
     t.setUint16(e, this.flags);
     t.setUint16(e + 2, this.glyphIndex);
     e += 4;
@@ -24518,7 +25761,10 @@ class CompositeGlyph {
       t.setUint16(e, this.instructions.length);
       e += 2;
       if (this.instructions.length) {
-        new Uint8Array(t.buffer, 0, t.buffer.byteLength).set(this.instructions, e);
+        new Uint8Array(t.buffer, 0, t.buffer.byteLength).set(
+          this.instructions,
+          e,
+        );
         e += this.instructions.length;
       }
     }
@@ -24733,7 +25979,21 @@ class Type1CharString {
             const c = this.stack.pop();
             if (0 === i && 3 === c) {
               const e = this.stack.splice(-17, 17);
-              this.stack.push(e[2] + e[0], e[3] + e[1], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12], e[13], e[14]);
+              this.stack.push(
+                e[2] + e[0],
+                e[3] + e[1],
+                e[4],
+                e[5],
+                e[6],
+                e[7],
+                e[8],
+                e[9],
+                e[10],
+                e[11],
+                e[12],
+                e[13],
+                e[14],
+              );
               o = this.executeCommand(13, Jn, !0);
               this.flexing = !1;
               this.stack.push(e[15], e[16]);
@@ -24746,7 +26006,17 @@ class Type1CharString {
         }
         if (o) break;
       } else {
-        n <= 246 ? (n -= 139) : (n = n <= 250 ? 256 * (n - 247) + e[++l] + 108 : n <= 254 ? -256 * (n - 251) - e[++l] - 108 : ((255 & e[++l]) << 24) | ((255 & e[++l]) << 16) | ((255 & e[++l]) << 8) | (255 & e[++l]));
+        n <= 246
+          ? (n -= 139)
+          : (n =
+              n <= 250
+                ? 256 * (n - 247) + e[++l] + 108
+                : n <= 254
+                  ? -256 * (n - 251) - e[++l] - 108
+                  : ((255 & e[++l]) << 24) |
+                    ((255 & e[++l]) << 16) |
+                    ((255 & e[++l]) << 8) |
+                    (255 & e[++l]));
         this.stack.push(n);
       }
     }
@@ -24761,7 +26031,13 @@ class Type1CharString {
       if (Number.isInteger(t)) this.output.push(28, (t >> 8) & 255, 255 & t);
       else {
         t = (65536 * t) | 0;
-        this.output.push(255, (t >> 24) & 255, (t >> 16) & 255, (t >> 8) & 255, 255 & t);
+        this.output.push(
+          255,
+          (t >> 24) & 255,
+          (t >> 16) & 255,
+          (t >> 8) & 255,
+          255 & t,
+        );
       }
     }
     this.output.push(...t);
@@ -24788,13 +26064,30 @@ function decrypt(e, t, a) {
   return o;
 }
 function isSpecial(e) {
-  return 47 === e || 91 === e || 93 === e || 123 === e || 125 === e || 40 === e || 41 === e;
+  return (
+    47 === e ||
+    91 === e ||
+    93 === e ||
+    123 === e ||
+    125 === e ||
+    40 === e ||
+    41 === e
+  );
 }
 class Type1Parser {
   constructor(e, t, a) {
     if (t) {
       const t = e.getBytes(),
-        a = !((isHexDigit(t[0]) || isWhiteSpace(t[0])) && isHexDigit(t[1]) && isHexDigit(t[2]) && isHexDigit(t[3]) && isHexDigit(t[4]) && isHexDigit(t[5]) && isHexDigit(t[6]) && isHexDigit(t[7]));
+        a = !(
+          (isHexDigit(t[0]) || isWhiteSpace(t[0])) &&
+          isHexDigit(t[1]) &&
+          isHexDigit(t[2]) &&
+          isHexDigit(t[3]) &&
+          isHexDigit(t[4]) &&
+          isHexDigit(t[5]) &&
+          isHexDigit(t[6]) &&
+          isHexDigit(t[7])
+        );
       e = new Stream(
         a
           ? decrypt(t, 55665, 4)
@@ -24967,7 +26260,11 @@ class Type1Parser {
       ".notdef" === s ? r.charstrings.unshift(l) : r.charstrings.push(l);
       if (e.builtInEncoding) {
         const t = e.builtInEncoding.indexOf(s);
-        t > -1 && void 0 === e.widths[t] && t >= e.firstChar && t <= e.lastChar && (e.widths[t] = n.width);
+        t > -1 &&
+          void 0 === e.widths[t] &&
+          t >= e.firstChar &&
+          t <= e.lastChar &&
+          (e.widths[t] = n.width);
       }
     }
     return r;
@@ -25054,7 +26351,8 @@ class Type1Font {
       } catch {}
       if (r === t) {
         i = findBlock(s, a, t - 2 * a.length);
-        if (i.found && i.length === t) return { stream: new Stream(s), length: t };
+        if (i.found && i.length === t)
+          return { stream: new Stream(s), length: t };
       }
       warn('Invalid "Length1" property in Type1 font -- trying to recover.');
       e.pos = n;
@@ -25069,7 +26367,9 @@ class Type1Font {
       }
       e.pos = n;
       if (o) return { stream: new Stream(e.getBytes(o)), length: o };
-      warn('Unable to recover "Length1" property in Type1 font -- using as is.');
+      warn(
+        'Unable to recover "Length1" property in Type1 font -- using as is.',
+      );
       return { stream: new Stream(e.getBytes(t)), length: t };
     })(t, n);
     new Type1Parser(o.stream, !1, jn).extractFontHeader(a);
@@ -25079,7 +26379,8 @@ class Type1Font {
     }
     const l = (function getEexecBlock(e, t) {
         const a = e.getBytes();
-        if (0 === a.length) throw new FormatError("getEexecBlock - no font program found.");
+        if (0 === a.length)
+          throw new FormatError("getEexecBlock - no font program found.");
         return { stream: new Stream(a), length: a.length };
       })(t),
       f = new Type1Parser(l.stream, !0, jn).extractFontProgram(a);
@@ -25189,11 +26490,27 @@ class Type1Font {
     r.charStrings = c;
     const h = new CFFPrivateDict();
     h.setByName("Subrs", null);
-    const u = ["BlueValues", "OtherBlues", "FamilyBlues", "FamilyOtherBlues", "StemSnapH", "StemSnapV", "BlueShift", "BlueFuzz", "BlueScale", "LanguageGroup", "ExpansionFactor", "ForceBold", "StdHW", "StdVW"];
+    const u = [
+      "BlueValues",
+      "OtherBlues",
+      "FamilyBlues",
+      "FamilyOtherBlues",
+      "StemSnapH",
+      "StemSnapV",
+      "BlueShift",
+      "BlueFuzz",
+      "BlueScale",
+      "LanguageGroup",
+      "ExpansionFactor",
+      "ForceBold",
+      "StdHW",
+      "StdVW",
+    ];
     for (const e of u) {
       if (!s.privateData.has(e)) continue;
       const t = s.privateData.get(e);
-      if (Array.isArray(t)) for (let e = t.length - 1; e > 0; e--) t[e] -= t[e - 1];
+      if (Array.isArray(t))
+        for (let e = t.length - 1; e > 0; e--) t[e] -= t[e - 1];
       h.setByName(e, t);
     }
     r.topDict.privateDict = h;
@@ -25208,8 +26525,47 @@ const ns = [
     [1048576, 1114109],
   ],
   ss = 1e3,
-  rs = ["ascent", "bbox", "black", "bold", "cssFontInfo", "data", "defaultVMetrics", "defaultWidth", "descent", "disableFontFace", "fallbackName", "fontExtraProperties", "fontMatrix", "isInvalidPDFjsFont", "isType3Font", "italic", "loadedName", "mimetype", "missingFile", "name", "remeasure", "systemFontInfo", "vertical"],
-  is = ["cMap", "composite", "defaultEncoding", "differences", "isMonospace", "isSerifFont", "isSymbolicFont", "seacMap", "subtype", "toFontChar", "toUnicode", "type", "vmetrics", "widths"];
+  rs = [
+    "ascent",
+    "bbox",
+    "black",
+    "bold",
+    "cssFontInfo",
+    "data",
+    "defaultVMetrics",
+    "defaultWidth",
+    "descent",
+    "disableFontFace",
+    "fallbackName",
+    "fontExtraProperties",
+    "fontMatrix",
+    "isInvalidPDFjsFont",
+    "isType3Font",
+    "italic",
+    "loadedName",
+    "mimetype",
+    "missingFile",
+    "name",
+    "remeasure",
+    "systemFontInfo",
+    "vertical",
+  ],
+  is = [
+    "cMap",
+    "composite",
+    "defaultEncoding",
+    "differences",
+    "isMonospace",
+    "isSerifFont",
+    "isSymbolicFont",
+    "seacMap",
+    "subtype",
+    "toFontChar",
+    "toUnicode",
+    "type",
+    "vmetrics",
+    "widths",
+  ];
 function adjustWidths(e) {
   if (!e.fontMatrix) return;
   if (e.fontMatrix[0] === n[0]) return;
@@ -25222,7 +26578,8 @@ function amendFallbackToUnicode(e) {
   if (!e.fallbackToUnicode) return;
   if (e.toUnicode instanceof IdentityToUnicodeMap) return;
   const t = [];
-  for (const a in e.fallbackToUnicode) e.toUnicode.has(a) || (t[a] = e.fallbackToUnicode[a]);
+  for (const a in e.fallbackToUnicode)
+    e.toUnicode.has(a) || (t[a] = e.fallbackToUnicode[a]);
   t.length > 0 && e.toUnicode.amend(t);
 }
 class fonts_Glyph {
@@ -25408,7 +26765,8 @@ function adjustMapping(e, t, a, n) {
   let l = 0;
   let f = ns[l][0],
     c = ns[l][1];
-  const isInPrivateArea = (e) => (ns[0][0] <= e && e <= ns[0][1]) || (ns[1][0] <= e && e <= ns[1][1]);
+  const isInPrivateArea = (e) =>
+    (ns[0][0] <= e && e <= ns[0][1]) || (ns[1][0] <= e && e <= ns[1][1]);
   let h = null;
   for (const u in e) {
     let m = e[u];
@@ -25454,8 +26812,11 @@ function adjustMapping(e, t, a, n) {
 function createCmapTable(e, t, a) {
   const n = (function getRanges(e, t, a) {
       const n = [];
-      for (const t in e) e[t] >= a || n.push({ fontCharCode: 0 | t, glyphId: e[t] });
-      if (t) for (const [e, s] of t) s >= a || n.push({ fontCharCode: e, glyphId: s });
+      for (const t in e)
+        e[t] >= a || n.push({ fontCharCode: 0 | t, glyphId: e[t] });
+      if (t)
+        for (const [e, s] of t)
+          s >= a || n.push({ fontCharCode: e, glyphId: s });
       0 === n.length && n.push({ fontCharCode: 0, glyphId: 0 });
       n.sort((e, t) => e.fontCharCode - t.fontCharCode);
       const s = [],
@@ -25572,7 +26933,13 @@ function createCmapTable(e, t, a) {
     S.setInt32(v.length / 12);
   }
   const x = new TrueTypeTableBuilder({
-    exactLength: 4 + r.length + (q?.length ?? 0) + y.length + (S?.length ?? 0) + (v?.length ?? 0),
+    exactLength:
+      4 +
+      r.length +
+      (q?.length ?? 0) +
+      y.length +
+      (S?.length ?? 0) +
+      (v?.length ?? 0),
   });
   x.setArray(r.data);
   x.setArray(q?.data ?? []);
@@ -25602,7 +26969,10 @@ function createOS2Table(e, t, a) {
       else if (f < 64) s |= 1 << (f - 32);
       else if (f < 96) r |= 1 << (f - 64);
       else {
-        if (!(f < 123)) throw new FormatError("Unicode ranges Bits > 123 are reserved for internal usage");
+        if (!(f < 123))
+          throw new FormatError(
+            "Unicode ranges Bits > 123 are reserved for internal usage",
+          );
         i |= 1 << (f - 96);
       }
     }
@@ -25612,7 +26982,11 @@ function createOS2Table(e, t, a) {
     l = 255;
   }
   const c = e.bbox || [0, 0, 0, 0],
-    h = a.unitsPerEm || (e.fontMatrix ? 1 / Math.max(...e.fontMatrix.slice(0, 4).map(Math.abs)) : 1e3),
+    h =
+      a.unitsPerEm ||
+      (e.fontMatrix
+        ? 1 / Math.max(...e.fontMatrix.slice(0, 4).map(Math.abs))
+        : 1e3),
     u = e.ascentScaled ? 1 : h / ss,
     m = a.ascent || Math.round(u * (e.ascent || c[3]));
   let p = a.descent || Math.round(u * (e.descent || c[1]));
@@ -25672,7 +27046,18 @@ function createPostscriptName(e) {
 }
 function createNameTable(e, t) {
   t ||= [[], []];
-  const a = [t[0][0] || "Original licence", t[0][1] || e, t[0][2] || "Unknown", t[0][3] || "uniqueID", t[0][4] || e, t[0][5] || "Version 0.11", t[0][6] || createPostscriptName(e), t[0][7] || "Unknown", t[0][8] || "Unknown", t[0][9] || "Unknown"],
+  const a = [
+      t[0][0] || "Original licence",
+      t[0][1] || e,
+      t[0][2] || "Unknown",
+      t[0][3] || "uniqueID",
+      t[0][4] || e,
+      t[0][5] || "Version 0.11",
+      t[0][6] || createPostscriptName(e),
+      t[0][7] || "Unknown",
+      t[0][8] || "Unknown",
+      t[0][9] || "Unknown",
+    ],
     n = a.map((e) => stringToBytes(e)),
     s = new Array(a.length);
   let r, i, o, l, f;
@@ -25716,7 +27101,11 @@ function createNameTable(e, t) {
   }
   const g = n.length * h.length,
     b = new TrueTypeTableBuilder({
-      exactLength: 6 + Math.sumPrecise(p.map((e) => e.length)) + Math.sumPrecise(n.map((e) => e.length)) + Math.sumPrecise(s.map((e) => e.length)),
+      exactLength:
+        6 +
+        Math.sumPrecise(p.map((e) => e.length)) +
+        Math.sumPrecise(n.map((e) => e.length)) +
+        Math.sumPrecise(s.map((e) => e.length)),
     });
   b.skip(2);
   b.setInt16(g);
@@ -25764,7 +27153,13 @@ class Font {
     this.systemFontInfo = a.systemFontInfo;
     const o = e.match(/^InvalidPDFjsFont_(.*)_\d+$/);
     this.isInvalidPDFjsFont = !!o;
-    this.isInvalidPDFjsFont ? (this.fallbackName = o[1]) : this.isMonospace ? (this.fallbackName = "monospace") : this.isSerifFont ? (this.fallbackName = "serif") : (this.fallbackName = "sans-serif");
+    this.isInvalidPDFjsFont
+      ? (this.fallbackName = o[1])
+      : this.isMonospace
+        ? (this.fallbackName = "monospace")
+        : this.isSerifFont
+          ? (this.fallbackName = "serif")
+          : (this.fallbackName = "sans-serif");
     if (this.systemFontInfo?.guessFallback) {
       this.systemFontInfo.guessFallback = !1;
       this.systemFontInfo.css += `,${this.fallbackName}`;
@@ -25784,7 +27179,8 @@ class Font {
     this.toUnicode = a.toUnicode;
     this.toFontChar = [];
     if ("Type3" === a.type) {
-      for (let e = 0; e < 256; e++) this.toFontChar[e] = this.differences[e] || a.defaultEncoding[e];
+      for (let e = 0; e < 256; e++)
+        this.toFontChar[e] = this.differences[e] || a.defaultEncoding[e];
       return;
     }
     this.cidEncoding = a.cidEncoding || "";
@@ -25799,7 +27195,10 @@ class Font {
       return;
     }
     [r, i] = getFontFileType(t, a);
-    (r === this.type && i === this.subtype) || info(`Inconsistent font file Type/SubType, expected: ${this.type}/${this.subtype} but found: ${r}/${i}.`);
+    (r === this.type && i === this.subtype) ||
+      info(
+        `Inconsistent font file Type/SubType, expected: ${this.type}/${this.subtype} but found: ${r}/${i}.`,
+      );
     let l;
     try {
       switch (r) {
@@ -25808,7 +27207,10 @@ class Font {
         case "Type1":
         case "CIDFontType0":
           this.mimetype = "font/opentype";
-          const n = "Type1C" === i || "CIDFontType0C" === i ? new CFFFont(t, a) : new Type1Font(e, t, a);
+          const n =
+            "Type1C" === i || "CIDFontType0C" === i
+              ? new CFFFont(t, a)
+              : new Type1Font(e, t, a);
           adjustWidths(a);
           l = this.convert(e, n, a);
           break;
@@ -25876,11 +27278,17 @@ class Font {
     this.black = /Black/g.test(t);
     const f = /Narrow/g.test(t);
     this.remeasure = (!i || f) && Object.keys(this.widths).length > 0;
-    if ((i || o) && "CIDFontType2" === a && this.cidEncoding.startsWith("Identity-")) {
+    if (
+      (i || o) &&
+      "CIDFontType2" === a &&
+      this.cidEncoding.startsWith("Identity-")
+    ) {
       const a = e.cidToGidMap,
         n = [];
       applyStandardFontGlyphMap(n, zn());
-      /Arial-?Black/i.test(t) ? applyStandardFontGlyphMap(n, Ln()) : /Calibri/i.test(t) && applyStandardFontGlyphMap(n, Un());
+      /Arial-?Black/i.test(t)
+        ? applyStandardFontGlyphMap(n, Ln())
+        : /Calibri/i.test(t) && applyStandardFontGlyphMap(n, Un());
       if (a) {
         for (const e in n) {
           const t = n[e];
@@ -25900,8 +27308,10 @@ class Font {
         });
       this.toFontChar = n;
       this.toUnicode = new ToUnicodeMap(n);
-    } else if (/Symbol/i.test(n)) this.toFontChar = buildToFontChar(hn, mn(), this.differences);
-    else if (/Dingbats/i.test(n)) this.toFontChar = buildToFontChar(un, pn(), this.differences);
+    } else if (/Symbol/i.test(n))
+      this.toFontChar = buildToFontChar(hn, mn(), this.differences);
+    else if (/Dingbats/i.test(n))
+      this.toFontChar = buildToFontChar(un, pn(), this.differences);
     else if (i || o) {
       const e = buildToFontChar(this.defaultEncoding, mn(), this.differences);
       "CIDFontType2" !== a ||
@@ -25916,19 +27326,40 @@ class Font {
         a = [];
       this.toUnicode.forEach((t, n) => {
         if (!this.composite) {
-          const a = getUnicodeForGlyph(this.differences[t] || this.defaultEncoding[t], e);
+          const a = getUnicodeForGlyph(
+            this.differences[t] || this.defaultEncoding[t],
+            e,
+          );
           -1 !== a && (n = a);
         }
         a[+t] = n;
       });
-      this.composite && this.toUnicode instanceof IdentityToUnicodeMap && /Tahoma|Verdana/i.test(t) && applyStandardFontGlyphMap(a, zn());
+      this.composite &&
+        this.toUnicode instanceof IdentityToUnicodeMap &&
+        /Tahoma|Verdana/i.test(t) &&
+        applyStandardFontGlyphMap(a, zn());
       this.toFontChar = a;
     }
     amendFallbackToUnicode(e);
     this.loadedName = n.split("-", 1)[0];
   }
   checkAndRepair(e, t, a) {
-    const n = ["OS/2", "cmap", "head", "hhea", "hmtx", "maxp", "name", "post", "loca", "glyf", "fpgm", "prep", "cvt ", "CFF "];
+    const n = [
+      "OS/2",
+      "cmap",
+      "head",
+      "hhea",
+      "hmtx",
+      "maxp",
+      "name",
+      "post",
+      "loca",
+      "glyf",
+      "fpgm",
+      "prep",
+      "cvt ",
+      "CFF ",
+    ];
     function readTables(e, t) {
       const a = Object.create(null);
       a["OS/2"] = null;
@@ -26082,13 +27513,23 @@ class Font {
         const o = e.name;
         if (e.encoding) {
           let a = "";
-          for (let n = 0, s = e.length; n < s; n += 2) a += String.fromCharCode(t.getUint16());
+          for (let n = 0, s = e.length; n < s; n += 2)
+            a += String.fromCharCode(t.getUint16());
           n[1][o] = a;
         } else n[0][o] = t.getString(e.length);
       }
       return [n, s];
     }
-    const s = [0, 0, 0, 0, 0, 0, 0, 0, -2, -2, -2, -2, 0, 0, -2, -5, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, -1, -1, -1, -1, 1, -1, -999, 0, 1, 0, -1, -2, 0, -1, -2, -1, -1, 0, -1, -1, 0, 0, -999, -999, -1, -1, -1, -1, -2, -999, -2, -2, -999, 0, -2, -2, 0, 0, -2, 0, -2, 0, 0, 0, -2, -1, -1, 1, 1, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, -1, -1, 0, -999, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -999, -999, -999, -999, -999, -1, -1, -2, -2, 0, 0, 0, 0, -1, -1, -999, -2, -2, 0, 0, -1, -2, -2, 0, 0, 0, -1, -1, -1, -2];
+    const s = [
+      0, 0, 0, 0, 0, 0, 0, 0, -2, -2, -2, -2, 0, 0, -2, -5, -1, -1, -1, -1, -1,
+      -1, -1, -1, 0, 0, -1, 0, -1, -1, -1, -1, 1, -1, -999, 0, 1, 0, -1, -2, 0,
+      -1, -2, -1, -1, 0, -1, -1, 0, 0, -999, -999, -1, -1, -1, -1, -2, -999, -2,
+      -2, -999, 0, -2, -2, 0, 0, -2, 0, -2, 0, 0, 0, -2, -1, -1, 1, 1, 0, 0, -1,
+      -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, -1, -1, 0, -999, -1, -1, -1, -1, -1,
+      -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -999, -999, -999, -999, -999,
+      -1, -1, -2, -2, 0, 0, 0, 0, -1, -1, -999, -2, -2, 0, 0, -1, -2, -2, 0, 0,
+      0, -1, -1, -1, -2,
+    ];
     function sanitizeTTProgram(e, t) {
       let a,
         n,
@@ -26205,7 +27646,11 @@ class Font {
         }
         if (!g && !w) {
           let t = 0;
-          e <= 142 ? (t = s[e]) : e >= 192 && e <= 223 ? (t = -1) : e >= 224 && (t = -2);
+          e <= 142
+            ? (t = s[e])
+            : e >= 192 && e <= 223
+              ? (t = -1)
+              : e >= 224 && (t = -2);
           if (e >= 113 && e <= 117) {
             n = u.pop();
             isNaN(n) || (t = 2 * -n);
@@ -26246,56 +27691,70 @@ class Font {
       })(e, j);
     }
     let r, i;
-    if (isTrueTypeCollectionFile((t = new Stream(new Uint8Array(t.getBytes()))))) {
+    if (
+      isTrueTypeCollectionFile((t = new Stream(new Uint8Array(t.getBytes()))))
+    ) {
       const e = (function readTrueTypeCollectionData(e, t) {
-        const { numFonts: a, offsetTable: n } = (function readTrueTypeCollectionHeader(e) {
-            const t = e.getString(4);
-            assert("ttcf" === t, "Must be a TrueType Collection font.");
-            const a = e.getUint16(),
-              n = e.getUint16(),
-              s = e.getInt32() >>> 0,
-              r = [];
-            for (let t = 0; t < s; t++) r.push(e.getInt32() >>> 0);
-            const i = {
-              ttcTag: t,
-              majorVersion: a,
-              minorVersion: n,
-              numFonts: s,
-              offsetTable: r,
-            };
-            switch (a) {
-              case 1:
-                return i;
-              case 2:
-                i.dsigTag = e.getInt32() >>> 0;
-                i.dsigLength = e.getInt32() >>> 0;
-                i.dsigOffset = e.getInt32() >>> 0;
-                return i;
-            }
-            throw new FormatError(`Invalid TrueType Collection majorVersion: ${a}.`);
-          })(e),
+        const { numFonts: a, offsetTable: n } =
+            (function readTrueTypeCollectionHeader(e) {
+              const t = e.getString(4);
+              assert("ttcf" === t, "Must be a TrueType Collection font.");
+              const a = e.getUint16(),
+                n = e.getUint16(),
+                s = e.getInt32() >>> 0,
+                r = [];
+              for (let t = 0; t < s; t++) r.push(e.getInt32() >>> 0);
+              const i = {
+                ttcTag: t,
+                majorVersion: a,
+                minorVersion: n,
+                numFonts: s,
+                offsetTable: r,
+              };
+              switch (a) {
+                case 1:
+                  return i;
+                case 2:
+                  i.dsigTag = e.getInt32() >>> 0;
+                  i.dsigLength = e.getInt32() >>> 0;
+                  i.dsigOffset = e.getInt32() >>> 0;
+                  return i;
+              }
+              throw new FormatError(
+                `Invalid TrueType Collection majorVersion: ${a}.`,
+              );
+            })(e),
           s = t.split("+");
         let r;
         for (let i = 0; i < a; i++) {
           e.pos = (e.start || 0) + n[i];
           const a = readOpenTypeHeader(e),
             o = readTables(e, a.numTables);
-          if (!o.name) throw new FormatError('TrueType Collection font must contain a "name" table.');
+          if (!o.name)
+            throw new FormatError(
+              'TrueType Collection font must contain a "name" table.',
+            );
           const [l] = readNameTable(o.name);
           for (let e = 0, n = l.length; e < n; e++)
             for (let n = 0, i = l[e].length; n < i; n++) {
               const i = l[e][n]?.replaceAll(/\s/g, "");
               if (i) {
                 if (i === t) return { header: a, tables: o };
-                if (!(s.length < 2)) for (const e of s) i === e && (r = { name: e, header: a, tables: o });
+                if (!(s.length < 2))
+                  for (const e of s)
+                    i === e && (r = { name: e, header: a, tables: o });
               }
             }
         }
         if (r) {
-          warn(`TrueType Collection does not contain "${t}" font, falling back to "${r.name}" font instead.`);
+          warn(
+            `TrueType Collection does not contain "${t}" font, falling back to "${r.name}" font instead.`,
+          );
           return { header: r.header, tables: r.tables };
         }
-        throw new FormatError(`TrueType Collection does not contain "${t}" font.`);
+        throw new FormatError(
+          `TrueType Collection does not contain "${t}" font.`,
+        );
       })(t, this.name);
       r = e.header;
       i = e.tables;
@@ -26312,7 +27771,14 @@ class Font {
       }
       this.isOpenType = !1;
     } else {
-      if (("OTTO" === r.version && !a.composite) || !i.head || !i.hhea || !i.maxp || !i.post) return this.convert(e, new CFFFont(new Stream(i["CFF "].data), a), a);
+      if (
+        ("OTTO" === r.version && !a.composite) ||
+        !i.head ||
+        !i.hhea ||
+        !i.maxp ||
+        !i.post
+      )
+        return this.convert(e, new CFFFont(new Stream(i["CFF "].data), a), a);
       delete i.glyf;
       delete i.loca;
       delete i.fpgm;
@@ -26342,7 +27808,8 @@ class Font {
     if (65536 !== f && 20480 !== f) {
       if (6 === i.maxp.length) f = 20480;
       else {
-        if (!(i.maxp.length >= 32)) throw new FormatError('"maxp" table has a wrong version number');
+        if (!(i.maxp.length >= 32))
+          throw new FormatError('"maxp" table has a wrong version number');
         f = 65536;
       }
       !(function writeUint32(e, t, a) {
@@ -26394,7 +27861,11 @@ class Font {
           n = Math.round(e[t] * int16(o[a], o[a + 1]));
         o[a] = (n >> 8) & 255;
         o[a + 1] = 255 & n;
-        writeSignedInt16(o, a + 2, Math.round(e[t] * signedInt16(o[a + 2], o[a + 3])));
+        writeSignedInt16(
+          o,
+          a + 2,
+          Math.round(e[t] * signedInt16(o[a + 2], o[a + 3])),
+        );
       }
     }
     let u = c + 1,
@@ -26488,7 +27959,9 @@ class Font {
         }
       }
       if (o > s) {
-        info(`The numOfMetrics (${o}) should not be greater than the numGlyphs (${s}).`);
+        info(
+          `The numOfMetrics (${o}) should not be greater than the numGlyphs (${s}).`,
+        );
         o = s;
         t.data[34] = (65280 & o) >> 8;
         t.data[35] = 255 & o;
@@ -26520,7 +27993,8 @@ class Font {
           n[50] = 0;
           n[51] = 0;
         } else {
-          if (a !== e << 2) throw new FormatError("Could not fix indexToLocFormat: " + i);
+          if (a !== e << 2)
+            throw new FormatError("Could not fix indexToLocFormat: " + i);
           n[50] = 0;
           n[51] = 1;
         }
@@ -26592,7 +28066,9 @@ class Font {
           f(u, b, y);
         }
         if (0 === y) {
-          const e = new Uint8Array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 49, 0]);
+          const e = new Uint8Array([
+            0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 49, 0,
+          ]);
           for (g = 0, b = o; g < c; g++, b += o) f(u, b, e.length);
           t.data = e;
         } else if (r) {
@@ -26860,7 +28336,8 @@ class Font {
                 const e = t.getInt32() >>> 0,
                   a = t.getInt32() >>> 0;
                 let n = t.getInt32() >>> 0;
-                for (let t = e; t <= a; t++) h.push({ charCode: t, glyphId: n++ });
+                for (let t = e; t <= a; t++)
+                  h.push({ charCode: t, glyphId: n++ });
               }
             }
           }
@@ -26886,18 +28363,36 @@ class Font {
         r = e.mappings;
       let o = [],
         l = !1;
-      !a.hasEncoding || ("MacRomanEncoding" !== a.baseEncodingName && "WinAnsiEncoding" !== a.baseEncodingName) || (o = getEncoding(a.baseEncodingName));
-      if (a.hasEncoding && !this.isSymbolicFont && ((3 === n && 1 === s) || (1 === n && 0 === s))) {
+      !a.hasEncoding ||
+        ("MacRomanEncoding" !== a.baseEncodingName &&
+          "WinAnsiEncoding" !== a.baseEncodingName) ||
+        (o = getEncoding(a.baseEncodingName));
+      if (
+        a.hasEncoding &&
+        !this.isSymbolicFont &&
+        ((3 === n && 1 === s) || (1 === n && 0 === s))
+      ) {
         const e = mn();
         for (let t = 0; t < 256; t++) {
           let i;
-          i = void 0 !== this.differences[t] ? this.differences[t] : o.length && "" !== o[t] ? o[t] : fn[t];
+          i =
+            void 0 !== this.differences[t]
+              ? this.differences[t]
+              : o.length && "" !== o[t]
+                ? o[t]
+                : fn[t];
           if (!i) continue;
           const l = recoverGlyphName(i, e);
           let f;
-          3 === n && 1 === s ? (f = e[l]) : 1 === n && 0 === s && (f = ln.indexOf(l));
+          3 === n && 1 === s
+            ? (f = e[l])
+            : 1 === n && 0 === s && (f = ln.indexOf(l));
           if (void 0 === f) {
-            if (!a.glyphNames && a.hasIncludedToUnicodeMap && !(this.toUnicode instanceof IdentityToUnicodeMap)) {
+            if (
+              !a.glyphNames &&
+              a.hasIncludedToUnicodeMap &&
+              !(this.toUnicode instanceof IdentityToUnicodeMap)
+            ) {
               const e = this.toUnicode.get(t);
               e && (f = e.codePointAt(0));
             }
@@ -26997,7 +28492,11 @@ class Font {
         const a = [],
           n = mn();
         for (const s in t) {
-          if (e.hasEncoding && (e.baseEncodingName || void 0 !== e.differences[s])) continue;
+          if (
+            e.hasEncoding &&
+            (e.baseEncodingName || void 0 !== e.differences[s])
+          )
+            continue;
           const r = getUnicodeForGlyph(t[s], n);
           -1 !== r && (a[s] = String.fromCharCode(r));
         }
@@ -27058,7 +28557,9 @@ class Font {
       }
       a.seacMap = o;
     }
-    const h = a.fontMatrix ? 1 / Math.max(...a.fontMatrix.slice(0, 4).map(Math.abs)) : 1e3,
+    const h = a.fontMatrix
+        ? 1 / Math.max(...a.fontMatrix.slice(0, 4).map(Math.abs))
+        : 1e3,
       u = new OpenTypeFileBuilder("OTTO");
     u.addTable("CFF ", t.data);
     u.addTable("OS/2", createOS2Table(a, o));
@@ -27181,7 +28682,13 @@ class Font {
         }
       }
       a = (function mapSpecialUnicodeValues(e) {
-        return e >= 65520 && e <= 65535 ? 0 : e >= 62976 && e <= 63743 ? dn()[e] || e : 173 === e ? 45 : e;
+        return e >= 65520 && e <= 65535
+          ? 0
+          : e >= 62976 && e <= 63743
+            ? dn()[e] || e
+            : 173 === e
+              ? 45
+              : e;
       })(a);
     }
     this.isType3Font && (s = a);
@@ -27196,7 +28703,10 @@ class Font {
       };
     }
     let h = "";
-    "number" == typeof a && (a <= 1114111 ? (h = String.fromCodePoint(a)) : warn(`charToGlyph - invalid fontCharCode: ${a}`));
+    "number" == typeof a &&
+      (a <= 1114111
+        ? (h = String.fromCodePoint(a))
+        : warn(`charToGlyph - invalid fontCharCode: ${a}`));
     if (this.missingFile && this.vertical && 1 === h.length) {
       const e = An()[h.charCodeAt(0)];
       e && (h = l = String.fromCharCode(e));
@@ -27250,7 +28760,10 @@ class Font {
     const t = [],
       a = [],
       hasCurrentBufErrors = () => t.length % 2 == 1,
-      n = this.toUnicode instanceof IdentityToUnicodeMap ? (e) => this.toUnicode.charCodeOf(e) : (e) => this.toUnicode.charCodeOf(String.fromCodePoint(e));
+      n =
+        this.toUnicode instanceof IdentityToUnicodeMap
+          ? (e) => this.toUnicode.charCodeOf(e)
+          : (e) => this.toUnicode.charCodeOf(String.fromCodePoint(e));
     for (let s = 0, r = e.length; s < r; s++) {
       const r = e.codePointAt(s);
       r > 55295 && (r < 57344 || r > 65533) && s++;
@@ -27261,7 +28774,12 @@ class Font {
             t.push(a.join(""));
             a.length = 0;
           }
-          for (let t = (this.cMap ? this.cMap.getCharCodeLength(e) : 1) - 1; t >= 0; t--) a.push(String.fromCharCode((e >> (8 * t)) & 255));
+          for (
+            let t = (this.cMap ? this.cMap.getCharCodeLength(e) : 1) - 1;
+            t >= 0;
+            t--
+          )
+            a.push(String.fromCharCode((e >> (8 * t)) & 255));
           continue;
         }
       }
@@ -27292,183 +28810,1540 @@ class ErrorFont {
   }
 }
 const os = [
-    1.3877, 1, 1, 1, 0.97801, 0.92482, 0.89552, 0.91133, 0.81988, 0.97566, 0.98152, 0.93548, 0.93548, 1.2798, 0.85284, 0.92794, 1, 0.96134, 1.54657, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.82845, 0.82845, 0.85284, 0.85284, 0.85284, 0.75859, 0.92138, 0.83908, 0.7762, 0.73293, 0.87289, 0.73133, 0.7514, 0.81921, 0.87356, 0.95958, 0.59526, 0.75727, 0.69225, 1.04924, 0.9121, 0.86943, 0.79795, 0.88198, 0.77958, 0.70864, 0.81055, 0.90399, 0.88653, 0.96017, 0.82577, 0.77892, 0.78257, 0.97507, 1.54657, 0.97507, 0.85284, 0.89552, 0.90176, 0.88762, 0.8785, 0.75241, 0.8785, 0.90518, 0.95015, 0.77618, 0.8785, 0.88401, 0.91916, 0.86304, 0.88401, 0.91488, 0.8785, 0.8801, 0.8785, 0.8785, 0.91343, 0.7173, 1.04106, 0.8785, 0.85075, 0.95794, 0.82616, 0.85162, 0.79492, 0.88331, 1.69808, 0.88331, 0.85284, 0.97801, 0.89552, 0.91133, 0.89552, 0.91133, 1.7801, 0.89552, 1.24487, 1.13254, 1.12401, 0.96839, 0.85284, 0.68787, 0.70645, 0.85592, 0.90747, 1.01466,
-    1.0088, 0.90323, 1, 1.07463, 1, 0.91056, 0.75806, 1.19118, 0.96839, 0.78864, 0.82845, 0.84133, 0.75859, 0.83908, 0.83908, 0.83908, 0.83908, 0.83908, 0.83908, 0.77539, 0.73293, 0.73133, 0.73133, 0.73133, 0.73133, 0.95958, 0.95958, 0.95958, 0.95958, 0.88506, 0.9121, 0.86943, 0.86943, 0.86943, 0.86943, 0.86943, 0.85284, 0.87508, 0.90399, 0.90399, 0.90399, 0.90399, 0.77892, 0.79795, 0.90807, 0.88762, 0.88762, 0.88762, 0.88762, 0.88762, 0.88762, 0.8715, 0.75241, 0.90518, 0.90518, 0.90518, 0.90518, 0.88401, 0.88401, 0.88401, 0.88401, 0.8785, 0.8785, 0.8801, 0.8801, 0.8801, 0.8801, 0.8801, 0.90747, 0.89049, 0.8785, 0.8785, 0.8785, 0.8785, 0.85162, 0.8785, 0.85162, 0.83908, 0.88762, 0.83908, 0.88762, 0.83908, 0.88762, 0.73293, 0.75241, 0.73293, 0.75241, 0.73293, 0.75241, 0.73293, 0.75241, 0.87289, 0.83016, 0.88506, 0.93125, 0.73133, 0.90518, 0.73133, 0.90518, 0.73133, 0.90518, 0.73133, 0.90518, 0.73133, 0.90518, 0.81921, 0.77618, 0.81921, 0.77618, 0.81921, 0.77618, 1, 1, 0.87356, 0.8785,
-    0.91075, 0.89608, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.76229, 0.90167, 0.59526, 0.91916, 1, 1, 0.86304, 0.69225, 0.88401, 1, 1, 0.70424, 0.79468, 0.91926, 0.88175, 0.70823, 0.94903, 0.9121, 0.8785, 1, 1, 0.9121, 0.8785, 0.87802, 0.88656, 0.8785, 0.86943, 0.8801, 0.86943, 0.8801, 0.86943, 0.8801, 0.87402, 0.89291, 0.77958, 0.91343, 1, 1, 0.77958, 0.91343, 0.70864, 0.7173, 0.70864, 0.7173, 0.70864, 0.7173, 0.70864, 0.7173, 1, 1, 0.81055, 0.75841, 0.81055, 1.06452, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.96017, 0.95794, 0.77892, 0.85162, 0.77892, 0.78257, 0.79492, 0.78257, 0.79492, 0.78257, 0.79492, 0.9297, 0.56892, 0.83908, 0.88762, 0.77539, 0.8715, 0.87508, 0.89049, 1, 1, 0.81055, 1.04106, 1.20528, 1.20528, 1, 1.15543, 0.70674, 0.98387, 0.94721, 1.33431, 1.45894, 0.95161, 1.06303, 0.83908, 0.80352, 0.57184, 0.6965, 0.56289, 0.82001, 0.56029, 0.81235, 1.02988,
-    0.83908, 0.7762, 0.68156, 0.80367, 0.73133, 0.78257, 0.87356, 0.86943, 0.95958, 0.75727, 0.89019, 1.04924, 0.9121, 0.7648, 0.86943, 0.87356, 0.79795, 0.78275, 0.81055, 0.77892, 0.9762, 0.82577, 0.99819, 0.84896, 0.95958, 0.77892, 0.96108, 1.01407, 0.89049, 1.02988, 0.94211, 0.96108, 0.8936, 0.84021, 0.87842, 0.96399, 0.79109, 0.89049, 1.00813, 1.02988, 0.86077, 0.87445, 0.92099, 0.84723, 0.86513, 0.8801, 0.75638, 0.85714, 0.78216, 0.79586, 0.87965, 0.94211, 0.97747, 0.78287, 0.97926, 0.84971, 1.02988, 0.94211, 0.8801, 0.94211, 0.84971, 0.73133, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90264, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90518, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90548, 1, 1, 1, 1, 1, 1, 0.96017, 0.95794, 0.96017, 0.95794, 0.96017, 0.95794, 0.77892, 0.85162, 1, 1, 0.89552, 0.90527, 1, 0.90363, 0.92794, 0.92794,
-    0.92794, 0.92794, 0.87012, 0.87012, 0.87012, 0.89552, 0.89552, 1.42259, 0.71143, 1.06152, 1, 1, 1.03372, 1.03372, 0.97171, 1.4956, 2.2807, 0.93835, 0.83406, 0.91133, 0.84107, 0.91133, 1, 1, 1, 0.72021, 1, 1.23108, 0.83489, 0.88525, 0.88525, 0.81499, 0.90527, 1.81055, 0.90527, 1.81055, 1.31006, 1.53711, 0.94434, 1.08696, 1, 0.95018, 0.77192, 0.85284, 0.90747, 1.17534, 0.69825, 0.9716, 1.37077, 0.90747, 0.90747, 0.85356, 0.90747, 0.90747, 1.44947, 0.85284, 0.8941, 0.8941, 0.70572, 0.8, 0.70572, 0.70572, 0.70572, 0.70572, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.99862, 0.99862, 1, 1, 1, 1, 1, 1.08004, 0.91027, 1, 1, 1, 0.99862, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90727, 0.90727, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.3877, 1, 1, 1, 0.97801, 0.92482, 0.89552, 0.91133, 0.81988, 0.97566,
+    0.98152, 0.93548, 0.93548, 1.2798, 0.85284, 0.92794, 1, 0.96134, 1.54657,
+    0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133,
+    0.91133, 0.91133, 0.82845, 0.82845, 0.85284, 0.85284, 0.85284, 0.75859,
+    0.92138, 0.83908, 0.7762, 0.73293, 0.87289, 0.73133, 0.7514, 0.81921,
+    0.87356, 0.95958, 0.59526, 0.75727, 0.69225, 1.04924, 0.9121, 0.86943,
+    0.79795, 0.88198, 0.77958, 0.70864, 0.81055, 0.90399, 0.88653, 0.96017,
+    0.82577, 0.77892, 0.78257, 0.97507, 1.54657, 0.97507, 0.85284, 0.89552,
+    0.90176, 0.88762, 0.8785, 0.75241, 0.8785, 0.90518, 0.95015, 0.77618,
+    0.8785, 0.88401, 0.91916, 0.86304, 0.88401, 0.91488, 0.8785, 0.8801, 0.8785,
+    0.8785, 0.91343, 0.7173, 1.04106, 0.8785, 0.85075, 0.95794, 0.82616,
+    0.85162, 0.79492, 0.88331, 1.69808, 0.88331, 0.85284, 0.97801, 0.89552,
+    0.91133, 0.89552, 0.91133, 1.7801, 0.89552, 1.24487, 1.13254, 1.12401,
+    0.96839, 0.85284, 0.68787, 0.70645, 0.85592, 0.90747, 1.01466, 1.0088,
+    0.90323, 1, 1.07463, 1, 0.91056, 0.75806, 1.19118, 0.96839, 0.78864,
+    0.82845, 0.84133, 0.75859, 0.83908, 0.83908, 0.83908, 0.83908, 0.83908,
+    0.83908, 0.77539, 0.73293, 0.73133, 0.73133, 0.73133, 0.73133, 0.95958,
+    0.95958, 0.95958, 0.95958, 0.88506, 0.9121, 0.86943, 0.86943, 0.86943,
+    0.86943, 0.86943, 0.85284, 0.87508, 0.90399, 0.90399, 0.90399, 0.90399,
+    0.77892, 0.79795, 0.90807, 0.88762, 0.88762, 0.88762, 0.88762, 0.88762,
+    0.88762, 0.8715, 0.75241, 0.90518, 0.90518, 0.90518, 0.90518, 0.88401,
+    0.88401, 0.88401, 0.88401, 0.8785, 0.8785, 0.8801, 0.8801, 0.8801, 0.8801,
+    0.8801, 0.90747, 0.89049, 0.8785, 0.8785, 0.8785, 0.8785, 0.85162, 0.8785,
+    0.85162, 0.83908, 0.88762, 0.83908, 0.88762, 0.83908, 0.88762, 0.73293,
+    0.75241, 0.73293, 0.75241, 0.73293, 0.75241, 0.73293, 0.75241, 0.87289,
+    0.83016, 0.88506, 0.93125, 0.73133, 0.90518, 0.73133, 0.90518, 0.73133,
+    0.90518, 0.73133, 0.90518, 0.73133, 0.90518, 0.81921, 0.77618, 0.81921,
+    0.77618, 0.81921, 0.77618, 1, 1, 0.87356, 0.8785, 0.91075, 0.89608, 0.95958,
+    0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958,
+    0.88401, 0.76229, 0.90167, 0.59526, 0.91916, 1, 1, 0.86304, 0.69225,
+    0.88401, 1, 1, 0.70424, 0.79468, 0.91926, 0.88175, 0.70823, 0.94903, 0.9121,
+    0.8785, 1, 1, 0.9121, 0.8785, 0.87802, 0.88656, 0.8785, 0.86943, 0.8801,
+    0.86943, 0.8801, 0.86943, 0.8801, 0.87402, 0.89291, 0.77958, 0.91343, 1, 1,
+    0.77958, 0.91343, 0.70864, 0.7173, 0.70864, 0.7173, 0.70864, 0.7173,
+    0.70864, 0.7173, 1, 1, 0.81055, 0.75841, 0.81055, 1.06452, 0.90399, 0.8785,
+    0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399,
+    0.8785, 0.96017, 0.95794, 0.77892, 0.85162, 0.77892, 0.78257, 0.79492,
+    0.78257, 0.79492, 0.78257, 0.79492, 0.9297, 0.56892, 0.83908, 0.88762,
+    0.77539, 0.8715, 0.87508, 0.89049, 1, 1, 0.81055, 1.04106, 1.20528, 1.20528,
+    1, 1.15543, 0.70674, 0.98387, 0.94721, 1.33431, 1.45894, 0.95161, 1.06303,
+    0.83908, 0.80352, 0.57184, 0.6965, 0.56289, 0.82001, 0.56029, 0.81235,
+    1.02988, 0.83908, 0.7762, 0.68156, 0.80367, 0.73133, 0.78257, 0.87356,
+    0.86943, 0.95958, 0.75727, 0.89019, 1.04924, 0.9121, 0.7648, 0.86943,
+    0.87356, 0.79795, 0.78275, 0.81055, 0.77892, 0.9762, 0.82577, 0.99819,
+    0.84896, 0.95958, 0.77892, 0.96108, 1.01407, 0.89049, 1.02988, 0.94211,
+    0.96108, 0.8936, 0.84021, 0.87842, 0.96399, 0.79109, 0.89049, 1.00813,
+    1.02988, 0.86077, 0.87445, 0.92099, 0.84723, 0.86513, 0.8801, 0.75638,
+    0.85714, 0.78216, 0.79586, 0.87965, 0.94211, 0.97747, 0.78287, 0.97926,
+    0.84971, 1.02988, 0.94211, 0.8801, 0.94211, 0.84971, 0.73133, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 0.90264, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0.90518, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90548, 1, 1, 1, 1, 1, 1,
+    0.96017, 0.95794, 0.96017, 0.95794, 0.96017, 0.95794, 0.77892, 0.85162, 1,
+    1, 0.89552, 0.90527, 1, 0.90363, 0.92794, 0.92794, 0.92794, 0.92794,
+    0.87012, 0.87012, 0.87012, 0.89552, 0.89552, 1.42259, 0.71143, 1.06152, 1,
+    1, 1.03372, 1.03372, 0.97171, 1.4956, 2.2807, 0.93835, 0.83406, 0.91133,
+    0.84107, 0.91133, 1, 1, 1, 0.72021, 1, 1.23108, 0.83489, 0.88525, 0.88525,
+    0.81499, 0.90527, 1.81055, 0.90527, 1.81055, 1.31006, 1.53711, 0.94434,
+    1.08696, 1, 0.95018, 0.77192, 0.85284, 0.90747, 1.17534, 0.69825, 0.9716,
+    1.37077, 0.90747, 0.90747, 0.85356, 0.90747, 0.90747, 1.44947, 0.85284,
+    0.8941, 0.8941, 0.70572, 0.8, 0.70572, 0.70572, 0.70572, 0.70572, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.99862, 0.99862, 1, 1, 1,
+    1, 1, 1.08004, 0.91027, 1, 1, 1, 0.99862, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0.90727, 0.90727, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   ls = { lineHeight: 1.2207, lineGap: 0.2207 },
   fs = [
-    1.3877, 1, 1, 1, 0.97801, 0.92482, 0.89552, 0.91133, 0.81988, 0.97566, 0.98152, 0.93548, 0.93548, 1.2798, 0.85284, 0.92794, 1, 0.96134, 1.56239, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.82845, 0.82845, 0.85284, 0.85284, 0.85284, 0.75859, 0.92138, 0.83908, 0.7762, 0.71805, 0.87289, 0.73133, 0.7514, 0.81921, 0.87356, 0.95958, 0.59526, 0.75727, 0.69225, 1.04924, 0.90872, 0.85938, 0.79795, 0.87068, 0.77958, 0.69766, 0.81055, 0.90399, 0.88653, 0.96068, 0.82577, 0.77892, 0.78257, 0.97507, 1.529, 0.97507, 0.85284, 0.89552, 0.90176, 0.94908, 0.86411, 0.74012, 0.86411, 0.88323, 0.95015, 0.86411, 0.86331, 0.88401, 0.91916, 0.86304, 0.88401, 0.9039, 0.86331, 0.86331, 0.86411, 0.86411, 0.90464, 0.70852, 1.04106, 0.86331, 0.84372, 0.95794, 0.82616, 0.84548, 0.79492, 0.88331, 1.69808, 0.88331, 0.85284, 0.97801, 0.89552, 0.91133, 0.89552, 0.91133, 1.7801, 0.89552, 1.24487, 1.13254, 1.19129, 0.96839, 0.85284, 0.68787, 0.70645, 0.85592, 0.90747,
-    1.01466, 1.0088, 0.90323, 1, 1.07463, 1, 0.91056, 0.75806, 1.19118, 0.96839, 0.78864, 0.82845, 0.84133, 0.75859, 0.83908, 0.83908, 0.83908, 0.83908, 0.83908, 0.83908, 0.77539, 0.71805, 0.73133, 0.73133, 0.73133, 0.73133, 0.95958, 0.95958, 0.95958, 0.95958, 0.88506, 0.90872, 0.85938, 0.85938, 0.85938, 0.85938, 0.85938, 0.85284, 0.87068, 0.90399, 0.90399, 0.90399, 0.90399, 0.77892, 0.79795, 0.90807, 0.94908, 0.94908, 0.94908, 0.94908, 0.94908, 0.94908, 0.85887, 0.74012, 0.88323, 0.88323, 0.88323, 0.88323, 0.88401, 0.88401, 0.88401, 0.88401, 0.8785, 0.86331, 0.86331, 0.86331, 0.86331, 0.86331, 0.86331, 0.90747, 0.89049, 0.86331, 0.86331, 0.86331, 0.86331, 0.84548, 0.86411, 0.84548, 0.83908, 0.94908, 0.83908, 0.94908, 0.83908, 0.94908, 0.71805, 0.74012, 0.71805, 0.74012, 0.71805, 0.74012, 0.71805, 0.74012, 0.87289, 0.79538, 0.88506, 0.92726, 0.73133, 0.88323, 0.73133, 0.88323, 0.73133, 0.88323, 0.73133, 0.88323, 0.73133, 0.88323, 0.81921, 0.86411, 0.81921, 0.86411, 0.81921, 0.86411,
-    1, 1, 0.87356, 0.86331, 0.91075, 0.8777, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.76467, 0.90167, 0.59526, 0.91916, 1, 1, 0.86304, 0.69225, 0.88401, 1, 1, 0.70424, 0.77312, 0.91926, 0.88175, 0.70823, 0.94903, 0.90872, 0.86331, 1, 1, 0.90872, 0.86331, 0.86906, 0.88116, 0.86331, 0.85938, 0.86331, 0.85938, 0.86331, 0.85938, 0.86331, 0.87402, 0.86549, 0.77958, 0.90464, 1, 1, 0.77958, 0.90464, 0.69766, 0.70852, 0.69766, 0.70852, 0.69766, 0.70852, 0.69766, 0.70852, 1, 1, 0.81055, 0.75841, 0.81055, 1.06452, 0.90399, 0.86331, 0.90399, 0.86331, 0.90399, 0.86331, 0.90399, 0.86331, 0.90399, 0.86331, 0.90399, 0.86331, 0.96068, 0.95794, 0.77892, 0.84548, 0.77892, 0.78257, 0.79492, 0.78257, 0.79492, 0.78257, 0.79492, 0.9297, 0.56892, 0.83908, 0.94908, 0.77539, 0.85887, 0.87068, 0.89049, 1, 1, 0.81055, 1.04106, 1.20528, 1.20528, 1, 1.15543, 0.70088, 0.98387, 0.94721, 1.33431, 1.45894, 0.95161, 1.48387, 0.83908, 0.80352, 0.57118, 0.6965, 0.56347,
-    0.79179, 0.55853, 0.80346, 1.02988, 0.83908, 0.7762, 0.67174, 0.86036, 0.73133, 0.78257, 0.87356, 0.86441, 0.95958, 0.75727, 0.89019, 1.04924, 0.90872, 0.74889, 0.85938, 0.87891, 0.79795, 0.7957, 0.81055, 0.77892, 0.97447, 0.82577, 0.97466, 0.87179, 0.95958, 0.77892, 0.94252, 0.95612, 0.8753, 1.02988, 0.92733, 0.94252, 0.87411, 0.84021, 0.8728, 0.95612, 0.74081, 0.8753, 1.02189, 1.02988, 0.84814, 0.87445, 0.91822, 0.84723, 0.85668, 0.86331, 0.81344, 0.87581, 0.76422, 0.82046, 0.96057, 0.92733, 0.99375, 0.78022, 0.95452, 0.86015, 1.02988, 0.92733, 0.86331, 0.92733, 0.86015, 0.73133, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90631, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.88323, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.85174, 1, 1, 1, 1, 1, 1, 0.96068, 0.95794, 0.96068, 0.95794, 0.96068, 0.95794, 0.77892, 0.84548, 1, 1, 0.89552,
-    0.90527, 1, 0.90363, 0.92794, 0.92794, 0.92794, 0.89807, 0.87012, 0.87012, 0.87012, 0.89552, 0.89552, 1.42259, 0.71094, 1.06152, 1, 1, 1.03372, 1.03372, 0.97171, 1.4956, 2.2807, 0.92972, 0.83406, 0.91133, 0.83326, 0.91133, 1, 1, 1, 0.72021, 1, 1.23108, 0.83489, 0.88525, 0.88525, 0.81499, 0.90616, 1.81055, 0.90527, 1.81055, 1.3107, 1.53711, 0.94434, 1.08696, 1, 0.95018, 0.77192, 0.85284, 0.90747, 1.17534, 0.69825, 0.9716, 1.37077, 0.90747, 0.90747, 0.85356, 0.90747, 0.90747, 1.44947, 0.85284, 0.8941, 0.8941, 0.70572, 0.8, 0.70572, 0.70572, 0.70572, 0.70572, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.99862, 0.99862, 1, 1, 1, 1, 1, 1.08004, 0.91027, 1, 1, 1, 0.99862, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90727, 0.90727, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.3877, 1, 1, 1, 0.97801, 0.92482, 0.89552, 0.91133, 0.81988, 0.97566,
+    0.98152, 0.93548, 0.93548, 1.2798, 0.85284, 0.92794, 1, 0.96134, 1.56239,
+    0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133,
+    0.91133, 0.91133, 0.82845, 0.82845, 0.85284, 0.85284, 0.85284, 0.75859,
+    0.92138, 0.83908, 0.7762, 0.71805, 0.87289, 0.73133, 0.7514, 0.81921,
+    0.87356, 0.95958, 0.59526, 0.75727, 0.69225, 1.04924, 0.90872, 0.85938,
+    0.79795, 0.87068, 0.77958, 0.69766, 0.81055, 0.90399, 0.88653, 0.96068,
+    0.82577, 0.77892, 0.78257, 0.97507, 1.529, 0.97507, 0.85284, 0.89552,
+    0.90176, 0.94908, 0.86411, 0.74012, 0.86411, 0.88323, 0.95015, 0.86411,
+    0.86331, 0.88401, 0.91916, 0.86304, 0.88401, 0.9039, 0.86331, 0.86331,
+    0.86411, 0.86411, 0.90464, 0.70852, 1.04106, 0.86331, 0.84372, 0.95794,
+    0.82616, 0.84548, 0.79492, 0.88331, 1.69808, 0.88331, 0.85284, 0.97801,
+    0.89552, 0.91133, 0.89552, 0.91133, 1.7801, 0.89552, 1.24487, 1.13254,
+    1.19129, 0.96839, 0.85284, 0.68787, 0.70645, 0.85592, 0.90747, 1.01466,
+    1.0088, 0.90323, 1, 1.07463, 1, 0.91056, 0.75806, 1.19118, 0.96839, 0.78864,
+    0.82845, 0.84133, 0.75859, 0.83908, 0.83908, 0.83908, 0.83908, 0.83908,
+    0.83908, 0.77539, 0.71805, 0.73133, 0.73133, 0.73133, 0.73133, 0.95958,
+    0.95958, 0.95958, 0.95958, 0.88506, 0.90872, 0.85938, 0.85938, 0.85938,
+    0.85938, 0.85938, 0.85284, 0.87068, 0.90399, 0.90399, 0.90399, 0.90399,
+    0.77892, 0.79795, 0.90807, 0.94908, 0.94908, 0.94908, 0.94908, 0.94908,
+    0.94908, 0.85887, 0.74012, 0.88323, 0.88323, 0.88323, 0.88323, 0.88401,
+    0.88401, 0.88401, 0.88401, 0.8785, 0.86331, 0.86331, 0.86331, 0.86331,
+    0.86331, 0.86331, 0.90747, 0.89049, 0.86331, 0.86331, 0.86331, 0.86331,
+    0.84548, 0.86411, 0.84548, 0.83908, 0.94908, 0.83908, 0.94908, 0.83908,
+    0.94908, 0.71805, 0.74012, 0.71805, 0.74012, 0.71805, 0.74012, 0.71805,
+    0.74012, 0.87289, 0.79538, 0.88506, 0.92726, 0.73133, 0.88323, 0.73133,
+    0.88323, 0.73133, 0.88323, 0.73133, 0.88323, 0.73133, 0.88323, 0.81921,
+    0.86411, 0.81921, 0.86411, 0.81921, 0.86411, 1, 1, 0.87356, 0.86331,
+    0.91075, 0.8777, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401,
+    0.95958, 0.88401, 0.95958, 0.88401, 0.76467, 0.90167, 0.59526, 0.91916, 1,
+    1, 0.86304, 0.69225, 0.88401, 1, 1, 0.70424, 0.77312, 0.91926, 0.88175,
+    0.70823, 0.94903, 0.90872, 0.86331, 1, 1, 0.90872, 0.86331, 0.86906,
+    0.88116, 0.86331, 0.85938, 0.86331, 0.85938, 0.86331, 0.85938, 0.86331,
+    0.87402, 0.86549, 0.77958, 0.90464, 1, 1, 0.77958, 0.90464, 0.69766,
+    0.70852, 0.69766, 0.70852, 0.69766, 0.70852, 0.69766, 0.70852, 1, 1,
+    0.81055, 0.75841, 0.81055, 1.06452, 0.90399, 0.86331, 0.90399, 0.86331,
+    0.90399, 0.86331, 0.90399, 0.86331, 0.90399, 0.86331, 0.90399, 0.86331,
+    0.96068, 0.95794, 0.77892, 0.84548, 0.77892, 0.78257, 0.79492, 0.78257,
+    0.79492, 0.78257, 0.79492, 0.9297, 0.56892, 0.83908, 0.94908, 0.77539,
+    0.85887, 0.87068, 0.89049, 1, 1, 0.81055, 1.04106, 1.20528, 1.20528, 1,
+    1.15543, 0.70088, 0.98387, 0.94721, 1.33431, 1.45894, 0.95161, 1.48387,
+    0.83908, 0.80352, 0.57118, 0.6965, 0.56347, 0.79179, 0.55853, 0.80346,
+    1.02988, 0.83908, 0.7762, 0.67174, 0.86036, 0.73133, 0.78257, 0.87356,
+    0.86441, 0.95958, 0.75727, 0.89019, 1.04924, 0.90872, 0.74889, 0.85938,
+    0.87891, 0.79795, 0.7957, 0.81055, 0.77892, 0.97447, 0.82577, 0.97466,
+    0.87179, 0.95958, 0.77892, 0.94252, 0.95612, 0.8753, 1.02988, 0.92733,
+    0.94252, 0.87411, 0.84021, 0.8728, 0.95612, 0.74081, 0.8753, 1.02189,
+    1.02988, 0.84814, 0.87445, 0.91822, 0.84723, 0.85668, 0.86331, 0.81344,
+    0.87581, 0.76422, 0.82046, 0.96057, 0.92733, 0.99375, 0.78022, 0.95452,
+    0.86015, 1.02988, 0.92733, 0.86331, 0.92733, 0.86015, 0.73133, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 0.90631, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 0.88323, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.85174, 1, 1, 1, 1, 1,
+    1, 0.96068, 0.95794, 0.96068, 0.95794, 0.96068, 0.95794, 0.77892, 0.84548,
+    1, 1, 0.89552, 0.90527, 1, 0.90363, 0.92794, 0.92794, 0.92794, 0.89807,
+    0.87012, 0.87012, 0.87012, 0.89552, 0.89552, 1.42259, 0.71094, 1.06152, 1,
+    1, 1.03372, 1.03372, 0.97171, 1.4956, 2.2807, 0.92972, 0.83406, 0.91133,
+    0.83326, 0.91133, 1, 1, 1, 0.72021, 1, 1.23108, 0.83489, 0.88525, 0.88525,
+    0.81499, 0.90616, 1.81055, 0.90527, 1.81055, 1.3107, 1.53711, 0.94434,
+    1.08696, 1, 0.95018, 0.77192, 0.85284, 0.90747, 1.17534, 0.69825, 0.9716,
+    1.37077, 0.90747, 0.90747, 0.85356, 0.90747, 0.90747, 1.44947, 0.85284,
+    0.8941, 0.8941, 0.70572, 0.8, 0.70572, 0.70572, 0.70572, 0.70572, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.99862, 0.99862, 1, 1, 1,
+    1, 1, 1.08004, 0.91027, 1, 1, 1, 0.99862, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0.90727, 0.90727, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   cs = { lineHeight: 1.2207, lineGap: 0.2207 },
   hs = [
-    1.3877, 1, 1, 1, 1.17223, 1.1293, 0.89552, 0.91133, 0.80395, 1.02269, 1.15601, 0.91056, 0.91056, 1.2798, 0.85284, 0.89807, 1, 0.90861, 1.39543, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.96309, 0.96309, 0.85284, 0.85284, 0.85284, 0.83319, 0.88071, 0.8675, 0.81552, 0.72346, 0.85193, 0.73206, 0.7522, 0.81105, 0.86275, 0.90685, 0.6377, 0.77892, 0.75593, 1.02638, 0.89249, 0.84118, 0.77452, 0.85374, 0.75186, 0.67789, 0.79776, 0.88844, 0.85066, 0.94309, 0.77818, 0.7306, 0.76659, 1.10369, 1.38313, 1.10369, 1.06139, 0.89552, 0.8739, 0.9245, 0.9245, 0.83203, 0.9245, 0.85865, 1.09842, 0.9245, 0.9245, 1.03297, 1.07692, 0.90918, 1.03297, 0.94959, 0.9245, 0.92274, 0.9245, 0.9245, 1.02933, 0.77832, 1.20562, 0.9245, 0.8916, 0.98986, 0.86621, 0.89453, 0.79004, 0.94152, 1.77256, 0.94152, 0.85284, 0.97801, 0.89552, 0.91133, 0.89552, 0.91133, 1.91729, 0.89552, 1.17889, 1.13254, 1.16359, 0.92098, 0.85284, 0.68787, 0.71353, 0.84737, 0.90747, 1.0088,
-    1.0044, 0.87683, 1, 1.09091, 1, 0.92229, 0.739, 1.15642, 0.92098, 0.76288, 0.80504, 0.80972, 0.75859, 0.8675, 0.8675, 0.8675, 0.8675, 0.8675, 0.8675, 0.76318, 0.72346, 0.73206, 0.73206, 0.73206, 0.73206, 0.90685, 0.90685, 0.90685, 0.90685, 0.86477, 0.89249, 0.84118, 0.84118, 0.84118, 0.84118, 0.84118, 0.85284, 0.84557, 0.88844, 0.88844, 0.88844, 0.88844, 0.7306, 0.77452, 0.86331, 0.9245, 0.9245, 0.9245, 0.9245, 0.9245, 0.9245, 0.84843, 0.83203, 0.85865, 0.85865, 0.85865, 0.85865, 0.82601, 0.82601, 0.82601, 0.82601, 0.94469, 0.9245, 0.92274, 0.92274, 0.92274, 0.92274, 0.92274, 0.90747, 0.86651, 0.9245, 0.9245, 0.9245, 0.9245, 0.89453, 0.9245, 0.89453, 0.8675, 0.9245, 0.8675, 0.9245, 0.8675, 0.9245, 0.72346, 0.83203, 0.72346, 0.83203, 0.72346, 0.83203, 0.72346, 0.83203, 0.85193, 0.8875, 0.86477, 0.99034, 0.73206, 0.85865, 0.73206, 0.85865, 0.73206, 0.85865, 0.73206, 0.85865, 0.73206, 0.85865, 0.81105, 0.9245, 0.81105, 0.9245, 0.81105, 0.9245, 1, 1, 0.86275, 0.9245, 0.90872, 0.93591,
-    0.90685, 0.82601, 0.90685, 0.82601, 0.90685, 0.82601, 0.90685, 1.03297, 0.90685, 0.82601, 0.77896, 1.05611, 0.6377, 1.07692, 1, 1, 0.90918, 0.75593, 1.03297, 1, 1, 0.76032, 0.9375, 0.98156, 0.93407, 0.77261, 1.11429, 0.89249, 0.9245, 1, 1, 0.89249, 0.9245, 0.92534, 0.86698, 0.9245, 0.84118, 0.92274, 0.84118, 0.92274, 0.84118, 0.92274, 0.8667, 0.86291, 0.75186, 1.02933, 1, 1, 0.75186, 1.02933, 0.67789, 0.77832, 0.67789, 0.77832, 0.67789, 0.77832, 0.67789, 0.77832, 1, 1, 0.79776, 0.97655, 0.79776, 1.23023, 0.88844, 0.9245, 0.88844, 0.9245, 0.88844, 0.9245, 0.88844, 0.9245, 0.88844, 0.9245, 0.88844, 0.9245, 0.94309, 0.98986, 0.7306, 0.89453, 0.7306, 0.76659, 0.79004, 0.76659, 0.79004, 0.76659, 0.79004, 1.09231, 0.54873, 0.8675, 0.9245, 0.76318, 0.84843, 0.84557, 0.86651, 1, 1, 0.79776, 1.20562, 1.18622, 1.18622, 1, 1.1437, 0.67009, 0.96334, 0.93695, 1.35191, 1.40909, 0.95161, 1.48387, 0.8675, 0.90861, 0.6192, 0.7363, 0.64824, 0.82411, 0.56321, 0.85696, 1.23516, 0.8675, 0.81552,
-    0.7286, 0.84134, 0.73206, 0.76659, 0.86275, 0.84369, 0.90685, 0.77892, 0.85871, 1.02638, 0.89249, 0.75828, 0.84118, 0.85984, 0.77452, 0.76466, 0.79776, 0.7306, 0.90782, 0.77818, 0.903, 0.87291, 0.90685, 0.7306, 0.99058, 1.03667, 0.94635, 1.23516, 0.9849, 0.99058, 0.92393, 0.8916, 0.942, 1.03667, 0.75026, 0.94635, 1.0297, 1.23516, 0.90918, 0.94048, 0.98217, 0.89746, 0.84153, 0.92274, 0.82507, 0.88832, 0.84438, 0.88178, 1.03525, 0.9849, 1.00225, 0.78086, 0.97248, 0.89404, 1.23516, 0.9849, 0.92274, 0.9849, 0.89404, 0.73206, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.89693, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.85865, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90933, 1, 1, 1, 1, 1, 1, 0.94309, 0.98986, 0.94309, 0.98986, 0.94309, 0.98986, 0.7306, 0.89453, 1, 1, 0.89552, 0.90527, 1, 0.90186, 1.12308, 1.12308, 1.12308, 1.12308, 1.2566,
-    1.2566, 1.2566, 0.89552, 0.89552, 1.42259, 0.68994, 1.03809, 1, 1, 1.0176, 1.0176, 1.11523, 1.4956, 2.01462, 0.97858, 0.82616, 0.91133, 0.83437, 0.91133, 1, 1, 1, 0.70508, 1, 1.23108, 0.79801, 0.84426, 0.84426, 0.774, 0.90572, 1.81055, 0.90749, 1.81055, 1.28809, 1.55469, 0.94434, 1.07806, 1, 0.97094, 0.7589, 0.85284, 0.90747, 1.19658, 0.69825, 0.97622, 1.33512, 0.90747, 0.90747, 0.85284, 0.90747, 0.90747, 1.44947, 0.85284, 0.8941, 0.8941, 0.70572, 0.8, 0.70572, 0.70572, 0.70572, 0.70572, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.99862, 0.99862, 1, 1, 1, 1, 1, 1.0336, 0.91027, 1, 1, 1, 0.99862, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.05859, 1.05859, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.3877, 1, 1, 1, 1.17223, 1.1293, 0.89552, 0.91133, 0.80395, 1.02269,
+    1.15601, 0.91056, 0.91056, 1.2798, 0.85284, 0.89807, 1, 0.90861, 1.39543,
+    0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133,
+    0.91133, 0.91133, 0.96309, 0.96309, 0.85284, 0.85284, 0.85284, 0.83319,
+    0.88071, 0.8675, 0.81552, 0.72346, 0.85193, 0.73206, 0.7522, 0.81105,
+    0.86275, 0.90685, 0.6377, 0.77892, 0.75593, 1.02638, 0.89249, 0.84118,
+    0.77452, 0.85374, 0.75186, 0.67789, 0.79776, 0.88844, 0.85066, 0.94309,
+    0.77818, 0.7306, 0.76659, 1.10369, 1.38313, 1.10369, 1.06139, 0.89552,
+    0.8739, 0.9245, 0.9245, 0.83203, 0.9245, 0.85865, 1.09842, 0.9245, 0.9245,
+    1.03297, 1.07692, 0.90918, 1.03297, 0.94959, 0.9245, 0.92274, 0.9245,
+    0.9245, 1.02933, 0.77832, 1.20562, 0.9245, 0.8916, 0.98986, 0.86621,
+    0.89453, 0.79004, 0.94152, 1.77256, 0.94152, 0.85284, 0.97801, 0.89552,
+    0.91133, 0.89552, 0.91133, 1.91729, 0.89552, 1.17889, 1.13254, 1.16359,
+    0.92098, 0.85284, 0.68787, 0.71353, 0.84737, 0.90747, 1.0088, 1.0044,
+    0.87683, 1, 1.09091, 1, 0.92229, 0.739, 1.15642, 0.92098, 0.76288, 0.80504,
+    0.80972, 0.75859, 0.8675, 0.8675, 0.8675, 0.8675, 0.8675, 0.8675, 0.76318,
+    0.72346, 0.73206, 0.73206, 0.73206, 0.73206, 0.90685, 0.90685, 0.90685,
+    0.90685, 0.86477, 0.89249, 0.84118, 0.84118, 0.84118, 0.84118, 0.84118,
+    0.85284, 0.84557, 0.88844, 0.88844, 0.88844, 0.88844, 0.7306, 0.77452,
+    0.86331, 0.9245, 0.9245, 0.9245, 0.9245, 0.9245, 0.9245, 0.84843, 0.83203,
+    0.85865, 0.85865, 0.85865, 0.85865, 0.82601, 0.82601, 0.82601, 0.82601,
+    0.94469, 0.9245, 0.92274, 0.92274, 0.92274, 0.92274, 0.92274, 0.90747,
+    0.86651, 0.9245, 0.9245, 0.9245, 0.9245, 0.89453, 0.9245, 0.89453, 0.8675,
+    0.9245, 0.8675, 0.9245, 0.8675, 0.9245, 0.72346, 0.83203, 0.72346, 0.83203,
+    0.72346, 0.83203, 0.72346, 0.83203, 0.85193, 0.8875, 0.86477, 0.99034,
+    0.73206, 0.85865, 0.73206, 0.85865, 0.73206, 0.85865, 0.73206, 0.85865,
+    0.73206, 0.85865, 0.81105, 0.9245, 0.81105, 0.9245, 0.81105, 0.9245, 1, 1,
+    0.86275, 0.9245, 0.90872, 0.93591, 0.90685, 0.82601, 0.90685, 0.82601,
+    0.90685, 0.82601, 0.90685, 1.03297, 0.90685, 0.82601, 0.77896, 1.05611,
+    0.6377, 1.07692, 1, 1, 0.90918, 0.75593, 1.03297, 1, 1, 0.76032, 0.9375,
+    0.98156, 0.93407, 0.77261, 1.11429, 0.89249, 0.9245, 1, 1, 0.89249, 0.9245,
+    0.92534, 0.86698, 0.9245, 0.84118, 0.92274, 0.84118, 0.92274, 0.84118,
+    0.92274, 0.8667, 0.86291, 0.75186, 1.02933, 1, 1, 0.75186, 1.02933, 0.67789,
+    0.77832, 0.67789, 0.77832, 0.67789, 0.77832, 0.67789, 0.77832, 1, 1,
+    0.79776, 0.97655, 0.79776, 1.23023, 0.88844, 0.9245, 0.88844, 0.9245,
+    0.88844, 0.9245, 0.88844, 0.9245, 0.88844, 0.9245, 0.88844, 0.9245, 0.94309,
+    0.98986, 0.7306, 0.89453, 0.7306, 0.76659, 0.79004, 0.76659, 0.79004,
+    0.76659, 0.79004, 1.09231, 0.54873, 0.8675, 0.9245, 0.76318, 0.84843,
+    0.84557, 0.86651, 1, 1, 0.79776, 1.20562, 1.18622, 1.18622, 1, 1.1437,
+    0.67009, 0.96334, 0.93695, 1.35191, 1.40909, 0.95161, 1.48387, 0.8675,
+    0.90861, 0.6192, 0.7363, 0.64824, 0.82411, 0.56321, 0.85696, 1.23516,
+    0.8675, 0.81552, 0.7286, 0.84134, 0.73206, 0.76659, 0.86275, 0.84369,
+    0.90685, 0.77892, 0.85871, 1.02638, 0.89249, 0.75828, 0.84118, 0.85984,
+    0.77452, 0.76466, 0.79776, 0.7306, 0.90782, 0.77818, 0.903, 0.87291,
+    0.90685, 0.7306, 0.99058, 1.03667, 0.94635, 1.23516, 0.9849, 0.99058,
+    0.92393, 0.8916, 0.942, 1.03667, 0.75026, 0.94635, 1.0297, 1.23516, 0.90918,
+    0.94048, 0.98217, 0.89746, 0.84153, 0.92274, 0.82507, 0.88832, 0.84438,
+    0.88178, 1.03525, 0.9849, 1.00225, 0.78086, 0.97248, 0.89404, 1.23516,
+    0.9849, 0.92274, 0.9849, 0.89404, 0.73206, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0.89693, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.85865, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90933, 1, 1, 1, 1, 1, 1, 0.94309, 0.98986,
+    0.94309, 0.98986, 0.94309, 0.98986, 0.7306, 0.89453, 1, 1, 0.89552, 0.90527,
+    1, 0.90186, 1.12308, 1.12308, 1.12308, 1.12308, 1.2566, 1.2566, 1.2566,
+    0.89552, 0.89552, 1.42259, 0.68994, 1.03809, 1, 1, 1.0176, 1.0176, 1.11523,
+    1.4956, 2.01462, 0.97858, 0.82616, 0.91133, 0.83437, 0.91133, 1, 1, 1,
+    0.70508, 1, 1.23108, 0.79801, 0.84426, 0.84426, 0.774, 0.90572, 1.81055,
+    0.90749, 1.81055, 1.28809, 1.55469, 0.94434, 1.07806, 1, 0.97094, 0.7589,
+    0.85284, 0.90747, 1.19658, 0.69825, 0.97622, 1.33512, 0.90747, 0.90747,
+    0.85284, 0.90747, 0.90747, 1.44947, 0.85284, 0.8941, 0.8941, 0.70572, 0.8,
+    0.70572, 0.70572, 0.70572, 0.70572, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 0.99862, 0.99862, 1, 1, 1, 1, 1, 1.0336, 0.91027, 1, 1, 1,
+    0.99862, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.05859, 1.05859, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   us = { lineHeight: 1.2207, lineGap: 0.2207 },
   ms = [
-    1.3877, 1, 1, 1, 1.17223, 1.1293, 0.89552, 0.91133, 0.80395, 1.02269, 1.15601, 0.91056, 0.91056, 1.2798, 0.85284, 0.89807, 1, 0.90861, 1.39016, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.96309, 0.96309, 0.85284, 0.85284, 0.85284, 0.83319, 0.88071, 0.8675, 0.81552, 0.73834, 0.85193, 0.73206, 0.7522, 0.81105, 0.86275, 0.90685, 0.6377, 0.77892, 0.75593, 1.02638, 0.89385, 0.85122, 0.77452, 0.86503, 0.75186, 0.68887, 0.79776, 0.88844, 0.85066, 0.94258, 0.77818, 0.7306, 0.76659, 1.10369, 1.39016, 1.10369, 1.06139, 0.89552, 0.8739, 0.86128, 0.94469, 0.8457, 0.94469, 0.89464, 1.09842, 0.84636, 0.94469, 1.03297, 1.07692, 0.90918, 1.03297, 0.95897, 0.94469, 0.9482, 0.94469, 0.94469, 1.04692, 0.78223, 1.20562, 0.94469, 0.90332, 0.98986, 0.86621, 0.90527, 0.79004, 0.94152, 1.77256, 0.94152, 0.85284, 0.97801, 0.89552, 0.91133, 0.89552, 0.91133, 1.91729, 0.89552, 1.17889, 1.13254, 1.08707, 0.92098, 0.85284, 0.68787, 0.71353, 0.84737, 0.90747,
-    1.0088, 1.0044, 0.87683, 1, 1.09091, 1, 0.92229, 0.739, 1.15642, 0.92098, 0.76288, 0.80504, 0.80972, 0.75859, 0.8675, 0.8675, 0.8675, 0.8675, 0.8675, 0.8675, 0.76318, 0.73834, 0.73206, 0.73206, 0.73206, 0.73206, 0.90685, 0.90685, 0.90685, 0.90685, 0.86477, 0.89385, 0.85122, 0.85122, 0.85122, 0.85122, 0.85122, 0.85284, 0.85311, 0.88844, 0.88844, 0.88844, 0.88844, 0.7306, 0.77452, 0.86331, 0.86128, 0.86128, 0.86128, 0.86128, 0.86128, 0.86128, 0.8693, 0.8457, 0.89464, 0.89464, 0.89464, 0.89464, 0.82601, 0.82601, 0.82601, 0.82601, 0.94469, 0.94469, 0.9482, 0.9482, 0.9482, 0.9482, 0.9482, 0.90747, 0.86651, 0.94469, 0.94469, 0.94469, 0.94469, 0.90527, 0.94469, 0.90527, 0.8675, 0.86128, 0.8675, 0.86128, 0.8675, 0.86128, 0.73834, 0.8457, 0.73834, 0.8457, 0.73834, 0.8457, 0.73834, 0.8457, 0.85193, 0.92454, 0.86477, 0.9921, 0.73206, 0.89464, 0.73206, 0.89464, 0.73206, 0.89464, 0.73206, 0.89464, 0.73206, 0.89464, 0.81105, 0.84636, 0.81105, 0.84636, 0.81105, 0.84636, 1, 1, 0.86275, 0.94469,
-    0.90872, 0.95786, 0.90685, 0.82601, 0.90685, 0.82601, 0.90685, 0.82601, 0.90685, 1.03297, 0.90685, 0.82601, 0.77741, 1.05611, 0.6377, 1.07692, 1, 1, 0.90918, 0.75593, 1.03297, 1, 1, 0.76032, 0.90452, 0.98156, 1.11842, 0.77261, 1.11429, 0.89385, 0.94469, 1, 1, 0.89385, 0.94469, 0.95877, 0.86901, 0.94469, 0.85122, 0.9482, 0.85122, 0.9482, 0.85122, 0.9482, 0.8667, 0.90016, 0.75186, 1.04692, 1, 1, 0.75186, 1.04692, 0.68887, 0.78223, 0.68887, 0.78223, 0.68887, 0.78223, 0.68887, 0.78223, 1, 1, 0.79776, 0.92188, 0.79776, 1.23023, 0.88844, 0.94469, 0.88844, 0.94469, 0.88844, 0.94469, 0.88844, 0.94469, 0.88844, 0.94469, 0.88844, 0.94469, 0.94258, 0.98986, 0.7306, 0.90527, 0.7306, 0.76659, 0.79004, 0.76659, 0.79004, 0.76659, 0.79004, 1.09231, 0.54873, 0.8675, 0.86128, 0.76318, 0.8693, 0.85311, 0.86651, 1, 1, 0.79776, 1.20562, 1.18622, 1.18622, 1, 1.1437, 0.67742, 0.96334, 0.93695, 1.35191, 1.40909, 0.95161, 1.48387, 0.86686, 0.90861, 0.62267, 0.74359, 0.65649, 0.85498, 0.56963, 0.88254,
-    1.23516, 0.8675, 0.81552, 0.75443, 0.84503, 0.73206, 0.76659, 0.86275, 0.85122, 0.90685, 0.77892, 0.85746, 1.02638, 0.89385, 0.75657, 0.85122, 0.86275, 0.77452, 0.74171, 0.79776, 0.7306, 0.95165, 0.77818, 0.89772, 0.88831, 0.90685, 0.7306, 0.98142, 1.02191, 0.96576, 1.23516, 0.99018, 0.98142, 0.9236, 0.89258, 0.94035, 1.02191, 0.78848, 0.96576, 0.9561, 1.23516, 0.90918, 0.92578, 0.95424, 0.89746, 0.83969, 0.9482, 0.80113, 0.89442, 0.85208, 0.86155, 0.98022, 0.99018, 1.00452, 0.81209, 0.99247, 0.89181, 1.23516, 0.99018, 0.9482, 0.99018, 0.89181, 0.73206, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.88844, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.89464, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.96766, 1, 1, 1, 1, 1, 1, 0.94258, 0.98986, 0.94258, 0.98986, 0.94258, 0.98986, 0.7306, 0.90527, 1, 1, 0.89552, 0.90527, 1, 0.90186, 1.12308,
-    1.12308, 1.12308, 1.12308, 1.2566, 1.2566, 1.2566, 0.89552, 0.89552, 1.42259, 0.69043, 1.03809, 1, 1, 1.0176, 1.0176, 1.11523, 1.4956, 2.01462, 0.99331, 0.82616, 0.91133, 0.84286, 0.91133, 1, 1, 1, 0.70508, 1, 1.23108, 0.79801, 0.84426, 0.84426, 0.774, 0.90527, 1.81055, 0.90527, 1.81055, 1.28809, 1.55469, 0.94434, 1.07806, 1, 0.97094, 0.7589, 0.85284, 0.90747, 1.19658, 0.69825, 0.97622, 1.33512, 0.90747, 0.90747, 0.85356, 0.90747, 0.90747, 1.44947, 0.85284, 0.8941, 0.8941, 0.70572, 0.8, 0.70572, 0.70572, 0.70572, 0.70572, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.99862, 0.99862, 1, 1, 1, 1, 1, 1.0336, 0.91027, 1, 1, 1, 0.99862, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.05859, 1.05859, 1, 1, 1, 1.07185, 0.99413, 0.96334, 1.08065, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.3877, 1, 1, 1, 1.17223, 1.1293, 0.89552, 0.91133, 0.80395, 1.02269,
+    1.15601, 0.91056, 0.91056, 1.2798, 0.85284, 0.89807, 1, 0.90861, 1.39016,
+    0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133,
+    0.91133, 0.91133, 0.96309, 0.96309, 0.85284, 0.85284, 0.85284, 0.83319,
+    0.88071, 0.8675, 0.81552, 0.73834, 0.85193, 0.73206, 0.7522, 0.81105,
+    0.86275, 0.90685, 0.6377, 0.77892, 0.75593, 1.02638, 0.89385, 0.85122,
+    0.77452, 0.86503, 0.75186, 0.68887, 0.79776, 0.88844, 0.85066, 0.94258,
+    0.77818, 0.7306, 0.76659, 1.10369, 1.39016, 1.10369, 1.06139, 0.89552,
+    0.8739, 0.86128, 0.94469, 0.8457, 0.94469, 0.89464, 1.09842, 0.84636,
+    0.94469, 1.03297, 1.07692, 0.90918, 1.03297, 0.95897, 0.94469, 0.9482,
+    0.94469, 0.94469, 1.04692, 0.78223, 1.20562, 0.94469, 0.90332, 0.98986,
+    0.86621, 0.90527, 0.79004, 0.94152, 1.77256, 0.94152, 0.85284, 0.97801,
+    0.89552, 0.91133, 0.89552, 0.91133, 1.91729, 0.89552, 1.17889, 1.13254,
+    1.08707, 0.92098, 0.85284, 0.68787, 0.71353, 0.84737, 0.90747, 1.0088,
+    1.0044, 0.87683, 1, 1.09091, 1, 0.92229, 0.739, 1.15642, 0.92098, 0.76288,
+    0.80504, 0.80972, 0.75859, 0.8675, 0.8675, 0.8675, 0.8675, 0.8675, 0.8675,
+    0.76318, 0.73834, 0.73206, 0.73206, 0.73206, 0.73206, 0.90685, 0.90685,
+    0.90685, 0.90685, 0.86477, 0.89385, 0.85122, 0.85122, 0.85122, 0.85122,
+    0.85122, 0.85284, 0.85311, 0.88844, 0.88844, 0.88844, 0.88844, 0.7306,
+    0.77452, 0.86331, 0.86128, 0.86128, 0.86128, 0.86128, 0.86128, 0.86128,
+    0.8693, 0.8457, 0.89464, 0.89464, 0.89464, 0.89464, 0.82601, 0.82601,
+    0.82601, 0.82601, 0.94469, 0.94469, 0.9482, 0.9482, 0.9482, 0.9482, 0.9482,
+    0.90747, 0.86651, 0.94469, 0.94469, 0.94469, 0.94469, 0.90527, 0.94469,
+    0.90527, 0.8675, 0.86128, 0.8675, 0.86128, 0.8675, 0.86128, 0.73834, 0.8457,
+    0.73834, 0.8457, 0.73834, 0.8457, 0.73834, 0.8457, 0.85193, 0.92454,
+    0.86477, 0.9921, 0.73206, 0.89464, 0.73206, 0.89464, 0.73206, 0.89464,
+    0.73206, 0.89464, 0.73206, 0.89464, 0.81105, 0.84636, 0.81105, 0.84636,
+    0.81105, 0.84636, 1, 1, 0.86275, 0.94469, 0.90872, 0.95786, 0.90685,
+    0.82601, 0.90685, 0.82601, 0.90685, 0.82601, 0.90685, 1.03297, 0.90685,
+    0.82601, 0.77741, 1.05611, 0.6377, 1.07692, 1, 1, 0.90918, 0.75593, 1.03297,
+    1, 1, 0.76032, 0.90452, 0.98156, 1.11842, 0.77261, 1.11429, 0.89385,
+    0.94469, 1, 1, 0.89385, 0.94469, 0.95877, 0.86901, 0.94469, 0.85122, 0.9482,
+    0.85122, 0.9482, 0.85122, 0.9482, 0.8667, 0.90016, 0.75186, 1.04692, 1, 1,
+    0.75186, 1.04692, 0.68887, 0.78223, 0.68887, 0.78223, 0.68887, 0.78223,
+    0.68887, 0.78223, 1, 1, 0.79776, 0.92188, 0.79776, 1.23023, 0.88844,
+    0.94469, 0.88844, 0.94469, 0.88844, 0.94469, 0.88844, 0.94469, 0.88844,
+    0.94469, 0.88844, 0.94469, 0.94258, 0.98986, 0.7306, 0.90527, 0.7306,
+    0.76659, 0.79004, 0.76659, 0.79004, 0.76659, 0.79004, 1.09231, 0.54873,
+    0.8675, 0.86128, 0.76318, 0.8693, 0.85311, 0.86651, 1, 1, 0.79776, 1.20562,
+    1.18622, 1.18622, 1, 1.1437, 0.67742, 0.96334, 0.93695, 1.35191, 1.40909,
+    0.95161, 1.48387, 0.86686, 0.90861, 0.62267, 0.74359, 0.65649, 0.85498,
+    0.56963, 0.88254, 1.23516, 0.8675, 0.81552, 0.75443, 0.84503, 0.73206,
+    0.76659, 0.86275, 0.85122, 0.90685, 0.77892, 0.85746, 1.02638, 0.89385,
+    0.75657, 0.85122, 0.86275, 0.77452, 0.74171, 0.79776, 0.7306, 0.95165,
+    0.77818, 0.89772, 0.88831, 0.90685, 0.7306, 0.98142, 1.02191, 0.96576,
+    1.23516, 0.99018, 0.98142, 0.9236, 0.89258, 0.94035, 1.02191, 0.78848,
+    0.96576, 0.9561, 1.23516, 0.90918, 0.92578, 0.95424, 0.89746, 0.83969,
+    0.9482, 0.80113, 0.89442, 0.85208, 0.86155, 0.98022, 0.99018, 1.00452,
+    0.81209, 0.99247, 0.89181, 1.23516, 0.99018, 0.9482, 0.99018, 0.89181,
+    0.73206, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.88844, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 0.89464, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0.96766, 1, 1, 1, 1, 1, 1, 0.94258, 0.98986, 0.94258, 0.98986, 0.94258,
+    0.98986, 0.7306, 0.90527, 1, 1, 0.89552, 0.90527, 1, 0.90186, 1.12308,
+    1.12308, 1.12308, 1.12308, 1.2566, 1.2566, 1.2566, 0.89552, 0.89552,
+    1.42259, 0.69043, 1.03809, 1, 1, 1.0176, 1.0176, 1.11523, 1.4956, 2.01462,
+    0.99331, 0.82616, 0.91133, 0.84286, 0.91133, 1, 1, 1, 0.70508, 1, 1.23108,
+    0.79801, 0.84426, 0.84426, 0.774, 0.90527, 1.81055, 0.90527, 1.81055,
+    1.28809, 1.55469, 0.94434, 1.07806, 1, 0.97094, 0.7589, 0.85284, 0.90747,
+    1.19658, 0.69825, 0.97622, 1.33512, 0.90747, 0.90747, 0.85356, 0.90747,
+    0.90747, 1.44947, 0.85284, 0.8941, 0.8941, 0.70572, 0.8, 0.70572, 0.70572,
+    0.70572, 0.70572, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0.99862, 0.99862, 1, 1, 1, 1, 1, 1.0336, 0.91027, 1, 1, 1, 0.99862, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1.05859, 1.05859, 1, 1, 1, 1.07185, 0.99413,
+    0.96334, 1.08065, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   ps = { lineHeight: 1.2207, lineGap: 0.2207 },
   ds = [
-    0.76116, 1, 1, 1.0006, 0.99998, 0.99974, 0.99973, 0.99973, 0.99982, 0.99977, 1.00087, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006, 1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99998, 1, 1.00003, 1.00003, 1.00003, 1.00026, 0.9999, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022, 0.99977, 1.0006, 0.99973, 0.99977, 1.00026, 0.99999, 0.99977, 1.00022, 1.00001, 1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016, 1.00001, 1.00001, 1.00026, 0.99998, 1.0006, 0.99998, 1.00003, 0.99973, 0.99998, 0.99973, 1.00026, 0.99973, 1.00026, 0.99973, 0.99998, 1.00026, 1.00026, 1.0006, 1.0006, 0.99973, 1.0006, 0.99982, 1.00026, 1.00026, 1.00026, 1.00026, 0.99959, 0.99973, 0.99998, 1.00026, 0.99973, 1.00022, 0.99973, 0.99973, 1, 0.99959, 1.00077, 0.99959, 1.00003, 0.99998, 0.99973, 0.99973, 0.99973, 0.99973, 1.00077, 0.99973, 0.99998, 1.00025, 0.99968, 0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1,
-    1, 0.99998, 1, 0.99973, 1.0006, 0.99998, 1, 0.99936, 0.99973, 1.00002, 1.00002, 1.00002, 1.00026, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 1, 0.99977, 1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006, 1.0006, 1.0006, 0.99977, 0.99977, 1.00022, 1.00022, 1.00022, 1.00022, 1.00022, 1.00003, 1.00022, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00001, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99982, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.06409, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 0.99973, 1.00026, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 1.03374, 0.99977, 1.00026, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 0.99977,
-    1.00026, 0.99977, 1.00026, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.00042, 0.99973, 0.99973, 1.0006, 0.99977, 0.99973, 0.99973, 1.00026, 1.0006, 1.00026, 1.0006, 1.00026, 1.03828, 1.00026, 0.99999, 1.00026, 1.0006, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.9993, 0.9998, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1, 1.00016, 0.99977, 0.99959, 0.99977, 0.99959, 0.99977, 0.99959, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00026, 0.99998, 1.00026, 0.8121, 1.00026, 0.99998, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 1.00016, 1.00022, 1.00001, 0.99973, 1.00001, 1.00026, 1, 1.00026, 1, 1.00026, 1, 1.0006, 0.99973, 0.99977, 0.99973, 1, 0.99982, 1.00022, 1.00026, 1.00001, 0.99973, 1.00026, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 1.00034, 0.99977, 1, 0.99997,
-    1.00026, 1.00078, 1.00036, 0.99973, 1.00013, 1.0006, 0.99977, 0.99977, 0.99988, 0.85148, 1.00001, 1.00026, 0.99977, 1.00022, 1.0006, 0.99977, 1.00001, 0.99999, 0.99977, 1.00069, 1.00022, 0.99977, 1.00001, 0.99984, 1.00026, 1.00001, 1.00024, 1.00001, 0.9999, 1, 1.0006, 1.00001, 1.00041, 0.99962, 1.00026, 1.0006, 0.99995, 1.00041, 0.99942, 0.99973, 0.99927, 1.00082, 0.99902, 1.00026, 1.00087, 1.0006, 1.00069, 0.99973, 0.99867, 0.99973, 0.9993, 1.00026, 1.00049, 1.00056, 1, 0.99988, 0.99935, 0.99995, 0.99954, 1.00055, 0.99945, 1.00032, 1.0006, 0.99995, 1.00026, 0.99995, 1.00032, 1.00001, 1.00008, 0.99971, 1.00019, 0.9994, 1.00001, 1.0006, 1.00044, 0.99973, 1.00023, 1.00047, 1, 0.99942, 0.99561, 0.99989, 1.00035, 0.99977, 1.00035, 0.99977, 1.00019, 0.99944, 1.00001, 1.00021, 0.99926, 1.00035, 1.00035, 0.99942, 1.00048, 0.99999, 0.99977, 1.00022, 1.00035, 1.00001, 0.99977, 1.00026, 0.99989, 1.00057, 1.00001, 0.99936, 1.00052, 1.00012, 0.99996, 1.00043, 1, 1.00035, 0.9994, 0.99976,
-    1.00035, 0.99973, 1.00052, 1.00041, 1.00119, 1.00037, 0.99973, 1.00002, 0.99986, 1.00041, 1.00041, 0.99902, 0.9996, 1.00034, 0.99999, 1.00026, 0.99999, 1.00026, 0.99973, 1.00052, 0.99973, 1, 0.99973, 1.00041, 1.00075, 0.9994, 1.0003, 0.99999, 1, 1.00041, 0.99955, 1, 0.99915, 0.99973, 0.99973, 1.00026, 1.00119, 0.99955, 0.99973, 1.0006, 0.99911, 1.0006, 1.00026, 0.99972, 1.00026, 0.99902, 1.00041, 0.99973, 0.99999, 1, 1, 1.00038, 1.0005, 1.00016, 1.00022, 1.00016, 1.00022, 1.00016, 1.00022, 1.00001, 0.99973, 1, 1, 0.99973, 1, 1, 0.99955, 1.0006, 1.0006, 1.0006, 1.0006, 1, 1, 1, 0.99973, 0.99973, 0.99972, 1, 1, 1.00106, 0.99999, 0.99998, 0.99998, 0.99999, 0.99998, 1.66475, 1, 0.99973, 0.99973, 1.00023, 0.99973, 0.99971, 1.00047, 1.00023, 1, 0.99991, 0.99984, 1.00002, 1.00002, 1.00002, 1.00002, 1, 1, 1, 1, 1, 1, 1, 0.99972, 1, 1.20985, 1.39713, 1.00003, 1.00031, 1.00015, 1, 0.99561, 1.00027, 1.00031, 1.00031, 0.99915, 1.00031, 1.00031, 0.99999, 1.00003, 0.99999, 0.99999, 1.41144,
-    1.6, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.40579, 1.40579, 1.36625, 0.99999, 1, 0.99861, 0.99861, 1, 1.00026, 1.00026, 1.00026, 1.00026, 0.99972, 0.99999, 0.99999, 0.99999, 0.99999, 1.40483, 1, 0.99977, 1.00054, 1, 1, 0.99953, 0.99962, 1.00042, 0.9995, 1, 1, 1, 1, 1, 1, 1, 1, 0.99998, 0.99998, 0.99998, 0.99998, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0.76116, 1, 1, 1.0006, 0.99998, 0.99974, 0.99973, 0.99973, 0.99982, 0.99977,
+    1.00087, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006,
+    1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973,
+    0.99973, 0.99973, 0.99973, 0.99998, 1, 1.00003, 1.00003, 1.00003, 1.00026,
+    0.9999, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022,
+    0.99977, 1.0006, 0.99973, 0.99977, 1.00026, 0.99999, 0.99977, 1.00022,
+    1.00001, 1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016,
+    1.00001, 1.00001, 1.00026, 0.99998, 1.0006, 0.99998, 1.00003, 0.99973,
+    0.99998, 0.99973, 1.00026, 0.99973, 1.00026, 0.99973, 0.99998, 1.00026,
+    1.00026, 1.0006, 1.0006, 0.99973, 1.0006, 0.99982, 1.00026, 1.00026,
+    1.00026, 1.00026, 0.99959, 0.99973, 0.99998, 1.00026, 0.99973, 1.00022,
+    0.99973, 0.99973, 1, 0.99959, 1.00077, 0.99959, 1.00003, 0.99998, 0.99973,
+    0.99973, 0.99973, 0.99973, 1.00077, 0.99973, 0.99998, 1.00025, 0.99968,
+    0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1, 1, 0.99998, 1,
+    0.99973, 1.0006, 0.99998, 1, 0.99936, 0.99973, 1.00002, 1.00002, 1.00002,
+    1.00026, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 1, 0.99977,
+    1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006, 1.0006, 1.0006, 0.99977,
+    0.99977, 1.00022, 1.00022, 1.00022, 1.00022, 1.00022, 1.00003, 1.00022,
+    0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00001, 1.00026, 0.99973,
+    0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99982, 0.99973, 0.99973,
+    0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 1.00026, 1.00026,
+    1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.06409, 1.00026, 1.00026,
+    1.00026, 1.00026, 1.00026, 0.99973, 1.00026, 0.99973, 0.99977, 0.99973,
+    0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973,
+    0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 1.03374, 0.99977, 1.00026,
+    1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973,
+    1.00001, 0.99973, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026,
+    1.00022, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 1.0006, 1.0006,
+    1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.00042,
+    0.99973, 0.99973, 1.0006, 0.99977, 0.99973, 0.99973, 1.00026, 1.0006,
+    1.00026, 1.0006, 1.00026, 1.03828, 1.00026, 0.99999, 1.00026, 1.0006,
+    0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.9993, 0.9998,
+    1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1, 1.00016,
+    0.99977, 0.99959, 0.99977, 0.99959, 0.99977, 0.99959, 1.00001, 0.99973,
+    1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00026, 0.99998,
+    1.00026, 0.8121, 1.00026, 0.99998, 0.99977, 1.00026, 0.99977, 1.00026,
+    0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026,
+    1.00016, 1.00022, 1.00001, 0.99973, 1.00001, 1.00026, 1, 1.00026, 1,
+    1.00026, 1, 1.0006, 0.99973, 0.99977, 0.99973, 1, 0.99982, 1.00022, 1.00026,
+    1.00001, 0.99973, 1.00026, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998,
+    0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 1.00034, 0.99977, 1,
+    0.99997, 1.00026, 1.00078, 1.00036, 0.99973, 1.00013, 1.0006, 0.99977,
+    0.99977, 0.99988, 0.85148, 1.00001, 1.00026, 0.99977, 1.00022, 1.0006,
+    0.99977, 1.00001, 0.99999, 0.99977, 1.00069, 1.00022, 0.99977, 1.00001,
+    0.99984, 1.00026, 1.00001, 1.00024, 1.00001, 0.9999, 1, 1.0006, 1.00001,
+    1.00041, 0.99962, 1.00026, 1.0006, 0.99995, 1.00041, 0.99942, 0.99973,
+    0.99927, 1.00082, 0.99902, 1.00026, 1.00087, 1.0006, 1.00069, 0.99973,
+    0.99867, 0.99973, 0.9993, 1.00026, 1.00049, 1.00056, 1, 0.99988, 0.99935,
+    0.99995, 0.99954, 1.00055, 0.99945, 1.00032, 1.0006, 0.99995, 1.00026,
+    0.99995, 1.00032, 1.00001, 1.00008, 0.99971, 1.00019, 0.9994, 1.00001,
+    1.0006, 1.00044, 0.99973, 1.00023, 1.00047, 1, 0.99942, 0.99561, 0.99989,
+    1.00035, 0.99977, 1.00035, 0.99977, 1.00019, 0.99944, 1.00001, 1.00021,
+    0.99926, 1.00035, 1.00035, 0.99942, 1.00048, 0.99999, 0.99977, 1.00022,
+    1.00035, 1.00001, 0.99977, 1.00026, 0.99989, 1.00057, 1.00001, 0.99936,
+    1.00052, 1.00012, 0.99996, 1.00043, 1, 1.00035, 0.9994, 0.99976, 1.00035,
+    0.99973, 1.00052, 1.00041, 1.00119, 1.00037, 0.99973, 1.00002, 0.99986,
+    1.00041, 1.00041, 0.99902, 0.9996, 1.00034, 0.99999, 1.00026, 0.99999,
+    1.00026, 0.99973, 1.00052, 0.99973, 1, 0.99973, 1.00041, 1.00075, 0.9994,
+    1.0003, 0.99999, 1, 1.00041, 0.99955, 1, 0.99915, 0.99973, 0.99973, 1.00026,
+    1.00119, 0.99955, 0.99973, 1.0006, 0.99911, 1.0006, 1.00026, 0.99972,
+    1.00026, 0.99902, 1.00041, 0.99973, 0.99999, 1, 1, 1.00038, 1.0005, 1.00016,
+    1.00022, 1.00016, 1.00022, 1.00016, 1.00022, 1.00001, 0.99973, 1, 1,
+    0.99973, 1, 1, 0.99955, 1.0006, 1.0006, 1.0006, 1.0006, 1, 1, 1, 0.99973,
+    0.99973, 0.99972, 1, 1, 1.00106, 0.99999, 0.99998, 0.99998, 0.99999,
+    0.99998, 1.66475, 1, 0.99973, 0.99973, 1.00023, 0.99973, 0.99971, 1.00047,
+    1.00023, 1, 0.99991, 0.99984, 1.00002, 1.00002, 1.00002, 1.00002, 1, 1, 1,
+    1, 1, 1, 1, 0.99972, 1, 1.20985, 1.39713, 1.00003, 1.00031, 1.00015, 1,
+    0.99561, 1.00027, 1.00031, 1.00031, 0.99915, 1.00031, 1.00031, 0.99999,
+    1.00003, 0.99999, 0.99999, 1.41144, 1.6, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.40579,
+    1.40579, 1.36625, 0.99999, 1, 0.99861, 0.99861, 1, 1.00026, 1.00026,
+    1.00026, 1.00026, 0.99972, 0.99999, 0.99999, 0.99999, 0.99999, 1.40483, 1,
+    0.99977, 1.00054, 1, 1, 0.99953, 0.99962, 1.00042, 0.9995, 1, 1, 1, 1, 1, 1,
+    1, 1, 0.99998, 0.99998, 0.99998, 0.99998, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   gs = { lineHeight: 1.2, lineGap: 0.2 },
   bs = [
-    0.76116, 1, 1, 1.0006, 0.99998, 0.99974, 0.99973, 0.99973, 0.99982, 0.99977, 1.00087, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006, 1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99998, 1, 1.00003, 1.00003, 1.00003, 1.00026, 0.9999, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022, 0.99977, 1.0006, 0.99973, 0.99977, 1.00026, 0.99999, 0.99977, 1.00022, 1.00001, 1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016, 1.00001, 1.00001, 1.00026, 0.99998, 1.0006, 0.99998, 1.00003, 0.99973, 0.99998, 0.99973, 1.00026, 0.99973, 1.00026, 0.99973, 0.99998, 1.00026, 1.00026, 1.0006, 1.0006, 0.99973, 1.0006, 0.99982, 1.00026, 1.00026, 1.00026, 1.00026, 0.99959, 0.99973, 0.99998, 1.00026, 0.99973, 1.00022, 0.99973, 0.99973, 1, 0.99959, 1.00077, 0.99959, 1.00003, 0.99998, 0.99973, 0.99973, 0.99973, 0.99973, 1.00077, 0.99973, 0.99998, 1.00025, 0.99968, 0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1,
-    1, 0.99998, 1, 0.99973, 1.0006, 0.99998, 1, 0.99936, 0.99973, 1.00002, 1.00002, 1.00002, 1.00026, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 1, 0.99977, 1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006, 1.0006, 1.0006, 0.99977, 0.99977, 1.00022, 1.00022, 1.00022, 1.00022, 1.00022, 1.00003, 1.00022, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00001, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99982, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.06409, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 0.99973, 1.00026, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 1.0044, 0.99977, 1.00026, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 0.99977,
-    1.00026, 0.99977, 1.00026, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 0.99971, 0.99973, 0.99973, 1.0006, 0.99977, 0.99973, 0.99973, 1.00026, 1.0006, 1.00026, 1.0006, 1.00026, 1.01011, 1.00026, 0.99999, 1.00026, 1.0006, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.9993, 0.9998, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1, 1.00016, 0.99977, 0.99959, 0.99977, 0.99959, 0.99977, 0.99959, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00026, 0.99998, 1.00026, 0.8121, 1.00026, 0.99998, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 1.00016, 1.00022, 1.00001, 0.99973, 1.00001, 1.00026, 1, 1.00026, 1, 1.00026, 1, 1.0006, 0.99973, 0.99977, 0.99973, 1, 0.99982, 1.00022, 1.00026, 1.00001, 0.99973, 1.00026, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99977, 1, 1, 1.00026,
-    0.99969, 0.99972, 0.99981, 0.9998, 1.0006, 0.99977, 0.99977, 1.00022, 0.91155, 1.00001, 1.00026, 0.99977, 1.00022, 1.0006, 0.99977, 1.00001, 0.99999, 0.99977, 0.99966, 1.00022, 1.00032, 1.00001, 0.99944, 1.00026, 1.00001, 0.99968, 1.00001, 1.00047, 1, 1.0006, 1.00001, 0.99981, 1.00101, 1.00026, 1.0006, 0.99948, 0.99981, 1.00064, 0.99973, 0.99942, 1.00101, 1.00061, 1.00026, 1.00069, 1.0006, 1.00014, 0.99973, 1.01322, 0.99973, 1.00065, 1.00026, 1.00012, 0.99923, 1, 1.00064, 1.00076, 0.99948, 1.00055, 1.00063, 1.00007, 0.99943, 1.0006, 0.99948, 1.00026, 0.99948, 0.99943, 1.00001, 1.00001, 1.00029, 1.00038, 1.00035, 1.00001, 1.0006, 1.0006, 0.99973, 0.99978, 1.00001, 1.00057, 0.99989, 0.99967, 0.99964, 0.99967, 0.99977, 0.99999, 0.99977, 1.00038, 0.99977, 1.00001, 0.99973, 1.00066, 0.99967, 0.99967, 1.00041, 0.99998, 0.99999, 0.99977, 1.00022, 0.99967, 1.00001, 0.99977, 1.00026, 0.99964, 1.00031, 1.00001, 0.99999, 0.99999, 1, 1.00023, 1, 1, 0.99999, 1.00035, 1.00001, 0.99999, 0.99973,
-    0.99977, 0.99999, 1.00058, 0.99973, 0.99973, 0.99955, 0.9995, 1.00026, 1.00026, 1.00032, 0.99989, 1.00034, 0.99999, 1.00026, 1.00026, 1.00026, 0.99973, 0.45998, 0.99973, 1.00026, 0.99973, 1.00001, 0.99999, 0.99982, 0.99994, 0.99996, 1, 1.00042, 1.00044, 1.00029, 1.00023, 0.99973, 0.99973, 1.00026, 0.99949, 1.00002, 0.99973, 1.0006, 1.0006, 1.0006, 0.99975, 1.00026, 1.00026, 1.00032, 0.98685, 0.99973, 1.00026, 1, 1, 0.99966, 1.00044, 1.00016, 1.00022, 1.00016, 1.00022, 1.00016, 1.00022, 1.00001, 0.99973, 1, 1, 0.99973, 1, 1, 0.99955, 1.0006, 1.0006, 1.0006, 1.0006, 1, 1, 1, 0.99973, 0.99973, 0.99972, 1, 1, 1.00106, 0.99999, 0.99998, 0.99998, 0.99999, 0.99998, 1.66475, 1, 0.99973, 0.99973, 1, 0.99973, 0.99971, 0.99978, 1, 1, 0.99991, 0.99984, 1.00002, 1.00002, 1.00002, 1.00002, 1.00098, 1, 1, 1, 1.00049, 1, 1, 0.99972, 1, 1.20985, 1.39713, 1.00003, 1.00031, 1.00015, 1, 0.99561, 1.00027, 1.00031, 1.00031, 0.99915, 1.00031, 1.00031, 0.99999, 1.00003, 0.99999, 0.99999, 1.41144, 1.6,
-    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.40579, 1.40579, 1.36625, 0.99999, 1, 0.99861, 0.99861, 1, 1.00026, 1.00026, 1.00026, 1.00026, 0.99972, 0.99999, 0.99999, 0.99999, 0.99999, 1.40483, 1, 0.99977, 1.00054, 1, 1, 0.99953, 0.99962, 1.00042, 0.9995, 1, 1, 1, 1, 1, 1, 1, 1, 0.99998, 0.99998, 0.99998, 0.99998, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0.76116, 1, 1, 1.0006, 0.99998, 0.99974, 0.99973, 0.99973, 0.99982, 0.99977,
+    1.00087, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006,
+    1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973,
+    0.99973, 0.99973, 0.99973, 0.99998, 1, 1.00003, 1.00003, 1.00003, 1.00026,
+    0.9999, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022,
+    0.99977, 1.0006, 0.99973, 0.99977, 1.00026, 0.99999, 0.99977, 1.00022,
+    1.00001, 1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016,
+    1.00001, 1.00001, 1.00026, 0.99998, 1.0006, 0.99998, 1.00003, 0.99973,
+    0.99998, 0.99973, 1.00026, 0.99973, 1.00026, 0.99973, 0.99998, 1.00026,
+    1.00026, 1.0006, 1.0006, 0.99973, 1.0006, 0.99982, 1.00026, 1.00026,
+    1.00026, 1.00026, 0.99959, 0.99973, 0.99998, 1.00026, 0.99973, 1.00022,
+    0.99973, 0.99973, 1, 0.99959, 1.00077, 0.99959, 1.00003, 0.99998, 0.99973,
+    0.99973, 0.99973, 0.99973, 1.00077, 0.99973, 0.99998, 1.00025, 0.99968,
+    0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1, 1, 0.99998, 1,
+    0.99973, 1.0006, 0.99998, 1, 0.99936, 0.99973, 1.00002, 1.00002, 1.00002,
+    1.00026, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 1, 0.99977,
+    1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006, 1.0006, 1.0006, 0.99977,
+    0.99977, 1.00022, 1.00022, 1.00022, 1.00022, 1.00022, 1.00003, 1.00022,
+    0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00001, 1.00026, 0.99973,
+    0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99982, 0.99973, 0.99973,
+    0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 1.00026, 1.00026,
+    1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.06409, 1.00026, 1.00026,
+    1.00026, 1.00026, 1.00026, 0.99973, 1.00026, 0.99973, 0.99977, 0.99973,
+    0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973,
+    0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 1.0044, 0.99977, 1.00026,
+    1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973,
+    1.00001, 0.99973, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026,
+    1.00022, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 1.0006, 1.0006,
+    1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 0.99971,
+    0.99973, 0.99973, 1.0006, 0.99977, 0.99973, 0.99973, 1.00026, 1.0006,
+    1.00026, 1.0006, 1.00026, 1.01011, 1.00026, 0.99999, 1.00026, 1.0006,
+    0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.9993, 0.9998,
+    1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1, 1.00016,
+    0.99977, 0.99959, 0.99977, 0.99959, 0.99977, 0.99959, 1.00001, 0.99973,
+    1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00026, 0.99998,
+    1.00026, 0.8121, 1.00026, 0.99998, 0.99977, 1.00026, 0.99977, 1.00026,
+    0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026,
+    1.00016, 1.00022, 1.00001, 0.99973, 1.00001, 1.00026, 1, 1.00026, 1,
+    1.00026, 1, 1.0006, 0.99973, 0.99977, 0.99973, 1, 0.99982, 1.00022, 1.00026,
+    1.00001, 0.99973, 1.00026, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998,
+    0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99977, 1,
+    1, 1.00026, 0.99969, 0.99972, 0.99981, 0.9998, 1.0006, 0.99977, 0.99977,
+    1.00022, 0.91155, 1.00001, 1.00026, 0.99977, 1.00022, 1.0006, 0.99977,
+    1.00001, 0.99999, 0.99977, 0.99966, 1.00022, 1.00032, 1.00001, 0.99944,
+    1.00026, 1.00001, 0.99968, 1.00001, 1.00047, 1, 1.0006, 1.00001, 0.99981,
+    1.00101, 1.00026, 1.0006, 0.99948, 0.99981, 1.00064, 0.99973, 0.99942,
+    1.00101, 1.00061, 1.00026, 1.00069, 1.0006, 1.00014, 0.99973, 1.01322,
+    0.99973, 1.00065, 1.00026, 1.00012, 0.99923, 1, 1.00064, 1.00076, 0.99948,
+    1.00055, 1.00063, 1.00007, 0.99943, 1.0006, 0.99948, 1.00026, 0.99948,
+    0.99943, 1.00001, 1.00001, 1.00029, 1.00038, 1.00035, 1.00001, 1.0006,
+    1.0006, 0.99973, 0.99978, 1.00001, 1.00057, 0.99989, 0.99967, 0.99964,
+    0.99967, 0.99977, 0.99999, 0.99977, 1.00038, 0.99977, 1.00001, 0.99973,
+    1.00066, 0.99967, 0.99967, 1.00041, 0.99998, 0.99999, 0.99977, 1.00022,
+    0.99967, 1.00001, 0.99977, 1.00026, 0.99964, 1.00031, 1.00001, 0.99999,
+    0.99999, 1, 1.00023, 1, 1, 0.99999, 1.00035, 1.00001, 0.99999, 0.99973,
+    0.99977, 0.99999, 1.00058, 0.99973, 0.99973, 0.99955, 0.9995, 1.00026,
+    1.00026, 1.00032, 0.99989, 1.00034, 0.99999, 1.00026, 1.00026, 1.00026,
+    0.99973, 0.45998, 0.99973, 1.00026, 0.99973, 1.00001, 0.99999, 0.99982,
+    0.99994, 0.99996, 1, 1.00042, 1.00044, 1.00029, 1.00023, 0.99973, 0.99973,
+    1.00026, 0.99949, 1.00002, 0.99973, 1.0006, 1.0006, 1.0006, 0.99975,
+    1.00026, 1.00026, 1.00032, 0.98685, 0.99973, 1.00026, 1, 1, 0.99966,
+    1.00044, 1.00016, 1.00022, 1.00016, 1.00022, 1.00016, 1.00022, 1.00001,
+    0.99973, 1, 1, 0.99973, 1, 1, 0.99955, 1.0006, 1.0006, 1.0006, 1.0006, 1, 1,
+    1, 0.99973, 0.99973, 0.99972, 1, 1, 1.00106, 0.99999, 0.99998, 0.99998,
+    0.99999, 0.99998, 1.66475, 1, 0.99973, 0.99973, 1, 0.99973, 0.99971,
+    0.99978, 1, 1, 0.99991, 0.99984, 1.00002, 1.00002, 1.00002, 1.00002,
+    1.00098, 1, 1, 1, 1.00049, 1, 1, 0.99972, 1, 1.20985, 1.39713, 1.00003,
+    1.00031, 1.00015, 1, 0.99561, 1.00027, 1.00031, 1.00031, 0.99915, 1.00031,
+    1.00031, 0.99999, 1.00003, 0.99999, 0.99999, 1.41144, 1.6, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.40579, 1.40579, 1.36625, 0.99999, 1, 0.99861, 0.99861, 1,
+    1.00026, 1.00026, 1.00026, 1.00026, 0.99972, 0.99999, 0.99999, 0.99999,
+    0.99999, 1.40483, 1, 0.99977, 1.00054, 1, 1, 0.99953, 0.99962, 1.00042,
+    0.9995, 1, 1, 1, 1, 1, 1, 1, 1, 0.99998, 0.99998, 0.99998, 0.99998, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1,
   ],
   ws = { lineHeight: 1.35, lineGap: 0.2 },
   js = [
-    0.76116, 1, 1, 1.0006, 1.0006, 1.00006, 0.99973, 0.99973, 0.99982, 1.00001, 1.00043, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006, 1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1, 1.00003, 1.00003, 1.00003, 0.99973, 0.99987, 1.00001, 1.00001, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022, 0.99977, 1.0006, 1, 1.00001, 0.99973, 0.99999, 0.99977, 1.00022, 1.00001, 1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016, 1.00001, 1.00001, 1.00026, 1.0006, 1.0006, 1.0006, 0.99949, 0.99973, 0.99998, 0.99973, 0.99973, 1, 0.99973, 0.99973, 1.0006, 0.99973, 0.99973, 0.99924, 0.99924, 1, 0.99924, 0.99999, 0.99973, 0.99973, 0.99973, 0.99973, 0.99998, 1, 1.0006, 0.99973, 1, 0.99977, 1, 1, 1, 1.00005, 1.0009, 1.00005, 1.00003, 0.99998, 0.99973, 0.99973, 0.99973, 0.99973, 1.0009, 0.99973, 0.99998, 1.00025, 0.99968, 0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1, 1, 0.99998, 1, 0.9998, 1.0006, 0.99998, 1,
-    0.99936, 0.99973, 1.00002, 1.00002, 1.00002, 1.00026, 1.00001, 1.00001, 1.00001, 1.00001, 1.00001, 1.00001, 1, 0.99977, 1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006, 1.0006, 1.0006, 0.99977, 0.99977, 1.00022, 1.00022, 1.00022, 1.00022, 1.00022, 1.00003, 1.00022, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00001, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99982, 1, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 1.06409, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 1, 0.99973, 1, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 0.99977, 1, 0.99977, 1, 0.99977, 1, 0.99977, 1, 0.99977, 1.0288, 0.99977, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006,
-    0.99924, 1.0006, 1.0006, 0.99946, 1.00034, 1, 0.99924, 1.00001, 1, 1, 0.99973, 0.99924, 0.99973, 0.99924, 0.99973, 1.06311, 0.99973, 1.00024, 0.99973, 0.99924, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 1.00041, 0.9998, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1, 1.00016, 0.99977, 0.99998, 0.99977, 0.99998, 0.99977, 0.99998, 1.00001, 1, 1.00001, 1, 1.00001, 1, 1.00001, 1, 1.00026, 1.0006, 1.00026, 0.89547, 1.00026, 1.0006, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 1.00016, 0.99977, 1.00001, 1, 1.00001, 1.00026, 1, 1.00026, 1, 1.00026, 1, 0.99924, 0.99973, 1.00001, 0.99973, 1, 0.99982, 1.00022, 1.00026, 1.00001, 1, 1.00026, 1.0006, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 1.00001, 1, 1.00054, 0.99977, 1.00084, 1.00007, 0.99973, 1.00013, 0.99924, 1.00001, 1.00001, 0.99945, 0.91221, 1.00001, 1.00026, 0.99977, 1.00022, 1.0006,
-    1.00001, 1.00001, 0.99999, 0.99977, 0.99933, 1.00022, 1.00054, 1.00001, 1.00065, 1.00026, 1.00001, 1.0001, 1.00001, 1.00052, 1, 1.0006, 1.00001, 0.99945, 0.99897, 0.99968, 0.99924, 1.00036, 0.99945, 0.99949, 1, 1.0006, 0.99897, 0.99918, 0.99968, 0.99911, 0.99924, 1, 0.99962, 1.01487, 1, 1.0005, 0.99973, 1.00012, 1.00043, 1, 0.99995, 0.99994, 1.00036, 0.99947, 1.00019, 1.00063, 1.00025, 0.99924, 1.00036, 0.99973, 1.00036, 1.00025, 1.00001, 1.00001, 1.00027, 1.0001, 1.00068, 1.00001, 1.0006, 1.0006, 1, 1.00008, 0.99957, 0.99972, 0.9994, 0.99954, 0.99975, 1.00051, 1.00001, 1.00019, 1.00001, 1.0001, 0.99986, 1.00001, 1.00001, 1.00038, 0.99954, 0.99954, 0.9994, 1.00066, 0.99999, 0.99977, 1.00022, 1.00054, 1.00001, 0.99977, 1.00026, 0.99975, 1.0001, 1.00001, 0.99993, 0.9995, 0.99955, 1.00016, 0.99978, 0.99974, 1.00019, 1.00022, 0.99955, 1.00053, 0.99973, 1.00089, 1.00005, 0.99967, 1.00048, 0.99973, 1.00002, 1.00034, 0.99973, 0.99973, 0.99964, 1.00006, 1.00066, 0.99947, 0.99973, 0.98894,
-    0.99973, 1, 0.44898, 1, 0.99946, 1, 1.00039, 1.00082, 0.99991, 0.99991, 0.99985, 1.00022, 1.00023, 1.00061, 1.00006, 0.99966, 0.99973, 0.99973, 0.99973, 1.00019, 1.0008, 1, 0.99924, 0.99924, 0.99924, 0.99983, 1.00044, 0.99973, 0.99964, 0.98332, 1, 0.99973, 1, 1, 0.99962, 0.99895, 1.00016, 0.99977, 1.00016, 0.99977, 1.00016, 0.99977, 1.00001, 1, 1, 1, 0.99973, 1, 1, 0.99955, 0.99924, 0.99924, 0.99924, 0.99924, 0.99998, 0.99998, 0.99998, 0.99973, 0.99973, 0.99972, 1, 1, 1.00267, 0.99999, 0.99998, 0.99998, 1, 0.99998, 1.66475, 1, 0.99973, 0.99973, 1.00023, 0.99973, 1.00423, 0.99925, 0.99999, 1, 0.99991, 0.99984, 1.00002, 1.00002, 1.00002, 1.00002, 1.00049, 1, 1.00245, 1, 1, 1, 1, 0.96329, 1, 1.20985, 1.39713, 1.00003, 0.8254, 1.00015, 1, 1.00035, 1.00027, 1.00031, 1.00031, 1.00003, 1.00031, 1.00031, 0.99999, 1.00003, 0.99999, 0.99999, 1.41144, 1.6, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
-    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.40579, 1.40579, 1.36625, 0.99999, 1, 0.99861, 0.99861, 1, 1.00026, 1.00026, 1.00026, 1.00026, 0.95317, 0.99999, 0.99999, 0.99999, 0.99999, 1.40483, 1, 0.99977, 1.00054, 1, 1, 0.99953, 0.99962, 1.00042, 0.9995, 1, 1, 1, 1, 1, 1, 1, 1, 0.99998, 0.99998, 0.99998, 0.99998, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0.76116, 1, 1, 1.0006, 1.0006, 1.00006, 0.99973, 0.99973, 0.99982, 1.00001,
+    1.00043, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006,
+    1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973,
+    0.99973, 0.99973, 0.99973, 1.0006, 1, 1.00003, 1.00003, 1.00003, 0.99973,
+    0.99987, 1.00001, 1.00001, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022,
+    0.99977, 1.0006, 1, 1.00001, 0.99973, 0.99999, 0.99977, 1.00022, 1.00001,
+    1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016, 1.00001,
+    1.00001, 1.00026, 1.0006, 1.0006, 1.0006, 0.99949, 0.99973, 0.99998,
+    0.99973, 0.99973, 1, 0.99973, 0.99973, 1.0006, 0.99973, 0.99973, 0.99924,
+    0.99924, 1, 0.99924, 0.99999, 0.99973, 0.99973, 0.99973, 0.99973, 0.99998,
+    1, 1.0006, 0.99973, 1, 0.99977, 1, 1, 1, 1.00005, 1.0009, 1.00005, 1.00003,
+    0.99998, 0.99973, 0.99973, 0.99973, 0.99973, 1.0009, 0.99973, 0.99998,
+    1.00025, 0.99968, 0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1,
+    1, 0.99998, 1, 0.9998, 1.0006, 0.99998, 1, 0.99936, 0.99973, 1.00002,
+    1.00002, 1.00002, 1.00026, 1.00001, 1.00001, 1.00001, 1.00001, 1.00001,
+    1.00001, 1, 0.99977, 1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006,
+    1.0006, 1.0006, 0.99977, 0.99977, 1.00022, 1.00022, 1.00022, 1.00022,
+    1.00022, 1.00003, 1.00022, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001,
+    1.00001, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973,
+    0.99982, 1, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006,
+    1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973,
+    1.06409, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 1, 0.99973, 1,
+    1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 0.99977, 1, 0.99977,
+    1, 0.99977, 1, 0.99977, 1, 0.99977, 1.0288, 0.99977, 0.99973, 1.00001,
+    0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001,
+    0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022,
+    0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006,
+    1.0006, 1.0006, 1.0006, 0.99924, 1.0006, 1.0006, 0.99946, 1.00034, 1,
+    0.99924, 1.00001, 1, 1, 0.99973, 0.99924, 0.99973, 0.99924, 0.99973,
+    1.06311, 0.99973, 1.00024, 0.99973, 0.99924, 0.99977, 0.99973, 0.99977,
+    0.99973, 0.99977, 0.99973, 1.00041, 0.9998, 0.99973, 1.00022, 0.99973,
+    1.00022, 0.99973, 1.00022, 0.99973, 1, 1.00016, 0.99977, 0.99998, 0.99977,
+    0.99998, 0.99977, 0.99998, 1.00001, 1, 1.00001, 1, 1.00001, 1, 1.00001, 1,
+    1.00026, 1.0006, 1.00026, 0.89547, 1.00026, 1.0006, 0.99977, 0.99973,
+    0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973,
+    0.99977, 0.99973, 1.00016, 0.99977, 1.00001, 1, 1.00001, 1.00026, 1,
+    1.00026, 1, 1.00026, 1, 0.99924, 0.99973, 1.00001, 0.99973, 1, 0.99982,
+    1.00022, 1.00026, 1.00001, 1, 1.00026, 1.0006, 0.99998, 0.99998, 0.99998,
+    0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998,
+    1.00001, 1, 1.00054, 0.99977, 1.00084, 1.00007, 0.99973, 1.00013, 0.99924,
+    1.00001, 1.00001, 0.99945, 0.91221, 1.00001, 1.00026, 0.99977, 1.00022,
+    1.0006, 1.00001, 1.00001, 0.99999, 0.99977, 0.99933, 1.00022, 1.00054,
+    1.00001, 1.00065, 1.00026, 1.00001, 1.0001, 1.00001, 1.00052, 1, 1.0006,
+    1.00001, 0.99945, 0.99897, 0.99968, 0.99924, 1.00036, 0.99945, 0.99949, 1,
+    1.0006, 0.99897, 0.99918, 0.99968, 0.99911, 0.99924, 1, 0.99962, 1.01487, 1,
+    1.0005, 0.99973, 1.00012, 1.00043, 1, 0.99995, 0.99994, 1.00036, 0.99947,
+    1.00019, 1.00063, 1.00025, 0.99924, 1.00036, 0.99973, 1.00036, 1.00025,
+    1.00001, 1.00001, 1.00027, 1.0001, 1.00068, 1.00001, 1.0006, 1.0006, 1,
+    1.00008, 0.99957, 0.99972, 0.9994, 0.99954, 0.99975, 1.00051, 1.00001,
+    1.00019, 1.00001, 1.0001, 0.99986, 1.00001, 1.00001, 1.00038, 0.99954,
+    0.99954, 0.9994, 1.00066, 0.99999, 0.99977, 1.00022, 1.00054, 1.00001,
+    0.99977, 1.00026, 0.99975, 1.0001, 1.00001, 0.99993, 0.9995, 0.99955,
+    1.00016, 0.99978, 0.99974, 1.00019, 1.00022, 0.99955, 1.00053, 0.99973,
+    1.00089, 1.00005, 0.99967, 1.00048, 0.99973, 1.00002, 1.00034, 0.99973,
+    0.99973, 0.99964, 1.00006, 1.00066, 0.99947, 0.99973, 0.98894, 0.99973, 1,
+    0.44898, 1, 0.99946, 1, 1.00039, 1.00082, 0.99991, 0.99991, 0.99985,
+    1.00022, 1.00023, 1.00061, 1.00006, 0.99966, 0.99973, 0.99973, 0.99973,
+    1.00019, 1.0008, 1, 0.99924, 0.99924, 0.99924, 0.99983, 1.00044, 0.99973,
+    0.99964, 0.98332, 1, 0.99973, 1, 1, 0.99962, 0.99895, 1.00016, 0.99977,
+    1.00016, 0.99977, 1.00016, 0.99977, 1.00001, 1, 1, 1, 0.99973, 1, 1,
+    0.99955, 0.99924, 0.99924, 0.99924, 0.99924, 0.99998, 0.99998, 0.99998,
+    0.99973, 0.99973, 0.99972, 1, 1, 1.00267, 0.99999, 0.99998, 0.99998, 1,
+    0.99998, 1.66475, 1, 0.99973, 0.99973, 1.00023, 0.99973, 1.00423, 0.99925,
+    0.99999, 1, 0.99991, 0.99984, 1.00002, 1.00002, 1.00002, 1.00002, 1.00049,
+    1, 1.00245, 1, 1, 1, 1, 0.96329, 1, 1.20985, 1.39713, 1.00003, 0.8254,
+    1.00015, 1, 1.00035, 1.00027, 1.00031, 1.00031, 1.00003, 1.00031, 1.00031,
+    0.99999, 1.00003, 0.99999, 0.99999, 1.41144, 1.6, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.40579, 1.40579, 1.36625, 0.99999, 1, 0.99861, 0.99861, 1, 1.00026,
+    1.00026, 1.00026, 1.00026, 0.95317, 0.99999, 0.99999, 0.99999, 0.99999,
+    1.40483, 1, 0.99977, 1.00054, 1, 1, 0.99953, 0.99962, 1.00042, 0.9995, 1, 1,
+    1, 1, 1, 1, 1, 1, 0.99998, 0.99998, 0.99998, 0.99998, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1,
   ],
   ks = { lineHeight: 1.35, lineGap: 0.2 },
   ys = [
-    0.76116, 1, 1, 1.0006, 1.0006, 1.00006, 0.99973, 0.99973, 0.99982, 1.00001, 1.00043, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006, 1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1, 1.00003, 1.00003, 1.00003, 0.99973, 0.99987, 1.00001, 1.00001, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022, 0.99977, 1.0006, 1, 1.00001, 0.99973, 0.99999, 0.99977, 1.00022, 1.00001, 1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016, 1.00001, 1.00001, 1.00026, 1.0006, 1.0006, 1.0006, 0.99949, 0.99973, 0.99998, 0.99973, 0.99973, 1, 0.99973, 0.99973, 1.0006, 0.99973, 0.99973, 0.99924, 0.99924, 1, 0.99924, 0.99999, 0.99973, 0.99973, 0.99973, 0.99973, 0.99998, 1, 1.0006, 0.99973, 1, 0.99977, 1, 1, 1, 1.00005, 1.0009, 1.00005, 1.00003, 0.99998, 0.99973, 0.99973, 0.99973, 0.99973, 1.0009, 0.99973, 0.99998, 1.00025, 0.99968, 0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1, 1, 0.99998, 1, 0.9998, 1.0006, 0.99998, 1,
-    0.99936, 0.99973, 1.00002, 1.00002, 1.00002, 1.00026, 1.00001, 1.00001, 1.00001, 1.00001, 1.00001, 1.00001, 1, 0.99977, 1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006, 1.0006, 1.0006, 0.99977, 0.99977, 1.00022, 1.00022, 1.00022, 1.00022, 1.00022, 1.00003, 1.00022, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00001, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99982, 1, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 1.06409, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 1, 0.99973, 1, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 0.99977, 1, 0.99977, 1, 0.99977, 1, 0.99977, 1, 0.99977, 1.04596, 0.99977, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006,
-    0.99924, 1.0006, 1.0006, 1.00019, 1.00034, 1, 0.99924, 1.00001, 1, 1, 0.99973, 0.99924, 0.99973, 0.99924, 0.99973, 1.02572, 0.99973, 1.00005, 0.99973, 0.99924, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99999, 0.9998, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1, 1.00016, 0.99977, 0.99998, 0.99977, 0.99998, 0.99977, 0.99998, 1.00001, 1, 1.00001, 1, 1.00001, 1, 1.00001, 1, 1.00026, 1.0006, 1.00026, 0.84533, 1.00026, 1.0006, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 1.00016, 0.99977, 1.00001, 1, 1.00001, 1.00026, 1, 1.00026, 1, 1.00026, 1, 0.99924, 0.99973, 1.00001, 0.99973, 1, 0.99982, 1.00022, 1.00026, 1.00001, 1, 1.00026, 1.0006, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99928, 1, 0.99977, 1.00013, 1.00055, 0.99947, 0.99945, 0.99941, 0.99924, 1.00001, 1.00001, 1.0004, 0.91621, 1.00001, 1.00026, 0.99977, 1.00022, 1.0006,
-    1.00001, 1.00005, 0.99999, 0.99977, 1.00015, 1.00022, 0.99977, 1.00001, 0.99973, 1.00026, 1.00001, 1.00019, 1.00001, 0.99946, 1, 1.0006, 1.00001, 0.99978, 1.00045, 0.99973, 0.99924, 1.00023, 0.99978, 0.99966, 1, 1.00065, 1.00045, 1.00019, 0.99973, 0.99973, 0.99924, 1, 1, 0.96499, 1, 1.00055, 0.99973, 1.00008, 1.00027, 1, 0.9997, 0.99995, 1.00023, 0.99933, 1.00019, 1.00015, 1.00031, 0.99924, 1.00023, 0.99973, 1.00023, 1.00031, 1.00001, 0.99928, 1.00029, 1.00092, 1.00035, 1.00001, 1.0006, 1.0006, 1, 0.99988, 0.99975, 1, 1.00082, 0.99561, 0.9996, 1.00035, 1.00001, 0.99962, 1.00001, 1.00092, 0.99964, 1.00001, 0.99963, 0.99999, 1.00035, 1.00035, 1.00082, 0.99962, 0.99999, 0.99977, 1.00022, 1.00035, 1.00001, 0.99977, 1.00026, 0.9996, 0.99967, 1.00001, 1.00034, 1.00074, 1.00054, 1.00053, 1.00063, 0.99971, 0.99962, 1.00035, 0.99975, 0.99977, 0.99973, 1.00043, 0.99953, 1.0007, 0.99915, 0.99973, 1.00008, 0.99892, 1.00073, 1.00073, 1.00114, 0.99915, 1.00073, 0.99955, 0.99973, 1.00092,
-    0.99973, 1, 0.99998, 1, 1.0003, 1, 1.00043, 1.00001, 0.99969, 1.0003, 1, 1.00035, 1.00001, 0.9995, 1, 1.00092, 0.99973, 0.99973, 0.99973, 1.0007, 0.9995, 1, 0.99924, 1.0006, 0.99924, 0.99972, 1.00062, 0.99973, 1.00114, 1.00073, 1, 0.99955, 1, 1, 1.00047, 0.99968, 1.00016, 0.99977, 1.00016, 0.99977, 1.00016, 0.99977, 1.00001, 1, 1, 1, 0.99973, 1, 1, 0.99955, 0.99924, 0.99924, 0.99924, 0.99924, 0.99998, 0.99998, 0.99998, 0.99973, 0.99973, 0.99972, 1, 1, 1.00267, 0.99999, 0.99998, 0.99998, 1, 0.99998, 1.66475, 1, 0.99973, 0.99973, 1.00023, 0.99973, 0.99971, 0.99925, 1.00023, 1, 0.99991, 0.99984, 1.00002, 1.00002, 1.00002, 1.00002, 1, 1, 1, 1, 1, 1, 1, 0.96329, 1, 1.20985, 1.39713, 1.00003, 0.8254, 1.00015, 1, 1.00035, 1.00027, 1.00031, 1.00031, 0.99915, 1.00031, 1.00031, 0.99999, 1.00003, 0.99999, 0.99999, 1.41144, 1.6, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
-    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.40579, 1.40579, 1.36625, 0.99999, 1, 0.99861, 0.99861, 1, 1.00026, 1.00026, 1.00026, 1.00026, 0.95317, 0.99999, 0.99999, 0.99999, 0.99999, 1.40483, 1, 0.99977, 1.00054, 1, 1, 0.99953, 0.99962, 1.00042, 0.9995, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0.76116, 1, 1, 1.0006, 1.0006, 1.00006, 0.99973, 0.99973, 0.99982, 1.00001,
+    1.00043, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006,
+    1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973,
+    0.99973, 0.99973, 0.99973, 1.0006, 1, 1.00003, 1.00003, 1.00003, 0.99973,
+    0.99987, 1.00001, 1.00001, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022,
+    0.99977, 1.0006, 1, 1.00001, 0.99973, 0.99999, 0.99977, 1.00022, 1.00001,
+    1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016, 1.00001,
+    1.00001, 1.00026, 1.0006, 1.0006, 1.0006, 0.99949, 0.99973, 0.99998,
+    0.99973, 0.99973, 1, 0.99973, 0.99973, 1.0006, 0.99973, 0.99973, 0.99924,
+    0.99924, 1, 0.99924, 0.99999, 0.99973, 0.99973, 0.99973, 0.99973, 0.99998,
+    1, 1.0006, 0.99973, 1, 0.99977, 1, 1, 1, 1.00005, 1.0009, 1.00005, 1.00003,
+    0.99998, 0.99973, 0.99973, 0.99973, 0.99973, 1.0009, 0.99973, 0.99998,
+    1.00025, 0.99968, 0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1,
+    1, 0.99998, 1, 0.9998, 1.0006, 0.99998, 1, 0.99936, 0.99973, 1.00002,
+    1.00002, 1.00002, 1.00026, 1.00001, 1.00001, 1.00001, 1.00001, 1.00001,
+    1.00001, 1, 0.99977, 1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006,
+    1.0006, 1.0006, 0.99977, 0.99977, 1.00022, 1.00022, 1.00022, 1.00022,
+    1.00022, 1.00003, 1.00022, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001,
+    1.00001, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973,
+    0.99982, 1, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006,
+    1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973,
+    1.06409, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 1, 0.99973, 1,
+    1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 0.99977, 1, 0.99977,
+    1, 0.99977, 1, 0.99977, 1, 0.99977, 1.04596, 0.99977, 0.99973, 1.00001,
+    0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001,
+    0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022, 0.99973, 1.00022,
+    0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006,
+    1.0006, 1.0006, 1.0006, 0.99924, 1.0006, 1.0006, 1.00019, 1.00034, 1,
+    0.99924, 1.00001, 1, 1, 0.99973, 0.99924, 0.99973, 0.99924, 0.99973,
+    1.02572, 0.99973, 1.00005, 0.99973, 0.99924, 0.99977, 0.99973, 0.99977,
+    0.99973, 0.99977, 0.99973, 0.99999, 0.9998, 0.99973, 1.00022, 0.99973,
+    1.00022, 0.99973, 1.00022, 0.99973, 1, 1.00016, 0.99977, 0.99998, 0.99977,
+    0.99998, 0.99977, 0.99998, 1.00001, 1, 1.00001, 1, 1.00001, 1, 1.00001, 1,
+    1.00026, 1.0006, 1.00026, 0.84533, 1.00026, 1.0006, 0.99977, 0.99973,
+    0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973,
+    0.99977, 0.99973, 1.00016, 0.99977, 1.00001, 1, 1.00001, 1.00026, 1,
+    1.00026, 1, 1.00026, 1, 0.99924, 0.99973, 1.00001, 0.99973, 1, 0.99982,
+    1.00022, 1.00026, 1.00001, 1, 1.00026, 1.0006, 0.99998, 0.99998, 0.99998,
+    0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998,
+    0.99928, 1, 0.99977, 1.00013, 1.00055, 0.99947, 0.99945, 0.99941, 0.99924,
+    1.00001, 1.00001, 1.0004, 0.91621, 1.00001, 1.00026, 0.99977, 1.00022,
+    1.0006, 1.00001, 1.00005, 0.99999, 0.99977, 1.00015, 1.00022, 0.99977,
+    1.00001, 0.99973, 1.00026, 1.00001, 1.00019, 1.00001, 0.99946, 1, 1.0006,
+    1.00001, 0.99978, 1.00045, 0.99973, 0.99924, 1.00023, 0.99978, 0.99966, 1,
+    1.00065, 1.00045, 1.00019, 0.99973, 0.99973, 0.99924, 1, 1, 0.96499, 1,
+    1.00055, 0.99973, 1.00008, 1.00027, 1, 0.9997, 0.99995, 1.00023, 0.99933,
+    1.00019, 1.00015, 1.00031, 0.99924, 1.00023, 0.99973, 1.00023, 1.00031,
+    1.00001, 0.99928, 1.00029, 1.00092, 1.00035, 1.00001, 1.0006, 1.0006, 1,
+    0.99988, 0.99975, 1, 1.00082, 0.99561, 0.9996, 1.00035, 1.00001, 0.99962,
+    1.00001, 1.00092, 0.99964, 1.00001, 0.99963, 0.99999, 1.00035, 1.00035,
+    1.00082, 0.99962, 0.99999, 0.99977, 1.00022, 1.00035, 1.00001, 0.99977,
+    1.00026, 0.9996, 0.99967, 1.00001, 1.00034, 1.00074, 1.00054, 1.00053,
+    1.00063, 0.99971, 0.99962, 1.00035, 0.99975, 0.99977, 0.99973, 1.00043,
+    0.99953, 1.0007, 0.99915, 0.99973, 1.00008, 0.99892, 1.00073, 1.00073,
+    1.00114, 0.99915, 1.00073, 0.99955, 0.99973, 1.00092, 0.99973, 1, 0.99998,
+    1, 1.0003, 1, 1.00043, 1.00001, 0.99969, 1.0003, 1, 1.00035, 1.00001,
+    0.9995, 1, 1.00092, 0.99973, 0.99973, 0.99973, 1.0007, 0.9995, 1, 0.99924,
+    1.0006, 0.99924, 0.99972, 1.00062, 0.99973, 1.00114, 1.00073, 1, 0.99955, 1,
+    1, 1.00047, 0.99968, 1.00016, 0.99977, 1.00016, 0.99977, 1.00016, 0.99977,
+    1.00001, 1, 1, 1, 0.99973, 1, 1, 0.99955, 0.99924, 0.99924, 0.99924,
+    0.99924, 0.99998, 0.99998, 0.99998, 0.99973, 0.99973, 0.99972, 1, 1,
+    1.00267, 0.99999, 0.99998, 0.99998, 1, 0.99998, 1.66475, 1, 0.99973,
+    0.99973, 1.00023, 0.99973, 0.99971, 0.99925, 1.00023, 1, 0.99991, 0.99984,
+    1.00002, 1.00002, 1.00002, 1.00002, 1, 1, 1, 1, 1, 1, 1, 0.96329, 1,
+    1.20985, 1.39713, 1.00003, 0.8254, 1.00015, 1, 1.00035, 1.00027, 1.00031,
+    1.00031, 0.99915, 1.00031, 1.00031, 0.99999, 1.00003, 0.99999, 0.99999,
+    1.41144, 1.6, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144,
+    1.41144, 1.41144, 1.41144, 1.41144, 1.40579, 1.40579, 1.36625, 0.99999, 1,
+    0.99861, 0.99861, 1, 1.00026, 1.00026, 1.00026, 1.00026, 0.95317, 0.99999,
+    0.99999, 0.99999, 0.99999, 1.40483, 1, 0.99977, 1.00054, 1, 1, 0.99953,
+    0.99962, 1.00042, 0.9995, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1,
   ],
   qs = { lineHeight: 1.2, lineGap: 0.2 },
   vs = [
-    365, 0, 333, 278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584, 333, 556, 556, 556, 556, 280, 556, 333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 556, 278, 333, 333, 365, 556, 834, 834, 834, 611, 722, 722, 722, 722, 722, 722, 1e3, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 556, 556, 556, 556, 556, 278, 278, 278, 278, 611, 611, 611, 611, 611, 611, 611, 549, 611, 611, 611, 611, 611, 556, 611, 556, 722, 556, 722, 556, 722, 556, 722,
-    556, 722, 556, 722, 556, 722, 556, 722, 719, 722, 611, 667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 611, 778, 611, 778, 611, 778, 611, 722, 611, 722, 611, 278, 278, 278, 278, 278, 278, 278, 278, 278, 278, 785, 556, 556, 278, 722, 556, 556, 611, 278, 611, 278, 611, 385, 611, 479, 611, 278, 722, 611, 722, 611, 722, 611, 708, 723, 611, 778, 611, 778, 611, 778, 611, 1e3, 944, 722, 389, 722, 389, 722, 389, 667, 556, 667, 556, 667, 556, 667, 556, 611, 333, 611, 479, 611, 333, 722, 611, 722, 611, 722, 611, 722, 611, 722, 611, 722, 611, 944, 778, 667, 556, 667, 611, 500, 611, 500, 611, 500, 278, 556, 722, 556, 1e3, 889, 778, 611, 667, 556, 611, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 465, 722, 333, 853, 906, 474, 825, 927, 838, 278, 722, 722, 601, 719, 667, 611, 722, 778, 278, 722, 667, 833, 722, 644, 778, 722, 667, 600, 611, 667, 821, 667, 809, 802, 278, 667, 615, 451, 611, 278, 582, 615, 610, 556, 606, 475, 460, 611, 541, 278, 558, 556, 612, 556, 445, 611, 766,
-    619, 520, 684, 446, 582, 715, 576, 753, 845, 278, 582, 611, 582, 845, 667, 669, 885, 567, 711, 667, 278, 276, 556, 1094, 1062, 875, 610, 722, 622, 719, 722, 719, 722, 567, 712, 667, 904, 626, 719, 719, 610, 702, 833, 722, 778, 719, 667, 722, 611, 622, 854, 667, 730, 703, 1005, 1019, 870, 979, 719, 711, 1031, 719, 556, 618, 615, 417, 635, 556, 709, 497, 615, 615, 500, 635, 740, 604, 611, 604, 611, 556, 490, 556, 875, 556, 615, 581, 833, 844, 729, 854, 615, 552, 854, 583, 556, 556, 611, 417, 552, 556, 278, 281, 278, 969, 906, 611, 500, 615, 556, 604, 778, 611, 487, 447, 944, 778, 944, 778, 944, 778, 667, 556, 333, 333, 556, 1e3, 1e3, 552, 278, 278, 278, 278, 500, 500, 500, 556, 556, 350, 1e3, 1e3, 240, 479, 333, 333, 604, 333, 167, 396, 556, 556, 1094, 556, 885, 489, 1115, 1e3, 768, 600, 834, 834, 834, 834, 1e3, 500, 1e3, 500, 1e3, 500, 500, 494, 612, 823, 713, 584, 549, 713, 979, 722, 274, 549, 549, 583, 549, 549, 604, 584, 604, 604, 708, 625, 708, 708, 708, 708, 708, 708, 708,
-    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 729, 604, 604, 354, 354, 1e3, 990, 990, 990, 990, 494, 604, 604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750, 750, 611, 611, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 333, 333, 333, 333, 333, 333, 333, 333,
+    365, 0, 333, 278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584,
+    278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333,
+    333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278,
+    556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667,
+    667, 611, 333, 278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611,
+    611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556,
+    778, 556, 556, 500, 389, 280, 389, 584, 333, 556, 556, 556, 556, 280, 556,
+    333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 556, 278,
+    333, 333, 365, 556, 834, 834, 834, 611, 722, 722, 722, 722, 722, 722, 1e3,
+    722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778,
+    778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556,
+    556, 889, 556, 556, 556, 556, 556, 278, 278, 278, 278, 611, 611, 611, 611,
+    611, 611, 611, 549, 611, 611, 611, 611, 611, 556, 611, 556, 722, 556, 722,
+    556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 719, 722, 611,
+    667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 611, 778, 611, 778,
+    611, 778, 611, 722, 611, 722, 611, 278, 278, 278, 278, 278, 278, 278, 278,
+    278, 278, 785, 556, 556, 278, 722, 556, 556, 611, 278, 611, 278, 611, 385,
+    611, 479, 611, 278, 722, 611, 722, 611, 722, 611, 708, 723, 611, 778, 611,
+    778, 611, 778, 611, 1e3, 944, 722, 389, 722, 389, 722, 389, 667, 556, 667,
+    556, 667, 556, 667, 556, 611, 333, 611, 479, 611, 333, 722, 611, 722, 611,
+    722, 611, 722, 611, 722, 611, 722, 611, 944, 778, 667, 556, 667, 611, 500,
+    611, 500, 611, 500, 278, 556, 722, 556, 1e3, 889, 778, 611, 667, 556, 611,
+    333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 465, 722, 333, 853,
+    906, 474, 825, 927, 838, 278, 722, 722, 601, 719, 667, 611, 722, 778, 278,
+    722, 667, 833, 722, 644, 778, 722, 667, 600, 611, 667, 821, 667, 809, 802,
+    278, 667, 615, 451, 611, 278, 582, 615, 610, 556, 606, 475, 460, 611, 541,
+    278, 558, 556, 612, 556, 445, 611, 766, 619, 520, 684, 446, 582, 715, 576,
+    753, 845, 278, 582, 611, 582, 845, 667, 669, 885, 567, 711, 667, 278, 276,
+    556, 1094, 1062, 875, 610, 722, 622, 719, 722, 719, 722, 567, 712, 667, 904,
+    626, 719, 719, 610, 702, 833, 722, 778, 719, 667, 722, 611, 622, 854, 667,
+    730, 703, 1005, 1019, 870, 979, 719, 711, 1031, 719, 556, 618, 615, 417,
+    635, 556, 709, 497, 615, 615, 500, 635, 740, 604, 611, 604, 611, 556, 490,
+    556, 875, 556, 615, 581, 833, 844, 729, 854, 615, 552, 854, 583, 556, 556,
+    611, 417, 552, 556, 278, 281, 278, 969, 906, 611, 500, 615, 556, 604, 778,
+    611, 487, 447, 944, 778, 944, 778, 944, 778, 667, 556, 333, 333, 556, 1e3,
+    1e3, 552, 278, 278, 278, 278, 500, 500, 500, 556, 556, 350, 1e3, 1e3, 240,
+    479, 333, 333, 604, 333, 167, 396, 556, 556, 1094, 556, 885, 489, 1115, 1e3,
+    768, 600, 834, 834, 834, 834, 1e3, 500, 1e3, 500, 1e3, 500, 500, 494, 612,
+    823, 713, 584, 549, 713, 979, 722, 274, 549, 549, 583, 549, 549, 604, 584,
+    604, 604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 729, 604, 604, 354, 354, 1e3, 990, 990, 990, 990, 494,
+    604, 604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500,
+    750, 750, 611, 611, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 333,
+    333, 333, 333, 333, 333, 333, 333,
   ],
   Ss = [
-    -1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276,
-    277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538, 539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904, 905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970, 971, 972, 973, 974,
-    1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810, 7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216, 8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242, 8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453, 8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594, 8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735, 8745, 8747, 8776,
-    8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472, 9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553, 9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565, 9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577, 9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632, 9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688, 9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834, 9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66,
+    67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+    86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+    104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
+    119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167,
+    168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183,
+    184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198,
+    199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213,
+    214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228,
+    229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243,
+    244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258,
+    259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273,
+    274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288,
+    289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303,
+    304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318,
+    319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333,
+    334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348,
+    349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363,
+    364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378,
+    379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538,
+    539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904,
+    905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921,
+    922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937,
+    938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952,
+    953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967,
+    968, 969, 970, 971, 972, 973, 974, 1024, 1025, 1026, 1027, 1028, 1029, 1030,
+    1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042,
+    1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054,
+    1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066,
+    1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078,
+    1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090,
+    1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102,
+    1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114,
+    1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810,
+    7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216,
+    8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242,
+    8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453,
+    8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594,
+    8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735,
+    8745, 8747, 8776, 8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472,
+    9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553,
+    9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565,
+    9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577,
+    9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632,
+    9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688,
+    9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834,
+    9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1,
   ],
   As = [
-    365, 0, 333, 278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584, 333, 556, 556, 556, 556, 280, 556, 333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 556, 278, 333, 333, 365, 556, 834, 834, 834, 611, 722, 722, 722, 722, 722, 722, 1e3, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 556, 556, 556, 556, 556, 278, 278, 278, 278, 611, 611, 611, 611, 611, 611, 611, 549, 611, 611, 611, 611, 611, 556, 611, 556, 722, 556, 722, 556, 722, 556, 722,
-    556, 722, 556, 722, 556, 722, 556, 722, 740, 722, 611, 667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 611, 778, 611, 778, 611, 778, 611, 722, 611, 722, 611, 278, 278, 278, 278, 278, 278, 278, 278, 278, 278, 782, 556, 556, 278, 722, 556, 556, 611, 278, 611, 278, 611, 396, 611, 479, 611, 278, 722, 611, 722, 611, 722, 611, 708, 723, 611, 778, 611, 778, 611, 778, 611, 1e3, 944, 722, 389, 722, 389, 722, 389, 667, 556, 667, 556, 667, 556, 667, 556, 611, 333, 611, 479, 611, 333, 722, 611, 722, 611, 722, 611, 722, 611, 722, 611, 722, 611, 944, 778, 667, 556, 667, 611, 500, 611, 500, 611, 500, 278, 556, 722, 556, 1e3, 889, 778, 611, 667, 556, 611, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 722, 333, 854, 906, 473, 844, 930, 847, 278, 722, 722, 610, 671, 667, 611, 722, 778, 278, 722, 667, 833, 722, 657, 778, 718, 667, 590, 611, 667, 822, 667, 829, 781, 278, 667, 620, 479, 611, 278, 591, 620, 621, 556, 610, 479, 492, 611, 558, 278, 566, 556, 603, 556, 450, 611, 712,
-    605, 532, 664, 409, 591, 704, 578, 773, 834, 278, 591, 611, 591, 834, 667, 667, 886, 614, 719, 667, 278, 278, 556, 1094, 1042, 854, 622, 719, 677, 719, 722, 708, 722, 614, 722, 667, 927, 643, 719, 719, 615, 687, 833, 722, 778, 719, 667, 722, 611, 677, 781, 667, 729, 708, 979, 989, 854, 1e3, 708, 719, 1042, 729, 556, 619, 604, 534, 618, 556, 736, 510, 611, 611, 507, 622, 740, 604, 611, 611, 611, 556, 889, 556, 885, 556, 646, 583, 889, 935, 707, 854, 594, 552, 865, 589, 556, 556, 611, 469, 563, 556, 278, 278, 278, 969, 906, 611, 507, 619, 556, 611, 778, 611, 575, 467, 944, 778, 944, 778, 944, 778, 667, 556, 333, 333, 556, 1e3, 1e3, 552, 278, 278, 278, 278, 500, 500, 500, 556, 556, 350, 1e3, 1e3, 240, 479, 333, 333, 604, 333, 167, 396, 556, 556, 1104, 556, 885, 516, 1146, 1e3, 768, 600, 834, 834, 834, 834, 999, 500, 1e3, 500, 1e3, 500, 500, 494, 612, 823, 713, 584, 549, 713, 979, 722, 274, 549, 549, 583, 549, 549, 604, 584, 604, 604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708,
-    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 729, 604, 604, 354, 354, 1e3, 990, 990, 990, 990, 494, 604, 604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750, 750, 611, 611, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 333, 333, 333, 333, 333, 333, 333, 333,
+    365, 0, 333, 278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584,
+    278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333,
+    333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278,
+    556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667,
+    667, 611, 333, 278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611,
+    611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556,
+    778, 556, 556, 500, 389, 280, 389, 584, 333, 556, 556, 556, 556, 280, 556,
+    333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 556, 278,
+    333, 333, 365, 556, 834, 834, 834, 611, 722, 722, 722, 722, 722, 722, 1e3,
+    722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778,
+    778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556,
+    556, 889, 556, 556, 556, 556, 556, 278, 278, 278, 278, 611, 611, 611, 611,
+    611, 611, 611, 549, 611, 611, 611, 611, 611, 556, 611, 556, 722, 556, 722,
+    556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 740, 722, 611,
+    667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 611, 778, 611, 778,
+    611, 778, 611, 722, 611, 722, 611, 278, 278, 278, 278, 278, 278, 278, 278,
+    278, 278, 782, 556, 556, 278, 722, 556, 556, 611, 278, 611, 278, 611, 396,
+    611, 479, 611, 278, 722, 611, 722, 611, 722, 611, 708, 723, 611, 778, 611,
+    778, 611, 778, 611, 1e3, 944, 722, 389, 722, 389, 722, 389, 667, 556, 667,
+    556, 667, 556, 667, 556, 611, 333, 611, 479, 611, 333, 722, 611, 722, 611,
+    722, 611, 722, 611, 722, 611, 722, 611, 944, 778, 667, 556, 667, 611, 500,
+    611, 500, 611, 500, 278, 556, 722, 556, 1e3, 889, 778, 611, 667, 556, 611,
+    333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 722, 333, 854,
+    906, 473, 844, 930, 847, 278, 722, 722, 610, 671, 667, 611, 722, 778, 278,
+    722, 667, 833, 722, 657, 778, 718, 667, 590, 611, 667, 822, 667, 829, 781,
+    278, 667, 620, 479, 611, 278, 591, 620, 621, 556, 610, 479, 492, 611, 558,
+    278, 566, 556, 603, 556, 450, 611, 712, 605, 532, 664, 409, 591, 704, 578,
+    773, 834, 278, 591, 611, 591, 834, 667, 667, 886, 614, 719, 667, 278, 278,
+    556, 1094, 1042, 854, 622, 719, 677, 719, 722, 708, 722, 614, 722, 667, 927,
+    643, 719, 719, 615, 687, 833, 722, 778, 719, 667, 722, 611, 677, 781, 667,
+    729, 708, 979, 989, 854, 1e3, 708, 719, 1042, 729, 556, 619, 604, 534, 618,
+    556, 736, 510, 611, 611, 507, 622, 740, 604, 611, 611, 611, 556, 889, 556,
+    885, 556, 646, 583, 889, 935, 707, 854, 594, 552, 865, 589, 556, 556, 611,
+    469, 563, 556, 278, 278, 278, 969, 906, 611, 507, 619, 556, 611, 778, 611,
+    575, 467, 944, 778, 944, 778, 944, 778, 667, 556, 333, 333, 556, 1e3, 1e3,
+    552, 278, 278, 278, 278, 500, 500, 500, 556, 556, 350, 1e3, 1e3, 240, 479,
+    333, 333, 604, 333, 167, 396, 556, 556, 1104, 556, 885, 516, 1146, 1e3, 768,
+    600, 834, 834, 834, 834, 999, 500, 1e3, 500, 1e3, 500, 500, 494, 612, 823,
+    713, 584, 549, 713, 979, 722, 274, 549, 549, 583, 549, 549, 604, 584, 604,
+    604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 729, 604, 604, 354, 354, 1e3, 990, 990, 990, 990, 494, 604,
+    604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750,
+    750, 611, 611, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 333, 333,
+    333, 333, 333, 333, 333, 333,
   ],
   xs = [
-    -1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276,
-    277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538, 539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904, 905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970, 971, 972, 973, 974,
-    1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810, 7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216, 8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242, 8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453, 8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594, 8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735, 8745, 8747, 8776,
-    8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472, 9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553, 9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565, 9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577, 9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632, 9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688, 9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834, 9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66,
+    67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+    86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+    104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
+    119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167,
+    168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183,
+    184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198,
+    199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213,
+    214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228,
+    229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243,
+    244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258,
+    259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273,
+    274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288,
+    289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303,
+    304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318,
+    319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333,
+    334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348,
+    349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363,
+    364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378,
+    379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538,
+    539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904,
+    905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921,
+    922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937,
+    938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952,
+    953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967,
+    968, 969, 970, 971, 972, 973, 974, 1024, 1025, 1026, 1027, 1028, 1029, 1030,
+    1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042,
+    1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054,
+    1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066,
+    1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078,
+    1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090,
+    1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102,
+    1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114,
+    1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810,
+    7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216,
+    8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242,
+    8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453,
+    8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594,
+    8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735,
+    8745, 8747, 8776, 8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472,
+    9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553,
+    9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565,
+    9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577,
+    9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632,
+    9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688,
+    9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834,
+    9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1,
   ],
   Cs = [
-    365, 0, 333, 278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584, 333, 556, 556, 556, 556, 260, 556, 333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 537, 278, 333, 333, 365, 556, 834, 834, 834, 611, 667, 667, 667, 667, 667, 667, 1e3, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 500, 556, 556, 556, 556, 278, 278, 278, 278, 556, 556, 556, 556, 556, 556, 556, 549, 611, 556, 556, 556, 556, 500, 556, 500, 667, 556, 667, 556, 667, 556, 722,
-    500, 722, 500, 722, 500, 722, 500, 722, 625, 722, 556, 667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 556, 778, 556, 778, 556, 778, 556, 722, 556, 722, 556, 278, 278, 278, 278, 278, 278, 278, 222, 278, 278, 733, 444, 500, 222, 667, 500, 500, 556, 222, 556, 222, 556, 281, 556, 400, 556, 222, 722, 556, 722, 556, 722, 556, 615, 723, 556, 778, 556, 778, 556, 778, 556, 1e3, 944, 722, 333, 722, 333, 722, 333, 667, 500, 667, 500, 667, 500, 667, 500, 611, 278, 611, 354, 611, 278, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 944, 722, 667, 500, 667, 611, 500, 611, 500, 611, 500, 222, 556, 667, 556, 1e3, 889, 778, 611, 667, 500, 611, 278, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 667, 278, 789, 846, 389, 794, 865, 775, 222, 667, 667, 570, 671, 667, 611, 722, 778, 278, 667, 667, 833, 722, 648, 778, 725, 667, 600, 611, 667, 837, 667, 831, 761, 278, 667, 570, 439, 555, 222, 550, 570, 571, 500, 556, 439, 463, 555, 542, 222, 500, 492, 548, 500, 447, 556, 670,
-    573, 486, 603, 374, 550, 652, 546, 728, 779, 222, 550, 556, 550, 779, 667, 667, 843, 544, 708, 667, 278, 278, 500, 1066, 982, 844, 589, 715, 639, 724, 667, 651, 667, 544, 704, 667, 917, 614, 715, 715, 589, 686, 833, 722, 778, 725, 667, 722, 611, 639, 795, 667, 727, 673, 920, 923, 805, 886, 651, 694, 1022, 682, 556, 562, 522, 493, 553, 556, 688, 465, 556, 556, 472, 564, 686, 550, 556, 556, 556, 500, 833, 500, 835, 500, 572, 518, 830, 851, 621, 736, 526, 492, 752, 534, 556, 556, 556, 378, 496, 500, 222, 222, 222, 910, 828, 556, 472, 565, 500, 556, 778, 556, 492, 339, 944, 722, 944, 722, 944, 722, 667, 500, 333, 333, 556, 1e3, 1e3, 552, 222, 222, 222, 222, 333, 333, 333, 556, 556, 350, 1e3, 1e3, 188, 354, 333, 333, 500, 333, 167, 365, 556, 556, 1094, 556, 885, 323, 1083, 1e3, 768, 600, 834, 834, 834, 834, 1e3, 500, 998, 500, 1e3, 500, 500, 494, 612, 823, 713, 584, 549, 713, 979, 719, 274, 549, 549, 584, 549, 549, 604, 584, 604, 604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708,
-    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 729, 604, 604, 354, 354, 1e3, 990, 990, 990, 990, 494, 604, 604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750, 750, 500, 500, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 294, 294, 324, 324, 316, 328, 398, 285,
+    365, 0, 333, 278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584,
+    278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278,
+    278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278,
+    500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667,
+    667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556,
+    556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500,
+    722, 500, 500, 500, 334, 260, 334, 584, 333, 556, 556, 556, 556, 260, 556,
+    333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 537, 278,
+    333, 333, 365, 556, 834, 834, 834, 611, 667, 667, 667, 667, 667, 667, 1e3,
+    722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778,
+    778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556,
+    556, 889, 500, 556, 556, 556, 556, 278, 278, 278, 278, 556, 556, 556, 556,
+    556, 556, 556, 549, 611, 556, 556, 556, 556, 500, 556, 500, 667, 556, 667,
+    556, 667, 556, 722, 500, 722, 500, 722, 500, 722, 500, 722, 625, 722, 556,
+    667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 556, 778, 556, 778,
+    556, 778, 556, 722, 556, 722, 556, 278, 278, 278, 278, 278, 278, 278, 222,
+    278, 278, 733, 444, 500, 222, 667, 500, 500, 556, 222, 556, 222, 556, 281,
+    556, 400, 556, 222, 722, 556, 722, 556, 722, 556, 615, 723, 556, 778, 556,
+    778, 556, 778, 556, 1e3, 944, 722, 333, 722, 333, 722, 333, 667, 500, 667,
+    500, 667, 500, 667, 500, 611, 278, 611, 354, 611, 278, 722, 556, 722, 556,
+    722, 556, 722, 556, 722, 556, 722, 556, 944, 722, 667, 500, 667, 611, 500,
+    611, 500, 611, 500, 222, 556, 667, 556, 1e3, 889, 778, 611, 667, 500, 611,
+    278, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 667, 278, 789,
+    846, 389, 794, 865, 775, 222, 667, 667, 570, 671, 667, 611, 722, 778, 278,
+    667, 667, 833, 722, 648, 778, 725, 667, 600, 611, 667, 837, 667, 831, 761,
+    278, 667, 570, 439, 555, 222, 550, 570, 571, 500, 556, 439, 463, 555, 542,
+    222, 500, 492, 548, 500, 447, 556, 670, 573, 486, 603, 374, 550, 652, 546,
+    728, 779, 222, 550, 556, 550, 779, 667, 667, 843, 544, 708, 667, 278, 278,
+    500, 1066, 982, 844, 589, 715, 639, 724, 667, 651, 667, 544, 704, 667, 917,
+    614, 715, 715, 589, 686, 833, 722, 778, 725, 667, 722, 611, 639, 795, 667,
+    727, 673, 920, 923, 805, 886, 651, 694, 1022, 682, 556, 562, 522, 493, 553,
+    556, 688, 465, 556, 556, 472, 564, 686, 550, 556, 556, 556, 500, 833, 500,
+    835, 500, 572, 518, 830, 851, 621, 736, 526, 492, 752, 534, 556, 556, 556,
+    378, 496, 500, 222, 222, 222, 910, 828, 556, 472, 565, 500, 556, 778, 556,
+    492, 339, 944, 722, 944, 722, 944, 722, 667, 500, 333, 333, 556, 1e3, 1e3,
+    552, 222, 222, 222, 222, 333, 333, 333, 556, 556, 350, 1e3, 1e3, 188, 354,
+    333, 333, 500, 333, 167, 365, 556, 556, 1094, 556, 885, 323, 1083, 1e3, 768,
+    600, 834, 834, 834, 834, 1e3, 500, 998, 500, 1e3, 500, 500, 494, 612, 823,
+    713, 584, 549, 713, 979, 719, 274, 549, 549, 584, 549, 549, 604, 584, 604,
+    604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 729, 604, 604, 354, 354, 1e3, 990, 990, 990, 990, 494, 604,
+    604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750,
+    750, 500, 500, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 294, 294,
+    324, 324, 316, 328, 398, 285,
   ],
   Is = [
-    -1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276,
-    277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538, 539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904, 905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970, 971, 972, 973, 974,
-    1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810, 7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216, 8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242, 8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453, 8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594, 8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735, 8745, 8747, 8776,
-    8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472, 9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553, 9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565, 9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577, 9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632, 9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688, 9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834, 9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66,
+    67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+    86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+    104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
+    119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167,
+    168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183,
+    184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198,
+    199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213,
+    214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228,
+    229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243,
+    244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258,
+    259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273,
+    274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288,
+    289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303,
+    304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318,
+    319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333,
+    334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348,
+    349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363,
+    364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378,
+    379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538,
+    539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904,
+    905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921,
+    922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937,
+    938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952,
+    953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967,
+    968, 969, 970, 971, 972, 973, 974, 1024, 1025, 1026, 1027, 1028, 1029, 1030,
+    1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042,
+    1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054,
+    1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066,
+    1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078,
+    1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090,
+    1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102,
+    1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114,
+    1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810,
+    7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216,
+    8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242,
+    8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453,
+    8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594,
+    8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735,
+    8745, 8747, 8776, 8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472,
+    9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553,
+    9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565,
+    9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577,
+    9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632,
+    9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688,
+    9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834,
+    9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1,
   ],
   Fs = [
-    365, 0, 333, 278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584, 333, 556, 556, 556, 556, 260, 556, 333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 537, 278, 333, 333, 365, 556, 834, 834, 834, 611, 667, 667, 667, 667, 667, 667, 1e3, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 500, 556, 556, 556, 556, 278, 278, 278, 278, 556, 556, 556, 556, 556, 556, 556, 549, 611, 556, 556, 556, 556, 500, 556, 500, 667, 556, 667, 556, 667, 556, 722,
-    500, 722, 500, 722, 500, 722, 500, 722, 615, 722, 556, 667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 556, 778, 556, 778, 556, 778, 556, 722, 556, 722, 556, 278, 278, 278, 278, 278, 278, 278, 222, 278, 278, 735, 444, 500, 222, 667, 500, 500, 556, 222, 556, 222, 556, 292, 556, 334, 556, 222, 722, 556, 722, 556, 722, 556, 604, 723, 556, 778, 556, 778, 556, 778, 556, 1e3, 944, 722, 333, 722, 333, 722, 333, 667, 500, 667, 500, 667, 500, 667, 500, 611, 278, 611, 375, 611, 278, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 944, 722, 667, 500, 667, 611, 500, 611, 500, 611, 500, 222, 556, 667, 556, 1e3, 889, 778, 611, 667, 500, 611, 278, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 667, 278, 784, 838, 384, 774, 855, 752, 222, 667, 667, 551, 668, 667, 611, 722, 778, 278, 667, 668, 833, 722, 650, 778, 722, 667, 618, 611, 667, 798, 667, 835, 748, 278, 667, 578, 446, 556, 222, 547, 578, 575, 500, 557, 446, 441, 556, 556, 222, 500, 500, 576, 500, 448, 556, 690,
-    569, 482, 617, 395, 547, 648, 525, 713, 781, 222, 547, 556, 547, 781, 667, 667, 865, 542, 719, 667, 278, 278, 500, 1057, 1010, 854, 583, 722, 635, 719, 667, 656, 667, 542, 677, 667, 923, 604, 719, 719, 583, 656, 833, 722, 778, 719, 667, 722, 611, 635, 760, 667, 740, 667, 917, 938, 792, 885, 656, 719, 1010, 722, 556, 573, 531, 365, 583, 556, 669, 458, 559, 559, 438, 583, 688, 552, 556, 542, 556, 500, 458, 500, 823, 500, 573, 521, 802, 823, 625, 719, 521, 510, 750, 542, 556, 556, 556, 365, 510, 500, 222, 278, 222, 906, 812, 556, 438, 559, 500, 552, 778, 556, 489, 411, 944, 722, 944, 722, 944, 722, 667, 500, 333, 333, 556, 1e3, 1e3, 552, 222, 222, 222, 222, 333, 333, 333, 556, 556, 350, 1e3, 1e3, 188, 354, 333, 333, 500, 333, 167, 365, 556, 556, 1094, 556, 885, 323, 1073, 1e3, 768, 600, 834, 834, 834, 834, 1e3, 500, 1e3, 500, 1e3, 500, 500, 494, 612, 823, 713, 584, 549, 713, 979, 719, 274, 549, 549, 583, 549, 549, 604, 584, 604, 604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708,
-    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 729, 604, 604, 354, 354, 1e3, 990, 990, 990, 990, 494, 604, 604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750, 750, 500, 500, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 294, 294, 324, 324, 316, 328, 398, 285,
+    365, 0, 333, 278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584,
+    278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278,
+    278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278,
+    500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667,
+    667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556,
+    556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500,
+    722, 500, 500, 500, 334, 260, 334, 584, 333, 556, 556, 556, 556, 260, 556,
+    333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 537, 278,
+    333, 333, 365, 556, 834, 834, 834, 611, 667, 667, 667, 667, 667, 667, 1e3,
+    722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778,
+    778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556,
+    556, 889, 500, 556, 556, 556, 556, 278, 278, 278, 278, 556, 556, 556, 556,
+    556, 556, 556, 549, 611, 556, 556, 556, 556, 500, 556, 500, 667, 556, 667,
+    556, 667, 556, 722, 500, 722, 500, 722, 500, 722, 500, 722, 615, 722, 556,
+    667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 556, 778, 556, 778,
+    556, 778, 556, 722, 556, 722, 556, 278, 278, 278, 278, 278, 278, 278, 222,
+    278, 278, 735, 444, 500, 222, 667, 500, 500, 556, 222, 556, 222, 556, 292,
+    556, 334, 556, 222, 722, 556, 722, 556, 722, 556, 604, 723, 556, 778, 556,
+    778, 556, 778, 556, 1e3, 944, 722, 333, 722, 333, 722, 333, 667, 500, 667,
+    500, 667, 500, 667, 500, 611, 278, 611, 375, 611, 278, 722, 556, 722, 556,
+    722, 556, 722, 556, 722, 556, 722, 556, 944, 722, 667, 500, 667, 611, 500,
+    611, 500, 611, 500, 222, 556, 667, 556, 1e3, 889, 778, 611, 667, 500, 611,
+    278, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 667, 278, 784,
+    838, 384, 774, 855, 752, 222, 667, 667, 551, 668, 667, 611, 722, 778, 278,
+    667, 668, 833, 722, 650, 778, 722, 667, 618, 611, 667, 798, 667, 835, 748,
+    278, 667, 578, 446, 556, 222, 547, 578, 575, 500, 557, 446, 441, 556, 556,
+    222, 500, 500, 576, 500, 448, 556, 690, 569, 482, 617, 395, 547, 648, 525,
+    713, 781, 222, 547, 556, 547, 781, 667, 667, 865, 542, 719, 667, 278, 278,
+    500, 1057, 1010, 854, 583, 722, 635, 719, 667, 656, 667, 542, 677, 667, 923,
+    604, 719, 719, 583, 656, 833, 722, 778, 719, 667, 722, 611, 635, 760, 667,
+    740, 667, 917, 938, 792, 885, 656, 719, 1010, 722, 556, 573, 531, 365, 583,
+    556, 669, 458, 559, 559, 438, 583, 688, 552, 556, 542, 556, 500, 458, 500,
+    823, 500, 573, 521, 802, 823, 625, 719, 521, 510, 750, 542, 556, 556, 556,
+    365, 510, 500, 222, 278, 222, 906, 812, 556, 438, 559, 500, 552, 778, 556,
+    489, 411, 944, 722, 944, 722, 944, 722, 667, 500, 333, 333, 556, 1e3, 1e3,
+    552, 222, 222, 222, 222, 333, 333, 333, 556, 556, 350, 1e3, 1e3, 188, 354,
+    333, 333, 500, 333, 167, 365, 556, 556, 1094, 556, 885, 323, 1073, 1e3, 768,
+    600, 834, 834, 834, 834, 1e3, 500, 1e3, 500, 1e3, 500, 500, 494, 612, 823,
+    713, 584, 549, 713, 979, 719, 274, 549, 549, 583, 549, 549, 604, 584, 604,
+    604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708,
+    708, 708, 708, 729, 604, 604, 354, 354, 1e3, 990, 990, 990, 990, 494, 604,
+    604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750,
+    750, 500, 500, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 294, 294,
+    324, 324, 316, 328, 398, 285,
   ],
   Ts = [
-    -1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276,
-    277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538, 539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904, 905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970, 971, 972, 973, 974,
-    1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810, 7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216, 8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242, 8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453, 8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594, 8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735, 8745, 8747, 8776,
-    8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472, 9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553, 9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565, 9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577, 9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632, 9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688, 9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834, 9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66,
+    67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+    86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+    104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
+    119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167,
+    168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183,
+    184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198,
+    199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213,
+    214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228,
+    229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243,
+    244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258,
+    259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273,
+    274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288,
+    289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303,
+    304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318,
+    319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333,
+    334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348,
+    349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363,
+    364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378,
+    379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538,
+    539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904,
+    905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921,
+    922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937,
+    938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952,
+    953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967,
+    968, 969, 970, 971, 972, 973, 974, 1024, 1025, 1026, 1027, 1028, 1029, 1030,
+    1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042,
+    1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054,
+    1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066,
+    1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078,
+    1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090,
+    1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102,
+    1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114,
+    1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810,
+    7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216,
+    8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242,
+    8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453,
+    8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594,
+    8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735,
+    8745, 8747, 8776, 8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472,
+    9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553,
+    9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565,
+    9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577,
+    9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632,
+    9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688,
+    9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834,
+    9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1,
   ],
   Os = [
-    1.36898, 1, 1, 0.72706, 0.80479, 0.83734, 0.98894, 0.99793, 0.9897, 0.93884, 0.86209, 0.94292, 0.94292, 1.16661, 1.02058, 0.93582, 0.96694, 0.93582, 1.19137, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.78076, 0.78076, 1.02058, 1.02058, 1.02058, 0.72851, 0.78966, 0.90838, 0.83637, 0.82391, 0.96376, 0.80061, 0.86275, 0.8768, 0.95407, 1.0258, 0.73901, 0.85022, 0.83655, 1.0156, 0.95546, 0.92179, 0.87107, 0.92179, 0.82114, 0.8096, 0.89713, 0.94438, 0.95353, 0.94083, 0.91905, 0.90406, 0.9446, 0.94292, 1.18777, 0.94292, 1.02058, 0.89903, 0.90088, 0.94938, 0.97898, 0.81093, 0.97571, 0.94938, 1.024, 0.9577, 0.95933, 0.98621, 1.0474, 0.97455, 0.98981, 0.9672, 0.95933, 0.9446, 0.97898, 0.97407, 0.97646, 0.78036, 1.10208, 0.95442, 0.95298, 0.97579, 0.9332, 0.94039, 0.938, 0.80687, 1.01149, 0.80687, 1.02058, 0.80479, 0.99793, 0.99793, 0.99793, 0.99793, 1.01149, 1.00872, 0.90088, 0.91882, 1.0213, 0.8361, 1.02058, 0.62295, 0.54324, 0.89022,
-    1.08595, 1, 1, 0.90088, 1, 0.97455, 0.93582, 0.90088, 1, 1.05686, 0.8361, 0.99642, 0.99642, 0.99642, 0.72851, 0.90838, 0.90838, 0.90838, 0.90838, 0.90838, 0.90838, 0.868, 0.82391, 0.80061, 0.80061, 0.80061, 0.80061, 1.0258, 1.0258, 1.0258, 1.0258, 0.97484, 0.95546, 0.92179, 0.92179, 0.92179, 0.92179, 0.92179, 1.02058, 0.92179, 0.94438, 0.94438, 0.94438, 0.94438, 0.90406, 0.86958, 0.98225, 0.94938, 0.94938, 0.94938, 0.94938, 0.94938, 0.94938, 0.9031, 0.81093, 0.94938, 0.94938, 0.94938, 0.94938, 0.98621, 0.98621, 0.98621, 0.98621, 0.93969, 0.95933, 0.9446, 0.9446, 0.9446, 0.9446, 0.9446, 1.08595, 0.9446, 0.95442, 0.95442, 0.95442, 0.95442, 0.94039, 0.97898, 0.94039, 0.90838, 0.94938, 0.90838, 0.94938, 0.90838, 0.94938, 0.82391, 0.81093, 0.82391, 0.81093, 0.82391, 0.81093, 0.82391, 0.81093, 0.96376, 0.84313, 0.97484, 0.97571, 0.80061, 0.94938, 0.80061, 0.94938, 0.80061, 0.94938, 0.80061, 0.94938, 0.80061, 0.94938, 0.8768, 0.9577, 0.8768, 0.9577, 0.8768, 0.9577, 1, 1, 0.95407,
-    0.95933, 0.97069, 0.95933, 1.0258, 0.98621, 1.0258, 0.98621, 1.0258, 0.98621, 1.0258, 0.98621, 1.0258, 0.98621, 0.887, 1.01591, 0.73901, 1.0474, 1, 1, 0.97455, 0.83655, 0.98981, 1, 1, 0.83655, 0.73977, 0.83655, 0.73903, 0.84638, 1.033, 0.95546, 0.95933, 1, 1, 0.95546, 0.95933, 0.8271, 0.95417, 0.95933, 0.92179, 0.9446, 0.92179, 0.9446, 0.92179, 0.9446, 0.936, 0.91964, 0.82114, 0.97646, 1, 1, 0.82114, 0.97646, 0.8096, 0.78036, 0.8096, 0.78036, 1, 1, 0.8096, 0.78036, 1, 1, 0.89713, 0.77452, 0.89713, 1.10208, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94083, 0.97579, 0.90406, 0.94039, 0.90406, 0.9446, 0.938, 0.9446, 0.938, 0.9446, 0.938, 1, 0.99793, 0.90838, 0.94938, 0.868, 0.9031, 0.92179, 0.9446, 1, 1, 0.89713, 1.10208, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90989, 0.9358, 0.91945, 0.83181, 0.75261, 0.87992, 0.82976, 0.96034, 0.83689, 0.97268, 1.0078, 0.90838, 0.83637,
-    0.8019, 0.90157, 0.80061, 0.9446, 0.95407, 0.92436, 1.0258, 0.85022, 0.97153, 1.0156, 0.95546, 0.89192, 0.92179, 0.92361, 0.87107, 0.96318, 0.89713, 0.93704, 0.95638, 0.91905, 0.91709, 0.92796, 1.0258, 0.93704, 0.94836, 1.0373, 0.95933, 1.0078, 0.95871, 0.94836, 0.96174, 0.92601, 0.9498, 0.98607, 0.95776, 0.95933, 1.05453, 1.0078, 0.98275, 0.9314, 0.95617, 0.91701, 1.05993, 0.9446, 0.78367, 0.9553, 1, 0.86832, 1.0128, 0.95871, 0.99394, 0.87548, 0.96361, 0.86774, 1.0078, 0.95871, 0.9446, 0.95871, 0.86774, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.94083, 0.97579, 0.94083, 0.97579, 0.94083, 0.97579, 0.90406, 0.94039, 0.96694, 1, 0.89903, 1, 1, 1, 0.93582, 0.93582, 0.93582, 1, 0.908, 0.908, 0.918, 0.94219, 0.94219, 0.96544, 1,
-    1.285, 1, 1, 0.81079, 0.81079, 1, 1, 0.74854, 1, 1, 1, 1, 0.99793, 1, 1, 1, 0.65, 1, 1.36145, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.17173, 1, 0.80535, 0.76169, 1.02058, 1.0732, 1.05486, 1, 1, 1.30692, 1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.16161, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.36898, 1, 1, 0.72706, 0.80479, 0.83734, 0.98894, 0.99793, 0.9897, 0.93884,
+    0.86209, 0.94292, 0.94292, 1.16661, 1.02058, 0.93582, 0.96694, 0.93582,
+    1.19137, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793,
+    0.99793, 0.99793, 0.99793, 0.78076, 0.78076, 1.02058, 1.02058, 1.02058,
+    0.72851, 0.78966, 0.90838, 0.83637, 0.82391, 0.96376, 0.80061, 0.86275,
+    0.8768, 0.95407, 1.0258, 0.73901, 0.85022, 0.83655, 1.0156, 0.95546,
+    0.92179, 0.87107, 0.92179, 0.82114, 0.8096, 0.89713, 0.94438, 0.95353,
+    0.94083, 0.91905, 0.90406, 0.9446, 0.94292, 1.18777, 0.94292, 1.02058,
+    0.89903, 0.90088, 0.94938, 0.97898, 0.81093, 0.97571, 0.94938, 1.024,
+    0.9577, 0.95933, 0.98621, 1.0474, 0.97455, 0.98981, 0.9672, 0.95933, 0.9446,
+    0.97898, 0.97407, 0.97646, 0.78036, 1.10208, 0.95442, 0.95298, 0.97579,
+    0.9332, 0.94039, 0.938, 0.80687, 1.01149, 0.80687, 1.02058, 0.80479,
+    0.99793, 0.99793, 0.99793, 0.99793, 1.01149, 1.00872, 0.90088, 0.91882,
+    1.0213, 0.8361, 1.02058, 0.62295, 0.54324, 0.89022, 1.08595, 1, 1, 0.90088,
+    1, 0.97455, 0.93582, 0.90088, 1, 1.05686, 0.8361, 0.99642, 0.99642, 0.99642,
+    0.72851, 0.90838, 0.90838, 0.90838, 0.90838, 0.90838, 0.90838, 0.868,
+    0.82391, 0.80061, 0.80061, 0.80061, 0.80061, 1.0258, 1.0258, 1.0258, 1.0258,
+    0.97484, 0.95546, 0.92179, 0.92179, 0.92179, 0.92179, 0.92179, 1.02058,
+    0.92179, 0.94438, 0.94438, 0.94438, 0.94438, 0.90406, 0.86958, 0.98225,
+    0.94938, 0.94938, 0.94938, 0.94938, 0.94938, 0.94938, 0.9031, 0.81093,
+    0.94938, 0.94938, 0.94938, 0.94938, 0.98621, 0.98621, 0.98621, 0.98621,
+    0.93969, 0.95933, 0.9446, 0.9446, 0.9446, 0.9446, 0.9446, 1.08595, 0.9446,
+    0.95442, 0.95442, 0.95442, 0.95442, 0.94039, 0.97898, 0.94039, 0.90838,
+    0.94938, 0.90838, 0.94938, 0.90838, 0.94938, 0.82391, 0.81093, 0.82391,
+    0.81093, 0.82391, 0.81093, 0.82391, 0.81093, 0.96376, 0.84313, 0.97484,
+    0.97571, 0.80061, 0.94938, 0.80061, 0.94938, 0.80061, 0.94938, 0.80061,
+    0.94938, 0.80061, 0.94938, 0.8768, 0.9577, 0.8768, 0.9577, 0.8768, 0.9577,
+    1, 1, 0.95407, 0.95933, 0.97069, 0.95933, 1.0258, 0.98621, 1.0258, 0.98621,
+    1.0258, 0.98621, 1.0258, 0.98621, 1.0258, 0.98621, 0.887, 1.01591, 0.73901,
+    1.0474, 1, 1, 0.97455, 0.83655, 0.98981, 1, 1, 0.83655, 0.73977, 0.83655,
+    0.73903, 0.84638, 1.033, 0.95546, 0.95933, 1, 1, 0.95546, 0.95933, 0.8271,
+    0.95417, 0.95933, 0.92179, 0.9446, 0.92179, 0.9446, 0.92179, 0.9446, 0.936,
+    0.91964, 0.82114, 0.97646, 1, 1, 0.82114, 0.97646, 0.8096, 0.78036, 0.8096,
+    0.78036, 1, 1, 0.8096, 0.78036, 1, 1, 0.89713, 0.77452, 0.89713, 1.10208,
+    0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442,
+    0.94438, 0.95442, 0.94438, 0.95442, 0.94083, 0.97579, 0.90406, 0.94039,
+    0.90406, 0.9446, 0.938, 0.9446, 0.938, 0.9446, 0.938, 1, 0.99793, 0.90838,
+    0.94938, 0.868, 0.9031, 0.92179, 0.9446, 1, 1, 0.89713, 1.10208, 0.90088,
+    0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088,
+    0.90989, 0.9358, 0.91945, 0.83181, 0.75261, 0.87992, 0.82976, 0.96034,
+    0.83689, 0.97268, 1.0078, 0.90838, 0.83637, 0.8019, 0.90157, 0.80061,
+    0.9446, 0.95407, 0.92436, 1.0258, 0.85022, 0.97153, 1.0156, 0.95546,
+    0.89192, 0.92179, 0.92361, 0.87107, 0.96318, 0.89713, 0.93704, 0.95638,
+    0.91905, 0.91709, 0.92796, 1.0258, 0.93704, 0.94836, 1.0373, 0.95933,
+    1.0078, 0.95871, 0.94836, 0.96174, 0.92601, 0.9498, 0.98607, 0.95776,
+    0.95933, 1.05453, 1.0078, 0.98275, 0.9314, 0.95617, 0.91701, 1.05993,
+    0.9446, 0.78367, 0.9553, 1, 0.86832, 1.0128, 0.95871, 0.99394, 0.87548,
+    0.96361, 0.86774, 1.0078, 0.95871, 0.9446, 0.95871, 0.86774, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.94083,
+    0.97579, 0.94083, 0.97579, 0.94083, 0.97579, 0.90406, 0.94039, 0.96694, 1,
+    0.89903, 1, 1, 1, 0.93582, 0.93582, 0.93582, 1, 0.908, 0.908, 0.918,
+    0.94219, 0.94219, 0.96544, 1, 1.285, 1, 1, 0.81079, 0.81079, 1, 1, 0.74854,
+    1, 1, 1, 1, 0.99793, 1, 1, 1, 0.65, 1, 1.36145, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1.17173, 1, 0.80535, 0.76169, 1.02058, 1.0732, 1.05486, 1, 1, 1.30692,
+    1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.16161, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   Rs = { lineHeight: 1.2, lineGap: 0.2 },
   Hs = [
-    1.36898, 1, 1, 0.66227, 0.80779, 0.81625, 0.97276, 0.97276, 0.97733, 0.92222, 0.83266, 0.94292, 0.94292, 1.16148, 1.02058, 0.93582, 0.96694, 0.93582, 1.17337, 0.97276, 0.97276, 0.97276, 0.97276, 0.97276, 0.97276, 0.97276, 0.97276, 0.97276, 0.97276, 0.78076, 0.78076, 1.02058, 1.02058, 1.02058, 0.71541, 0.76813, 0.85576, 0.80591, 0.80729, 0.94299, 0.77512, 0.83655, 0.86523, 0.92222, 0.98621, 0.71743, 0.81698, 0.79726, 0.98558, 0.92222, 0.90637, 0.83809, 0.90637, 0.80729, 0.76463, 0.86275, 0.90699, 0.91605, 0.9154, 0.85308, 0.85458, 0.90531, 0.94292, 1.21296, 0.94292, 1.02058, 0.89903, 1.18616, 0.99613, 0.91677, 0.78216, 0.91677, 0.90083, 0.98796, 0.9135, 0.92168, 0.95381, 0.98981, 0.95298, 0.95381, 0.93459, 0.92168, 0.91513, 0.92004, 0.91677, 0.95077, 0.748, 1.04502, 0.91677, 0.92061, 0.94236, 0.89544, 0.89364, 0.9, 0.80687, 0.8578, 0.80687, 1.02058, 0.80779, 0.97276, 0.97276, 0.97276, 0.97276, 0.8578, 0.99973, 1.18616, 0.91339, 1.08074, 0.82891, 1.02058, 0.55509, 0.71526, 0.89022,
-    1.08595, 1, 1, 1.18616, 1, 0.96736, 0.93582, 1.18616, 1, 1.04864, 0.82711, 0.99043, 0.99043, 0.99043, 0.71541, 0.85576, 0.85576, 0.85576, 0.85576, 0.85576, 0.85576, 0.845, 0.80729, 0.77512, 0.77512, 0.77512, 0.77512, 0.98621, 0.98621, 0.98621, 0.98621, 0.95961, 0.92222, 0.90637, 0.90637, 0.90637, 0.90637, 0.90637, 1.02058, 0.90251, 0.90699, 0.90699, 0.90699, 0.90699, 0.85458, 0.83659, 0.94951, 0.99613, 0.99613, 0.99613, 0.99613, 0.99613, 0.99613, 0.85811, 0.78216, 0.90083, 0.90083, 0.90083, 0.90083, 0.95381, 0.95381, 0.95381, 0.95381, 0.9135, 0.92168, 0.91513, 0.91513, 0.91513, 0.91513, 0.91513, 1.08595, 0.91677, 0.91677, 0.91677, 0.91677, 0.91677, 0.89364, 0.92332, 0.89364, 0.85576, 0.99613, 0.85576, 0.99613, 0.85576, 0.99613, 0.80729, 0.78216, 0.80729, 0.78216, 0.80729, 0.78216, 0.80729, 0.78216, 0.94299, 0.76783, 0.95961, 0.91677, 0.77512, 0.90083, 0.77512, 0.90083, 0.77512, 0.90083, 0.77512, 0.90083, 0.77512, 0.90083, 0.86523, 0.9135, 0.86523, 0.9135, 0.86523, 0.9135, 1, 1,
-    0.92222, 0.92168, 0.92222, 0.92168, 0.98621, 0.95381, 0.98621, 0.95381, 0.98621, 0.95381, 0.98621, 0.95381, 0.98621, 0.95381, 0.86036, 0.97096, 0.71743, 0.98981, 1, 1, 0.95298, 0.79726, 0.95381, 1, 1, 0.79726, 0.6894, 0.79726, 0.74321, 0.81691, 1.0006, 0.92222, 0.92168, 1, 1, 0.92222, 0.92168, 0.79464, 0.92098, 0.92168, 0.90637, 0.91513, 0.90637, 0.91513, 0.90637, 0.91513, 0.909, 0.87514, 0.80729, 0.95077, 1, 1, 0.80729, 0.95077, 0.76463, 0.748, 0.76463, 0.748, 1, 1, 0.76463, 0.748, 1, 1, 0.86275, 0.72651, 0.86275, 1.04502, 0.90699, 0.91677, 0.90699, 0.91677, 0.90699, 0.91677, 0.90699, 0.91677, 0.90699, 0.91677, 0.90699, 0.91677, 0.9154, 0.94236, 0.85458, 0.89364, 0.85458, 0.90531, 0.9, 0.90531, 0.9, 0.90531, 0.9, 1, 0.97276, 0.85576, 0.99613, 0.845, 0.85811, 0.90251, 0.91677, 1, 1, 0.86275, 1.04502, 1.18616, 1.18616, 1.18616, 1.18616, 1.18616, 1.18616, 1.18616, 1.18616, 1.18616, 1.00899, 1.30628, 0.85576, 0.80178, 0.66862, 0.7927, 0.69323, 0.88127, 0.72459, 0.89711, 0.95381,
-    0.85576, 0.80591, 0.7805, 0.94729, 0.77512, 0.90531, 0.92222, 0.90637, 0.98621, 0.81698, 0.92655, 0.98558, 0.92222, 0.85359, 0.90637, 0.90976, 0.83809, 0.94523, 0.86275, 0.83509, 0.93157, 0.85308, 0.83392, 0.92346, 0.98621, 0.83509, 0.92886, 0.91324, 0.92168, 0.95381, 0.90646, 0.92886, 0.90557, 0.86847, 0.90276, 0.91324, 0.86842, 0.92168, 0.99531, 0.95381, 0.9224, 0.85408, 0.92699, 0.86847, 1.0051, 0.91513, 0.80487, 0.93481, 1, 0.88159, 1.05214, 0.90646, 0.97355, 0.81539, 0.89398, 0.85923, 0.95381, 0.90646, 0.91513, 0.90646, 0.85923, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9154, 0.94236, 0.9154, 0.94236, 0.9154, 0.94236, 0.85458, 0.89364, 0.96694, 1, 0.89903, 1, 1, 1, 0.91782, 0.91782, 0.91782, 1, 0.896, 0.896, 0.896,
-    0.9332, 0.9332, 0.95973, 1, 1.26, 1, 1, 0.80479, 0.80178, 1, 1, 0.85633, 1, 1, 1, 1, 0.97276, 1, 1, 1, 0.698, 1, 1.36145, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.14542, 1, 0.79199, 0.78694, 1.02058, 1.03493, 1.05486, 1, 1, 1.23026, 1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.20006, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.36898, 1, 1, 0.66227, 0.80779, 0.81625, 0.97276, 0.97276, 0.97733,
+    0.92222, 0.83266, 0.94292, 0.94292, 1.16148, 1.02058, 0.93582, 0.96694,
+    0.93582, 1.17337, 0.97276, 0.97276, 0.97276, 0.97276, 0.97276, 0.97276,
+    0.97276, 0.97276, 0.97276, 0.97276, 0.78076, 0.78076, 1.02058, 1.02058,
+    1.02058, 0.71541, 0.76813, 0.85576, 0.80591, 0.80729, 0.94299, 0.77512,
+    0.83655, 0.86523, 0.92222, 0.98621, 0.71743, 0.81698, 0.79726, 0.98558,
+    0.92222, 0.90637, 0.83809, 0.90637, 0.80729, 0.76463, 0.86275, 0.90699,
+    0.91605, 0.9154, 0.85308, 0.85458, 0.90531, 0.94292, 1.21296, 0.94292,
+    1.02058, 0.89903, 1.18616, 0.99613, 0.91677, 0.78216, 0.91677, 0.90083,
+    0.98796, 0.9135, 0.92168, 0.95381, 0.98981, 0.95298, 0.95381, 0.93459,
+    0.92168, 0.91513, 0.92004, 0.91677, 0.95077, 0.748, 1.04502, 0.91677,
+    0.92061, 0.94236, 0.89544, 0.89364, 0.9, 0.80687, 0.8578, 0.80687, 1.02058,
+    0.80779, 0.97276, 0.97276, 0.97276, 0.97276, 0.8578, 0.99973, 1.18616,
+    0.91339, 1.08074, 0.82891, 1.02058, 0.55509, 0.71526, 0.89022, 1.08595, 1,
+    1, 1.18616, 1, 0.96736, 0.93582, 1.18616, 1, 1.04864, 0.82711, 0.99043,
+    0.99043, 0.99043, 0.71541, 0.85576, 0.85576, 0.85576, 0.85576, 0.85576,
+    0.85576, 0.845, 0.80729, 0.77512, 0.77512, 0.77512, 0.77512, 0.98621,
+    0.98621, 0.98621, 0.98621, 0.95961, 0.92222, 0.90637, 0.90637, 0.90637,
+    0.90637, 0.90637, 1.02058, 0.90251, 0.90699, 0.90699, 0.90699, 0.90699,
+    0.85458, 0.83659, 0.94951, 0.99613, 0.99613, 0.99613, 0.99613, 0.99613,
+    0.99613, 0.85811, 0.78216, 0.90083, 0.90083, 0.90083, 0.90083, 0.95381,
+    0.95381, 0.95381, 0.95381, 0.9135, 0.92168, 0.91513, 0.91513, 0.91513,
+    0.91513, 0.91513, 1.08595, 0.91677, 0.91677, 0.91677, 0.91677, 0.91677,
+    0.89364, 0.92332, 0.89364, 0.85576, 0.99613, 0.85576, 0.99613, 0.85576,
+    0.99613, 0.80729, 0.78216, 0.80729, 0.78216, 0.80729, 0.78216, 0.80729,
+    0.78216, 0.94299, 0.76783, 0.95961, 0.91677, 0.77512, 0.90083, 0.77512,
+    0.90083, 0.77512, 0.90083, 0.77512, 0.90083, 0.77512, 0.90083, 0.86523,
+    0.9135, 0.86523, 0.9135, 0.86523, 0.9135, 1, 1, 0.92222, 0.92168, 0.92222,
+    0.92168, 0.98621, 0.95381, 0.98621, 0.95381, 0.98621, 0.95381, 0.98621,
+    0.95381, 0.98621, 0.95381, 0.86036, 0.97096, 0.71743, 0.98981, 1, 1,
+    0.95298, 0.79726, 0.95381, 1, 1, 0.79726, 0.6894, 0.79726, 0.74321, 0.81691,
+    1.0006, 0.92222, 0.92168, 1, 1, 0.92222, 0.92168, 0.79464, 0.92098, 0.92168,
+    0.90637, 0.91513, 0.90637, 0.91513, 0.90637, 0.91513, 0.909, 0.87514,
+    0.80729, 0.95077, 1, 1, 0.80729, 0.95077, 0.76463, 0.748, 0.76463, 0.748, 1,
+    1, 0.76463, 0.748, 1, 1, 0.86275, 0.72651, 0.86275, 1.04502, 0.90699,
+    0.91677, 0.90699, 0.91677, 0.90699, 0.91677, 0.90699, 0.91677, 0.90699,
+    0.91677, 0.90699, 0.91677, 0.9154, 0.94236, 0.85458, 0.89364, 0.85458,
+    0.90531, 0.9, 0.90531, 0.9, 0.90531, 0.9, 1, 0.97276, 0.85576, 0.99613,
+    0.845, 0.85811, 0.90251, 0.91677, 1, 1, 0.86275, 1.04502, 1.18616, 1.18616,
+    1.18616, 1.18616, 1.18616, 1.18616, 1.18616, 1.18616, 1.18616, 1.00899,
+    1.30628, 0.85576, 0.80178, 0.66862, 0.7927, 0.69323, 0.88127, 0.72459,
+    0.89711, 0.95381, 0.85576, 0.80591, 0.7805, 0.94729, 0.77512, 0.90531,
+    0.92222, 0.90637, 0.98621, 0.81698, 0.92655, 0.98558, 0.92222, 0.85359,
+    0.90637, 0.90976, 0.83809, 0.94523, 0.86275, 0.83509, 0.93157, 0.85308,
+    0.83392, 0.92346, 0.98621, 0.83509, 0.92886, 0.91324, 0.92168, 0.95381,
+    0.90646, 0.92886, 0.90557, 0.86847, 0.90276, 0.91324, 0.86842, 0.92168,
+    0.99531, 0.95381, 0.9224, 0.85408, 0.92699, 0.86847, 1.0051, 0.91513,
+    0.80487, 0.93481, 1, 0.88159, 1.05214, 0.90646, 0.97355, 0.81539, 0.89398,
+    0.85923, 0.95381, 0.90646, 0.91513, 0.90646, 0.85923, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9154, 0.94236,
+    0.9154, 0.94236, 0.9154, 0.94236, 0.85458, 0.89364, 0.96694, 1, 0.89903, 1,
+    1, 1, 0.91782, 0.91782, 0.91782, 1, 0.896, 0.896, 0.896, 0.9332, 0.9332,
+    0.95973, 1, 1.26, 1, 1, 0.80479, 0.80178, 1, 1, 0.85633, 1, 1, 1, 1,
+    0.97276, 1, 1, 1, 0.698, 1, 1.36145, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.14542, 1, 0.79199, 0.78694, 1.02058, 1.03493, 1.05486, 1, 1, 1.23026,
+    1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.20006, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   Bs = { lineHeight: 1.2, lineGap: 0.2 },
   Ds = [
-    1.36898, 1, 1, 0.65507, 0.84943, 0.85639, 0.88465, 0.88465, 0.86936, 0.88307, 0.86948, 0.85283, 0.85283, 1.06383, 1.02058, 0.75945, 0.9219, 0.75945, 1.17337, 0.88465, 0.88465, 0.88465, 0.88465, 0.88465, 0.88465, 0.88465, 0.88465, 0.88465, 0.88465, 0.75945, 0.75945, 1.02058, 1.02058, 1.02058, 0.69046, 0.70926, 0.85158, 0.77812, 0.76852, 0.89591, 0.70466, 0.76125, 0.80094, 0.86822, 0.83864, 0.728, 0.77212, 0.79475, 0.93637, 0.87514, 0.8588, 0.76013, 0.8588, 0.72421, 0.69866, 0.77598, 0.85991, 0.80811, 0.87832, 0.78112, 0.77512, 0.8562, 1.0222, 1.18417, 1.0222, 1.27014, 0.89903, 1.15012, 0.93859, 0.94399, 0.846, 0.94399, 0.81453, 1.0186, 0.94219, 0.96017, 1.03075, 1.02175, 0.912, 1.03075, 0.96998, 0.96017, 0.93859, 0.94399, 0.94399, 0.95493, 0.746, 1.12658, 0.94578, 0.91, 0.979, 0.882, 0.882, 0.83, 0.85034, 0.83537, 0.85034, 1.02058, 0.70869, 0.88465, 0.88465, 0.88465, 0.88465, 0.83537, 0.90083, 1.15012, 0.9161, 0.94565, 0.73541, 1.02058, 0.53609, 0.69353, 0.79519, 1.08595, 1, 1,
-    1.15012, 1, 0.91974, 0.75945, 1.15012, 1, 0.9446, 0.73361, 0.9005, 0.9005, 0.9005, 0.62864, 0.85158, 0.85158, 0.85158, 0.85158, 0.85158, 0.85158, 0.773, 0.76852, 0.70466, 0.70466, 0.70466, 0.70466, 0.83864, 0.83864, 0.83864, 0.83864, 0.90561, 0.87514, 0.8588, 0.8588, 0.8588, 0.8588, 0.8588, 1.02058, 0.85751, 0.85991, 0.85991, 0.85991, 0.85991, 0.77512, 0.76013, 0.88075, 0.93859, 0.93859, 0.93859, 0.93859, 0.93859, 0.93859, 0.8075, 0.846, 0.81453, 0.81453, 0.81453, 0.81453, 0.82424, 0.82424, 0.82424, 0.82424, 0.9278, 0.96017, 0.93859, 0.93859, 0.93859, 0.93859, 0.93859, 1.08595, 0.8562, 0.94578, 0.94578, 0.94578, 0.94578, 0.882, 0.94578, 0.882, 0.85158, 0.93859, 0.85158, 0.93859, 0.85158, 0.93859, 0.76852, 0.846, 0.76852, 0.846, 0.76852, 0.846, 0.76852, 0.846, 0.89591, 0.8544, 0.90561, 0.94399, 0.70466, 0.81453, 0.70466, 0.81453, 0.70466, 0.81453, 0.70466, 0.81453, 0.70466, 0.81453, 0.80094, 0.94219, 0.80094, 0.94219, 0.80094, 0.94219, 1, 1, 0.86822, 0.96017, 0.86822, 0.96017,
-    0.83864, 0.82424, 0.83864, 0.82424, 0.83864, 0.82424, 0.83864, 1.03075, 0.83864, 0.82424, 0.81402, 1.02738, 0.728, 1.02175, 1, 1, 0.912, 0.79475, 1.03075, 1, 1, 0.79475, 0.83911, 0.79475, 0.66266, 0.80553, 1.06676, 0.87514, 0.96017, 1, 1, 0.87514, 0.96017, 0.86865, 0.87396, 0.96017, 0.8588, 0.93859, 0.8588, 0.93859, 0.8588, 0.93859, 0.867, 0.84759, 0.72421, 0.95493, 1, 1, 0.72421, 0.95493, 0.69866, 0.746, 0.69866, 0.746, 1, 1, 0.69866, 0.746, 1, 1, 0.77598, 0.88417, 0.77598, 1.12658, 0.85991, 0.94578, 0.85991, 0.94578, 0.85991, 0.94578, 0.85991, 0.94578, 0.85991, 0.94578, 0.85991, 0.94578, 0.87832, 0.979, 0.77512, 0.882, 0.77512, 0.8562, 0.83, 0.8562, 0.83, 0.8562, 0.83, 1, 0.88465, 0.85158, 0.93859, 0.773, 0.8075, 0.85751, 0.8562, 1, 1, 0.77598, 1.12658, 1.15012, 1.15012, 1.15012, 1.15012, 1.15012, 1.15313, 1.15012, 1.15012, 1.15012, 1.08106, 1.03901, 0.85158, 0.77025, 0.62264, 0.7646, 0.65351, 0.86026, 0.69461, 0.89947, 1.03075, 0.85158, 0.77812, 0.76449, 0.88836, 0.70466,
-    0.8562, 0.86822, 0.8588, 0.83864, 0.77212, 0.85308, 0.93637, 0.87514, 0.82352, 0.8588, 0.85701, 0.76013, 0.89058, 0.77598, 0.8156, 0.82565, 0.78112, 0.77899, 0.89386, 0.83864, 0.8156, 0.9486, 0.92388, 0.96186, 1.03075, 0.91123, 0.9486, 0.93298, 0.878, 0.93942, 0.92388, 0.84596, 0.96186, 0.95119, 1.03075, 0.922, 0.88787, 0.95829, 0.88, 0.93559, 0.93859, 0.78815, 0.93758, 1, 0.89217, 1.03737, 0.91123, 0.93969, 0.77487, 0.85769, 0.86799, 1.03075, 0.91123, 0.93859, 0.91123, 0.86799, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.87832, 0.979, 0.87832, 0.979, 0.87832, 0.979, 0.77512, 0.882, 0.9219, 1, 0.89903, 1, 1, 1, 0.87321, 0.87321, 0.87321, 1, 1.027, 1.027, 1.027, 0.86847, 0.86847, 0.79121, 1, 1.124, 1, 1, 0.73572, 0.73572, 1, 1,
-    0.85034, 1, 1, 1, 1, 0.88465, 1, 1, 1, 0.669, 1, 1.36145, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.04828, 1, 0.74948, 0.75187, 1.02058, 0.98391, 1.02119, 1, 1, 1.06233, 1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.05233, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.36898, 1, 1, 0.65507, 0.84943, 0.85639, 0.88465, 0.88465, 0.86936,
+    0.88307, 0.86948, 0.85283, 0.85283, 1.06383, 1.02058, 0.75945, 0.9219,
+    0.75945, 1.17337, 0.88465, 0.88465, 0.88465, 0.88465, 0.88465, 0.88465,
+    0.88465, 0.88465, 0.88465, 0.88465, 0.75945, 0.75945, 1.02058, 1.02058,
+    1.02058, 0.69046, 0.70926, 0.85158, 0.77812, 0.76852, 0.89591, 0.70466,
+    0.76125, 0.80094, 0.86822, 0.83864, 0.728, 0.77212, 0.79475, 0.93637,
+    0.87514, 0.8588, 0.76013, 0.8588, 0.72421, 0.69866, 0.77598, 0.85991,
+    0.80811, 0.87832, 0.78112, 0.77512, 0.8562, 1.0222, 1.18417, 1.0222,
+    1.27014, 0.89903, 1.15012, 0.93859, 0.94399, 0.846, 0.94399, 0.81453,
+    1.0186, 0.94219, 0.96017, 1.03075, 1.02175, 0.912, 1.03075, 0.96998,
+    0.96017, 0.93859, 0.94399, 0.94399, 0.95493, 0.746, 1.12658, 0.94578, 0.91,
+    0.979, 0.882, 0.882, 0.83, 0.85034, 0.83537, 0.85034, 1.02058, 0.70869,
+    0.88465, 0.88465, 0.88465, 0.88465, 0.83537, 0.90083, 1.15012, 0.9161,
+    0.94565, 0.73541, 1.02058, 0.53609, 0.69353, 0.79519, 1.08595, 1, 1,
+    1.15012, 1, 0.91974, 0.75945, 1.15012, 1, 0.9446, 0.73361, 0.9005, 0.9005,
+    0.9005, 0.62864, 0.85158, 0.85158, 0.85158, 0.85158, 0.85158, 0.85158,
+    0.773, 0.76852, 0.70466, 0.70466, 0.70466, 0.70466, 0.83864, 0.83864,
+    0.83864, 0.83864, 0.90561, 0.87514, 0.8588, 0.8588, 0.8588, 0.8588, 0.8588,
+    1.02058, 0.85751, 0.85991, 0.85991, 0.85991, 0.85991, 0.77512, 0.76013,
+    0.88075, 0.93859, 0.93859, 0.93859, 0.93859, 0.93859, 0.93859, 0.8075,
+    0.846, 0.81453, 0.81453, 0.81453, 0.81453, 0.82424, 0.82424, 0.82424,
+    0.82424, 0.9278, 0.96017, 0.93859, 0.93859, 0.93859, 0.93859, 0.93859,
+    1.08595, 0.8562, 0.94578, 0.94578, 0.94578, 0.94578, 0.882, 0.94578, 0.882,
+    0.85158, 0.93859, 0.85158, 0.93859, 0.85158, 0.93859, 0.76852, 0.846,
+    0.76852, 0.846, 0.76852, 0.846, 0.76852, 0.846, 0.89591, 0.8544, 0.90561,
+    0.94399, 0.70466, 0.81453, 0.70466, 0.81453, 0.70466, 0.81453, 0.70466,
+    0.81453, 0.70466, 0.81453, 0.80094, 0.94219, 0.80094, 0.94219, 0.80094,
+    0.94219, 1, 1, 0.86822, 0.96017, 0.86822, 0.96017, 0.83864, 0.82424,
+    0.83864, 0.82424, 0.83864, 0.82424, 0.83864, 1.03075, 0.83864, 0.82424,
+    0.81402, 1.02738, 0.728, 1.02175, 1, 1, 0.912, 0.79475, 1.03075, 1, 1,
+    0.79475, 0.83911, 0.79475, 0.66266, 0.80553, 1.06676, 0.87514, 0.96017, 1,
+    1, 0.87514, 0.96017, 0.86865, 0.87396, 0.96017, 0.8588, 0.93859, 0.8588,
+    0.93859, 0.8588, 0.93859, 0.867, 0.84759, 0.72421, 0.95493, 1, 1, 0.72421,
+    0.95493, 0.69866, 0.746, 0.69866, 0.746, 1, 1, 0.69866, 0.746, 1, 1,
+    0.77598, 0.88417, 0.77598, 1.12658, 0.85991, 0.94578, 0.85991, 0.94578,
+    0.85991, 0.94578, 0.85991, 0.94578, 0.85991, 0.94578, 0.85991, 0.94578,
+    0.87832, 0.979, 0.77512, 0.882, 0.77512, 0.8562, 0.83, 0.8562, 0.83, 0.8562,
+    0.83, 1, 0.88465, 0.85158, 0.93859, 0.773, 0.8075, 0.85751, 0.8562, 1, 1,
+    0.77598, 1.12658, 1.15012, 1.15012, 1.15012, 1.15012, 1.15012, 1.15313,
+    1.15012, 1.15012, 1.15012, 1.08106, 1.03901, 0.85158, 0.77025, 0.62264,
+    0.7646, 0.65351, 0.86026, 0.69461, 0.89947, 1.03075, 0.85158, 0.77812,
+    0.76449, 0.88836, 0.70466, 0.8562, 0.86822, 0.8588, 0.83864, 0.77212,
+    0.85308, 0.93637, 0.87514, 0.82352, 0.8588, 0.85701, 0.76013, 0.89058,
+    0.77598, 0.8156, 0.82565, 0.78112, 0.77899, 0.89386, 0.83864, 0.8156,
+    0.9486, 0.92388, 0.96186, 1.03075, 0.91123, 0.9486, 0.93298, 0.878, 0.93942,
+    0.92388, 0.84596, 0.96186, 0.95119, 1.03075, 0.922, 0.88787, 0.95829, 0.88,
+    0.93559, 0.93859, 0.78815, 0.93758, 1, 0.89217, 1.03737, 0.91123, 0.93969,
+    0.77487, 0.85769, 0.86799, 1.03075, 0.91123, 0.93859, 0.91123, 0.86799, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0.87832, 0.979, 0.87832, 0.979, 0.87832, 0.979, 0.77512, 0.882, 0.9219, 1,
+    0.89903, 1, 1, 1, 0.87321, 0.87321, 0.87321, 1, 1.027, 1.027, 1.027,
+    0.86847, 0.86847, 0.79121, 1, 1.124, 1, 1, 0.73572, 0.73572, 1, 1, 0.85034,
+    1, 1, 1, 1, 0.88465, 1, 1, 1, 0.669, 1, 1.36145, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1.04828, 1, 0.74948, 0.75187, 1.02058, 0.98391, 1.02119, 1, 1,
+    1.06233, 1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1.05233, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   Ms = { lineHeight: 1.2, lineGap: 0.2 },
   Ns = [
-    1.36898, 1, 1, 0.76305, 0.82784, 0.94935, 0.89364, 0.92241, 0.89073, 0.90706, 0.98472, 0.85283, 0.85283, 1.0664, 1.02058, 0.74505, 0.9219, 0.74505, 1.23456, 0.92241, 0.92241, 0.92241, 0.92241, 0.92241, 0.92241, 0.92241, 0.92241, 0.92241, 0.92241, 0.74505, 0.74505, 1.02058, 1.02058, 1.02058, 0.73002, 0.72601, 0.91755, 0.8126, 0.80314, 0.92222, 0.73764, 0.79726, 0.83051, 0.90284, 0.86023, 0.74, 0.8126, 0.84869, 0.96518, 0.91115, 0.8858, 0.79761, 0.8858, 0.74498, 0.73914, 0.81363, 0.89591, 0.83659, 0.89633, 0.85608, 0.8111, 0.90531, 1.0222, 1.22736, 1.0222, 1.27014, 0.89903, 0.90088, 0.86667, 1.0231, 0.896, 1.01411, 0.90083, 1.05099, 1.00512, 0.99793, 1.05326, 1.09377, 0.938, 1.06226, 1.00119, 0.99793, 0.98714, 1.0231, 1.01231, 0.98196, 0.792, 1.19137, 0.99074, 0.962, 1.01915, 0.926, 0.942, 0.856, 0.85034, 0.92006, 0.85034, 1.02058, 0.69067, 0.92241, 0.92241, 0.92241, 0.92241, 0.92006, 0.9332, 0.90088, 0.91882, 0.93484, 0.75339, 1.02058, 0.56866, 0.54324, 0.79519, 1.08595, 1, 1,
-    0.90088, 1, 0.95325, 0.74505, 0.90088, 1, 0.97198, 0.75339, 0.91009, 0.91009, 0.91009, 0.66466, 0.91755, 0.91755, 0.91755, 0.91755, 0.91755, 0.91755, 0.788, 0.80314, 0.73764, 0.73764, 0.73764, 0.73764, 0.86023, 0.86023, 0.86023, 0.86023, 0.92915, 0.91115, 0.8858, 0.8858, 0.8858, 0.8858, 0.8858, 1.02058, 0.8858, 0.89591, 0.89591, 0.89591, 0.89591, 0.8111, 0.79611, 0.89713, 0.86667, 0.86667, 0.86667, 0.86667, 0.86667, 0.86667, 0.86936, 0.896, 0.90083, 0.90083, 0.90083, 0.90083, 0.84224, 0.84224, 0.84224, 0.84224, 0.97276, 0.99793, 0.98714, 0.98714, 0.98714, 0.98714, 0.98714, 1.08595, 0.89876, 0.99074, 0.99074, 0.99074, 0.99074, 0.942, 1.0231, 0.942, 0.91755, 0.86667, 0.91755, 0.86667, 0.91755, 0.86667, 0.80314, 0.896, 0.80314, 0.896, 0.80314, 0.896, 0.80314, 0.896, 0.92222, 0.93372, 0.92915, 1.01411, 0.73764, 0.90083, 0.73764, 0.90083, 0.73764, 0.90083, 0.73764, 0.90083, 0.73764, 0.90083, 0.83051, 1.00512, 0.83051, 1.00512, 0.83051, 1.00512, 1, 1, 0.90284, 0.99793, 0.90976, 0.99793,
-    0.86023, 0.84224, 0.86023, 0.84224, 0.86023, 0.84224, 0.86023, 1.05326, 0.86023, 0.84224, 0.82873, 1.07469, 0.74, 1.09377, 1, 1, 0.938, 0.84869, 1.06226, 1, 1, 0.84869, 0.83704, 0.84869, 0.81441, 0.85588, 1.08927, 0.91115, 0.99793, 1, 1, 0.91115, 0.99793, 0.91887, 0.90991, 0.99793, 0.8858, 0.98714, 0.8858, 0.98714, 0.8858, 0.98714, 0.894, 0.91434, 0.74498, 0.98196, 1, 1, 0.74498, 0.98196, 0.73914, 0.792, 0.73914, 0.792, 1, 1, 0.73914, 0.792, 1, 1, 0.81363, 0.904, 0.81363, 1.19137, 0.89591, 0.99074, 0.89591, 0.99074, 0.89591, 0.99074, 0.89591, 0.99074, 0.89591, 0.99074, 0.89591, 0.99074, 0.89633, 1.01915, 0.8111, 0.942, 0.8111, 0.90531, 0.856, 0.90531, 0.856, 0.90531, 0.856, 1, 0.92241, 0.91755, 0.86667, 0.788, 0.86936, 0.8858, 0.89876, 1, 1, 0.81363, 1.19137, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90388, 1.03901, 0.92138, 0.78105, 0.7154, 0.86169, 0.80513, 0.94007, 0.82528, 0.98612, 1.06226, 0.91755, 0.8126, 0.81884, 0.92819, 0.73764,
-    0.90531, 0.90284, 0.8858, 0.86023, 0.8126, 0.91172, 0.96518, 0.91115, 0.83089, 0.8858, 0.87791, 0.79761, 0.89297, 0.81363, 0.88157, 0.89992, 0.85608, 0.81992, 0.94307, 0.86023, 0.88157, 0.95308, 0.98699, 0.99793, 1.06226, 0.95817, 0.95308, 0.97358, 0.928, 0.98088, 0.98699, 0.92761, 0.99793, 0.96017, 1.06226, 0.986, 0.944, 0.95978, 0.938, 0.96705, 0.98714, 0.80442, 0.98972, 1, 0.89762, 1.04552, 0.95817, 0.99007, 0.87064, 0.91879, 0.88888, 1.06226, 0.95817, 0.98714, 0.95817, 0.88888, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.89633, 1.01915, 0.89633, 1.01915, 0.89633, 1.01915, 0.8111, 0.942, 0.9219, 1, 0.89903, 1, 1, 1, 0.93173, 0.93173, 0.93173, 1, 1.06304, 1.06304, 1.06904, 0.89903, 0.89903, 0.80549, 1, 1.156, 1, 1, 0.76575,
-    0.76575, 1, 1, 0.72458, 1, 1, 1, 1, 0.92241, 1, 1, 1, 0.619, 1, 1.36145, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.07257, 1, 0.74705, 0.71119, 1.02058, 1.024, 1.02119, 1, 1, 1.1536, 1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.05638, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.36898, 1, 1, 0.76305, 0.82784, 0.94935, 0.89364, 0.92241, 0.89073,
+    0.90706, 0.98472, 0.85283, 0.85283, 1.0664, 1.02058, 0.74505, 0.9219,
+    0.74505, 1.23456, 0.92241, 0.92241, 0.92241, 0.92241, 0.92241, 0.92241,
+    0.92241, 0.92241, 0.92241, 0.92241, 0.74505, 0.74505, 1.02058, 1.02058,
+    1.02058, 0.73002, 0.72601, 0.91755, 0.8126, 0.80314, 0.92222, 0.73764,
+    0.79726, 0.83051, 0.90284, 0.86023, 0.74, 0.8126, 0.84869, 0.96518, 0.91115,
+    0.8858, 0.79761, 0.8858, 0.74498, 0.73914, 0.81363, 0.89591, 0.83659,
+    0.89633, 0.85608, 0.8111, 0.90531, 1.0222, 1.22736, 1.0222, 1.27014,
+    0.89903, 0.90088, 0.86667, 1.0231, 0.896, 1.01411, 0.90083, 1.05099,
+    1.00512, 0.99793, 1.05326, 1.09377, 0.938, 1.06226, 1.00119, 0.99793,
+    0.98714, 1.0231, 1.01231, 0.98196, 0.792, 1.19137, 0.99074, 0.962, 1.01915,
+    0.926, 0.942, 0.856, 0.85034, 0.92006, 0.85034, 1.02058, 0.69067, 0.92241,
+    0.92241, 0.92241, 0.92241, 0.92006, 0.9332, 0.90088, 0.91882, 0.93484,
+    0.75339, 1.02058, 0.56866, 0.54324, 0.79519, 1.08595, 1, 1, 0.90088, 1,
+    0.95325, 0.74505, 0.90088, 1, 0.97198, 0.75339, 0.91009, 0.91009, 0.91009,
+    0.66466, 0.91755, 0.91755, 0.91755, 0.91755, 0.91755, 0.91755, 0.788,
+    0.80314, 0.73764, 0.73764, 0.73764, 0.73764, 0.86023, 0.86023, 0.86023,
+    0.86023, 0.92915, 0.91115, 0.8858, 0.8858, 0.8858, 0.8858, 0.8858, 1.02058,
+    0.8858, 0.89591, 0.89591, 0.89591, 0.89591, 0.8111, 0.79611, 0.89713,
+    0.86667, 0.86667, 0.86667, 0.86667, 0.86667, 0.86667, 0.86936, 0.896,
+    0.90083, 0.90083, 0.90083, 0.90083, 0.84224, 0.84224, 0.84224, 0.84224,
+    0.97276, 0.99793, 0.98714, 0.98714, 0.98714, 0.98714, 0.98714, 1.08595,
+    0.89876, 0.99074, 0.99074, 0.99074, 0.99074, 0.942, 1.0231, 0.942, 0.91755,
+    0.86667, 0.91755, 0.86667, 0.91755, 0.86667, 0.80314, 0.896, 0.80314, 0.896,
+    0.80314, 0.896, 0.80314, 0.896, 0.92222, 0.93372, 0.92915, 1.01411, 0.73764,
+    0.90083, 0.73764, 0.90083, 0.73764, 0.90083, 0.73764, 0.90083, 0.73764,
+    0.90083, 0.83051, 1.00512, 0.83051, 1.00512, 0.83051, 1.00512, 1, 1,
+    0.90284, 0.99793, 0.90976, 0.99793, 0.86023, 0.84224, 0.86023, 0.84224,
+    0.86023, 0.84224, 0.86023, 1.05326, 0.86023, 0.84224, 0.82873, 1.07469,
+    0.74, 1.09377, 1, 1, 0.938, 0.84869, 1.06226, 1, 1, 0.84869, 0.83704,
+    0.84869, 0.81441, 0.85588, 1.08927, 0.91115, 0.99793, 1, 1, 0.91115,
+    0.99793, 0.91887, 0.90991, 0.99793, 0.8858, 0.98714, 0.8858, 0.98714,
+    0.8858, 0.98714, 0.894, 0.91434, 0.74498, 0.98196, 1, 1, 0.74498, 0.98196,
+    0.73914, 0.792, 0.73914, 0.792, 1, 1, 0.73914, 0.792, 1, 1, 0.81363, 0.904,
+    0.81363, 1.19137, 0.89591, 0.99074, 0.89591, 0.99074, 0.89591, 0.99074,
+    0.89591, 0.99074, 0.89591, 0.99074, 0.89591, 0.99074, 0.89633, 1.01915,
+    0.8111, 0.942, 0.8111, 0.90531, 0.856, 0.90531, 0.856, 0.90531, 0.856, 1,
+    0.92241, 0.91755, 0.86667, 0.788, 0.86936, 0.8858, 0.89876, 1, 1, 0.81363,
+    1.19137, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088,
+    0.90088, 0.90088, 0.90388, 1.03901, 0.92138, 0.78105, 0.7154, 0.86169,
+    0.80513, 0.94007, 0.82528, 0.98612, 1.06226, 0.91755, 0.8126, 0.81884,
+    0.92819, 0.73764, 0.90531, 0.90284, 0.8858, 0.86023, 0.8126, 0.91172,
+    0.96518, 0.91115, 0.83089, 0.8858, 0.87791, 0.79761, 0.89297, 0.81363,
+    0.88157, 0.89992, 0.85608, 0.81992, 0.94307, 0.86023, 0.88157, 0.95308,
+    0.98699, 0.99793, 1.06226, 0.95817, 0.95308, 0.97358, 0.928, 0.98088,
+    0.98699, 0.92761, 0.99793, 0.96017, 1.06226, 0.986, 0.944, 0.95978, 0.938,
+    0.96705, 0.98714, 0.80442, 0.98972, 1, 0.89762, 1.04552, 0.95817, 0.99007,
+    0.87064, 0.91879, 0.88888, 1.06226, 0.95817, 0.98714, 0.95817, 0.88888, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0.89633, 1.01915, 0.89633, 1.01915, 0.89633, 1.01915, 0.8111, 0.942, 0.9219,
+    1, 0.89903, 1, 1, 1, 0.93173, 0.93173, 0.93173, 1, 1.06304, 1.06304,
+    1.06904, 0.89903, 0.89903, 0.80549, 1, 1.156, 1, 1, 0.76575, 0.76575, 1, 1,
+    0.72458, 1, 1, 1, 1, 0.92241, 1, 1, 1, 0.619, 1, 1.36145, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1.07257, 1, 0.74705, 0.71119, 1.02058, 1.024, 1.02119, 1, 1,
+    1.1536, 1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1.05638, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   Es = { lineHeight: 1.2, lineGap: 0.2 },
   _s = [
-    1.76738, 1, 1, 0.99297, 0.9824, 1.04016, 1.06497, 1.03424, 0.97529, 1.17647, 1.23203, 1.1085, 1.1085, 1.16939, 1.2107, 0.9754, 1.21408, 0.9754, 1.59578, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 0.81378, 0.81378, 1.2107, 1.2107, 1.2107, 0.71703, 0.97847, 0.97363, 0.88776, 0.8641, 1.02096, 0.79795, 0.85132, 0.914, 1.06085, 1.1406, 0.8007, 0.89858, 0.83693, 1.14889, 1.09398, 0.97489, 0.92094, 0.97489, 0.90399, 0.84041, 0.95923, 1.00135, 1, 1.06467, 0.98243, 0.90996, 0.99361, 1.1085, 1.56942, 1.1085, 1.2107, 0.74627, 0.94282, 0.96752, 1.01519, 0.86304, 1.01359, 0.97278, 1.15103, 1.01359, 0.98561, 1.02285, 1.02285, 1.00527, 1.02285, 1.0302, 0.99041, 1.0008, 1.01519, 1.01359, 1.02258, 0.79104, 1.16862, 0.99041, 0.97454, 1.02511, 0.99298, 0.96752, 0.95801, 0.94856, 1.16579, 0.94856, 1.2107, 0.9824, 1.03424, 1.03424, 1, 1.03424, 1.16579, 0.8727, 1.3871, 1.18622, 1.10818, 1.04478, 1.2107, 1.18622, 0.75155, 0.94994, 1.28826, 1.21408, 1.21408,
-    0.91056, 1, 0.91572, 0.9754, 0.64663, 1.18328, 1.24866, 1.04478, 1.14169, 1.15749, 1.17389, 0.71703, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.93506, 0.8641, 0.79795, 0.79795, 0.79795, 0.79795, 1.1406, 1.1406, 1.1406, 1.1406, 1.02096, 1.09398, 0.97426, 0.97426, 0.97426, 0.97426, 0.97426, 1.2107, 0.97489, 1.00135, 1.00135, 1.00135, 1.00135, 0.90996, 0.92094, 1.02798, 0.96752, 0.96752, 0.96752, 0.96752, 0.96752, 0.96752, 0.93136, 0.86304, 0.97278, 0.97278, 0.97278, 0.97278, 1.02285, 1.02285, 1.02285, 1.02285, 0.97122, 0.99041, 1, 1, 1, 1, 1, 1.28826, 1.0008, 0.99041, 0.99041, 0.99041, 0.99041, 0.96752, 1.01519, 0.96752, 0.97363, 0.96752, 0.97363, 0.96752, 0.97363, 0.96752, 0.8641, 0.86304, 0.8641, 0.86304, 0.8641, 0.86304, 0.8641, 0.86304, 1.02096, 1.03057, 1.02096, 1.03517, 0.79795, 0.97278, 0.79795, 0.97278, 0.79795, 0.97278, 0.79795, 0.97278, 0.79795, 0.97278, 0.914, 1.01359, 0.914, 1.01359, 0.914, 1.01359, 1, 1, 1.06085, 0.98561, 1.06085, 1.00879, 1.1406, 1.02285,
-    1.1406, 1.02285, 1.1406, 1.02285, 1.1406, 1.02285, 1.1406, 1.02285, 0.97138, 1.08692, 0.8007, 1.02285, 1, 1, 1.00527, 0.83693, 1.02285, 1, 1, 0.83693, 0.9455, 0.83693, 0.90418, 0.83693, 1.13005, 1.09398, 0.99041, 1, 1, 1.09398, 0.99041, 0.96692, 1.09251, 0.99041, 0.97489, 1.0008, 0.97489, 1.0008, 0.97489, 1.0008, 0.93994, 0.97931, 0.90399, 1.02258, 1, 1, 0.90399, 1.02258, 0.84041, 0.79104, 0.84041, 0.79104, 0.84041, 0.79104, 0.84041, 0.79104, 1, 1, 0.95923, 1.07034, 0.95923, 1.16862, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.06467, 1.02511, 0.90996, 0.96752, 0.90996, 0.99361, 0.95801, 0.99361, 0.95801, 0.99361, 0.95801, 1.07733, 1.03424, 0.97363, 0.96752, 0.93506, 0.93136, 0.97489, 1.0008, 1, 1, 0.95923, 1.16862, 1.15103, 1.15103, 1.01173, 1.03959, 0.75953, 0.81378, 0.79912, 1.15103, 1.21994, 0.95161, 0.87815, 1.01149, 0.81525, 0.7676, 0.98167, 1.01134, 1.02546, 0.84097, 1.03089, 1.18102, 0.97363, 0.88776,
-    0.85134, 0.97826, 0.79795, 0.99361, 1.06085, 0.97489, 1.1406, 0.89858, 1.0388, 1.14889, 1.09398, 0.86039, 0.97489, 1.0595, 0.92094, 0.94793, 0.95923, 0.90996, 0.99346, 0.98243, 1.02112, 0.95493, 1.1406, 0.90996, 1.03574, 1.02597, 1.0008, 1.18102, 1.06628, 1.03574, 1.0192, 1.01932, 1.00886, 0.97531, 1.0106, 1.0008, 1.13189, 1.18102, 1.02277, 0.98683, 1.0016, 0.99561, 1.07237, 1.0008, 0.90434, 0.99921, 0.93803, 0.8965, 1.23085, 1.06628, 1.04983, 0.96268, 1.0499, 0.98439, 1.18102, 1.06628, 1.0008, 1.06628, 0.98439, 0.79795, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.09466, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.97278, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.02065, 1, 1, 1, 1, 1, 1, 1.06467, 1.02511, 1.06467, 1.02511, 1.06467, 1.02511, 0.90996, 0.96752, 1, 1.21408, 0.89903, 1, 1, 0.75155, 1.04394, 1.04394, 1.04394, 1.04394, 0.98633,
-    0.98633, 0.98633, 0.73047, 0.73047, 1.20642, 0.91211, 1.25635, 1.222, 1.02956, 1.03372, 1.03372, 0.96039, 1.24633, 1, 1.12454, 0.93503, 1.03424, 1.19687, 1.03424, 1, 1, 1, 0.771, 1, 1, 1.15749, 1.15749, 1.15749, 1.10948, 0.86279, 0.94434, 0.86279, 0.94434, 0.86182, 1, 1, 1.16897, 1, 0.96085, 0.90137, 1.2107, 1.18416, 1.13973, 0.69825, 0.9716, 2.10339, 1.29004, 1.29004, 1.21172, 1.29004, 1.29004, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1, 0.99862, 0.99862, 1, 0.87025, 0.87025, 0.87025, 0.87025, 1.18874, 1.42603, 1, 1.42603, 1.42603, 0.99862, 1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296, 1.34163, 1, 1, 1, 1.09193, 1.09193, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.76738, 1, 1, 0.99297, 0.9824, 1.04016, 1.06497, 1.03424, 0.97529, 1.17647,
+    1.23203, 1.1085, 1.1085, 1.16939, 1.2107, 0.9754, 1.21408, 0.9754, 1.59578,
+    1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424,
+    1.03424, 1.03424, 0.81378, 0.81378, 1.2107, 1.2107, 1.2107, 0.71703,
+    0.97847, 0.97363, 0.88776, 0.8641, 1.02096, 0.79795, 0.85132, 0.914,
+    1.06085, 1.1406, 0.8007, 0.89858, 0.83693, 1.14889, 1.09398, 0.97489,
+    0.92094, 0.97489, 0.90399, 0.84041, 0.95923, 1.00135, 1, 1.06467, 0.98243,
+    0.90996, 0.99361, 1.1085, 1.56942, 1.1085, 1.2107, 0.74627, 0.94282,
+    0.96752, 1.01519, 0.86304, 1.01359, 0.97278, 1.15103, 1.01359, 0.98561,
+    1.02285, 1.02285, 1.00527, 1.02285, 1.0302, 0.99041, 1.0008, 1.01519,
+    1.01359, 1.02258, 0.79104, 1.16862, 0.99041, 0.97454, 1.02511, 0.99298,
+    0.96752, 0.95801, 0.94856, 1.16579, 0.94856, 1.2107, 0.9824, 1.03424,
+    1.03424, 1, 1.03424, 1.16579, 0.8727, 1.3871, 1.18622, 1.10818, 1.04478,
+    1.2107, 1.18622, 0.75155, 0.94994, 1.28826, 1.21408, 1.21408, 0.91056, 1,
+    0.91572, 0.9754, 0.64663, 1.18328, 1.24866, 1.04478, 1.14169, 1.15749,
+    1.17389, 0.71703, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363,
+    0.93506, 0.8641, 0.79795, 0.79795, 0.79795, 0.79795, 1.1406, 1.1406, 1.1406,
+    1.1406, 1.02096, 1.09398, 0.97426, 0.97426, 0.97426, 0.97426, 0.97426,
+    1.2107, 0.97489, 1.00135, 1.00135, 1.00135, 1.00135, 0.90996, 0.92094,
+    1.02798, 0.96752, 0.96752, 0.96752, 0.96752, 0.96752, 0.96752, 0.93136,
+    0.86304, 0.97278, 0.97278, 0.97278, 0.97278, 1.02285, 1.02285, 1.02285,
+    1.02285, 0.97122, 0.99041, 1, 1, 1, 1, 1, 1.28826, 1.0008, 0.99041, 0.99041,
+    0.99041, 0.99041, 0.96752, 1.01519, 0.96752, 0.97363, 0.96752, 0.97363,
+    0.96752, 0.97363, 0.96752, 0.8641, 0.86304, 0.8641, 0.86304, 0.8641,
+    0.86304, 0.8641, 0.86304, 1.02096, 1.03057, 1.02096, 1.03517, 0.79795,
+    0.97278, 0.79795, 0.97278, 0.79795, 0.97278, 0.79795, 0.97278, 0.79795,
+    0.97278, 0.914, 1.01359, 0.914, 1.01359, 0.914, 1.01359, 1, 1, 1.06085,
+    0.98561, 1.06085, 1.00879, 1.1406, 1.02285, 1.1406, 1.02285, 1.1406,
+    1.02285, 1.1406, 1.02285, 1.1406, 1.02285, 0.97138, 1.08692, 0.8007,
+    1.02285, 1, 1, 1.00527, 0.83693, 1.02285, 1, 1, 0.83693, 0.9455, 0.83693,
+    0.90418, 0.83693, 1.13005, 1.09398, 0.99041, 1, 1, 1.09398, 0.99041,
+    0.96692, 1.09251, 0.99041, 0.97489, 1.0008, 0.97489, 1.0008, 0.97489,
+    1.0008, 0.93994, 0.97931, 0.90399, 1.02258, 1, 1, 0.90399, 1.02258, 0.84041,
+    0.79104, 0.84041, 0.79104, 0.84041, 0.79104, 0.84041, 0.79104, 1, 1,
+    0.95923, 1.07034, 0.95923, 1.16862, 1.00135, 0.99041, 1.00135, 0.99041,
+    1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041,
+    1.06467, 1.02511, 0.90996, 0.96752, 0.90996, 0.99361, 0.95801, 0.99361,
+    0.95801, 0.99361, 0.95801, 1.07733, 1.03424, 0.97363, 0.96752, 0.93506,
+    0.93136, 0.97489, 1.0008, 1, 1, 0.95923, 1.16862, 1.15103, 1.15103, 1.01173,
+    1.03959, 0.75953, 0.81378, 0.79912, 1.15103, 1.21994, 0.95161, 0.87815,
+    1.01149, 0.81525, 0.7676, 0.98167, 1.01134, 1.02546, 0.84097, 1.03089,
+    1.18102, 0.97363, 0.88776, 0.85134, 0.97826, 0.79795, 0.99361, 1.06085,
+    0.97489, 1.1406, 0.89858, 1.0388, 1.14889, 1.09398, 0.86039, 0.97489,
+    1.0595, 0.92094, 0.94793, 0.95923, 0.90996, 0.99346, 0.98243, 1.02112,
+    0.95493, 1.1406, 0.90996, 1.03574, 1.02597, 1.0008, 1.18102, 1.06628,
+    1.03574, 1.0192, 1.01932, 1.00886, 0.97531, 1.0106, 1.0008, 1.13189,
+    1.18102, 1.02277, 0.98683, 1.0016, 0.99561, 1.07237, 1.0008, 0.90434,
+    0.99921, 0.93803, 0.8965, 1.23085, 1.06628, 1.04983, 0.96268, 1.0499,
+    0.98439, 1.18102, 1.06628, 1.0008, 1.06628, 0.98439, 0.79795, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1.09466, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0.97278, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.02065, 1, 1, 1, 1, 1, 1,
+    1.06467, 1.02511, 1.06467, 1.02511, 1.06467, 1.02511, 0.90996, 0.96752, 1,
+    1.21408, 0.89903, 1, 1, 0.75155, 1.04394, 1.04394, 1.04394, 1.04394,
+    0.98633, 0.98633, 0.98633, 0.73047, 0.73047, 1.20642, 0.91211, 1.25635,
+    1.222, 1.02956, 1.03372, 1.03372, 0.96039, 1.24633, 1, 1.12454, 0.93503,
+    1.03424, 1.19687, 1.03424, 1, 1, 1, 0.771, 1, 1, 1.15749, 1.15749, 1.15749,
+    1.10948, 0.86279, 0.94434, 0.86279, 0.94434, 0.86182, 1, 1, 1.16897, 1,
+    0.96085, 0.90137, 1.2107, 1.18416, 1.13973, 0.69825, 0.9716, 2.10339,
+    1.29004, 1.29004, 1.21172, 1.29004, 1.29004, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1, 0.99862,
+    0.99862, 1, 0.87025, 0.87025, 0.87025, 0.87025, 1.18874, 1.42603, 1,
+    1.42603, 1.42603, 0.99862, 1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296, 1.34163,
+    1, 1, 1, 1.09193, 1.09193, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1,
   ],
   zs = { lineHeight: 1.33008, lineGap: 0 },
   Ls = [
-    1.76738, 1, 1, 0.98946, 1.03959, 1.04016, 1.02809, 1.036, 0.97639, 1.10953, 1.23203, 1.11144, 1.11144, 1.16939, 1.21237, 0.9754, 1.21261, 0.9754, 1.59754, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036, 0.81378, 0.81378, 1.21237, 1.21237, 1.21237, 0.73541, 0.97847, 0.97363, 0.89723, 0.87897, 1.0426, 0.79429, 0.85292, 0.91149, 1.05815, 1.1406, 0.79631, 0.90128, 0.83853, 1.04396, 1.10615, 0.97552, 0.94436, 0.97552, 0.88641, 0.80527, 0.96083, 1.00135, 1, 1.06777, 0.9817, 0.91142, 0.99361, 1.11144, 1.57293, 1.11144, 1.21237, 0.74627, 1.31818, 1.06585, 0.97042, 0.83055, 0.97042, 0.93503, 1.1261, 0.97042, 0.97922, 1.14236, 0.94552, 1.01054, 1.14236, 1.02471, 0.97922, 0.94165, 0.97042, 0.97042, 1.0276, 0.78929, 1.1261, 0.97922, 0.95874, 1.02197, 0.98507, 0.96752, 0.97168, 0.95107, 1.16579, 0.95107, 1.21237, 1.03959, 1.036, 1.036, 1, 1.036, 1.16579, 0.87357, 1.31818, 1.18754, 1.26781, 1.05356, 1.21237, 1.18622, 0.79487, 0.94994, 1.29004, 1.24047, 1.24047, 1.31818, 1,
-    0.91484, 0.9754, 1.31818, 1.1349, 1.24866, 1.05356, 1.13934, 1.15574, 1.17389, 0.73541, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.94385, 0.87897, 0.79429, 0.79429, 0.79429, 0.79429, 1.1406, 1.1406, 1.1406, 1.1406, 1.0426, 1.10615, 0.97552, 0.97552, 0.97552, 0.97552, 0.97552, 1.21237, 0.97552, 1.00135, 1.00135, 1.00135, 1.00135, 0.91142, 0.94436, 0.98721, 1.06585, 1.06585, 1.06585, 1.06585, 1.06585, 1.06585, 0.96705, 0.83055, 0.93503, 0.93503, 0.93503, 0.93503, 1.14236, 1.14236, 1.14236, 1.14236, 0.93125, 0.97922, 0.94165, 0.94165, 0.94165, 0.94165, 0.94165, 1.29004, 0.94165, 0.97922, 0.97922, 0.97922, 0.97922, 0.96752, 0.97042, 0.96752, 0.97363, 1.06585, 0.97363, 1.06585, 0.97363, 1.06585, 0.87897, 0.83055, 0.87897, 0.83055, 0.87897, 0.83055, 0.87897, 0.83055, 1.0426, 1.0033, 1.0426, 0.97042, 0.79429, 0.93503, 0.79429, 0.93503, 0.79429, 0.93503, 0.79429, 0.93503, 0.79429, 0.93503, 0.91149, 0.97042, 0.91149, 0.97042, 0.91149, 0.97042, 1, 1, 1.05815, 0.97922, 1.05815,
-    0.97922, 1.1406, 1.14236, 1.1406, 1.14236, 1.1406, 1.14236, 1.1406, 1.14236, 1.1406, 1.14236, 0.97441, 1.04302, 0.79631, 1.01582, 1, 1, 1.01054, 0.83853, 1.14236, 1, 1, 0.83853, 1.09125, 0.83853, 0.90418, 0.83853, 1.19508, 1.10615, 0.97922, 1, 1, 1.10615, 0.97922, 1.01034, 1.10466, 0.97922, 0.97552, 0.94165, 0.97552, 0.94165, 0.97552, 0.94165, 0.91602, 0.91981, 0.88641, 1.0276, 1, 1, 0.88641, 1.0276, 0.80527, 0.78929, 0.80527, 0.78929, 0.80527, 0.78929, 0.80527, 0.78929, 1, 1, 0.96083, 1.05403, 0.95923, 1.16862, 1.00135, 0.97922, 1.00135, 0.97922, 1.00135, 0.97922, 1.00135, 0.97922, 1.00135, 0.97922, 1.00135, 0.97922, 1.06777, 1.02197, 0.91142, 0.96752, 0.91142, 0.99361, 0.97168, 0.99361, 0.97168, 0.99361, 0.97168, 1.23199, 1.036, 0.97363, 1.06585, 0.94385, 0.96705, 0.97552, 0.94165, 1, 1, 0.96083, 1.1261, 1.31818, 1.31818, 1.31818, 1.31818, 1.31818, 1.31818, 1.31818, 1.31818, 1.31818, 0.95161, 1.27126, 1.00811, 0.83284, 0.77702, 0.99137, 0.95253, 1.0347, 0.86142, 1.07205,
-    1.14236, 0.97363, 0.89723, 0.86869, 1.09818, 0.79429, 0.99361, 1.05815, 0.97552, 1.1406, 0.90128, 1.06662, 1.04396, 1.10615, 0.84918, 0.97552, 1.04694, 0.94436, 0.98015, 0.96083, 0.91142, 1.00356, 0.9817, 1.01945, 0.98999, 1.1406, 0.91142, 1.04961, 0.9898, 1.00639, 1.14236, 1.07514, 1.04961, 0.99607, 1.02897, 1.008, 0.9898, 0.95134, 1.00639, 1.11121, 1.14236, 1.00518, 0.97981, 1.02186, 1, 1.08578, 0.94165, 0.99314, 0.98387, 0.93028, 0.93377, 1.35125, 1.07514, 1.10687, 0.93491, 1.04232, 1.00351, 1.14236, 1.07514, 0.94165, 1.07514, 1.00351, 0.79429, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.09097, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.93503, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.96609, 1, 1, 1, 1, 1, 1, 1.06777, 1.02197, 1.06777, 1.02197, 1.06777, 1.02197, 0.91142, 0.96752, 1, 1.21261, 0.89903, 1, 1, 0.75155, 1.04745, 1.04745,
-    1.04745, 1.04394, 0.98633, 0.98633, 0.98633, 0.72959, 0.72959, 1.20502, 0.91406, 1.26514, 1.222, 1.02956, 1.03372, 1.03372, 0.96039, 1.24633, 1, 1.09125, 0.93327, 1.03336, 1.16541, 1.036, 1, 1, 1, 0.771, 1, 1, 1.15574, 1.15574, 1.15574, 1.15574, 0.86364, 0.94434, 0.86279, 0.94434, 0.86224, 1, 1, 1.16798, 1, 0.96085, 0.90068, 1.21237, 1.18416, 1.13904, 0.69825, 0.9716, 2.10339, 1.29004, 1.29004, 1.21339, 1.29004, 1.29004, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1, 0.99862, 0.99862, 1, 0.87025, 0.87025, 0.87025, 0.87025, 1.18775, 1.42603, 1, 1.42603, 1.42603, 0.99862, 1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296, 1.34163, 1, 1, 1, 1.13269, 1.13269, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.76738, 1, 1, 0.98946, 1.03959, 1.04016, 1.02809, 1.036, 0.97639, 1.10953,
+    1.23203, 1.11144, 1.11144, 1.16939, 1.21237, 0.9754, 1.21261, 0.9754,
+    1.59754, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036, 1.036,
+    1.036, 0.81378, 0.81378, 1.21237, 1.21237, 1.21237, 0.73541, 0.97847,
+    0.97363, 0.89723, 0.87897, 1.0426, 0.79429, 0.85292, 0.91149, 1.05815,
+    1.1406, 0.79631, 0.90128, 0.83853, 1.04396, 1.10615, 0.97552, 0.94436,
+    0.97552, 0.88641, 0.80527, 0.96083, 1.00135, 1, 1.06777, 0.9817, 0.91142,
+    0.99361, 1.11144, 1.57293, 1.11144, 1.21237, 0.74627, 1.31818, 1.06585,
+    0.97042, 0.83055, 0.97042, 0.93503, 1.1261, 0.97042, 0.97922, 1.14236,
+    0.94552, 1.01054, 1.14236, 1.02471, 0.97922, 0.94165, 0.97042, 0.97042,
+    1.0276, 0.78929, 1.1261, 0.97922, 0.95874, 1.02197, 0.98507, 0.96752,
+    0.97168, 0.95107, 1.16579, 0.95107, 1.21237, 1.03959, 1.036, 1.036, 1,
+    1.036, 1.16579, 0.87357, 1.31818, 1.18754, 1.26781, 1.05356, 1.21237,
+    1.18622, 0.79487, 0.94994, 1.29004, 1.24047, 1.24047, 1.31818, 1, 0.91484,
+    0.9754, 1.31818, 1.1349, 1.24866, 1.05356, 1.13934, 1.15574, 1.17389,
+    0.73541, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.94385,
+    0.87897, 0.79429, 0.79429, 0.79429, 0.79429, 1.1406, 1.1406, 1.1406, 1.1406,
+    1.0426, 1.10615, 0.97552, 0.97552, 0.97552, 0.97552, 0.97552, 1.21237,
+    0.97552, 1.00135, 1.00135, 1.00135, 1.00135, 0.91142, 0.94436, 0.98721,
+    1.06585, 1.06585, 1.06585, 1.06585, 1.06585, 1.06585, 0.96705, 0.83055,
+    0.93503, 0.93503, 0.93503, 0.93503, 1.14236, 1.14236, 1.14236, 1.14236,
+    0.93125, 0.97922, 0.94165, 0.94165, 0.94165, 0.94165, 0.94165, 1.29004,
+    0.94165, 0.97922, 0.97922, 0.97922, 0.97922, 0.96752, 0.97042, 0.96752,
+    0.97363, 1.06585, 0.97363, 1.06585, 0.97363, 1.06585, 0.87897, 0.83055,
+    0.87897, 0.83055, 0.87897, 0.83055, 0.87897, 0.83055, 1.0426, 1.0033,
+    1.0426, 0.97042, 0.79429, 0.93503, 0.79429, 0.93503, 0.79429, 0.93503,
+    0.79429, 0.93503, 0.79429, 0.93503, 0.91149, 0.97042, 0.91149, 0.97042,
+    0.91149, 0.97042, 1, 1, 1.05815, 0.97922, 1.05815, 0.97922, 1.1406, 1.14236,
+    1.1406, 1.14236, 1.1406, 1.14236, 1.1406, 1.14236, 1.1406, 1.14236, 0.97441,
+    1.04302, 0.79631, 1.01582, 1, 1, 1.01054, 0.83853, 1.14236, 1, 1, 0.83853,
+    1.09125, 0.83853, 0.90418, 0.83853, 1.19508, 1.10615, 0.97922, 1, 1,
+    1.10615, 0.97922, 1.01034, 1.10466, 0.97922, 0.97552, 0.94165, 0.97552,
+    0.94165, 0.97552, 0.94165, 0.91602, 0.91981, 0.88641, 1.0276, 1, 1, 0.88641,
+    1.0276, 0.80527, 0.78929, 0.80527, 0.78929, 0.80527, 0.78929, 0.80527,
+    0.78929, 1, 1, 0.96083, 1.05403, 0.95923, 1.16862, 1.00135, 0.97922,
+    1.00135, 0.97922, 1.00135, 0.97922, 1.00135, 0.97922, 1.00135, 0.97922,
+    1.00135, 0.97922, 1.06777, 1.02197, 0.91142, 0.96752, 0.91142, 0.99361,
+    0.97168, 0.99361, 0.97168, 0.99361, 0.97168, 1.23199, 1.036, 0.97363,
+    1.06585, 0.94385, 0.96705, 0.97552, 0.94165, 1, 1, 0.96083, 1.1261, 1.31818,
+    1.31818, 1.31818, 1.31818, 1.31818, 1.31818, 1.31818, 1.31818, 1.31818,
+    0.95161, 1.27126, 1.00811, 0.83284, 0.77702, 0.99137, 0.95253, 1.0347,
+    0.86142, 1.07205, 1.14236, 0.97363, 0.89723, 0.86869, 1.09818, 0.79429,
+    0.99361, 1.05815, 0.97552, 1.1406, 0.90128, 1.06662, 1.04396, 1.10615,
+    0.84918, 0.97552, 1.04694, 0.94436, 0.98015, 0.96083, 0.91142, 1.00356,
+    0.9817, 1.01945, 0.98999, 1.1406, 0.91142, 1.04961, 0.9898, 1.00639,
+    1.14236, 1.07514, 1.04961, 0.99607, 1.02897, 1.008, 0.9898, 0.95134,
+    1.00639, 1.11121, 1.14236, 1.00518, 0.97981, 1.02186, 1, 1.08578, 0.94165,
+    0.99314, 0.98387, 0.93028, 0.93377, 1.35125, 1.07514, 1.10687, 0.93491,
+    1.04232, 1.00351, 1.14236, 1.07514, 0.94165, 1.07514, 1.00351, 0.79429, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.09097, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 0.93503, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.96609, 1, 1,
+    1, 1, 1, 1, 1.06777, 1.02197, 1.06777, 1.02197, 1.06777, 1.02197, 0.91142,
+    0.96752, 1, 1.21261, 0.89903, 1, 1, 0.75155, 1.04745, 1.04745, 1.04745,
+    1.04394, 0.98633, 0.98633, 0.98633, 0.72959, 0.72959, 1.20502, 0.91406,
+    1.26514, 1.222, 1.02956, 1.03372, 1.03372, 0.96039, 1.24633, 1, 1.09125,
+    0.93327, 1.03336, 1.16541, 1.036, 1, 1, 1, 0.771, 1, 1, 1.15574, 1.15574,
+    1.15574, 1.15574, 0.86364, 0.94434, 0.86279, 0.94434, 0.86224, 1, 1,
+    1.16798, 1, 0.96085, 0.90068, 1.21237, 1.18416, 1.13904, 0.69825, 0.9716,
+    2.10339, 1.29004, 1.29004, 1.21339, 1.29004, 1.29004, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1,
+    0.99862, 0.99862, 1, 0.87025, 0.87025, 0.87025, 0.87025, 1.18775, 1.42603,
+    1, 1.42603, 1.42603, 0.99862, 1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296,
+    1.34163, 1, 1, 1, 1.13269, 1.13269, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1,
   ],
   Us = { lineHeight: 1.33008, lineGap: 0 },
   Xs = [
-    1.76738, 1, 1, 0.98946, 1.14763, 1.05365, 1.06234, 0.96927, 0.92586, 1.15373, 1.18414, 0.91349, 0.91349, 1.07403, 1.17308, 0.78383, 1.20088, 0.78383, 1.42531, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.78383, 0.78383, 1.17308, 1.17308, 1.17308, 0.77349, 0.94565, 0.94729, 0.85944, 0.88506, 0.9858, 0.74817, 0.80016, 0.88449, 0.98039, 0.95782, 0.69238, 0.89898, 0.83231, 0.98183, 1.03989, 0.96924, 0.86237, 0.96924, 0.80595, 0.74524, 0.86091, 0.95402, 0.94143, 0.98448, 0.8858, 0.83089, 0.93285, 1.0949, 1.39016, 1.0949, 1.45994, 0.74627, 1.04839, 0.97454, 0.97454, 0.87207, 0.97454, 0.87533, 1.06151, 0.97454, 1.00176, 1.16484, 1.08132, 0.98047, 1.16484, 1.02989, 1.01054, 0.96225, 0.97454, 0.97454, 1.06598, 0.79004, 1.16344, 1.00351, 0.94629, 0.9973, 0.91016, 0.96777, 0.9043, 0.91082, 0.92481, 0.91082, 1.17308, 0.95748, 0.96927, 0.96927, 1, 0.96927, 0.92481, 0.80597, 1.04839, 1.23393, 1.1781, 0.9245, 1.17308, 1.20808, 0.63218, 0.94261,
-    1.24822, 1.09971, 1.09971, 1.04839, 1, 0.85273, 0.78032, 1.04839, 1.09971, 1.22326, 0.9245, 1.09836, 1.13525, 1.15222, 0.70424, 0.94729, 0.94729, 0.94729, 0.94729, 0.94729, 0.94729, 0.85498, 0.88506, 0.74817, 0.74817, 0.74817, 0.74817, 0.95782, 0.95782, 0.95782, 0.95782, 0.9858, 1.03989, 0.96924, 0.96924, 0.96924, 0.96924, 0.96924, 1.17308, 0.96924, 0.95402, 0.95402, 0.95402, 0.95402, 0.83089, 0.86237, 0.88409, 0.97454, 0.97454, 0.97454, 0.97454, 0.97454, 0.97454, 0.92916, 0.87207, 0.87533, 0.87533, 0.87533, 0.87533, 0.93146, 0.93146, 0.93146, 0.93146, 0.93854, 1.01054, 0.96225, 0.96225, 0.96225, 0.96225, 0.96225, 1.24822, 0.8761, 1.00351, 1.00351, 1.00351, 1.00351, 0.96777, 0.97454, 0.96777, 0.94729, 0.97454, 0.94729, 0.97454, 0.94729, 0.97454, 0.88506, 0.87207, 0.88506, 0.87207, 0.88506, 0.87207, 0.88506, 0.87207, 0.9858, 0.95391, 0.9858, 0.97454, 0.74817, 0.87533, 0.74817, 0.87533, 0.74817, 0.87533, 0.74817, 0.87533, 0.74817, 0.87533, 0.88449, 0.97454, 0.88449, 0.97454,
-    0.88449, 0.97454, 1, 1, 0.98039, 1.00176, 0.98039, 1.00176, 0.95782, 0.93146, 0.95782, 0.93146, 0.95782, 0.93146, 0.95782, 1.16484, 0.95782, 0.93146, 0.84421, 1.12761, 0.69238, 1.08132, 1, 1, 0.98047, 0.83231, 1.16484, 1, 1, 0.84723, 1.04861, 0.84723, 0.78755, 0.83231, 1.23736, 1.03989, 1.01054, 1, 1, 1.03989, 1.01054, 0.9857, 1.03849, 1.01054, 0.96924, 0.96225, 0.96924, 0.96225, 0.96924, 0.96225, 0.92383, 0.90171, 0.80595, 1.06598, 1, 1, 0.80595, 1.06598, 0.74524, 0.79004, 0.74524, 0.79004, 0.74524, 0.79004, 0.74524, 0.79004, 1, 1, 0.86091, 1.02759, 0.85771, 1.16344, 0.95402, 1.00351, 0.95402, 1.00351, 0.95402, 1.00351, 0.95402, 1.00351, 0.95402, 1.00351, 0.95402, 1.00351, 0.98448, 0.9973, 0.83089, 0.96777, 0.83089, 0.93285, 0.9043, 0.93285, 0.9043, 0.93285, 0.9043, 1.31868, 0.96927, 0.94729, 0.97454, 0.85498, 0.92916, 0.96924, 0.8761, 1, 1, 0.86091, 1.16344, 1.04839, 1.04839, 1.04839, 1.04839, 1.04839, 1.04839, 1.04839, 1.04839, 1.04839, 0.81965, 0.81965, 0.94729, 0.78032,
-    0.71022, 0.90883, 0.84171, 0.99877, 0.77596, 1.05734, 1.2, 0.94729, 0.85944, 0.82791, 0.9607, 0.74817, 0.93285, 0.98039, 0.96924, 0.95782, 0.89898, 0.98316, 0.98183, 1.03989, 0.78614, 0.96924, 0.97642, 0.86237, 0.86075, 0.86091, 0.83089, 0.90082, 0.8858, 0.97296, 1.01284, 0.95782, 0.83089, 1.0976, 1.04, 1.03342, 1.2, 1.0675, 1.0976, 0.98205, 1.03809, 1.05097, 1.04, 0.95364, 1.03342, 1.05401, 1.2, 1.02148, 1.0119, 1.04724, 1.0127, 1.02732, 0.96225, 0.8965, 0.97783, 0.93574, 0.94818, 1.30679, 1.0675, 1.11826, 0.99821, 1.0557, 1.0326, 1.2, 1.0675, 0.96225, 1.0675, 1.0326, 0.74817, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.03754, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.87533, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.98705, 1, 1, 1, 1, 1, 1, 0.98448, 0.9973, 0.98448, 0.9973, 0.98448, 0.9973, 0.83089, 0.96777, 1, 1.20088, 0.89903, 1, 1,
-    0.75155, 0.94945, 0.94945, 0.94945, 0.94945, 1.12317, 1.12317, 1.12317, 0.67603, 0.67603, 1.15621, 0.73584, 1.21191, 1.22135, 1.06483, 0.94868, 0.94868, 0.95996, 1.24633, 1, 1.07497, 0.87709, 0.96927, 1.01473, 0.96927, 1, 1, 1, 0.77295, 1, 1, 1.09836, 1.09836, 1.09836, 1.01522, 0.86321, 0.94434, 0.8649, 0.94434, 0.86182, 1, 1, 1.083, 1, 0.91578, 0.86438, 1.17308, 1.18416, 1.14589, 0.69825, 0.97622, 1.96791, 1.24822, 1.24822, 1.17308, 1.24822, 1.24822, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1, 0.99862, 0.99862, 1, 0.87025, 0.87025, 0.87025, 0.87025, 1.17984, 1.42603, 1, 1.42603, 1.42603, 0.99862, 1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296, 1.34163, 1, 1, 1, 1.10742, 1.10742, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.76738, 1, 1, 0.98946, 1.14763, 1.05365, 1.06234, 0.96927, 0.92586,
+    1.15373, 1.18414, 0.91349, 0.91349, 1.07403, 1.17308, 0.78383, 1.20088,
+    0.78383, 1.42531, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927,
+    0.96927, 0.96927, 0.96927, 0.96927, 0.78383, 0.78383, 1.17308, 1.17308,
+    1.17308, 0.77349, 0.94565, 0.94729, 0.85944, 0.88506, 0.9858, 0.74817,
+    0.80016, 0.88449, 0.98039, 0.95782, 0.69238, 0.89898, 0.83231, 0.98183,
+    1.03989, 0.96924, 0.86237, 0.96924, 0.80595, 0.74524, 0.86091, 0.95402,
+    0.94143, 0.98448, 0.8858, 0.83089, 0.93285, 1.0949, 1.39016, 1.0949,
+    1.45994, 0.74627, 1.04839, 0.97454, 0.97454, 0.87207, 0.97454, 0.87533,
+    1.06151, 0.97454, 1.00176, 1.16484, 1.08132, 0.98047, 1.16484, 1.02989,
+    1.01054, 0.96225, 0.97454, 0.97454, 1.06598, 0.79004, 1.16344, 1.00351,
+    0.94629, 0.9973, 0.91016, 0.96777, 0.9043, 0.91082, 0.92481, 0.91082,
+    1.17308, 0.95748, 0.96927, 0.96927, 1, 0.96927, 0.92481, 0.80597, 1.04839,
+    1.23393, 1.1781, 0.9245, 1.17308, 1.20808, 0.63218, 0.94261, 1.24822,
+    1.09971, 1.09971, 1.04839, 1, 0.85273, 0.78032, 1.04839, 1.09971, 1.22326,
+    0.9245, 1.09836, 1.13525, 1.15222, 0.70424, 0.94729, 0.94729, 0.94729,
+    0.94729, 0.94729, 0.94729, 0.85498, 0.88506, 0.74817, 0.74817, 0.74817,
+    0.74817, 0.95782, 0.95782, 0.95782, 0.95782, 0.9858, 1.03989, 0.96924,
+    0.96924, 0.96924, 0.96924, 0.96924, 1.17308, 0.96924, 0.95402, 0.95402,
+    0.95402, 0.95402, 0.83089, 0.86237, 0.88409, 0.97454, 0.97454, 0.97454,
+    0.97454, 0.97454, 0.97454, 0.92916, 0.87207, 0.87533, 0.87533, 0.87533,
+    0.87533, 0.93146, 0.93146, 0.93146, 0.93146, 0.93854, 1.01054, 0.96225,
+    0.96225, 0.96225, 0.96225, 0.96225, 1.24822, 0.8761, 1.00351, 1.00351,
+    1.00351, 1.00351, 0.96777, 0.97454, 0.96777, 0.94729, 0.97454, 0.94729,
+    0.97454, 0.94729, 0.97454, 0.88506, 0.87207, 0.88506, 0.87207, 0.88506,
+    0.87207, 0.88506, 0.87207, 0.9858, 0.95391, 0.9858, 0.97454, 0.74817,
+    0.87533, 0.74817, 0.87533, 0.74817, 0.87533, 0.74817, 0.87533, 0.74817,
+    0.87533, 0.88449, 0.97454, 0.88449, 0.97454, 0.88449, 0.97454, 1, 1,
+    0.98039, 1.00176, 0.98039, 1.00176, 0.95782, 0.93146, 0.95782, 0.93146,
+    0.95782, 0.93146, 0.95782, 1.16484, 0.95782, 0.93146, 0.84421, 1.12761,
+    0.69238, 1.08132, 1, 1, 0.98047, 0.83231, 1.16484, 1, 1, 0.84723, 1.04861,
+    0.84723, 0.78755, 0.83231, 1.23736, 1.03989, 1.01054, 1, 1, 1.03989,
+    1.01054, 0.9857, 1.03849, 1.01054, 0.96924, 0.96225, 0.96924, 0.96225,
+    0.96924, 0.96225, 0.92383, 0.90171, 0.80595, 1.06598, 1, 1, 0.80595,
+    1.06598, 0.74524, 0.79004, 0.74524, 0.79004, 0.74524, 0.79004, 0.74524,
+    0.79004, 1, 1, 0.86091, 1.02759, 0.85771, 1.16344, 0.95402, 1.00351,
+    0.95402, 1.00351, 0.95402, 1.00351, 0.95402, 1.00351, 0.95402, 1.00351,
+    0.95402, 1.00351, 0.98448, 0.9973, 0.83089, 0.96777, 0.83089, 0.93285,
+    0.9043, 0.93285, 0.9043, 0.93285, 0.9043, 1.31868, 0.96927, 0.94729,
+    0.97454, 0.85498, 0.92916, 0.96924, 0.8761, 1, 1, 0.86091, 1.16344, 1.04839,
+    1.04839, 1.04839, 1.04839, 1.04839, 1.04839, 1.04839, 1.04839, 1.04839,
+    0.81965, 0.81965, 0.94729, 0.78032, 0.71022, 0.90883, 0.84171, 0.99877,
+    0.77596, 1.05734, 1.2, 0.94729, 0.85944, 0.82791, 0.9607, 0.74817, 0.93285,
+    0.98039, 0.96924, 0.95782, 0.89898, 0.98316, 0.98183, 1.03989, 0.78614,
+    0.96924, 0.97642, 0.86237, 0.86075, 0.86091, 0.83089, 0.90082, 0.8858,
+    0.97296, 1.01284, 0.95782, 0.83089, 1.0976, 1.04, 1.03342, 1.2, 1.0675,
+    1.0976, 0.98205, 1.03809, 1.05097, 1.04, 0.95364, 1.03342, 1.05401, 1.2,
+    1.02148, 1.0119, 1.04724, 1.0127, 1.02732, 0.96225, 0.8965, 0.97783,
+    0.93574, 0.94818, 1.30679, 1.0675, 1.11826, 0.99821, 1.0557, 1.0326, 1.2,
+    1.0675, 0.96225, 1.0675, 1.0326, 0.74817, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1.03754, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.87533, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.98705, 1, 1, 1, 1, 1, 1, 0.98448, 0.9973,
+    0.98448, 0.9973, 0.98448, 0.9973, 0.83089, 0.96777, 1, 1.20088, 0.89903, 1,
+    1, 0.75155, 0.94945, 0.94945, 0.94945, 0.94945, 1.12317, 1.12317, 1.12317,
+    0.67603, 0.67603, 1.15621, 0.73584, 1.21191, 1.22135, 1.06483, 0.94868,
+    0.94868, 0.95996, 1.24633, 1, 1.07497, 0.87709, 0.96927, 1.01473, 0.96927,
+    1, 1, 1, 0.77295, 1, 1, 1.09836, 1.09836, 1.09836, 1.01522, 0.86321,
+    0.94434, 0.8649, 0.94434, 0.86182, 1, 1, 1.083, 1, 0.91578, 0.86438,
+    1.17308, 1.18416, 1.14589, 0.69825, 0.97622, 1.96791, 1.24822, 1.24822,
+    1.17308, 1.24822, 1.24822, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1, 0.99862, 0.99862, 1, 0.87025,
+    0.87025, 0.87025, 0.87025, 1.17984, 1.42603, 1, 1.42603, 1.42603, 0.99862,
+    1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296, 1.34163, 1, 1, 1, 1.10742, 1.10742,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   Ws = { lineHeight: 1.33008, lineGap: 0 },
   Ks = [
-    1.76738, 1, 1, 0.98594, 1.02285, 1.10454, 1.06234, 0.96927, 0.92037, 1.19985, 1.2046, 0.90616, 0.90616, 1.07152, 1.1714, 0.78032, 1.20088, 0.78032, 1.40246, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.78032, 0.78032, 1.1714, 1.1714, 1.1714, 0.80597, 0.94084, 0.96706, 0.85944, 0.85734, 0.97093, 0.75842, 0.79936, 0.88198, 0.9831, 0.95782, 0.71387, 0.86969, 0.84636, 1.07796, 1.03584, 0.96924, 0.83968, 0.96924, 0.82826, 0.79649, 0.85771, 0.95132, 0.93119, 0.98965, 0.88433, 0.8287, 0.93365, 1.08612, 1.3638, 1.08612, 1.45786, 0.74627, 0.80499, 0.91484, 1.05707, 0.92383, 1.05882, 0.9403, 1.12654, 1.05882, 1.01756, 1.09011, 1.09011, 0.99414, 1.09011, 1.034, 1.01756, 1.05356, 1.05707, 1.05882, 1.04399, 0.84863, 1.21968, 1.01756, 0.95801, 1.00068, 0.91797, 0.96777, 0.9043, 0.90351, 0.92105, 0.90351, 1.1714, 0.85337, 0.96927, 0.96927, 0.99912, 0.96927, 0.92105, 0.80597, 1.2434, 1.20808, 1.05937, 0.90957, 1.1714, 1.20808, 0.75155, 0.94261,
-    1.24644, 1.09971, 1.09971, 0.84751, 1, 0.85273, 0.78032, 0.61584, 1.05425, 1.17914, 0.90957, 1.08665, 1.11593, 1.14169, 0.73381, 0.96706, 0.96706, 0.96706, 0.96706, 0.96706, 0.96706, 0.86035, 0.85734, 0.75842, 0.75842, 0.75842, 0.75842, 0.95782, 0.95782, 0.95782, 0.95782, 0.97093, 1.03584, 0.96924, 0.96924, 0.96924, 0.96924, 0.96924, 1.1714, 0.96924, 0.95132, 0.95132, 0.95132, 0.95132, 0.8287, 0.83968, 0.89049, 0.91484, 0.91484, 0.91484, 0.91484, 0.91484, 0.91484, 0.93575, 0.92383, 0.9403, 0.9403, 0.9403, 0.9403, 0.8717, 0.8717, 0.8717, 0.8717, 1.00527, 1.01756, 1.05356, 1.05356, 1.05356, 1.05356, 1.05356, 1.24644, 0.95923, 1.01756, 1.01756, 1.01756, 1.01756, 0.96777, 1.05707, 0.96777, 0.96706, 0.91484, 0.96706, 0.91484, 0.96706, 0.91484, 0.85734, 0.92383, 0.85734, 0.92383, 0.85734, 0.92383, 0.85734, 0.92383, 0.97093, 1.0969, 0.97093, 1.05882, 0.75842, 0.9403, 0.75842, 0.9403, 0.75842, 0.9403, 0.75842, 0.9403, 0.75842, 0.9403, 0.88198, 1.05882, 0.88198, 1.05882, 0.88198, 1.05882,
-    1, 1, 0.9831, 1.01756, 0.9831, 1.01756, 0.95782, 0.8717, 0.95782, 0.8717, 0.95782, 0.8717, 0.95782, 1.09011, 0.95782, 0.8717, 0.84784, 1.11551, 0.71387, 1.09011, 1, 1, 0.99414, 0.84636, 1.09011, 1, 1, 0.84636, 1.0536, 0.84636, 0.94298, 0.84636, 1.23297, 1.03584, 1.01756, 1, 1, 1.03584, 1.01756, 1.00323, 1.03444, 1.01756, 0.96924, 1.05356, 0.96924, 1.05356, 0.96924, 1.05356, 0.93066, 0.98293, 0.82826, 1.04399, 1, 1, 0.82826, 1.04399, 0.79649, 0.84863, 0.79649, 0.84863, 0.79649, 0.84863, 0.79649, 0.84863, 1, 1, 0.85771, 1.17318, 0.85771, 1.21968, 0.95132, 1.01756, 0.95132, 1.01756, 0.95132, 1.01756, 0.95132, 1.01756, 0.95132, 1.01756, 0.95132, 1.01756, 0.98965, 1.00068, 0.8287, 0.96777, 0.8287, 0.93365, 0.9043, 0.93365, 0.9043, 0.93365, 0.9043, 1.08571, 0.96927, 0.96706, 0.91484, 0.86035, 0.93575, 0.96924, 0.95923, 1, 1, 0.85771, 1.21968, 1.11437, 1.11437, 0.93109, 0.91202, 0.60411, 0.84164, 0.55572, 1.01173, 0.97361, 0.81818, 0.81818, 0.96635, 0.78032, 0.72727, 0.92366, 0.98601,
-    1.03405, 0.77968, 1.09799, 1.2, 0.96706, 0.85944, 0.85638, 0.96491, 0.75842, 0.93365, 0.9831, 0.96924, 0.95782, 0.86969, 0.94152, 1.07796, 1.03584, 0.78437, 0.96924, 0.98715, 0.83968, 0.83491, 0.85771, 0.8287, 0.94492, 0.88433, 0.9287, 1.0098, 0.95782, 0.8287, 1.0625, 0.98248, 1.03424, 1.2, 1.01071, 1.0625, 0.95246, 1.03809, 1.04912, 0.98248, 1.00221, 1.03424, 1.05443, 1.2, 1.04785, 0.99609, 1.00169, 1.05176, 0.99346, 1.05356, 0.9087, 1.03004, 0.95542, 0.93117, 1.23362, 1.01071, 1.07831, 1.02512, 1.05205, 1.03502, 1.2, 1.01071, 1.05356, 1.01071, 1.03502, 0.75842, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.03719, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9403, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.04021, 1, 1, 1, 1, 1, 1, 0.98965, 1.00068, 0.98965, 1.00068, 0.98965, 1.00068, 0.8287, 0.96777, 1, 1.20088, 0.89903, 1, 1, 0.75155,
-    1.03077, 1.03077, 1.03077, 1.03077, 1.13196, 1.13196, 1.13196, 0.67428, 0.67428, 1.16039, 0.73291, 1.20996, 1.22135, 1.06483, 0.94868, 0.94868, 0.95996, 1.24633, 1, 1.07497, 0.87796, 0.96927, 1.01518, 0.96927, 1, 1, 1, 0.77295, 1, 1, 1.10539, 1.10539, 1.11358, 1.06967, 0.86279, 0.94434, 0.86279, 0.94434, 0.86182, 1, 1, 1.083, 1, 0.91578, 0.86507, 1.1714, 1.18416, 1.14589, 0.69825, 0.97622, 1.9697, 1.24822, 1.24822, 1.17238, 1.24822, 1.24822, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1, 0.99862, 0.99862, 1, 0.87025, 0.87025, 0.87025, 0.87025, 1.18083, 1.42603, 1, 1.42603, 1.42603, 0.99862, 1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296, 1.34163, 1, 1, 1, 1.10938, 1.10938, 1, 1, 1, 1.05425, 1.09971, 1.09971, 1.09971, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1.76738, 1, 1, 0.98594, 1.02285, 1.10454, 1.06234, 0.96927, 0.92037,
+    1.19985, 1.2046, 0.90616, 0.90616, 1.07152, 1.1714, 0.78032, 1.20088,
+    0.78032, 1.40246, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927, 0.96927,
+    0.96927, 0.96927, 0.96927, 0.96927, 0.78032, 0.78032, 1.1714, 1.1714,
+    1.1714, 0.80597, 0.94084, 0.96706, 0.85944, 0.85734, 0.97093, 0.75842,
+    0.79936, 0.88198, 0.9831, 0.95782, 0.71387, 0.86969, 0.84636, 1.07796,
+    1.03584, 0.96924, 0.83968, 0.96924, 0.82826, 0.79649, 0.85771, 0.95132,
+    0.93119, 0.98965, 0.88433, 0.8287, 0.93365, 1.08612, 1.3638, 1.08612,
+    1.45786, 0.74627, 0.80499, 0.91484, 1.05707, 0.92383, 1.05882, 0.9403,
+    1.12654, 1.05882, 1.01756, 1.09011, 1.09011, 0.99414, 1.09011, 1.034,
+    1.01756, 1.05356, 1.05707, 1.05882, 1.04399, 0.84863, 1.21968, 1.01756,
+    0.95801, 1.00068, 0.91797, 0.96777, 0.9043, 0.90351, 0.92105, 0.90351,
+    1.1714, 0.85337, 0.96927, 0.96927, 0.99912, 0.96927, 0.92105, 0.80597,
+    1.2434, 1.20808, 1.05937, 0.90957, 1.1714, 1.20808, 0.75155, 0.94261,
+    1.24644, 1.09971, 1.09971, 0.84751, 1, 0.85273, 0.78032, 0.61584, 1.05425,
+    1.17914, 0.90957, 1.08665, 1.11593, 1.14169, 0.73381, 0.96706, 0.96706,
+    0.96706, 0.96706, 0.96706, 0.96706, 0.86035, 0.85734, 0.75842, 0.75842,
+    0.75842, 0.75842, 0.95782, 0.95782, 0.95782, 0.95782, 0.97093, 1.03584,
+    0.96924, 0.96924, 0.96924, 0.96924, 0.96924, 1.1714, 0.96924, 0.95132,
+    0.95132, 0.95132, 0.95132, 0.8287, 0.83968, 0.89049, 0.91484, 0.91484,
+    0.91484, 0.91484, 0.91484, 0.91484, 0.93575, 0.92383, 0.9403, 0.9403,
+    0.9403, 0.9403, 0.8717, 0.8717, 0.8717, 0.8717, 1.00527, 1.01756, 1.05356,
+    1.05356, 1.05356, 1.05356, 1.05356, 1.24644, 0.95923, 1.01756, 1.01756,
+    1.01756, 1.01756, 0.96777, 1.05707, 0.96777, 0.96706, 0.91484, 0.96706,
+    0.91484, 0.96706, 0.91484, 0.85734, 0.92383, 0.85734, 0.92383, 0.85734,
+    0.92383, 0.85734, 0.92383, 0.97093, 1.0969, 0.97093, 1.05882, 0.75842,
+    0.9403, 0.75842, 0.9403, 0.75842, 0.9403, 0.75842, 0.9403, 0.75842, 0.9403,
+    0.88198, 1.05882, 0.88198, 1.05882, 0.88198, 1.05882, 1, 1, 0.9831, 1.01756,
+    0.9831, 1.01756, 0.95782, 0.8717, 0.95782, 0.8717, 0.95782, 0.8717, 0.95782,
+    1.09011, 0.95782, 0.8717, 0.84784, 1.11551, 0.71387, 1.09011, 1, 1, 0.99414,
+    0.84636, 1.09011, 1, 1, 0.84636, 1.0536, 0.84636, 0.94298, 0.84636, 1.23297,
+    1.03584, 1.01756, 1, 1, 1.03584, 1.01756, 1.00323, 1.03444, 1.01756,
+    0.96924, 1.05356, 0.96924, 1.05356, 0.96924, 1.05356, 0.93066, 0.98293,
+    0.82826, 1.04399, 1, 1, 0.82826, 1.04399, 0.79649, 0.84863, 0.79649,
+    0.84863, 0.79649, 0.84863, 0.79649, 0.84863, 1, 1, 0.85771, 1.17318,
+    0.85771, 1.21968, 0.95132, 1.01756, 0.95132, 1.01756, 0.95132, 1.01756,
+    0.95132, 1.01756, 0.95132, 1.01756, 0.95132, 1.01756, 0.98965, 1.00068,
+    0.8287, 0.96777, 0.8287, 0.93365, 0.9043, 0.93365, 0.9043, 0.93365, 0.9043,
+    1.08571, 0.96927, 0.96706, 0.91484, 0.86035, 0.93575, 0.96924, 0.95923, 1,
+    1, 0.85771, 1.21968, 1.11437, 1.11437, 0.93109, 0.91202, 0.60411, 0.84164,
+    0.55572, 1.01173, 0.97361, 0.81818, 0.81818, 0.96635, 0.78032, 0.72727,
+    0.92366, 0.98601, 1.03405, 0.77968, 1.09799, 1.2, 0.96706, 0.85944, 0.85638,
+    0.96491, 0.75842, 0.93365, 0.9831, 0.96924, 0.95782, 0.86969, 0.94152,
+    1.07796, 1.03584, 0.78437, 0.96924, 0.98715, 0.83968, 0.83491, 0.85771,
+    0.8287, 0.94492, 0.88433, 0.9287, 1.0098, 0.95782, 0.8287, 1.0625, 0.98248,
+    1.03424, 1.2, 1.01071, 1.0625, 0.95246, 1.03809, 1.04912, 0.98248, 1.00221,
+    1.03424, 1.05443, 1.2, 1.04785, 0.99609, 1.00169, 1.05176, 0.99346, 1.05356,
+    0.9087, 1.03004, 0.95542, 0.93117, 1.23362, 1.01071, 1.07831, 1.02512,
+    1.05205, 1.03502, 1.2, 1.01071, 1.05356, 1.01071, 1.03502, 0.75842, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1.03719, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 0.9403, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.04021, 1, 1, 1, 1, 1,
+    1, 0.98965, 1.00068, 0.98965, 1.00068, 0.98965, 1.00068, 0.8287, 0.96777, 1,
+    1.20088, 0.89903, 1, 1, 0.75155, 1.03077, 1.03077, 1.03077, 1.03077,
+    1.13196, 1.13196, 1.13196, 0.67428, 0.67428, 1.16039, 0.73291, 1.20996,
+    1.22135, 1.06483, 0.94868, 0.94868, 0.95996, 1.24633, 1, 1.07497, 0.87796,
+    0.96927, 1.01518, 0.96927, 1, 1, 1, 0.77295, 1, 1, 1.10539, 1.10539,
+    1.11358, 1.06967, 0.86279, 0.94434, 0.86279, 0.94434, 0.86182, 1, 1, 1.083,
+    1, 0.91578, 0.86507, 1.1714, 1.18416, 1.14589, 0.69825, 0.97622, 1.9697,
+    1.24822, 1.24822, 1.17238, 1.24822, 1.24822, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1, 0.99862,
+    0.99862, 1, 0.87025, 0.87025, 0.87025, 0.87025, 1.18083, 1.42603, 1,
+    1.42603, 1.42603, 0.99862, 1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296, 1.34163,
+    1, 1, 1, 1.10938, 1.10938, 1, 1, 1, 1.05425, 1.09971, 1.09971, 1.09971, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ],
   Gs = { lineHeight: 1.33008, lineGap: 0 },
   Vs = getLookupTableFactory(function (e) {
@@ -27506,7 +30381,10 @@ const os = [
           baseMapping: xs,
           metrics: Bs,
         };
-    e.ArialMT = e.Arial = e["Arial-Regular"] = { name: "LiberationSans-Regular", baseWidths: Fs, baseMapping: Ts };
+    e.ArialMT =
+      e.Arial =
+      e["Arial-Regular"] =
+        { name: "LiberationSans-Regular", baseWidths: Fs, baseMapping: Ts };
     e["Arial-BoldMT"] = e["Arial-Bold"] = {
       name: "LiberationSans-Bold",
       baseWidths: vs,
@@ -27900,7 +30778,10 @@ class ast_Parser {
     this._token = this.lexer.next();
   }
   _expect(e) {
-    if (this._token.id !== e) throw new FormatError(`PostScript function: expected token id ${e}, got ${this._token.id}.`);
+    if (this._token.id !== e)
+      throw new FormatError(
+        `PostScript function: expected token id ${e}, got ${this._token.id}.`,
+      );
     const t = this._token;
     this._advance();
     return t;
@@ -27910,7 +30791,8 @@ class ast_Parser {
     this._expect($s.lbrace);
     const e = this._parseBlock();
     this._expect($s.rbrace);
-    this._token.id !== $s.eof && warn("PostScript function: unexpected content after closing brace.");
+    this._token.id !== $s.eof &&
+      warn("PostScript function: unexpected content after closing brace.");
     return new PsProgram(e);
   }
   _parseBlock() {
@@ -27930,7 +30812,10 @@ class ast_Parser {
             this._advance();
             e.push(new PsIf(t));
           } else {
-            if (this._token.id !== $s.lbrace) throw new FormatError("PostScript function: a procedure block must be followed by 'if' or '{…} ifelse'.");
+            if (this._token.id !== $s.lbrace)
+              throw new FormatError(
+                "PostScript function: a procedure block must be followed by 'if' or '{…} ifelse'.",
+              );
             {
               this._advance();
               const a = this._parseBlock();
@@ -27946,14 +30831,18 @@ class ast_Parser {
           return new PsBlock(e);
         case $s.if:
         case $s.ifelse:
-          throw new FormatError(`PostScript function: unexpected '${t.value}' operator.`);
+          throw new FormatError(
+            `PostScript function: unexpected '${t.value}' operator.`,
+          );
         default:
           if (ast_Parser._isRegularOperator(t.id)) {
             e.push(new PsOperator(t.id));
             this._advance();
             break;
           }
-          throw new FormatError(`PostScript function: unexpected token id ${t.id}.`);
+          throw new FormatError(
+            `PostScript function: unexpected token id ${t.id}.`,
+          );
       }
     }
   }
@@ -27972,9 +30861,17 @@ function _nodesEqual(e, t) {
     case or:
       return e.op === t.op && _nodesEqual(e.operand, t.operand);
     case lr:
-      return e.op === t.op && _nodesEqual(e.first, t.first) && _nodesEqual(e.second, t.second);
+      return (
+        e.op === t.op &&
+        _nodesEqual(e.first, t.first) &&
+        _nodesEqual(e.second, t.second)
+      );
     case fr:
-      return _nodesEqual(e.cond, t.cond) && _nodesEqual(e.then, t.then) && _nodesEqual(e.otherwise, t.otherwise);
+      return (
+        _nodesEqual(e.cond, t.cond) &&
+        _nodesEqual(e.then, t.then) &&
+        _nodesEqual(e.otherwise, t.otherwise)
+      );
     default:
       return !1;
   }
@@ -27986,9 +30883,51 @@ class PSStackToTree {
   static #ce = null;
   static #he = null;
   static #ue() {
-    this.#le = new Set([$s.add, $s.sub, $s.mul, $s.div, $s.idiv, $s.mod, $s.exp, $s.atan, $s.eq, $s.ne, $s.gt, $s.ge, $s.lt, $s.le, $s.and, $s.or, $s.xor, $s.bitshift]);
-    this.#fe = new Set([$s.abs, $s.neg, $s.ceiling, $s.floor, $s.round, $s.truncate, $s.sqrt, $s.sin, $s.cos, $s.ln, $s.log, $s.cvi, $s.cvr, $s.not]);
-    this.#ce = new Set([$s.abs, $s.ceiling, $s.cvi, $s.cvr, $s.floor, $s.round, $s.truncate]);
+    this.#le = new Set([
+      $s.add,
+      $s.sub,
+      $s.mul,
+      $s.div,
+      $s.idiv,
+      $s.mod,
+      $s.exp,
+      $s.atan,
+      $s.eq,
+      $s.ne,
+      $s.gt,
+      $s.ge,
+      $s.lt,
+      $s.le,
+      $s.and,
+      $s.or,
+      $s.xor,
+      $s.bitshift,
+    ]);
+    this.#fe = new Set([
+      $s.abs,
+      $s.neg,
+      $s.ceiling,
+      $s.floor,
+      $s.round,
+      $s.truncate,
+      $s.sqrt,
+      $s.sin,
+      $s.cos,
+      $s.ln,
+      $s.log,
+      $s.cvi,
+      $s.cvr,
+      $s.not,
+    ]);
+    this.#ce = new Set([
+      $s.abs,
+      $s.ceiling,
+      $s.cvi,
+      $s.cvr,
+      $s.floor,
+      $s.round,
+      $s.truncate,
+    ]);
     this.#he = new Map([
       [$s.eq, $s.ne],
       [$s.ne, $s.eq],
@@ -28060,7 +30999,9 @@ class PSStackToTree {
             r = a.slice();
           this._evalBlock(t.then, a);
           if (this._failed) break;
-          if (a.length === r.length) for (let e = 0; e < a.length; e++) a[e] !== r[e] && (a[e] = this._makeTernary(s, a[e], r[e]));
+          if (a.length === r.length)
+            for (let e = 0; e < a.length; e++)
+              a[e] !== r[e] && (a[e] = this._makeTernary(s, a[e], r[e]));
           else {
             if (a.length > r.length) {
               if (s.type === ir) {
@@ -28082,7 +31023,8 @@ class PSStackToTree {
                 for (; i.length < t.length; ) i.push(e);
               }
               a.length = 0;
-              for (let e = 0; e < t.length; e++) a.push(this._makeTernary(s, t[e], i[e]));
+              for (let e = 0; e < t.length; e++)
+                a.push(this._makeTernary(s, t[e], i[e]));
               return;
             }
             this._failed = !0;
@@ -28108,7 +31050,8 @@ class PSStackToTree {
             for (; r.length < s.length; ) r.push(e);
           }
           a.length = 0;
-          for (let t = 0; t < s.length; t++) a.push(this._makeTernary(e, s[t], r[t]));
+          for (let t = 0; t < s.length; t++)
+            a.push(this._makeTernary(e, s[t], r[t]));
           break;
         }
       }
@@ -28308,7 +31251,8 @@ class PSStackToTree {
           if (-1 === n) return this._makeUnary($s.neg, a);
           break;
         case $s.div:
-          if (0 !== n) return this._makeBinary($s.mul, new PsConstNode(1 / n), a);
+          if (0 !== n)
+            return this._makeBinary($s.mul, new PsConstNode(1 / n), a);
           break;
         case $s.idiv:
           if (1 === n) return a;
@@ -28322,7 +31266,8 @@ class PSStackToTree {
             return this._makeUnary($s.sqrt, e);
           }
           if (2 === n) return this._makeBinary($s.mul, a, a);
-          if (3 === n) return this._makeBinary($s.mul, this._makeBinary($s.mul, a, a), a);
+          if (3 === n)
+            return this._makeBinary($s.mul, this._makeBinary($s.mul, a, a), a);
           if (4 === n) {
             const e = this._makeBinary($s.mul, a, a);
             return this._makeBinary($s.mul, e, e);
@@ -28338,10 +31283,22 @@ class PSStackToTree {
           if (!0 === n) return t;
           break;
         case $s.min:
-          if (a.type === lr && a.op === $s.max && a.first.type === ir && a.first.value >= n) return t;
+          if (
+            a.type === lr &&
+            a.op === $s.max &&
+            a.first.type === ir &&
+            a.first.value >= n
+          )
+            return t;
           break;
         case $s.max:
-          if (a.type === lr && a.op === $s.min && a.first.type === ir && a.first.value <= n) return t;
+          if (
+            a.type === lr &&
+            a.op === $s.min &&
+            a.first.type === ir &&
+            a.first.value <= n
+          )
+            return t;
       }
     }
     if (a.type === ir) {
@@ -28438,10 +31395,16 @@ class PSStackToTree {
       const e = PSStackToTree.#he.get(t.op);
       if (void 0 !== e) return new PsBinaryNode(e, t.first, t.second, Js);
     }
-    if (e === $s.neg && t.type === lr && t.op === $s.sub) return this._makeBinary($s.sub, t.second, t.first);
+    if (e === $s.neg && t.type === lr && t.op === $s.sub)
+      return this._makeBinary($s.sub, t.second, t.first);
     if (t.type === or) {
-      if ((e === $s.neg && t.op === $s.neg) || (e === $s.not && t.op === $s.not)) return t.operand;
-      if (e === $s.abs && t.op === $s.neg) return this._makeUnary($s.abs, t.operand);
+      if (
+        (e === $s.neg && t.op === $s.neg) ||
+        (e === $s.not && t.op === $s.not)
+      )
+        return t.operand;
+      if (e === $s.abs && t.op === $s.neg)
+        return this._makeUnary($s.abs, t.operand);
       if (PSStackToTree.#ce.has(e) && e === t.op) return t;
     }
     return new PsUnaryNode(
@@ -28462,14 +31425,23 @@ class PSStackToTree {
     if (e.type === lr) {
       const { op: n, first: s, second: r } = e;
       if (n === $s.gt || n === $s.ge) {
-        if (_nodesEqual(t, s) && _nodesEqual(a, r)) return this._makeBinary($s.min, s, r);
-        if (_nodesEqual(t, r) && _nodesEqual(a, s)) return this._makeBinary($s.max, s, r);
+        if (_nodesEqual(t, s) && _nodesEqual(a, r))
+          return this._makeBinary($s.min, s, r);
+        if (_nodesEqual(t, r) && _nodesEqual(a, s))
+          return this._makeBinary($s.max, s, r);
       } else if (n === $s.lt || n === $s.le) {
-        if (_nodesEqual(t, s) && _nodesEqual(a, r)) return this._makeBinary($s.max, s, r);
-        if (_nodesEqual(t, r) && _nodesEqual(a, s)) return this._makeBinary($s.min, s, r);
+        if (_nodesEqual(t, s) && _nodesEqual(a, r))
+          return this._makeBinary($s.max, s, r);
+        if (_nodesEqual(t, r) && _nodesEqual(a, s))
+          return this._makeBinary($s.min, s, r);
       }
     }
-    return new PsTernaryNode(e, t, a, t.valueType === a.valueType ? t.valueType : Qs);
+    return new PsTernaryNode(
+      e,
+      t,
+      a,
+      t.valueType === a.valueType ? t.valueType : Qs,
+    );
   }
 }
 const hr = 0,
@@ -29103,7 +32075,9 @@ class PSStackBasedInterpreter {
           0 !== this.#pe[--this.#ge] && this.#je(t.then.instructions);
           break;
         case sr:
-          0 !== this.#pe[--this.#ge] ? this.#je(t.then.instructions) : this.#je(t.otherwise.instructions);
+          0 !== this.#pe[--this.#ge]
+            ? this.#je(t.then.instructions)
+            : this.#je(t.otherwise.instructions);
       }
   }
   static build(e, t, a) {
@@ -29179,7 +32153,10 @@ function unsignedLEB128(e) {
   return t;
 }
 function encodeASCIIString(e) {
-  return [...unsignedLEB128(e.length), ...Array.from(e, (e) => e.charCodeAt(0))];
+  return [
+    ...unsignedLEB128(e.length),
+    ...Array.from(e, (e) => e.charCodeAt(0)),
+  ];
 }
 function section(e, t) {
   return [e, ...unsignedLEB128(t.length), ...t];
@@ -29228,7 +32205,19 @@ class PsWasmCompiler {
     this.#ve = Math.PI / 180;
     this.#Se = 180 / Math.PI;
     this.#Ae = fi.map(([, , , e, t]) => [96, ...vec(e), ...vec(t)]);
-    this.#xe = new Uint8Array(section(si, vec(fi.map(([, e, t], a) => [...encodeASCIIString(e), ...encodeASCIIString(t), 0, ...unsignedLEB128(a + 1)]))));
+    this.#xe = new Uint8Array(
+      section(
+        si,
+        vec(
+          fi.map(([, e, t], a) => [
+            ...encodeASCIIString(e),
+            ...encodeASCIIString(t),
+            0,
+            ...unsignedLEB128(a + 1),
+          ]),
+        ),
+      ),
+    );
     this.#Ce = new Uint8Array(section(ri, vec([[0]])));
     this.#Ie = new Uint8Array(section(ii, vec([[0, 1]])));
     this.#Fe = new Uint8Array(
@@ -29354,7 +32343,13 @@ class PsWasmCompiler {
       }
       if (e.valueType === Ys) {
         if (!this._compileNode(e.operand)) return !1;
-        t.push(ti.i32_trunc_f64_s, ti.i32_const, 127, ti.i32_xor, ti.f64_convert_i32_s);
+        t.push(
+          ti.i32_trunc_f64_s,
+          ti.i32_const,
+          127,
+          ti.i32_xor,
+          ti.f64_convert_i32_s,
+        );
         return !0;
       }
       return !1;
@@ -29603,7 +32598,19 @@ class PsWasmCompiler {
   }
   _compileBinaryNode(e) {
     const { op: t, first: a, second: n } = e;
-    return t === $s.bitshift ? this._compileBitshiftNode(a, n) : t === $s.div ? this._compileSafeDivNode(a, n) : t === $s.idiv ? this._compileSafeIdivNode(a, n) : t === $s.mod ? this._compileModNode(a, n) : t === $s.atan ? this._compileAtanNode(a, n) : t === $s.and || t === $s.or || t === $s.xor ? this._compileBitwiseNode(t, a, n) : this._compileStandardBinaryNode(t, a, n);
+    return t === $s.bitshift
+      ? this._compileBitshiftNode(a, n)
+      : t === $s.div
+        ? this._compileSafeDivNode(a, n)
+        : t === $s.idiv
+          ? this._compileSafeIdivNode(a, n)
+          : t === $s.mod
+            ? this._compileModNode(a, n)
+            : t === $s.atan
+              ? this._compileAtanNode(a, n)
+              : t === $s.and || t === $s.or || t === $s.xor
+                ? this._compileBitwiseNode(t, a, n)
+                : this._compileStandardBinaryNode(t, a, n);
   }
   _compileNodeAsBoolI32(e) {
     if (e.type === lr) {
@@ -29614,7 +32621,10 @@ class PsWasmCompiler {
         this._code.push(t);
         return !0;
       }
-      if (e.valueType === Js && (e.op === $s.and || e.op === $s.or || e.op === $s.xor)) {
+      if (
+        e.valueType === Js &&
+        (e.op === $s.and || e.op === $s.or || e.op === $s.xor)
+      ) {
         if (!this._compileNodeAsBoolI32(e.second)) return !1;
         if (!this._compileNodeAsBoolI32(e.first)) return !1;
         switch (e.op) {
@@ -29674,13 +32684,22 @@ class PsWasmCompiler {
       i = new Uint8Array(section(ni, vec([r, ...PsWasmCompiler.#Ae]))),
       o = vec(s > 0 ? [[...unsignedLEB128(s), ai]] : []),
       l = o.length + a.length,
-      f = new Uint8Array(section(li, vec([[...unsignedLEB128(l), ...o, ...a]]))),
+      f = new Uint8Array(
+        section(li, vec([[...unsignedLEB128(l), ...o, ...a]])),
+      ),
       c = PsWasmCompiler.#Te,
       h = PsWasmCompiler.#xe,
       u = PsWasmCompiler.#Ce,
       m = PsWasmCompiler.#Ie,
       p = PsWasmCompiler.#Fe,
-      d = c.length + i.length + h.length + u.length + m.length + p.length + f.length,
+      d =
+        c.length +
+        i.length +
+        h.length +
+        u.length +
+        m.length +
+        p.length +
+        f.length,
       g = new Uint8Array(d);
     let b = 0;
     g.set(c, b);
@@ -29771,7 +32790,11 @@ function buildPostScriptWasmFunction(e, t, a) {
           };
         }
       }
-    })(new WebAssembly.Instance(new WebAssembly.Module(n), ci).exports, t.length >> 1, a.length >> 1);
+    })(
+      new WebAssembly.Instance(new WebAssembly.Module(n), ci).exports,
+      t.length >> 1,
+      a.length >> 1,
+    );
   } catch {
     return null;
   }
@@ -29799,7 +32822,8 @@ class BaseLocalCache {
 }
 class LocalImageCache extends BaseLocalCache {
   set(e, t = null, a) {
-    if ("string" != typeof e) throw new Error('LocalImageCache.set - expected "name" argument.');
+    if ("string" != typeof e)
+      throw new Error('LocalImageCache.set - expected "name" argument.');
     if (t) {
       if (this._imageCache.has(t)) return;
       this._nameRefMap.set(e, t);
@@ -29809,7 +32833,10 @@ class LocalImageCache extends BaseLocalCache {
 }
 class LocalColorSpaceCache extends BaseLocalCache {
   set(e = null, t = null, a) {
-    if ("string" != typeof e && !t) throw new Error('LocalColorSpaceCache.set - expected "name" and/or "ref" argument.');
+    if ("string" != typeof e && !t)
+      throw new Error(
+        'LocalColorSpaceCache.set - expected "name" and/or "ref" argument.',
+      );
     if (t) {
       if (this._imageCache.has(t)) return;
       null !== e && this._nameRefMap.set(e, t);
@@ -29822,13 +32849,15 @@ class LocalFunctionCache extends BaseLocalCache {
     super({ onlyRefs: !0 });
   }
   set(e = null, t, a) {
-    if (!t) throw new Error('LocalFunctionCache.set - expected "ref" argument.');
+    if (!t)
+      throw new Error('LocalFunctionCache.set - expected "ref" argument.');
     this._imageCache.has(t) || this._imageCache.put(t, a);
   }
 }
 class LocalGStateCache extends BaseLocalCache {
   set(e, t = null, a) {
-    if ("string" != typeof e) throw new Error('LocalGStateCache.set - expected "name" argument.');
+    if ("string" != typeof e)
+      throw new Error('LocalGStateCache.set - expected "name" argument.');
     if (t) {
       if (this._imageCache.has(t)) return;
       this._nameRefMap.set(e, t);
@@ -29841,7 +32870,8 @@ class LocalTilingPatternCache extends BaseLocalCache {
     super({ onlyRefs: !0 });
   }
   set(e = null, t, a) {
-    if (!t) throw new Error('LocalTilingPatternCache.set - expected "ref" argument.');
+    if (!t)
+      throw new Error('LocalTilingPatternCache.set - expected "ref" argument.');
     this._imageCache.has(t) || this._imageCache.put(t, a);
   }
 }
@@ -29850,7 +32880,8 @@ class RegionalImageCache extends BaseLocalCache {
     super({ onlyRefs: !0 });
   }
   set(e = null, t, a) {
-    if (!t) throw new Error('RegionalImageCache.set - expected "ref" argument.');
+    if (!t)
+      throw new Error('RegionalImageCache.set - expected "ref" argument.');
     this._imageCache.has(t) || this._imageCache.put(t, a);
   }
 }
@@ -29859,7 +32890,8 @@ class GlobalColorSpaceCache extends BaseLocalCache {
     super({ onlyRefs: !0 });
   }
   set(e = null, t, a) {
-    if (!t) throw new Error('GlobalColorSpaceCache.set - expected "ref" argument.');
+    if (!t)
+      throw new Error('GlobalColorSpaceCache.set - expected "ref" argument.');
     this._imageCache.has(t) || this._imageCache.put(t, a);
   }
   clear() {
@@ -29881,7 +32913,10 @@ class GlobalImageCache {
     return e;
   }
   get #De() {
-    return !(this._imageCache.size < GlobalImageCache.MIN_IMAGES_TO_CACHE) && !(this.#Be < GlobalImageCache.MAX_BYTE_SIZE);
+    return (
+      !(this._imageCache.size < GlobalImageCache.MIN_IMAGES_TO_CACHE) &&
+      !(this.#Be < GlobalImageCache.MAX_BYTE_SIZE)
+    );
   }
   shouldCache(e, t) {
     let a = this._refCache.get(e);
@@ -29890,7 +32925,10 @@ class GlobalImageCache {
       this._refCache.put(e, a);
     }
     a.add(t);
-    return !(a.size < GlobalImageCache.NUM_PAGES_THRESHOLD) && !(!this._imageCache.has(e) && this.#De);
+    return (
+      !(a.size < GlobalImageCache.NUM_PAGES_THRESHOLD) &&
+      !(!this._imageCache.has(e) && this.#De)
+    );
   }
   addDecodeFailed(e) {
     this.#He.put(e);
@@ -29912,8 +32950,14 @@ class GlobalImageCache {
     return n;
   }
   setData(e, t) {
-    if (!this._refCache.has(e)) throw new Error('GlobalImageCache.setData - expected "shouldCache" to have been called.');
-    this._imageCache.has(e) || (this.#De ? warn("GlobalImageCache.setData - cache limit reached.") : this._imageCache.put(e, t));
+    if (!this._refCache.has(e))
+      throw new Error(
+        'GlobalImageCache.setData - expected "shouldCache" to have been called.',
+      );
+    this._imageCache.has(e) ||
+      (this.#De
+        ? warn("GlobalImageCache.setData - cache limit reached.")
+        : this._imageCache.put(e, t));
   }
   clear(e = !1) {
     if (!e) {
@@ -29940,14 +32984,21 @@ class PDFFunctionFactory {
   }
   create(e, t = !1) {
     let a, n;
-    e instanceof Ref ? (a = e) : e instanceof Dict ? (a = e.objId) : e instanceof BaseStream && (a = e.dict?.objId);
+    e instanceof Ref
+      ? (a = e)
+      : e instanceof Dict
+        ? (a = e.objId)
+        : e instanceof BaseStream && (a = e.dict?.objId);
     if (a) {
       const e = this._localFunctionCache.getByRef(a);
       if (e) return e;
     }
     const s = this.xref.fetchIfRef(e);
     if (Array.isArray(s)) {
-      if (!t) throw new Error('PDFFunctionFactory.create - expected "parseArray" argument.');
+      if (!t)
+        throw new Error(
+          'PDFFunctionFactory.create - expected "parseArray" argument.',
+        );
       n = PDFFunction.parseArray(this, s);
     } else n = PDFFunction.parse(this, s);
     a && this._localFunctionCache.set(null, a, n);
@@ -29958,7 +33009,11 @@ class PDFFunctionFactory {
   }
 }
 function toNumberArray(e) {
-  return Array.isArray(e) ? (isNumberArray(e, null) ? e : e.map((e) => +e)) : null;
+  return Array.isArray(e)
+    ? isNumberArray(e, null)
+      ? e
+      : e.map((e) => +e)
+    : null;
 }
 class PDFFunction {
   static getSampleArray(e, t, a, n) {
@@ -30036,7 +33091,13 @@ class PDFFunction {
       for (d = 0; d < r; ++d) {
         const a = n[2 * d],
           s = n[2 * d + 1];
-        let r = interpolate(MathClamp(e[t + d], a, s), a, s, c[2 * d], c[2 * d + 1]);
+        let r = interpolate(
+          MathClamp(e[t + d], a, s),
+          a,
+          s,
+          c[2 * d],
+          c[2 * d + 1],
+        );
         const i = o[d];
         r = MathClamp(r, 0, i - 1);
         const l = r < i - 1 ? Math.floor(r) : r - 1,
@@ -30078,7 +33139,8 @@ class PDFFunction {
   static constructStiched(e, t) {
     const a = toNumberArray(t.getArray("Domain"));
     if (!a) throw new FormatError("No domain");
-    if (1 !== a.length / 2) throw new FormatError("Bad domain for stiched function");
+    if (1 !== a.length / 2)
+      throw new FormatError("Bad domain for stiched function");
     const { xref: n } = e,
       s = [];
     for (const a of t.get("Functions")) s.push(this.parse(e, n.fetchIfRef(a)));
@@ -30690,7 +33752,11 @@ function bidi(e, t = -1, a = !1) {
     else if (1536 <= t && t <= 1791) {
       a = gi[255 & t];
       a || warn("Bidi: invalid Unicode character " + t.toString(16));
-    } else ((1792 <= t && t <= 2220) || (64336 <= t && t <= 65023) || (65136 <= t && t <= 65279)) && (a = "AL");
+    } else
+      ((1792 <= t && t <= 2220) ||
+        (64336 <= t && t <= 65023) ||
+        (65136 <= t && t <= 65279)) &&
+        (a = "AL");
     ("R" !== a && "AL" !== a && "AN" !== a) || o++;
     wi[r] = a;
   }
@@ -30717,15 +33783,23 @@ function bidi(e, t = -1, a = !1) {
   m = c;
   for (r = 0; r < s; ++r) {
     u = wi[r];
-    "EN" === u ? (wi[r] = "AL" === m ? "AN" : "EN") : ("R" !== u && "L" !== u && "AL" !== u) || (m = u);
+    "EN" === u
+      ? (wi[r] = "AL" === m ? "AN" : "EN")
+      : ("R" !== u && "L" !== u && "AL" !== u) || (m = u);
   }
   for (r = 0; r < s; ++r) {
     u = wi[r];
     "AL" === u && (wi[r] = "R");
   }
   for (r = 1; r < s - 1; ++r) {
-    "ES" === wi[r] && "EN" === wi[r - 1] && "EN" === wi[r + 1] && (wi[r] = "EN");
-    "CS" !== wi[r] || ("EN" !== wi[r - 1] && "AN" !== wi[r - 1]) || wi[r + 1] !== wi[r - 1] || (wi[r] = wi[r - 1]);
+    "ES" === wi[r] &&
+      "EN" === wi[r - 1] &&
+      "EN" === wi[r + 1] &&
+      (wi[r] = "EN");
+    "CS" !== wi[r] ||
+      ("EN" !== wi[r - 1] && "AN" !== wi[r - 1]) ||
+      wi[r + 1] !== wi[r - 1] ||
+      (wi[r] = wi[r - 1]);
   }
   for (r = 0; r < s; ++r)
     if ("EN" === wi[r]) {
@@ -30739,7 +33813,9 @@ function bidi(e, t = -1, a = !1) {
   m = c;
   for (r = 0; r < s; ++r) {
     u = wi[r];
-    "EN" === u ? (wi[r] = "L" === m ? "L" : "EN") : ("R" !== u && "L" !== u) || (m = u);
+    "EN" === u
+      ? (wi[r] = "L" === m ? "L" : "EN")
+      : ("R" !== u && "L" !== u) || (m = u);
   }
   for (r = 0; r < s; ++r)
     if ("ON" === wi[r]) {
@@ -30774,7 +33850,11 @@ function bidi(e, t = -1, a = !1) {
   for (r = 0; r < s; ++r) "ON" === wi[r] && (wi[r] = f);
   for (r = 0; r < s; ++r) {
     u = wi[r];
-    isEven(l[r]) ? ("R" === u ? (l[r] += 1) : ("AN" !== u && "EN" !== u) || (l[r] += 2)) : ("L" !== u && "AN" !== u && "EN" !== u) || (l[r] += 1);
+    isEven(l[r])
+      ? "R" === u
+        ? (l[r] += 1)
+        : ("AN" !== u && "EN" !== u) || (l[r] += 2)
+      : ("L" !== u && "AN" !== u && "EN" !== u) || (l[r] += 1);
   }
   let p,
     d = -1,
@@ -30809,18 +33889,57 @@ const ji = { style: "normal", weight: "normal" },
     [
       "Times-Roman",
       {
-        local: ["Times New Roman", "Times-Roman", "Times", "Liberation Serif", "Nimbus Roman", "Nimbus Roman L", "Tinos", "Thorndale", "TeX Gyre Termes", "FreeSerif", "Linux Libertine O", "Libertinus Serif", "PT Astra Serif", "DejaVu Serif", "Bitstream Vera Serif", "Ubuntu"],
+        local: [
+          "Times New Roman",
+          "Times-Roman",
+          "Times",
+          "Liberation Serif",
+          "Nimbus Roman",
+          "Nimbus Roman L",
+          "Tinos",
+          "Thorndale",
+          "TeX Gyre Termes",
+          "FreeSerif",
+          "Linux Libertine O",
+          "Libertinus Serif",
+          "PT Astra Serif",
+          "DejaVu Serif",
+          "Bitstream Vera Serif",
+          "Ubuntu",
+        ],
         style: ji,
         ultimate: "serif",
       },
     ],
     ["Times-Bold", { alias: "Times-Roman", style: ki, ultimate: "serif" }],
     ["Times-Italic", { alias: "Times-Roman", style: yi, ultimate: "serif" }],
-    ["Times-BoldItalic", { alias: "Times-Roman", style: qi, ultimate: "serif" }],
+    [
+      "Times-BoldItalic",
+      { alias: "Times-Roman", style: qi, ultimate: "serif" },
+    ],
     [
       "Helvetica",
       {
-        local: ["Helvetica", "Helvetica Neue", "Arial", "Arial Nova", "Liberation Sans", "Arimo", "Nimbus Sans", "Nimbus Sans L", "A030", "TeX Gyre Heros", "FreeSans", "DejaVu Sans", "Albany", "Bitstream Vera Sans", "Arial Unicode MS", "Microsoft Sans Serif", "Apple Symbols", "Cantarell"],
+        local: [
+          "Helvetica",
+          "Helvetica Neue",
+          "Arial",
+          "Arial Nova",
+          "Liberation Sans",
+          "Arimo",
+          "Nimbus Sans",
+          "Nimbus Sans L",
+          "A030",
+          "TeX Gyre Heros",
+          "FreeSans",
+          "DejaVu Sans",
+          "Albany",
+          "Bitstream Vera Sans",
+          "Arial Unicode MS",
+          "Microsoft Sans Serif",
+          "Apple Symbols",
+          "Cantarell",
+        ],
         path: "LiberationSans-Regular.ttf",
         style: ji,
         ultimate: "sans-serif",
@@ -30856,14 +33975,29 @@ const ji = { style: "normal", weight: "normal" },
     [
       "Courier",
       {
-        local: ["Courier", "Courier New", "Liberation Mono", "Nimbus Mono", "Nimbus Mono L", "Cousine", "Cumberland", "TeX Gyre Cursor", "FreeMono", "Linux Libertine Mono O", "Libertinus Mono"],
+        local: [
+          "Courier",
+          "Courier New",
+          "Liberation Mono",
+          "Nimbus Mono",
+          "Nimbus Mono L",
+          "Cousine",
+          "Cumberland",
+          "TeX Gyre Cursor",
+          "FreeMono",
+          "Linux Libertine Mono O",
+          "Libertinus Mono",
+        ],
         style: ji,
         ultimate: "monospace",
       },
     ],
     ["Courier-Bold", { alias: "Courier", style: ki, ultimate: "monospace" }],
     ["Courier-Oblique", { alias: "Courier", style: yi, ultimate: "monospace" }],
-    ["Courier-BoldOblique", { alias: "Courier", style: qi, ultimate: "monospace" }],
+    [
+      "Courier-BoldOblique",
+      { alias: "Courier", style: qi, ultimate: "monospace" },
+    ],
     [
       "ArialBlack",
       {
@@ -30885,18 +34019,45 @@ const ji = { style: "normal", weight: "normal" },
     [
       "ArialNarrow",
       {
-        local: ["Arial Narrow", "Liberation Sans Narrow", "Helvetica Condensed", "Nimbus Sans Narrow", "TeX Gyre Heros Cn"],
+        local: [
+          "Arial Narrow",
+          "Liberation Sans Narrow",
+          "Helvetica Condensed",
+          "Nimbus Sans Narrow",
+          "TeX Gyre Heros Cn",
+        ],
         style: ji,
         fallback: "Helvetica",
       },
     ],
-    ["ArialNarrow-Bold", { alias: "ArialNarrow", style: ki, fallback: "Helvetica-Bold" }],
-    ["ArialNarrow-Italic", { alias: "ArialNarrow", style: yi, fallback: "Helvetica-Oblique" }],
-    ["ArialNarrow-BoldItalic", { alias: "ArialNarrow", style: qi, fallback: "Helvetica-BoldOblique" }],
-    ["Calibri", { local: ["Calibri", "Carlito"], style: ji, fallback: "Helvetica" }],
-    ["Calibri-Bold", { alias: "Calibri", style: ki, fallback: "Helvetica-Bold" }],
-    ["Calibri-Italic", { alias: "Calibri", style: yi, fallback: "Helvetica-Oblique" }],
-    ["Calibri-BoldItalic", { alias: "Calibri", style: qi, fallback: "Helvetica-BoldOblique" }],
+    [
+      "ArialNarrow-Bold",
+      { alias: "ArialNarrow", style: ki, fallback: "Helvetica-Bold" },
+    ],
+    [
+      "ArialNarrow-Italic",
+      { alias: "ArialNarrow", style: yi, fallback: "Helvetica-Oblique" },
+    ],
+    [
+      "ArialNarrow-BoldItalic",
+      { alias: "ArialNarrow", style: qi, fallback: "Helvetica-BoldOblique" },
+    ],
+    [
+      "Calibri",
+      { local: ["Calibri", "Carlito"], style: ji, fallback: "Helvetica" },
+    ],
+    [
+      "Calibri-Bold",
+      { alias: "Calibri", style: ki, fallback: "Helvetica-Bold" },
+    ],
+    [
+      "Calibri-Italic",
+      { alias: "Calibri", style: yi, fallback: "Helvetica-Oblique" },
+    ],
+    [
+      "Calibri-BoldItalic",
+      { alias: "Calibri", style: qi, fallback: "Helvetica-BoldOblique" },
+    ],
     ["Wingdings", { local: ["Wingdings", "URW Dingbats"], style: ji }],
     ["Wingdings-Regular", { alias: "Wingdings" }],
     ["Wingdings-Bold", { alias: "Wingdings" }],
@@ -30934,18 +34095,61 @@ const ji = { style: "normal", weight: "normal" },
     ],
     ["¿¬Ìå_GB2312", { alias: "¿¬Ìå" }],
     ["·ÂËÎ_GB2312", { alias: "·ÂËÎ" }],
-    ["Á¥Êé", { local: ["SimLi", "SimLi Regular"], style: ji, ultimate: "serif" }],
+    [
+      "Á¥Êé",
+      { local: ["SimLi", "SimLi Regular"], style: ji, ultimate: "serif" },
+    ],
     ["ÐÂËÎ", { alias: "ËÎÌå" }],
   ]),
   Si = new Map([["Arial-Black", "ArialBlack"]]);
 function getFamilyName(e) {
-  const t = new Set(["thin", "extralight", "ultralight", "demilight", "semilight", "light", "book", "regular", "normal", "medium", "demibold", "semibold", "bold", "extrabold", "ultrabold", "black", "heavy", "extrablack", "ultrablack", "roman", "italic", "oblique", "ultracondensed", "extracondensed", "condensed", "semicondensed", "normal", "semiexpanded", "expanded", "extraexpanded", "ultraexpanded", "bolditalic"]);
+  const t = new Set([
+    "thin",
+    "extralight",
+    "ultralight",
+    "demilight",
+    "semilight",
+    "light",
+    "book",
+    "regular",
+    "normal",
+    "medium",
+    "demibold",
+    "semibold",
+    "bold",
+    "extrabold",
+    "ultrabold",
+    "black",
+    "heavy",
+    "extrablack",
+    "ultrablack",
+    "roman",
+    "italic",
+    "oblique",
+    "ultracondensed",
+    "extracondensed",
+    "condensed",
+    "semicondensed",
+    "normal",
+    "semiexpanded",
+    "expanded",
+    "extraexpanded",
+    "ultraexpanded",
+    "bolditalic",
+  ]);
   return e
     .split(/[- ,+]+/g)
     .filter((e) => !t.has(e.toLowerCase()))
     .join(" ");
 }
-function generateFont({ alias: e, local: t, path: a, fallback: n, style: s, ultimate: r }, i, o, l = !0, f = !0, c = "") {
+function generateFont(
+  { alias: e, local: t, path: a, fallback: n, style: s, ultimate: r },
+  i,
+  o,
+  l = !0,
+  f = !0,
+  c = "",
+) {
   const h = { style: null, ultimate: null };
   if (t) {
     const e = c ? ` ${c}` : "";
@@ -30983,7 +34187,9 @@ function generateFont({ alias: e, local: t, path: a, fallback: n, style: s, ulti
 }
 function getFontSubstitution(e, t, a, n, s, r) {
   if (n.startsWith("InvalidPDFjsFont_")) return null;
-  ("TrueType" !== r && "Type1" !== r) || !/^[A-Z]{6}\+/.test(n) || (n = n.slice(7));
+  ("TrueType" !== r && "Type1" !== r) ||
+    !/^[A-Z]{6}\+/.test(n) ||
+    (n = n.slice(7));
   const i = (n = normalizeFontName(n));
   let o = e.get(i);
   if (o) return o;
@@ -31059,7 +34265,8 @@ class MurmurHash3_64 {
         }
       }
     } else {
-      if (!ArrayBuffer.isView(e)) throw new Error("Invalid data format, must be a string or TypedArray.");
+      if (!ArrayBuffer.isView(e))
+        throw new Error("Invalid data format, must be a string or TypedArray.");
       t = e.slice();
       a = t.byteLength;
     }
@@ -31113,16 +34320,34 @@ class MurmurHash3_64 {
       t = this.h2;
     e ^= t >>> 1;
     e = ((3981806797 * e) & xi) | ((36045 * e) & Ci);
-    t = ((4283543511 * t) & xi) | (((2950163797 * ((t << 16) | (e >>> 16))) & xi) >>> 16);
+    t =
+      ((4283543511 * t) & xi) |
+      (((2950163797 * ((t << 16) | (e >>> 16))) & xi) >>> 16);
     e ^= t >>> 1;
     e = ((444984403 * e) & xi) | ((60499 * e) & Ci);
-    t = ((3301882366 * t) & xi) | (((3120437893 * ((t << 16) | (e >>> 16))) & xi) >>> 16);
+    t =
+      ((3301882366 * t) & xi) |
+      (((3120437893 * ((t << 16) | (e >>> 16))) & xi) >>> 16);
     e ^= t >>> 1;
-    return (e >>> 0).toString(16).padStart(8, "0") + (t >>> 0).toString(16).padStart(8, "0");
+    return (
+      (e >>> 0).toString(16).padStart(8, "0") +
+      (t >>> 0).toString(16).padStart(8, "0")
+    );
   }
 }
 class PDFImage {
-  constructor({ xref: e, res: t, image: a, isInline: n = !1, smask: s = null, mask: r = null, isMask: i = !1, pdfFunctionFactory: o, globalColorSpaceCache: l, localColorSpaceCache: f }) {
+  constructor({
+    xref: e,
+    res: t,
+    image: a,
+    isInline: n = !1,
+    smask: s = null,
+    mask: r = null,
+    isMask: i = !1,
+    pdfFunctionFactory: o,
+    globalColorSpaceCache: l,
+    localColorSpaceCache: f,
+  }) {
     this.image = a;
     const c = a.dict,
       h = c.get("F", "Filter");
@@ -31134,9 +34359,18 @@ class PDFImage {
     }
     switch (u) {
       case "JPXDecode":
-        ({ width: a.width, height: a.height, componentsCount: a.numComps, bitsPerComponent: a.bitsPerComponent } = JpxImage.parseImageProperties(a.stream));
+        ({
+          width: a.width,
+          height: a.height,
+          componentsCount: a.numComps,
+          bitsPerComponent: a.bitsPerComponent,
+        } = JpxImage.parseImageProperties(a.stream));
         a.stream.reset();
-        const e = ImageResizer.getReducePowerForJPX(a.width, a.height, a.numComps);
+        const e = ImageResizer.getReducePowerForJPX(
+          a.width,
+          a.height,
+          a.numComps,
+        );
         this.jpxDecoderOptions = {
           numComponents: 0,
           isIndexedColormap: !1,
@@ -31155,16 +34389,27 @@ class PDFImage {
     }
     let m = c.get("W", "Width"),
       p = c.get("H", "Height");
-    if (Number.isInteger(a.width) && a.width > 0 && Number.isInteger(a.height) && a.height > 0 && (a.width !== m || a.height !== p)) {
-      warn("PDFImage - using the Width/Height of the image data, rather than the image dictionary.");
+    if (
+      Number.isInteger(a.width) &&
+      a.width > 0 &&
+      Number.isInteger(a.height) &&
+      a.height > 0 &&
+      (a.width !== m || a.height !== p)
+    ) {
+      warn(
+        "PDFImage - using the Width/Height of the image data, rather than the image dictionary.",
+      );
       m = a.width;
       p = a.height;
     } else {
       const e = "number" == typeof m && m > 0,
         t = "number" == typeof p && p > 0;
       if (!e || !t) {
-        if (!a.fallbackDims) throw new FormatError(`Invalid image width: ${m} or height: ${p}`);
-        warn("PDFImage - using the Width/Height of the parent image, for SMask/Mask data.");
+        if (!a.fallbackDims)
+          throw new FormatError(`Invalid image width: ${m} or height: ${p}`);
+        warn(
+          "PDFImage - using the Width/Height of the parent image, for SMask/Mask data.",
+        );
         e || (m = a.fallbackDims.width);
         t || (p = a.fallbackDims.height);
       }
@@ -31178,7 +34423,10 @@ class PDFImage {
     if (!d) {
       d = c.get("BPC", "BitsPerComponent");
       if (!d) {
-        if (!this.imageMask) throw new FormatError(`Bits per component missing in image: ${this.imageMask}`);
+        if (!this.imageMask)
+          throw new FormatError(
+            `Bits per component missing in image: ${this.imageMask}`,
+          );
         d = 1;
       }
     }
@@ -31187,7 +34435,8 @@ class PDFImage {
     else {
       let s = c.getRaw("CS") || c.getRaw("ColorSpace");
       const r = !!s;
-      if (r) this.jpxDecoderOptions?.smaskInData && (s = Name.get("DeviceRGBA"));
+      if (r)
+        this.jpxDecoderOptions?.smaskInData && (s = Name.get("DeviceRGBA"));
       else if (this.jpxDecoderOptions) s = Name.get("DeviceRGBA");
       else
         switch (a.numComps) {
@@ -31201,7 +34450,9 @@ class PDFImage {
             s = Name.get("DeviceCMYK");
             break;
           default:
-            throw new Error(`Images with ${a.numComps} color components not supported.`);
+            throw new Error(
+              `Images with ${a.numComps} color components not supported.`,
+            );
         }
       this.colorSpace = ColorSpaceUtils.parse({
         cs: s,
@@ -31214,12 +34465,17 @@ class PDFImage {
       this.numComps = this.colorSpace.numComps;
       if (this.jpxDecoderOptions) {
         this.jpxDecoderOptions.numComponents = r ? this.numComps : 0;
-        this.jpxDecoderOptions.isIndexedColormap = "Indexed" === this.colorSpace.name;
+        this.jpxDecoderOptions.isIndexedColormap =
+          "Indexed" === this.colorSpace.name;
       }
     }
     this.decode = c.getArray("D", "Decode");
     this.needsDecode = !1;
-    if (this.decode && ((this.colorSpace && !this.colorSpace.isDefaultDecode(this.decode, d)) || (i && !ColorSpace.isDefaultDecode(this.decode, 1)))) {
+    if (
+      this.decode &&
+      ((this.colorSpace && !this.colorSpace.isDefaultDecode(this.decode, d)) ||
+        (i && !ColorSpace.isDefaultDecode(this.decode, 1)))
+    ) {
       this.needsDecode = !0;
       const e = (1 << d) - 1;
       this.decodeCoefficients = [];
@@ -31260,13 +34516,28 @@ class PDFImage {
         } else warn("Ignoring /Mask in image without /ImageMask.");
       } else this.mask = r;
   }
-  static async buildImage({ xref: e, res: t, image: a, isInline: n = !1, pdfFunctionFactory: s, globalColorSpaceCache: r, localColorSpaceCache: i }) {
+  static async buildImage({
+    xref: e,
+    res: t,
+    image: a,
+    isInline: n = !1,
+    pdfFunctionFactory: s,
+    globalColorSpaceCache: r,
+    localColorSpaceCache: i,
+  }) {
     const o = a;
     let l = null,
       f = null;
     const c = a.dict.get("SMask"),
       h = a.dict.get("Mask");
-    c ? (c instanceof BaseStream ? (l = c) : warn("Unsupported /SMask format.")) : h && (h instanceof BaseStream || Array.isArray(h) ? (f = h) : warn("Unsupported /Mask format."));
+    c
+      ? c instanceof BaseStream
+        ? (l = c)
+        : warn("Unsupported /SMask format.")
+      : h &&
+        (h instanceof BaseStream || Array.isArray(h)
+          ? (f = h)
+          : warn("Unsupported /Mask format."));
     return new PDFImage({
       xref: e,
       res: t,
@@ -31344,7 +34615,11 @@ class PDFImage {
     return Math.max(this.width, this.smask?.width || 0, this.mask?.width || 0);
   }
   get drawHeight() {
-    return Math.max(this.height, this.smask?.height || 0, this.mask?.height || 0);
+    return Math.max(
+      this.height,
+      this.smask?.height || 0,
+      this.mask?.height || 0,
+    );
   }
   decodeBuffer(e) {
     const t = this.bpc,
@@ -31373,7 +34648,12 @@ class PDFImage {
       r = a * n * s;
     let i,
       o = 0;
-    i = t <= 8 ? new Uint8Array(r) : t <= 16 ? new Uint16Array(r) : new Uint32Array(r);
+    i =
+      t <= 8
+        ? new Uint8Array(r)
+        : t <= 16
+          ? new Uint16Array(r)
+          : new Uint32Array(r);
     const l = a * s,
       f = (1 << t) - 1;
     let c,
@@ -31429,7 +34709,9 @@ class PDFImage {
   }
   async fillOpacity(e, t, a, n, s) {
     let r;
-    if (this.smask) r = (e, n) => this.smask.fillGrayBuffer(e, { ...n, destWidth: t, destHeight: a });
+    if (this.smask)
+      r = (e, n) =>
+        this.smask.fillGrayBuffer(e, { ...n, destWidth: t, destHeight: a });
     else if (this.mask)
       if (this.mask instanceof PDFImage)
         r = (e, n) =>
@@ -31440,7 +34722,8 @@ class PDFImage {
             destHeight: a,
           });
       else {
-        if (!Array.isArray(this.mask)) throw new FormatError("Unknown mask format.");
+        if (!Array.isArray(this.mask))
+          throw new FormatError("Unknown mask format.");
         r = (e, { maxRows: a, offset: n, stride: r }) => {
           for (let i = 0, o = t * a; i < o; ++i) {
             let t = 0;
@@ -31506,11 +34789,20 @@ class PDFImage {
       const e = (s.data = await this.getImageBytes(o * i * 4, {
         internal: t && c,
       }));
-      return t ? (c ? ImageResizer.createImage(s, !1) : this.createBitmap(O, a, n, e)) : s;
+      return t
+        ? c
+          ? ImageResizer.createImage(s, !1)
+          : this.createBitmap(O, a, n, e)
+        : s;
     }
     if (!e) {
       let e;
-      "DeviceGray" === this.colorSpace.name && 1 === l ? (e = F) : "DeviceRGB" !== this.colorSpace.name || 8 !== l || this.needsDecode || (e = T);
+      "DeviceGray" === this.colorSpace.name && 1 === l
+        ? (e = F)
+        : "DeviceRGB" !== this.colorSpace.name ||
+          8 !== l ||
+          this.needsDecode ||
+          (e = T);
       if (e && !this.smask && !this.mask && a === i && n === o) {
         const r = await this.#Me(i, o);
         if (r) return r;
@@ -31531,13 +34823,21 @@ class PDFImage {
         s.kind = e;
         s.data = l;
         if (this.needsDecode) {
-          assert(e === F, "PDFImage.createImageData: The image must be grayscale.");
+          assert(
+            e === F,
+            "PDFImage.createImageData: The image must be grayscale.",
+          );
           const t = s.data;
           for (let e = 0, a = t.length; e < a; e++) t[e] ^= 255;
         }
         return s;
       }
-      if (this.image instanceof JpegStream && !this.smask && !this.mask && !this.needsDecode) {
+      if (
+        this.image instanceof JpegStream &&
+        !this.smask &&
+        !this.mask &&
+        !this.needsDecode
+      ) {
         let e = o * f;
         if (t && !c) {
           let t = !1;
@@ -31603,7 +34903,9 @@ class PDFImage {
         j = new Uint8ClampedArray(a * n * 3);
         p = 0;
       } else {
-        new Uint32Array(j.buffer).fill(FeatureTest.isLittleEndian ? 4278190080 : 255);
+        new Uint32Array(j.buffer).fill(
+          FeatureTest.isLittleEndian ? 4278190080 : 255,
+        );
         p = 1;
       }
       d = !1;
@@ -31624,9 +34926,20 @@ class PDFImage {
     s.data = j;
     return c ? ImageResizer.createImage(s) : s;
   }
-  async fillGrayBuffer(e, { destWidth: t, destHeight: a, invertOutput: n, maxRows: s, offset: r = 0, stride: i = 1 } = {}) {
+  async fillGrayBuffer(
+    e,
+    {
+      destWidth: t,
+      destHeight: a,
+      invertOutput: n,
+      maxRows: s,
+      offset: r = 0,
+      stride: i = 1,
+    } = {},
+  ) {
     const o = this.numComps;
-    if (1 !== o) throw new FormatError(`Reading gray scale from a color image: ${o}`);
+    if (1 !== o)
+      throw new FormatError(`Reading gray scale from a color image: ${o}`);
     const l = this.width,
       f = this.height,
       c = this.bpc,
@@ -31670,7 +34983,8 @@ class PDFImage {
           }
       } else {
         const t = w * b;
-        if (this.needsDecode) for (let a = 0; a < t; ++a) e[a * i + r] = ((m[a] - 1) & 255) ^ y;
+        if (this.needsDecode)
+          for (let a = 0; a < t; ++a) e[a * i + r] = ((m[a] - 1) & 255) ^ y;
         else for (let a = 0; a < t; ++a) e[a * i + r] = (255 & -m[a]) ^ y;
       }
       return;
@@ -31729,7 +35043,16 @@ class PDFImage {
         }
       : null;
   }
-  async getImageBytes(e, { drawWidth: t, drawHeight: a, forceRGBA: n = !1, forceRGB: s = !1, internal: r = !1 }) {
+  async getImageBytes(
+    e,
+    {
+      drawWidth: t,
+      drawHeight: a,
+      forceRGBA: n = !1,
+      forceRGB: s = !1,
+      internal: r = !1,
+    },
+  ) {
     this.image.reset();
     this.image.drawWidth = t || this.width;
     this.image.drawHeight = a || this.height;
@@ -31737,7 +35060,10 @@ class PDFImage {
     this.image.forceRGB = !!s;
     const i = await this.image.getImageData(e, this.jpxDecoderOptions);
     if (r || this.image instanceof DecodeStream) return i;
-    assert(i instanceof Uint8Array, 'PDFImage.getImageBytes: Unsupported "imageBytes" type.');
+    assert(
+      i instanceof Uint8Array,
+      'PDFImage.getImageBytes: Unsupported "imageBytes" type.',
+    );
     return new Uint8Array(i);
   }
 }
@@ -31811,7 +35137,10 @@ function normalizeBlendMode(e, t = !1) {
   warn(`Unsupported blend mode: ${e.name}`);
   return "source-over";
 }
-function addCachedImageOps(e, { objId: t, fn: a, args: n, optionalContent: s, hasMask: r }) {
+function addCachedImageOps(
+  e,
+  { objId: t, fn: a, args: n, optionalContent: s, hasMask: r },
+) {
   t && e.addDependency(t);
   e.addImageOps(a, n, s, r);
   a === Mt && n[0]?.count > 0 && n[0].count++;
@@ -31833,7 +35162,19 @@ class TimeSlotManager {
   }
 }
 class PartialEvaluator {
-  constructor({ xref: e, handler: t, pageIndex: a, idFactory: n, fontCache: s, builtInCMapCache: r, standardFontDataCache: i, globalColorSpaceCache: o, globalImageCache: l, systemFontCache: f, options: c = null }) {
+  constructor({
+    xref: e,
+    handler: t,
+    pageIndex: a,
+    idFactory: n,
+    fontCache: s,
+    builtInCMapCache: r,
+    standardFontDataCache: i,
+    globalColorSpaceCache: o,
+    globalImageCache: l,
+    systemFontCache: f,
+    options: c = null,
+  }) {
     this.xref = e;
     this.handler = t;
     this.pageIndex = a;
@@ -31850,7 +35191,11 @@ class PartialEvaluator {
     this._fetchBuiltInCMapBound = this.fetchBuiltInCMap.bind(this);
   }
   get _pdfFunctionFactory() {
-    return shadow(this, "_pdfFunctionFactory", new PDFFunctionFactory({ xref: this.xref }));
+    return shadow(
+      this,
+      "_pdfFunctionFactory",
+      new PDFFunctionFactory({ xref: this.xref }),
+    );
   }
   get parsingType3Font() {
     return !!this.type3FontRefs;
@@ -31887,7 +35232,9 @@ class PartialEvaluator {
           const t = e.get("BM");
           if (t instanceof Name) {
             if ("Normal" !== t.name) return !0;
-          } else if (void 0 !== t && Array.isArray(t)) for (const e of t) if (e instanceof Name && "Normal" !== e.name) return !0;
+          } else if (void 0 !== t && Array.isArray(t))
+            for (const e of t)
+              if (e instanceof Name && "Normal" !== e.name) return !0;
         }
       const r = e.get("XObject");
       if (r instanceof Dict)
@@ -31936,7 +35283,8 @@ class PartialEvaluator {
   async fetchStandardFontData(e) {
     const t = this.standardFontDataCache.get(e);
     if (t) return new Stream(t);
-    if (this.options.useSystemFonts && "Symbol" !== e && "ZapfDingbats" !== e) return null;
+    if (this.options.useSystemFonts && "Symbol" !== e && "ZapfDingbats" !== e)
+      return null;
     const a = Nn()[e];
     let n;
     try {
@@ -32014,10 +35362,24 @@ class PartialEvaluator {
   }
   _sendImgData(e, t, a = !1) {
     const n = t ? [t.bitmap || t.data.buffer] : null;
-    return this.parsingType3Font || a ? this.handler.send("commonobj", [e, "Image", t], n) : this.handler.send("obj", [e, this.pageIndex, "Image", t], n);
+    return this.parsingType3Font || a
+      ? this.handler.send("commonobj", [e, "Image", t], n)
+      : this.handler.send("obj", [e, this.pageIndex, "Image", t], n);
   }
-  async buildPaintImageXObject({ resources: e, image: t, isInline: a = !1, operatorList: n, cacheKey: s, localImageCache: r, localColorSpaceCache: i }) {
-    const { maxImageSize: o, ignoreErrors: l, isOffscreenCanvasSupported: f } = this.options,
+  async buildPaintImageXObject({
+    resources: e,
+    image: t,
+    isInline: a = !1,
+    operatorList: n,
+    cacheKey: s,
+    localImageCache: r,
+    localColorSpaceCache: i,
+  }) {
+    const {
+        maxImageSize: o,
+        ignoreErrors: l,
+        isOffscreenCanvasSupported: f,
+      } = this.options,
       { dict: c } = t,
       h = c.objId,
       u = c.get("W", "Width"),
@@ -32054,7 +35416,9 @@ class PartialEvaluator {
       if (this.parsingType3Font) {
         b = (function compileType3Glyph({ data: e, width: t, height: a }) {
           if (t > 1e3 || a > 1e3) return null;
-          const n = new Uint8Array([0, 2, 4, 0, 1, 0, 5, 4, 8, 10, 0, 8, 0, 2, 1, 0]),
+          const n = new Uint8Array([
+              0, 2, 4, 0, 1, 0, 5, 4, 8, 10, 0, 8, 0, 2, 1, 0,
+            ]),
             s = t + 1,
             r = new Uint8Array(s * (a + 1));
           let i, o, l;
@@ -32127,7 +35491,14 @@ class PartialEvaluator {
           if (u > 1e3) return null;
           const m = new Int32Array([0, s, -1, 0, -s, 0, 0, 0, 1]),
             p = [],
-            { a: d, b: g, c: b, d: w, e: j, f: k } = new DOMMatrix().scaleSelf(1 / t, -1 / a).translateSelf(0, -a);
+            {
+              a: d,
+              b: g,
+              c: b,
+              d: w,
+              e: j,
+              f: k,
+            } = new DOMMatrix().scaleSelf(1 / t, -1 / a).translateSelf(0, -a);
           for (i = 0; u && i <= a; i++) {
             let e = i * s;
             const a = e + t;
@@ -32241,7 +35612,11 @@ class PartialEvaluator {
         return;
       }
       if (u * m > 25e4 || w) {
-        const e = await this.handler.sendWithPromise("commonobj", [j, "CopyLocalImage", { imageRef: h }]);
+        const e = await this.handler.sendWithPromise("commonobj", [
+          j,
+          "CopyLocalImage",
+          { imageRef: h },
+        ]);
         if (e) {
           this.globalImageCache.setData(h, y);
           this.globalImageCache.addByteSize(h, e);
@@ -32297,7 +35672,16 @@ class PartialEvaluator {
       }
       l.transferMap = t;
     }
-    return this.buildFormXObject(t, o, l, a, n, s.state.clone({ newPath: !0 }), r, i);
+    return this.buildFormXObject(
+      t,
+      o,
+      l,
+      a,
+      n,
+      s.state.clone({ newPath: !0 }),
+      r,
+      i,
+    );
   }
   handleTransferFunction(e) {
     let t;
@@ -32373,17 +35757,33 @@ class PartialEvaluator {
     const a = t.font,
       n = a.charsToGlyphs(e);
     if (a.data) {
-      (!!(t.textRenderingMode & C) || "Pattern" === t.fillColorSpace.name || "Pattern" === t.strokeColorSpace.name || a.disableFontFace) && PartialEvaluator.buildFontPaths(a, n, this.handler, this.options);
+      (!!(t.textRenderingMode & C) ||
+        "Pattern" === t.fillColorSpace.name ||
+        "Pattern" === t.strokeColorSpace.name ||
+        a.disableFontFace) &&
+        PartialEvaluator.buildFontPaths(a, n, this.handler, this.options);
     }
     return n;
   }
   ensureStateFont(e) {
     if (e.font) return;
-    const t = new FormatError("Missing setFont (Tf) operator before text rendering operator.");
+    const t = new FormatError(
+      "Missing setFont (Tf) operator before text rendering operator.",
+    );
     if (!this.options.ignoreErrors) throw t;
     warn(`ensureStateFont: "${t}".`);
   }
-  async setGState({ resources: e, gState: t, operatorList: a, cacheKey: n, task: s, stateManager: r, localGStateCache: i, localColorSpaceCache: o, seenRefs: l }) {
+  async setGState({
+    resources: e,
+    gState: t,
+    operatorList: a,
+    cacheKey: n,
+    task: s,
+    stateManager: r,
+    localGStateCache: i,
+    localColorSpaceCache: o,
+    seenRefs: l,
+  }) {
     const f = t.objId;
     let c = !0;
     const h = [];
@@ -32485,10 +35885,13 @@ class PartialEvaluator {
         warn(`Font "${e}" is not available.`);
         return errorFont();
       }
-      warn(`Font "${e}" is not available -- attempting to fallback to a default font.`);
+      warn(
+        `Font "${e}" is not available -- attempting to fallback to a default font.`,
+      );
       t = s || PartialEvaluator.fallbackFontDict;
     }
-    if (t.cacheKey && this.fontCache.has(t.cacheKey)) return this.fontCache.get(t.cacheKey);
+    if (t.cacheKey && this.fontCache.has(t.cacheKey))
+      return this.fontCache.get(t.cacheKey);
     const { promise: o, resolve: l } = Promise.withResolvers();
     let f;
     try {
@@ -32557,7 +35960,9 @@ class PartialEvaluator {
           o = t[3],
           l = e + i,
           f = r + o;
-        0 === i || 0 === o ? s.push(Vt, e, r, $t, l, f, Qt) : s.push(Vt, e, r, $t, l, r, $t, l, f, $t, e, f, Qt);
+        0 === i || 0 === o
+          ? s.push(Vt, e, r, $t, l, f, Qt)
+          : s.push(Vt, e, r, $t, l, r, $t, l, f, $t, e, f, Qt);
         Util.rectBoundingBox(e, r, l, f, n);
         break;
       }
@@ -32632,12 +36037,24 @@ class PartialEvaluator {
       throw e;
     }
   }
-  parseShading({ shading: e, resources: t, localColorSpaceCache: a, localShadingPatternCache: n }) {
+  parseShading({
+    shading: e,
+    resources: t,
+    localColorSpaceCache: a,
+    localShadingPatternCache: n,
+  }) {
     let s,
       r = n.get(e);
     if (r) return r;
     try {
-      s = Pattern.parseShading(e, this.xref, t, this._pdfFunctionFactory, this.globalColorSpaceCache, a).getIR();
+      s = Pattern.parseShading(
+        e,
+        this.xref,
+        t,
+        this._pdfFunctionFactory,
+        this.globalColorSpaceCache,
+        a,
+      ).getIR();
     } catch (t) {
       if (t instanceof AbortException) return null;
       if (this.options.ignoreErrors) {
@@ -32664,7 +36081,9 @@ class PartialEvaluator {
             t = "axial" === e[1] ? 1 : 2;
             a = e[2];
             r = e[3];
-            1 === t ? n.push(...e[4], ...e[5]) : n.push(e[4][0], e[4][1], e[6], e[5][0], e[5][1], e[7]);
+            1 === t
+              ? n.push(...e[4], ...e[5])
+              : n.push(e[4][0], e[4][1], e[6], e[5][0], e[5][1], e[7]);
             break;
           case "Mesh":
             t = 3;
@@ -32680,7 +36099,9 @@ class PartialEvaluator {
         const l = Math.floor(n.length / 2),
           f = Math.floor(s.length / 4),
           c = r.length,
-          h = new ArrayBuffer(20 + 8 * l + 4 * f + 8 * c + (a ? 16 : 0) + (o ? 3 : 0)),
+          h = new ArrayBuffer(
+            20 + 8 * l + 4 * f + 8 * c + (a ? 16 : 0) + (o ? 3 : 0),
+          ),
           u = new DataView(h),
           m = new Uint8Array(h);
         u.setUint8(PATTERN_INFO.KIND, t);
@@ -32722,7 +36143,12 @@ class PartialEvaluator {
       if (u)
         try {
           const s = n.base ? n.base.getRgbHex(a, 0) : null,
-            r = getTilingPatternIR(u.operatorListIR, u.dict, s, u.needsIsolation);
+            r = getTilingPatternIR(
+              u.operatorListIR,
+              u.dict,
+              s,
+              u.needsIsolation,
+            );
           e.addOp(t, r);
           return;
         } catch {}
@@ -32787,7 +36213,8 @@ class PartialEvaluator {
     if (e instanceof Name) {
       a = t.get("Properties").get(e.name);
     } else {
-      if (!(e instanceof Dict)) throw new FormatError("Optional content properties malformed.");
+      if (!(e instanceof Dict))
+        throw new FormatError("Optional content properties malformed.");
       a = e;
     }
     const n = a.get("Type")?.name;
@@ -32815,7 +36242,15 @@ class PartialEvaluator {
     }
     return null;
   }
-  async getOperatorList({ stream: e, task: a, resources: n, operatorList: s, initialState: r = null, fallbackFontDict: i = null, prevRefs: o = null }) {
+  async getOperatorList({
+    stream: e,
+    task: a,
+    resources: n,
+    operatorList: s,
+    initialState: r = null,
+    fallbackFontDict: i = null,
+    prevRefs: o = null,
+  }) {
     if (e.isAsync) {
       const t = await e.asyncGetBytes();
       t && (e = new Stream(t, 0, t.length, e.dict));
@@ -32823,12 +36258,14 @@ class PartialEvaluator {
     const l = e.dict?.objId,
       f = new RefSet(o);
     if (l) {
-      if (o?.has(l)) throw new Error(`getOperatorList - ignoring circular reference: ${l}`);
+      if (o?.has(l))
+        throw new Error(`getOperatorList - ignoring circular reference: ${l}`);
       f.put(l);
     }
     n ||= Dict.empty;
     r ||= new EvalState();
-    if (!s) throw new Error('getOperatorList: missing "operatorList" parameter');
+    if (!s)
+      throw new Error('getOperatorList: missing "operatorList" parameter');
     const c = this,
       h = this.xref,
       u = new LocalImageCache(),
@@ -32877,10 +36314,14 @@ class PartialEvaluator {
             }
             next(
               new Promise(function (e, t) {
-                if (!C) throw new FormatError("XObject must be referred to by name.");
+                if (!C)
+                  throw new FormatError("XObject must be referred to by name.");
                 let r = b.getRaw(x);
                 if (r instanceof Ref) {
-                  const t = u.getByRef(r) || c._regionalImageCache.getByRef(r) || c.globalImageCache.getData(r, c.pageIndex);
+                  const t =
+                    u.getByRef(r) ||
+                    c._regionalImageCache.getByRef(r) ||
+                    c.globalImageCache.getData(r, c.pageIndex);
                   if (t) {
                     addCachedImageOps(s, t);
                     e();
@@ -32888,12 +36329,17 @@ class PartialEvaluator {
                   }
                   r = h.fetch(r);
                 }
-                if (!(r instanceof BaseStream)) throw new FormatError("XObject should be a stream");
+                if (!(r instanceof BaseStream))
+                  throw new FormatError("XObject should be a stream");
                 const i = r.dict.get("Subtype");
-                if (!(i instanceof Name)) throw new FormatError("XObject should have a Name subtype");
+                if (!(i instanceof Name))
+                  throw new FormatError("XObject should have a Name subtype");
                 if ("Form" !== i.name)
                   if ("Image" !== i.name) {
-                    if ("PS" !== i.name) throw new FormatError(`Unhandled XObject subtype ${i.name}`);
+                    if ("PS" !== i.name)
+                      throw new FormatError(
+                        `Unhandled XObject subtype ${i.name}`,
+                      );
                     info("Ignored XObject subtype PS");
                     e();
                   } else
@@ -32907,7 +36353,16 @@ class PartialEvaluator {
                     }).then(e, t);
                 else {
                   j.save();
-                  c.buildFormXObject(n, r, null, s, a, j.state.clone({ newPath: !0 }), m, f).then(function () {
+                  c.buildFormXObject(
+                    n,
+                    r,
+                    null,
+                    s,
+                    a,
+                    j.state.clone({ newPath: !0 }),
+                    m,
+                    f,
+                  ).then(function () {
                     j.restore();
                     e();
                   }, t);
@@ -32965,7 +36420,10 @@ class PartialEvaluator {
             }
             const k = [],
               y = j.state;
-            for (const t of e[0]) "string" == typeof t ? k.push(...c.handleText(t, y)) : "number" == typeof t && k.push(t);
+            for (const t of e[0])
+              "string" == typeof t
+                ? k.push(...c.handleText(t, y))
+                : "number" == typeof t && k.push(t);
             e[0] = k;
             r = et;
             break;
@@ -33132,11 +36590,14 @@ class PartialEvaluator {
             }
             next(
               new Promise(function (e, t) {
-                if (!C) throw new FormatError("GState must be referred to by name.");
+                if (!C)
+                  throw new FormatError("GState must be referred to by name.");
                 const r = n.get("ExtGState");
-                if (!(r instanceof Dict)) throw new FormatError("ExtGState should be a dictionary.");
+                if (!(r instanceof Dict))
+                  throw new FormatError("ExtGState should be a dictionary.");
                 const i = r.get(x);
-                if (!(i instanceof Dict)) throw new FormatError("GState should be a dictionary.");
+                if (!(i instanceof Dict))
+                  throw new FormatError("GState should be a dictionary.");
                 c.setGState({
                   resources: n,
                   gState: i,
@@ -33176,7 +36637,8 @@ class PartialEvaluator {
               warn(`Invalid setDash: ${a}`);
               continue;
             }
-            a.some((e) => "number" != typeof e) && (e[0] = a.filter((e) => "number" == typeof e));
+            a.some((e) => "number" != typeof e) &&
+              (e[0] = a.filter((e) => "number" == typeof e));
             break;
           }
           case ve:
@@ -33233,7 +36695,9 @@ class PartialEvaluator {
                   .catch((e) => {
                     if (!(e instanceof AbortException)) {
                       if (!c.options.ignoreErrors) throw e;
-                      warn(`getOperatorList - ignoring beginMarkedContentProps: "${e}".`);
+                      warn(
+                        `getOperatorList - ignoring beginMarkedContentProps: "${e}".`,
+                      );
                       s.addOp(xt, ["OC", null]);
                     }
                   }),
@@ -33261,12 +36725,29 @@ class PartialEvaluator {
     }).catch((e) => {
       if (!(e instanceof AbortException)) {
         if (!this.options.ignoreErrors) throw e;
-        warn(`getOperatorList - ignoring errors during "${a.name}" task: "${e}".`);
+        warn(
+          `getOperatorList - ignoring errors during "${a.name}" task: "${e}".`,
+        );
         closePendingRestoreOPS();
       }
     });
   }
-  async getTextContent({ stream: e, task: t, resources: a, stateManager: s = null, includeMarkedContent: r = !1, sink: i, seenStyles: o = new Set(), viewBox: l, lang: f = null, markedContentData: c = null, disableNormalization: h = !1, keepWhiteSpace: u = !1, prevRefs: m = null, intersector: p = null }) {
+  async getTextContent({
+    stream: e,
+    task: t,
+    resources: a,
+    stateManager: s = null,
+    includeMarkedContent: r = !1,
+    sink: i,
+    seenStyles: o = new Set(),
+    viewBox: l,
+    lang: f = null,
+    markedContentData: c = null,
+    disableNormalization: h = !1,
+    keepWhiteSpace: u = !1,
+    prevRefs: m = null,
+    intersector: p = null,
+  }) {
     if (e.isAsync) {
       const t = await e.asyncGetBytes();
       t && (e = new Stream(t, 0, t.length, e.dict));
@@ -33274,7 +36755,8 @@ class PartialEvaluator {
     const d = e.dict?.objId,
       g = new RefSet(m);
     if (d) {
-      if (m?.has(d)) throw new Error(`getTextContent - ignoring circular reference: ${d}`);
+      if (m?.has(d))
+        throw new Error(`getTextContent - ignoring circular reference: ${d}`);
       g.put(d);
     }
     a ||= Dict.empty;
@@ -33325,7 +36807,12 @@ class PartialEvaluator {
       C = new LocalGStateCache(),
       F = new EvaluatorPreprocessor(e, q, s);
     let T, O;
-    function pushWhitespace({ width: e = 0, height: t = 0, transform: a = w.prevTransform, fontName: n = w.fontName }) {
+    function pushWhitespace({
+      width: e = 0,
+      height: t = 0,
+      transform: a = w.prevTransform,
+      fontName: n = w.fontName,
+    }) {
       p?.addExtraChar(" ");
       b.items.push({
         str: " ",
@@ -33340,7 +36827,11 @@ class PartialEvaluator {
     function getCurrentTextTransform() {
       const e = T.font,
         t = [T.fontSize * T.textHScale, 0, 0, T.fontSize, 0, T.textRise];
-      if (e.isType3Font && (T.fontSize <= 1 || e.isCharBBox) && !isArrayEqual(T.fontMatrix, n)) {
+      if (
+        e.isType3Font &&
+        (T.fontSize <= 1 || e.isCharBBox) &&
+        !isArrayEqual(T.fontMatrix, n)
+      ) {
         const a = e.bbox[3] - e.bbox[1];
         a > 0 && (t[3] *= a * T.fontMatrix[3]);
       }
@@ -33407,10 +36898,13 @@ class PartialEvaluator {
       h ||
         (t = (function normalizeUnicode(e) {
           if (!sa) {
-            sa = /([\u00a0\u00b5\u037e\u0eb3\u2000-\u200a\u202f\u2126\ufb00-\ufb04\ufb06\ufb20-\ufb36\ufb38-\ufb3c\ufb3e\ufb40-\ufb41\ufb43-\ufb44\ufb46-\ufba1\ufba4-\ufba9\ufbae-\ufbb1\ufbd3-\ufbdc\ufbde-\ufbe7\ufbea-\ufbf8\ufbfc-\ufbfd\ufc00-\ufc5d\ufc64-\ufcf1\ufcf5-\ufd3d\ufd88\ufdf4\ufdfa-\ufdfb\ufe71\ufe77\ufe79\ufe7b\ufe7d]+)|(\ufb05+)/gu;
+            sa =
+              /([\u00a0\u00b5\u037e\u0eb3\u2000-\u200a\u202f\u2126\ufb00-\ufb04\ufb06\ufb20-\ufb36\ufb38-\ufb3c\ufb3e\ufb40-\ufb41\ufb43-\ufb44\ufb46-\ufba1\ufba4-\ufba9\ufbae-\ufbb1\ufbd3-\ufbdc\ufbde-\ufbe7\ufbea-\ufbf8\ufbfc-\ufbfd\ufc00-\ufc5d\ufc64-\ufcf1\ufcf5-\ufd3d\ufd88\ufdf4\ufdfa-\ufdfb\ufe71\ufe77\ufe79\ufe7b\ufe7d]+)|(\ufb05+)/gu;
             ra = new Map([["ﬅ", "ſt"]]);
           }
-          return e.replaceAll(sa, (e, t, a) => (t ? t.normalize("NFKC") : ra.get(a)));
+          return e.replaceAll(sa, (e, t, a) =>
+            t ? t.normalize("NFKC") : ra.get(a),
+          );
         })(t));
       const a = bidi(t, -1, e.vertical);
       return {
@@ -33445,7 +36939,9 @@ class PartialEvaluator {
         r = w.prevTransform[5];
       if (s === a && r === n) return !0;
       let i = -1;
-      t[0] && 0 === t[1] && 0 === t[2] ? (i = t[0] > 0 ? 0 : 180) : t[1] && 0 === t[0] && 0 === t[3] && (i = t[1] > 0 ? 90 : 270);
+      t[0] && 0 === t[1] && 0 === t[2]
+        ? (i = t[0] > 0 ? 0 : 180)
+        : t[1] && 0 === t[0] && 0 === t[3] && (i = t[1] > 0 ? 90 : 270);
       switch (i) {
         case 0:
           break;
@@ -33530,7 +37026,13 @@ class PartialEvaluator {
       return !0;
     }
     function buildTextContentItem({ chars: e, extraSpacing: t }) {
-      if (O !== T && (O.fontSize !== T.fontSize || (O.fontName !== T.fontName && (O.font.name !== T.font.name || O.font.vertical !== T.font.vertical)))) {
+      if (
+        O !== T &&
+        (O.fontSize !== T.fontSize ||
+          (O.fontName !== T.fontName &&
+            (O.font.name !== T.font.name ||
+              O.font.vertical !== T.font.vertical)))
+      ) {
         flushTextContentItem();
         O = T.clone();
       }
@@ -33538,7 +37040,10 @@ class PartialEvaluator {
         n = a.vertical ? -T.charSpacing : T.charSpacing;
       if (!e) {
         const e = n + t;
-        e && (a.vertical ? T.translateTextMatrix(0, -e) : T.translateTextMatrix(e * T.textHScale, 0));
+        e &&
+          (a.vertical
+            ? T.translateTextMatrix(0, -e)
+            : T.translateTextMatrix(e * T.textHScale, 0));
         u && compareWithLastPosition(0);
         return;
       }
@@ -33565,7 +37070,9 @@ class PartialEvaluator {
           continue;
         }
         if (!l.isZeroWidthDiacritic && !compareWithLastPosition(m)) {
-          a.vertical ? T.translateTextMatrix(0, m) : T.translateTextMatrix(m * T.textHScale, 0);
+          a.vertical
+            ? T.translateTextMatrix(0, m)
+            : T.translateTextMatrix(m * T.textHScale, 0);
           continue;
         }
         const d = ensureTextContentItem();
@@ -33591,7 +37098,10 @@ class PartialEvaluator {
           p?.addExtraChar(" ");
         }
         p || d.str.push(g);
-        c && (a.vertical ? T.translateTextMatrix(0, -c) : T.translateTextMatrix(c * T.textHScale, 0));
+        c &&
+          (a.vertical
+            ? T.translateTextMatrix(0, -c)
+            : T.translateTextMatrix(c * T.textHScale, 0));
       }
     }
     function appendEOL() {
@@ -33638,7 +37148,9 @@ class PartialEvaluator {
     }
     function flushTextContentItem() {
       if (w.initialized && w.str) {
-        w.vertical ? (w.totalHeight += w.height * w.textAdvanceScale) : (w.totalWidth += w.width * w.textAdvanceScale);
+        w.vertical
+          ? (w.totalHeight += w.height * w.textAdvanceScale)
+          : (w.totalWidth += w.width * w.textAdvanceScale);
         b.items.push(runBidiTransform(w));
         w.initialized = !1;
         w.str.length = 0;
@@ -33779,7 +37291,8 @@ class PartialEvaluator {
             if (w && x.getByName(d)) break;
             next(
               new Promise(function (e, n) {
-                if (!w) throw new FormatError("XObject must be referred to by name.");
+                if (!w)
+                  throw new FormatError("XObject must be referred to by name.");
                 let m = S.getRaw(d);
                 if (m instanceof Ref) {
                   if (x.getByRef(m)) {
@@ -33792,10 +37305,12 @@ class PartialEvaluator {
                   }
                   m = q.fetch(m);
                 }
-                if (!(m instanceof BaseStream)) throw new FormatError("XObject should be a stream");
+                if (!(m instanceof BaseStream))
+                  throw new FormatError("XObject should be a stream");
                 const { dict: p } = m,
                   b = p.get("Subtype");
-                if (!(b instanceof Name)) throw new FormatError("XObject should have a Name subtype");
+                if (!(b instanceof Name))
+                  throw new FormatError("XObject should have a Name subtype");
                 if ("Form" !== b.name) {
                   x.set(d, p.objId, !0);
                   e();
@@ -33852,11 +37367,14 @@ class PartialEvaluator {
             if (w && C.getByName(d)) break;
             next(
               new Promise(function (e, t) {
-                if (!w) throw new FormatError("GState must be referred to by name.");
+                if (!w)
+                  throw new FormatError("GState must be referred to by name.");
                 const n = a.get("ExtGState");
-                if (!(n instanceof Dict)) throw new FormatError("ExtGState should be a dictionary.");
+                if (!(n instanceof Dict))
+                  throw new FormatError("ExtGState should be a dictionary.");
                 const s = n.get(d);
-                if (!(s instanceof Dict)) throw new FormatError("GState should be a dictionary.");
+                if (!(s instanceof Dict))
+                  throw new FormatError("GState should be a dictionary.");
                 const r = s.get("Font");
                 if (r) {
                   flushTextContentItem();
@@ -33893,7 +37411,9 @@ class PartialEvaluator {
               j[1] instanceof Dict && (e = j[1].get("MCID"));
               b.items.push({
                 type: "beginMarkedContentProps",
-                id: Number.isInteger(e) ? `${y.idFactory.getPageObjId()}_mc${e}` : null,
+                id: Number.isInteger(e)
+                  ? `${y.idFactory.getPageObjId()}_mc${e}`
+                  : null,
                 tag: j[0] instanceof Name ? j[0].name : null,
               });
             }
@@ -33920,7 +37440,9 @@ class PartialEvaluator {
     }).catch((e) => {
       if (!(e instanceof AbortException)) {
         if (!this.options.ignoreErrors) throw e;
-        warn(`getTextContent - ignoring errors during "${t.name}" task: "${e}".`);
+        warn(
+          `getTextContent - ignoring errors during "${t.name}" task: "${e}".`,
+        );
         flushTextContentItem();
         enqueueChunk();
       }
@@ -33962,7 +37484,10 @@ class PartialEvaluator {
             const e = a.fetchIfRef(n);
             if ("number" == typeof e) t = e;
             else {
-              if (!(e instanceof Name)) throw new FormatError(`Invalid entry in 'Differences' array: ${e}`);
+              if (!(e instanceof Name))
+                throw new FormatError(
+                  `Invalid entry in 'Differences' array: ${e}`,
+                );
               r[t++] = e.name;
             }
           }
@@ -33973,14 +37498,30 @@ class PartialEvaluator {
         if (!this.options.ignoreErrors) throw new FormatError(e);
         warn(e);
       }
-      "MacRomanEncoding" !== o && "MacExpertEncoding" !== o && "WinAnsiEncoding" !== o && (o = null);
+      "MacRomanEncoding" !== o &&
+        "MacExpertEncoding" !== o &&
+        "WinAnsiEncoding" !== o &&
+        (o = null);
     }
     const l = !t.file || t.isInternalFont,
       f = _n()[t.name];
     o && l && f && (o = null);
     if ("WinAnsiEncoding" === o && l && t.name?.charCodeAt(0) >= 183) {
       const e = t.name;
-      if (["ËÎÌå", "ºÚÌå", "¿¬Ìå", "·ÂËÎ", "¿¬Ìå_GB2312", "·ÂËÎ_GB2312", "Á¥Êé", "ÐÂËÎ", "·ÂËÎÌå", "Ð¡±êËÎ"].includes(e)) {
+      if (
+        [
+          "ËÎÌå",
+          "ºÚÌå",
+          "¿¬Ìå",
+          "·ÂËÎ",
+          "¿¬Ìå_GB2312",
+          "·ÂËÎ_GB2312",
+          "Á¥Êé",
+          "ÐÂËÎ",
+          "·ÂËÎÌå",
+          "Ð¡±êËÎ",
+        ].includes(e)
+      ) {
         o = null;
         t.defaultEncoding = "Adobe-GB1-UCS2";
         t.composite = !0;
@@ -34007,7 +37548,12 @@ class PartialEvaluator {
       "TrueType" !== t.type || a || (i = cn);
       if (e || f) {
         i = ln;
-        l && (/Symbol/i.test(t.name) ? (i = hn) : /Dingbats/i.test(t.name) ? (i = un) : /Wingdings/i.test(t.name) && (i = cn));
+        l &&
+          (/Symbol/i.test(t.name)
+            ? (i = hn)
+            : /Dingbats/i.test(t.name)
+              ? (i = un)
+              : /Wingdings/i.test(t.name) && (i = cn));
       }
       t.defaultEncoding = i;
     }
@@ -34057,7 +37603,8 @@ class PartialEvaluator {
               break;
             }
             f = +a;
-            if (Number.isNaN(f) && Number.isInteger(parseInt(a, 16))) return this._simpleFontToUnicode(e, !0);
+            if (Number.isNaN(f) && Number.isInteger(parseInt(a, 16)))
+              return this._simpleFontToUnicode(e, !0);
           }
           break;
         case "u":
@@ -34089,11 +37636,21 @@ class PartialEvaluator {
   async buildToUnicode(e) {
     e.hasIncludedToUnicodeMap = e.toUnicode?.length > 0;
     if (e.hasIncludedToUnicodeMap) {
-      !e.composite && e.hasEncoding && (e.fallbackToUnicode = this._simpleFontToUnicode(e));
+      !e.composite &&
+        e.hasEncoding &&
+        (e.fallbackToUnicode = this._simpleFontToUnicode(e));
       return e.toUnicode;
     }
     if (!e.composite) return new ToUnicodeMap(this._simpleFontToUnicode(e));
-    if (e.composite && ((e.cMap.builtInCMap && !(e.cMap instanceof IdentityCMap)) || ("Adobe" === e.cidSystemInfo?.registry && ("GB1" === e.cidSystemInfo.ordering || "CNS1" === e.cidSystemInfo.ordering || "Japan1" === e.cidSystemInfo.ordering || "Korea1" === e.cidSystemInfo.ordering)))) {
+    if (
+      e.composite &&
+      ((e.cMap.builtInCMap && !(e.cMap instanceof IdentityCMap)) ||
+        ("Adobe" === e.cidSystemInfo?.registry &&
+          ("GB1" === e.cidSystemInfo.ordering ||
+            "CNS1" === e.cidSystemInfo.ordering ||
+            "Japan1" === e.cidSystemInfo.ordering ||
+            "Korea1" === e.cidSystemInfo.ordering)))
+    ) {
       const { registry: t, ordering: a } = e.cidSystemInfo,
         n = Name.get(`${t}-${a}-UCS2`),
         s = await CMapFactory.create({
@@ -34108,7 +37665,8 @@ class PartialEvaluator {
         const a = s.lookup(t);
         if (a) {
           i.length = 0;
-          for (let e = 0, t = a.length; e < t; e += 2) i.push((a.charCodeAt(e) << 8) + a.charCodeAt(e + 1));
+          for (let e = 0, t = a.length; e < t; e += 2)
+            i.push((a.charCodeAt(e) << 8) + a.charCodeAt(e + 1));
           r[e] = String.fromCharCode(...i);
         }
       });
@@ -34124,7 +37682,9 @@ class PartialEvaluator {
         fetchBuiltInCMap: this._fetchBuiltInCMapBound,
         useCMap: null,
       });
-      return t instanceof IdentityCMap ? new IdentityToUnicodeMap(0, 65535) : new ToUnicodeMap(t.getMap());
+      return t instanceof IdentityCMap
+        ? new IdentityToUnicodeMap(0, 65535)
+        : new ToUnicodeMap(t.getMap());
     }
     if (e instanceof BaseStream)
       try {
@@ -34133,7 +37693,8 @@ class PartialEvaluator {
           fetchBuiltInCMap: this._fetchBuiltInCMapBound,
           useCMap: null,
         });
-        if (t instanceof IdentityCMap) return new IdentityToUnicodeMap(0, 65535);
+        if (t instanceof IdentityCMap)
+          return new IdentityToUnicodeMap(0, 65535);
         const a = new Array(t.length);
         t.forEach(function (e, t) {
           if ("number" == typeof t) {
@@ -34216,14 +37777,22 @@ class PartialEvaluator {
             const s = n.fetchIfRef(a[e]);
             if (Array.isArray(s))
               for (let e = 0, a = s.length; e < a; e++) {
-                const a = [n.fetchIfRef(s[e++]), n.fetchIfRef(s[e++]), n.fetchIfRef(s[e])];
+                const a = [
+                  n.fetchIfRef(s[e++]),
+                  n.fetchIfRef(s[e++]),
+                  n.fetchIfRef(s[e]),
+                ];
                 isNumberArray(a, null) && (i[t] = a);
                 t++;
               }
             else {
               if (!Number.isInteger(s)) break;
               {
-                const r = [n.fetchIfRef(a[++e]), n.fetchIfRef(a[++e]), n.fetchIfRef(a[++e])];
+                const r = [
+                  n.fetchIfRef(a[++e]),
+                  n.fetchIfRef(a[++e]),
+                  n.fetchIfRef(a[++e]),
+                ];
                 if (!isNumberArray(r, null)) continue;
                 for (let e = t; e <= s; e++) i[e] = r;
               }
@@ -34290,7 +37859,10 @@ class PartialEvaluator {
     const a = Object.create(null),
       n = t.differences,
       s = t.defaultEncoding;
-    for (let t = 0; t < 256; t++) t in n && e[n[t]] ? (a[t] = e[n[t]]) : t in s && e[s[t]] && (a[t] = e[s[t]]);
+    for (let t = 0; t < 256; t++)
+      t in n && e[n[t]]
+        ? (a[t] = e[n[t]])
+        : t in s && e[s[t]] && (a[t] = e[s[t]]);
     return a;
   }
   preEvaluateFont(e) {
@@ -34302,7 +37874,13 @@ class PartialEvaluator {
     if ("Type0" === a.name) {
       const t = e.get("DescendantFonts");
       if (!t) throw new FormatError("Descendant fonts are not specified");
-      if (!((e = Array.isArray(t) ? this.xref.fetchIfRef(t[0]) : t) instanceof Dict)) throw new FormatError("Descendant font is not a dictionary.");
+      if (
+        !(
+          (e = Array.isArray(t) ? this.xref.fetchIfRef(t[0]) : t) instanceof
+          Dict
+        )
+      )
+        throw new FormatError("Descendant font is not a dictionary.");
       a = e.get("Subtype");
       if (!(a instanceof Name)) throw new FormatError("invalid font Subtype");
       s = !0;
@@ -34327,20 +37905,26 @@ class PartialEvaluator {
               a = new Array(t);
             for (let n = 0; n < t; n++) {
               const t = e[n];
-              t instanceof Name ? (a[n] = t.name) : ("number" == typeof t || t instanceof Ref) && (a[n] = t.toString());
+              t instanceof Name
+                ? (a[n] = t.name)
+                : ("number" == typeof t || t instanceof Ref) &&
+                  (a[n] = t.toString());
             }
             n.update(a.join());
           }
       n.update(`${r}-${i}`);
       if (l instanceof BaseStream) {
         const e = l.stream || l,
-          t = e.buffer ? new Uint8Array(e.buffer.buffer, 0, e.bufferLength) : new Uint8Array(e.bytes.buffer, e.start, e.end - e.start);
+          t = e.buffer
+            ? new Uint8Array(e.buffer.buffer, 0, e.bufferLength)
+            : new Uint8Array(e.bytes.buffer, e.start, e.end - e.start);
         n.update(t);
       } else l instanceof Name && n.update(l.name);
       const f = e.get("Widths") || t.get("Widths");
       if (Array.isArray(f)) {
         const e = [];
-        for (const t of f) ("number" == typeof t || t instanceof Ref) && e.push(t.toString());
+        for (const t of f)
+          ("number" == typeof t || t instanceof Ref) && e.push(t.toString());
         n.update(e.join());
       }
       if (s) {
@@ -34352,17 +37936,25 @@ class PartialEvaluator {
             if ("number" == typeof t || t instanceof Ref) e.push(t.toString());
             else if (Array.isArray(t)) {
               const a = [];
-              for (const e of t) ("number" == typeof e || e instanceof Ref) && a.push(e.toString());
+              for (const e of t)
+                ("number" == typeof e || e instanceof Ref) &&
+                  a.push(e.toString());
               e.push(`[${a.join()}]`);
             }
           n.update(e.join());
         }
         const s = e.getRaw("CIDToGIDMap") || t.getRaw("CIDToGIDMap");
-        s instanceof Name ? n.update(s.name) : s instanceof Ref ? n.update(s.toString()) : s instanceof BaseStream && n.update(s.peekBytes());
+        s instanceof Name
+          ? n.update(s.name)
+          : s instanceof Ref
+            ? n.update(s.toString())
+            : s instanceof BaseStream && n.update(s.peekBytes());
       }
       if ("Type3" === a.name) {
         const e = t.get("CharProcs");
-        if (e instanceof Dict) for (const [t, a] of e.getRawEntries()) n.update(a instanceof Ref ? `${t}\0${a}` : t);
+        if (e instanceof Dict)
+          for (const [t, a] of e.getRawEntries())
+            n.update(a instanceof Ref ? `${t}\0${a}` : t);
       }
     }
     return {
@@ -34377,16 +37969,30 @@ class PartialEvaluator {
       hash: n ? n.hexdigest() : "",
     };
   }
-  async translateFont({ descriptor: e, dict: t, baseDict: a, composite: s, type: r, firstChar: i, lastChar: o, toUnicode: l, cssFontInfo: f }) {
+  async translateFont({
+    descriptor: e,
+    dict: t,
+    baseDict: a,
+    composite: s,
+    type: r,
+    firstChar: i,
+    lastChar: o,
+    toUnicode: l,
+    cssFontInfo: f,
+  }) {
     const c = "Type3" === r;
     if (!e) {
       if (!c) {
         let e = t.get("BaseFont");
-        if (!(e instanceof Name)) throw new FormatError("Base font is not specified");
+        if (!(e instanceof Name))
+          throw new FormatError("Base font is not specified");
         e = normalizeFontName(e.name);
         const n = this.getBaseFontMetrics(e),
           s = e.split("-", 1)[0],
-          f = (this.isSerifFont(s) ? yn : 0) | (n.monospace ? kn : 0) | (_n()[s] ? qn : vn),
+          f =
+            (this.isSerifFont(s) ? yn : 0) |
+            (n.monospace ? kn : 0) |
+            (_n()[s] ? qn : vn),
           h = {
             type: r,
             name: e,
@@ -34411,7 +38017,16 @@ class PartialEvaluator {
           p = await this.fetchStandardFontData(m);
           h.isInternalFont = !!p;
         }
-        !h.isInternalFont && this.options.useSystemFonts && (h.systemFontInfo = getFontSubstitution(this.systemFontCache, this.idFactory, this.options.standardFontDataUrl, e, m, r));
+        !h.isInternalFont &&
+          this.options.useSystemFonts &&
+          (h.systemFontInfo = getFontSubstitution(
+            this.systemFontCache,
+            this.idFactory,
+            this.options.standardFontDataUrl,
+            e,
+            m,
+            r,
+          ));
         const d = await this.extractDataStructures(t, h);
         if (Array.isArray(u)) {
           const e = [];
@@ -34435,8 +38050,13 @@ class PartialEvaluator {
       p = u?.name;
     if (c) m || (h = Name.get(r));
     else if (m !== p) {
-      info(`The FontDescriptor's FontName is "${m}" but should be the same as the Font's BaseFont "${p}".`);
-      m && p && (p.startsWith(m) || (!isKnownFontName(m) && isKnownFontName(p))) && (h = null);
+      info(
+        `The FontDescriptor's FontName is "${m}" but should be the same as the Font's BaseFont "${p}".`,
+      );
+      m &&
+        p &&
+        (p.startsWith(m) || (!isKnownFontName(m) && isKnownFontName(p))) &&
+        (h = null);
       h ||= u;
     }
     if (!(h instanceof Name)) throw new FormatError("invalid font name");
@@ -34444,7 +38064,8 @@ class PartialEvaluator {
     try {
       d = e.get("FontFile", "FontFile2", "FontFile3");
       if (d) {
-        if (!(d instanceof BaseStream)) throw new FormatError("FontFile should be a stream");
+        if (!(d instanceof BaseStream))
+          throw new FormatError("FontFile should be a stream");
         if (d.isAsync) {
           const e = await d.asyncGetBytes();
           e && (d = new Stream(e, 0, e.length, d.dict));
@@ -34484,10 +38105,22 @@ class PartialEvaluator {
         d = await this.fetchStandardFontData(e);
         k = !!d;
       }
-      !k && this.options.useSystemFonts && (q = getFontSubstitution(this.systemFontCache, this.idFactory, this.options.standardFontDataUrl, h.name, e, r));
+      !k &&
+        this.options.useSystemFonts &&
+        (q = getFontSubstitution(
+          this.systemFontCache,
+          this.idFactory,
+          this.options.standardFontDataUrl,
+          h.name,
+          e,
+          r,
+        ));
     }
     const v = lookupMatrix(t.getArray("FontMatrix"), n),
-      S = lookupNormalRect(e.getArray("FontBBox") || t.getArray("FontBBox"), c ? [0, 0, 0, 0] : void 0);
+      S = lookupNormalRect(
+        e.getArray("FontBBox") || t.getArray("FontBBox"),
+        c ? [0, 0, 0, 0] : void 0,
+      );
     let x = e.get("Ascent");
     "number" != typeof x && (x = void 0);
     let C = e.get("Descent");
@@ -34594,7 +38227,12 @@ class TranslatedFont {
   fallback(e, t) {
     if (this.font.data) {
       this.font.disableFontFace = !0;
-      PartialEvaluator.buildFontPaths(this.font, this.font.glyphCacheValues, e, t);
+      PartialEvaluator.buildFontPaths(
+        this.font,
+        this.font.glyphCacheValues,
+        e,
+        t,
+      );
     }
   }
   loadType3Data(e, t, a) {
@@ -34950,7 +38588,11 @@ class EvaluatorPreprocessor {
         let o = null !== t ? t.length : 0;
         this._isPathOp || (this._numInvalidPathOPS = 0);
         this._isPathOp = r >= ve && r <= Pe;
-        if (s.variableArgs) o > i && info(`Command ${n}: expected [0, ${i}] args, but received ${o} args.`);
+        if (s.variableArgs)
+          o > i &&
+            info(
+              `Command ${n}: expected [0, ${i}] args, but received ${o} args.`,
+            );
         else {
           if (o !== i) {
             const e = this.nonProcessedArgs;
@@ -34966,7 +38608,12 @@ class EvaluatorPreprocessor {
           }
           if (o < i) {
             const e = `command ${n}: expected ${i} args, but received ${o} args.`;
-            if (this._isPathOp && ++this._numInvalidPathOPS > EvaluatorPreprocessor.MAX_INVALID_PATH_OPS) throw new FormatError(`Invalid ${e}`);
+            if (
+              this._isPathOp &&
+              ++this._numInvalidPathOPS >
+                EvaluatorPreprocessor.MAX_INVALID_PATH_OPS
+            )
+              throw new FormatError(`Invalid ${e}`);
             warn(`Skipping ${e}`);
             null !== t && (t.length = 0);
             continue;
@@ -35122,14 +38769,22 @@ class AppearanceStreamEvaluator extends EvaluatorPreprocessor {
     return shadow(this, "_localColorSpaceCache", new LocalColorSpaceCache());
   }
   get _pdfFunctionFactory() {
-    return shadow(this, "_pdfFunctionFactory", new PDFFunctionFactory({ xref: this.xref }));
+    return shadow(
+      this,
+      "_pdfFunctionFactory",
+      new PDFFunctionFactory({ xref: this.xref }),
+    );
   }
 }
 function getPdfColor(e, t) {
   if (e[0] === e[1] && e[1] === e[2]) {
     return `${numberToString(e[0] / 255)} ${t ? "g" : "G"}`;
   }
-  return Array.from(e, (e) => numberToString(e / 255)).join(" ") + " " + (t ? "rg" : "RG");
+  return (
+    Array.from(e, (e) => numberToString(e / 255)).join(" ") +
+    " " +
+    (t ? "rg" : "RG")
+  );
 }
 class FakeUnicodeFont {
   static #ze = 1;
@@ -35273,7 +38928,13 @@ class FakeUnicodeFont {
       y = j * f.length;
     y > g && (w = g / y);
     const q = n * Math.min(b, w),
-      v = ["q", `0 0 ${numberToString(d)} ${numberToString(g)} re W n`, "BT", `1 0 0 1 0 ${numberToString(g + k)} Tm 0 Tc ${getPdfColor(i, !0)}`, `/${this.fontName.name} ${numberToString(q)} Tf`],
+      v = [
+        "q",
+        `0 0 ${numberToString(d)} ${numberToString(g)} re W n`,
+        "BT",
+        `1 0 0 1 0 ${numberToString(g + k)} Tm 0 Tc ${getPdfColor(i, !0)}`,
+        `/${this.fontName.name} ${numberToString(q)} Tf`,
+      ],
       { resources: S } = this;
     if (1 !== (o = "number" == typeof o && o >= 0 && o <= 1 ? o : 1)) {
       v.push("/R0 gs");
@@ -35304,7 +38965,22 @@ class FakeUnicodeFont {
     return T;
   }
 }
-const Ri = ["m/d", "m/d/yy", "mm/dd/yy", "mm/yy", "d-mmm", "d-mmm-yy", "dd-mmm-yy", "yy-mm-dd", "mmm-yy", "mmmm-yy", "mmm d, yyyy", "mmmm d, yyyy", "m/d/yy h:MM tt", "m/d/yy HH:MM"],
+const Ri = [
+    "m/d",
+    "m/d/yy",
+    "mm/dd/yy",
+    "mm/yy",
+    "d-mmm",
+    "d-mmm-yy",
+    "dd-mmm-yy",
+    "yy-mm-dd",
+    "mmm-yy",
+    "mmmm-yy",
+    "mmm d, yyyy",
+    "mmmm d, yyyy",
+    "m/d/yy h:MM tt",
+    "m/d/yy HH:MM",
+  ],
   Hi = ["HH:MM", "h:MM tt", "HH:MM:ss", "h:MM:ss tt"];
 class NameOrNumberTree {
   constructor(e, t, a) {
@@ -35327,7 +39003,8 @@ class NameOrNumberTree {
         if (!Array.isArray(e)) continue;
         for (const t of e) {
           if (t instanceof Ref) {
-            if (n.has(t)) throw new FormatError(`Duplicate entry in "${this._type}" tree.`);
+            if (n.has(t))
+              throw new FormatError(`Duplicate entry in "${this._type}" tree.`);
             n.put(t);
           }
           s.push(t);
@@ -35335,7 +39012,9 @@ class NameOrNumberTree {
         continue;
       }
       const i = r.get(this._type);
-      if (Array.isArray(i)) for (let n = 0, s = i.length; n < s; n += 2) t.set(a.fetchIfRef(i[n]), e ? i[n + 1] : a.fetchIfRef(i[n + 1]));
+      if (Array.isArray(i))
+        for (let n = 0, s = i.length; n < s; n += 2)
+          t.set(a.fetchIfRef(i[n]), e ? i[n + 1] : a.fetchIfRef(i[n + 1]));
     }
     return t;
   }
@@ -35415,7 +39094,9 @@ function clearGlobalCaches() {
   JpxImage.cleanup();
 }
 function pickPlatformItem(e) {
-  if (e instanceof Dict) for (const t of ["UF", "F", "Unix", "Mac", "DOS"]) if (e.has(t)) return e.get(t);
+  if (e instanceof Dict)
+    for (const t of ["UF", "F", "Unix", "Mac", "DOS"])
+      if (e.has(t)) return e.get(t);
   return null;
 }
 class FileSpec {
@@ -35425,12 +39106,20 @@ class FileSpec {
       this.root = e;
       e.has("FS") && (this.fs = e.get("FS"));
       e.has("RF") && warn("Related file specifications are not supported");
-      t || (e.has("EF") ? (this.#Le = !0) : warn("Non-embedded file specifications are not supported"));
+      t ||
+        (e.has("EF")
+          ? (this.#Le = !0)
+          : warn("Non-embedded file specifications are not supported"));
     }
   }
   get filename() {
     const e = pickPlatformItem(this.root);
-    return e && "string" == typeof e ? stringToPDFString(e, !0).replaceAll("\\\\", "\\").replaceAll("\\/", "/").replaceAll("\\", "/") : "";
+    return e && "string" == typeof e
+      ? stringToPDFString(e, !0)
+          .replaceAll("\\\\", "\\")
+          .replaceAll("\\/", "/")
+          .replaceAll("\\", "/")
+      : "";
   }
   get content() {
     if (!this.#Le) return null;
@@ -35468,8 +39157,10 @@ function isWhitespace(e, t) {
 class XMLParserBase {
   _resolveEntities(e) {
     return e.replaceAll(/&([^;]+);/g, (e, t) => {
-      if ("#x" === t.substring(0, 2)) return String.fromCodePoint(parseInt(t.substring(2), 16));
-      if ("#" === t.substring(0, 1)) return String.fromCodePoint(parseInt(t.substring(1), 10));
+      if ("#x" === t.substring(0, 2))
+        return String.fromCodePoint(parseInt(t.substring(2), 16));
+      if ("#" === t.substring(0, 1))
+        return String.fromCodePoint(parseInt(t.substring(1), 10));
       switch (t) {
         case "lt":
           return "<";
@@ -35491,7 +39182,11 @@ class XMLParserBase {
     function skipWs() {
       for (; n < e.length && isWhitespace(e, n); ) ++n;
     }
-    for (; n < e.length && !isWhitespace(e, n) && ">" !== e[n] && "/" !== e[n]; ) ++n;
+    for (
+      ;
+      n < e.length && !isWhitespace(e, n) && ">" !== e[n] && "/" !== e[n];
+    )
+      ++n;
     const s = e.substring(t, n);
     skipWs();
     for (; n < e.length && ">" !== e[n] && "/" !== e[n] && "?" !== e[n]; ) {
@@ -35519,7 +39214,15 @@ class XMLParserBase {
   }
   _parseProcessingInstruction(e, t) {
     let a = t;
-    for (; a < e.length && !isWhitespace(e, a) && ">" !== e[a] && "?" !== e[a] && "/" !== e[a]; ) ++a;
+    for (
+      ;
+      a < e.length &&
+      !isWhitespace(e, a) &&
+      ">" !== e[a] &&
+      "?" !== e[a] &&
+      "/" !== e[a];
+    )
+      ++a;
     const n = e.substring(t, a);
     !(function skipWs() {
       for (; a < e.length && isWhitespace(e, a); ) ++a;
@@ -35651,7 +39354,9 @@ class SimpleDOMNode {
     return -1 !== t ? e[t + 1] : void 0;
   }
   get textContent() {
-    return this.childNodes ? this.childNodes.map((e) => e.textContent).join("") : this.nodeValue || "";
+    return this.childNodes
+      ? this.childNodes.map((e) => e.textContent).join("")
+      : this.nodeValue || "";
   }
   get children() {
     return this.childNodes || [];
@@ -35662,7 +39367,8 @@ class SimpleDOMNode {
   searchNode(e, t) {
     if (t >= e.length) return this;
     const a = e[t];
-    if (a.name.startsWith("#") && t < e.length - 1) return this.searchNode(e, t + 1);
+    if (a.name.startsWith("#") && t < e.length - 1)
+      return this.searchNode(e, t + 1);
     const n = [];
     let s = this;
     for (;;) {
@@ -35706,12 +39412,17 @@ class SimpleDOMNode {
   dump(e) {
     if ("#text" !== this.nodeName) {
       e.push(`<${this.nodeName}`);
-      if (this.attributes) for (const t of this.attributes) e.push(` ${t.name}="${encodeToXmlString(t.value)}"`);
+      if (this.attributes)
+        for (const t of this.attributes)
+          e.push(` ${t.name}="${encodeToXmlString(t.value)}"`);
       if (this.hasChildNodes()) {
         e.push(">");
         for (const t of this.childNodes) t.dump(e);
         e.push(`</${this.nodeName}>`);
-      } else this.nodeValue ? e.push(`>${encodeToXmlString(this.nodeValue)}</${this.nodeName}>`) : e.push("/>");
+      } else
+        this.nodeValue
+          ? e.push(`>${encodeToXmlString(this.nodeValue)}</${this.nodeName}>`)
+          : e.push("/>");
     } else e.push(encodeToXmlString(this.nodeValue));
   }
 }
@@ -35736,7 +39447,8 @@ class SimpleXMLParser extends XMLParserBase {
   onText(e) {
     if (
       (function isWhitespaceString(e) {
-        for (let t = 0, a = e.length; t < a; t++) if (!isWhitespace(e, t)) return !1;
+        for (let t = 0, a = e.length; t < a; t++)
+          if (!isWhitespace(e, t)) return !1;
         return !0;
       })(e)
     )
@@ -35779,37 +39491,43 @@ class MetadataParser {
     t && this._parse(t);
   }
   _repair(e) {
-    return e.replace(/^[^<]+/, "").replaceAll(/>\\376\\377([^<]+)/g, function (e, t) {
-      const a = t
-          .replaceAll(/\\([0-3])([0-7])([0-7])/g, function (e, t, a, n) {
-            return String.fromCharCode(64 * t + 8 * a + 1 * n);
-          })
-          .replaceAll(/&(amp|apos|gt|lt|quot);/g, function (e, t) {
-            switch (t) {
-              case "amp":
-                return "&";
-              case "apos":
-                return "'";
-              case "gt":
-                return ">";
-              case "lt":
-                return "<";
-              case "quot":
-                return '"';
-            }
-            throw new Error(`_repair: ${t} isn't defined.`);
-          }),
-        n = [">"];
-      for (let e = 0, t = a.length; e < t; e += 2) {
-        const t = 256 * a.charCodeAt(e) + a.charCodeAt(e + 1);
-        t >= 32 && t < 127 && 60 !== t && 62 !== t && 38 !== t ? n.push(String.fromCharCode(t)) : n.push("&#x" + (65536 + t).toString(16).substring(1) + ";");
-      }
-      return n.join("");
-    });
+    return e
+      .replace(/^[^<]+/, "")
+      .replaceAll(/>\\376\\377([^<]+)/g, function (e, t) {
+        const a = t
+            .replaceAll(/\\([0-3])([0-7])([0-7])/g, function (e, t, a, n) {
+              return String.fromCharCode(64 * t + 8 * a + 1 * n);
+            })
+            .replaceAll(/&(amp|apos|gt|lt|quot);/g, function (e, t) {
+              switch (t) {
+                case "amp":
+                  return "&";
+                case "apos":
+                  return "'";
+                case "gt":
+                  return ">";
+                case "lt":
+                  return "<";
+                case "quot":
+                  return '"';
+              }
+              throw new Error(`_repair: ${t} isn't defined.`);
+            }),
+          n = [">"];
+        for (let e = 0, t = a.length; e < t; e += 2) {
+          const t = 256 * a.charCodeAt(e) + a.charCodeAt(e + 1);
+          t >= 32 && t < 127 && 60 !== t && 62 !== t && 38 !== t
+            ? n.push(String.fromCharCode(t))
+            : n.push("&#x" + (65536 + t).toString(16).substring(1) + ";");
+        }
+        return n.join("");
+      });
   }
   _getSequence(e) {
     const t = e.nodeName;
-    return "rdf:bag" !== t && "rdf:seq" !== t && "rdf:alt" !== t ? null : e.childNodes.filter((e) => "rdf:li" === e.nodeName);
+    return "rdf:bag" !== t && "rdf:seq" !== t && "rdf:alt" !== t
+      ? null
+      : e.childNodes.filter((e) => "rdf:li" === e.nodeName);
   }
   _parseArray(e) {
     if (!e.hasChildNodes()) return;
@@ -35870,7 +39588,9 @@ class StructTreeRoot {
           const n = e[a];
           n && t.set(n.toString(), a);
         }
-      } else this.kidRefToPosition = e instanceof Dict ? new Map([[e.objId, 0]]) : e ? null : new Map();
+      } else
+        this.kidRefToPosition =
+          e instanceof Dict ? new Map([[e.objId, 0]]) : e ? null : new Map();
     }
     return this.kidRefToPosition ? (this.kidRefToPosition.get(e) ?? NaN) : -1;
   }
@@ -35894,9 +39614,14 @@ class StructTreeRoot {
   }
   readRoleMap() {
     const e = this.dict.get("RoleMap");
-    if (e instanceof Dict) for (const [t, a] of e) a instanceof Name && this.roleMap.set(t, a.name);
+    if (e instanceof Dict)
+      for (const [t, a] of e) a instanceof Name && this.roleMap.set(t, a.name);
   }
-  static async canCreateStructureTree({ catalogRef: e, pdfManager: t, newAnnotationsByPage: a }) {
+  static async canCreateStructureTree({
+    catalogRef: e,
+    pdfManager: t,
+    newAnnotationsByPage: a,
+  }) {
     if (!(e instanceof Ref)) {
       warn("Cannot save the struct tree: no catalog reference.");
       return !1;
@@ -35922,7 +39647,13 @@ class StructTreeRoot {
     }
     return !0;
   }
-  static async createStructureTree({ newAnnotationsByPage: e, xref: t, catalogRef: a, pdfManager: n, changes: s }) {
+  static async createStructureTree({
+    newAnnotationsByPage: e,
+    xref: t,
+    catalogRef: a,
+    pdfManager: n,
+    changes: s,
+  }) {
     const r = await n.ensureCatalog("cloneDict"),
       i = new RefSetCache();
     i.put(a, r);
@@ -36008,7 +39739,11 @@ class StructTreeRoot {
     }
     return !0;
   }
-  async updateStructureTree({ newAnnotationsByPage: e, pdfManager: t, changes: a }) {
+  async updateStructureTree({
+    newAnnotationsByPage: e,
+    pdfManager: t,
+    changes: a,
+  }) {
     const { ref: n, xref: s } = this,
       r = this.dict.clone(),
       i = new RefSetCache();
@@ -36048,7 +39783,17 @@ class StructTreeRoot {
       for (const [e, t] of i.items()) a.put(e, { data: t });
     }
   }
-  static async #Xe({ newAnnotationsByPage: e, structTreeRootRef: t, structTreeRoot: a, kids: n, nums: s, xref: r, pdfManager: i, changes: o, cache: l }) {
+  static async #Xe({
+    newAnnotationsByPage: e,
+    structTreeRootRef: t,
+    structTreeRoot: a,
+    kids: n,
+    nums: s,
+    xref: r,
+    pdfManager: i,
+    changes: o,
+    cache: l,
+  }) {
     const f = Name.get("OBJR");
     let c,
       h = -1;
@@ -36056,7 +39801,12 @@ class StructTreeRoot {
       const e = await i.getPage(u),
         { ref: p } = e,
         d = p instanceof Ref;
-      for (const { accessibilityData: i, ref: g, parentTreeId: b, structTreeParent: w } of m) {
+      for (const {
+        accessibilityData: i,
+        ref: g,
+        parentTreeId: b,
+        structTreeParent: w,
+      } of m) {
         if (!i?.type) continue;
         const { structParent: m } = i;
         if (a && Number.isInteger(m) && m >= 0) {
@@ -36097,7 +39847,10 @@ class StructTreeRoot {
     }
     return h + 1;
   }
-  static #Ke(e, { type: t, title: a, lang: n, alt: s, expanded: r, actualText: i }) {
+  static #Ke(
+    e,
+    { type: t, title: a, lang: n, alt: s, expanded: r, actualText: i },
+  ) {
     e.set("S", Name.get(t));
     a && e.set("T", stringToAsciiOrUTF16BE(a));
     n && e.set("Lang", stringToAsciiOrUTF16BE(n));
@@ -36144,7 +39897,15 @@ class StructTreeRoot {
         }
     }
   }
-  static async #Ge({ structTreeParent: e, tagDict: t, newTagRef: a, structTreeRootRef: n, fallbackKids: s, xref: r, cache: i }) {
+  static async #Ge({
+    structTreeParent: e,
+    tagDict: t,
+    newTagRef: a,
+    structTreeRootRef: n,
+    fallbackKids: s,
+    xref: r,
+    cache: i,
+  }) {
     let o,
       l = null;
     if (e) {
@@ -36200,7 +39961,12 @@ class StructElementNode {
       const e = t.get("EF");
       if (!(e instanceof Dict)) continue;
       const a = e.get("UF") || e.get("F");
-      if (a instanceof BaseStream && isName(a.dict.get("Type"), "EmbeddedFile") && isName(a.dict.get("Subtype"), "application/mathml+xml")) return stringToUTF8String(a.getString());
+      if (
+        a instanceof BaseStream &&
+        isName(a.dict.get("Type"), "EmbeddedFile") &&
+        isName(a.dict.get("Subtype"), "application/mathml+xml")
+      )
+        return stringToUTF8String(a.getString());
     }
     const t = this.dict.get("A");
     if (t instanceof Dict) {
@@ -36227,7 +39993,10 @@ class StructElementNode {
     }
   }
   parseKid(e, t) {
-    if (Number.isInteger(t)) return this.tree.pageDict.objId !== e ? null : new StructElement({ type: zi, mcid: t, pageObjId: e });
+    if (Number.isInteger(t))
+      return this.tree.pageDict.objId !== e
+        ? null
+        : new StructElement({ type: zi, mcid: t, pageObjId: e });
     if (!(t instanceof Dict)) return null;
     const a = t.getRaw("Pg");
     a instanceof Ref && (e = a.toString());
@@ -36255,7 +40024,13 @@ class StructElementNode {
   }
 }
 class StructElement {
-  constructor({ type: e, dict: t = null, mcid: a = null, pageObjId: n = null, refObjId: s = null }) {
+  constructor({
+    type: e,
+    dict: t = null,
+    mcid: a = null,
+    pageObjId: n = null,
+    refObjId: s = null,
+  }) {
     this.type = e;
     this.dict = t;
     this.mcid = a;
@@ -36296,14 +40071,18 @@ class StructTreePage {
     const s = new Map();
     if (Number.isInteger(a)) {
       const e = t.get(a);
-      if (Array.isArray(e)) for (const t of e) t instanceof Ref && this.addNode(this.xref.fetch(t), s);
+      if (Array.isArray(e))
+        for (const t of e)
+          t instanceof Ref && this.addNode(this.xref.fetch(t), s);
     }
     if (n)
       for (const [e, a] of n) {
         const n = t.get(e);
         if (n) {
           const e = this.addNode(this.xref.fetchIfRef(n), s);
-          1 === e?.kids?.length && e.kids[0].type === Wi && (e.kids[0].type = a);
+          1 === e?.kids?.length &&
+            e.kids[0].type === Wi &&
+            (e.kids[0].type = a);
         }
       }
   }
@@ -36373,7 +40152,11 @@ class StructTreePage {
         else {
           const e = r.get("Width"),
             t = r.get("Height");
-          "number" == typeof e && e > 0 && "number" == typeof t && t > 0 && (n.bbox = [0, 0, e, t]);
+          "number" == typeof e &&
+            e > 0 &&
+            "number" == typeof t &&
+            t > 0 &&
+            (n.bbox = [0, 0, e, t]);
         }
       }
       const i = e.dict.get("Lang");
@@ -36430,7 +40213,8 @@ const Vi = function _isValidExplicitDest(e, t, a) {
     default:
       return !1;
   }
-  for (const e of r) if (!("number" == typeof e || (o && null === e))) return !1;
+  for (const e of r)
+    if (!("number" == typeof e || (o && null === e))) return !1;
   return !0;
 }.bind(null, (e) => e instanceof Ref, isName);
 function fetchDest(e) {
@@ -36463,7 +40247,8 @@ class Catalog {
     this.pdfManager = e;
     this.xref = t;
     this.#$e = t.getCatalogObj();
-    if (!(this.#$e instanceof Dict)) throw new FormatError("Catalog object is not a dictionary.");
+    if (!(this.#$e instanceof Dict))
+      throw new FormatError("Catalog object is not a dictionary.");
     this.toplevelPagesDict;
   }
   cloneDict() {
@@ -36479,7 +40264,11 @@ class Catalog {
   }
   get lang() {
     const e = this.#$e.get("Lang");
-    return shadow(this, "lang", e && "string" == typeof e ? stringToPDFString(e) : null);
+    return shadow(
+      this,
+      "lang",
+      e && "string" == typeof e ? stringToPDFString(e) : null,
+    );
   }
   get needsRendering() {
     const e = this.#$e.get("NeedsRendering");
@@ -36574,7 +40363,8 @@ class Catalog {
   }
   get toplevelPagesDict() {
     const e = this.#$e.get("Pages");
-    if (!(e instanceof Dict)) throw new FormatError("Invalid top-level pages dictionary.");
+    if (!(e instanceof Dict))
+      throw new FormatError("Invalid top-level pages dictionary.");
     return shadow(this, "toplevelPagesDict", e);
   }
   get documentOutline() {
@@ -36615,7 +40405,9 @@ class Catalog {
         h = o.getArray("C"),
         u = o.get("Count");
       let m = i;
-      !isNumberArray(h, 3) || (0 === h[0] && 0 === h[1] && 0 === h[2]) || (m = ColorSpaceUtils.rgb.getRgb(h, 0));
+      !isNumberArray(h, 3) ||
+        (0 === h[0] && 0 === h[1] && 0 === h[2]) ||
+        (m = ColorSpaceUtils.rgb.getRgb(h, 0));
       const p = {
         action: l.action,
         attachment: l.attachment,
@@ -36739,7 +40531,8 @@ class Catalog {
   #tt(e, t) {
     function parseOnOff(e) {
       const a = [];
-      if (Array.isArray(e)) for (const n of e) n instanceof Ref && t.has(n) && a.push(n.toString());
+      if (Array.isArray(e))
+        for (const n of e) n instanceof Ref && t.has(n) && a.push(n.toString());
       return a;
     }
     function parseOrder(e, a = 0) {
@@ -36789,9 +40582,16 @@ class Catalog {
         }
     })(e.get("RBGroups"));
     return {
-      name: "string" == typeof e.get("Name") ? stringToPDFString(e.get("Name")) : null,
-      creator: "string" == typeof e.get("Creator") ? stringToPDFString(e.get("Creator")) : null,
-      baseState: e.get("BaseState") instanceof Name ? e.get("BaseState").name : null,
+      name:
+        "string" == typeof e.get("Name")
+          ? stringToPDFString(e.get("Name"))
+          : null,
+      creator:
+        "string" == typeof e.get("Creator")
+          ? stringToPDFString(e.get("Creator"))
+          : null,
+      baseState:
+        e.get("BaseState") instanceof Name ? e.get("BaseState").name : null,
       on: parseOnOff(e.get("ON")),
       off: parseOnOff(e.get("OFF")),
       order: parseOrder(e.get("Order")),
@@ -36806,7 +40606,10 @@ class Catalog {
   }
   get _pagesCount() {
     const e = this.toplevelPagesDict.get("Count");
-    if (!Number.isInteger(e)) throw new FormatError("Page count in top-level pages dictionary is not an integer.");
+    if (!Number.isInteger(e))
+      throw new FormatError(
+        "Page count in top-level pages dictionary is not an integer.",
+      );
     return shadow(this, "_pagesCount", e);
   }
   get numPages() {
@@ -36829,7 +40632,8 @@ class Catalog {
     return shadow(this, "destinations", t);
   }
   getDestination(e) {
-    if (Object.hasOwn(this, "destinations")) return this.destinations[e] ?? null;
+    if (Object.hasOwn(this, "destinations"))
+      return this.destinations[e] ?? null;
     const t = this.#at();
     for (const a of t)
       if (a instanceof NameTree || a instanceof Dict) {
@@ -36875,21 +40679,26 @@ class Catalog {
     for (let i = 0, o = this.numPages; i < o; i++) {
       const o = e.get(i);
       if (void 0 !== o) {
-        if (!(o instanceof Dict)) throw new FormatError("PageLabel is not a dictionary.");
-        if (o.has("Type") && !isName(o.get("Type"), "PageLabel")) throw new FormatError("Invalid type in PageLabel dictionary.");
+        if (!(o instanceof Dict))
+          throw new FormatError("PageLabel is not a dictionary.");
+        if (o.has("Type") && !isName(o.get("Type"), "PageLabel"))
+          throw new FormatError("Invalid type in PageLabel dictionary.");
         if (o.has("S")) {
           const e = o.get("S");
-          if (!(e instanceof Name)) throw new FormatError("Invalid style in PageLabel dictionary.");
+          if (!(e instanceof Name))
+            throw new FormatError("Invalid style in PageLabel dictionary.");
           a = e.name;
         } else a = null;
         if (o.has("P")) {
           const e = o.get("P");
-          if ("string" != typeof e) throw new FormatError("Invalid prefix in PageLabel dictionary.");
+          if ("string" != typeof e)
+            throw new FormatError("Invalid prefix in PageLabel dictionary.");
           n = stringToPDFString(e);
         } else n = "";
         if (o.has("St")) {
           const e = o.get("St");
-          if (!(Number.isInteger(e) && e >= 1)) throw new FormatError("Invalid start in PageLabel dictionary.");
+          if (!(Number.isInteger(e) && e >= 1))
+            throw new FormatError("Invalid start in PageLabel dictionary.");
           r = e;
         } else r = 1;
       }
@@ -36909,7 +40718,10 @@ class Catalog {
           s = String.fromCharCode(t + (n % e)).repeat(Math.floor(n / e) + 1);
           break;
         default:
-          if (a) throw new FormatError(`Invalid style "${a}" in PageLabel dictionary.`);
+          if (a)
+            throw new FormatError(
+              `Invalid style "${a}" in PageLabel dictionary.`,
+            );
           s = "";
       }
       t[i] = n + s;
@@ -37029,7 +40841,13 @@ class Catalog {
           break;
         case "PrintPageRange":
           if (Array.isArray(n) && n.length % 2 == 0) {
-            n.every((e, t, a) => Number.isInteger(e) && e > 0 && (0 === t || e >= a[t - 1]) && e <= this.numPages) && (e = n);
+            n.every(
+              (e, t, a) =>
+                Number.isInteger(e) &&
+                e > 0 &&
+                (0 === t || e >= a[t - 1]) &&
+                e <= this.numPages,
+            ) && (e = n);
           }
           break;
         case "NumCopies":
@@ -37054,7 +40872,9 @@ class Catalog {
       a.set("A", e);
       const n = { url: null, dest: null, action: null };
       Catalog.parseDestDictionary({ destDict: a, resultObj: n });
-      Array.isArray(n.dest) ? (t.dest = n.dest) : n.action && (t.action = n.action);
+      Array.isArray(n.dest)
+        ? (t.dest = n.dest)
+        : n.action && (t.action = n.action);
     } else Vi(e) && (t.dest = e);
     return shadow(this, "openAction", objectSize(t) > 0 ? t : null);
   }
@@ -37103,7 +40923,8 @@ class Catalog {
     }
     if (e instanceof Dict && e.has("JavaScript")) {
       const t = new NameTree(e.getRaw("JavaScript"), this.xref);
-      for (const [e, a] of t.getAll()) appendIfJavaScriptDict(stringToPDFString(e, !0), a);
+      for (const [e, a] of t.getAll())
+        appendIfJavaScriptDict(stringToPDFString(e, !0), a);
     }
     const a = this.#$e.get("OpenAction");
     a && appendIfJavaScriptDict("OpenAction", a);
@@ -37126,7 +40947,8 @@ class Catalog {
     this.pageIndexCache.clear();
     this.pageDictCache.clear();
     this.nonBlendModesSet.clear();
-    for (const { dict: e } of await Promise.all(this.fontCache)) delete e.cacheKey;
+    for (const { dict: e } of await Promise.all(this.fontCache))
+      delete e.cacheKey;
     this.fontCache.clear();
     this.builtInCMapCache.clear();
     this.standardFontDataCache.clear();
@@ -37150,7 +40972,8 @@ class Catalog {
           l += f;
           continue;
         }
-        if (a.has(n)) throw new FormatError("Pages tree contains circular reference.");
+        if (a.has(n))
+          throw new FormatError("Pages tree contains circular reference.");
         a.put(n);
         const c = await (o.get(n) || s.fetchAsync(n));
         if (c instanceof Dict) {
@@ -37167,7 +40990,10 @@ class Catalog {
         t.push(c);
         continue;
       }
-      if (!(n instanceof Dict)) throw new FormatError("Page dictionary kid reference points to wrong type of object.");
+      if (!(n instanceof Dict))
+        throw new FormatError(
+          "Page dictionary kid reference points to wrong type of object.",
+        );
       const { objId: f } = n;
       let c = n.getRaw("Count");
       c instanceof Ref && (c = await s.fetchAsync(c));
@@ -37193,7 +41019,10 @@ class Catalog {
       for (let e = h.length - 1; e >= 0; e--) {
         const a = h[e];
         t.push(a);
-        n === this.toplevelPagesDict && a instanceof Ref && !o.has(a) && o.put(a, s.fetchAsync(a));
+        n === this.toplevelPagesDict &&
+          a instanceof Ref &&
+          !o.has(a) &&
+          o.put(a, s.fetchAsync(a));
       }
     }
     throw new Error(`Page index ${e} not found.`);
@@ -37232,7 +41061,9 @@ class Catalog {
           break;
         }
       if (!Array.isArray(r)) {
-        addPageError(new FormatError("Page dictionary kids object is not an array."));
+        addPageError(
+          new FormatError("Page dictionary kids object is not an array."),
+        );
         break;
       }
       if (s >= r.length) {
@@ -37243,7 +41074,9 @@ class Catalog {
       let l;
       if (o instanceof Ref) {
         if (n.has(o)) {
-          addPageError(new FormatError("Pages tree contains circular reference."));
+          addPageError(
+            new FormatError("Pages tree contains circular reference."),
+          );
           break;
         }
         n.put(o);
@@ -37255,7 +41088,11 @@ class Catalog {
         }
       } else l = o;
       if (!(l instanceof Dict)) {
-        addPageError(new FormatError("Page dictionary kid reference points to wrong type of object."));
+        addPageError(
+          new FormatError(
+            "Page dictionary kid reference points to wrong type of object.",
+          ),
+        );
         break;
       }
       let f = l.getRaw("Type");
@@ -37266,7 +41103,9 @@ class Catalog {
           addPageError(e);
           break;
         }
-      isName(f, "Page") || !l.has("Kids") ? addPageDict(l, o instanceof Ref ? o : null) : a.push({ currentNode: l, posInKids: 0 });
+      isName(f, "Page") || !l.has("Kids")
+        ? addPageDict(l, o instanceof Ref ? o : null)
+        : a.push({ currentNode: l, posInKids: 0 });
       e.posInKids++;
     }
     return r;
@@ -37283,15 +41122,24 @@ class Catalog {
         return a
           .fetchAsync(t)
           .then(function (a) {
-            if (isRefsEqual(t, e) && !isDict(a, "Page") && !(a instanceof Dict && !a.has("Type") && a.has("Contents"))) throw new FormatError("The reference does not point to a /Page dictionary.");
+            if (
+              isRefsEqual(t, e) &&
+              !isDict(a, "Page") &&
+              !(a instanceof Dict && !a.has("Type") && a.has("Contents"))
+            )
+              throw new FormatError(
+                "The reference does not point to a /Page dictionary.",
+              );
             if (!a) return null;
-            if (!(a instanceof Dict)) throw new FormatError("Node must be a dictionary.");
+            if (!(a instanceof Dict))
+              throw new FormatError("Node must be a dictionary.");
             n = a.getRaw("Parent");
             return a.getAsync("Parent");
           })
           .then(function (e) {
             if (!e) return null;
-            if (!(e instanceof Dict)) throw new FormatError("Parent must be a dictionary.");
+            if (!(e instanceof Dict))
+              throw new FormatError("Parent must be a dictionary.");
             return e.getAsync("Kids");
           })
           .then(function (e) {
@@ -37299,19 +41147,24 @@ class Catalog {
             const r = [];
             let i = !1;
             for (const n of e) {
-              if (!(n instanceof Ref)) throw new FormatError("Kid must be a reference.");
+              if (!(n instanceof Ref))
+                throw new FormatError("Kid must be a reference.");
               if (isRefsEqual(n, t)) {
                 i = !0;
                 break;
               }
               r.push(
                 a.fetchAsync(n).then(function (e) {
-                  if (!(e instanceof Dict)) throw new FormatError("Kid node must be a dictionary.");
+                  if (!(e instanceof Dict))
+                    throw new FormatError("Kid node must be a dictionary.");
                   e.has("Count") ? (s += e.get("Count")) : s++;
                 }),
               );
             }
-            if (!i) throw new FormatError("Kid reference not found in parent's kids.");
+            if (!i)
+              throw new FormatError(
+                "Kid reference not found in parent's kids.",
+              );
             return Promise.all(r).then(() => [s, n]);
           });
       })(t).then((t) => {
@@ -37394,7 +41247,12 @@ class Catalog {
     }
     return [n, { name: "XYZ" }, r, i, null];
   }
-  static parseDestDictionary({ destDict: e, resultObj: t, docBaseUrl: a = null, docAttachments: n = null }) {
+  static parseDestDictionary({
+    destDict: e,
+    resultObj: t,
+    docBaseUrl: a = null,
+    docAttachments: n = null,
+  }) {
     if (!(e instanceof Dict)) {
       warn("parseDestDictionary: `destDict` must be a dictionary.");
       return;
@@ -37406,7 +41264,8 @@ class Catalog {
       if (e.has("Dest")) i = e.get("Dest");
       else {
         i = e.get("AA");
-        i instanceof Dict && (i.has("D") ? (i = i.get("D")) : i.has("U") && (i = i.get("U")));
+        i instanceof Dict &&
+          (i.has("D") ? (i = i.get("D")) : i.has("U") && (i = i.get("U")));
       }
     if (i instanceof Dict) {
       const e = i.get("S");
@@ -37421,7 +41280,10 @@ class Catalog {
             o = !(1 & ("number" == typeof e ? e : 0)),
             l = [],
             f = [];
-          for (const e of i.get("Fields") || []) e instanceof Ref ? f.push(e.toString()) : "string" == typeof e && l.push(stringToPDFString(e));
+          for (const e of i.get("Fields") || [])
+            e instanceof Ref
+              ? f.push(e.toString())
+              : "string" == typeof e && l.push(stringToPDFString(e));
           t.resetForm = { fields: l, refs: f, include: o };
           break;
         case "URI":
@@ -37452,7 +41314,9 @@ class Catalog {
           if (n && m instanceof Dict) {
             const e = m.get("R"),
               t = m.get("N");
-            isName(e, "C") && "string" == typeof t && (p = n[stringToPDFString(t, !0)]);
+            isName(e, "C") &&
+              "string" == typeof t &&
+              (p = n[stringToPDFString(t, !0)]);
           }
           if (p) {
             t.attachment = p;
@@ -37484,7 +41348,9 @@ class Catalog {
         case "JavaScript":
           const j = i.get("JS");
           let k;
-          j instanceof BaseStream ? (k = j.getString()) : "string" == typeof j && (k = j);
+          j instanceof BaseStream
+            ? (k = j.getString())
+            : "string" == typeof j && (k = j);
           const y = k && recoverJsURL(stringToPDFString(k, !0));
           if (y) {
             s = y.url;
@@ -37506,9 +41372,20 @@ class Catalog {
     }
     if (r) {
       r instanceof Name && (r = r.name);
-      "string" == typeof r ? (t.dest = stringToPDFString(r, !0)) : Vi(r) && (t.dest = r);
+      "string" == typeof r
+        ? (t.dest = stringToPDFString(r, !0))
+        : Vi(r) && (t.dest = r);
     }
-    if (!(t.dest || t.url || t.action || t.attachment || t.setOCGState || t.resetForm)) {
+    if (
+      !(
+        t.dest ||
+        t.url ||
+        t.action ||
+        t.attachment ||
+        t.setOCGState ||
+        t.resetForm
+      )
+    ) {
       const a = e.getRaw("SE");
       if (a instanceof Ref)
         try {
@@ -37522,7 +41399,12 @@ class Catalog {
   }
 }
 function mayHaveChildren(e) {
-  return e instanceof Ref || e instanceof Dict || e instanceof BaseStream || Array.isArray(e);
+  return (
+    e instanceof Ref ||
+    e instanceof Dict ||
+    e instanceof BaseStream ||
+    Array.isArray(e)
+  );
 }
 function addChildren(e, t) {
   if (e instanceof Dict) e = e.getRawValues();
@@ -37669,7 +41551,8 @@ const $i = Symbol(),
     },
     connectionSet: {
       id: 1,
-      check: (e) => e.startsWith("http://www.xfa.org/schema/xfa-connection-set/"),
+      check: (e) =>
+        e.startsWith("http://www.xfa.org/schema/xfa-connection-set/"),
     },
     datasets: {
       id: 2,
@@ -37806,7 +41689,8 @@ class FontFinder {
   }
   add(e, t = null) {
     for (const t of e) this.addPdfFont(t);
-    for (const e of this.fonts.values()) e.regular || (e.regular = e.italic || e.bold || e.bolditalic);
+    for (const e of this.fonts.values())
+      e.regular || (e.regular = e.italic || e.bold || e.bolditalic);
     if (!t || 0 === t.size) return;
     const a = this.fonts.get("PdfJS-Fallback-PdfJS-XFA");
     for (const e of t) this.fonts.set(e, a);
@@ -37818,10 +41702,16 @@ class FontFinder {
     this.defaultFont ??= n;
     let s = "";
     const r = parseFloat(t.fontWeight);
-    0 !== parseFloat(t.italicAngle) ? (s = r >= 700 ? "bolditalic" : "italic") : r >= 700 && (s = "bold");
+    0 !== parseFloat(t.italicAngle)
+      ? (s = r >= 700 ? "bolditalic" : "italic")
+      : r >= 700 && (s = "bold");
     if (!s) {
       (e.name.includes("Bold") || e.psName?.includes("Bold")) && (s = "bold");
-      (e.name.includes("Italic") || e.name.endsWith("It") || e.psName?.includes("Italic") || e.psName?.endsWith("It")) && (s += "italic");
+      (e.name.includes("Italic") ||
+        e.name.endsWith("It") ||
+        e.psName?.includes("Italic") ||
+        e.psName?.endsWith("It")) &&
+        (s += "italic");
     }
     s || (s = "regular");
     n[s] = e;
@@ -37841,15 +41731,25 @@ class FontFinder {
     }
     s = s.toLowerCase();
     const r = [];
-    for (const [e, t] of this.fonts) e.replaceAll(n, "").toLowerCase().startsWith(s) && r.push(t);
-    if (0 === r.length) for (const e of this.fonts.values()) e.regular.name?.replaceAll(n, "").toLowerCase().startsWith(s) && r.push(e);
+    for (const [e, t] of this.fonts)
+      e.replaceAll(n, "").toLowerCase().startsWith(s) && r.push(t);
+    if (0 === r.length)
+      for (const e of this.fonts.values())
+        e.regular.name?.replaceAll(n, "").toLowerCase().startsWith(s) &&
+          r.push(e);
     if (0 === r.length) {
       s = s.replaceAll(/psmt|mt/gi, "");
-      for (const [e, t] of this.fonts) e.replaceAll(n, "").toLowerCase().startsWith(s) && r.push(t);
+      for (const [e, t] of this.fonts)
+        e.replaceAll(n, "").toLowerCase().startsWith(s) && r.push(t);
     }
-    if (0 === r.length) for (const e of this.fonts.values()) e.regular.name?.replaceAll(n, "").toLowerCase().startsWith(s) && r.push(e);
+    if (0 === r.length)
+      for (const e of this.fonts.values())
+        e.regular.name?.replaceAll(n, "").toLowerCase().startsWith(s) &&
+          r.push(e);
     if (r.length >= 1) {
-      1 !== r.length && t && warn(`XFA - Too many choices to guess the correct font: ${e}`);
+      1 !== r.length &&
+        t &&
+        warn(`XFA - Too many choices to guess the correct font: ${e}`);
       this.cache.set(e, r[0]);
       return r[0];
     }
@@ -37861,7 +41761,13 @@ class FontFinder {
   }
 }
 function selectFont(e, t) {
-  return "italic" === e.posture ? ("bold" === e.weight ? t.bolditalic : t.italic) : "bold" === e.weight ? t.bold : t.regular;
+  return "italic" === e.posture
+    ? "bold" === e.weight
+      ? t.bolditalic
+      : t.italic
+    : "bold" === e.weight
+      ? t.bold
+      : t.regular;
 }
 class FontInfo {
   constructor(e, t, a, n) {
@@ -37885,7 +41791,11 @@ class FontInfo {
     } else [this.pdfFont, this.xfaFont] = this.defaultFont(n);
   }
   defaultFont(e) {
-    const t = e.find("Helvetica", !1) || e.find("Myriad Pro", !1) || e.find("Arial", !1) || e.getDefault();
+    const t =
+      e.find("Helvetica", !1) ||
+      e.find("Myriad Pro", !1) ||
+      e.find("Arial", !1) ||
+      e.getDefault();
     if (t?.regular) {
       const e = t.regular;
       return [
@@ -37918,8 +41828,10 @@ class FontSelector {
   }
   pushData(e, t, a) {
     const n = this.stack.at(-1);
-    for (const t of ["typeface", "posture", "weight", "size", "letterSpacing"]) e[t] ||= n.xfaFont[t];
-    for (const e of ["top", "bottom", "left", "right"]) isNaN(t[e]) && (t[e] = n.paraMargin[e]);
+    for (const t of ["typeface", "posture", "weight", "size", "letterSpacing"])
+      e[t] ||= n.xfaFont[t];
+    for (const e of ["top", "bottom", "left", "right"])
+      isNaN(t[e]) && (t[e] = n.paraMargin[e]);
     const s = new FontInfo(e, t, a || n.lineHeight, this.fontFinder);
     s.pdfFont ||= n.pdfFont;
     this.stack.push(s);
@@ -38106,14 +42018,18 @@ function parseExpression(e, t, a = !0) {
         break;
       case "[":
         if (a) {
-          warn("XFA - SOM expression contains a FormCalc subexpression which is not supported for now.");
+          warn(
+            "XFA - SOM expression contains a FormCalc subexpression which is not supported for now.",
+          );
           return null;
         }
         l = kl;
         break;
       case "(":
         if (a) {
-          warn("XFA - SOM expression contains a JavaScript subexpression which is not supported for now.");
+          warn(
+            "XFA - SOM expression contains a JavaScript subexpression which is not supported for now.",
+          );
           return null;
         }
         l = yl;
@@ -38294,7 +42210,9 @@ class XFAObject {
       return !0;
     }
     let n = "";
-    this.id ? (n = ` (id: ${this.id})`) : this.name && (n = ` (name: ${this.name} ${this.h.value})`);
+    this.id
+      ? (n = ` (id: ${this.id})`)
+      : this.name && (n = ` (name: ${this.name} ${this.h.value})`);
     warn(`XFA - node "${this[Uo]}"${n} has already enough "${t}"!`);
     return !1;
   }
@@ -38368,14 +42286,21 @@ class XFAObject {
     return "";
   }
   [rl]() {
-    return 0 === this[Cl].length ? this[so] : this[Cl].map((e) => e[rl]()).join("");
+    return 0 === this[Cl].length
+      ? this[so]
+      : this[Cl].map((e) => e[rl]()).join("");
   }
   get [xl]() {
     const e = Object.getPrototypeOf(this);
     if (!e._attributes) {
       const t = (e._attributes = new Set());
       for (const e of Object.getOwnPropertyNames(this)) {
-        if (null === this[e] || this[e] instanceof XFAObject || this[e] instanceof XFAObjectArray) break;
+        if (
+          null === this[e] ||
+          this[e] instanceof XFAObject ||
+          this[e] instanceof XFAObjectArray
+        )
+          break;
         t.add(e);
       }
     }
@@ -38403,7 +42328,12 @@ class XFAObject {
     this[so] && (e.$content = this[so]);
     for (const t of Object.getOwnPropertyNames(this)) {
       const a = this[t];
-      null !== a && (a instanceof XFAObject ? (e[t] = a[io]()) : a instanceof XFAObjectArray ? a.isEmpty() || (e[t] = a.dump()) : (e[t] = a));
+      null !== a &&
+        (a instanceof XFAObject
+          ? (e[t] = a[io]())
+          : a instanceof XFAObjectArray
+            ? a.isEmpty() || (e[t] = a.dump())
+            : (e[t] = a));
     }
     return e;
   }
@@ -38474,7 +42404,13 @@ class XFAObject {
       o = a;
     if (n) {
       o = n;
-      n.startsWith("#som(") && n.endsWith(")") ? (r = n.slice(5, -1)) : n.startsWith(".#som(") && n.endsWith(")") ? (r = n.slice(6, -1)) : n.startsWith("#") ? (i = n.slice(1)) : n.startsWith(".#") && (i = n.slice(2));
+      n.startsWith("#som(") && n.endsWith(")")
+        ? (r = n.slice(5, -1))
+        : n.startsWith(".#som(") && n.endsWith(")")
+          ? (r = n.slice(6, -1))
+          : n.startsWith("#")
+            ? (i = n.slice(1))
+            : n.startsWith(".#") && (i = n.slice(2));
     } else a.startsWith("#") ? (i = a.slice(1)) : (r = a);
     this.use = this.usehref = "";
     if (i) s = e.get(i);
@@ -38540,7 +42476,11 @@ class XFAObject {
     }
   }
   static [Il](e) {
-    return Array.isArray(e) ? e.map((e) => XFAObject[Il](e)) : "object" == typeof e && null !== e ? Object.assign({}, e) : e;
+    return Array.isArray(e)
+      ? e.map((e) => XFAObject[Il](e))
+      : "object" == typeof e && null !== e
+        ? Object.assign({}, e)
+        : e;
   }
   [ao]() {
     const e = Object.create(Object.getPrototypeOf(this));
@@ -38612,7 +42552,9 @@ class XFAObjectArray {
     return 0 === this[Cl].length;
   }
   dump() {
-    return 1 === this[Cl].length ? this[Cl][0][io]() : this[Cl].map((e) => e[io]());
+    return 1 === this[Cl].length
+      ? this[Cl][0][io]()
+      : this[Cl].map((e) => e[io]());
   }
   [ao]() {
     const e = new XFAObjectArray(this[Ml]);
@@ -38662,10 +42604,14 @@ class XmlObject extends XFAObject {
     if ("#text" !== t) {
       const e = new Map();
       this[Al] = e;
-      for (const [t, n] of Object.entries(a)) e.set(t, new XFAAttribute(this, t, n));
+      for (const [t, n] of Object.entries(a))
+        e.set(t, new XFAAttribute(this, t, n));
       if (Object.hasOwn(a, Xo)) {
         const e = a[Xo].xfa.dataNode;
-        void 0 !== e && ("dataGroup" === e ? (this[Fl] = !1) : "dataValue" === e && (this[Fl] = !0));
+        void 0 !== e &&
+          ("dataGroup" === e
+            ? (this[Fl] = !1)
+            : "dataValue" === e && (this[Fl] = !0));
       }
     }
     this[no] = !1;
@@ -38683,10 +42629,16 @@ class XmlObject extends XFAObject {
       const n = utf8StringToString(t);
       e.push(` ${n}="${encodeToXmlString(a[so])}"`);
     }
-    null !== this[Fl] && (this[Fl] ? e.push(' xfa:dataNode="dataValue"') : e.push(' xfa:dataNode="dataGroup"'));
+    null !== this[Fl] &&
+      (this[Fl]
+        ? e.push(' xfa:dataNode="dataValue"')
+        : e.push(' xfa:dataNode="dataGroup"'));
     if (this[so] || 0 !== this[Cl].length) {
       e.push(">");
-      if (this[so]) "string" == typeof this[so] ? e.push(encodeToXmlString(this[so])) : this[so][ll](e);
+      if (this[so])
+        "string" == typeof this[so]
+          ? e.push(encodeToXmlString(this[so]))
+          : this[so][ll](e);
       else for (const t of this[Cl]) t[ll](e);
       e.push(`</${n}${a}>`);
     } else e.push("/>");
@@ -38713,7 +42665,9 @@ class XmlObject extends XFAObject {
     }
   }
   [ol]() {
-    return "#text" === this[Uo] ? HTMLResult.success({ name: "#text", value: this[so] }) : HTMLResult.EMPTY;
+    return "#text" === this[Uo]
+      ? HTMLResult.success({ name: "#text", value: this[so] })
+      : HTMLResult.EMPTY;
   }
   [ko](e = null) {
     return e ? this[Cl].filter((t) => t[Uo] === e) : this[Cl];
@@ -38745,10 +42699,18 @@ class XmlObject extends XFAObject {
     }
   }
   [Bo]() {
-    return null === this[Fl] ? 0 === this[Cl].length || this[Cl][0][Lo] === ul.xhtml.id : this[Fl];
+    return null === this[Fl]
+      ? 0 === this[Cl].length || this[Cl][0][Lo] === ul.xhtml.id
+      : this[Fl];
   }
   [bo]() {
-    return null === this[Fl] ? (0 === this[Cl].length ? this[so].trim() : this[Cl][0][Lo] === ul.xhtml.id ? this[Cl][0][rl]().trim() : null) : this[so].trim();
+    return null === this[Fl]
+      ? 0 === this[Cl].length
+        ? this[so].trim()
+        : this[Cl][0][Lo] === ul.xhtml.id
+          ? this[Cl][0][rl]().trim()
+          : null
+      : this[so].trim();
   }
   [nl](e) {
     e = e.value || "";
@@ -38828,7 +42790,11 @@ class Option10 extends IntegerObject {
   }
 }
 function measureToString(e) {
-  return "string" == typeof e ? "0px" : Number.isInteger(e) ? `${e}px` : `${e.toFixed(2)}px`;
+  return "string" == typeof e
+    ? "0px"
+    : Number.isInteger(e)
+      ? `${e}px`
+      : `${e.toFixed(2)}px`;
 }
 const Wl = {
   anchorType(e, t) {
@@ -38874,7 +42840,9 @@ const Wl = {
         r = Math.sumPrecise(t.columnWidths.slice(t.currentColumn));
         t.currentColumn = 0;
       } else {
-        r = Math.sumPrecise(t.columnWidths.slice(t.currentColumn, t.currentColumn + s));
+        r = Math.sumPrecise(
+          t.columnWidths.slice(t.currentColumn, t.currentColumn + s),
+        );
         t.currentColumn = (t.currentColumn + e.colSpan) % t.columnWidths.length;
       }
       isNaN(r) || (n = e.w = r);
@@ -38983,7 +42951,11 @@ function layoutNode(e, t) {
     }
     const c = (e.w || t.width) - r,
       h = e[xo].fontFinder;
-    if (e.value.exData && e.value.exData[so] && "text/html" === e.value.exData.contentType) {
+    if (
+      e.value.exData &&
+      e.value.exData[so] &&
+      "text/html" === e.value.exData.contentType
+    ) {
       const t = layoutText(e.value.exData[so], f, l, o, h, c);
       n = t.width;
       a = t.height;
@@ -39033,11 +43005,19 @@ function fixDimensions(e) {
     const a = t[oo],
       n = e.colSpan;
     let s;
-    s = -1 === n ? Math.sumPrecise(a.columnWidths.slice(a.currentColumn)) : Math.sumPrecise(a.columnWidths.slice(a.currentColumn, a.currentColumn + n));
+    s =
+      -1 === n
+        ? Math.sumPrecise(a.columnWidths.slice(a.currentColumn))
+        : Math.sumPrecise(
+            a.columnWidths.slice(a.currentColumn, a.currentColumn + n),
+          );
     isNaN(s) || (e.w = s);
   }
   t.layout && "position" !== t.layout && (e.x = e.y = 0);
-  "table" === e.layout && "" === e.w && Array.isArray(e.columnWidths) && (e.w = Math.sumPrecise(e.columnWidths));
+  "table" === e.layout &&
+    "" === e.w &&
+    Array.isArray(e.columnWidths) &&
+    (e.w = Math.sumPrecise(e.columnWidths));
 }
 function layoutClass(e) {
   switch (e.layout) {
@@ -39066,7 +43046,9 @@ function toStyle(e, ...t) {
       if (Object.hasOwn(Wl, n)) Wl[n](e, a);
       else if (t instanceof XFAObject) {
         const e = t[fl]();
-        e ? Object.assign(a, e) : warn(`(DEBUG) - XFA - style for ${n} not implemented yet`);
+        e
+          ? Object.assign(a, e)
+          : warn(`(DEBUG) - XFA - style for ${n} not implemented yet`);
       }
   }
   return a;
@@ -39115,19 +43097,40 @@ function createWrapper(e, t) {
       },
       children: [],
     };
-    for (const e of ["border", "borderWidth", "borderColor", "borderRadius", "borderStyle"])
+    for (const e of [
+      "border",
+      "borderWidth",
+      "borderColor",
+      "borderRadius",
+      "borderStyle",
+    ])
       if (void 0 !== n[e]) {
         m.attributes.style[e] = n[e];
         delete n[e];
       }
     s.children.push(m, t);
   } else s.children.push(t);
-  for (const e of ["background", "backgroundClip", "top", "left", "width", "height", "minWidth", "minHeight", "maxWidth", "maxHeight", "transform", "transformOrigin", "visibility"])
+  for (const e of [
+    "background",
+    "backgroundClip",
+    "top",
+    "left",
+    "width",
+    "height",
+    "minWidth",
+    "minHeight",
+    "maxWidth",
+    "maxHeight",
+    "transform",
+    "transformOrigin",
+    "visibility",
+  ])
     if (void 0 !== n[e]) {
       s.attributes.style[e] = n[e];
       delete n[e];
     }
-  s.attributes.style.position = "absolute" === n.position ? "absolute" : "relative";
+  s.attributes.style.position =
+    "absolute" === n.position ? "absolute" : "relative";
   delete n.position;
   if (n.alignSelf) {
     s.attributes.style.alignSelf = n.alignSelf;
@@ -39138,7 +43141,11 @@ function createWrapper(e, t) {
 function fixTextIndent(e) {
   const t = getMeasurement(e.textIndent, "0px");
   if (t >= 0) return;
-  const a = "padding" + ("left" === ("right" === e.textAlign ? "right" : "left") ? "Left" : "Right"),
+  const a =
+      "padding" +
+      ("left" === ("right" === e.textAlign ? "right" : "left")
+        ? "Left"
+        : "Right"),
     n = getMeasurement(e[a], "0px");
   e[a] = n - t + "px";
 }
@@ -39155,7 +43162,11 @@ function setAccess(e, t) {
   }
 }
 function isPrintOnly(e) {
-  return e.relevant.length > 0 && !e.relevant[0].excluded && "print" === e.relevant[0].viewname;
+  return (
+    e.relevant.length > 0 &&
+    !e.relevant[0].excluded &&
+    "print" === e.relevant[0].viewname
+  );
 }
 function getCurrentPara(e) {
   const t = e[Ao]()[oo].paraStack;
@@ -39228,7 +43239,10 @@ function flushHTML(e) {
   };
   if (e[oo].failingNode) {
     const a = e[oo].failingNode[fo]();
-    a && (e.layout.endsWith("-tb") ? t.children.push(createLine(e, [a])) : t.children.push(a));
+    a &&
+      (e.layout.endsWith("-tb")
+        ? t.children.push(createLine(e, [a]))
+        : t.children.push(a));
   }
   return 0 === t.children.length ? null : t;
 }
@@ -39356,22 +43370,50 @@ function checkDimensions(e, t) {
           [t, a] = [i, -r];
           [n, s] = [-s, n];
       }
-      return [e.x + t + Math.min(0, n), e.y + a + Math.min(0, s), Math.abs(n), Math.abs(s)];
+      return [
+        e.x + t + Math.min(0, n),
+        e.y + a + Math.min(0, s),
+        Math.abs(n),
+        Math.abs(s),
+      ];
     })(e);
   switch (a.layout) {
     case "lr-tb":
     case "rl-tb":
-      return 0 === n ? (e[Ao]()[oo].noLayoutFailure ? ("" !== e.w ? Math.round(r - t.width) <= 2 : t.width > 2) : !("" !== e.h && Math.round(i - t.height) > 2) && ("" !== e.w ? Math.round(r - t.width) <= 2 || (0 === a[oo].numberInLine && t.height > 2) : t.width > 2)) : !!e[Ao]()[oo].noLayoutFailure || (!("" !== e.h && Math.round(i - t.height) > 2) && ("" === e.w || Math.round(r - t.width) <= 2 || !a[Po]()) && t.height > 2);
+      return 0 === n
+        ? e[Ao]()[oo].noLayoutFailure
+          ? "" !== e.w
+            ? Math.round(r - t.width) <= 2
+            : t.width > 2
+          : !("" !== e.h && Math.round(i - t.height) > 2) &&
+            ("" !== e.w
+              ? Math.round(r - t.width) <= 2 ||
+                (0 === a[oo].numberInLine && t.height > 2)
+              : t.width > 2)
+        : !!e[Ao]()[oo].noLayoutFailure ||
+            (!("" !== e.h && Math.round(i - t.height) > 2) &&
+              ("" === e.w || Math.round(r - t.width) <= 2 || !a[Po]()) &&
+              t.height > 2);
     case "table":
     case "tb":
-      return !!e[Ao]()[oo].noLayoutFailure || ("" === e.h || e[No]() ? ("" === e.w || Math.round(r - t.width) <= 2 || !a[Po]()) && t.height > 2 : Math.round(i - t.height) <= 2);
+      return (
+        !!e[Ao]()[oo].noLayoutFailure ||
+        ("" === e.h || e[No]()
+          ? ("" === e.w || Math.round(r - t.width) <= 2 || !a[Po]()) &&
+            t.height > 2
+          : Math.round(i - t.height) <= 2)
+      );
     case "position":
       if (e[Ao]()[oo].noLayoutFailure) return !0;
       if ("" === e.h || Math.round(i + s - t.height) <= 2) return !0;
       return i + s > e[Ao]()[oo].currentContentArea.h;
     case "rl-row":
     case "row":
-      return !!e[Ao]()[oo].noLayoutFailure || "" === e.h || Math.round(i - t.height) <= 2;
+      return (
+        !!e[Ao]()[oo].noLayoutFailure ||
+        "" === e.h ||
+        Math.round(i - t.height) <= 2
+      );
     default:
       return !0;
   }
@@ -39379,7 +43421,20 @@ function checkDimensions(e, t) {
 const Kl = ul.template.id,
   Gl = "http://www.w3.org/2000/svg",
   Vl = /^H(\d+)$/,
-  $l = new Set(["image/gif", "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/apng", "image/x-png", "image/bmp", "image/x-ms-bmp", "image/tiff", "image/tif", "application/octet-stream"]),
+  $l = new Set([
+    "image/gif",
+    "image/jpeg",
+    "image/jpg",
+    "image/pjpeg",
+    "image/png",
+    "image/apng",
+    "image/x-png",
+    "image/bmp",
+    "image/x-ms-bmp",
+    "image/tiff",
+    "image/tif",
+    "application/octet-stream",
+  ]),
   Yl = [
     [[66, 77], "image/bmp"],
     [[255, 216, 255], "image/jpeg"],
@@ -39399,7 +43454,13 @@ function getBorderDims(e) {
     : { w: 0, h: 0 };
 }
 function hasMargin(e) {
-  return e.margin && (e.margin.topInset || e.margin.rightInset || e.margin.bottomInset || e.margin.leftInset);
+  return (
+    e.margin &&
+    (e.margin.topInset ||
+      e.margin.rightInset ||
+      e.margin.bottomInset ||
+      e.margin.leftInset)
+  );
 }
 function _setValue(e, t) {
   if (!e.value) {
@@ -39456,19 +43517,26 @@ function applyAssist(e, t) {
   else if ("row" === e.layout) t.role = "row";
   else {
     const a = e[So]();
-    "row" === a.layout && (t.role = "TH" === a.assist?.role ? "columnheader" : "cell");
+    "row" === a.layout &&
+      (t.role = "TH" === a.assist?.role ? "columnheader" : "cell");
   }
 }
 function ariaLabel(e) {
   if (!e.assist) return null;
   const t = e.assist;
-  return t.speak && "" !== t.speak[so] ? t.speak[so] : t.toolTip ? t.toolTip[so] : null;
+  return t.speak && "" !== t.speak[so]
+    ? t.speak[so]
+    : t.toolTip
+      ? t.toolTip[so]
+      : null;
 }
 function valueToHtml(e) {
   return HTMLResult.success({
     name: "div",
     attributes: { class: ["xfaRich"], style: Object.create(null) },
-    children: [{ name: "span", attributes: { style: Object.create(null) }, value: e }],
+    children: [
+      { name: "span", attributes: { style: Object.create(null) }, value: e },
+    ],
   });
 }
 function setFirstUnsplittable(e) {
@@ -39576,7 +43644,9 @@ class Arc extends XFAObject {
     const e = this.edge || new Edge({}),
       t = e[fl](),
       a = Object.create(null);
-    "visible" === this.fill?.presence ? Object.assign(a, this.fill[fl]()) : (a.fill = "transparent");
+    "visible" === this.fill?.presence
+      ? Object.assign(a, this.fill[fl]())
+      : (a.fill = "transparent");
     a.strokeWidth = measureToString("visible" === e.presence ? e.thickness : 0);
     a.stroke = t.color;
     let n;
@@ -39600,7 +43670,12 @@ class Arc extends XFAObject {
       const e = (this.startAngle * Math.PI) / 180,
         t = (this.sweepAngle * Math.PI) / 180,
         r = this.sweepAngle > 180 ? 1 : 0,
-        [i, o, l, f] = [50 * (1 + Math.cos(e)), 50 * (1 - Math.sin(e)), 50 * (1 + Math.cos(e + t)), 50 * (1 - Math.sin(e + t))];
+        [i, o, l, f] = [
+          50 * (1 + Math.cos(e)),
+          50 * (1 - Math.sin(e)),
+          50 * (1 + Math.cos(e + t)),
+          50 * (1 - Math.sin(e + t)),
+        ];
       n = {
         name: "path",
         attributes: {
@@ -39676,7 +43751,14 @@ class Area extends XFAObject {
     const n = [];
     this[oo] = { children: n, width: 0, height: 0, availableSpace: e };
     const s = this[Qi]({
-      filter: new Set(["area", "draw", "field", "exclGroup", "subform", "subformSet"]),
+      filter: new Set([
+        "area",
+        "draw",
+        "field",
+        "exclGroup",
+        "subform",
+        "subformSet",
+      ]),
       include: !0,
     });
     if (!s.success) {
@@ -39712,9 +43794,28 @@ class Barcode extends XFAObject {
     this.charEncoding = getKeyword({
       data: e.charEncoding ? e.charEncoding.toLowerCase() : "",
       defaultValue: "",
-      validate: (e) => ["utf-8", "big-five", "fontspecific", "gbk", "gb-18030", "gb-2312", "ksc-5601", "none", "shift-jis", "ucs-2", "utf-16"].includes(e) || e.match(/iso-8859-\d{2}/),
+      validate: (e) =>
+        [
+          "utf-8",
+          "big-five",
+          "fontspecific",
+          "gbk",
+          "gb-18030",
+          "gb-2312",
+          "ksc-5601",
+          "none",
+          "shift-jis",
+          "ucs-2",
+          "utf-16",
+        ].includes(e) || e.match(/iso-8859-\d{2}/),
     });
-    this.checksum = getStringOption(e.checksum, ["none", "1mod10", "1mod10_1mod11", "2mod10", "auto"]);
+    this.checksum = getStringOption(e.checksum, [
+      "none",
+      "1mod10",
+      "1mod10_1mod11",
+      "2mod10",
+      "auto",
+    ]);
     this.dataColumnCount = getInteger({
       data: e.dataColumnCount,
       defaultValue: -1,
@@ -39747,14 +43848,88 @@ class Barcode extends XFAObject {
     });
     this.rowColumnRatio = getRatio(e.rowColumnRatio);
     this.startChar = e.startChar || "";
-    this.textLocation = getStringOption(e.textLocation, ["below", "above", "aboveEmbedded", "belowEmbedded", "none"]);
+    this.textLocation = getStringOption(e.textLocation, [
+      "below",
+      "above",
+      "aboveEmbedded",
+      "belowEmbedded",
+      "none",
+    ]);
     this.truncate = getInteger({
       data: e.truncate,
       defaultValue: 0,
       validate: (e) => 1 === e,
     });
-    this.type = getStringOption(e.type ? e.type.toLowerCase() : "", ["aztec", "codabar", "code2of5industrial", "code2of5interleaved", "code2of5matrix", "code2of5standard", "code3of9", "code3of9extended", "code11", "code49", "code93", "code128", "code128a", "code128b", "code128c", "code128sscc", "datamatrix", "ean8", "ean8add2", "ean8add5", "ean13", "ean13add2", "ean13add5", "ean13pwcd", "fim", "logmars", "maxicode", "msi", "pdf417", "pdf417macro", "plessey", "postauscust2", "postauscust3", "postausreplypaid", "postausstandard", "postukrm4scc", "postusdpbc", "postusimb", "postusstandard", "postus5zip", "qrcode", "rfid", "rss14", "rss14expanded", "rss14limited", "rss14stacked", "rss14stackedomni", "rss14truncated", "telepen", "ucc128", "ucc128random", "ucc128sscc", "upca", "upcaadd2", "upcaadd5", "upcapwcd", "upce", "upceadd2", "upceadd5", "upcean2", "upcean5", "upsmaxicode"]);
-    this.upsMode = getStringOption(e.upsMode, ["usCarrier", "internationalCarrier", "secureSymbol", "standardSymbol"]);
+    this.type = getStringOption(e.type ? e.type.toLowerCase() : "", [
+      "aztec",
+      "codabar",
+      "code2of5industrial",
+      "code2of5interleaved",
+      "code2of5matrix",
+      "code2of5standard",
+      "code3of9",
+      "code3of9extended",
+      "code11",
+      "code49",
+      "code93",
+      "code128",
+      "code128a",
+      "code128b",
+      "code128c",
+      "code128sscc",
+      "datamatrix",
+      "ean8",
+      "ean8add2",
+      "ean8add5",
+      "ean13",
+      "ean13add2",
+      "ean13add5",
+      "ean13pwcd",
+      "fim",
+      "logmars",
+      "maxicode",
+      "msi",
+      "pdf417",
+      "pdf417macro",
+      "plessey",
+      "postauscust2",
+      "postauscust3",
+      "postausreplypaid",
+      "postausstandard",
+      "postukrm4scc",
+      "postusdpbc",
+      "postusimb",
+      "postusstandard",
+      "postus5zip",
+      "qrcode",
+      "rfid",
+      "rss14",
+      "rss14expanded",
+      "rss14limited",
+      "rss14stacked",
+      "rss14stackedomni",
+      "rss14truncated",
+      "telepen",
+      "ucc128",
+      "ucc128random",
+      "ucc128sscc",
+      "upca",
+      "upcaadd2",
+      "upcaadd5",
+      "upcapwcd",
+      "upce",
+      "upceadd2",
+      "upceadd5",
+      "upcean2",
+      "upcean5",
+      "upsmaxicode",
+    ]);
+    this.upsMode = getStringOption(e.upsMode, [
+      "usCarrier",
+      "internationalCarrier",
+      "secureSymbol",
+      "standardSymbol",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
     this.wideNarrowRatio = getRatio(e.wideNarrowRatio);
@@ -39765,7 +43940,12 @@ class Barcode extends XFAObject {
 class Bind extends XFAObject {
   constructor(e) {
     super(Kl, "bind", !0);
-    this.match = getStringOption(e.match, ["once", "dataRef", "global", "none"]);
+    this.match = getStringOption(e.match, [
+      "once",
+      "dataRef",
+      "global",
+      "none",
+    ]);
     this.ref = e.ref || "";
     this.picture = null;
   }
@@ -39807,7 +43987,12 @@ class Border extends XFAObject {
     this.break = getStringOption(e.break, ["close", "open"]);
     this.hand = getStringOption(e.hand, ["even", "left", "right"]);
     this.id = e.id || "";
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.relevant = getRelevant(e.relevant);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -39873,9 +44058,21 @@ class Border extends XFAObject {
 class Break extends XFAObject {
   constructor(e) {
     super(Kl, "break", !0);
-    this.after = getStringOption(e.after, ["auto", "contentArea", "pageArea", "pageEven", "pageOdd"]);
+    this.after = getStringOption(e.after, [
+      "auto",
+      "contentArea",
+      "pageArea",
+      "pageEven",
+      "pageOdd",
+    ]);
     this.afterTarget = e.afterTarget || "";
-    this.before = getStringOption(e.before, ["auto", "contentArea", "pageArea", "pageEven", "pageOdd"]);
+    this.before = getStringOption(e.before, [
+      "auto",
+      "contentArea",
+      "pageArea",
+      "pageEven",
+      "pageOdd",
+    ]);
     this.beforeTarget = e.beforeTarget || "";
     this.bookendLeader = e.bookendLeader || "";
     this.bookendTrailer = e.bookendTrailer || "";
@@ -39904,7 +44101,11 @@ class BreakAfter extends XFAObject {
       validate: (e) => 1 === e,
     });
     this.target = e.target || "";
-    this.targetType = getStringOption(e.targetType, ["auto", "contentArea", "pageArea"]);
+    this.targetType = getStringOption(e.targetType, [
+      "auto",
+      "contentArea",
+      "pageArea",
+    ]);
     this.trailer = e.trailer || "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -39922,7 +44123,11 @@ class BreakBefore extends XFAObject {
       validate: (e) => 1 === e,
     });
     this.target = e.target || "";
-    this.targetType = getStringOption(e.targetType, ["auto", "contentArea", "pageArea"]);
+    this.targetType = getStringOption(e.targetType, [
+      "auto",
+      "contentArea",
+      "pageArea",
+    ]);
     this.trailer = e.trailer || "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -39936,7 +44141,12 @@ class BreakBefore extends XFAObject {
 class Button extends XFAObject {
   constructor(e) {
     super(Kl, "button", !0);
-    this.highlight = getStringOption(e.highlight, ["inverted", "none", "outline", "push"]);
+    this.highlight = getStringOption(e.highlight, [
+      "inverted",
+      "none",
+      "outline",
+      "push",
+    ]);
     this.id = e.id || "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -39974,7 +44184,12 @@ class Calculate extends XFAObject {
   constructor(e) {
     super(Kl, "calculate", !0);
     this.id = e.id || "";
-    this.override = getStringOption(e.override, ["disabled", "error", "ignore", "warning"]);
+    this.override = getStringOption(e.override, [
+      "disabled",
+      "error",
+      "ignore",
+      "warning",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
     this.extras = null;
@@ -39986,8 +44201,19 @@ class Caption extends XFAObject {
   constructor(e) {
     super(Kl, "caption", !0);
     this.id = e.id || "";
-    this.placement = getStringOption(e.placement, ["left", "bottom", "inline", "right", "top"]);
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.placement = getStringOption(e.placement, [
+      "left",
+      "bottom",
+      "inline",
+      "right",
+      "top",
+    ]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.reserve = Math.ceil(getMeasurement(e.reserve));
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -40073,7 +44299,10 @@ class Certificate extends StringObject {
 class Certificates extends XFAObject {
   constructor(e) {
     super(Kl, "certificates", !0);
-    this.credentialServerPolicy = getStringOption(e.credentialServerPolicy, ["optional", "required"]);
+    this.credentialServerPolicy = getStringOption(e.credentialServerPolicy, [
+      "optional",
+      "required",
+    ]);
     this.id = e.id || "";
     this.url = e.url || "";
     this.urlPolicy = e.urlPolicy || "";
@@ -40091,7 +44320,15 @@ class CheckButton extends XFAObject {
   constructor(e) {
     super(Kl, "checkButton", !0);
     this.id = e.id || "";
-    this.mark = getStringOption(e.mark, ["default", "check", "circle", "cross", "diamond", "square", "star"]);
+    this.mark = getStringOption(e.mark, [
+      "default",
+      "check",
+      "circle",
+      "cross",
+      "diamond",
+      "square",
+      "star",
+    ]);
     this.shape = getStringOption(e.shape, ["square", "round"]);
     this.size = getMeasurement(e.size, "10pt");
     this.use = e.use || "";
@@ -40157,7 +44394,12 @@ class ChoiceList extends XFAObject {
     super(Kl, "choiceList", !0);
     this.commitOn = getStringOption(e.commitOn, ["select", "exit"]);
     this.id = e.id || "";
-    this.open = getStringOption(e.open, ["userControl", "always", "multiSelect", "onEntry"]);
+    this.open = getStringOption(e.open, [
+      "userControl",
+      "always",
+      "multiSelect",
+      "onEntry",
+    ]);
     this.textEntry = getInteger({
       data: e.textEntry,
       defaultValue: 0,
@@ -40250,7 +44492,9 @@ class Color extends XFAObject {
     return !1;
   }
   [fl]() {
-    return this.value ? Util.makeHexColor(this.value.r, this.value.g, this.value.b) : null;
+    return this.value
+      ? Util.makeHexColor(this.value.r, this.value.g, this.value.b)
+      : null;
   }
 }
 class Comb extends XFAObject {
@@ -40272,7 +44516,11 @@ class Connect extends XFAObject {
     this.connection = e.connection || "";
     this.id = e.id || "";
     this.ref = e.ref || "";
-    this.usage = getStringOption(e.usage, ["exportAndImport", "exportOnly", "importOnly"]);
+    this.usage = getStringOption(e.usage, [
+      "exportAndImport",
+      "exportOnly",
+      "importOnly",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
     this.picture = null;
@@ -40319,9 +44567,24 @@ class Corner extends XFAObject {
       validate: (e) => 1 === e,
     });
     this.join = getStringOption(e.join, ["square", "round"]);
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.radius = getMeasurement(e.radius);
-    this.stroke = getStringOption(e.stroke, ["solid", "dashDot", "dashDotDot", "dashed", "dotted", "embossed", "etched", "lowered", "raised"]);
+    this.stroke = getStringOption(e.stroke, [
+      "solid",
+      "dashDot",
+      "dashDotDot",
+      "dashed",
+      "dotted",
+      "embossed",
+      "etched",
+      "lowered",
+      "raised",
+    ]);
     this.thickness = getMeasurement(e.thickness, "0.5pt");
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -40369,7 +44632,11 @@ class DateTime extends ContentObject {
 class DateTimeEdit extends XFAObject {
   constructor(e) {
     super(Kl, "dateTimeEdit", !0);
-    this.hScrollPolicy = getStringOption(e.hScrollPolicy, ["auto", "off", "on"]);
+    this.hScrollPolicy = getStringOption(e.hScrollPolicy, [
+      "auto",
+      "off",
+      "on",
+    ]);
     this.id = e.id || "";
     this.picker = getStringOption(e.picker, ["host", "none"]);
     this.use = e.use || "";
@@ -40479,14 +44746,31 @@ class DigestMethods extends XFAObject {
 class Draw extends XFAObject {
   constructor(e) {
     super(Kl, "draw", !0);
-    this.anchorType = getStringOption(e.anchorType, ["topLeft", "bottomCenter", "bottomLeft", "bottomRight", "middleCenter", "middleLeft", "middleRight", "topCenter", "topRight"]);
+    this.anchorType = getStringOption(e.anchorType, [
+      "topLeft",
+      "bottomCenter",
+      "bottomLeft",
+      "bottomRight",
+      "middleCenter",
+      "middleLeft",
+      "middleRight",
+      "topCenter",
+      "topRight",
+    ]);
     this.colSpan = getInteger({
       data: e.colSpan,
       defaultValue: 1,
       validate: (e) => e >= 1 || -1 === e,
     });
     this.h = e.h ? getMeasurement(e.h) : "";
-    this.hAlign = getStringOption(e.hAlign, ["left", "center", "justify", "justifyAll", "radix", "right"]);
+    this.hAlign = getStringOption(e.hAlign, [
+      "left",
+      "center",
+      "justify",
+      "justifyAll",
+      "radix",
+      "right",
+    ]);
     this.id = e.id || "";
     this.locale = e.locale || "";
     this.maxH = getMeasurement(e.maxH, "0pt");
@@ -40494,7 +44778,12 @@ class Draw extends XFAObject {
     this.minH = getMeasurement(e.minH, "0pt");
     this.minW = getMeasurement(e.minW, "0pt");
     this.name = e.name || "";
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.relevant = getRelevant(e.relevant);
     this.rotate = getInteger({
       data: e.rotate,
@@ -40525,7 +44814,8 @@ class Draw extends XFAObject {
   }
   [ol](e) {
     setTabIndex(this);
-    if ("hidden" === this.presence || "inactive" === this.presence) return HTMLResult.EMPTY;
+    if ("hidden" === this.presence || "inactive" === this.presence)
+      return HTMLResult.EMPTY;
     fixDimensions(this);
     this[Yo]();
     const t = this.w,
@@ -40547,7 +44837,18 @@ class Draw extends XFAObject {
       return HTMLResult.FAILURE;
     }
     unsetFirstUnsplittable(this);
-    const i = toStyle(this, "font", "hAlign", "dimensions", "position", "presence", "rotate", "anchorType", "border", "margin");
+    const i = toStyle(
+      this,
+      "font",
+      "hAlign",
+      "dimensions",
+      "position",
+      "presence",
+      "rotate",
+      "anchorType",
+      "border",
+      "margin",
+    );
     setMinMaxDimensions(this, i);
     if (i.margin) {
       i.padding = i.margin;
@@ -40581,8 +44882,23 @@ class Edge extends XFAObject {
     super(Kl, "edge", !0);
     this.cap = getStringOption(e.cap, ["square", "butt", "round"]);
     this.id = e.id || "";
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
-    this.stroke = getStringOption(e.stroke, ["solid", "dashDot", "dashDotDot", "dashed", "dotted", "embossed", "etched", "lowered", "raised"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
+    this.stroke = getStringOption(e.stroke, [
+      "solid",
+      "dashDot",
+      "dashDotDot",
+      "dashed",
+      "dotted",
+      "embossed",
+      "etched",
+      "lowered",
+      "raised",
+    ]);
     this.thickness = getMeasurement(e.thickness, "0.5pt");
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -40628,7 +44944,11 @@ class Edge extends XFAObject {
 }
 class Encoding extends OptionObject {
   constructor(e) {
-    super(Kl, "encoding", ["adbe.x509.rsa_sha1", "adbe.pkcs7.detached", "adbe.pkcs7.sha1"]);
+    super(Kl, "encoding", [
+      "adbe.x509.rsa_sha1",
+      "adbe.pkcs7.detached",
+      "adbe.pkcs7.sha1",
+    ]);
     this.id = e.id || "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -40677,7 +44997,13 @@ class Encryption extends XFAObject {
 }
 class EncryptionMethod extends OptionObject {
   constructor(e) {
-    super(Kl, "encryptionMethod", ["", "AES256-CBC", "TRIPLEDES-CBC", "AES128-CBC", "AES192-CBC"]);
+    super(Kl, "encryptionMethod", [
+      "",
+      "AES256-CBC",
+      "TRIPLEDES-CBC",
+      "AES128-CBC",
+      "AES192-CBC",
+    ]);
     this.id = e.id || "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -40696,7 +45022,35 @@ class EncryptionMethods extends XFAObject {
 class Event extends XFAObject {
   constructor(e) {
     super(Kl, "event", !0);
-    this.activity = getStringOption(e.activity, ["click", "change", "docClose", "docReady", "enter", "exit", "full", "indexChange", "initialize", "mouseDown", "mouseEnter", "mouseExit", "mouseUp", "postExecute", "postOpen", "postPrint", "postSave", "postSign", "postSubmit", "preExecute", "preOpen", "prePrint", "preSave", "preSign", "preSubmit", "ready", "validationState"]);
+    this.activity = getStringOption(e.activity, [
+      "click",
+      "change",
+      "docClose",
+      "docReady",
+      "enter",
+      "exit",
+      "full",
+      "indexChange",
+      "initialize",
+      "mouseDown",
+      "mouseEnter",
+      "mouseExit",
+      "mouseUp",
+      "postExecute",
+      "postOpen",
+      "postPrint",
+      "postSave",
+      "postSign",
+      "postSubmit",
+      "preExecute",
+      "preOpen",
+      "prePrint",
+      "preSave",
+      "preSign",
+      "preSubmit",
+      "ready",
+      "validationState",
+    ]);
     this.id = e.id || "";
     this.listen = getStringOption(e.listen, ["refOnly", "refAndDescendents"]);
     this.name = e.name || "";
@@ -40724,7 +45078,11 @@ class ExData extends ContentObject {
     });
     this.name = e.name || "";
     this.rid = e.rid || "";
-    this.transferEncoding = getStringOption(e.transferEncoding, ["none", "base64", "package"]);
+    this.transferEncoding = getStringOption(e.transferEncoding, [
+      "none",
+      "base64",
+      "package",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
   }
@@ -40743,7 +45101,9 @@ class ExData extends ContentObject {
     return !1;
   }
   [ol](e) {
-    return "text/html" === this.contentType && this[so] ? this[so][ol](e) : HTMLResult.EMPTY;
+    return "text/html" === this.contentType && this[so]
+      ? this[so][ol](e)
+      : HTMLResult.EMPTY;
   }
 }
 class ExObject extends XFAObject {
@@ -40774,24 +45134,59 @@ class ExObject extends XFAObject {
 class ExclGroup extends XFAObject {
   constructor(e) {
     super(Kl, "exclGroup", !0);
-    this.access = getStringOption(e.access, ["open", "nonInteractive", "protected", "readOnly"]);
+    this.access = getStringOption(e.access, [
+      "open",
+      "nonInteractive",
+      "protected",
+      "readOnly",
+    ]);
     this.accessKey = e.accessKey || "";
-    this.anchorType = getStringOption(e.anchorType, ["topLeft", "bottomCenter", "bottomLeft", "bottomRight", "middleCenter", "middleLeft", "middleRight", "topCenter", "topRight"]);
+    this.anchorType = getStringOption(e.anchorType, [
+      "topLeft",
+      "bottomCenter",
+      "bottomLeft",
+      "bottomRight",
+      "middleCenter",
+      "middleLeft",
+      "middleRight",
+      "topCenter",
+      "topRight",
+    ]);
     this.colSpan = getInteger({
       data: e.colSpan,
       defaultValue: 1,
       validate: (e) => e >= 1 || -1 === e,
     });
     this.h = e.h ? getMeasurement(e.h) : "";
-    this.hAlign = getStringOption(e.hAlign, ["left", "center", "justify", "justifyAll", "radix", "right"]);
+    this.hAlign = getStringOption(e.hAlign, [
+      "left",
+      "center",
+      "justify",
+      "justifyAll",
+      "radix",
+      "right",
+    ]);
     this.id = e.id || "";
-    this.layout = getStringOption(e.layout, ["position", "lr-tb", "rl-row", "rl-tb", "row", "table", "tb"]);
+    this.layout = getStringOption(e.layout, [
+      "position",
+      "lr-tb",
+      "rl-row",
+      "rl-tb",
+      "row",
+      "table",
+      "tb",
+    ]);
     this.maxH = getMeasurement(e.maxH, "0pt");
     this.maxW = getMeasurement(e.maxW, "0pt");
     this.minH = getMeasurement(e.minH, "0pt");
     this.minW = getMeasurement(e.minW, "0pt");
     this.name = e.name || "";
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.relevant = getRelevant(e.relevant);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -40831,7 +45226,12 @@ class ExclGroup extends XFAObject {
     }
   }
   [Po]() {
-    return (this.layout.endsWith("-tb") && 0 === this[oo].attempt && this[oo].numberInLine > 0) || this[So]()[Po]();
+    return (
+      (this.layout.endsWith("-tb") &&
+        0 === this[oo].attempt &&
+        this[oo].numberInLine > 0) ||
+      this[So]()[Po]()
+    );
   }
   [No]() {
     const e = this[vo]();
@@ -40856,7 +45256,13 @@ class ExclGroup extends XFAObject {
   }
   [ol](e) {
     setTabIndex(this);
-    if ("hidden" === this.presence || "inactive" === this.presence || 0 === this.h || 0 === this.w) return HTMLResult.EMPTY;
+    if (
+      "hidden" === this.presence ||
+      "inactive" === this.presence ||
+      0 === this.h ||
+      0 === this.w
+    )
+      return HTMLResult.EMPTY;
     fixDimensions(this);
     const t = [],
       a = { id: this[cl], class: [] };
@@ -40888,7 +45294,16 @@ class ExclGroup extends XFAObject {
         this[oo].currentColumn = 0;
       }
     }
-    const r = toStyle(this, "anchorType", "dimensions", "position", "presence", "border", "margin", "hAlign"),
+    const r = toStyle(
+        this,
+        "anchorType",
+        "dimensions",
+        "position",
+        "presence",
+        "border",
+        "margin",
+        "hAlign",
+      ),
       i = ["xfaExclgroup"],
       o = layoutClass(this);
     o && i.push(o);
@@ -40907,7 +45322,12 @@ class ExclGroup extends XFAObject {
         this[$o]();
         return e;
       }
-      if (l && 0 === this[oo].attempt && 0 === this[oo].numberInLine && !this[Ao]()[oo].noLayoutFailure) {
+      if (
+        l &&
+        0 === this[oo].attempt &&
+        0 === this[oo].numberInLine &&
+        !this[Ao]()[oo].noLayoutFailure
+      ) {
         this[oo].attempt = f;
         break;
       }
@@ -40969,16 +45389,38 @@ class Extras extends XFAObject {
 class Field extends XFAObject {
   constructor(e) {
     super(Kl, "field", !0);
-    this.access = getStringOption(e.access, ["open", "nonInteractive", "protected", "readOnly"]);
+    this.access = getStringOption(e.access, [
+      "open",
+      "nonInteractive",
+      "protected",
+      "readOnly",
+    ]);
     this.accessKey = e.accessKey || "";
-    this.anchorType = getStringOption(e.anchorType, ["topLeft", "bottomCenter", "bottomLeft", "bottomRight", "middleCenter", "middleLeft", "middleRight", "topCenter", "topRight"]);
+    this.anchorType = getStringOption(e.anchorType, [
+      "topLeft",
+      "bottomCenter",
+      "bottomLeft",
+      "bottomRight",
+      "middleCenter",
+      "middleLeft",
+      "middleRight",
+      "topCenter",
+      "topRight",
+    ]);
     this.colSpan = getInteger({
       data: e.colSpan,
       defaultValue: 1,
       validate: (e) => e >= 1 || -1 === e,
     });
     this.h = e.h ? getMeasurement(e.h) : "";
-    this.hAlign = getStringOption(e.hAlign, ["left", "center", "justify", "justifyAll", "radix", "right"]);
+    this.hAlign = getStringOption(e.hAlign, [
+      "left",
+      "center",
+      "justify",
+      "justifyAll",
+      "radix",
+      "right",
+    ]);
     this.id = e.id || "";
     this.locale = e.locale || "";
     this.maxH = getMeasurement(e.maxH, "0pt");
@@ -40986,7 +45428,12 @@ class Field extends XFAObject {
     this.minH = getMeasurement(e.minH, "0pt");
     this.minW = getMeasurement(e.minW, "0pt");
     this.name = e.name || "";
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.relevant = getRelevant(e.relevant);
     this.rotate = getInteger({
       data: e.rotate,
@@ -41048,7 +45495,14 @@ class Field extends XFAObject {
       }
       this.ui[Ji](e);
     }
-    if (!this.ui || "hidden" === this.presence || "inactive" === this.presence || 0 === this.h || 0 === this.w) return HTMLResult.EMPTY;
+    if (
+      !this.ui ||
+      "hidden" === this.presence ||
+      "inactive" === this.presence ||
+      0 === this.h ||
+      0 === this.w
+    )
+      return HTMLResult.EMPTY;
     this.caption && delete this.caption[oo];
     this[Yo]();
     const t = this.caption ? this.caption[ol](e).html : null,
@@ -41118,11 +45572,17 @@ class Field extends XFAObject {
       }
       if (t && "" === this.w) {
         t += s;
-        this.w = Math.min(this.maxW <= 0 ? 1 / 0 : this.maxW, this.minW + 1 < t ? t : this.minW);
+        this.w = Math.min(
+          this.maxW <= 0 ? 1 / 0 : this.maxW,
+          this.minW + 1 < t ? t : this.minW,
+        );
       }
       if (a && "" === this.h) {
         a += r;
-        this.h = Math.min(this.maxH <= 0 ? 1 / 0 : this.maxH, this.minH + 1 < a ? a : this.minH);
+        this.h = Math.min(
+          this.maxH <= 0 ? 1 / 0 : this.maxH,
+          this.minH + 1 < a ? a : this.minH,
+        );
       }
     }
     this[$o]();
@@ -41135,7 +45595,17 @@ class Field extends XFAObject {
       return HTMLResult.FAILURE;
     }
     unsetFirstUnsplittable(this);
-    const o = toStyle(this, "font", "dimensions", "position", "rotate", "anchorType", "presence", "margin", "hAlign");
+    const o = toStyle(
+      this,
+      "font",
+      "dimensions",
+      "position",
+      "rotate",
+      "anchorType",
+      "presence",
+      "margin",
+      "hAlign",
+    );
     setMinMaxDimensions(this, o);
     const l = ["xfaField"];
     this.font && l.push("xfaFont");
@@ -41157,7 +45627,10 @@ class Field extends XFAObject {
       Object.assign(o, u);
       return HTMLResult.success(createWrapper(this, h), m);
     }
-    this[sl] && (p.children?.[0] ? (p.children[0].attributes.tabindex = this[sl]) : (p.attributes.tabindex = this[sl]));
+    this[sl] &&
+      (p.children?.[0]
+        ? (p.children[0].attributes.tabindex = this[sl])
+        : (p.attributes.tabindex = this[sl]));
     p.attributes.style ||= Object.create(null);
     let d = null;
     if (this.ui.button) {
@@ -41175,13 +45648,17 @@ class Field extends XFAObject {
           const t = this.value[ol]().html;
           null !== t && (e = t.children[0].value);
         }
-        this.ui.textEdit && this.value.text?.maxChars && (p.children[0].attributes.maxLength = this.value.text.maxChars);
+        this.ui.textEdit &&
+          this.value.text?.maxChars &&
+          (p.children[0].attributes.maxLength = this.value.text.maxChars);
         if (e) {
           if (this.ui.numericEdit) {
             e = parseFloat(e);
             e = isNaN(e) ? "" : e.toString();
           }
-          "textarea" === p.children[0].name ? (p.children[0].attributes.textContent = e) : (p.children[0].attributes.value = e);
+          "textarea" === p.children[0].name
+            ? (p.children[0].attributes.textContent = e)
+            : (p.children[0].attributes.value = e);
         }
       }
     if (!this.ui.imageEdit && p.children?.[0] && this.h) {
@@ -41233,7 +45710,12 @@ class Fill extends XFAObject {
   constructor(e) {
     super(Kl, "fill", !0);
     this.id = e.id || "";
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
     this.color = null;
@@ -41277,7 +45759,12 @@ class Fill extends XFAObject {
 class Filter extends XFAObject {
   constructor(e) {
     super(Kl, "filter", !0);
-    this.addRevocationInfo = getStringOption(e.addRevocationInfo, ["", "required", "optional", "none"]);
+    this.addRevocationInfo = getStringOption(e.addRevocationInfo, [
+      "",
+      "required",
+      "optional",
+      "none",
+    ]);
     this.id = e.id || "";
     this.name = e.name || "";
     this.use = e.use || "";
@@ -41337,7 +45824,10 @@ class template_Font extends XFAObject {
       defaultValue: 0,
       validate: (e) => 1 === e || 2 === e,
     });
-    this.lineThroughPeriod = getStringOption(e.lineThroughPeriod, ["all", "word"]);
+    this.lineThroughPeriod = getStringOption(e.lineThroughPeriod, [
+      "all",
+      "word",
+    ]);
     this.overline = getInteger({
       data: e.overline,
       defaultValue: 0,
@@ -41373,7 +45863,8 @@ class template_Font extends XFAObject {
         e.backgroundClip = "text";
         e.color = "transparent";
       }
-    this.baselineShift && (e.verticalAlign = measureToString(this.baselineShift));
+    this.baselineShift &&
+      (e.verticalAlign = measureToString(this.baselineShift));
     e.fontKerning = "none" === this.kerningMode ? "none" : "normal";
     e.letterSpacing = measureToString(this.letterSpacing);
     if (0 !== this.lineThrough) {
@@ -41455,20 +45946,33 @@ class Hyphenation extends XFAObject {
 class Image extends StringObject {
   constructor(e) {
     super(Kl, "image");
-    this.aspect = getStringOption(e.aspect, ["fit", "actual", "height", "none", "width"]);
+    this.aspect = getStringOption(e.aspect, [
+      "fit",
+      "actual",
+      "height",
+      "none",
+      "width",
+    ]);
     this.contentType = e.contentType || "";
     this.href = e.href || "";
     this.id = e.id || "";
     this.name = e.name || "";
-    this.transferEncoding = getStringOption(e.transferEncoding, ["base64", "none", "package"]);
+    this.transferEncoding = getStringOption(e.transferEncoding, [
+      "base64",
+      "none",
+      "package",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
   }
   [ol]() {
-    if (this.contentType && !$l.has(this.contentType.toLowerCase())) return HTMLResult.EMPTY;
+    if (this.contentType && !$l.has(this.contentType.toLowerCase()))
+      return HTMLResult.EMPTY;
     let e = this[xo].images?.get(this.href);
     if (!e && (this.href || !this[so])) return HTMLResult.EMPTY;
-    e || "base64" !== this.transferEncoding || (e = Uint8Array.fromBase64(this[so]));
+    e ||
+      "base64" !== this.transferEncoding ||
+      (e = Uint8Array.fromBase64(this[so]));
     if (!e) return HTMLResult.EMPTY;
     if (!this.contentType) {
       for (const [t, a] of Yl)
@@ -41517,7 +46021,9 @@ class ImageEdit extends XFAObject {
     this.margin = null;
   }
   [ol](e) {
-    return "embed" === this.data ? HTMLResult.success({ name: "div", children: [], attributes: {} }) : HTMLResult.EMPTY;
+    return "embed" === this.data
+      ? HTMLResult.success({ name: "div", children: [], attributes: {} })
+      : HTMLResult.EMPTY;
   }
 }
 class Integer extends ContentObject {
@@ -41551,7 +46057,12 @@ class Items extends XFAObject {
     super(Kl, "items", !0);
     this.id = e.id || "";
     this.name = e.name || "";
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.ref = e.ref || "";
     this.save = getInteger({
       data: e.save,
@@ -41639,7 +46150,10 @@ class Line extends XFAObject {
     } else if (e.h <= s) {
       [r, i, o, l] = [0, "50%", "100%", "50%"];
       c = n.strokeWidth;
-    } else "\\" === this.slope ? ([r, i, o, l] = [0, 0, "100%", "100%"]) : ([r, i, o, l] = [0, "100%", "100%", 0]);
+    } else
+      "\\" === this.slope
+        ? ([r, i, o, l] = [0, 0, "100%", "100%"])
+        : ([r, i, o, l] = [0, "100%", "100%", 0]);
     const h = {
       name: "svg",
       children: [
@@ -41671,7 +46185,12 @@ class Linear extends XFAObject {
   constructor(e) {
     super(Kl, "linear", !0);
     this.id = e.id || "";
-    this.type = getStringOption(e.type, ["toRight", "toBottom", "toLeft", "toTop"]);
+    this.type = getStringOption(e.type, [
+      "toRight",
+      "toBottom",
+      "toLeft",
+      "toTop",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
     this.color = null;
@@ -41720,7 +46239,14 @@ class Margin extends XFAObject {
   }
   [fl]() {
     return {
-      margin: measureToString(this.topInset) + " " + measureToString(this.rightInset) + " " + measureToString(this.bottomInset) + " " + measureToString(this.leftInset),
+      margin:
+        measureToString(this.topInset) +
+        " " +
+        measureToString(this.rightInset) +
+        " " +
+        measureToString(this.bottomInset) +
+        " " +
+        measureToString(this.leftInset),
     };
   }
 }
@@ -41746,12 +46272,16 @@ class Medium extends XFAObject {
       const t = -1;
       if (!e) return { x: t, y: t, width: t, height: t };
       const a = e.split(",", 4).map((e) => getMeasurement(e.trim(), "-1"));
-      if (a.length < 4 || a[2] < 0 || a[3] < 0) return { x: t, y: t, width: t, height: t };
+      if (a.length < 4 || a[2] < 0 || a[3] < 0)
+        return { x: t, y: t, width: t, height: t };
       const [n, s, r, i] = a;
       return { x: n, y: s, width: r, height: i };
     })(e.imagingBBox);
     this.long = getMeasurement(e.long);
-    this.orientation = getStringOption(e.orientation, ["portrait", "landscape"]);
+    this.orientation = getStringOption(e.orientation, [
+      "portrait",
+      "landscape",
+    ]);
     this.short = getMeasurement(e.short);
     this.stock = e.stock || "";
     this.trayIn = getStringOption(e.trayIn, ["auto", "delegate", "pageFront"]);
@@ -41772,7 +46302,11 @@ class Message extends XFAObject {
 class NumericEdit extends XFAObject {
   constructor(e) {
     super(Kl, "numericEdit", !0);
-    this.hScrollPolicy = getStringOption(e.hScrollPolicy, ["auto", "off", "on"]);
+    this.hScrollPolicy = getStringOption(e.hScrollPolicy, [
+      "auto",
+      "off",
+      "on",
+    ]);
     this.id = e.id || "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -41811,9 +46345,18 @@ class Occur extends XFAObject {
   constructor(e) {
     super(Kl, "occur", !0);
     this.id = e.id || "";
-    this.initial = "" !== e.initial ? getInteger({ data: e.initial, defaultValue: "", validate: (e) => !0 }) : "";
-    this.max = "" !== e.max ? getInteger({ data: e.max, defaultValue: -1, validate: (e) => !0 }) : "";
-    this.min = "" !== e.min ? getInteger({ data: e.min, defaultValue: 1, validate: (e) => !0 }) : "";
+    this.initial =
+      "" !== e.initial
+        ? getInteger({ data: e.initial, defaultValue: "", validate: (e) => !0 })
+        : "";
+    this.max =
+      "" !== e.max
+        ? getInteger({ data: e.max, defaultValue: -1, validate: (e) => !0 })
+        : "";
+    this.min =
+      "" !== e.min
+        ? getInteger({ data: e.min, defaultValue: 1, validate: (e) => !0 })
+        : "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
     this.extras = null;
@@ -41821,10 +46364,18 @@ class Occur extends XFAObject {
   [Zi]() {
     const e = this[So](),
       t = this.min;
-    "" === this.min && (this.min = e instanceof PageArea || e instanceof PageSet ? 0 : 1);
-    "" === this.max && (this.max = "" === t ? (e instanceof PageArea || e instanceof PageSet ? -1 : 1) : this.min);
+    "" === this.min &&
+      (this.min = e instanceof PageArea || e instanceof PageSet ? 0 : 1);
+    "" === this.max &&
+      (this.max =
+        "" === t
+          ? e instanceof PageArea || e instanceof PageSet
+            ? -1
+            : 1
+          : this.min);
     -1 !== this.max && this.max < this.min && (this.max = this.min);
-    "" === this.initial && (this.initial = e instanceof Template ? 1 : this.min);
+    "" === this.initial &&
+      (this.initial = e instanceof Template ? 1 : this.min);
   }
 }
 class Oid extends StringObject {
@@ -41877,7 +46428,11 @@ class Overflow extends XFAObject {
 class PageArea extends XFAObject {
   constructor(e) {
     super(Kl, "pageArea", !0);
-    this.blankOrNotBlank = getStringOption(e.blankOrNotBlank, ["any", "blank", "notBlank"]);
+    this.blankOrNotBlank = getStringOption(e.blankOrNotBlank, [
+      "any",
+      "blank",
+      "notBlank",
+    ]);
     this.id = e.id || "";
     this.initialNumber = getInteger({
       data: e.initialNumber,
@@ -41891,7 +46446,13 @@ class PageArea extends XFAObject {
       validate: (e) => !0,
     });
     this.oddOrEven = getStringOption(e.oddOrEven, ["any", "even", "odd"]);
-    this.pagePosition = getStringOption(e.pagePosition, ["any", "first", "last", "only", "rest"]);
+    this.pagePosition = getStringOption(e.pagePosition, [
+      "any",
+      "first",
+      "last",
+      "only",
+      "rest",
+    ]);
     this.relevant = getRelevant(e.relevant);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -41911,7 +46472,11 @@ class PageArea extends XFAObject {
       this[oo] = { numberOfUse: 0 };
       return !0;
     }
-    return !this.occur || -1 === this.occur.max || this[oo].numberOfUse < this.occur.max;
+    return (
+      !this.occur ||
+      -1 === this.occur.max ||
+      this[oo].numberOfUse < this.occur.max
+    );
   }
   [eo]() {
     delete this[oo];
@@ -41964,10 +46529,17 @@ class PageArea extends XFAObject {
 class PageSet extends XFAObject {
   constructor(e) {
     super(Kl, "pageSet", !0);
-    this.duplexImposition = getStringOption(e.duplexImposition, ["longEdge", "shortEdge"]);
+    this.duplexImposition = getStringOption(e.duplexImposition, [
+      "longEdge",
+      "shortEdge",
+    ]);
     this.id = e.id || "";
     this.name = e.name || "";
-    this.relation = getStringOption(e.relation, ["orderedOccurrence", "duplexPaginated", "simplexPaginated"]);
+    this.relation = getStringOption(e.relation, [
+      "orderedOccurrence",
+      "duplexPaginated",
+      "simplexPaginated",
+    ]);
     this.relevant = getRelevant(e.relevant);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -41981,7 +46553,11 @@ class PageSet extends XFAObject {
     for (const e of this.pageSet.children) e[eo]();
   }
   [_o]() {
-    return !this.occur || -1 === this.occur.max || this[oo].numberOfUse < this.occur.max;
+    return (
+      !this.occur ||
+      -1 === this.occur.max ||
+      this[oo].numberOfUse < this.occur.max
+    );
   }
   [qo]() {
     this[oo] ||= { numberOfUse: 1, pageIndex: -1, pageSetIndex: -1 };
@@ -42008,29 +46584,46 @@ class PageSet extends XFAObject {
     const e = this[Ao]()[oo].pageNumber,
       t = e % 2 == 0 ? "even" : "odd",
       a = 0 === e ? "first" : "rest";
-    let n = this.pageArea.children.find((e) => e.oddOrEven === t && e.pagePosition === a);
+    let n = this.pageArea.children.find(
+      (e) => e.oddOrEven === t && e.pagePosition === a,
+    );
     if (n) return n;
-    n = this.pageArea.children.find((e) => "any" === e.oddOrEven && e.pagePosition === a);
+    n = this.pageArea.children.find(
+      (e) => "any" === e.oddOrEven && e.pagePosition === a,
+    );
     if (n) return n;
-    n = this.pageArea.children.find((e) => "any" === e.oddOrEven && "any" === e.pagePosition);
+    n = this.pageArea.children.find(
+      (e) => "any" === e.oddOrEven && "any" === e.pagePosition,
+    );
     return n || this.pageArea.children[0];
   }
 }
 class Para extends XFAObject {
   constructor(e) {
     super(Kl, "para", !0);
-    this.hAlign = getStringOption(e.hAlign, ["left", "center", "justify", "justifyAll", "radix", "right"]);
+    this.hAlign = getStringOption(e.hAlign, [
+      "left",
+      "center",
+      "justify",
+      "justifyAll",
+      "radix",
+      "right",
+    ]);
     this.id = e.id || "";
     this.lineHeight = e.lineHeight ? getMeasurement(e.lineHeight, "0pt") : "";
     this.marginLeft = e.marginLeft ? getMeasurement(e.marginLeft, "0pt") : "";
-    this.marginRight = e.marginRight ? getMeasurement(e.marginRight, "0pt") : "";
+    this.marginRight = e.marginRight
+      ? getMeasurement(e.marginRight, "0pt")
+      : "";
     this.orphans = getInteger({
       data: e.orphans,
       defaultValue: 0,
       validate: (e) => e >= 0,
     });
     this.preserve = e.preserve || "";
-    this.radixOffset = e.radixOffset ? getMeasurement(e.radixOffset, "0pt") : "";
+    this.radixOffset = e.radixOffset
+      ? getMeasurement(e.radixOffset, "0pt")
+      : "";
     this.spaceAbove = e.spaceAbove ? getMeasurement(e.spaceAbove, "0pt") : "";
     this.spaceBelow = e.spaceBelow ? getMeasurement(e.spaceBelow, "0pt") : "";
     this.tabDefault = e.tabDefault ? getMeasurement(this.tabDefault) : "";
@@ -42051,10 +46644,13 @@ class Para extends XFAObject {
   }
   [fl]() {
     const e = toStyle(this, "hAlign");
-    "" !== this.marginLeft && (e.paddingLeft = measureToString(this.marginLeft));
-    "" !== this.marginRight && (e.paddingRight = measureToString(this.marginRight));
+    "" !== this.marginLeft &&
+      (e.paddingLeft = measureToString(this.marginLeft));
+    "" !== this.marginRight &&
+      (e.paddingRight = measureToString(this.marginRight));
     "" !== this.spaceAbove && (e.paddingTop = measureToString(this.spaceAbove));
-    "" !== this.spaceBelow && (e.paddingBottom = measureToString(this.spaceBelow));
+    "" !== this.spaceBelow &&
+      (e.paddingBottom = measureToString(this.spaceBelow));
     if ("" !== this.textIndent) {
       e.textIndent = measureToString(this.textIndent);
       fixTextIndent(e);
@@ -42069,7 +46665,11 @@ class Para extends XFAObject {
 class PasswordEdit extends XFAObject {
   constructor(e) {
     super(Kl, "passwordEdit", !0);
-    this.hScrollPolicy = getStringOption(e.hScrollPolicy, ["auto", "off", "on"]);
+    this.hScrollPolicy = getStringOption(e.hScrollPolicy, [
+      "auto",
+      "off",
+      "on",
+    ]);
     this.id = e.id || "";
     this.passwordChar = e.passwordChar || "*";
     this.use = e.use || "";
@@ -42083,7 +46683,14 @@ class template_Pattern extends XFAObject {
   constructor(e) {
     super(Kl, "pattern", !0);
     this.id = e.id || "";
-    this.type = getStringOption(e.type, ["crossHatch", "crossDiagonal", "diagonalLeft", "diagonalRight", "horizontal", "vertical"]);
+    this.type = getStringOption(e.type, [
+      "crossHatch",
+      "crossDiagonal",
+      "diagonalLeft",
+      "diagonalRight",
+      "horizontal",
+      "vertical",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
     this.color = null;
@@ -42284,10 +46891,14 @@ class Rectangle extends XFAObject {
     const e = this.edge.children.length ? this.edge.children[0] : new Edge({}),
       t = e[fl](),
       a = Object.create(null);
-    "visible" === this.fill?.presence ? Object.assign(a, this.fill[fl]()) : (a.fill = "transparent");
+    "visible" === this.fill?.presence
+      ? Object.assign(a, this.fill[fl]())
+      : (a.fill = "transparent");
     a.strokeWidth = measureToString("visible" === e.presence ? e.thickness : 0);
     a.stroke = t.color;
-    const n = (this.corner.children.length ? this.corner.children[0] : new Corner({}))[fl](),
+    const n = (
+        this.corner.children.length ? this.corner.children[0] : new Corner({})
+      )[fl](),
       s = {
         name: "svg",
         children: [
@@ -42410,7 +47021,12 @@ class Speak extends StringObject {
       validate: (e) => 1 === e,
     });
     this.id = e.id || "";
-    this.priority = getStringOption(e.priority, ["custom", "caption", "name", "toolTip"]);
+    this.priority = getStringOption(e.priority, [
+      "custom",
+      "caption",
+      "name",
+      "toolTip",
+    ]);
     this.rid = e.rid || "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -42432,19 +47048,38 @@ class Stipple extends XFAObject {
   }
   [fl](e) {
     const t = this.rate / 100;
-    return Util.makeHexColor(Math.round(e.value.r * (1 - t) + this.value.r * t), Math.round(e.value.g * (1 - t) + this.value.g * t), Math.round(e.value.b * (1 - t) + this.value.b * t));
+    return Util.makeHexColor(
+      Math.round(e.value.r * (1 - t) + this.value.r * t),
+      Math.round(e.value.g * (1 - t) + this.value.g * t),
+      Math.round(e.value.b * (1 - t) + this.value.b * t),
+    );
   }
 }
 class Subform extends XFAObject {
   constructor(e) {
     super(Kl, "subform", !0);
-    this.access = getStringOption(e.access, ["open", "nonInteractive", "protected", "readOnly"]);
+    this.access = getStringOption(e.access, [
+      "open",
+      "nonInteractive",
+      "protected",
+      "readOnly",
+    ]);
     this.allowMacro = getInteger({
       data: e.allowMacro,
       defaultValue: 0,
       validate: (e) => 1 === e,
     });
-    this.anchorType = getStringOption(e.anchorType, ["topLeft", "bottomCenter", "bottomLeft", "bottomRight", "middleCenter", "middleLeft", "middleRight", "topCenter", "topRight"]);
+    this.anchorType = getStringOption(e.anchorType, [
+      "topLeft",
+      "bottomCenter",
+      "bottomLeft",
+      "bottomRight",
+      "middleCenter",
+      "middleLeft",
+      "middleRight",
+      "topCenter",
+      "topRight",
+    ]);
     this.colSpan = getInteger({
       data: e.colSpan,
       defaultValue: 1,
@@ -42455,17 +47090,40 @@ class Subform extends XFAObject {
       .split(/\s+/)
       .map((e) => ("-1" === e ? -1 : getMeasurement(e)));
     this.h = e.h ? getMeasurement(e.h) : "";
-    this.hAlign = getStringOption(e.hAlign, ["left", "center", "justify", "justifyAll", "radix", "right"]);
+    this.hAlign = getStringOption(e.hAlign, [
+      "left",
+      "center",
+      "justify",
+      "justifyAll",
+      "radix",
+      "right",
+    ]);
     this.id = e.id || "";
-    this.layout = getStringOption(e.layout, ["position", "lr-tb", "rl-row", "rl-tb", "row", "table", "tb"]);
+    this.layout = getStringOption(e.layout, [
+      "position",
+      "lr-tb",
+      "rl-row",
+      "rl-tb",
+      "row",
+      "table",
+      "tb",
+    ]);
     this.locale = e.locale || "";
     this.maxH = getMeasurement(e.maxH, "0pt");
     this.maxW = getMeasurement(e.maxW, "0pt");
-    this.mergeMode = getStringOption(e.mergeMode, ["consumeData", "matchTemplate"]);
+    this.mergeMode = getStringOption(e.mergeMode, [
+      "consumeData",
+      "matchTemplate",
+    ]);
     this.minH = getMeasurement(e.minH, "0pt");
     this.minW = getMeasurement(e.minW, "0pt");
     this.name = e.name || "";
-    this.presence = getStringOption(e.presence, ["visible", "hidden", "inactive", "invisible"]);
+    this.presence = getStringOption(e.presence, [
+      "visible",
+      "hidden",
+      "inactive",
+      "invisible",
+    ]);
     this.relevant = getRelevant(e.relevant);
     this.restoreState = getStringOption(e.restoreState, ["manual", "auto"]);
     this.scope = getStringOption(e.scope, ["name", "none"]);
@@ -42513,7 +47171,12 @@ class Subform extends XFAObject {
     return !0;
   }
   [Po]() {
-    return (this.layout.endsWith("-tb") && 0 === this[oo].attempt && this[oo].numberInLine > 0) || this[So]()[Po]();
+    return (
+      (this.layout.endsWith("-tb") &&
+        0 === this[oo].attempt &&
+        this[oo].numberInLine > 0) ||
+      this[So]()[Po]()
+    );
   }
   *[yo]() {
     yield* getContainedChildren(this);
@@ -42579,8 +47242,13 @@ class Subform extends XFAObject {
       this[Jo](this.break);
       this.break = null;
     }
-    if ("hidden" === this.presence || "inactive" === this.presence) return HTMLResult.EMPTY;
-    (this.breakBefore.children.length > 1 || this.breakAfter.children.length > 1) && warn("XFA - Several breakBefore or breakAfter in subforms: please file a bug.");
+    if ("hidden" === this.presence || "inactive" === this.presence)
+      return HTMLResult.EMPTY;
+    (this.breakBefore.children.length > 1 ||
+      this.breakAfter.children.length > 1) &&
+      warn(
+        "XFA - Several breakBefore or breakAfter in subforms: please file a bug.",
+      );
     if (this.breakBefore.children.length >= 1) {
       const e = this.breakBefore.children[0];
       if (handleBreak(e)) return HTMLResult.breakNode(e);
@@ -42611,7 +47279,14 @@ class Subform extends XFAObject {
       r = this[No]();
     r || setFirstUnsplittable(this);
     if (!checkDimensions(this, e)) return HTMLResult.FAILURE;
-    const i = new Set(["area", "draw", "exclGroup", "field", "subform", "subformSet"]);
+    const i = new Set([
+      "area",
+      "draw",
+      "exclGroup",
+      "field",
+      "subform",
+      "subformSet",
+    ]);
     if (this.layout.includes("row")) {
       const e = this[vo]().columnWidths;
       if (Array.isArray(e) && e.length > 0) {
@@ -42619,7 +47294,16 @@ class Subform extends XFAObject {
         this[oo].currentColumn = 0;
       }
     }
-    const o = toStyle(this, "anchorType", "dimensions", "position", "presence", "border", "margin", "hAlign"),
+    const o = toStyle(
+        this,
+        "anchorType",
+        "dimensions",
+        "position",
+        "presence",
+        "border",
+        "margin",
+        "hAlign",
+      ),
       l = ["xfaSubform"],
       f = layoutClass(this);
     f && l.push(f);
@@ -42644,7 +47328,12 @@ class Subform extends XFAObject {
         this[$o]();
         return e;
       }
-      if (c && 0 === this[oo].attempt && 0 === this[oo].numberInLine && !n[oo].noLayoutFailure) {
+      if (
+        c &&
+        0 === this[oo].attempt &&
+        0 === this[oo].numberInLine &&
+        !n[oo].noLayoutFailure
+      ) {
         this[oo].attempt = h;
         break;
       }
@@ -42675,7 +47364,8 @@ class Subform extends XFAObject {
       g = [this.x, this.y, p, d];
     "" === this.w && (o.width = measureToString(p));
     "" === this.h && (o.height = measureToString(d));
-    if (("0px" === o.width || "0px" === o.height) && 0 === t.length) return HTMLResult.EMPTY;
+    if (("0px" === o.width || "0px" === o.height) && 0 === t.length)
+      return HTMLResult.EMPTY;
     const b = { name: "div", attributes: a, children: t };
     applyAssist(this, a);
     const w = HTMLResult.success(createWrapper(this, b), g);
@@ -42695,7 +47385,11 @@ class SubformSet extends XFAObject {
     super(Kl, "subformSet", !0);
     this.id = e.id || "";
     this.name = e.name || "";
-    this.relation = getStringOption(e.relation, ["ordered", "choice", "unordered"]);
+    this.relation = getStringOption(e.relation, [
+      "ordered",
+      "choice",
+      "unordered",
+    ]);
     this.relevant = getRelevant(e.relevant);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -42758,13 +47452,33 @@ class Submit extends XFAObject {
       defaultValue: 0,
       validate: (e) => 1 === e,
     });
-    this.format = getStringOption(e.format, ["xdp", "formdata", "pdf", "urlencoded", "xfd", "xml"]);
+    this.format = getStringOption(e.format, [
+      "xdp",
+      "formdata",
+      "pdf",
+      "urlencoded",
+      "xfd",
+      "xml",
+    ]);
     this.id = e.id || "";
     this.target = e.target || "";
     this.textEncoding = getKeyword({
       data: e.textEncoding ? e.textEncoding.toLowerCase() : "",
       defaultValue: "",
-      validate: (e) => ["utf-8", "big-five", "fontspecific", "gbk", "gb-18030", "gb-2312", "ksc-5601", "none", "shift-jis", "ucs-2", "utf-16"].includes(e) || e.match(/iso-8859-\d{2}/),
+      validate: (e) =>
+        [
+          "utf-8",
+          "big-five",
+          "fontspecific",
+          "gbk",
+          "gb-18030",
+          "gb-2312",
+          "ksc-5601",
+          "none",
+          "shift-jis",
+          "ucs-2",
+          "utf-16",
+        ].includes(e) || e.match(/iso-8859-\d{2}/),
     });
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -42777,23 +47491,31 @@ class Submit extends XFAObject {
 class Template extends XFAObject {
   constructor(e) {
     super(Kl, "template", !0);
-    this.baseProfile = getStringOption(e.baseProfile, ["full", "interactiveForms"]);
+    this.baseProfile = getStringOption(e.baseProfile, [
+      "full",
+      "interactiveForms",
+    ]);
     this.extras = null;
     this.subform = new XFAObjectArray();
   }
   [lo]() {
-    0 === this.subform.children.length && warn("XFA - No subforms in template node.");
-    this.subform.children.length >= 2 && warn("XFA - Several subforms in template node: please file a bug.");
+    0 === this.subform.children.length &&
+      warn("XFA - No subforms in template node.");
+    this.subform.children.length >= 2 &&
+      warn("XFA - Several subforms in template node: please file a bug.");
     this[sl] = 5e3;
   }
   [No]() {
     return !0;
   }
   [el](e, t) {
-    return e.startsWith("#") ? [this[Io].get(e.slice(1))] : searchNode(this, t, e, !0, !0);
+    return e.startsWith("#")
+      ? [this[Io].get(e.slice(1))]
+      : searchNode(this, t, e, !0, !0);
   }
   *[il]() {
-    if (!this.subform.children.length) return HTMLResult.success({ name: "div", children: [] });
+    if (!this.subform.children.length)
+      return HTMLResult.success({ name: "div", children: [] });
     this[oo] = {
       overflowNode: null,
       firstUnsplittable: null,
@@ -42816,13 +47538,19 @@ class Template extends XFAObject {
     if (e.breakBefore.children.length >= 1) {
       s = e.breakBefore.children[0];
       r = s.target;
-    } else if (e.subform.children.length >= 1 && e.subform.children[0].breakBefore.children.length >= 1) {
+    } else if (
+      e.subform.children.length >= 1 &&
+      e.subform.children[0].breakBefore.children.length >= 1
+    ) {
       s = e.subform.children[0].breakBefore.children[0];
       r = s.target;
     } else if (e.break?.beforeTarget) {
       s = e.break;
       r = s.beforeTarget;
-    } else if (e.subform.children.length >= 1 && e.subform.children[0].break?.beforeTarget) {
+    } else if (
+      e.subform.children.length >= 1 &&
+      e.subform.children[0].break?.beforeTarget
+    ) {
       s = e.subform.children[0].break;
       r = s.beforeTarget;
     }
@@ -42871,7 +47599,9 @@ class Template extends XFAObject {
         f = null;
       }
       const s = n.contentArea.children,
-        r = t.children.filter((e) => e.attributes.class.includes("xfaContentarea"));
+        r = t.children.filter((e) =>
+          e.attributes.class.includes("xfaContentarea"),
+        );
       c = !1;
       this[oo].firstUnsplittable = null;
       this[oo].noLayoutFailure = !1;
@@ -42983,7 +47713,8 @@ class Text extends ContentObject {
     this[so] instanceof XFAObject || super[Go](e);
   }
   [lo]() {
-    "string" == typeof this[so] && (this[so] = this[so].replaceAll("\r\n", "\n"));
+    "string" == typeof this[so] &&
+      (this[so] = this[so].replaceAll("\r\n", "\n"));
   }
   [wo]() {
     return "string" == typeof this[so]
@@ -43001,7 +47732,11 @@ class Text extends ContentObject {
         e.children = [];
         this[so]
           .split("\u2029")
-          .map((e) => e.split(/[\u2028\n]/).flatMap((e) => [{ name: "span", value: e }, { name: "br" }]))
+          .map((e) =>
+            e
+              .split(/[\u2028\n]/)
+              .flatMap((e) => [{ name: "span", value: e }, { name: "br" }]),
+          )
           .forEach((t) => {
             e.children.push({ name: "p", children: t });
           });
@@ -43025,7 +47760,11 @@ class TextEdit extends XFAObject {
       defaultValue: 0,
       validate: (e) => 1 === e,
     });
-    this.hScrollPolicy = getStringOption(e.hScrollPolicy, ["auto", "off", "on"]);
+    this.hScrollPolicy = getStringOption(e.hScrollPolicy, [
+      "auto",
+      "off",
+      "on",
+    ]);
     this.id = e.id || "";
     this.multiLine = getInteger({
       data: e.multiLine,
@@ -43034,7 +47773,11 @@ class TextEdit extends XFAObject {
     });
     this.use = e.use || "";
     this.usehref = e.usehref || "";
-    this.vScrollPolicy = getStringOption(e.vScrollPolicy, ["auto", "off", "on"]);
+    this.vScrollPolicy = getStringOption(e.vScrollPolicy, [
+      "auto",
+      "off",
+      "on",
+    ]);
     this.border = null;
     this.comb = null;
     this.extras = null;
@@ -43130,7 +47873,15 @@ class Traverse extends XFAObject {
   constructor(e) {
     super(Kl, "traverse", !0);
     this.id = e.id || "";
-    this.operation = getStringOption(e.operation, ["next", "back", "down", "first", "left", "right", "up"]);
+    this.operation = getStringOption(e.operation, [
+      "next",
+      "back",
+      "down",
+      "first",
+      "left",
+      "right",
+      "up",
+    ]);
     this.ref = e.ref || "";
     this.use = e.use || "";
     this.usehref = e.usehref || "";
@@ -43186,10 +47937,22 @@ class Ui extends XFAObject {
 class Validate extends XFAObject {
   constructor(e) {
     super(Kl, "validate", !0);
-    this.formatTest = getStringOption(e.formatTest, ["warning", "disabled", "error"]);
+    this.formatTest = getStringOption(e.formatTest, [
+      "warning",
+      "disabled",
+      "error",
+    ]);
     this.id = e.id || "";
-    this.nullTest = getStringOption(e.nullTest, ["disabled", "error", "warning"]);
-    this.scriptTest = getStringOption(e.scriptTest, ["error", "disabled", "warning"]);
+    this.nullTest = getStringOption(e.nullTest, [
+      "disabled",
+      "error",
+      "warning",
+    ]);
+    this.scriptTest = getStringOption(e.scriptTest, [
+      "error",
+      "disabled",
+      "warning",
+    ]);
     this.use = e.use || "";
     this.usehref = e.usehref || "";
     this.extras = null;
@@ -43248,7 +48011,10 @@ class Value extends XFAObject {
     } else this[a][so] = e[so];
   }
   [rl]() {
-    if (this.exData) return "string" == typeof this.exData[so] ? this.exData[so].trim() : this.exData[so][rl]().trim();
+    if (this.exData)
+      return "string" == typeof this.exData[so]
+        ? this.exData[so].trim()
+        : this.exData[so][rl]().trim();
     for (const e of Object.getOwnPropertyNames(this)) {
       if ("image" === e) continue;
       const t = this[e];
@@ -43668,13 +48434,20 @@ class Binder {
       if (t[Bo]()) {
         const a = t[bo]();
         e[nl](createText(a));
-      } else if (e instanceof Field && "multiSelect" === e.ui?.choiceList?.open) {
+      } else if (
+        e instanceof Field &&
+        "multiSelect" === e.ui?.choiceList?.open
+      ) {
         const a = t[ko]()
           .map((e) => e[so].trim())
           .join("\n");
         e[nl](createText(a));
-      } else this._isConsumeData() && warn("XFA - Nodes haven't the same type.");
-    else !t[Bo]() || this._isMatchTemplate() ? this._bindElement(e, t) : warn("XFA - Nodes haven't the same type.");
+      } else
+        this._isConsumeData() && warn("XFA - Nodes haven't the same type.");
+    else
+      !t[Bo]() || this._isMatchTemplate()
+        ? this._bindElement(e, t)
+        : warn("XFA - Nodes haven't the same type.");
   }
   _findDataByNameToConsume(e, t, a, n) {
     if (!e) return null;
@@ -43699,7 +48472,8 @@ class Binder {
   }
   _setProperties(e, t) {
     if (Object.hasOwn(e, "setProperty"))
-      for (const { ref: a, target: n, connection: s } of e.setProperty.children) {
+      for (const { ref: a, target: n, connection: s } of e.setProperty
+        .children) {
         if (s) continue;
         if (!a) continue;
         const r = searchNode(this.root, t, a, !1, !1);
@@ -43724,11 +48498,15 @@ class Binder {
         }
         const f = l[So]();
         if (l instanceof SetProperty || f instanceof SetProperty) {
-          warn("XFA - Invalid target: cannot be a setProperty or one of its properties.");
+          warn(
+            "XFA - Invalid target: cannot be a setProperty or one of its properties.",
+          );
           continue;
         }
         if (l instanceof BindItems || f instanceof BindItems) {
-          warn("XFA - Invalid target: cannot be a bindItems or one of its properties.");
+          warn(
+            "XFA - Invalid target: cannot be a bindItems or one of its properties.",
+          );
           continue;
         }
         const c = i[rl](),
@@ -43736,7 +48514,9 @@ class Binder {
         if (l instanceof XFAAttribute) {
           const e = Object.create(null);
           e[h] = c;
-          const t = Reflect.construct(Object.getPrototypeOf(f).constructor, [e]);
+          const t = Reflect.construct(Object.getPrototypeOf(f).constructor, [
+            e,
+          ]);
           f[h] = t[h];
           continue;
         }
@@ -43748,7 +48528,12 @@ class Binder {
       }
   }
   _bindItems(e, t) {
-    if (!Object.hasOwn(e, "items") || !Object.hasOwn(e, "bindItems") || e.bindItems.isEmpty()) return;
+    if (
+      !Object.hasOwn(e, "items") ||
+      !Object.hasOwn(e, "bindItems") ||
+      e.bindItems.isEmpty()
+    )
+      return;
     for (const t of e.items.children) e[Jo](t);
     e.items.clear();
     const a = new Items({}),
@@ -43757,7 +48542,8 @@ class Binder {
     e.items.push(a);
     e[Ji](n);
     e.items.push(n);
-    for (const { ref: s, labelRef: r, valueRef: i, connection: o } of e.bindItems.children) {
+    for (const { ref: s, labelRef: r, valueRef: i, connection: o } of e
+      .bindItems.children) {
       if (o) continue;
       if (!s) continue;
       const e = searchNode(this.root, t, s, !1, !1);
@@ -43829,7 +48615,9 @@ class Binder {
       n = e[Uo];
     if (!(a[n] instanceof XFAObjectArray)) return;
     let s;
-    s = e.name ? a[n].children.filter((t) => t.name === e.name).length : a[n].children.length;
+    s = e.name
+      ? a[n].children.filter((t) => t.name === e.name).length
+      : a[n].children.length;
     const r = a[Fo](e) + 1,
       i = t.initial - s;
     if (i) {
@@ -43945,7 +48733,11 @@ class Binder {
           i = [i];
         }
       }
-      i ? this._bindOccurrences(n, i, s) : o > 0 ? this._setAndBind(n, t) : a.push(n);
+      i
+        ? this._bindOccurrences(n, i, s)
+        : o > 0
+          ? this._setAndBind(n, t)
+          : a.push(n);
     }
     a.forEach((e) => e[So]()[Jo](e));
   }
@@ -43980,8 +48772,11 @@ class DataHandler {
       const o = r[ko]();
       o.length > 0 && t.push([-1, o]);
     }
-    const a = ['<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/">'];
-    if (this.dataset) for (const e of this.dataset[ko]()) "data" !== e[Uo] && e[ll](a);
+    const a = [
+      '<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/">',
+    ];
+    if (this.dataset)
+      for (const e of this.dataset[ko]()) "data" !== e[Uo] && e[ll](a);
     this.data[ll](a);
     a.push("</xfa:datasets>");
     return a.join("");
@@ -44060,7 +48855,20 @@ class config_Area extends XFAObject {
       defaultValue: 0,
       validate: (e) => e >= 1 && e <= 3,
     });
-    this.name = getStringOption(e.name, ["", "barcode", "coreinit", "deviceDriver", "font", "general", "layout", "merge", "script", "signature", "sourceSet", "templateCache"]);
+    this.name = getStringOption(e.name, [
+      "",
+      "barcode",
+      "coreinit",
+      "deviceDriver",
+      "font",
+      "general",
+      "layout",
+      "merge",
+      "script",
+      "signature",
+      "sourceSet",
+      "templateCache",
+    ]);
   }
 }
 class Attributes extends OptionObject {
@@ -44081,7 +48889,12 @@ class Base extends StringObject {
 class BatchOutput extends XFAObject {
   constructor(e) {
     super(Ql, "batchOutput");
-    this.format = getStringOption(e.format, ["none", "concat", "zip", "zipCompress"]);
+    this.format = getStringOption(e.format, [
+      "none",
+      "concat",
+      "zip",
+      "zipCompress",
+    ]);
   }
 }
 class BehaviorOverride extends ContentObject {
@@ -44208,7 +49021,21 @@ class Debug extends XFAObject {
 class DefaultTypeface extends ContentObject {
   constructor(e) {
     super(Ql, "defaultTypeface");
-    this.writingScript = getStringOption(e.writingScript, ["*", "Arabic", "Cyrillic", "EastEuropeanRoman", "Greek", "Hebrew", "Japanese", "Korean", "Roman", "SimplifiedChinese", "Thai", "TraditionalChinese", "Vietnamese"]);
+    this.writingScript = getStringOption(e.writingScript, [
+      "*",
+      "Arabic",
+      "Cyrillic",
+      "EastEuropeanRoman",
+      "Greek",
+      "Hebrew",
+      "Japanese",
+      "Korean",
+      "Roman",
+      "SimplifiedChinese",
+      "Thai",
+      "TraditionalChinese",
+      "Vietnamese",
+    ]);
   }
 }
 class Destination extends OptionObject {
@@ -44231,7 +49058,11 @@ class Driver extends XFAObject {
 }
 class DuplexOption extends OptionObject {
   constructor(e) {
-    super(Ql, "duplexOption", ["simplex", "duplexFlipLongEdge", "duplexFlipShortEdge"]);
+    super(Ql, "duplexOption", [
+      "simplex",
+      "duplexFlipLongEdge",
+      "duplexFlipShortEdge",
+    ]);
   }
 }
 class DynamicRender extends OptionObject {
@@ -44312,7 +49143,19 @@ class Exclude extends ContentObject {
     this[so] = this[so]
       .trim()
       .split(/\s+/)
-      .filter((e) => e && ["calculate", "close", "enter", "exit", "initialize", "ready", "validate"].includes(e));
+      .filter(
+        (e) =>
+          e &&
+          [
+            "calculate",
+            "close",
+            "enter",
+            "exit",
+            "initialize",
+            "ready",
+            "validate",
+          ].includes(e),
+      );
   }
 }
 class ExcludeNS extends StringObject {
@@ -44515,7 +49358,9 @@ class Packets extends StringObject {
       (this[so] = this[so]
         .trim()
         .split(/\s+/)
-        .filter((e) => ["config", "datasets", "template", "xfdf", "xslt"].includes(e)));
+        .filter((e) =>
+          ["config", "datasets", "template", "xfdf", "xslt"].includes(e),
+        ));
   }
 }
 class PageOffset extends XFAObject {
@@ -44554,7 +49399,13 @@ class Pagination extends OptionObject {
 }
 class PaginationOverride extends OptionObject {
   constructor(e) {
-    super(Ql, "paginationOverride", ["none", "forceDuplex", "forceDuplexLongEdge", "forceDuplexShortEdge", "forceSimplex"]);
+    super(Ql, "paginationOverride", [
+      "none",
+      "forceDuplex",
+      "forceDuplexLongEdge",
+      "forceDuplexShortEdge",
+      "forceSimplex",
+    ]);
   }
 }
 class Part extends IntegerObject {
@@ -44641,7 +49492,13 @@ class PlaintextMetadata extends Option01 {
 }
 class Presence extends OptionObject {
   constructor(e) {
-    super(Ql, "presence", ["preserve", "dissolve", "dissolveStructure", "ignore", "remove"]);
+    super(Ql, "presence", [
+      "preserve",
+      "dissolve",
+      "dissolveStructure",
+      "ignore",
+      "remove",
+    ]);
   }
 }
 class Present extends XFAObject {
@@ -44748,7 +49605,9 @@ class Rename extends ContentObject {
   }
   [lo]() {
     this[so] = this[so].trim();
-    (this[so].toLowerCase().startsWith("xml") || new RegExp("[\\p{L}_][\\p{L}\\d._\\p{M}-]*", "u").test(this[so])) && warn("XFA - Rename: invalid XFA name");
+    (this[so].toLowerCase().startsWith("xml") ||
+      new RegExp("[\\p{L}_][\\p{L}\\d._\\p{M}-]*", "u").test(this[so])) &&
+      warn("XFA - Rename: invalid XFA name");
   }
 }
 class RenderPolicy extends OptionObject {
@@ -44776,7 +49635,13 @@ class ScriptModel extends OptionObject {
 }
 class Severity extends OptionObject {
   constructor(e) {
-    super(Ql, "severity", ["ignore", "error", "information", "trace", "warning"]);
+    super(Ql, "severity", [
+      "ignore",
+      "error",
+      "information",
+      "trace",
+      "warning",
+    ]);
   }
 }
 class SilentPrint extends XFAObject {
@@ -44877,7 +49742,18 @@ class Transform extends XFAObject {
 }
 class Type extends OptionObject {
   constructor(e) {
-    super(Ql, "type", ["none", "ascii85", "asciiHex", "ccittfax", "flate", "lzw", "runLength", "native", "xdp", "mergedXDP"]);
+    super(Ql, "type", [
+      "none",
+      "ascii85",
+      "asciiHex",
+      "ccittfax",
+      "flate",
+      "lzw",
+      "runLength",
+      "native",
+      "xdp",
+      "mergedXDP",
+    ]);
   }
 }
 class Uri extends StringObject {
@@ -44903,7 +49779,12 @@ class ValidateApprovalSignatures extends ContentObject {
 }
 class ValidationMessaging extends OptionObject {
   constructor(e) {
-    super(Ql, "validationMessaging", ["allMessagesIndividually", "allMessagesTogether", "firstMessageOnly", "noMessages"]);
+    super(Ql, "validationMessaging", [
+      "allMessagesIndividually",
+      "allMessagesTogether",
+      "firstMessageOnly",
+      "noMessages",
+    ]);
   }
 }
 class Version extends OptionObject {
@@ -44914,7 +49795,11 @@ class Version extends OptionObject {
 class VersionControl extends XFAObject {
   constructor(e) {
     super(Ql, "VersionControl");
-    this.outputBelow = getStringOption(e.outputBelow, ["warn", "error", "update"]);
+    this.outputBelow = getStringOption(e.outputBelow, [
+      "warn",
+      "error",
+      "update",
+    ]);
     this.sourceAbove = getStringOption(e.sourceAbove, ["warn", "error"]);
     this.sourceBelow = getStringOption(e.sourceBelow, ["update", "maintain"]);
   }
@@ -44943,7 +49828,13 @@ class WebClient extends XFAObject {
 }
 class Whitespace extends OptionObject {
   constructor(e) {
-    super(Ql, "whitespace", ["preserve", "ltrim", "normalize", "rtrim", "trim"]);
+    super(Ql, "whitespace", [
+      "preserve",
+      "ltrim",
+      "normalize",
+      "rtrim",
+      "trim",
+    ]);
   }
 }
 class Window extends ContentObject {
@@ -45526,7 +50417,8 @@ class XsdConnection extends XFAObject {
 }
 class ConnectionSetNamespace {
   static [hl](e, t) {
-    if (Object.hasOwn(ConnectionSetNamespace, e)) return ConnectionSetNamespace[e](t);
+    if (Object.hasOwn(ConnectionSetNamespace, e))
+      return ConnectionSetNamespace[e](t);
   }
   static connectionSet(e) {
     return new ConnectionSet(e);
@@ -45582,7 +50474,9 @@ class Datasets extends XFAObject {
   }
   [Wo](e) {
     const t = e[Uo];
-    (("data" === t && e[Lo] === ef) || ("Signature" === t && e[Lo] === ul.signature.id)) && (this[t] = e);
+    (("data" === t && e[Lo] === ef) ||
+      ("Signature" === t && e[Lo] === ul.signature.id)) &&
+      (this[t] = e);
     this[Ji](e);
   }
 }
@@ -45727,7 +50621,13 @@ class NumberPatterns extends XFAObject {
 class NumberSymbol extends StringObject {
   constructor(e) {
     super(tf, "numberSymbol");
-    this.name = getStringOption(e.name, ["decimal", "grouping", "percent", "minus", "zero"]);
+    this.name = getStringOption(e.name, [
+      "decimal",
+      "grouping",
+      "percent",
+      "minus",
+      "zero",
+    ]);
   }
 }
 class NumberSymbols extends XFAObject {
@@ -45893,17 +50793,58 @@ class XdpNamespace {
 }
 const rf = ul.xhtml.id,
   of = Symbol(),
-  lf = new Set(["color", "font", "font-family", "font-size", "font-stretch", "font-style", "font-weight", "margin", "margin-bottom", "margin-left", "margin-right", "margin-top", "letter-spacing", "line-height", "orphans", "page-break-after", "page-break-before", "page-break-inside", "tab-interval", "tab-stop", "text-align", "text-decoration", "text-indent", "vertical-align", "widows", "kerning-mode", "xfa-font-horizontal-scale", "xfa-font-vertical-scale", "xfa-spacerun", "xfa-tab-stops"]),
+  lf = new Set([
+    "color",
+    "font",
+    "font-family",
+    "font-size",
+    "font-stretch",
+    "font-style",
+    "font-weight",
+    "margin",
+    "margin-bottom",
+    "margin-left",
+    "margin-right",
+    "margin-top",
+    "letter-spacing",
+    "line-height",
+    "orphans",
+    "page-break-after",
+    "page-break-before",
+    "page-break-inside",
+    "tab-interval",
+    "tab-stop",
+    "text-align",
+    "text-decoration",
+    "text-indent",
+    "vertical-align",
+    "widows",
+    "kerning-mode",
+    "xfa-font-horizontal-scale",
+    "xfa-font-vertical-scale",
+    "xfa-spacerun",
+    "xfa-tab-stops",
+  ]),
   ff = new Map([
     ["page-break-after", "breakAfter"],
     ["page-break-before", "breakBefore"],
     ["page-break-inside", "breakInside"],
     ["kerning-mode", (e) => ("none" === e ? "none" : "normal")],
-    ["xfa-font-horizontal-scale", (e) => `scaleX(${Math.max(0, parseInt(e, 10) / 100).toFixed(2)})`],
-    ["xfa-font-vertical-scale", (e) => `scaleY(${Math.max(0, parseInt(e, 10) / 100).toFixed(2)})`],
+    [
+      "xfa-font-horizontal-scale",
+      (e) => `scaleX(${Math.max(0, parseInt(e, 10) / 100).toFixed(2)})`,
+    ],
+    [
+      "xfa-font-vertical-scale",
+      (e) => `scaleY(${Math.max(0, parseInt(e, 10) / 100).toFixed(2)})`,
+    ],
     ["xfa-spacerun", ""],
     ["xfa-tab-stops", ""],
-    ["font-size", (e, t) => measureToString(0.99 * (e = t.fontSize = Math.abs(getMeasurement(e))))],
+    [
+      "font-size",
+      (e, t) =>
+        measureToString(0.99 * (e = t.fontSize = Math.abs(getMeasurement(e)))),
+    ],
     ["letter-spacing", (e) => measureToString(getMeasurement(e))],
     ["line-height", (e) => measureToString(getMeasurement(e))],
     ["margin", (e) => measureToString(getMeasurement(e))],
@@ -45927,7 +50868,9 @@ function mapStyle(e, t, a) {
     if ("" === e) continue;
     let r = a;
     e && (r = "string" == typeof e ? e : e(a, s));
-    t.endsWith("scale") ? (n.transform = n.transform ? `${n[t]} ${r}` : r) : (n[t.replaceAll(/-([a-zA-Z])/g, (e, t) => t.toUpperCase())] = r);
+    t.endsWith("scale")
+      ? (n.transform = n.transform ? `${n[t]} ${r}` : r)
+      : (n[t.replaceAll(/-([a-zA-Z])/g, (e, t) => t.toUpperCase())] = r);
   }
   n.fontFamily &&
     setFontFamily(
@@ -45946,9 +50889,13 @@ function mapStyle(e, t, a) {
       t = 0.333,
       a = getMeasurement(n.fontSize);
     n.fontSize = measureToString(a * e);
-    n.verticalAlign = measureToString(Math.sign(getMeasurement(n.verticalAlign)) * a * t);
+    n.verticalAlign = measureToString(
+      Math.sign(getMeasurement(n.verticalAlign)) * a * t,
+    );
   }
-  a && n.fontSize && (n.fontSize = `calc(${n.fontSize} * var(--total-scale-factor))`);
+  a &&
+    n.fontSize &&
+    (n.fontSize = `calc(${n.fontSize} * var(--total-scale-factor))`);
   fixTextIndent(n);
   return n;
 }
@@ -46047,7 +50994,9 @@ class XhtmlObject extends XmlObject {
       }
     e.pushData(a, n, s);
     if (this[so]) e.addString(this[so]);
-    else for (const t of this[ko]()) "#text" !== t[Uo] ? t[Vo](e) : e.addString(t[so]);
+    else
+      for (const t of this[ko]())
+        "#text" !== t[Uo] ? t[Vo](e) : e.addString(t[so]);
     t && e.popFont();
   }
   [ol](e) {
@@ -46056,7 +51005,11 @@ class XhtmlObject extends XmlObject {
     this[Qi]({});
     if (0 === t.length && !this[so]) return HTMLResult.EMPTY;
     let a;
-    a = this[of] ? (this[so] ? this[so].replaceAll(uf, "\n") : void 0) : this[so] || void 0;
+    a = this[of]
+      ? this[so]
+        ? this[so].replaceAll(uf, "\n")
+        : void 0
+      : this[so] || void 0;
     return HTMLResult.success({
       name: this[Uo],
       attributes: {
@@ -46314,7 +51267,8 @@ class Builder {
     const i = this._getNamespaceToUse(e),
       o = i?.[hl](t, a) || new Empty();
     o[Mo]() && this._nsAgnosticLevel++;
-    (r || s || o[Mo]()) && (o[to] = { hasNamespace: r, prefixes: s, nsAgnostic: o[Mo]() });
+    (r || s || o[Mo]()) &&
+      (o[to] = { hasNamespace: r, prefixes: s, nsAgnostic: o[Mo]() });
     return o;
   }
   isNsAgnostic() {
@@ -46381,7 +51335,9 @@ class XFAParser extends XMLParserBase {
   }
   onText(e) {
     e = e.replace(this._nbsps, (e) => e.slice(1) + " ");
-    this._richText || this._current[$i]() ? this._current[Go](e, this._richText) : this._whiteRegex.test(e) || this._current[Go](e.trim());
+    this._richText || this._current[$i]()
+      ? this._current[Go](e, this._richText)
+      : this._whiteRegex.test(e) || this._current[Go](e.trim());
   }
   onCdata(e) {
     this._current[Go](e);
@@ -46391,7 +51347,8 @@ class XFAParser extends XMLParserBase {
       n = null;
     const s = Object.create({});
     for (const { name: r, value: i } of e)
-      if ("xmlns" === r) a ? warn(`XFA - multiple namespace definition in <${t}>`) : (a = i);
+      if ("xmlns" === r)
+        a ? warn(`XFA - multiple namespace definition in <${t}>`) : (a = i);
       else if (r.startsWith("xmlns:")) {
         const e = r.substring(6);
         n ??= [];
@@ -46409,7 +51366,9 @@ class XFAParser extends XMLParserBase {
   }
   _getNameAndPrefix(e, t) {
     const a = e.indexOf(":");
-    return -1 === a ? [e, null] : [e.substring(a + 1), t ? "" : e.substring(0, a)];
+    return -1 === a
+      ? [e, null]
+      : [e.substring(a + 1), t ? "" : e.substring(0, a)];
   }
   onBeginElement(e, t, a) {
     const [n, s, r] = this._mkAttributes(t, e),
@@ -46549,7 +51508,14 @@ class XFAFactory {
 }
 class AnnotationFactory {
   static createGlobals(e) {
-    return Promise.all([e.ensureCatalog("acroForm"), e.ensureDoc("xfaDatasets"), e.ensureCatalog("structTreeRoot"), e.ensureCatalog("baseUrl"), e.ensureCatalog("attachments"), e.ensureCatalog("globalColorSpaceCache")]).then(
+    return Promise.all([
+      e.ensureCatalog("acroForm"),
+      e.ensureDoc("xfaDatasets"),
+      e.ensureCatalog("structTreeRoot"),
+      e.ensureCatalog("baseUrl"),
+      e.ensureCatalog("attachments"),
+      e.ensureCatalog("globalColorSpaceCache"),
+    ]).then(
       ([t, a, n, s, r, i]) => ({
         pdfManager: e,
         acroForm: t instanceof Dict ? t : Dict.empty,
@@ -46609,7 +51575,9 @@ class AnnotationFactory {
           case "Sig":
             return new SignatureWidgetAnnotation(p);
         }
-        warn(`Unimplemented widget field type "${e}", falling back to base field type.`);
+        warn(
+          `Unimplemented widget field type "${e}", falling back to base field type.`,
+        );
         return new WidgetAnnotation(p);
       case "Popup":
         return new PopupAnnotation(p);
@@ -46642,7 +51610,12 @@ class AnnotationFactory {
       case "FileAttachment":
         return new FileAttachmentAnnotation(p);
       default:
-        s || warn(c ? `Unimplemented annotation type "${c}", falling back to base annotation.` : "Annotation is missing the required /Subtype.");
+        s ||
+          warn(
+            c
+              ? `Unimplemented annotation type "${c}", falling back to base annotation.`
+              : "Annotation is missing the required /Subtype.",
+          );
         return new Annotation(p);
     }
   }
@@ -46671,7 +51644,9 @@ class AnnotationFactory {
   }
   static generateImages(e, t, a) {
     if (!a) {
-      warn("generateImages: OffscreenCanvas is not supported, cannot save or print some annotations with images.");
+      warn(
+        "generateImages: OffscreenCanvas is not supported, cannot save or print some annotations with images.",
+      );
       return null;
     }
     let n;
@@ -46708,7 +51683,9 @@ class AnnotationFactory {
             );
             break;
           case b:
-            f.quadPoints ? o.push(HighlightAnnotation.createNewAnnotation(t, f, r)) : o.push(InkAnnotation.createNewAnnotation(t, f, r));
+            f.quadPoints
+              ? o.push(HighlightAnnotation.createNewAnnotation(t, f, r))
+              : o.push(InkAnnotation.createNewAnnotation(t, f, r));
             break;
           case j:
             o.push(InkAnnotation.createNewAnnotation(t, f, r));
@@ -46770,7 +51747,9 @@ class AnnotationFactory {
             );
             break;
           case w:
-            const n = r.isOffscreenCanvasSupported ? await s?.get(l.bitmapId) : null;
+            const n = r.isOffscreenCanvasSupported
+              ? await s?.get(l.bitmapId)
+              : null;
             if (n?.imageStream) {
               const { imageStream: e, smaskStream: t } = n;
               t && e.dict.set("SMask", t);
@@ -46818,7 +51797,8 @@ function getPdfColorArray(e, t = null) {
 }
 function getQuadPoints(e, t) {
   const a = e.getArray("QuadPoints");
-  if (!isNumberArray(a, null) || 0 === a.length || a.length % 8 > 0) return null;
+  if (!isNumberArray(a, null) || 0 === a.length || a.length % 8 > 0)
+    return null;
   const n = new Float32Array(a.length);
   for (let e = 0, s = a.length; e < s; e += 8) {
     const [s, r, i, o, l, f, c, h] = a.slice(e, e + 8),
@@ -46826,7 +51806,8 @@ function getQuadPoints(e, t) {
       m = Math.max(s, i, l, c),
       p = Math.min(r, o, f, h),
       d = Math.max(r, o, f, h);
-    if (null !== t && (u < t[0] || m > t[2] || p < t[1] || d > t[3])) return null;
+    if (null !== t && (u < t[0] || m > t[2] || p < t[1] || d > t[3]))
+      return null;
     n.set([u, d, m, d, u, p, m, p], e);
   }
   return n;
@@ -46842,7 +51823,14 @@ function getTransformMatrix(e, t, n) {
 }
 class Annotation {
   constructor(e) {
-    const { annotationGlobals: t, dict: a, orphanFields: n, ref: s, subtype: r, xref: i } = e,
+    const {
+        annotationGlobals: t,
+        dict: a,
+        orphanFields: n,
+        ref: s,
+        subtype: r,
+        xref: i,
+      } = e,
       o = n?.get(s);
     o && a.set("Parent", o);
     this.setTitle(a.get("T"));
@@ -46900,7 +51888,8 @@ class Annotation {
     }
     const h = a.get("IT");
     h instanceof Name && (this.data.it = h.name);
-    this._isOffscreenCanvasSupported = e.evaluatorOptions.isOffscreenCanvasSupported;
+    this._isOffscreenCanvasSupported =
+      e.evaluatorOptions.isOffscreenCanvasSupported;
     this._fallbackFontDict = null;
     this._needAppearances = !1;
   }
@@ -46938,10 +51927,17 @@ class Annotation {
     return e ? !this.data.isEditable : !t?.has(this.data.id);
   }
   get viewable() {
-    return null !== this.data.quadPoints && (0 === this.flags || this._isViewable(this.flags));
+    return (
+      null !== this.data.quadPoints &&
+      (0 === this.flags || this._isViewable(this.flags))
+    );
   }
   get printable() {
-    return null !== this.data.quadPoints && 0 !== this.flags && this._isPrintable(this.flags);
+    return (
+      null !== this.data.quadPoints &&
+      0 !== this.flags &&
+      this._isPrintable(this.flags)
+    );
   }
   _parseStringHelper(e) {
     const t = "string" == typeof e ? stringToPDFString(e) : "";
@@ -46949,9 +51945,12 @@ class Annotation {
   }
   setDefaultAppearance(e) {
     const { dict: t, annotationGlobals: a } = e,
-      n = getInheritableProperty({ dict: t, key: "DA" }) || a.acroForm.get("DA");
+      n =
+        getInheritableProperty({ dict: t, key: "DA" }) || a.acroForm.get("DA");
     this._defaultAppearance = "string" == typeof n ? n : "";
-    this.data.defaultAppearanceData = parseDefaultAppearance(this._defaultAppearance);
+    this.data.defaultAppearanceData = parseDefaultAppearance(
+      this._defaultAppearance,
+    );
   }
   setTitle(e) {
     this._title = this._parseStringHelper(e);
@@ -46964,7 +51963,9 @@ class Annotation {
   }
   setFlags(e) {
     this.flags = Number.isInteger(e) && e > 0 ? e : 0;
-    this.flags & M && "Annotation" !== this.constructor.name && (this.flags ^= M);
+    this.flags & M &&
+      "Annotation" !== this.constructor.name &&
+      (this.flags ^= M);
   }
   hasFlag(e) {
     return this._hasFlag(this.flags, e);
@@ -47056,7 +52057,9 @@ class Annotation {
   setOptionalContent(e) {
     this.oc = null;
     const t = e.get("OC");
-    t instanceof Name ? warn("setOptionalContent: Support for /Name-entry is not implemented.") : t instanceof Dict && (this.oc = t);
+    t instanceof Name
+      ? warn("setOptionalContent: Support for /Name-entry is not implemented.")
+      : t instanceof Dict && (this.oc = t);
   }
   async loadResources(e, t) {
     const a = await t.dict.getAsync("Resources");
@@ -47315,18 +52318,39 @@ class MarkupAnnotation extends Annotation {
       t.has("C") || (this.data.color = null);
     }
     this.data.popupRef = a instanceof Ref ? a.toString() : null;
-    t.has("RC") && (this.data.richText = XFAFactory.getRichTextAsHtml(t.get("RC")));
+    t.has("RC") &&
+      (this.data.richText = XFAFactory.getRichTextAsHtml(t.get("RC")));
   }
   setCreationDate(e) {
     this.creationDate = "string" == typeof e ? e : null;
   }
-  _setDefaultAppearance({ xref: e, extra: a, strokeColor: n, fillColor: s, blendMode: r, strokeAlpha: i, fillAlpha: o, pointsCallback: l }) {
+  _setDefaultAppearance({
+    xref: e,
+    extra: a,
+    strokeColor: n,
+    fillColor: s,
+    blendMode: r,
+    strokeAlpha: i,
+    fillAlpha: o,
+    pointsCallback: l,
+  }) {
     const f = (this.data.rect = t.slice()),
       c = ["q"];
     a && c.push(a);
     n && c.push(`${n[0]} ${n[1]} ${n[2]} RG`);
     s && c.push(`${s[0]} ${s[1]} ${s[2]} rg`);
-    const h = this.data.quadPoints || Float32Array.from([this.rectangle[0], this.rectangle[3], this.rectangle[2], this.rectangle[3], this.rectangle[0], this.rectangle[1], this.rectangle[2], this.rectangle[1]]);
+    const h =
+      this.data.quadPoints ||
+      Float32Array.from([
+        this.rectangle[0],
+        this.rectangle[3],
+        this.rectangle[2],
+        this.rectangle[3],
+        this.rectangle[0],
+        this.rectangle[1],
+        this.rectangle[2],
+        this.rectangle[1],
+      ]);
     for (let e = 0, t = h.length; e < t; e += 8) {
       const t = l(c, h.subarray(e, e + 8));
       Util.rectBoundingBox(...t, f);
@@ -47416,10 +52440,13 @@ class WidgetAnnotation extends Annotation {
         s.fieldValue = r = n.xfaDatasets.getValue(e);
       }
     }
-    void 0 === r && null !== s.defaultFieldValue && (s.fieldValue = s.defaultFieldValue);
+    void 0 === r &&
+      null !== s.defaultFieldValue &&
+      (s.fieldValue = s.defaultFieldValue);
     s.alternativeText = stringToPDFString(t.get("TU") || "");
     this.setDefaultAppearance(e);
-    s.hasAppearance ||= this._needAppearances && void 0 !== s.fieldValue && null !== s.fieldValue;
+    s.hasAppearance ||=
+      this._needAppearances && void 0 !== s.fieldValue && null !== s.fieldValue;
     const o = getInheritableProperty({ dict: t, key: "FT" });
     s.fieldType = o instanceof Name ? o.name : null;
     const l = getInheritableProperty({ dict: t, key: "DR" }),
@@ -47440,14 +52467,22 @@ class WidgetAnnotation extends Annotation {
     s.password = this.hasFieldFlag(G);
     s.readOnly = this.hasFieldFlag(X);
     s.required = this.hasFieldFlag(W);
-    s.hidden = this._hasFlag(s.annotationFlags, N) || this._hasFlag(s.annotationFlags, z);
+    s.hidden =
+      this._hasFlag(s.annotationFlags, N) ||
+      this._hasFlag(s.annotationFlags, z);
   }
   _decodeFormValue(e) {
     if (Array.isArray(e)) {
-      const t = e.map((e) => this._decodeFormValue(e)).filter((e) => null !== e);
+      const t = e
+        .map((e) => this._decodeFormValue(e))
+        .filter((e) => null !== e);
       return t.length > 0 ? t : null;
     }
-    return e instanceof Name ? e.name : "string" == typeof e ? stringToPDFString(e) : null;
+    return e instanceof Name
+      ? e.name
+      : "string" == typeof e
+        ? stringToPDFString(e)
+        : null;
   }
   hasFieldFlag(e) {
     return !!(this.data.fieldFlags & e);
@@ -47456,7 +52491,9 @@ class WidgetAnnotation extends Annotation {
     return !0;
   }
   mustBeViewed(e, t) {
-    return t ? this.viewable : super.mustBeViewed(e, t) && !this._hasFlag(this.flags, z);
+    return t
+      ? this.viewable
+      : super.mustBeViewed(e, t) && !this._hasFlag(this.flags, z);
   }
   getRotationMatrix(e) {
     let t = e?.get(this.data.id)?.rotation;
@@ -47467,16 +52504,25 @@ class WidgetAnnotation extends Annotation {
     let t = e?.get(this.data.id)?.rotation;
     void 0 === t && (t = this.rotation);
     if (!this.backgroundColor && !this.borderColor) return "";
-    const a = 0 === t || 180 === t ? `0 0 ${this.width} ${this.height} re` : `0 0 ${this.height} ${this.width} re`;
+    const a =
+      0 === t || 180 === t
+        ? `0 0 ${this.width} ${this.height} re`
+        : `0 0 ${this.height} ${this.width} re`;
     let n = "";
-    this.backgroundColor && (n = `${getPdfColor(this.backgroundColor, !0)} ${a} f `);
+    this.backgroundColor &&
+      (n = `${getPdfColor(this.backgroundColor, !0)} ${a} f `);
     if (this.borderColor) {
       n += `${this.borderStyle.width || 1} w ${getPdfColor(this.borderColor, !1)} ${a} S `;
     }
     return n;
   }
   async getOperatorList(e, t, a, n) {
-    if (a & h && !(this instanceof SignatureWidgetAnnotation) && !this.data.noHTML && !this.data.hasOwnCanvas)
+    if (
+      a & h &&
+      !(this instanceof SignatureWidgetAnnotation) &&
+      !this.data.noHTML &&
+      !this.data.hasOwnCanvas
+    )
       return {
         opList: new OperatorList(),
         separateForm: !0,
@@ -47486,14 +52532,21 @@ class WidgetAnnotation extends Annotation {
     const s = await this._getAppearance(e, t, a, n);
     if (this.appearance && null === s) return super.getOperatorList(e, t, a, n);
     const r = new OperatorList();
-    if (!this._defaultAppearance || null === s) return { opList: r, separateForm: !1, separateCanvas: !1 };
+    if (!this._defaultAppearance || null === s)
+      return { opList: r, separateForm: !1, separateCanvas: !1 };
     const i = !!(this.data.hasOwnCanvas && a & l),
       o = [0, 0, this.width, this.height],
       f = getTransformMatrix(this.data.rect, o, [1, 0, 0, 1, 0, 0]);
     let c;
     this.oc && (c = await e.parseMarkedContentProps(this.oc, null));
     void 0 !== c && r.addOp(xt, ["OC", c]);
-    r.addOp(Bt, [this.data.id, this.data.rect, f, this.getRotationMatrix(n), i]);
+    r.addOp(Bt, [
+      this.data.id,
+      this.data.rect,
+      f,
+      this.getRotationMatrix(n),
+      i,
+    ]);
     const u = new StringStream(s);
     await e.getOperatorList({
       stream: u,
@@ -47549,7 +52602,15 @@ class WidgetAnnotation extends Annotation {
       if (!this._hasValueFromXFA && void 0 === o && void 0 === r) return;
       i ||= this.data.fieldValue;
     }
-    if (void 0 === o && !this._hasValueFromXFA && Array.isArray(i) && Array.isArray(this.data.fieldValue) && isArrayEqual(i, this.data.fieldValue) && void 0 === r) return;
+    if (
+      void 0 === o &&
+      !this._hasValueFromXFA &&
+      Array.isArray(i) &&
+      Array.isArray(this.data.fieldValue) &&
+      isArrayEqual(i, this.data.fieldValue) &&
+      void 0 === r
+    )
+      return;
     void 0 === o && (o = this.rotation);
     let l = null;
     if (!this._needAppearances) {
@@ -47574,7 +52635,14 @@ class WidgetAnnotation extends Annotation {
       }
     }
     const p = { path: this.data.fieldName, value: i },
-      d = this.setValue(m, Array.isArray(i) ? i.map(stringToAsciiOrUTF16BE) : stringToAsciiOrUTF16BE(i), h, n);
+      d = this.setValue(
+        m,
+        Array.isArray(i)
+          ? i.map(stringToAsciiOrUTF16BE)
+          : stringToAsciiOrUTF16BE(i),
+        h,
+        n,
+      );
     this.amendSavedDict(a, d || m);
     const g = this._getMKDict(o);
     g && m.set("MK", g);
@@ -47589,7 +52657,10 @@ class WidgetAnnotation extends Annotation {
         i = (r.dict = new Dict(h));
       i.setIfName("Subtype", "Form");
       i.set("Resources", s);
-      const f = o % 180 == 0 ? [0, 0, this.width, this.height] : [0, 0, this.height, this.width];
+      const f =
+        o % 180 == 0
+          ? [0, 0, this.width, this.height]
+          : [0, 0, this.height, this.width];
       i.set("BBox", f);
       const c = this.getRotationMatrix(a);
       c !== pa && i.set("Matrix", c);
@@ -47605,7 +52676,13 @@ class WidgetAnnotation extends Annotation {
       r = s.formattedValue || s.value;
       o = s.rotation;
     }
-    if (void 0 === o && void 0 === r && !this._needAppearances && (!this._hasValueFromXFA || this.appearance)) return null;
+    if (
+      void 0 === o &&
+      void 0 === r &&
+      !this._needAppearances &&
+      (!this._hasValueFromXFA || this.appearance)
+    )
+      return null;
     const l = this.getBorderAndBackgroundAppearances(n);
     if (void 0 === r) {
       r = this.data.fieldValue;
@@ -47628,11 +52705,19 @@ class WidgetAnnotation extends Annotation {
     } else f = [r.replace(/\r\n?|\n/, "").normalize("NFC")];
     let { width: u, height: m } = this;
     (90 !== o && 270 !== o) || ([u, m] = [m, u]);
-    this._defaultAppearance || (this.data.defaultAppearanceData = parseDefaultAppearance((this._defaultAppearance = "/Helvetica 0 Tf 0 g")));
+    this._defaultAppearance ||
+      (this.data.defaultAppearanceData = parseDefaultAppearance(
+        (this._defaultAppearance = "/Helvetica 0 Tf 0 g"),
+      ));
     let p,
       d,
       g,
-      b = await WidgetAnnotation._getFontData(e, t, this.data.defaultAppearanceData, this._fieldResources.mergedResources);
+      b = await WidgetAnnotation._getFontData(
+        e,
+        t,
+        this.data.defaultAppearanceData,
+        this._fieldResources.mergedResources,
+      );
     const w = [];
     let j = !1;
     for (const e of f) {
@@ -47651,26 +52736,63 @@ class WidgetAnnotation extends Annotation {
         for (const [t, a] of i.getRawEntries()) e.set(t, a);
       } else this._fieldResources.mergedResources.set("Font", i);
       const o = n.fontName.name;
-      b = await WidgetAnnotation._getFontData(e, t, { fontName: o, fontSize: 0 }, s);
-      for (let e = 0, t = w.length; e < t; e++) w[e] = stringToUTF16String(f[e]);
-      const l = Object.assign(Object.create(null), this.data.defaultAppearanceData);
+      b = await WidgetAnnotation._getFontData(
+        e,
+        t,
+        { fontName: o, fontSize: 0 },
+        s,
+      );
+      for (let e = 0, t = w.length; e < t; e++)
+        w[e] = stringToUTF16String(f[e]);
+      const l = Object.assign(
+        Object.create(null),
+        this.data.defaultAppearanceData,
+      );
       this.data.defaultAppearanceData.fontSize = 0;
       this.data.defaultAppearanceData.fontName = o;
       [p, d, g] = this._computeFontSize(m - 2, u - 4, r, b, h);
       this.data.defaultAppearanceData = l;
     } else {
-      this._isOffscreenCanvasSupported || warn("_getAppearance: OffscreenCanvas is not supported, annotation may not render correctly.");
+      this._isOffscreenCanvasSupported ||
+        warn(
+          "_getAppearance: OffscreenCanvas is not supported, annotation may not render correctly.",
+        );
       [p, d, g] = this._computeFontSize(m - 2, u - 4, r, b, h);
     }
     let k = b.descent;
     k = isNaN(k) ? i * g : Math.max(i * g, Math.abs(k) * d);
     const y = Math.min(Math.floor((m - d) / 2), 1),
       q = this.data.textAlignment;
-    if (this.data.multiLine) return this._getMultilineAppearance(p, w, b, d, u, m, q, 2, y, k, g, n);
-    if (this.data.comb) return this._getCombAppearance(p, b, w[0], d, u, m, 2, y, k, g, q, "rtl" === bidi(f[0]).dir, n);
+    if (this.data.multiLine)
+      return this._getMultilineAppearance(p, w, b, d, u, m, q, 2, y, k, g, n);
+    if (this.data.comb)
+      return this._getCombAppearance(
+        p,
+        b,
+        w[0],
+        d,
+        u,
+        m,
+        2,
+        y,
+        k,
+        g,
+        q,
+        "rtl" === bidi(f[0]).dir,
+        n,
+      );
     const v = y + k;
-    if (0 === q || q > 2) return `/Tx BMC q ${l}BT ` + p + ` 1 0 0 1 ${numberToString(2)} ${numberToString(v)} Tm (${escapeString(w[0])}) Tj ET Q EMC`;
-    return `/Tx BMC q ${l}BT ` + p + ` 1 0 0 1 0 0 Tm ${this._renderText(w[0], b, d, u, q, { shift: 0 }, 2, v)} ET Q EMC`;
+    if (0 === q || q > 2)
+      return (
+        `/Tx BMC q ${l}BT ` +
+        p +
+        ` 1 0 0 1 ${numberToString(2)} ${numberToString(v)} Tm (${escapeString(w[0])}) Tj ET Q EMC`
+      );
+    return (
+      `/Tx BMC q ${l}BT ` +
+      p +
+      ` 1 0 0 1 0 0 Tm ${this._renderText(w[0], b, d, u, q, { shift: 0 }, 2, v)} ET Q EMC`
+    );
   }
   static async _getFontData(e, t, a, n) {
     const s = new OperatorList(),
@@ -47723,7 +52845,11 @@ class WidgetAnnotation extends Annotation {
         }
       }
       const { fontName: f, fontColor: c } = this.data.defaultAppearanceData;
-      this._defaultAppearance = (function createDefaultAppearance({ fontSize: e, fontName: t, fontColor: a }) {
+      this._defaultAppearance = (function createDefaultAppearance({
+        fontSize: e,
+        fontName: t,
+        fontColor: a,
+      }) {
         return `/${escapePDFName(t)} ${e} Tf ${getPdfColor(a, !0)}`;
       })({ fontSize: i, fontName: f, fontColor: c });
     }
@@ -47741,7 +52867,11 @@ class WidgetAnnotation extends Annotation {
     return `${f} ${(o = numberToString(o))} Td (${escapeString(e)}) Tj`;
   }
   _getSaveFieldResources(e) {
-    const { localResources: t, appearanceResources: a, acroFormResources: n } = this._fieldResources,
+    const {
+        localResources: t,
+        appearanceResources: a,
+        acroFormResources: n,
+      } = this._fieldResources,
       s = this.data.defaultAppearanceData?.fontName;
     if (!s) return t || Dict.empty;
     for (const e of [t, a])
@@ -47784,15 +52914,31 @@ class TextWidgetAnnotation extends WidgetAnnotation {
     (!Number.isInteger(n) || n < 0) && (n = 0);
     this.data.maxLen = n;
     this.data.multiLine = this.hasFieldFlag(K);
-    this.data.comb = this.hasFieldFlag(ee) && !this.data.multiLine && !this.data.password && !this.hasFieldFlag(J) && 0 !== this.data.maxLen;
+    this.data.comb =
+      this.hasFieldFlag(ee) &&
+      !this.data.multiLine &&
+      !this.data.password &&
+      !this.hasFieldFlag(J) &&
+      0 !== this.data.maxLen;
     this.data.doNotScroll = this.hasFieldFlag(Z);
     const {
       data: { actions: s },
     } = this;
     if (!s) return;
-    const r = /^AF(Date|Time)_(?:Keystroke|Format)(?:Ex)?\(['"]?([^'"]+)['"]?\);$/;
+    const r =
+      /^AF(Date|Time)_(?:Keystroke|Format)(?:Ex)?\(['"]?([^'"]+)['"]?\);$/;
     let i = !1;
-    ((1 === s.Format?.length && 1 === s.Keystroke?.length && r.test(s.Format[0]) && r.test(s.Keystroke[0])) || (0 === s.Format?.length && 1 === s.Keystroke?.length && r.test(s.Keystroke[0])) || (0 === s.Keystroke?.length && 1 === s.Format?.length && r.test(s.Format[0]))) && (i = !0);
+    ((1 === s.Format?.length &&
+      1 === s.Keystroke?.length &&
+      r.test(s.Format[0]) &&
+      r.test(s.Keystroke[0])) ||
+      (0 === s.Format?.length &&
+        1 === s.Keystroke?.length &&
+        r.test(s.Keystroke[0])) ||
+      (0 === s.Keystroke?.length &&
+        1 === s.Format?.length &&
+        r.test(s.Format[0]))) &&
+      (i = !0);
     const o = [];
     s.Format && o.push(...s.Format);
     s.Keystroke && o.push(...s.Keystroke);
@@ -47806,7 +52952,9 @@ class TextWidgetAnnotation extends WidgetAnnotation {
       const a = "Date" === t[1];
       let n = t[2];
       const s = parseInt(n, 10);
-      isNaN(s) || Math.floor(Math.log10(s)) + 1 !== t[2].length || (n = (a ? Ri : Hi)[s] ?? n);
+      isNaN(s) ||
+        Math.floor(Math.log10(s)) + 1 !== t[2].length ||
+        (n = (a ? Ri : Hi)[s] ?? n);
       this.data.datetimeFormat = n;
       if (!i) break;
       if (a) {
@@ -47833,9 +52981,15 @@ class TextWidgetAnnotation extends WidgetAnnotation {
     h && d.reverse();
     const b = m * g.length;
     let w = i;
-    1 === c ? (w += Math.floor((s - b) / (2 * m)) * m) : 2 === c && (w += s - b);
+    1 === c
+      ? (w += Math.floor((s - b) / (2 * m)) * m)
+      : 2 === c && (w += s - b);
     const j = d.join(` ${numberToString(m)} 0 Td `);
-    return `/Tx BMC q ${p}BT ` + e + ` 1 0 0 1 ${numberToString(w)} ${numberToString(o + l)} Tm ${j} ET Q EMC`;
+    return (
+      `/Tx BMC q ${p}BT ` +
+      e +
+      ` 1 0 0 1 ${numberToString(w)} ${numberToString(o + l)} Tm ${j} ET Q EMC`
+    );
   }
   _getMultilineAppearance(e, t, a, n, s, r, i, o, l, f, c, h) {
     const u = [],
@@ -47852,7 +53006,11 @@ class TextWidgetAnnotation extends WidgetAnnotation {
     }
     const d = this.getBorderAndBackgroundAppearances(h),
       g = u.join("\n");
-    return `/Tx BMC q ${d}BT ` + e + ` 1 0 0 1 0 ${numberToString(r)} Tm ${g} ET Q EMC`;
+    return (
+      `/Tx BMC q ${d}BT ` +
+      e +
+      ` 1 0 0 1 0 ${numberToString(r)} Tm ${g} ET Q EMC`
+    );
   }
   _splitLine(e, t, a, n, s = {}) {
     e = s.line || e;
@@ -47906,8 +53064,11 @@ class TextWidgetAnnotation extends WidgetAnnotation {
     if (!n) return;
     const s = n.join("\n");
     if (s === this.data.fieldValue) return;
-    const r = s.replaceAll(/([.*+?^${}()|[\]\\])|(\s+)/g, (e, t) => (t ? `\\${t}` : "\\s+"));
-    new RegExp(`^\\s*${r}\\s*$`).test(this.data.fieldValue) && (this.data.textContent = this.data.fieldValue.split("\n"));
+    const r = s.replaceAll(/([.*+?^${}()|[\]\\])|(\s+)/g, (e, t) =>
+      t ? `\\${t}` : "\\s+",
+    );
+    new RegExp(`^\\s*${r}\\s*$`).test(this.data.fieldValue) &&
+      (this.data.textContent = this.data.fieldValue.split("\n"));
   }
   getFieldObject() {
     return {
@@ -47962,7 +53123,10 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
       r = e ? e.rotation : null;
     }
     if (null === s && this.appearance) return super.getOperatorList(e, t, a, n);
-    null == s && (s = this.data.checkBox ? this.data.fieldValue === this.data.exportValue : this.data.fieldValue === this.data.buttonValue);
+    null == s &&
+      (s = this.data.checkBox
+        ? this.data.fieldValue === this.data.exportValue
+        : this.data.fieldValue === this.data.buttonValue);
     const i = s ? this.checkedAppearance : this.uncheckedAppearance;
     if (i) {
       const s = this.appearance,
@@ -47977,7 +53141,9 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
     return { opList: new OperatorList(), separateForm: !1, separateCanvas: !1 };
   }
   async save(e, t, a, n) {
-    this.data.checkBox ? this._saveCheckbox(e, t, a, n) : this.data.radioButton && this._saveRadioButton(e, t, a, n);
+    this.data.checkBox
+      ? this._saveCheckbox(e, t, a, n)
+      : this.data.radioButton && this._saveRadioButton(e, t, a, n);
   }
   async _saveCheckbox(e, t, a, n) {
     if (!a) return;
@@ -48071,7 +53237,10 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
     if (!(a instanceof Dict)) return;
     const n = this._decodeFormValue(e.dict.get("AS"));
     "string" == typeof n && (this.data.fieldValue = n);
-    const s = null !== this.data.fieldValue && "Off" !== this.data.fieldValue ? this.data.fieldValue : "Yes",
+    const s =
+        null !== this.data.fieldValue && "Off" !== this.data.fieldValue
+          ? this.data.fieldValue
+          : "Yes",
       r = [...a.getKeys()];
     if (0 === r.length) r.push("Off", s);
     else if (1 === r.length) "Off" === r[0] ? r.push(s) : r.unshift("Off");
@@ -48089,10 +53258,13 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
     this.checkedAppearance = i instanceof BaseStream ? i : null;
     const o = a.get("Off");
     this.uncheckedAppearance = o instanceof BaseStream ? o : null;
-    this.checkedAppearance ? this._streams.push(this.checkedAppearance) : this._getDefaultCheckedAppearance(e, "check");
+    this.checkedAppearance
+      ? this._streams.push(this.checkedAppearance)
+      : this._getDefaultCheckedAppearance(e, "check");
     this.uncheckedAppearance && this._streams.push(this.uncheckedAppearance);
     this._fallbackFontDict = this.fallbackFontDict;
-    null === this.data.defaultFieldValue && (this.data.defaultFieldValue = "Off");
+    null === this.data.defaultFieldValue &&
+      (this.data.defaultFieldValue = "Off");
   }
   _processRadioButton(e) {
     this.data.buttonValue = null;
@@ -48115,10 +53287,13 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
     this.checkedAppearance = s instanceof BaseStream ? s : null;
     const r = n.get("Off");
     this.uncheckedAppearance = r instanceof BaseStream ? r : null;
-    this.checkedAppearance ? this._streams.push(this.checkedAppearance) : this._getDefaultCheckedAppearance(e, "disc");
+    this.checkedAppearance
+      ? this._streams.push(this.checkedAppearance)
+      : this._getDefaultCheckedAppearance(e, "disc");
     this.uncheckedAppearance && this._streams.push(this.uncheckedAppearance);
     this._fallbackFontDict = this.fallbackFontDict;
-    null === this.data.defaultFieldValue && (this.data.defaultFieldValue = "Off");
+    null === this.data.defaultFieldValue &&
+      (this.data.defaultFieldValue = "Off");
   }
   _processPushButton(e) {
     const { dict: t, annotationGlobals: a } = e;
@@ -48188,8 +53363,15 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
     if (this.hasIndices) {
       this.data.fieldValue = [];
       const e = this.data.options.length;
-      for (const t of this.indices) Number.isInteger(t) && t >= 0 && t < e && this.data.fieldValue.push(this.data.options[t].exportValue);
-    } else "string" == typeof this.data.fieldValue ? (this.data.fieldValue = [this.data.fieldValue]) : (this.data.fieldValue ||= []);
+      for (const t of this.indices)
+        Number.isInteger(t) &&
+          t >= 0 &&
+          t < e &&
+          this.data.fieldValue.push(this.data.options[t].exportValue);
+    } else
+      "string" == typeof this.data.fieldValue
+        ? (this.data.fieldValue = [this.data.fieldValue])
+        : (this.data.fieldValue ||= []);
     0 === this.data.options.length &&
       this.data.fieldValue.length > 0 &&
       (this.data.options = this.data.fieldValue.map((e) => ({
@@ -48253,8 +53435,16 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
       const { exportValue: t } = this.data.options[e];
       r.includes(t) && h.push(e);
     }
-    this._defaultAppearance || (this.data.defaultAppearanceData = parseDefaultAppearance((this._defaultAppearance = "/Helvetica 0 Tf 0 g")));
-    const u = await WidgetAnnotation._getFontData(e, t, this.data.defaultAppearanceData, this._fieldResources.mergedResources);
+    this._defaultAppearance ||
+      (this.data.defaultAppearanceData = parseDefaultAppearance(
+        (this._defaultAppearance = "/Helvetica 0 Tf 0 g"),
+      ));
+    const u = await WidgetAnnotation._getFontData(
+      e,
+      t,
+      this.data.defaultAppearanceData,
+      this._fieldResources.mergedResources,
+    );
     let m,
       { fontSize: p } = this.data.defaultAppearanceData;
     if (p) m = this._defaultAppearance;
@@ -48285,7 +53475,8 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
       k = ["/Tx BMC q", `1 1 ${l} ${f} re W n`];
     if (h.length) {
       k.push("0.600006 0.756866 0.854904 rg");
-      for (const e of h) w <= e && e < j && k.push(`1 ${f - (e - w + 1) * d} ${l} ${d} re f`);
+      for (const e of h)
+        w <= e && e < j && k.push(`1 ${f - (e - w + 1) * d} ${l} ${d} re f`);
     }
     k.push("BT", m, `1 0 0 1 0 ${f} Tm`);
     const y = { shift: 0 };
@@ -48385,7 +53576,8 @@ class PopupAnnotation extends Annotation {
     this.data.titleObj = this._title;
     this.setContents(a.get("Contents"));
     this.data.contentsObj = this._contents;
-    a.has("RC") && (this.data.richText = XFAFactory.getRichTextAsHtml(a.get("RC")));
+    a.has("RC") &&
+      (this.data.richText = XFAFactory.getRichTextAsHtml(a.get("RC")));
     this.data.open = !!t.get("Open");
   }
   static createNewDict(e, t, a) {
@@ -48412,7 +53604,11 @@ class FreeTextAnnotation extends MarkupAnnotation {
     this.setDefaultAppearance(e);
     this._hasAppearance = !!this.appearance;
     if (this._hasAppearance) {
-      const { fontColor: e, fontSize: n } = (function parseAppearanceStream(e, t, a) {
+      const { fontColor: e, fontSize: n } = (function parseAppearanceStream(
+        e,
+        t,
+        a,
+      ) {
         return new AppearanceStreamEvaluator(e, t, a).parse();
       })(this.appearance, a, t.globalColorSpaceCache);
       this.data.defaultAppearanceData.fontColor = e;
@@ -48421,23 +53617,52 @@ class FreeTextAnnotation extends MarkupAnnotation {
       this.data.defaultAppearanceData.fontSize ||= 10;
       const { fontColor: t, fontSize: n } = this.data.defaultAppearanceData;
       if (this._contents.str) {
-        this.data.textContent = this._contents.str.split(/\r\n?|\n/).map((e) => e.trimEnd());
-        const { coords: e, bbox: t, matrix: a } = FakeUnicodeFont.getFirstPositionInfo(this.rectangle, this.rotation, n);
+        this.data.textContent = this._contents.str
+          .split(/\r\n?|\n/)
+          .map((e) => e.trimEnd());
+        const {
+          coords: e,
+          bbox: t,
+          matrix: a,
+        } = FakeUnicodeFont.getFirstPositionInfo(
+          this.rectangle,
+          this.rotation,
+          n,
+        );
         this.data.textPosition = this._transformPoint(e, t, a);
       }
       if (this._isOffscreenCanvasSupported) {
         const s = e.dict.get("CA"),
           r = new FakeUnicodeFont(a, "sans-serif");
-        this.appearance = r.createAppearance(this._contents.str, this.rectangle, this.rotation, n, t, s);
+        this.appearance = r.createAppearance(
+          this._contents.str,
+          this.rectangle,
+          this.rotation,
+          n,
+          t,
+          s,
+        );
         this._streams.push(this.appearance);
-      } else warn("FreeTextAnnotation: OffscreenCanvas is not supported, annotation may not render correctly.");
+      } else
+        warn(
+          "FreeTextAnnotation: OffscreenCanvas is not supported, annotation may not render correctly.",
+        );
     }
   }
   get hasTextContent() {
     return this._hasAppearance;
   }
   static createNewDict(e, t, { apRef: a, ap: n }) {
-    const { color: s, date: r, fontSize: i, oldAnnotation: o, rect: l, rotation: f, user: c, value: h } = e,
+    const {
+        color: s,
+        date: r,
+        fontSize: i,
+        oldAnnotation: o,
+        rect: l,
+        rotation: f,
+        user: c,
+        value: h,
+      } = e,
       u = o || new Dict(t);
     u.setIfNotExists("Type", Name.get("Annot"));
     u.setIfNotExists("Subtype", Name.get("FreeText"));
@@ -48474,7 +53699,12 @@ class FreeTextAnnotation extends MarkupAnnotation {
       m.set("Helv", e);
     }
     u.set("Font", m);
-    const p = await WidgetAnnotation._getFontData(r, i, { fontName: "Helv", fontSize: l }, u),
+    const p = await WidgetAnnotation._getFontData(
+        r,
+        i,
+        { fontName: "Helv", fontSize: l },
+        u,
+      ),
       [d, g, b, w] = f;
     let j = b - d,
       k = w - g;
@@ -48523,7 +53753,14 @@ class FreeTextAnnotation extends MarkupAnnotation {
         D = [-f[3], f[0], j, k];
         H = [-f[3], f[2] - T];
     }
-    const N = ["q", `${M.join(" ")} 0 0 cm`, `${D.join(" ")} re W n`, "BT", `${getPdfColor(o, !0)}`, `0 Tc /Helv ${numberToString(R)} Tf`];
+    const N = [
+      "q",
+      `${M.join(" ")} 0 0 cm`,
+      `${D.join(" ")} re W n`,
+      "BT",
+      `${getPdfColor(o, !0)}`,
+      `0 Tc /Helv ${numberToString(R)} Tf`,
+    ];
     N.push(`${H.join(" ")} Td (${escapeString(S[0])}) Tj`);
     const E = numberToString(F);
     for (let e = 1, t = S.length; e < t; e++) {
@@ -48561,7 +53798,12 @@ class LineAnnotation extends MarkupAnnotation {
         i = r ? s : null,
         o = this.borderStyle.width || 1,
         l = 2 * o,
-        f = [this.data.lineCoordinates[0] - l, this.data.lineCoordinates[1] - l, this.data.lineCoordinates[2] + l, this.data.lineCoordinates[3] + l];
+        f = [
+          this.data.lineCoordinates[0] - l,
+          this.data.lineCoordinates[1] - l,
+          this.data.lineCoordinates[2] + l,
+          this.data.lineCoordinates[3] + l,
+        ];
       Util.intersect(this.rectangle, f) || (this.rectangle = f);
       this._setDefaultAppearance({
         xref: a,
@@ -48637,7 +53879,14 @@ class CircleAnnotation extends MarkupAnnotation {
             f = n + (o - n) / 2,
             c = ((r - a) / 2) * i,
             h = ((o - n) / 2) * i;
-          e.push(`${l} ${o} m`, `${l + c} ${o} ${r} ${f + h} ${r} ${f} c`, `${r} ${f - h} ${l + c} ${n} ${l} ${n} c`, `${l - c} ${n} ${a} ${f - h} ${a} ${f} c`, `${a} ${f + h} ${l - c} ${o} ${l} ${o} c`, "h");
+          e.push(
+            `${l} ${o} m`,
+            `${l + c} ${o} ${r} ${f + h} ${r} ${f} c`,
+            `${r} ${f - h} ${l + c} ${n} ${l} ${n} c`,
+            `${l - c} ${n} ${a} ${f - h} ${a} ${f} c`,
+            `${a} ${f + h} ${l - c} ${o} ${l} ${o} c`,
+            "h",
+          );
           s ? e.push("B") : e.push("S");
           return [t[0], t[7], t[2], t[3]];
         },
@@ -48665,11 +53914,18 @@ class PolylineAnnotation extends MarkupAnnotation {
       let i,
         o = getRgbColor(a.getArray("IC"), null);
       o && (o = getPdfColorArray(o));
-      i = o ? (this.color ? (o.every((t, a) => t === e[a]) ? "f" : "B") : "f") : "S";
+      i = o
+        ? this.color
+          ? o.every((t, a) => t === e[a])
+            ? "f"
+            : "B"
+          : "f"
+        : "S";
       const l = this.borderStyle.width || 1,
         f = 2 * l,
         c = t.slice();
-      for (let e = 0, t = r.length; e < t; e += 2) Util.rectBoundingBox(r[e] - f, r[e + 1] - f, r[e] + f, r[e + 1] + f, c);
+      for (let e = 0, t = r.length; e < t; e += 2)
+        Util.rectBoundingBox(r[e] - f, r[e + 1] - f, r[e] + f, r[e + 1] + f, c);
       Util.intersect(this.rectangle, c) || (this.rectangle = c);
       this._setDefaultAppearance({
         xref: n,
@@ -48679,7 +53935,8 @@ class PolylineAnnotation extends MarkupAnnotation {
         fillColor: o,
         fillAlpha: o ? s : null,
         pointsCallback: (e, t) => {
-          for (let t = 0, a = r.length; t < a; t += 2) e.push(`${r[t]} ${r[t + 1]} ${0 === t ? "m" : "l"}`);
+          for (let t = 0, a = r.length; t < a; t += 2)
+            e.push(`${r[t]} ${r[t + 1]} ${0 === t ? "m" : "l"}`);
           e.push(i);
           return [t[0], t[7], t[2], t[3]];
         },
@@ -48720,7 +53977,15 @@ class InkAnnotation extends MarkupAnnotation {
           r = this.borderStyle.width || 1,
           i = 2 * r,
           o = t.slice();
-        for (const e of this.data.inkLists) for (let t = 0, a = e.length; t < a; t += 2) Util.rectBoundingBox(e[t] - i, e[t + 1] - i, e[t] + i, e[t + 1] + i, o);
+        for (const e of this.data.inkLists)
+          for (let t = 0, a = e.length; t < a; t += 2)
+            Util.rectBoundingBox(
+              e[t] - i,
+              e[t + 1] - i,
+              e[t] + i,
+              e[t + 1] + i,
+              o,
+            );
         Util.intersect(this.rectangle, o) || (this.rectangle = o);
         this._setDefaultAppearance({
           xref: n,
@@ -48729,7 +53994,8 @@ class InkAnnotation extends MarkupAnnotation {
           strokeAlpha: s,
           pointsCallback: (e, t) => {
             for (const t of this.data.inkLists) {
-              for (let a = 0, n = t.length; a < n; a += 2) e.push(`${t[a]} ${t[a + 1]} ${0 === a ? "m" : "l"}`);
+              for (let a = 0, n = t.length; a < n; a += 2)
+                e.push(`${t[a]} ${t[a + 1]} ${0 === a ? "m" : "l"}`);
               e.push("S");
             }
             return [t[0], t[7], t[2], t[3]];
@@ -48739,7 +54005,18 @@ class InkAnnotation extends MarkupAnnotation {
     }
   }
   static createNewDict(e, t, { apRef: a, ap: n }) {
-    const { oldAnnotation: s, color: r, date: i, opacity: o, paths: l, outlines: f, rect: c, rotation: h, thickness: u, user: m } = e,
+    const {
+        oldAnnotation: s,
+        color: r,
+        date: i,
+        opacity: o,
+        paths: l,
+        outlines: f,
+        rect: c,
+        rotation: h,
+        thickness: u,
+        user: m,
+      } = e,
       p = s || new Dict(t);
     p.setIfNotExists("Type", Name.get("Annot"));
     p.setIfNotExists("Subtype", Name.get("Ink"));
@@ -48773,12 +54050,14 @@ class InkAnnotation extends MarkupAnnotation {
     for (const e of r.lines) {
       l.push(`${numberToString(e[4])} ${numberToString(e[5])} m`);
       for (let t = 6, a = e.length; t < a; t += 6)
-        if (isNaN(e[t])) l.push(`${numberToString(e[t + 4])} ${numberToString(e[t + 5])} l`);
+        if (isNaN(e[t]))
+          l.push(`${numberToString(e[t + 4])} ${numberToString(e[t + 5])} l`);
         else {
           const [a, n, s, r, i, o] = e.slice(t, t + 6);
           l.push([a, n, s, r, i, o].map(numberToString).join(" ") + " c");
         }
-      6 === e.length && l.push(`${numberToString(e[4])} ${numberToString(e[5])} l`);
+      6 === e.length &&
+        l.push(`${numberToString(e[4])} ${numberToString(e[5])} l`);
     }
     l.push("S");
     const f = l.join("\n"),
@@ -48813,7 +54092,8 @@ class InkAnnotation extends MarkupAnnotation {
     const o = [`${getPdfColor(n, !0)}`, "/R0 gs"];
     o.push(`${numberToString(r[4])} ${numberToString(r[5])} m`);
     for (let e = 6, t = r.length; e < t; e += 6)
-      if (isNaN(r[e])) o.push(`${numberToString(r[e + 4])} ${numberToString(r[e + 5])} l`);
+      if (isNaN(r[e]))
+        o.push(`${numberToString(r[e + 4])} ${numberToString(r[e + 5])} l`);
       else {
         const [t, a, n, s, i, l] = r.slice(e, e + 6);
         o.push([t, a, n, s, i, l].map(numberToString).join(" ") + " c");
@@ -48852,7 +54132,8 @@ class HighlightAnnotation extends MarkupAnnotation {
     if ((this.data.quadPoints = getQuadPoints(t, null))) {
       const e = this.appearance?.dict.get("Resources");
       if (!this.appearance || !e?.has("ExtGState")) {
-        this.appearance && warn("HighlightAnnotation - ignoring built-in appearance stream.");
+        this.appearance &&
+          warn("HighlightAnnotation - ignoring built-in appearance stream.");
         const e = getPdfColorArray(this.color, [1, 1, 0]),
           n = t.get("CA");
         this._setDefaultAppearance({
@@ -48861,7 +54142,13 @@ class HighlightAnnotation extends MarkupAnnotation {
           blendMode: "Multiply",
           fillAlpha: n,
           pointsCallback: (e, t) => {
-            e.push(`${t[0]} ${t[1]} m`, `${t[2]} ${t[3]} l`, `${t[6]} ${t[7]} l`, `${t[4]} ${t[5]} l`, "f");
+            e.push(
+              `${t[0]} ${t[1]} m`,
+              `${t[2]} ${t[3]} l`,
+              `${t[6]} ${t[7]} l`,
+              `${t[4]} ${t[5]} l`,
+              "f",
+            );
             return [t[0], t[7], t[2], t[3]];
           },
         });
@@ -48872,7 +54159,16 @@ class HighlightAnnotation extends MarkupAnnotation {
     return !0;
   }
   static createNewDict(e, t, { apRef: a, ap: n }) {
-    const { color: s, date: r, oldAnnotation: i, opacity: o, rect: l, rotation: f, user: c, quadPoints: h } = e,
+    const {
+        color: s,
+        date: r,
+        oldAnnotation: i,
+        opacity: o,
+        rect: l,
+        rotation: f,
+        user: c,
+        quadPoints: h,
+      } = e,
       u = i || new Dict(t);
     u.setIfNotExists("Type", Name.get("Annot"));
     u.setIfNotExists("Subtype", Name.get("Highlight"));
@@ -48900,7 +54196,8 @@ class HighlightAnnotation extends MarkupAnnotation {
     for (const e of r) {
       l.length = 0;
       l.push(`${numberToString(e[0])} ${numberToString(e[1])} m`);
-      for (let t = 2, a = e.length; t < a; t += 2) l.push(`${numberToString(e[t])} ${numberToString(e[t + 1])} l`);
+      for (let t = 2, a = e.length; t < a; t += 2)
+        l.push(`${numberToString(e[t])} ${numberToString(e[t + 1])} l`);
       l.push("h");
       o.push(l.join("\n"));
     }
@@ -49003,7 +54300,11 @@ class StrikeOutAnnotation extends MarkupAnnotation {
           strokeColor: e,
           strokeAlpha: n,
           pointsCallback: (e, t) => {
-            e.push((t[0] + t[4]) / 2 + " " + (t[1] + t[5]) / 2 + " m", (t[2] + t[6]) / 2 + " " + (t[3] + t[7]) / 2 + " l", "S");
+            e.push(
+              (t[0] + t[4]) / 2 + " " + (t[1] + t[5]) / 2 + " m",
+              (t[2] + t[6]) / 2 + " " + (t[3] + t[7]) / 2 + " l",
+              "S",
+            );
             return [t[0], t[7], t[2], t[3]];
           },
         });
@@ -49042,13 +54343,19 @@ class StampAnnotation extends MarkupAnnotation {
     r.drawImage(e, 0, 0);
     const i = r.getImageData(0, 0, a, n).data,
       o = new Uint32Array(i.buffer),
-      l = o.some(FeatureTest.isLittleEndian ? (e) => e >>> 24 != 255 : (e) => !!(255 & ~e));
+      l = o.some(
+        FeatureTest.isLittleEndian
+          ? (e) => e >>> 24 != 255
+          : (e) => !!(255 & ~e),
+      );
     if (l) {
       r.fillStyle = "white";
       r.fillRect(0, 0, a, n);
       r.drawImage(e, 0, 0);
     }
-    const f = s.convertToBlob({ type: "image/jpeg", quality: 1 }).then((e) => e.bytes()),
+    const f = s
+        .convertToBlob({ type: "image/jpeg", quality: 1 })
+        .then((e) => e.bytes()),
       c = Name.get("XObject"),
       h = Name.get("Image"),
       u = new Dict(t);
@@ -49063,7 +54370,8 @@ class StampAnnotation extends MarkupAnnotation {
     let m = null;
     if (l) {
       const e = new Uint8Array(o.length);
-      if (FeatureTest.isLittleEndian) for (let t = 0, a = o.length; t < a; t++) e[t] = o[t] >>> 24;
+      if (FeatureTest.isLittleEndian)
+        for (let t = 0, a = o.length; t < a; t++) e[t] = o[t] >>> 24;
       else for (let t = 0, a = o.length; t < a; t++) e[t] = 255 & o[t];
       const s = new Dict(t);
       s.set("Type", c);
@@ -49106,12 +54414,14 @@ class StampAnnotation extends MarkupAnnotation {
     for (const e of r) {
       o.push(`${numberToString(e[4])} ${numberToString(e[5])} m`);
       for (let t = 6, a = e.length; t < a; t += 6)
-        if (isNaN(e[t])) o.push(`${numberToString(e[t + 4])} ${numberToString(e[t + 5])} l`);
+        if (isNaN(e[t]))
+          o.push(`${numberToString(e[t + 4])} ${numberToString(e[t + 5])} l`);
         else {
           const [a, n, s, r, i, l] = e.slice(t, t + 6);
           o.push([a, n, s, r, i, l].map(numberToString).join(" ") + " c");
         }
-      6 === e.length && o.push(`${numberToString(e[4])} ${numberToString(e[5])} l`);
+      6 === e.length &&
+        o.push(`${numberToString(e[4])} ${numberToString(e[5])} l`);
     }
     o.push(a ? "F" : "S");
     const l = o.join("\n"),
@@ -49166,10 +54476,35 @@ class FileAttachmentAnnotation extends MarkupAnnotation {
 }
 const df = {
   get r() {
-    return shadow(this, "r", new Uint8Array([7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21]));
+    return shadow(
+      this,
+      "r",
+      new Uint8Array([
+        7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14,
+        20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16,
+        23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10,
+        15, 21, 6, 10, 15, 21,
+      ]),
+    );
   },
   get k() {
-    return shadow(this, "k", new Int32Array([-680876936, -389564586, 606105819, -1044525330, -176418897, 1200080426, -1473231341, -45705983, 1770035416, -1958414417, -42063, -1990404162, 1804603682, -40341101, -1502002290, 1236535329, -165796510, -1069501632, 643717713, -373897302, -701558691, 38016083, -660478335, -405537848, 568446438, -1019803690, -187363961, 1163531501, -1444681467, -51403784, 1735328473, -1926607734, -378558, -2022574463, 1839030562, -35309556, -1530992060, 1272893353, -155497632, -1094730640, 681279174, -358537222, -722521979, 76029189, -640364487, -421815835, 530742520, -995338651, -198630844, 1126891415, -1416354905, -57434055, 1700485571, -1894986606, -1051523, -2054922799, 1873313359, -30611744, -1560198380, 1309151649, -145523070, -1120210379, 718787259, -343485551]));
+    return shadow(
+      this,
+      "k",
+      new Int32Array([
+        -680876936, -389564586, 606105819, -1044525330, -176418897, 1200080426,
+        -1473231341, -45705983, 1770035416, -1958414417, -42063, -1990404162,
+        1804603682, -40341101, -1502002290, 1236535329, -165796510, -1069501632,
+        643717713, -373897302, -701558691, 38016083, -660478335, -405537848,
+        568446438, -1019803690, -187363961, 1163531501, -1444681467, -51403784,
+        1735328473, -1926607734, -378558, -2022574463, 1839030562, -35309556,
+        -1530992060, 1272893353, -155497632, -1094730640, 681279174, -358537222,
+        -722521979, 76029189, -640364487, -421815835, 530742520, -995338651,
+        -198630844, 1126891415, -1416354905, -57434055, 1700485571, -1894986606,
+        -1051523, -2054922799, 1873313359, -30611744, -1560198380, 1309151649,
+        -145523070, -1120210379, 718787259, -343485551,
+      ]),
+    );
   },
 };
 function calculateMD5(e, t, a) {
@@ -49193,7 +54528,8 @@ function calculateMD5(e, t, a) {
   const u = new Int32Array(16),
     { k: m, r: p } = df;
   for (f = 0; f < o; ) {
-    for (c = 0; c < 16; ++c, f += 4) u[c] = l[f] | (l[f + 1] << 8) | (l[f + 2] << 16) | (l[f + 3] << 24);
+    for (c = 0; c < 16; ++c, f += 4)
+      u[c] = l[f] | (l[f + 1] << 8) | (l[f + 2] << 16) | (l[f + 3] << 24);
     let e,
       t,
       a = n,
@@ -49227,7 +54563,24 @@ function calculateMD5(e, t, a) {
     r = (r + h) | 0;
     i = (i + d) | 0;
   }
-  return new Uint8Array([255 & n, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255, 255 & s, (s >> 8) & 255, (s >> 16) & 255, (s >>> 24) & 255, 255 & r, (r >> 8) & 255, (r >> 16) & 255, (r >>> 24) & 255, 255 & i, (i >> 8) & 255, (i >> 16) & 255, (i >>> 24) & 255]);
+  return new Uint8Array([
+    255 & n,
+    (n >> 8) & 255,
+    (n >> 16) & 255,
+    (n >>> 24) & 255,
+    255 & s,
+    (s >> 8) & 255,
+    (s >> 16) & 255,
+    (s >>> 24) & 255,
+    255 & r,
+    (r >> 8) & 255,
+    (r >> 16) & 255,
+    (r >>> 24) & 255,
+    255 & i,
+    (i >> 8) & 255,
+    (i >> 16) & 255,
+    (i >>> 24) & 255,
+  ]);
 }
 function decodeString(e) {
   try {
@@ -49249,7 +54602,10 @@ class DatasetXMLParser extends SimpleXMLParser {
 }
 class DatasetReader {
   constructor(e) {
-    if (e.datasets) this.node = new SimpleXMLParser({ hasAttributes: !0 }).parseFromString(e.datasets).documentElement;
+    if (e.datasets)
+      this.node = new SimpleXMLParser({ hasAttributes: !0 }).parseFromString(
+        e.datasets,
+      ).documentElement;
     else {
       const t = new DatasetXMLParser({ hasAttributes: !0 });
       try {
@@ -49263,7 +54619,9 @@ class DatasetReader {
     const t = this.node.searchNode(parseXFAPath(e), 0);
     if (!t) return "";
     const a = t.firstChild;
-    return "value" === a?.nodeName ? t.children.map((e) => decodeString(e.textContent)) : decodeString(t.textContent);
+    return "value" === a?.nodeName
+      ? t.children.map((e) => decodeString(e.textContent))
+      : decodeString(t.textContent);
   }
 }
 class SingleIntersector {
@@ -49291,12 +54649,14 @@ class SingleIntersector {
     } else [this.minX, this.minY, this.maxX, this.maxY] = e.data.rect;
   }
   #dt(e, t) {
-    if (this.minX >= e || this.maxX <= e || this.minY >= t || this.maxY <= t) return !1;
+    if (this.minX >= e || this.maxX <= e || this.minY >= t || this.maxY <= t)
+      return !1;
     const a = this.#ct;
     if (!a) return !0;
     if (this.#mt >= 0) {
       const n = this.#mt;
-      if (!(a[n] >= e || a[n + 2] <= e || a[n + 5] >= t || a[n + 1] <= t)) return !0;
+      if (!(a[n] >= e || a[n + 2] <= e || a[n + 5] >= t || a[n + 1] <= t))
+        return !0;
       this.#mt = -1;
     }
     for (let n = 0, s = a.length; n < s; n += 8)
@@ -49377,7 +54737,10 @@ class Intersector {
     }
   }
   #St(e, t) {
-    return Math.floor((e - this.#wt) * this.#qt) + Math.floor((t - this.#kt) * this.#vt) * gf;
+    return (
+      Math.floor((e - this.#wt) * this.#qt) +
+      Math.floor((t - this.#kt) * this.#vt) * gf
+    );
   }
   addGlyph(e, t, a, n) {
     const s = e[4] + t / 2,
@@ -49651,7 +55014,8 @@ function calculateSHA512(e, t, a, n = !1) {
   for (p = 0; p < u; ) {
     for (d = 0; d < 16; ++d) {
       b[d].high = (m[p] << 24) | (m[p + 1] << 16) | (m[p + 2] << 8) | m[p + 3];
-      b[d].low = (m[p + 4] << 24) | (m[p + 5] << 16) | (m[p + 6] << 8) | m[p + 7];
+      b[d].low =
+        (m[p + 4] << 24) | (m[p + 5] << 16) | (m[p + 6] << 8) | m[p + 7];
       p += 8;
     }
     for (d = 16; d < 80; ++d) {
@@ -49729,7 +55093,23 @@ function calculateSHA384(e, t, a) {
 }
 const wf = {
   get k() {
-    return shadow(this, "k", [1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298]);
+    return shadow(
+      this,
+      "k",
+      [
+        1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993,
+        2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987,
+        1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774,
+        264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986,
+        2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711,
+        113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291,
+        1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411,
+        3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344,
+        430227734, 506948616, 659060556, 883997877, 958139571, 1322822218,
+        1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424,
+        2428436474, 2756734187, 3204031479, 3329325298,
+      ],
+    );
   },
 };
 function rotr(e, t) {
@@ -49782,7 +55162,13 @@ function calculateSHA256(e, t, a) {
       g[p] = (u[m] << 24) | (u[m + 1] << 16) | (u[m + 2] << 8) | u[m + 3];
       m += 4;
     }
-    for (p = 16; p < 64; ++p) g[p] = (calculate_sha256_littleSigmaPrime(g[p - 2]) + g[p - 7] + calculate_sha256_littleSigma(g[p - 15]) + g[p - 16]) | 0;
+    for (p = 16; p < 64; ++p)
+      g[p] =
+        (calculate_sha256_littleSigmaPrime(g[p - 2]) +
+          g[p - 7] +
+          calculate_sha256_littleSigma(g[p - 15]) +
+          g[p - 16]) |
+        0;
     let e,
       t,
       a = n,
@@ -49794,7 +55180,12 @@ function calculateSHA256(e, t, a) {
       y = f,
       q = c;
     for (p = 0; p < 64; ++p) {
-      e = q + calculate_sha256_sigmaPrime(j) + calculate_sha256_ch(j, k, y) + b[p] + g[p];
+      e =
+        q +
+        calculate_sha256_sigmaPrime(j) +
+        calculate_sha256_ch(j, k, y) +
+        b[p] +
+        g[p];
       t = calculate_sha256_sigma(a) + calculate_sha256_maj(a, h, d);
       q = y;
       y = k;
@@ -49814,7 +55205,40 @@ function calculateSHA256(e, t, a) {
     f = (f + y) | 0;
     c = (c + q) | 0;
   }
-  return new Uint8Array([(n >> 24) & 255, (n >> 16) & 255, (n >> 8) & 255, 255 & n, (s >> 24) & 255, (s >> 16) & 255, (s >> 8) & 255, 255 & s, (r >> 24) & 255, (r >> 16) & 255, (r >> 8) & 255, 255 & r, (i >> 24) & 255, (i >> 16) & 255, (i >> 8) & 255, 255 & i, (o >> 24) & 255, (o >> 16) & 255, (o >> 8) & 255, 255 & o, (l >> 24) & 255, (l >> 16) & 255, (l >> 8) & 255, 255 & l, (f >> 24) & 255, (f >> 16) & 255, (f >> 8) & 255, 255 & f, (c >> 24) & 255, (c >> 16) & 255, (c >> 8) & 255, 255 & c]);
+  return new Uint8Array([
+    (n >> 24) & 255,
+    (n >> 16) & 255,
+    (n >> 8) & 255,
+    255 & n,
+    (s >> 24) & 255,
+    (s >> 16) & 255,
+    (s >> 8) & 255,
+    255 & s,
+    (r >> 24) & 255,
+    (r >> 16) & 255,
+    (r >> 8) & 255,
+    255 & r,
+    (i >> 24) & 255,
+    (i >> 16) & 255,
+    (i >> 8) & 255,
+    255 & i,
+    (o >> 24) & 255,
+    (o >> 16) & 255,
+    (o >> 8) & 255,
+    255 & o,
+    (l >> 24) & 255,
+    (l >> 16) & 255,
+    (l >> 8) & 255,
+    255 & l,
+    (f >> 24) & 255,
+    (f >> 16) & 255,
+    (f >> 8) & 255,
+    255 & f,
+    (c >> 24) & 255,
+    (c >> 16) & 255,
+    (c >> 8) & 255,
+    255 & c,
+  ]);
 }
 class DecryptStream extends DecodeStream {
   constructor(e, t, a) {
@@ -49899,20 +55323,89 @@ class NullCipher {
 }
 class AESBaseCipher {
   _s = new Uint8Array([
-    99, 124, 119, 123, 242, 107, 111, 197, 48, 1, 103, 43, 254, 215, 171, 118, 202, 130, 201, 125, 250, 89, 71, 240, 173, 212, 162, 175, 156, 164, 114, 192, 183, 253, 147, 38, 54, 63, 247, 204, 52, 165, 229, 241, 113, 216, 49, 21, 4, 199, 35, 195, 24, 150, 5, 154, 7, 18, 128, 226, 235, 39, 178, 117, 9, 131, 44, 26, 27, 110, 90, 160, 82, 59, 214, 179, 41, 227, 47, 132, 83, 209, 0, 237, 32, 252, 177, 91, 106, 203, 190, 57, 74, 76, 88, 207, 208, 239, 170, 251, 67, 77, 51, 133, 69, 249, 2, 127, 80, 60, 159, 168, 81, 163, 64, 143, 146, 157, 56, 245, 188, 182, 218, 33, 16, 255, 243, 210, 205, 12, 19, 236, 95, 151, 68, 23, 196, 167, 126, 61, 100, 93, 25, 115, 96, 129, 79, 220, 34, 42, 144, 136, 70, 238, 184, 20, 222, 94, 11, 219, 224, 50, 58, 10, 73, 6, 36, 92, 194, 211, 172, 98, 145, 149, 228, 121, 231, 200, 55, 109, 141, 213, 78, 169, 108, 86, 244, 234, 101, 122, 174, 8, 186, 120, 37, 46, 28, 166, 180, 198, 232, 221, 116, 31, 75, 189, 139, 138, 112, 62, 181, 102, 72, 3, 246, 14, 97, 53,
-    87, 185, 134, 193, 29, 158, 225, 248, 152, 17, 105, 217, 142, 148, 155, 30, 135, 233, 206, 85, 40, 223, 140, 161, 137, 13, 191, 230, 66, 104, 65, 153, 45, 15, 176, 84, 187, 22,
+    99, 124, 119, 123, 242, 107, 111, 197, 48, 1, 103, 43, 254, 215, 171, 118,
+    202, 130, 201, 125, 250, 89, 71, 240, 173, 212, 162, 175, 156, 164, 114,
+    192, 183, 253, 147, 38, 54, 63, 247, 204, 52, 165, 229, 241, 113, 216, 49,
+    21, 4, 199, 35, 195, 24, 150, 5, 154, 7, 18, 128, 226, 235, 39, 178, 117, 9,
+    131, 44, 26, 27, 110, 90, 160, 82, 59, 214, 179, 41, 227, 47, 132, 83, 209,
+    0, 237, 32, 252, 177, 91, 106, 203, 190, 57, 74, 76, 88, 207, 208, 239, 170,
+    251, 67, 77, 51, 133, 69, 249, 2, 127, 80, 60, 159, 168, 81, 163, 64, 143,
+    146, 157, 56, 245, 188, 182, 218, 33, 16, 255, 243, 210, 205, 12, 19, 236,
+    95, 151, 68, 23, 196, 167, 126, 61, 100, 93, 25, 115, 96, 129, 79, 220, 34,
+    42, 144, 136, 70, 238, 184, 20, 222, 94, 11, 219, 224, 50, 58, 10, 73, 6,
+    36, 92, 194, 211, 172, 98, 145, 149, 228, 121, 231, 200, 55, 109, 141, 213,
+    78, 169, 108, 86, 244, 234, 101, 122, 174, 8, 186, 120, 37, 46, 28, 166,
+    180, 198, 232, 221, 116, 31, 75, 189, 139, 138, 112, 62, 181, 102, 72, 3,
+    246, 14, 97, 53, 87, 185, 134, 193, 29, 158, 225, 248, 152, 17, 105, 217,
+    142, 148, 155, 30, 135, 233, 206, 85, 40, 223, 140, 161, 137, 13, 191, 230,
+    66, 104, 65, 153, 45, 15, 176, 84, 187, 22,
   ]);
   _inv_s = new Uint8Array([
-    82, 9, 106, 213, 48, 54, 165, 56, 191, 64, 163, 158, 129, 243, 215, 251, 124, 227, 57, 130, 155, 47, 255, 135, 52, 142, 67, 68, 196, 222, 233, 203, 84, 123, 148, 50, 166, 194, 35, 61, 238, 76, 149, 11, 66, 250, 195, 78, 8, 46, 161, 102, 40, 217, 36, 178, 118, 91, 162, 73, 109, 139, 209, 37, 114, 248, 246, 100, 134, 104, 152, 22, 212, 164, 92, 204, 93, 101, 182, 146, 108, 112, 72, 80, 253, 237, 185, 218, 94, 21, 70, 87, 167, 141, 157, 132, 144, 216, 171, 0, 140, 188, 211, 10, 247, 228, 88, 5, 184, 179, 69, 6, 208, 44, 30, 143, 202, 63, 15, 2, 193, 175, 189, 3, 1, 19, 138, 107, 58, 145, 17, 65, 79, 103, 220, 234, 151, 242, 207, 206, 240, 180, 230, 115, 150, 172, 116, 34, 231, 173, 53, 133, 226, 249, 55, 232, 28, 117, 223, 110, 71, 241, 26, 113, 29, 41, 197, 137, 111, 183, 98, 14, 170, 24, 190, 27, 252, 86, 62, 75, 198, 210, 121, 32, 154, 219, 192, 254, 120, 205, 90, 244, 31, 221, 168, 51, 136, 7, 199, 49, 177, 18, 16, 89, 39, 128, 236, 95, 96, 81, 127, 169, 25, 181, 74, 13, 45, 229,
-    122, 159, 147, 201, 156, 239, 160, 224, 59, 77, 174, 42, 245, 176, 200, 235, 187, 60, 131, 83, 153, 97, 23, 43, 4, 126, 186, 119, 214, 38, 225, 105, 20, 99, 85, 33, 12, 125,
+    82, 9, 106, 213, 48, 54, 165, 56, 191, 64, 163, 158, 129, 243, 215, 251,
+    124, 227, 57, 130, 155, 47, 255, 135, 52, 142, 67, 68, 196, 222, 233, 203,
+    84, 123, 148, 50, 166, 194, 35, 61, 238, 76, 149, 11, 66, 250, 195, 78, 8,
+    46, 161, 102, 40, 217, 36, 178, 118, 91, 162, 73, 109, 139, 209, 37, 114,
+    248, 246, 100, 134, 104, 152, 22, 212, 164, 92, 204, 93, 101, 182, 146, 108,
+    112, 72, 80, 253, 237, 185, 218, 94, 21, 70, 87, 167, 141, 157, 132, 144,
+    216, 171, 0, 140, 188, 211, 10, 247, 228, 88, 5, 184, 179, 69, 6, 208, 44,
+    30, 143, 202, 63, 15, 2, 193, 175, 189, 3, 1, 19, 138, 107, 58, 145, 17, 65,
+    79, 103, 220, 234, 151, 242, 207, 206, 240, 180, 230, 115, 150, 172, 116,
+    34, 231, 173, 53, 133, 226, 249, 55, 232, 28, 117, 223, 110, 71, 241, 26,
+    113, 29, 41, 197, 137, 111, 183, 98, 14, 170, 24, 190, 27, 252, 86, 62, 75,
+    198, 210, 121, 32, 154, 219, 192, 254, 120, 205, 90, 244, 31, 221, 168, 51,
+    136, 7, 199, 49, 177, 18, 16, 89, 39, 128, 236, 95, 96, 81, 127, 169, 25,
+    181, 74, 13, 45, 229, 122, 159, 147, 201, 156, 239, 160, 224, 59, 77, 174,
+    42, 245, 176, 200, 235, 187, 60, 131, 83, 153, 97, 23, 43, 4, 126, 186, 119,
+    214, 38, 225, 105, 20, 99, 85, 33, 12, 125,
   ]);
   _mix = new Uint32Array([
-    0, 235474187, 470948374, 303765277, 941896748, 908933415, 607530554, 708780849, 1883793496, 2118214995, 1817866830, 1649639237, 1215061108, 1181045119, 1417561698, 1517767529, 3767586992, 4003061179, 4236429990, 4069246893, 3635733660, 3602770327, 3299278474, 3400528769, 2430122216, 2664543715, 2362090238, 2193862645, 2835123396, 2801107407, 3035535058, 3135740889, 3678124923, 3576870512, 3341394285, 3374361702, 3810496343, 3977675356, 4279080257, 4043610186, 2876494627, 2776292904, 3076639029, 3110650942, 2472011535, 2640243204, 2403728665, 2169303058, 1001089995, 899835584, 666464733, 699432150, 59727847, 226906860, 530400753, 294930682, 1273168787, 1172967064, 1475418501, 1509430414, 1942435775, 2110667444, 1876241833, 1641816226, 2910219766, 2743034109, 2976151520, 3211623147, 2505202138, 2606453969, 2302690252, 2269728455, 3711829422, 3543599269, 3240894392, 3475313331, 3843699074, 3943906441, 4178062228, 4144047775, 1306967366, 1139781709, 1374988112, 1610459739, 1975683434,
-    2076935265, 1775276924, 1742315127, 1034867998, 866637845, 566021896, 800440835, 92987698, 193195065, 429456164, 395441711, 1984812685, 2017778566, 1784663195, 1683407248, 1315562145, 1080094634, 1383856311, 1551037884, 101039829, 135050206, 437757123, 337553864, 1042385657, 807962610, 573804783, 742039012, 2531067453, 2564033334, 2328828971, 2227573024, 2935566865, 2700099354, 3001755655, 3168937228, 3868552805, 3902563182, 4203181171, 4102977912, 3736164937, 3501741890, 3265478751, 3433712980, 1106041591, 1340463100, 1576976609, 1408749034, 2043211483, 2009195472, 1708848333, 1809054150, 832877231, 1068351396, 766945465, 599762354, 159417987, 126454664, 361929877, 463180190, 2709260871, 2943682380, 3178106961, 3009879386, 2572697195, 2538681184, 2236228733, 2336434550, 3509871135, 3745345300, 3441850377, 3274667266, 3910161971, 3877198648, 4110568485, 4211818798, 2597806476, 2497604743, 2261089178, 2295101073, 2733856160, 2902087851, 3202437046, 2968011453, 3936291284,
-    3835036895, 4136440770, 4169408201, 3535486456, 3702665459, 3467192302, 3231722213, 2051518780, 1951317047, 1716890410, 1750902305, 1113818384, 1282050075, 1584504582, 1350078989, 168810852, 67556463, 371049330, 404016761, 841739592, 1008918595, 775550814, 540080725, 3969562369, 3801332234, 4035489047, 4269907996, 3569255213, 3669462566, 3366754619, 3332740144, 2631065433, 2463879762, 2160117071, 2395588676, 2767645557, 2868897406, 3102011747, 3069049960, 202008497, 33778362, 270040487, 504459436, 875451293, 975658646, 675039627, 641025152, 2084704233, 1917518562, 1615861247, 1851332852, 1147550661, 1248802510, 1484005843, 1451044056, 933301370, 967311729, 733156972, 632953703, 260388950, 25965917, 328671808, 496906059, 1206477858, 1239443753, 1543208500, 1441952575, 2144161806, 1908694277, 1675577880, 1842759443, 3610369226, 3644379585, 3408119516, 3307916247, 4011190502, 3776767469, 4077384432, 4245618683, 2809771154, 2842737049, 3144396420, 3043140495, 2673705150, 2438237621,
-    2203032232, 2370213795,
+    0, 235474187, 470948374, 303765277, 941896748, 908933415, 607530554,
+    708780849, 1883793496, 2118214995, 1817866830, 1649639237, 1215061108,
+    1181045119, 1417561698, 1517767529, 3767586992, 4003061179, 4236429990,
+    4069246893, 3635733660, 3602770327, 3299278474, 3400528769, 2430122216,
+    2664543715, 2362090238, 2193862645, 2835123396, 2801107407, 3035535058,
+    3135740889, 3678124923, 3576870512, 3341394285, 3374361702, 3810496343,
+    3977675356, 4279080257, 4043610186, 2876494627, 2776292904, 3076639029,
+    3110650942, 2472011535, 2640243204, 2403728665, 2169303058, 1001089995,
+    899835584, 666464733, 699432150, 59727847, 226906860, 530400753, 294930682,
+    1273168787, 1172967064, 1475418501, 1509430414, 1942435775, 2110667444,
+    1876241833, 1641816226, 2910219766, 2743034109, 2976151520, 3211623147,
+    2505202138, 2606453969, 2302690252, 2269728455, 3711829422, 3543599269,
+    3240894392, 3475313331, 3843699074, 3943906441, 4178062228, 4144047775,
+    1306967366, 1139781709, 1374988112, 1610459739, 1975683434, 2076935265,
+    1775276924, 1742315127, 1034867998, 866637845, 566021896, 800440835,
+    92987698, 193195065, 429456164, 395441711, 1984812685, 2017778566,
+    1784663195, 1683407248, 1315562145, 1080094634, 1383856311, 1551037884,
+    101039829, 135050206, 437757123, 337553864, 1042385657, 807962610,
+    573804783, 742039012, 2531067453, 2564033334, 2328828971, 2227573024,
+    2935566865, 2700099354, 3001755655, 3168937228, 3868552805, 3902563182,
+    4203181171, 4102977912, 3736164937, 3501741890, 3265478751, 3433712980,
+    1106041591, 1340463100, 1576976609, 1408749034, 2043211483, 2009195472,
+    1708848333, 1809054150, 832877231, 1068351396, 766945465, 599762354,
+    159417987, 126454664, 361929877, 463180190, 2709260871, 2943682380,
+    3178106961, 3009879386, 2572697195, 2538681184, 2236228733, 2336434550,
+    3509871135, 3745345300, 3441850377, 3274667266, 3910161971, 3877198648,
+    4110568485, 4211818798, 2597806476, 2497604743, 2261089178, 2295101073,
+    2733856160, 2902087851, 3202437046, 2968011453, 3936291284, 3835036895,
+    4136440770, 4169408201, 3535486456, 3702665459, 3467192302, 3231722213,
+    2051518780, 1951317047, 1716890410, 1750902305, 1113818384, 1282050075,
+    1584504582, 1350078989, 168810852, 67556463, 371049330, 404016761,
+    841739592, 1008918595, 775550814, 540080725, 3969562369, 3801332234,
+    4035489047, 4269907996, 3569255213, 3669462566, 3366754619, 3332740144,
+    2631065433, 2463879762, 2160117071, 2395588676, 2767645557, 2868897406,
+    3102011747, 3069049960, 202008497, 33778362, 270040487, 504459436,
+    875451293, 975658646, 675039627, 641025152, 2084704233, 1917518562,
+    1615861247, 1851332852, 1147550661, 1248802510, 1484005843, 1451044056,
+    933301370, 967311729, 733156972, 632953703, 260388950, 25965917, 328671808,
+    496906059, 1206477858, 1239443753, 1543208500, 1441952575, 2144161806,
+    1908694277, 1675577880, 1842759443, 3610369226, 3644379585, 3408119516,
+    3307916247, 4011190502, 3776767469, 4077384432, 4245618683, 2809771154,
+    2842737049, 3144396420, 3043140495, 2673705150, 2438237621, 2203032232,
+    2370213795,
   ]);
-  _mixCol = new Uint8Array(256).map((e, t) => (t < 128 ? t << 1 : (t << 1) ^ 27));
+  _mixCol = new Uint8Array(256).map((e, t) =>
+    t < 128 ? t << 1 : (t << 1) ^ 27,
+  );
   constructor() {
     this.buffer = new Uint8Array(16);
     this.bufferPosition = 0;
@@ -49951,7 +55444,14 @@ class AESBaseCipher {
           n = this._mix[r[e + 1]],
           s = this._mix[r[e + 2]],
           i = this._mix[r[e + 3]];
-        a = t ^ (n >>> 8) ^ (n << 24) ^ (s >>> 16) ^ (s << 16) ^ (i >>> 24) ^ (i << 8);
+        a =
+          t ^
+          (n >>> 8) ^
+          (n << 24) ^
+          (s >>> 16) ^
+          (s << 16) ^
+          (i >>> 24) ^
+          (i << 8);
         r[e] = (a >>> 24) & 255;
         r[e + 1] = (a >> 16) & 255;
         r[e + 2] = (a >> 8) & 255;
@@ -50130,8 +55630,22 @@ class AESBaseCipher {
 }
 class AES128Cipher extends AESBaseCipher {
   _rcon = new Uint8Array([
-    141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77, 154, 47, 94, 188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145, 57, 114, 228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29, 58, 116, 232, 203, 141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77, 154, 47, 94, 188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145, 57, 114, 228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29, 58, 116, 232, 203, 141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77, 154, 47, 94, 188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145, 57, 114, 228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29, 58, 116, 232, 203, 141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77, 154, 47, 94, 188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145, 57, 114, 228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29, 58, 116, 232, 203, 141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77, 154, 47, 94,
-    188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145, 57, 114, 228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29, 58, 116, 232, 203, 141,
+    141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77, 154, 47, 94,
+    188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145, 57, 114, 228,
+    211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29, 58, 116, 232,
+    203, 141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77, 154, 47,
+    94, 188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145, 57, 114,
+    228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29, 58, 116,
+    232, 203, 141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77, 154,
+    47, 94, 188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145, 57,
+    114, 228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29, 58,
+    116, 232, 203, 141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171, 77,
+    154, 47, 94, 188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197, 145,
+    57, 114, 228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131, 29,
+    58, 116, 232, 203, 141, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54, 108, 216, 171,
+    77, 154, 47, 94, 188, 99, 198, 151, 53, 106, 212, 179, 125, 250, 239, 197,
+    145, 57, 114, 228, 211, 189, 97, 194, 159, 37, 74, 148, 51, 102, 204, 131,
+    29, 58, 116, 232, 203, 141,
   ]);
   constructor(e) {
     super();
@@ -50272,7 +55786,11 @@ class PDF20 extends PDFBase {
       for (let e = 0, a = 0; e < 64; e++, a += t) l.set(i, a);
       s = new AES128Cipher(n.subarray(0, 16)).encrypt(l, n.subarray(16, 32));
       const f = Math.sumPrecise(s.slice(0, 16)) % 3;
-      0 === f ? (n = calculateSHA256(s, 0, s.length)) : 1 === f ? (n = calculateSHA384(s, 0, s.length)) : 2 === f && (n = calculateSHA512(s, 0, s.length));
+      0 === f
+        ? (n = calculateSHA256(s, 0, s.length))
+        : 1 === f
+          ? (n = calculateSHA384(s, 0, s.length))
+          : 2 === f && (n = calculateSHA512(s, 0, s.length));
       r++;
     }
     return n.subarray(0, 32);
@@ -50316,7 +55834,14 @@ class CipherTransform {
 }
 class CipherTransformFactory {
   static get _defaultPasswordBytes() {
-    return shadow(this, "_defaultPasswordBytes", new Uint8Array([40, 191, 78, 94, 78, 117, 138, 65, 100, 0, 78, 86, 255, 250, 1, 8, 46, 46, 0, 182, 208, 104, 62, 128, 47, 12, 169, 254, 100, 83, 105, 122]));
+    return shadow(
+      this,
+      "_defaultPasswordBytes",
+      new Uint8Array([
+        40, 191, 78, 94, 78, 117, 138, 65, 100, 0, 78, 86, 255, 250, 1, 8, 46,
+        46, 0, 182, 208, 104, 62, 128, 47, 12, 169, 254, 100, 83, 105, 122,
+      ]),
+    );
   }
   #At(e, t, a, n, s, r, i, o, l, f, c, h) {
     if (t) {
@@ -50324,7 +55849,11 @@ class CipherTransformFactory {
       t = t.subarray(0, e);
     } else t = [];
     const u = 6 === e ? new PDF20() : new PDF17();
-    return u.checkUserPassword(t, o, i) ? u.getUserKey(t, l, c) : t.length && u.checkOwnerPassword(t, n, r, a) ? u.getOwnerKey(t, s, r, f) : null;
+    return u.checkUserPassword(t, o, i)
+      ? u.getUserKey(t, l, c)
+      : t.length && u.checkOwnerPassword(t, n, r, a)
+        ? u.getOwnerKey(t, s, r, f)
+        : null;
   }
   #xt(e, t, a, n, s, r, i, o) {
     const l = 40 + a.length + e.length,
@@ -50420,7 +55949,8 @@ class CipherTransformFactory {
     return calculateMD5(r, 0, i).subarray(0, Math.min(s + 5, 16));
   }
   #Ft(e, t, a, n, s) {
-    if (!(t instanceof Name)) throw new FormatError("Invalid crypt filter name.");
+    if (!(t instanceof Name))
+      throw new FormatError("Invalid crypt filter name.");
     const r = this,
       i = e.get(t.name),
       o = i?.get("CFM");
@@ -50444,11 +55974,13 @@ class CipherTransformFactory {
   }
   constructor(e, t, a) {
     const n = e.get("Filter");
-    if (!isName(n, "Standard")) throw new FormatError("unknown encryption method");
+    if (!isName(n, "Standard"))
+      throw new FormatError("unknown encryption method");
     this.filterName = n.name;
     this.dict = e;
     const s = e.get("V");
-    if (!Number.isInteger(s) || (1 !== s && 2 !== s && 4 !== s && 5 !== s)) throw new FormatError("unsupported encryption algorithm");
+    if (!Number.isInteger(s) || (1 !== s && 2 !== s && 4 !== s && 5 !== s))
+      throw new FormatError("unsupported encryption algorithm");
     this.algorithm = s;
     let r = e.get("Length");
     if (!r)
@@ -50463,7 +55995,8 @@ class CipherTransformFactory {
           r < 40 && (r <<= 3);
         }
       }
-    if (!Number.isInteger(r) || r < 40 || r % 8 != 0) throw new FormatError("invalid key length");
+    if (!Number.isInteger(r) || r < 40 || r % 8 != 0)
+      throw new FormatError("invalid key length");
     const i = stringToBytes(e.get("O")),
       o = stringToBytes(e.get("U")),
       l = i.subarray(0, 32),
@@ -50479,7 +56012,9 @@ class CipherTransformFactory {
         try {
           a = utf8StringToString(a);
         } catch {
-          warn("CipherTransformFactory: Unable to convert UTF8 encoded password.");
+          warn(
+            "CipherTransformFactory: Unable to convert UTF8 encoded password.",
+          );
         }
       p = stringToBytes(a);
     }
@@ -50515,7 +56050,11 @@ class CipherTransformFactory {
     }
   }
   createCipherTransform(e, t) {
-    if (4 === this.algorithm || 5 === this.algorithm) return new CipherTransform(this.#Ft(this.cf, this.strf, e, t, this.encryptionKey), this.#Ft(this.cf, this.stmf, e, t, this.encryptionKey));
+    if (4 === this.algorithm || 5 === this.algorithm)
+      return new CipherTransform(
+        this.#Ft(this.cf, this.strf, e, t, this.encryptionKey),
+        this.#Ft(this.cf, this.stmf, e, t, this.encryptionKey),
+      );
     const a = this.#It(e, t, this.encryptionKey, !1),
       cipherConstructor = function () {
         return new ARCFourCipher(a);
@@ -50536,7 +56075,8 @@ class XRef {
     this._persistentRefsCache = null;
   }
   getNewPersistentRef(e) {
-    null === this._newPersistentRefNum && (this._newPersistentRefNum = this.entries.length || 1);
+    null === this._newPersistentRefNum &&
+      (this._newPersistentRefNum = this.entries.length || 1);
     const t = this._newPersistentRefNum++;
     this._cacheMap.set(t, e);
     return Ref.get(t, 0);
@@ -50546,7 +56086,11 @@ class XRef {
       this._newTemporaryRefNum = this.entries.length || 1;
       if (this._newPersistentRefNum) {
         this._persistentRefsCache = new Map();
-        for (let e = this._newTemporaryRefNum; e < this._newPersistentRefNum; e++) {
+        for (
+          let e = this._newTemporaryRefNum;
+          e < this._newPersistentRefNum;
+          e++
+        ) {
           this._persistentRefsCache.set(e, this._cacheMap.get(e));
           this._cacheMap.delete(e);
         }
@@ -50556,7 +56100,8 @@ class XRef {
   }
   resetNewTemporaryRef() {
     this._newTemporaryRefNum = null;
-    if (this._persistentRefsCache) for (const [e, t] of this._persistentRefsCache) this._cacheMap.set(e, t);
+    if (this._persistentRefsCache)
+      for (const [e, t] of this._persistentRefsCache) this._cacheMap.set(e, t);
     this._persistentRefsCache = null;
   }
   setStartXRef(e) {
@@ -50609,10 +56154,16 @@ class XRef {
         parserBuf1: e.buf1,
         parserBuf2: e.buf2,
       });
-    if (!isCmd(this.readXRefTable(e), "trailer")) throw new FormatError("Invalid XRef table: could not find trailer dictionary");
+    if (!isCmd(this.readXRefTable(e), "trailer"))
+      throw new FormatError(
+        "Invalid XRef table: could not find trailer dictionary",
+      );
     let t = e.getObj();
     t instanceof Dict || !t.dict || (t = t.dict);
-    if (!(t instanceof Dict)) throw new FormatError("Invalid XRef table: could not parse trailer dictionary");
+    if (!(t instanceof Dict))
+      throw new FormatError(
+        "Invalid XRef table: could not parse trailer dictionary",
+      );
     delete this.tableState;
     return t;
   }
@@ -50631,7 +56182,10 @@ class XRef {
       }
       let s = a.firstEntryNum;
       const r = a.entryCount;
-      if (!Number.isInteger(s) || !Number.isInteger(r)) throw new FormatError("Invalid XRef table: wrong types in subsection header");
+      if (!Number.isInteger(s) || !Number.isInteger(r))
+        throw new FormatError(
+          "Invalid XRef table: wrong types in subsection header",
+        );
       for (let n = a.entryNum; n < r; n++) {
         a.streamPos = t.pos;
         a.entryNum = n;
@@ -50649,7 +56203,12 @@ class XRef {
             case "n":
               i.uncompressed = !0;
           }
-        if (!Number.isInteger(i.offset) || !Number.isInteger(i.gen) || (!i.free && !i.uncompressed)) throw new FormatError(`Invalid entry in XRef subsection: ${s}, ${r}`);
+        if (
+          !Number.isInteger(i.offset) ||
+          !Number.isInteger(i.gen) ||
+          (!i.free && !i.uncompressed)
+        )
+          throw new FormatError(`Invalid entry in XRef subsection: ${s}, ${r}`);
         0 === n && i.free && 1 === s && (s = 0);
         this.entries[n + s] || (this.entries[n + s] = i);
       }
@@ -50660,7 +56219,8 @@ class XRef {
       delete a.firstEntryNum;
       delete a.entryCount;
     }
-    if (this.entries[0] && !this.entries[0].free) throw new FormatError("Invalid XRef table: unexpected first object");
+    if (this.entries[0] && !this.entries[0].free)
+      throw new FormatError("Invalid XRef table: unexpected first object");
     return n;
   }
   processXRefStream(e) {
@@ -50686,8 +56246,10 @@ class XRef {
       r = t.entryRanges;
     for (; r.length > 0; ) {
       const [i, o] = r;
-      if (!Number.isInteger(i) || !Number.isInteger(o)) throw new FormatError(`Invalid XRef range fields: ${i}, ${o}`);
-      if (!Number.isInteger(a) || !Number.isInteger(n) || !Number.isInteger(s)) throw new FormatError(`Invalid XRef entry fields length: ${i}, ${o}`);
+      if (!Number.isInteger(i) || !Number.isInteger(o))
+        throw new FormatError(`Invalid XRef range fields: ${i}, ${o}`);
+      if (!Number.isInteger(a) || !Number.isInteger(n) || !Number.isInteger(s))
+        throw new FormatError(`Invalid XRef entry fields length: ${i}, ${o}`);
       for (let r = t.entryNum; r < o; ++r) {
         t.entryNum = r;
         t.streamPos = e.pos;
@@ -50696,18 +56258,21 @@ class XRef {
           f = 0;
         for (let t = 0; t < a; ++t) {
           const t = e.getByte();
-          if (-1 === t) throw new FormatError("Invalid XRef byteWidths 'type'.");
+          if (-1 === t)
+            throw new FormatError("Invalid XRef byteWidths 'type'.");
           o = (o << 8) | t;
         }
         0 === a && (o = 1);
         for (let t = 0; t < n; ++t) {
           const t = e.getByte();
-          if (-1 === t) throw new FormatError("Invalid XRef byteWidths 'offset'.");
+          if (-1 === t)
+            throw new FormatError("Invalid XRef byteWidths 'offset'.");
           l = (l << 8) | t;
         }
         for (let t = 0; t < s; ++t) {
           const t = e.getByte();
-          if (-1 === t) throw new FormatError("Invalid XRef byteWidths 'generation'.");
+          if (-1 === t)
+            throw new FormatError("Invalid XRef byteWidths 'generation'.");
           f = (f << 8) | t;
         }
         const c = {};
@@ -50803,16 +56368,21 @@ class XRef {
               new Parser({ lexer: new Lexer(i.makeSubStream(n)) }).getObj();
               h = !0;
             } catch (e) {
-              e instanceof ParserEOFException ? warn(`indexObjects -- checking object (${p}): "${e}".`) : (h = !0);
+              e instanceof ParserEOFException
+                ? warn(`indexObjects -- checking object (${p}): "${e}".`)
+                : (h = !0);
             }
         } else h = !0;
-        h && (this.entries[t] = { offset: c - i.start, gen: a, uncompressed: !0 });
+        h &&
+          (this.entries[t] = { offset: c - i.start, gen: a, uncompressed: !0 });
         e.lastIndex = n;
         const m = e.exec(l);
         if (m) {
           s = e.lastIndex + 1 - c;
           if ("endobj" !== m[1]) {
-            warn(`indexObjects: Found "${m[1]}" inside of another "obj", caused by missing "endobj" -- trying to recover.`);
+            warn(
+              `indexObjects: Found "${m[1]}" inside of another "obj", caused by missing "endobj" -- trying to recover.`,
+            );
             s -= m[1].length + 1;
           }
         } else s = f - c;
@@ -50823,7 +56393,10 @@ class XRef {
           this._xrefStms.add(c - i.start);
         }
         c += s;
-      } else if (p.startsWith("trailer") && (7 === p.length || /\s/.test(p[7]))) {
+      } else if (
+        p.startsWith("trailer") &&
+        (7 === p.length || /\s/.test(p[7]))
+      ) {
         h.push(c);
         const e = c + p.length;
         let a;
@@ -50832,7 +56405,9 @@ class XRef {
         if (n) {
           a = t.lastIndex + 1 - c;
           if ("startxref" !== n[1]) {
-            warn(`indexObjects: Found "${n[1]}" after "trailer", caused by missing "startxref" -- trying to recover.`);
+            warn(
+              `indexObjects: Found "${n[1]}" after "trailer", caused by missing "startxref" -- trying to recover.`,
+            );
             a -= n[1].length + 1;
           }
         } else a = f - c;
@@ -50930,14 +56505,24 @@ class XRef {
             this.startXRefQueue.push(r);
           }
         } else {
-          if (!Number.isInteger(r)) throw new FormatError("Invalid XRef stream header");
-          if (!(Number.isInteger(n.getObj()) && isCmd(n.getObj(), "obj") && (r = n.getObj()) instanceof BaseStream)) throw new FormatError("Invalid XRef stream");
+          if (!Number.isInteger(r))
+            throw new FormatError("Invalid XRef stream header");
+          if (
+            !(
+              Number.isInteger(n.getObj()) &&
+              isCmd(n.getObj(), "obj") &&
+              (r = n.getObj()) instanceof BaseStream
+            )
+          )
+            throw new FormatError("Invalid XRef stream");
           s = this.processXRefStream(r);
           this.topDict || (this.topDict = s);
           if (!s) throw new FormatError("Failed to read XRef stream");
         }
         r = s.get("Prev");
-        Number.isInteger(r) ? this.startXRefQueue.push(r) : r instanceof Ref && this.startXRefQueue.push(r.num);
+        Number.isInteger(r)
+          ? this.startXRefQueue.push(r)
+          : r instanceof Ref && this.startXRefQueue.push(r.num);
       } catch (e) {
         if (e instanceof MissingDataException) throw e;
         info("(while reading XRef): " + e);
@@ -50971,13 +56556,17 @@ class XRef {
     }
     this._pendingRefs.put(e);
     try {
-      s = s.uncompressed ? this.fetchUncompressed(e, s, t) : this.fetchCompressed(e, s, t);
+      s = s.uncompressed
+        ? this.fetchUncompressed(e, s, t)
+        : this.fetchCompressed(e, s, t);
       this._pendingRefs.remove(e);
     } catch (t) {
       this._pendingRefs.remove(e);
       throw t;
     }
-    s instanceof Dict ? (s.objId = e.toString()) : s instanceof BaseStream && (s.dict.objId = e.toString());
+    s instanceof Dict
+      ? (s.objId = e.toString())
+      : s instanceof BaseStream && (s.dict.objId = e.toString());
     return s;
   }
   fetchUncompressed(e, t, a = !1) {
@@ -50996,7 +56585,8 @@ class XRef {
       o = i.getObj(),
       l = i.getObj(),
       f = i.getObj();
-    if (o !== s || l !== n || !(f instanceof Cmd)) throw new XRefEntryException(`Bad (uncompressed) XRef entry: ${e}`);
+    if (o !== s || l !== n || !(f instanceof Cmd))
+      throw new XRefEntryException(`Bad (uncompressed) XRef entry: ${e}`);
     if ("obj" !== f.cmd) {
       if (f.cmd.startsWith("obj")) {
         s = parseInt(f.cmd.substring(3), 10);
@@ -51004,7 +56594,10 @@ class XRef {
       }
       throw new XRefEntryException(`Bad (uncompressed) XRef entry: ${e}`);
     }
-    (t = this.encrypt && !a ? i.getObj(this.encrypt.createCipherTransform(s, n)) : i.getObj()) instanceof BaseStream || this._cacheMap.set(s, t);
+    (t =
+      this.encrypt && !a
+        ? i.getObj(this.encrypt.createCipherTransform(s, n))
+        : i.getObj()) instanceof BaseStream || this._cacheMap.set(s, t);
     return t;
   }
   fetchCompressed(e, t, a = !1) {
@@ -51013,15 +56606,22 @@ class XRef {
     if (!(s instanceof BaseStream)) throw new FormatError("bad ObjStm stream");
     const r = s.dict.get("First"),
       i = s.dict.get("N");
-    if (!Number.isInteger(r) || !Number.isInteger(i)) throw new FormatError("invalid first and n parameters for ObjStm stream");
+    if (!Number.isInteger(r) || !Number.isInteger(i))
+      throw new FormatError("invalid first and n parameters for ObjStm stream");
     let o = new Parser({ lexer: new Lexer(s), xref: this, allowStreams: !0 });
     const l = new Array(i),
       f = new Array(i);
     for (let e = 0; e < i; ++e) {
       const t = o.getObj();
-      if (!Number.isInteger(t)) throw new FormatError(`invalid object number in the ObjStm stream: ${t}`);
+      if (!Number.isInteger(t))
+        throw new FormatError(
+          `invalid object number in the ObjStm stream: ${t}`,
+        );
       const a = o.getObj();
-      if (!Number.isInteger(a)) throw new FormatError(`invalid object offset in the ObjStm stream: ${a}`);
+      if (!Number.isInteger(a))
+        throw new FormatError(
+          `invalid object offset in the ObjStm stream: ${a}`,
+        );
       l[e] = t;
       const s = this.getEntry(t);
       s?.offset === n && s.gen !== e && (s.gen = e);
@@ -51044,7 +56644,8 @@ class XRef {
         u = this.entries[r];
       u && u.offset === n && u.gen === e && this._cacheMap.set(r, a);
     }
-    if (void 0 === (t = h[t.gen])) throw new XRefEntryException(`Bad (compressed) XRef entry: ${e}`);
+    if (void 0 === (t = h[t.gen]))
+      throw new XRefEntryException(`Bad (compressed) XRef entry: ${e}`);
     return t;
   }
   async fetchIfRefAsync(e, t) {
@@ -51066,7 +56667,22 @@ class XRef {
 const jf = [0, 0, 612, 792];
 class Page {
   #Tt = null;
-  constructor({ pdfManager: e, xref: t, pageIndex: a, pageDict: n, ref: s, globalIdFactory: r, fontCache: i, builtInCMapCache: o, standardFontDataCache: l, globalColorSpaceCache: f, globalImageCache: c, systemFontCache: h, nonBlendModesSet: u, xfaFactory: m }) {
+  constructor({
+    pdfManager: e,
+    xref: t,
+    pageIndex: a,
+    pageDict: n,
+    ref: s,
+    globalIdFactory: r,
+    fontCache: i,
+    builtInCMapCache: o,
+    standardFontDataCache: l,
+    globalColorSpaceCache: f,
+    globalImageCache: c,
+    systemFontCache: h,
+    nonBlendModesSet: u,
+    xfaFactory: m,
+  }) {
     this.pdfManager = e;
     this.pageIndex = a;
     this.pageDict = n;
@@ -51116,7 +56732,11 @@ class Page {
       getArray: t,
       stopWhenFound: !1,
     });
-    return Array.isArray(a) ? (1 !== a.length && a[0] instanceof Dict ? Dict.merge({ xref: this.xref, dictArray: a }) : a[0]) : a;
+    return Array.isArray(a)
+      ? 1 !== a.length && a[0] instanceof Dict
+        ? Dict.merge({ xref: this.xref, dictArray: a })
+        : a[0]
+      : a;
   }
   get content() {
     return this.pageDict.getArray("Contents");
@@ -51138,7 +56758,11 @@ class Page {
     return shadow(this, "mediaBox", this.getBoundingBox("MediaBox") || jf);
   }
   get cropBox() {
-    return shadow(this, "cropBox", this.getBoundingBox("CropBox") || this.mediaBox);
+    return shadow(
+      this,
+      "cropBox",
+      this.getBoundingBox("CropBox") || this.mediaBox,
+    );
   }
   get userUnit() {
     const e = this.pageDict.get("UserUnit");
@@ -51148,14 +56772,19 @@ class Page {
     const { cropBox: e, mediaBox: t } = this;
     if (e !== t && !isArrayEqual(e, t)) {
       const a = Util.intersect(e, t);
-      if (a && a[2] - a[0] > 0 && a[3] - a[1] > 0) return shadow(this, "view", a);
+      if (a && a[2] - a[0] > 0 && a[3] - a[1] > 0)
+        return shadow(this, "view", a);
       warn("Empty /CropBox and /MediaBox intersection.");
     }
     return shadow(this, "view", t);
   }
   get rotate() {
     let e = this.#Rt("Rotate") || 0;
-    e % 90 != 0 ? (e = 0) : e >= 360 ? (e %= 360) : e < 0 && (e = ((e % 360) + 360) % 360);
+    e % 90 != 0
+      ? (e = 0)
+      : e >= 360
+        ? (e %= 360)
+        : e < 0 && (e = ((e % 360) + 360) % 360);
     return shadow(this, "rotate", e);
   }
   #Ht(e, t) {
@@ -51189,7 +56818,13 @@ class Page {
     return new NullStream();
   }
   get xfaData() {
-    return shadow(this, "xfaData", this.xfaFactory ? { bbox: this.xfaFactory.getBoundingBox(this.pageIndex) } : null);
+    return shadow(
+      this,
+      "xfaData",
+      this.xfaFactory
+        ? { bbox: this.xfaFactory.getBoundingBox(this.pageIndex) }
+        : null,
+    );
   }
   async #Bt(e, t, a) {
     const n = [];
@@ -51237,7 +56872,8 @@ class Page {
     const l = this.pageDict,
       f = this.annotations.filter((e) => !(e instanceof Ref && i.has(e))),
       c = await AnnotationFactory.saveNewAnnotations(r, this.xref, t, a, n, s);
-    for (const { ref: e } of c.annotations) e instanceof Ref && !o.has(e) && f.push(e);
+    for (const { ref: e } of c.annotations)
+      e instanceof Ref && !o.has(e) && f.push(e);
     const h = l.clone();
     h.set("Annots", f);
     s.put(this.ref, { data: h });
@@ -51250,7 +56886,9 @@ class Page {
     for (const e of r)
       i.push(
         e.save(s, t, a, n).catch(function (e) {
-          warn(`save - ignoring annotation data during "${t.name}" task: "${e}".`);
+          warn(
+            `save - ignoring annotation data during "${t.name}" task: "${e}".`,
+          );
           return null;
         }),
       );
@@ -51270,7 +56908,16 @@ class Page {
       mergeSubDicts: !0,
     });
   }
-  async getOperatorList({ handler: e, sink: t, task: a, intent: n, cacheKey: s, pageIndex: r = this.pageIndex, annotationStorage: i = null, modifiedIds: c = null }) {
+  async getOperatorList({
+    handler: e,
+    sink: t,
+    task: a,
+    intent: n,
+    cacheKey: s,
+    pageIndex: r = this.pageIndex,
+    annotationStorage: i = null,
+    modifiedIds: c = null,
+  }) {
     const p = this.getContentStream(),
       g = this.loadResources(da),
       b = this.#Ot(e, r),
@@ -51282,15 +56929,19 @@ class Page {
       const e = this.pdfManager.ensureDoc("annotationGlobals");
       let t;
       const n = new Set();
-      for (const { bitmapId: e, bitmap: t } of j) !e || t || n.has(e) || n.add(e);
+      for (const { bitmapId: e, bitmap: t } of j)
+        !e || t || n.has(e) || n.add(e);
       const { isOffscreenCanvasSupported: s } = this.evaluatorOptions;
       if (n.size > 0) {
         const e = j.slice();
-        for (const [t, a] of i) t.startsWith(d) && a.bitmap && n.has(a.bitmapId) && e.push(a);
+        for (const [t, a] of i)
+          t.startsWith(d) && a.bitmap && n.has(a.bitmapId) && e.push(a);
         t = AnnotationFactory.generateImages(e, this.xref, s);
       } else t = AnnotationFactory.generateImages(j, this.xref, s);
       y = new RefSet();
-      k = Promise.all([e, this.#Bt(j, y, null)]).then(([e]) => (e ? AnnotationFactory.printNewAnnotations(e, b, a, j, t) : null));
+      k = Promise.all([e, this.#Bt(j, y, null)]).then(([e]) =>
+        e ? AnnotationFactory.printNewAnnotations(e, b, a, j, t) : null,
+      );
     }
     const q = Promise.all([p, g]).then(async ([i]) => {
       const o = await this.#Dt(i.dict, da),
@@ -51314,7 +56965,9 @@ class Page {
       for (let e = 0, t = x.length; e < t; e++) {
         const a = x[e];
         if (a.refToReplace) {
-          const n = S.findIndex((e) => e.ref && isRefsEqual(e.ref, a.refToReplace));
+          const n = S.findIndex(
+            (e) => e.ref && isRefsEqual(e.ref, a.refToReplace),
+          );
           if (n >= 0) {
             S.splice(n, 1, a);
             x.splice(e--, 1);
@@ -51335,10 +56988,14 @@ class Page {
       R = !!(n & f),
       H = [];
     for (const e of S)
-      (T || (O && e.mustBeViewed(i, C) && e.mustBeViewedWhenEditing(F, c)) || (R && e.mustBePrinted(i))) &&
+      (T ||
+        (O && e.mustBeViewed(i, C) && e.mustBeViewedWhenEditing(F, c)) ||
+        (R && e.mustBePrinted(i))) &&
         H.push(
           e.getOperatorList(b, a, n, i).catch(function (e) {
-            warn(`getOperatorList - ignoring annotation data during "${a.name}" task: "${e}".`);
+            warn(
+              `getOperatorList - ignoring annotation data during "${a.name}" task: "${e}".`,
+            );
             return { opList: null, separateForm: !1, separateCanvas: !1 };
           }),
         );
@@ -51353,7 +57010,14 @@ class Page {
     v.flush(!0, { form: M, canvas: N });
     return { length: v.totalLength };
   }
-  async extractTextContent({ handler: e, task: t, includeMarkedContent: a, disableNormalization: n, sink: s, intersector: r = null }) {
+  async extractTextContent({
+    handler: e,
+    task: t,
+    includeMarkedContent: a,
+    disableNormalization: n,
+    sink: s,
+    intersector: r = null,
+  }) {
     const i = this.getContentStream(),
       o = this.loadResources(ga),
       l = this.pdfManager.ensureCatalog("lang"),
@@ -51404,9 +57068,13 @@ class Page {
       if (a.hasTextContent && n) {
         i ??= this.#Ot(e);
         r.push(
-          a.extractTextContent(i, t, [-1 / 0, -1 / 0, 1 / 0, 1 / 0]).catch(function (e) {
-            warn(`getAnnotationsData - ignoring textContent during "${t.name}" task: "${e}".`);
-          }),
+          a
+            .extractTextContent(i, t, [-1 / 0, -1 / 0, 1 / 0, 1 / 0])
+            .catch(function (e) {
+              warn(
+                `getAnnotationsData - ignoring textContent during "${t.name}" task: "${e}".`,
+              );
+            }),
         );
       } else a.overlaysTextContent && n && m.push(a);
     }
@@ -51440,20 +57108,38 @@ class Page {
       "_parsedAnnotations",
       this.pdfManager.ensure(this, "annotations").then(async (e) => {
         if (0 === e.length) return e;
-        const [t, a] = await Promise.all([this.pdfManager.ensureDoc("annotationGlobals"), this.pdfManager.ensureDoc("fieldObjects")]);
+        const [t, a] = await Promise.all([
+          this.pdfManager.ensureDoc("annotationGlobals"),
+          this.pdfManager.ensureDoc("fieldObjects"),
+        ]);
         if (!t) return [];
         const n = a?.orphanFields,
           s = [];
         for (const a of e)
           s.push(
-            AnnotationFactory.create(this.xref, a, t, this._localIdFactory, !1, n, null, this.ref).catch(function (e) {
+            AnnotationFactory.create(
+              this.xref,
+              a,
+              t,
+              this._localIdFactory,
+              !1,
+              n,
+              null,
+              this.ref,
+            ).catch(function (e) {
               warn(`_parsedAnnotations: "${e}".`);
               return null;
             }),
           );
         const r = [];
         let i, o;
-        for (const e of await Promise.all(s)) e && (e instanceof WidgetAnnotation ? (o ||= []).push(e) : e instanceof PopupAnnotation ? (i ||= []).push(e) : r.push(e));
+        for (const e of await Promise.all(s))
+          e &&
+            (e instanceof WidgetAnnotation
+              ? (o ||= []).push(e)
+              : e instanceof PopupAnnotation
+                ? (i ||= []).push(e)
+                : r.push(e));
         o && r.push(...o);
         i && r.push(...i);
         return r;
@@ -51461,7 +57147,11 @@ class Page {
     );
   }
   get jsActions() {
-    return shadow(this, "jsActions", collectActions(this.xref, this.pageDict, le));
+    return shadow(
+      this,
+      "jsActions",
+      collectActions(this.xref, this.pageDict, le),
+    );
   }
   async collectAnnotationsByType(e, t, a, n, s) {
     const { pageIndex: r } = this;
@@ -51478,7 +57168,16 @@ class Page {
     let o;
     for (const l of i)
       n.push(
-        AnnotationFactory.create(this.xref, l, s, this._localIdFactory, !1, null, a, this.ref)
+        AnnotationFactory.create(
+          this.xref,
+          l,
+          s,
+          this._localIdFactory,
+          !1,
+          null,
+          a,
+          this.ref,
+        )
           .then(async (a) => {
             if (!a) return null;
             a.data.pageIndex = r;
@@ -51533,7 +57232,10 @@ class PDFDocument {
   #Mt = new Map();
   #Nt = null;
   constructor(e, t) {
-    if (t.length <= 0) throw new InvalidPDFException("The PDF file is empty, i.e. its size is zero bytes.");
+    if (t.length <= 0)
+      throw new InvalidPDFException(
+        "The PDF file is empty, i.e. its size is zero bytes.",
+      );
     this.pdfManager = e;
     this.stream = t;
     this.xref = new XRef(t, e);
@@ -51617,7 +57319,8 @@ class PDFDocument {
     e.skip(kf.length);
     let t,
       a = "";
-    for (; (t = e.getByte()) > 32 && a.length < 7; ) a += String.fromCharCode(t);
+    for (; (t = e.getByte()) > 32 && a.length < 7; )
+      a += String.fromCharCode(t);
     ua.test(a) ? (this.#Nt = a) : warn(`Invalid PDF header version: ${a}`);
   }
   parseStartXRef() {
@@ -51625,7 +57328,13 @@ class PDFDocument {
   }
   get numPages() {
     let e = 0;
-    e = this.catalog.hasActualNumPages ? this.catalog.numPages : this.xfaFactory ? this.xfaFactory.getNumPages() : this.linearization ? this.linearization.numPages : this.catalog.numPages;
+    e = this.catalog.hasActualNumPages
+      ? this.catalog.numPages
+      : this.xfaFactory
+        ? this.xfaFactory.getNumPages()
+        : this.linearization
+          ? this.linearization.numPages
+          : this.catalog.numPages;
     return shadow(this, "numPages", e);
   }
   #Pt(e, t = 0) {
@@ -51651,7 +57360,18 @@ class PDFDocument {
     const { acroForm: e } = this.catalog;
     if (!e) return null;
     const t = e.get("XFA"),
-      a = new Map(["xdp:xdp", "template", "datasets", "config", "connectionSet", "localeSet", "stylesheet", "/xdp:xdp"].map((e) => [e, null]));
+      a = new Map(
+        [
+          "xdp:xdp",
+          "template",
+          "datasets",
+          "config",
+          "connectionSet",
+          "localeSet",
+          "stylesheet",
+          "/xdp:xdp",
+        ].map((e) => [e, null]),
+      );
     if (t instanceof BaseStream && !t.isEmpty) {
       a.set("xdp:xdp", t);
       return a;
@@ -51698,7 +57418,11 @@ class PDFDocument {
   }
   get xfaFactory() {
     let e;
-    this.pdfManager.enableXfa && this.catalog.needsRendering && this.formInfo.hasXfa && !this.formInfo.hasAcroForm && (e = this.xfaData);
+    this.pdfManager.enableXfa &&
+      this.catalog.needsRendering &&
+      this.formInfo.hasXfa &&
+      !this.formInfo.hasAcroForm &&
+      (e = this.xfaData);
     return shadow(this, "xfaFactory", e ? new XFAFactory(e) : null);
   }
   get isPureXfa() {
@@ -51719,8 +57443,16 @@ class PDFDocument {
     await ObjectLoader.load(n, ["Font"], this.xref);
     const s = n.get("Font");
     if (!(s instanceof Dict)) return;
-    const r = Object.assign(Object.create(null), this.pdfManager.evaluatorOptions, { useSystemFonts: !1 }),
-      { builtInCMapCache: i, fontCache: o, standardFontDataCache: l } = this.catalog,
+    const r = Object.assign(
+        Object.create(null),
+        this.pdfManager.evaluatorOptions,
+        { useSystemFonts: !1 },
+      ),
+      {
+        builtInCMapCache: i,
+        fontCache: o,
+        standardFontDataCache: l,
+      } = this.catalog,
       f = new PartialEvaluator({
         xref: this.xref,
         handler: e,
@@ -51809,7 +57541,9 @@ class PDFDocument {
         n = Array.isArray(a) && a.length > 0;
       e.hasFields = n;
       const s = t.get("XFA");
-      e.hasXfa = (Array.isArray(s) && s.length > 0) || (s instanceof BaseStream && !s.isEmpty);
+      e.hasXfa =
+        (Array.isArray(s) && s.length > 0) ||
+        (s instanceof BaseStream && !s.isEmpty);
       const r = !!(1 & t.get("SigFlags")),
         i = r && this.#Pt(a);
       e.hasAcroForm = n && !i;
@@ -51907,13 +57641,18 @@ class PDFDocument {
       if (e instanceof Dict) {
         let a = e.getRaw("Type");
         a instanceof Ref && (a = await n.fetchAsync(a));
-        if (isName(a, "Page") || (!e.has("Type") && !e.has("Kids") && e.has("Contents"))) {
+        if (
+          isName(a, "Page") ||
+          (!e.has("Type") && !e.has("Kids") && e.has("Contents"))
+        ) {
           t.pageKidsCountCache.has(s) || t.pageKidsCountCache.put(s, 1);
           t.pageIndexCache.has(s) || t.pageIndexCache.put(s, 0);
           return [e, s];
         }
       }
-      throw new FormatError("The Linearization dictionary doesn't point to a valid Page dictionary.");
+      throw new FormatError(
+        "The Linearization dictionary doesn't point to a valid Page dictionary.",
+      );
     } catch (a) {
       warn(`_getLinearizationPage: "${a.message}".`);
       return t.getPageDict(e);
@@ -51924,7 +57663,11 @@ class PDFDocument {
     if (t) return t;
     const { catalog: a, linearization: n, xfaFactory: s } = this;
     let r;
-    r = s ? Promise.resolve([Dict.empty, null]) : n?.pageFirst === e ? this.#zt(e) : a.getPageDict(e);
+    r = s
+      ? Promise.resolve([Dict.empty, null])
+      : n?.pageFirst === e
+        ? this.#zt(e)
+        : a.getPageDict(e);
     r = r.then(
       ([t, n]) =>
         new Page({
@@ -51964,10 +57707,15 @@ class PDFDocument {
     t.setActualNumPages();
     let n;
     try {
-      await Promise.all([a.ensureDoc("xfaFactory"), a.ensureDoc("linearization"), a.ensureCatalog("numPages")]);
+      await Promise.all([
+        a.ensureDoc("xfaFactory"),
+        a.ensureDoc("linearization"),
+        a.ensureCatalog("numPages"),
+      ]);
       if (this.xfaFactory) return;
       n = this.linearization ? this.linearization.numPages : t.numPages;
-      if (!Number.isInteger(n)) throw new FormatError("Page count is not an integer.");
+      if (!Number.isInteger(n))
+        throw new FormatError("Page count is not an integer.");
       if (n <= 1) return;
       await this.getPage(n - 1);
     } catch (s) {
@@ -51979,7 +57727,8 @@ class PDFDocument {
       try {
         r = await t.getAllPageDicts(e);
       } catch (a) {
-        if (a instanceof XRefEntryException && !e) throw new XRefParseException();
+        if (a instanceof XRefEntryException && !e)
+          throw new XRefParseException();
         t.setActualNumPages(1);
         return;
       }
@@ -52062,7 +57811,8 @@ class PDFDocument {
     );
     if (!l.has("Kids")) return;
     const c = await l.getAsync("Kids");
-    if (Array.isArray(c)) for (const t of c) await this.#Lt(e, a, t, n, s, r, i);
+    if (Array.isArray(c))
+      for (const t of c) await this.#Lt(e, a, t, n, s, r, i);
   }
   get fieldObjects() {
     return shadow(
@@ -52077,7 +57827,8 @@ class PDFDocument {
           s = Object.create(null),
           r = new Map(),
           i = new RefSetCache();
-        for (const e of a.get("Fields")) await this.#Lt("", null, e, r, t, n, i);
+        for (const e of a.get("Fields"))
+          await this.#Lt("", null, e, r, t, n, i);
         const o = [];
         for (const [e, t] of r)
           o.push(
@@ -52091,28 +57842,53 @@ class PDFDocument {
     );
   }
   get hasJSActions() {
-    return shadow(this, "hasJSActions", this.pdfManager.ensureDoc("_parseHasJSActions"));
+    return shadow(
+      this,
+      "hasJSActions",
+      this.pdfManager.ensureDoc("_parseHasJSActions"),
+    );
   }
   async _parseHasJSActions() {
-    const [e, t] = await Promise.all([this.pdfManager.ensureCatalog("jsActions"), this.pdfManager.ensureDoc("fieldObjects")]);
-    return !!e || (!!t?.allFields && Object.values(t.allFields).some((e) => e.some((e) => null !== e.actions)));
+    const [e, t] = await Promise.all([
+      this.pdfManager.ensureCatalog("jsActions"),
+      this.pdfManager.ensureDoc("fieldObjects"),
+    ]);
+    return (
+      !!e ||
+      (!!t?.allFields &&
+        Object.values(t.allFields).some((e) =>
+          e.some((e) => null !== e.actions),
+        ))
+    );
   }
   get calculationOrderIds() {
     const e = this.catalog.acroForm?.get("CO");
-    if (!Array.isArray(e) || 0 === e.length) return shadow(this, "calculationOrderIds", null);
+    if (!Array.isArray(e) || 0 === e.length)
+      return shadow(this, "calculationOrderIds", null);
     const t = [];
     for (const a of e) a instanceof Ref && t.push(a.toString());
     return shadow(this, "calculationOrderIds", t.length ? t : null);
   }
   get annotationGlobals() {
-    return shadow(this, "annotationGlobals", AnnotationFactory.createGlobals(this.pdfManager));
+    return shadow(
+      this,
+      "annotationGlobals",
+      AnnotationFactory.createGlobals(this.pdfManager),
+    );
   }
   async toJSObject(e, t = !0) {
     throw new Error("Not implemented: toJSObject");
   }
 }
 class BasePdfManager {
-  constructor({ docBaseUrl: e, docId: t, enableXfa: a, evaluatorOptions: n, handler: s, password: r }) {
+  constructor({
+    docBaseUrl: e,
+    docId: t,
+    enableXfa: a,
+    evaluatorOptions: n,
+    handler: s,
+    password: r,
+  }) {
     this._docBaseUrl = (function parseDocBaseUrl(e) {
       if (e) {
         const t = createValidAbsoluteUrl(e);
@@ -52249,8 +58025,19 @@ const vf = 1,
   Rf = 8;
 function onFn() {}
 function wrapReason(e) {
-  if (e instanceof AbortException || e instanceof InvalidPDFException || e instanceof PasswordException || e instanceof ResponseException || e instanceof UnknownErrorException) return e;
-  e instanceof Error || ("object" == typeof e && null !== e) || unreachable('wrapReason: Expected "reason" to be a (possibly cloned) Error.');
+  if (
+    e instanceof AbortException ||
+    e instanceof InvalidPDFException ||
+    e instanceof PasswordException ||
+    e instanceof ResponseException ||
+    e instanceof UnknownErrorException
+  )
+    return e;
+  e instanceof Error ||
+    ("object" == typeof e && null !== e) ||
+    unreachable(
+      'wrapReason: Expected "reason" to be a (possibly cloned) Error.',
+    );
   switch (e.name) {
     case "AbortException":
       return new AbortException(e.message);
@@ -52440,7 +58227,10 @@ class MessageHandler {
             this.sinkCapability = Promise.withResolvers();
             this.ready = this.sinkCapability.promise;
           }
-          s.postMessage({ sourceName: a, targetName: n, stream: If, streamId: t, chunk: e }, i);
+          s.postMessage(
+            { sourceName: a, targetName: n, stream: If, streamId: t, chunk: e },
+            i,
+          );
         },
         close() {
           if (!this.isCancelled) {
@@ -52507,10 +58297,14 @@ class MessageHandler {
       i = this.streamSinks[t];
     switch (e.stream) {
       case Rf:
-        e.success ? r.startCall.resolve() : r.startCall.reject(wrapReason(e.reason));
+        e.success
+          ? r.startCall.resolve()
+          : r.startCall.reject(wrapReason(e.reason));
         break;
       case Of:
-        e.success ? r.pullCall.resolve() : r.pullCall.reject(wrapReason(e.reason));
+        e.success
+          ? r.pullCall.resolve()
+          : r.pullCall.reject(wrapReason(e.reason));
         break;
       case Tf:
         if (!i) {
@@ -52564,7 +58358,9 @@ class MessageHandler {
         this.#Gt(r, t);
         break;
       case xf:
-        e.success ? r.cancelCall.resolve() : r.cancelCall.reject(wrapReason(e.reason));
+        e.success
+          ? r.cancelCall.resolve()
+          : r.cancelCall.reject(wrapReason(e.reason));
         this.#Gt(r, t);
         break;
       case Af:
@@ -52599,7 +58395,11 @@ class MessageHandler {
     }
   }
   async #Gt(e, t) {
-    await Promise.allSettled([e.startCall?.promise, e.pullCall?.promise, e.cancelCall?.promise]);
+    await Promise.allSettled([
+      e.startCall?.promise,
+      e.pullCall?.promise,
+      e.cancelCall?.promise,
+    ]);
     delete this.streamControllers[t];
   }
   destroy() {
@@ -52607,7 +58407,12 @@ class MessageHandler {
     this.#Ut = null;
   }
 }
-async function writeObject(e, t, a, { encrypt: n = null, encryptRef: s = null }) {
+async function writeObject(
+  e,
+  t,
+  a,
+  { encrypt: n = null, encryptRef: s = null },
+) {
   const r = n && s !== e ? n.createCipherTransform(e.num, e.gen) : null;
   a.push(`${e.num} ${e.gen} obj\n`);
   await writeValue(t, a, r);
@@ -52648,8 +58453,14 @@ async function writeValue(e, t, a) {
                 (e = e.getOriginalStream()).reset();
                 let n = e.getBytes();
                 const { dict: s } = e,
-                  [r, i] = await Promise.all([s.getAsync("Filter"), s.getAsync("DecodeParms")]),
-                  o = isName(Array.isArray(r) ? await s.xref.fetchIfRefAsync(r[0]) : r, "FlateDecode");
+                  [r, i] = await Promise.all([
+                    s.getAsync("Filter"),
+                    s.getAsync("DecodeParms"),
+                  ]),
+                  o = isName(
+                    Array.isArray(r) ? await s.xref.fetchIfRefAsync(r[0]) : r,
+                    "FlateDecode",
+                  );
                 if (n.length >= 256 && !o)
                   try {
                     const e = new CompressionStream("deflate"),
@@ -52665,7 +58476,9 @@ async function writeValue(e, t, a) {
                     let a, l;
                     if (r) {
                       if (!o) {
-                        a = Array.isArray(r) ? [Name.get("FlateDecode"), ...r] : [Name.get("FlateDecode"), r];
+                        a = Array.isArray(r)
+                          ? [Name.get("FlateDecode"), ...r]
+                          : [Name.get("FlateDecode"), r];
                         i && (l = Array.isArray(i) ? [null, ...i] : [null, i]);
                       }
                     } else a = Name.get("FlateDecode");
@@ -52682,7 +58495,9 @@ async function writeValue(e, t, a) {
               })(e, t, a)
             : null === e
               ? t.push("null")
-              : warn(`Unhandled value in writer: ${typeof e}, please file a bug.`);
+              : warn(
+                  `Unhandled value in writer: ${typeof e}, please file a bug.`,
+                );
 }
 function writeInt(e, t, a, n) {
   for (let s = t + a - 1; s > a - 1; s--) {
@@ -52707,7 +58522,11 @@ function updateXFA({ xfaData: e, xfaDatasetsRef: t, changes: a, xref: n }) {
         const s = parseXFAPath(t);
         let r = a.documentElement.searchNode(s, 0);
         !r && s.length > 1 && (r = a.documentElement.searchNode([s.at(-1)], 0));
-        r ? (r.childNodes = Array.isArray(n) ? n.map((e) => new SimpleDOMNode("value", e)) : [new SimpleDOMNode("#text", n)]) : warn(`Node not found for path: ${t}`);
+        r
+          ? (r.childNodes = Array.isArray(n)
+              ? n.map((e) => new SimpleDOMNode("value", e))
+              : [new SimpleDOMNode("#text", n)])
+          : warn(`Node not found for path: ${t}`);
       }
       const n = [];
       a.documentElement.dump(n);
@@ -52721,7 +58540,8 @@ function updateXFA({ xfaData: e, xfaDatasetsRef: t, changes: a, xref: n }) {
 }
 function getIndexes(e) {
   const t = [];
-  for (const { ref: a } of e) a.num === t.at(-2) + t.at(-1) ? (t[t.length - 1] += 1) : t.push(a.num, 1);
+  for (const { ref: a } of e)
+    a.num === t.at(-2) + t.at(-1) ? (t[t.length - 1] += 1) : t.push(a.num, 1);
   return t;
 }
 function computeIDs(e, t, a) {
@@ -52739,8 +58559,30 @@ function computeIDs(e, t, a) {
     a.set("ID", [t.fileIds[0] || n, n]);
   }
 }
-async function incrementalUpdate({ originalData: e, xrefInfo: t, changes: a, xref: n = null, hasXfa: s = !1, xfaDatasetsRef: r = null, hasXfaDatasetsEntry: i = !1, needAppearances: o, acroFormRef: l = null, acroForm: f = null, xfaData: c = null, useXrefStream: h = !1 }) {
-  await (async function updateAcroform({ xref: e, acroForm: t, acroFormRef: a, hasXfa: n, hasXfaDatasetsEntry: s, xfaDatasetsRef: r, needAppearances: i, changes: o }) {
+async function incrementalUpdate({
+  originalData: e,
+  xrefInfo: t,
+  changes: a,
+  xref: n = null,
+  hasXfa: s = !1,
+  xfaDatasetsRef: r = null,
+  hasXfaDatasetsEntry: i = !1,
+  needAppearances: o,
+  acroFormRef: l = null,
+  acroForm: f = null,
+  xfaData: c = null,
+  useXrefStream: h = !1,
+}) {
+  await (async function updateAcroform({
+    xref: e,
+    acroForm: t,
+    acroFormRef: a,
+    hasXfa: n,
+    hasXfaDatasetsEntry: s,
+    xfaDatasetsRef: r,
+    needAppearances: i,
+    changes: o,
+  }) {
     !n || s || r || warn("XFA - Cannot save it");
     if (!i && (!n || !r || s)) return;
     const l = t.clone();
@@ -52844,7 +58686,9 @@ async function incrementalUpdate({ originalData: e, xrefInfo: t, changes: a, xre
             i += 2;
           }
           if (null !== n) {
-            s.push(`${t.toString().padStart(10, "0")} ${Math.min(e.gen, 65535).toString().padStart(5, "0")} n\r\n`);
+            s.push(
+              `${t.toString().padStart(10, "0")} ${Math.min(e.gen, 65535).toString().padStart(5, "0")} n\r\n`,
+            );
             t += n.length;
           } else
             s.push(
@@ -52956,7 +58800,11 @@ class PDFEditor {
   acroFormQ = 0;
   outlineItems = null;
   embeddedFiles = new Map();
-  constructor({ useObjectStreams: e = !0, title: t = "", author: a = "" } = {}) {
+  constructor({
+    useObjectStreams: e = !0,
+    title: t = "",
+    author: a = "",
+  } = {}) {
     [this.rootRef, this.rootDict] = this.newDict;
     [this.infoRef, this.infoDict] = this.newDict;
     [this.pagesRef, this.pagesDict] = this.newDict;
@@ -53004,7 +58852,9 @@ class PDFEditor {
       t && (e = e.slice());
       for (let t = 0, r = e.length; t < r; t++) {
         const r = e[t] instanceof Ref && s.get(e[t]);
-        r ? r.push((a) => (e[t] = a)) : n.push(this.#Yt(e[t], !0, a).then((a) => (e[t] = a)));
+        r
+          ? r.push((a) => (e[t] = a))
+          : n.push(this.#Yt(e[t], !0, a).then((a) => (e[t] = a)));
       }
       await Promise.all(n);
       return e;
@@ -53020,7 +58870,9 @@ class PDFEditor {
     if (r) {
       for (const [e, t] of r.getRawEntries()) {
         const i = t instanceof Ref && s.get(t);
-        i ? i.push((t) => r.set(e, t)) : n.push(this.#Yt(t, !0, a).then((t) => r.set(e, t)));
+        i
+          ? i.push((t) => r.set(e, t))
+          : n.push(this.#Yt(t, !0, a).then((t) => r.set(e, t)));
       }
       await Promise.all(n);
     }
@@ -53156,8 +59008,10 @@ class PDFEditor {
   #Qt({ document: e, includePages: t, excludePages: a }) {
     if (!e) return [];
     let n, s, r, i;
-    for (const e of t || []) Array.isArray(e) ? (s ||= []).push(e) : (n ||= new Set()).add(e);
-    for (const e of a || []) Array.isArray(e) ? (i ||= []).push(e) : (r ||= new Set()).add(e);
+    for (const e of t || [])
+      Array.isArray(e) ? (s ||= []).push(e) : (n ||= new Set()).add(e);
+    for (const e of a || [])
+      Array.isArray(e) ? (i ||= []).push(e) : (r ||= new Set()).add(e);
     const o = [];
     for (let t = 0, a = e.numPages; t < a; t++) {
       if (r?.has(t)) continue;
@@ -53198,13 +59052,18 @@ class PDFEditor {
       for (const t of e) {
         if (!t.document || !t.pageIndices) continue;
         const e = this.#Qt(t).length;
-        if (t.pageIndices.length < e) throw new Error("extractPages: partial pageIndices cannot be combined with insertAfter entries.");
+        if (t.pageIndices.length < e)
+          throw new Error(
+            "extractPages: partial pageIndices cannot be combined with insertAfter entries.",
+          );
       }
     const n = a.length > 0 && e.some((e) => e.document && e.pageIndices);
     if (0 === t.length && n) {
       const t = e.slice();
       let n = -1;
-      for (const t of e) if (t.document && t.pageIndices) for (const e of t.pageIndices) e > n && (n = e);
+      for (const t of e)
+        if (t.document && t.pageIndices)
+          for (const e of t.pageIndices) e > n && (n = e);
       let s = 0;
       for (const { i: e, insertAfter: r, count: i } of a) {
         const a = Math.min(Math.max(r, -1) + s, n);
@@ -53250,7 +59109,8 @@ class PDFEditor {
     e.some((e) => void 0 !== e.insertAfter) && (e = this.#Zt(e));
     const s = [];
     let r = 0;
-    this.isSingleFile = 1 === e.length || e.every((t) => t.document === e[0].document);
+    this.isSingleFile =
+      1 === e.length || e.every((t) => t.document === e[0].document);
     this.hasSingleFile = 1 === e.length;
     const i = [];
     t &&
@@ -53258,9 +59118,18 @@ class PDFEditor {
         handler: a,
         task: n,
         newAnnotationsByPage: getNewAnnotationsMap(t),
-        imagesPromises: AnnotationFactory.generateImages(t.values(), this.xrefWrapper, !0),
+        imagesPromises: AnnotationFactory.generateImages(
+          t.values(),
+          this.xrefWrapper,
+          !0,
+        ),
       });
-    for (const { document: t, includePages: a, excludePages: n, pageIndices: o } of e) {
+    for (const {
+      document: t,
+      includePages: a,
+      excludePages: n,
+      pageIndices: o,
+    } of e) {
       if (!t) continue;
       o && (r = -1);
       const e = new DocumentData(t);
@@ -53294,7 +59163,8 @@ class PDFEditor {
     await Promise.all(s);
     this.#ra();
     this.#ia(i);
-    for (let e = 0, t = this.oldPages.length; e < t; e++) this.newPages[e] = await this.#oa(e, null);
+    for (let e = 0, t = this.oldPages.length; e < t; e++)
+      this.newPages[e] = await this.#oa(e, null);
     this.#la(i);
     await this.#fa(i);
     await this.#ca(i);
@@ -53306,7 +59176,14 @@ class PDFEditor {
     const {
       document: { pdfManager: t, xref: a },
     } = e;
-    await Promise.all([t.ensureCatalog("destinations").then((t) => (e.destinations = t)), t.ensureCatalog("rawPageLabels").then((t) => (e.pageLabels = t)), t.ensureCatalog("structTreeRoot").then((t) => (e.structTreeRoot = t)), t.ensureCatalog("acroForm").then((t) => (e.acroForm = t)), t.ensureCatalog("documentOutlineForEditor").then((t) => (e.outline = t)), t.ensureCatalog("rawEmbeddedFiles").then((t) => (e.embeddedFiles = t))]);
+    await Promise.all([
+      t.ensureCatalog("destinations").then((t) => (e.destinations = t)),
+      t.ensureCatalog("rawPageLabels").then((t) => (e.pageLabels = t)),
+      t.ensureCatalog("structTreeRoot").then((t) => (e.structTreeRoot = t)),
+      t.ensureCatalog("acroForm").then((t) => (e.acroForm = t)),
+      t.ensureCatalog("documentOutlineForEditor").then((t) => (e.outline = t)),
+      t.ensureCatalog("rawEmbeddedFiles").then((t) => (e.embeddedFiles = t)),
+    ]);
     const n = e.structTreeRoot;
     if (n) {
       const t = n.dict,
@@ -53332,7 +59209,12 @@ class PDFEditor {
   async #sa(e) {
     const {
       page: { xref: t, annotations: a },
-      documentData: { pagesMap: n, destinations: s, usedNamedDestinations: r, fieldToParent: i },
+      documentData: {
+        pagesMap: n,
+        destinations: s,
+        usedNamedDestinations: r,
+        fieldToParent: i,
+      },
     } = e;
     if (!a) return;
     const o = [];
@@ -53355,7 +59237,10 @@ class PDFEditor {
           }
           const o = t.get("A"),
             f = o instanceof Dict ? o.get("D") : t.get("Dest");
-          if (f && (!Array.isArray(f) || (f[0] instanceof Ref && !n.has(f[0])))) {
+          if (
+            f &&
+            (!Array.isArray(f) || (f[0] instanceof Ref && !n.has(f[0])))
+          ) {
             if ("string" == typeof f) {
               const t = stringToPDFString(f, !0);
               if (s.has(t)) {
@@ -53373,7 +59258,8 @@ class PDFEditor {
     e.documentData.hasSignatureAnnotations ||= c;
   }
   #ia(e) {
-    for (const { postponedRefCopies: t, pagesMap: a } of e) for (const e of a.keys()) t.put(e, []);
+    for (const { postponedRefCopies: t, pagesMap: a } of e)
+      for (const e of a.keys()) t.put(e, []);
   }
   #la(e) {
     for (const { postponedRefCopies: t, oldRefMapping: a } of e) {
@@ -53435,7 +59321,9 @@ class PDFEditor {
           }
           Array.isArray(f) && f.every((e) => null === e) && (f = null);
           if (!f) {
-            e.has("StructParent") ? e.delete("StructParent") : e.delete("StructParents");
+            e.has("StructParent")
+              ? e.delete("StructParent")
+              : e.delete("StructParents");
             return;
           }
           let h = r.get(l);
@@ -53444,12 +59332,22 @@ class PDFEditor {
             r.set(l, h);
             a.set(h, [s, f]);
           }
-          e.has("StructParent") ? e.set("StructParent", h) : e.set("StructParents", h);
+          e.has("StructParent")
+            ? e.set("StructParent", h)
+            : e.set("StructParents", h);
         },
         c,
       );
     }
-    const { structTreeKids: n, idTree: s, classMap: r, roleMap: i, namespaces: o, structTreeAF: l, structTreePronunciationLexicon: f } = this;
+    const {
+      structTreeKids: n,
+      idTree: s,
+      classMap: r,
+      roleMap: i,
+      namespaces: o,
+      structTreeAF: l,
+      structTreePronunciationLexicon: f,
+    } = this;
     for (const t of e) {
       const {
         document: { xref: e },
@@ -53583,7 +59481,11 @@ class PDFEditor {
     for (let t = 0, a = this.oldPages.length; t < a; t++) {
       const a = this.oldPages[t],
         {
-          documentData: { destinations: n, dedupNamedDestinations: s, usedNamedDestinations: r },
+          documentData: {
+            destinations: n,
+            dedupNamedDestinations: s,
+            usedNamedDestinations: r,
+          },
         } = a;
       let { pointingNamedDestinations: i } = a;
       if (i) {
@@ -53633,14 +59535,23 @@ class PDFEditor {
     }
   }
   #da(e, t) {
-    const { dest: a, action: n, url: s, unsafeUrl: r, attachment: i, setOCGState: o } = e;
+    const {
+      dest: a,
+      action: n,
+      url: s,
+      unsafeUrl: r,
+      attachment: i,
+      setOCGState: o,
+    } = e;
     if (n || s || r || i || o) return !0;
     if (!a) return !1;
     if ("string" == typeof a) {
       const e = t.dedupNamedDestinations.get(a) || a;
       return this.namedDestinations.has(e);
     }
-    return !!(Array.isArray(a) && a[0] instanceof Ref) && !!t.oldRefMapping.get(a[0]);
+    return (
+      !!(Array.isArray(a) && a[0] instanceof Ref) && !!t.oldRefMapping.get(a[0])
+    );
   }
   #ga(e, t) {
     const a = [];
@@ -53719,7 +59630,9 @@ class PDFEditor {
           await this.#ba(r, s);
           const i = (s.bold ? 2 : 0) | (s.italic ? 1 : 0);
           0 !== i && r.set("F", i);
-          !s.color || (0 === s.color[0] && 0 === s.color[1] && 0 === s.color[2]) || r.set("C", [s.color[0] / 255, s.color[1] / 255, s.color[2] / 255]);
+          !s.color ||
+            (0 === s.color[0] && 0 === s.color[1] && 0 === s.color[2]) ||
+            r.set("C", [s.color[0] / 255, s.color[1] / 255, s.color[2] / 255]);
         }
         return a;
       },
@@ -53737,7 +59650,9 @@ class PDFEditor {
     const t = this.fields;
     for (const a of e) {
       let e = a.acroForm?.get("Fields") || null;
-      !e && a.fieldToParent.size > 0 && (e = this.#va(a.fieldToParent, a.document.xref));
+      !e &&
+        a.fieldToParent.size > 0 &&
+        (e = this.#va(a.fieldToParent, a.document.xref));
       if (Array.isArray(e) && e.length > 0) {
         this.currentDocument = a;
         await this.#Sa(t, e);
@@ -53953,7 +59868,12 @@ class PDFEditor {
         for (const [e, a] of l.getRawEntries())
           if (!t.has(e)) {
             let n = a;
-            a instanceof Ref ? (n = await this.#Yt(a, !0, s)) : (a instanceof Dict || a instanceof BaseStream || Array.isArray(a)) && (n = await u.getOrInsertComputed(a, () => this.#$t(a, s)));
+            a instanceof Ref
+              ? (n = await this.#Yt(a, !0, s))
+              : (a instanceof Dict ||
+                  a instanceof BaseStream ||
+                  Array.isArray(a)) &&
+                (n = await u.getOrInsertComputed(a, () => this.#$t(a, s)));
             t.set(e, n);
           }
       }
@@ -53999,7 +59919,12 @@ class PDFEditor {
     }
   }
   async #oa(e) {
-    const { page: t, documentData: a, annotations: n, pointingNamedDestinations: s } = this.oldPages[e];
+    const {
+      page: t,
+      documentData: a,
+      annotations: n,
+      pointingNamedDestinations: s,
+    } = this.oldPages[e];
     this.currentDocument = a;
     const { dedupNamedDestinations: r, oldRefMapping: i } = a,
       { xref: o, rotate: l, mediaBox: f, resources: c, ref: h } = t,
@@ -54011,7 +59936,19 @@ class PDFEditor {
         const t = r.get(e) || e;
         this.namedDestinations.get(t)[0] = u;
       }
-    for (const e of ["Rotate", "MediaBox", "CropBox", "BleedBox", "TrimBox", "ArtBox", "Resources", "Annots", "Parent", "UserUnit"]) m.delete(e);
+    for (const e of [
+      "Rotate",
+      "MediaBox",
+      "CropBox",
+      "BleedBox",
+      "TrimBox",
+      "ArtBox",
+      "Resources",
+      "Annots",
+      "Parent",
+      "UserUnit",
+    ])
+      m.delete(e);
     const p = this.newRefCount;
     await this.#Yt(m, !1, o);
     m.set("Rotate", l);
@@ -54033,7 +59970,14 @@ class PDFEditor {
     if (b) {
       const { handler: e, task: a, imagesPromises: n } = this.#Vt,
         s = new RefSetCache(),
-        r = await AnnotationFactory.saveNewAnnotations(t.createAnnotationEvaluator(e), this.xrefWrapper, a, b, n, s);
+        r = await AnnotationFactory.saveNewAnnotations(
+          t.createAnnotationEvaluator(e),
+          this.xrefWrapper,
+          a,
+          b,
+          n,
+          s,
+        );
       for (const [e, { data: t }] of s.items()) this.xref[e.num] = t;
       g ||= [];
       for (const { ref: e } of r.annotations) g.push(e);
@@ -54083,7 +60027,9 @@ class PDFEditor {
     }
   }
   #Ca(e, t) {
-    const a = e.sort(t ? ([e], [t]) => e.localeCompare(t) : ([e], [t]) => e - t),
+    const a = e.sort(
+        t ? ([e], [t]) => e.localeCompare(t) : ([e], [t]) => e - t,
+      ),
       [n, s] = this.newDict,
       r = [{ dict: s, entries: a, isRoot: !0 }],
       i = t ? "Names" : "Nums";
@@ -54149,7 +60095,10 @@ class PDFEditor {
         [this.namesRef, this.namesDict] = this.newDict;
         this.rootDict.set("Names", this.namesRef);
       }
-      this.namesDict.set("EmbeddedFiles", this.#Ca(Array.from(e.entries()), !0));
+      this.namesDict.set(
+        "EmbeddedFiles",
+        this.#Ca(Array.from(e.entries()), !0),
+      );
     }
   }
   #Ta() {
@@ -54224,7 +60173,8 @@ class PDFEditor {
     this.acroFormSigFlags > 0 && a.set("SigFlags", this.acroFormSigFlags);
     a.setIfArray("CO", this.acroFormCalculationOrder);
     a.setIfDict("DR", this.acroFormDefaultResources);
-    this.acroFormDefaultAppearance && a.set("DA", this.acroFormDefaultAppearance);
+    this.acroFormDefaultAppearance &&
+      a.set("DA", this.acroFormDefaultAppearance);
     this.acroFormQ > 0 && a.set("Q", this.acroFormQ);
   }
   async #Ha() {
@@ -54246,7 +60196,8 @@ class PDFEditor {
           xref: { trailer: t },
         } = this.oldPages[0].documentData.document,
         a = t.get("Info");
-      for (const [t, n] of a || []) "string" == typeof n && e.set(t, stringToPDFString(n));
+      for (const [t, n] of a || [])
+        "string" == typeof n && e.set(t, stringToPDFString(n));
     }
     e.delete("ModDate");
     e.set("CreationDate", getModificationDate());
@@ -54276,7 +60227,10 @@ class PDFEditor {
   async #Ma() {
     const e = new RefSetCache();
     e.put(Ref.get(0, 65535), { data: null });
-    for (let t = 1, a = this.xref.length; t < a; t++) this.objStreamRefs?.has(t) ? await this.#Na(Ref.get(t, 0), this.xref[t], e) : e.put(Ref.get(t, 0), { data: this.xref[t] });
+    for (let t = 1, a = this.xref.length; t < a; t++)
+      this.objStreamRefs?.has(t)
+        ? await this.#Na(Ref.get(t, 0), this.xref[t], e)
+        : e.put(Ref.get(t, 0), { data: this.xref[t] });
     return [e, this.newRef];
   }
   async #Na(e, t, a) {
@@ -54340,7 +60294,10 @@ class BasePDFStream {
     return this._fullReader?._loaded ?? 0;
   }
   getFullReader() {
-    assert(!this._fullReader, "BasePDFStream.getFullReader can only be called once.");
+    assert(
+      !this._fullReader,
+      "BasePDFStream.getFullReader can only be called once.",
+    );
     return (this._fullReader = new this.#Pa(this));
   }
   getRangeReader(e, t) {
@@ -54467,7 +60424,12 @@ class WorkerTask {
 }
 class WorkerMessageHandler {
   static {
-    "undefined" == typeof window && !e && "undefined" != typeof self && "function" == typeof self.postMessage && "onmessage" in self && this.initializeFromPort(self);
+    "undefined" == typeof window &&
+      !e &&
+      "undefined" != typeof self &&
+      "function" == typeof self.postMessage &&
+      "onmessage" in self &&
+      this.initializeFromPort(self);
   }
   static setup(e, t) {
     let a = !1;
@@ -54492,8 +60454,12 @@ class WorkerMessageHandler {
       i = getVerbosityLevel(),
       { docId: o, apiVersion: l } = e,
       f = "5.7.284";
-    if (l !== f) throw new Error(`The API version "${l}" does not match the Worker version "${f}".`);
-    const buildMsg = (e, t) => `The \`${e}.prototype\` contains unexpected enumerable property "${t}", thus breaking e.g. \`for...in\` iteration of ${e}s.`;
+    if (l !== f)
+      throw new Error(
+        `The API version "${l}" does not match the Worker version "${f}".`,
+      );
+    const buildMsg = (e, t) =>
+      `The \`${e}.prototype\` contains unexpected enumerable property "${t}", thus breaking e.g. \`for...in\` iteration of ${e}s.`;
     for (const e in {}) throw new Error(buildMsg("Object", e));
     for (const e in []) throw new Error(buildMsg("Array", e));
     const c = o + "_worker";
@@ -54521,7 +60487,10 @@ class WorkerMessageHandler {
         await a.ensureDoc("loadXfaResources", [h, e]);
         finishWorkerTask(e);
       }
-      const [n, s] = await Promise.all([a.ensureDoc("numPages"), a.ensureDoc("fingerprints")]);
+      const [n, s] = await Promise.all([
+        a.ensureDoc("numPages"),
+        a.ensureDoc("fingerprints"),
+      ]);
       return {
         numPages: n,
         fingerprints: s,
@@ -54563,7 +60532,15 @@ class WorkerMessageHandler {
         });
       }
       ensureNotTerminated();
-      (async function getPdfManager({ data: e, password: t, disableAutoFetch: a, rangeChunkSize: n, docBaseUrl: r, enableXfa: i, evaluatorOptions: l }) {
+      (async function getPdfManager({
+        data: e,
+        password: t,
+        disableAutoFetch: a,
+        rangeChunkSize: n,
+        docBaseUrl: r,
+        enableXfa: i,
+        evaluatorOptions: l,
+      }) {
         const f = {
           source: null,
           disableAutoFetch: a,
@@ -54610,7 +60587,8 @@ class WorkerMessageHandler {
             ensureNotTerminated();
             if (a) break;
             e += t.byteLength;
-            u.isStreamingSupported || h.send("DocProgress", { loaded: e, total: u.contentLength });
+            u.isStreamingSupported ||
+              h.send("DocProgress", { loaded: e, total: u.contentLength });
             g ? g.sendProgressiveData(t) : b.push(t);
           }
           if (!g) {
@@ -54640,7 +60618,12 @@ class WorkerMessageHandler {
     }
     h.on("GetPage", function (e) {
       return a.getPage(e.pageIndex).then(function (e) {
-        return Promise.all([a.ensure(e, "rotate"), a.ensure(e, "ref"), a.ensure(e, "userUnit"), a.ensure(e, "view")]).then(function ([e, t, a, n]) {
+        return Promise.all([
+          a.ensure(e, "rotate"),
+          a.ensure(e, "ref"),
+          a.ensure(e, "userUnit"),
+          a.ensure(e, "view"),
+        ]).then(function ([e, t, a, n]) {
           return {
             rotate: e,
             ref: t,
@@ -54685,27 +60668,40 @@ class WorkerMessageHandler {
     h.on("GetPageJSActions", function ({ pageIndex: e }) {
       return a.getPage(e).then((e) => a.ensure(e, "jsActions"));
     });
-    h.on("GetAnnotationsByType", async function ({ types: e, pageIndexesToSkip: t }) {
-      const [n, s] = await Promise.all([a.ensureDoc("numPages"), a.ensureDoc("annotationGlobals")]);
-      if (!s) return null;
-      const r = [],
-        i = [];
-      let o = null;
-      try {
-        for (let l = 0, f = n; l < f; l++)
-          if (!t?.has(l)) {
-            if (!o) {
-              o = new WorkerTask("GetAnnotationsByType");
-              startWorkerTask(o);
+    h.on(
+      "GetAnnotationsByType",
+      async function ({ types: e, pageIndexesToSkip: t }) {
+        const [n, s] = await Promise.all([
+          a.ensureDoc("numPages"),
+          a.ensureDoc("annotationGlobals"),
+        ]);
+        if (!s) return null;
+        const r = [],
+          i = [];
+        let o = null;
+        try {
+          for (let l = 0, f = n; l < f; l++)
+            if (!t?.has(l)) {
+              if (!o) {
+                o = new WorkerTask("GetAnnotationsByType");
+                startWorkerTask(o);
+              }
+              r.push(
+                a
+                  .getPage(l)
+                  .then(
+                    async (t) =>
+                      (t && t.collectAnnotationsByType(h, o, e, i, s)) || [],
+                  ),
+              );
             }
-            r.push(a.getPage(l).then(async (t) => (t && t.collectAnnotationsByType(h, o, e, i, s)) || []));
-          }
-        await Promise.all(r);
-        return (await Promise.all(i)).filter((e) => !!e);
-      } finally {
-        o && finishWorkerTask(o);
-      }
-    });
+          await Promise.all(r);
+          return (await Promise.all(i)).filter((e) => !!e);
+        } finally {
+          o && finishWorkerTask(o);
+        }
+      },
+    );
     h.on("GetOutline", function (e) {
       return a.ensureCatalog("documentOutline");
     });
@@ -54716,7 +60712,11 @@ class WorkerMessageHandler {
       return a.ensureCatalog("permissions");
     });
     h.on("GetMetadata", function (e) {
-      return Promise.all([a.ensureDoc("documentInfo"), a.ensureCatalog("metadata"), a.ensureCatalog("hasStructTree")]);
+      return Promise.all([
+        a.ensureDoc("documentInfo"),
+        a.ensureCatalog("metadata"),
+        a.ensureCatalog("hasStructTree"),
+      ]);
     });
     h.on("GetMarkInfo", function (e) {
       return a.ensureCatalog("markInfo");
@@ -54749,194 +60749,224 @@ class WorkerMessageHandler {
     h.on("GetCalculationOrderIds", function (e) {
       return a.ensureDoc("calculationOrderIds");
     });
-    h.on("ExtractPages", async function ({ pageInfos: e, annotationStorage: t }) {
-      if (!e) {
-        warn("extractPages: nothing to extract.");
-        return null;
-      }
-      Array.isArray(e) || (e = [e]);
-      let n,
-        s = 0;
-      for (const t of e)
-        if (null === t.document) t.document = a.pdfDocument;
-        else if (ArrayBuffer.isView(t.document)) {
-          const e = new LocalPdfManager({
-            source: t.document,
-            docId: `${o}_extractPages_${s++}`,
-            handler: h,
-            password: t.password ?? null,
-            evaluatorOptions: Object.assign({}, a.evaluatorOptions),
-          });
-          let n = !1,
-            r = !0;
-          for (;;)
-            try {
-              await e.requestLoadedStream();
-              await e.ensureDoc("checkHeader");
-              await e.ensureDoc("parseStartXRef");
-              await e.ensureDoc("parse", [n]);
-              break;
-            } catch (t) {
-              if (t instanceof XRefParseException) {
-                if (!1 === n) {
-                  n = !0;
-                  continue;
-                }
-                r = !1;
-                warn("extractPages: XRefParseException.");
-              } else if (t instanceof PasswordException) {
-                const a = new WorkerTask(`PasswordException: response ${t.code}`);
-                startWorkerTask(a);
-                try {
-                  const { password: a } = await h.sendWithPromise("PasswordRequest", t);
-                  e.updatePassword(a);
-                } catch {
+    h.on(
+      "ExtractPages",
+      async function ({ pageInfos: e, annotationStorage: t }) {
+        if (!e) {
+          warn("extractPages: nothing to extract.");
+          return null;
+        }
+        Array.isArray(e) || (e = [e]);
+        let n,
+          s = 0;
+        for (const t of e)
+          if (null === t.document) t.document = a.pdfDocument;
+          else if (ArrayBuffer.isView(t.document)) {
+            const e = new LocalPdfManager({
+              source: t.document,
+              docId: `${o}_extractPages_${s++}`,
+              handler: h,
+              password: t.password ?? null,
+              evaluatorOptions: Object.assign({}, a.evaluatorOptions),
+            });
+            let n = !1,
+              r = !0;
+            for (;;)
+              try {
+                await e.requestLoadedStream();
+                await e.ensureDoc("checkHeader");
+                await e.ensureDoc("parseStartXRef");
+                await e.ensureDoc("parse", [n]);
+                break;
+              } catch (t) {
+                if (t instanceof XRefParseException) {
+                  if (!1 === n) {
+                    n = !0;
+                    continue;
+                  }
                   r = !1;
-                  warn("extractPages: invalid password.");
-                } finally {
-                  finishWorkerTask(a);
+                  warn("extractPages: XRefParseException.");
+                } else if (t instanceof PasswordException) {
+                  const a = new WorkerTask(
+                    `PasswordException: response ${t.code}`,
+                  );
+                  startWorkerTask(a);
+                  try {
+                    const { password: a } = await h.sendWithPromise(
+                      "PasswordRequest",
+                      t,
+                    );
+                    e.updatePassword(a);
+                  } catch {
+                    r = !1;
+                    warn("extractPages: invalid password.");
+                  } finally {
+                    finishWorkerTask(a);
+                  }
+                } else {
+                  r = !1;
+                  warn("extractPages: invalid document.");
                 }
-              } else {
-                r = !1;
-                warn("extractPages: invalid document.");
+                if (!r) break;
               }
-              if (!r) break;
-            }
-          r || (t.document = null);
-          if (await e.ensureDoc("isPureXfa")) {
-            t.document = null;
-            warn("extractPages does not support pure XFA documents.");
-          } else t.document = e.pdfDocument;
-        } else warn("extractPages: invalid document.");
-      try {
-        const a = new PDFEditor();
-        n = new WorkerTask(`ExtractPages: ${e.length} page(s)`);
-        startWorkerTask(n);
-        return await a.extractPages(e, t, h, n);
-      } catch (e) {
-        warn(`extractPages: "${e}".`);
-        return null;
-      } finally {
-        n && finishWorkerTask(n);
-      }
-    });
-    h.on("SaveDocument", async function ({ isPureXfa: e, numPages: t, annotationStorage: n, filename: s }) {
-      const r = [a.requestLoadedStream(), a.ensureCatalog("acroForm"), a.ensureCatalog("acroFormRef"), a.ensureDoc("startXRef"), a.ensureDoc("xref"), a.ensureCatalog("structTreeRoot")],
-        i = new RefSetCache(),
-        o = [],
-        l = e ? null : getNewAnnotationsMap(n),
-        [f, c, u, m, p, d] = await Promise.all(r),
-        g = p.trailer.getRaw("Root") || null;
-      let b;
-      if (l) {
-        d
-          ? (await d.canUpdateStructTree({
-              pdfManager: a,
-              newAnnotationsByPage: l,
-            })) && (b = d)
-          : (await StructTreeRoot.canCreateStructureTree({
-              catalogRef: g,
-              pdfManager: a,
-              newAnnotationsByPage: l,
-            })) && (b = null);
-        const e = AnnotationFactory.generateImages(n.values(), p, a.evaluatorOptions.isOffscreenCanvasSupported),
-          t = void 0 === b ? o : [];
-        for (const [n, s] of l)
-          t.push(
-            a.getPage(n).then((t) => {
-              const a = new WorkerTask(`Save (editor): page ${n}`);
-              startWorkerTask(a);
-              return t.saveNewAnnotations(h, a, s, e, i).finally(function () {
-                finishWorkerTask(a);
-              });
-            }),
-          );
-        null === b
-          ? o.push(
-              Promise.all(t).then(async () => {
-                await StructTreeRoot.createStructureTree({
-                  newAnnotationsByPage: l,
-                  xref: p,
-                  catalogRef: g,
-                  pdfManager: a,
-                  changes: i,
-                });
-              }),
-            )
-          : b &&
-            o.push(
-              Promise.all(t).then(async () => {
-                await b.updateStructureTree({
-                  newAnnotationsByPage: l,
-                  pdfManager: a,
-                  changes: i,
+            r || (t.document = null);
+            if (await e.ensureDoc("isPureXfa")) {
+              t.document = null;
+              warn("extractPages does not support pure XFA documents.");
+            } else t.document = e.pdfDocument;
+          } else warn("extractPages: invalid document.");
+        try {
+          const a = new PDFEditor();
+          n = new WorkerTask(`ExtractPages: ${e.length} page(s)`);
+          startWorkerTask(n);
+          return await a.extractPages(e, t, h, n);
+        } catch (e) {
+          warn(`extractPages: "${e}".`);
+          return null;
+        } finally {
+          n && finishWorkerTask(n);
+        }
+      },
+    );
+    h.on(
+      "SaveDocument",
+      async function ({
+        isPureXfa: e,
+        numPages: t,
+        annotationStorage: n,
+        filename: s,
+      }) {
+        const r = [
+            a.requestLoadedStream(),
+            a.ensureCatalog("acroForm"),
+            a.ensureCatalog("acroFormRef"),
+            a.ensureDoc("startXRef"),
+            a.ensureDoc("xref"),
+            a.ensureCatalog("structTreeRoot"),
+          ],
+          i = new RefSetCache(),
+          o = [],
+          l = e ? null : getNewAnnotationsMap(n),
+          [f, c, u, m, p, d] = await Promise.all(r),
+          g = p.trailer.getRaw("Root") || null;
+        let b;
+        if (l) {
+          d
+            ? (await d.canUpdateStructTree({
+                pdfManager: a,
+                newAnnotationsByPage: l,
+              })) && (b = d)
+            : (await StructTreeRoot.canCreateStructureTree({
+                catalogRef: g,
+                pdfManager: a,
+                newAnnotationsByPage: l,
+              })) && (b = null);
+          const e = AnnotationFactory.generateImages(
+              n.values(),
+              p,
+              a.evaluatorOptions.isOffscreenCanvasSupported,
+            ),
+            t = void 0 === b ? o : [];
+          for (const [n, s] of l)
+            t.push(
+              a.getPage(n).then((t) => {
+                const a = new WorkerTask(`Save (editor): page ${n}`);
+                startWorkerTask(a);
+                return t.saveNewAnnotations(h, a, s, e, i).finally(function () {
+                  finishWorkerTask(a);
                 });
               }),
             );
-      }
-      if (e) o.push(a.ensureDoc("serializeXfaData", [n]));
-      else
-        for (let e = 0; e < t; e++)
-          o.push(
-            a.getPage(e).then(function (t) {
-              const a = new WorkerTask(`Save: page ${e}`);
-              startWorkerTask(a);
-              return t.save(h, a, n, i).finally(function () {
-                finishWorkerTask(a);
-              });
-            }),
-          );
-      const w = await Promise.all(o);
-      let j = null;
-      if (e) {
-        j = w[0];
-        if (!j) return f.bytes;
-      } else if (0 === i.size) return f.bytes;
-      const k = u && c instanceof Dict && i.values().some((e) => e.needAppearances),
-        y = (c instanceof Dict && c.get("XFA")) || null;
-      let q = null,
-        v = !1;
-      if (Array.isArray(y)) {
-        for (let e = 0, t = y.length; e < t; e += 2)
-          if ("datasets" === y[e]) {
-            q = y[e + 1];
-            v = !0;
-          }
-        null === q && (q = p.getNewTemporaryRef());
-      } else y && warn("Unsupported XFA type.");
-      let S = Object.create(null);
-      if (p.trailer) {
-        const e = new Map(),
-          t = p.trailer.get("Info") || null;
-        if (t instanceof Dict) for (const [a, n] of t) "string" == typeof n && e.set(a, stringToPDFString(n));
-        S = {
-          rootRef: g,
-          encryptRef: p.trailer.getRaw("Encrypt") || null,
-          newRef: p.getNewTemporaryRef(),
-          infoRef: p.trailer.getRaw("Info") || null,
-          infoMap: e,
-          fileIds: p.trailer.get("ID") || null,
-          startXRef: m,
-          filename: s,
-        };
-      }
-      return incrementalUpdate({
-        originalData: f.bytes,
-        xrefInfo: S,
-        changes: i,
-        xref: p,
-        hasXfa: !!y,
-        xfaDatasetsRef: q,
-        hasXfaDatasetsEntry: v,
-        needAppearances: k,
-        acroFormRef: u,
-        acroForm: c,
-        xfaData: j,
-        useXrefStream: isDict(p.topDict, "XRef"),
-      }).finally(() => {
-        p.resetNewTemporaryRef();
-      });
-    });
+          null === b
+            ? o.push(
+                Promise.all(t).then(async () => {
+                  await StructTreeRoot.createStructureTree({
+                    newAnnotationsByPage: l,
+                    xref: p,
+                    catalogRef: g,
+                    pdfManager: a,
+                    changes: i,
+                  });
+                }),
+              )
+            : b &&
+              o.push(
+                Promise.all(t).then(async () => {
+                  await b.updateStructureTree({
+                    newAnnotationsByPage: l,
+                    pdfManager: a,
+                    changes: i,
+                  });
+                }),
+              );
+        }
+        if (e) o.push(a.ensureDoc("serializeXfaData", [n]));
+        else
+          for (let e = 0; e < t; e++)
+            o.push(
+              a.getPage(e).then(function (t) {
+                const a = new WorkerTask(`Save: page ${e}`);
+                startWorkerTask(a);
+                return t.save(h, a, n, i).finally(function () {
+                  finishWorkerTask(a);
+                });
+              }),
+            );
+        const w = await Promise.all(o);
+        let j = null;
+        if (e) {
+          j = w[0];
+          if (!j) return f.bytes;
+        } else if (0 === i.size) return f.bytes;
+        const k =
+            u && c instanceof Dict && i.values().some((e) => e.needAppearances),
+          y = (c instanceof Dict && c.get("XFA")) || null;
+        let q = null,
+          v = !1;
+        if (Array.isArray(y)) {
+          for (let e = 0, t = y.length; e < t; e += 2)
+            if ("datasets" === y[e]) {
+              q = y[e + 1];
+              v = !0;
+            }
+          null === q && (q = p.getNewTemporaryRef());
+        } else y && warn("Unsupported XFA type.");
+        let S = Object.create(null);
+        if (p.trailer) {
+          const e = new Map(),
+            t = p.trailer.get("Info") || null;
+          if (t instanceof Dict)
+            for (const [a, n] of t)
+              "string" == typeof n && e.set(a, stringToPDFString(n));
+          S = {
+            rootRef: g,
+            encryptRef: p.trailer.getRaw("Encrypt") || null,
+            newRef: p.getNewTemporaryRef(),
+            infoRef: p.trailer.getRaw("Info") || null,
+            infoMap: e,
+            fileIds: p.trailer.get("ID") || null,
+            startXRef: m,
+            filename: s,
+          };
+        }
+        return incrementalUpdate({
+          originalData: f.bytes,
+          xrefInfo: S,
+          changes: i,
+          xref: p,
+          hasXfa: !!y,
+          xfaDatasetsRef: q,
+          hasXfaDatasetsEntry: v,
+          needAppearances: k,
+          acroFormRef: u,
+          acroForm: c,
+          xfaData: j,
+          useXrefStream: isDict(p.topDict, "XRef"),
+        }).finally(() => {
+          p.resetNewTemporaryRef();
+        });
+      },
+    );
     h.on("GetOperatorList", function (e, t) {
       const { pageId: n, pageIndex: s } = e;
       a.getPage(n).then(function (a) {
@@ -54955,7 +60985,10 @@ class WorkerMessageHandler {
         }).then(
           function (e) {
             finishWorkerTask(n);
-            r && info(`page=${s + 1} - getOperatorList: time=${Date.now() - r}ms, len=${e.length}`);
+            r &&
+              info(
+                `page=${s + 1} - getOperatorList: time=${Date.now() - r}ms, len=${e.length}`,
+              );
             t.close();
           },
           function (e) {
@@ -54966,7 +60999,12 @@ class WorkerMessageHandler {
       });
     });
     h.on("GetTextContent", function (e, t) {
-      const { pageId: n, pageIndex: s, includeMarkedContent: r, disableNormalization: o } = e;
+      const {
+        pageId: n,
+        pageIndex: s,
+        includeMarkedContent: r,
+        disableNormalization: o,
+      } = e;
       a.getPage(n).then(function (e) {
         const a = new WorkerTask("GetTextContent: page " + s);
         startWorkerTask(a);
@@ -54980,7 +61018,12 @@ class WorkerMessageHandler {
         }).then(
           function () {
             finishWorkerTask(a);
-            n && info(`page=${s + 1} - getTextContent: time=` + (Date.now() - n) + "ms");
+            n &&
+              info(
+                `page=${s + 1} - getTextContent: time=` +
+                  (Date.now() - n) +
+                  "ms",
+              );
             t.close();
           },
           function (e) {

@@ -12,7 +12,12 @@ const VECTORA_API_URL = process.env.VECTORA_API_URL ?? "http://localhost:8080";
 const auth = new Hono();
 
 /** Proxy genérico que repassa headers de cookie em ambas as direções. */
-async function proxyAuth(path: string, method: "GET" | "POST" | "DELETE", body: unknown | null, incomingCookies: string) {
+async function proxyAuth(
+  path: string,
+  method: "GET" | "POST" | "DELETE",
+  body: unknown | null,
+  incomingCookies: string,
+) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -42,70 +47,151 @@ auth.get("/has-users", async (c) => {
   return c.json(await res.json(), res.status as 200);
 });
 
+auth.get("/invite/:token", async (c) => {
+  const token = c.req.param("token");
+  const res = await proxyAuth(`/auth/invite/${token}`, "GET", null, "");
+  return c.json(await res.json(), res.status as 200);
+});
+
 auth.post("/signup", async (c) => {
   const body = await c.req.json();
-  const res = await proxyAuth("/auth/signup", "POST", body, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/signup",
+    "POST",
+    body,
+    c.req.header("Cookie") ?? "",
+  );
   copySetCookie(res, c);
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.post("/signin", async (c) => {
   const body = await c.req.json();
-  const res = await proxyAuth("/auth/signin", "POST", body, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/signin",
+    "POST",
+    body,
+    c.req.header("Cookie") ?? "",
+  );
   copySetCookie(res, c);
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.post("/refresh", async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const res = await proxyAuth("/auth/refresh", "POST", body, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/refresh",
+    "POST",
+    body,
+    c.req.header("Cookie") ?? "",
+  );
   copySetCookie(res, c);
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.post("/signout", async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const res = await proxyAuth("/auth/signout", "POST", body, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/signout",
+    "POST",
+    body,
+    c.req.header("Cookie") ?? "",
+  );
   copySetCookie(res, c);
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.get("/me", async (c) => {
-  const res = await proxyAuth("/auth/me", "GET", null, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/me",
+    "GET",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+auth.get("/ws-token", async (c) => {
+  const res = await proxyAuth(
+    "/auth/ws-token",
+    "GET",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+auth.get("/usage", async (c) => {
+  const res = await proxyAuth(
+    "/auth/usage",
+    "GET",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.post("/change-password", async (c) => {
   const body = await c.req.json();
-  const res = await proxyAuth("/auth/change-password", "POST", body, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/change-password",
+    "POST",
+    body,
+    c.req.header("Cookie") ?? "",
+  );
   copySetCookie(res, c);
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.get("/envs", async (c) => {
-  const res = await proxyAuth("/auth/envs", "GET", null, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/envs",
+    "GET",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.post("/envs", async (c) => {
   const body = await c.req.json();
-  const res = await proxyAuth("/auth/envs", "POST", body, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/envs",
+    "POST",
+    body,
+    c.req.header("Cookie") ?? "",
+  );
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.delete("/envs/:key", async (c) => {
   const key = c.req.param("key");
-  const res = await proxyAuth(`/auth/envs/${key}`, "DELETE", null, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    `/auth/envs/${key}`,
+    "DELETE",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.get("/users", async (c) => {
-  const res = await proxyAuth("/auth/users", "GET", null, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/users",
+    "GET",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
   return c.json(await res.json(), res.status as 200);
 });
 
 auth.get("/audit", async (c) => {
-  const res = await proxyAuth("/auth/audit", "GET", null, c.req.header("Cookie") ?? "");
+  const res = await proxyAuth(
+    "/auth/audit",
+    "GET",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
   return c.json(await res.json(), res.status as 200);
 });
 

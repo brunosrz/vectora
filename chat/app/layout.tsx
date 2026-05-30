@@ -63,7 +63,10 @@ analytics.page();
           />
         )}
       </head>
-      <body className={`${inter.variable} ${inconsolata.variable} antialiased`} suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${inconsolata.variable} antialiased`}
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           <I18nProvider>
             <AuthProvider>

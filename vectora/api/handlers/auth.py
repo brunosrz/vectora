@@ -27,6 +27,7 @@ from vectora.api.schemas import (
     ChangePasswordRequest,
     EnvOverrideRequest,
     HasUsersResponse,
+    InviteValidationResponse,
     RefreshRequest,
     SigninRequest,
     SignoutRequest,
@@ -99,34 +100,55 @@ async def has_users_endpoint() -> HasUsersResponse:
     return HasUsersResponse(exists=await has_users())
 
 
+@router.get("/invite/{token}", response_model=InviteValidationResponse)
+async def validate_invite_endpoint(token: str) -> InviteValidationResponse:
+    """Valida um token de convite para a página de signup pré-verificar."""
+    from vectora.services import auth as auth_svc
+
+    info = await auth_svc.validate_invite(token)
+    if info is None:
+        return InviteValidationResponse(valid=False)
+    return InviteValidationResponse(valid=True, email=info["email"], role=info["role"])
+
+
 @router.post("/signup", response_model=TokenResponse)
 async def signup_endpoint(
     body: SignupRequest,
     request: Request,
     response: Response,
 ) -> TokenResponse:
-    """Cria conta. O primeiro usuário vira root; os demais viram member.
+    """Cria conta.
+
+    Camadas de autorização:
+    1. Sem usuários ainda → signup do root permitido.
+    2. Token de convite válido → permitido com a role do convite (consumido).
+    3. Caso contrário → 403.
 
     Retorna tokens via JSON e também os grava em cookies httpOnly.
     """
     from vectora.services import auth as auth_svc
 
-    # Bloqueia signup público se já houver usuários e a config não permitir
+    invite_role = None
+    invite_token = body.invite_token.strip()
+
     if await auth_svc.has_users():
-        # Futuramente: ler allow_public_signup de config.toml
-        # Por ora: bloqueia signup público após primeiro usuário
-        # (admin/root pode criar usuários via POST /auth/users)
-        raise HTTPException(
-            status_code=403,
-            detail="Signup público desabilitado. Contate o administrador.",
-        )
+        invite = await auth_svc.validate_invite(invite_token) if invite_token else None
+        if invite is None:
+            raise HTTPException(
+                status_code=403,
+                detail="Signup público desabilitado. Contate o administrador.",
+            )
+        invite_role = invite["role"]
 
     try:
         user, access_token, refresh_token = await auth_svc.signup(
-            body.email, body.password
+            body.email, body.password, role=invite_role
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if invite_token:
+        await auth_svc.consume_invite(invite_token, user.id)
 
     _set_auth_cookies(response, access_token, refresh_token)
     return TokenResponse(
@@ -211,6 +233,39 @@ async def me_endpoint(request: Request) -> UserResponse:
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
     return UserResponse.from_user(user)
+
+
+@router.get("/usage")
+async def get_usage(request: Request) -> dict:
+    """Consumo de requisições do usuário na janela de rate limit (R5)."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Não autenticado.")
+    from vectora.services.usage import usage_tracker
+
+    return usage_tracker.usage(user.id)
+
+
+@router.get("/ws-token")
+async def get_ws_token(request: Request) -> dict:
+    """Devolve o access token (do cookie) para uso em WebSockets cross-origin.
+
+    O cookie é httpOnly — o JS do browser não consegue lê-lo. Para conectar ao
+    WebSocket do terminal, expomos o token via JSON para que o front passe na
+    query string da conexão (cookies não trafegam em WS cross-origin).
+    """
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Não autenticado.")
+    token = request.cookies.get(_ACCESS_COOKIE, "")
+    if not token:
+        # Sem cookie: pode ter vindo via Bearer header — devolve o que veio.
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            token = auth[7:].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Sem token disponível.")
+    return {"token": token}
 
 
 @router.post("/change-password")

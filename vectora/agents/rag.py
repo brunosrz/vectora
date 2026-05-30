@@ -118,7 +118,7 @@ async def curate_workspace_knowledge(workspace_id: str) -> str:
         llm = _get_curator_llm()
         from langchain_core.messages import HumanMessage, SystemMessage
 
-        result = await llm.ainvoke(  # type: ignore[attr-defined]
+        result = await llm.ainvoke(  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             [
                 SystemMessage(
                     content=(
@@ -190,7 +190,7 @@ async def _sample_recent_docs(workspace_id: str, max_docs: int = 20) -> list[dic
                     continue
                 db = await lancedb.connect_async(str(settings.lancedb_dir))
                 table = await db.open_table(coll_name)
-                df = await asyncio.to_thread(lambda t=table: t.to_pandas().head(5))
+                df = await asyncio.to_thread(lambda t=table: t.to_pandas().head(5))  # ty: ignore[unresolved-attribute]
                 for _, row in df.iterrows():
                     try:
                         meta = json.loads(row.get("metadata", "{}") or "{}")

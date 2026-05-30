@@ -7,8 +7,18 @@
 
 import { memo } from "react";
 
-function SkeletonLine({ width, height = "h-3" }: { width: string; height?: string }) {
-  return <div className={`${height} ${width} rounded-full bg-muted/60 animate-pulse`} />;
+function SkeletonLine({
+  width,
+  height = "h-3",
+}: {
+  width: string;
+  height?: string;
+}) {
+  return (
+    <div
+      className={`${height} ${width} rounded-full bg-muted/60 animate-pulse`}
+    />
+  );
 }
 
 /** Skeleton de uma mensagem do usuário (alinhada à direita) */

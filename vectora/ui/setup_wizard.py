@@ -313,7 +313,7 @@ async def _test_connection(
         console.print(
             Panel(
                 f"[green]✓ Conexão bem-sucedida![/green]\n"
-                f"[cyan]Resposta: {response.content}[/cyan]",  # ty: ignore[unresolved-attribute]
+                f"[cyan]Resposta: {response.content}[/cyan]",
                 title="[bold green]Teste de Conexão[/bold green]",
                 style="green",
                 expand=False,

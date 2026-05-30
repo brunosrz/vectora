@@ -81,9 +81,11 @@ def _row_to_thread(row: tuple) -> Thread:
     """Converte uma linha da tabela vectora_sessions em Thread."""
     thread_id, _, created_at, last_activity, _, extra_json = row
     title = ""
+    workspace_id = ""
     try:
         extra = json.loads(extra_json or "{}")
         title = extra.get("title", "")
+        workspace_id = extra.get("workspace_id", "")
     except Exception:
         pass
     return Thread(
@@ -91,6 +93,7 @@ def _row_to_thread(row: tuple) -> Thread:
         created_at=created_at,
         updated_at=last_activity,
         title=title,
+        workspace_id=workspace_id,
     )
 
 
@@ -99,18 +102,37 @@ def _row_to_thread(row: tuple) -> Thread:
 # ---------------------------------------------------------------------------
 
 
-async def _upsert_session(thread_id: str, title: str = "") -> None:
+async def _upsert_session(
+    thread_id: str, title: str | None = None, workspace_id: str | None = None
+) -> None:
     """Garante que thread_id existe em vectora_sessions (cria ou atualiza).
 
     Chamado por stream_chat() para que threads criadas via chat normal
     apareçam em ListThreads após reinicialização do servidor.
 
-    O campo extra é preservado em updates: se já houver outros dados em extra,
-    apenas o title é sobrescrito.
+    O campo extra é mesclado: title e workspace_id só são sobrescritos quando
+    fornecidos, preservando os demais dados já gravados.
     """
     db = await _get_db()
     now = datetime.now(UTC).isoformat()
-    extra = json.dumps({"title": title})
+
+    async with db.execute(
+        "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+        (thread_id,),
+    ) as cur:
+        row = await cur.fetchone()
+    extra: dict[str, Any] = {}
+    if row:
+        try:
+            extra = json.loads(row[0] or "{}")
+        except Exception:
+            extra = {}
+    if title is not None:
+        extra["title"] = title
+    if workspace_id is not None:
+        extra["workspace_id"] = workspace_id
+    extra_json = json.dumps(extra)
+
     # ON CONFLICT preserva created_at original; atualiza last_activity e extra.
     await db.execute(
         """
@@ -121,7 +143,7 @@ async def _upsert_session(thread_id: str, title: str = "") -> None:
             last_activity = excluded.last_activity,
             extra        = excluded.extra
         """,
-        (thread_id, now, now, extra),
+        (thread_id, now, now, extra_json),
     )
     await db.commit()
 

@@ -238,6 +238,16 @@ async def _ensure_schema(db: Any) -> None:
             success       INTEGER NOT NULL DEFAULT 1,
             metadata_json TEXT    NOT NULL DEFAULT '{}'
         );
+
+        CREATE TABLE IF NOT EXISTS invites (
+            token_hash  TEXT    PRIMARY KEY,
+            email       TEXT,
+            role        TEXT    NOT NULL DEFAULT 'member',
+            created_by  TEXT,
+            expires_at  TEXT    NOT NULL,
+            used_at     TEXT,
+            created_at  TEXT    NOT NULL
+        );
     """)
     await db.commit()
 
@@ -282,10 +292,13 @@ async def has_users() -> bool:
     return await _count_users(db) > 0
 
 
-async def signup(email: str, password: str) -> tuple[User, str, str]:
+async def signup(
+    email: str, password: str, *, role: Role | None = None
+) -> tuple[User, str, str]:
     """Cria um novo usuário.
 
-    O primeiro usuário vira root automaticamente. Os demais viram member.
+    O primeiro usuário vira root automaticamente. Quando ``role`` é informado
+    (signup via convite), usa a role do convite; caso contrário, member.
 
     Returns:
         (user, access_token, refresh_token)
@@ -298,7 +311,10 @@ async def signup(email: str, password: str) -> tuple[User, str, str]:
 
     db = await _get_db()
     count = await _count_users(db)
-    role: Role = "root" if count == 0 else "member"
+    if count == 0:
+        role = "root"
+    elif role is None:
+        role = "member"
 
     now = datetime.now(UTC).isoformat()
     user_id = str(uuid.uuid4())
@@ -566,6 +582,119 @@ async def delete_user(user_id: str) -> None:
     await db.execute("DELETE FROM refresh_tokens WHERE user_id = ?", (user_id,))
     await db.execute("DELETE FROM users WHERE id = ?", (user_id,))
     await db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Convites de signup (Q8)
+# ---------------------------------------------------------------------------
+
+
+def _hash_token(token: str) -> str:
+    """SHA-256 de um token opaco — armazenado no banco."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+async def create_invite(
+    created_by: str,
+    *,
+    role: Role = "member",
+    email: str | None = None,
+    ttl_hours: int = 24,
+) -> tuple[str, str]:
+    """Cria um convite de signup e retorna (token, expires_at).
+
+    O token é opaco; apenas seu hash SHA-256 é persistido.
+    """
+    token = secrets.token_hex(32)
+    now = datetime.now(UTC)
+    expires_at = (now + timedelta(hours=ttl_hours)).isoformat()
+    db = await _get_db()
+    await db.execute(
+        """INSERT INTO invites (token_hash, email, role, created_by, expires_at,
+           created_at) VALUES (?, ?, ?, ?, ?, ?)""",
+        (
+            _hash_token(token),
+            (email.lower().strip() if email else None),
+            role,
+            created_by,
+            expires_at,
+            now.isoformat(),
+        ),
+    )
+    await db.commit()
+    await _write_audit(
+        db, created_by, "invite_create", success=True, metadata={"role": role}
+    )
+    return token, expires_at
+
+
+async def validate_invite(token: str) -> dict[str, Any] | None:
+    """Valida um convite. Retorna {email, role, expires_at} se utilizável.
+
+    Retorna None se o token for inexistente, já usado ou expirado.
+    """
+    db = await _get_db()
+    now_str = datetime.now(UTC).isoformat()
+    async with db.execute(
+        "SELECT * FROM invites WHERE token_hash = ?", (_hash_token(token),)
+    ) as cur:
+        row = await cur.fetchone()
+    if row is None or row["used_at"] is not None or row["expires_at"] < now_str:
+        return None
+    return {
+        "email": row["email"],
+        "role": row["role"],
+        "expires_at": row["expires_at"],
+    }
+
+
+async def consume_invite(token: str, user_id: str) -> None:
+    """Marca o convite como usado (idempotente — só consome se ainda aberto)."""
+    db = await _get_db()
+    now_str = datetime.now(UTC).isoformat()
+    await db.execute(
+        "UPDATE invites SET used_at = ? WHERE token_hash = ? AND used_at IS NULL",
+        (now_str, _hash_token(token)),
+    )
+    await db.commit()
+    await _write_audit(
+        db, user_id, "invite_consume", success=True, target_type="invite"
+    )
+
+
+async def list_invites() -> list[dict[str, Any]]:
+    """Lista convites pendentes (não usados e não expirados)."""
+    db = await _get_db()
+    now_str = datetime.now(UTC).isoformat()
+    async with db.execute(
+        """SELECT token_hash, email, role, created_by, expires_at, created_at
+           FROM invites WHERE used_at IS NULL AND expires_at >= ?
+           ORDER BY created_at DESC""",
+        (now_str,),
+    ) as cur:
+        rows = await cur.fetchall()
+    return [
+        {
+            "token_hash": r["token_hash"],
+            "email": r["email"],
+            "role": r["role"],
+            "created_by": r["created_by"],
+            "expires_at": r["expires_at"],
+            "created_at": r["created_at"],
+        }
+        for r in rows
+    ]
+
+
+async def revoke_invite(token_hash: str) -> bool:
+    """Revoga um convite pendente pelo seu hash. Retorna True se removido."""
+    db = await _get_db()
+    async with db.execute(
+        "DELETE FROM invites WHERE token_hash = ?", (token_hash,)
+    ) as cur:
+        deleted = cur.rowcount
+    await db.commit()
+    return bool(deleted)
 
 
 # ---------------------------------------------------------------------------

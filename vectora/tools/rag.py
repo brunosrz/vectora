@@ -40,7 +40,8 @@ def _parse_metadata(raw: object) -> dict[str, Any]:
     também dict já desserializado (defensivo) e devolve {} em qualquer falha.
     """
     if isinstance(raw, dict):
-        return raw
+        # type narrow: dict desserializado vindo do LanceDB
+        return dict(raw)  # ty: ignore[no-matching-overload]
     if not isinstance(raw, str) or not raw:
         return {}
     try:
@@ -337,7 +338,7 @@ async def ingest_docs(
     directory_path: str,
     collection: str = "articles",
     glob_pattern: str = "**/*.py",
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Indexa um diretório inteiro de arquivos no banco vetorial (LanceDB).
 

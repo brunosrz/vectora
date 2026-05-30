@@ -8,7 +8,11 @@ interface ThinkingTimerProps {
   isThinking: boolean;
 }
 
-export function ThinkingTimer({ startTime, duration, isThinking }: ThinkingTimerProps) {
+export function ThinkingTimer({
+  startTime,
+  duration,
+  isThinking,
+}: ThinkingTimerProps) {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -34,5 +38,9 @@ export function ThinkingTimer({ startTime, duration, isThinking }: ThinkingTimer
     return `${minutes}m ${remainingSeconds}s`;
   };
 
-  return <span className="text-muted-foreground font-mono text-[10px]">{formatTime(elapsed)}</span>;
+  return (
+    <span className="text-muted-foreground font-mono text-[10px]">
+      {formatTime(elapsed)}
+    </span>
+  );
 }

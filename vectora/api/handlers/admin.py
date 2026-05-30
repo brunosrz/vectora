@@ -96,6 +96,16 @@ class ToolToggleBody(BaseModel):
     enabled: bool
 
 
+class CreateInviteBody(BaseModel):
+    role: str = "member"
+    email: str | None = None
+    ttl_hours: int = 24
+
+
+class ToolOverrideBody(BaseModel):
+    disabled: list[str] = []
+
+
 class PatchConfigBody(BaseModel):
     allow_public_signup: bool | None = None
     default_model: str | None = None
@@ -219,6 +229,111 @@ async def delete_user(request: Request, user_id: str) -> dict:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+@router.get("/users/{user_id}/tools")
+async def get_user_tools(request: Request, user_id: str) -> dict:
+    """Política de tools de um usuário (override ABAC — P2/S5)."""
+    user = _get_user(request)
+    require_admin(user)
+    from vectora.nodes.tools import ALL_TOOLS
+    from vectora.services import tool_policy
+
+    return {
+        "disabled": tool_policy.get_disabled(user_id),
+        "available": [t.name for t in ALL_TOOLS],
+    }
+
+
+@router.post("/users/{user_id}/tools")
+async def set_user_tools(
+    request: Request, user_id: str, body: ToolOverrideBody
+) -> dict:
+    """Define as tools desabilitadas de um usuário (admin override)."""
+    user = _get_user(request)
+    require_admin(user)
+    from vectora.nodes.tools import ALL_TOOLS
+    from vectora.services import tool_policy
+
+    valid = {t.name for t in ALL_TOOLS}
+    unknown = [n for n in body.disabled if n not in valid]
+    if unknown:
+        raise HTTPException(
+            status_code=400, detail=f"Tools desconhecidas: {sorted(unknown)}"
+        )
+    tool_policy.set_disabled(user_id, body.disabled)
+    return {"status": "ok", "user_id": user_id, "disabled": body.disabled}
+
+
+@router.post("/invites")
+async def create_invite(request: Request, body: CreateInviteBody) -> dict:
+    """Gera um link de convite de signup com token expirável."""
+    import os
+
+    user = _get_user(request)
+    require_admin(user)
+
+    valid_roles = {"admin", "member", "viewer"}
+    if body.role not in valid_roles:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Role inválido para convite. Válidos: {sorted(valid_roles)}",
+        )
+
+    try:
+        from typing import cast
+
+        from vectora.services import auth as auth_svc
+        from vectora.services.auth import Role
+
+        token, expires_at = await auth_svc.create_invite(
+            user.id,
+            role=cast("Role", body.role),
+            email=body.email,
+            ttl_hours=body.ttl_hours,
+        )
+        frontend = os.environ.get("VECTORA_FRONTEND_URL", "http://localhost:3000")
+        url = f"{frontend.rstrip('/')}/auth/signup?invite={token}"
+        return {"token": token, "url": url, "expires_at": expires_at}
+    except Exception as exc:
+        logger.exception("create_invite failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/invites")
+async def list_invites(request: Request) -> dict:
+    """Lista convites pendentes (não usados, não expirados)."""
+    user = _get_user(request)
+    require_admin(user)
+
+    try:
+        from vectora.services import auth as auth_svc
+
+        invites = await auth_svc.list_invites()
+        return {"invites": invites, "total": len(invites)}
+    except Exception as exc:
+        logger.exception("list_invites failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.delete("/invites/{token_hash}")
+async def revoke_invite(request: Request, token_hash: str) -> dict:
+    """Revoga um convite pendente pelo seu hash."""
+    user = _get_user(request)
+    require_admin(user)
+
+    try:
+        from vectora.services import auth as auth_svc
+
+        removed = await auth_svc.revoke_invite(token_hash)
+        if not removed:
+            raise HTTPException(status_code=404, detail="Convite não encontrado.")
+        return {"status": "revoked", "token_hash": token_hash}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("revoke_invite failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @router.get("/tools")
 async def list_tools_admin(request: Request) -> dict:
     """Lista todas as tools com status de habilitação global."""
@@ -336,15 +451,15 @@ async def patch_server_config(request: Request, body: PatchConfigBody) -> dict:
         from vectora.config.settings import settings
 
         if body.allow_public_signup is not None:
-            settings.allow_public_signup = body.allow_public_signup  # type: ignore[attr-defined]
+            settings.allow_public_signup = body.allow_public_signup  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             updated["allow_public_signup"] = body.allow_public_signup
 
         if body.default_model is not None:
-            settings.default_model = body.default_model  # type: ignore[attr-defined]
+            settings.default_model = body.default_model  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             updated["default_model"] = body.default_model
 
         if body.max_recursion is not None:
-            settings.max_recursion = body.max_recursion  # type: ignore[attr-defined]
+            settings.max_recursion = body.max_recursion  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             updated["max_recursion"] = body.max_recursion
 
         logger.info("admin: config patched by root user_id=%s: %s", user.id, updated)

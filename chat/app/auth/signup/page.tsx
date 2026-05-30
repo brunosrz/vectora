@@ -33,21 +33,52 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isFirstUser, setIsFirstUser] = useState<boolean | null>(null);
+  const [ready, setReady] = useState(false);
+  const [inviteToken, setInviteToken] = useState("");
+  const [inviteRole, setInviteRole] = useState<string | null>(null);
 
-  // Verifica se é primeiro acesso (sem usuários) ou signup bloqueado
+  // Resolve o fluxo de entrada: primeiro acesso, convite válido, ou bloqueado.
   useEffect(() => {
-    fetch("/api/auth/has-users")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.exists) {
-          // Signup público bloqueado → redireciona para signin
-          router.replace("/auth/signin");
-        } else {
-          setIsFirstUser(true);
+    const token =
+      new URLSearchParams(window.location.search).get("invite") ?? "";
+
+    async function resolve() {
+      let hasUsers = true;
+      try {
+        const r = await fetch("/api/auth/has-users");
+        hasUsers = Boolean((await r.json()).exists);
+      } catch {
+        hasUsers = true;
+      }
+
+      // Sem usuários → setup do root, sem necessidade de convite
+      if (!hasUsers) {
+        setReady(true);
+        return;
+      }
+
+      // Com usuários → exige convite válido
+      if (token) {
+        try {
+          const r = await fetch(`/api/auth/invite/${token}`);
+          const data = await r.json();
+          if (data.valid) {
+            setInviteToken(token);
+            setInviteRole(data.role ?? "member");
+            if (data.email) setEmail(data.email);
+            setReady(true);
+            return;
+          }
+        } catch {
+          // cai no redirect abaixo
         }
-      })
-      .catch(() => setIsFirstUser(true));
+      }
+
+      // Sem convite válido e com usuários → signup público bloqueado
+      router.replace("/auth/signin");
+    }
+
+    void resolve();
   }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -71,7 +102,7 @@ export default function SignUpPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, invite_token: inviteToken }),
       });
 
       const data = await res.json();
@@ -89,7 +120,7 @@ export default function SignUpPage() {
     }
   }
 
-  if (isFirstUser === null) {
+  if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-sm text-muted-foreground">Carregando…</p>
@@ -102,57 +133,150 @@ export default function SignUpPage() {
       <div className="w-full max-w-sm space-y-8">
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
-          <Image src="/vectora.svg" alt="Vectora" width={48} height={48} priority />
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground" style={{ fontFamily: "var(--font-aeonik-mono)" }}>
+          <Image
+            src="/vectora.svg"
+            alt="Vectora"
+            width={48}
+            height={48}
+            priority
+          />
+          <h1
+            className="text-2xl font-semibold tracking-tight text-foreground"
+            style={{ fontFamily: "var(--font-aeonik-mono)" }}
+          >
             Vectora
           </h1>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">Primeiro acesso</p>
-            <p className="text-xs text-muted-foreground/70 mt-0.5">
-              O primeiro usuário criado vira <span className="text-yellow-400 font-medium">root</span> automaticamente.
-            </p>
+            {inviteRole ? (
+              <>
+                <p className="text-sm text-muted-foreground">Criar conta</p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">
+                  Convite para função:{" "}
+                  <span className="text-primary font-medium">{inviteRole}</span>
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">Primeiro acesso</p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">
+                  O primeiro usuário criado vira{" "}
+                  <span className="text-yellow-400 font-medium">root</span>{" "}
+                  automaticamente.
+                </p>
+              </>
+            )}
           </div>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground" htmlFor="email">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="email"
+            >
               E-mail
             </label>
-            <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" placeholder="voce@empresa.com" />
-            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
+              placeholder="voce@empresa.com"
+            />
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email}</p>
+            )}
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground" htmlFor="password">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="password"
+            >
               Senha
             </label>
             <div className="relative">
-              <input id="password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" placeholder="Mínimo 12 caracteres" />
-              <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
+                placeholder="Mínimo 12 caracteres"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </button>
             </div>
-            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+            {errors.password && (
+              <p className="text-xs text-destructive">{errors.password}</p>
+            )}
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground" htmlFor="confirm">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="confirm"
+            >
               Confirmar senha
             </label>
             <div className="relative">
-              <input id="confirm" type={showConfirm ? "text" : "password"} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60" placeholder="••••••••••••" />
-              <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors" aria-label={showConfirm ? "Ocultar confirmação" : "Mostrar confirmação"}>
-                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <input
+                id="confirm"
+                type={showConfirm ? "text" : "password"}
+                autoComplete="new-password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
+                placeholder="••••••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={
+                  showConfirm ? "Ocultar confirmação" : "Mostrar confirmação"
+                }
+              >
+                {showConfirm ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </button>
             </div>
-            {errors.confirm && <p className="text-xs text-destructive">{errors.confirm}</p>}
+            {errors.confirm && (
+              <p className="text-xs text-destructive">{errors.confirm}</p>
+            )}
           </div>
 
-          {serverError && <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{serverError}</p>}
+          {serverError && (
+            <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
+              {serverError}
+            </p>
+          )}
 
-          <button type="submit" disabled={loading} className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
+          >
             {loading ? "Criando conta…" : "Criar conta"}
           </button>
         </form>

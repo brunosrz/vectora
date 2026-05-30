@@ -40,7 +40,10 @@ export function SegmentProvider({ children }: { children: React.ReactNode }) {
 /**
  * Track custom events for the public app.
  */
-export function trackEvent(eventName: string, properties?: Record<string, any>): void {
+export function trackEvent(
+  eventName: string,
+  properties?: Record<string, any>,
+): void {
   if (typeof window === "undefined" || !window.analytics) {
     return;
   }

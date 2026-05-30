@@ -35,7 +35,11 @@ from vectora.api.handlers.auth import router as auth_router
 from vectora.api.handlers.chat import router as chat_router
 from vectora.api.handlers.memory import router as memory_router
 from vectora.api.handlers.oauth import router as oauth_router
+from vectora.api.handlers.plugins import router as plugins_router
+from vectora.api.handlers.terminal import router as terminal_router
 from vectora.api.handlers.threads import router as thread_router
+from vectora.api.handlers.tools import router as tools_router
+from vectora.api.handlers.workspaces import router as workspace_router
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +110,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     finally:
         logger.info("api/server: shutdown — fechando recursos")
         from vectora.api.handlers.chat import aclose_graph
+        from vectora.services.pty_registry import pty_registry
+
+        # Encerra PTYs ANTES do hard-exit em main.py — evita processos órfãos.
+        try:
+            pty_registry.close_all()
+        except Exception:
+            logger.debug("api/server: erro ao encerrar PTYs")
 
         # Ordem lógica: parar workers que podem estar usando o grafo ANTES de
         # fechar o checkpointer. Mas como ambos têm `try/except` internos e são
@@ -127,8 +138,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             )
 
 
-def create_app() -> FastAPI:
-    """Cria e configura a aplicação FastAPI do Vectora."""
+def create_app(serve_static: bool = True) -> FastAPI:
+    """Cria e configura a aplicação FastAPI do Vectora.
+
+    ``serve_static=False`` desliga o catch-all que faz proxy do frontend Next.js
+    — usado em testes para que rotas não-API retornem 404 reais em vez de cair
+    no proxy.
+    """
     from vectora.version import __version__
 
     app = FastAPI(
@@ -180,6 +196,10 @@ def create_app() -> FastAPI:
     app.include_router(memory_router)
     app.include_router(oauth_router)
     app.include_router(admin_router)
+    app.include_router(workspace_router)
+    app.include_router(plugins_router)
+    app.include_router(tools_router)
+    app.include_router(terminal_router)
 
     # ── Health + Metrics ──────────────────────────────────────────────────────
 
@@ -205,14 +225,17 @@ def create_app() -> FastAPI:
     ).rstrip("/")
 
     # Headers de request que não devem ser encaminhados ao upstream
-    _PROXY_SKIP_REQ_HEADERS = frozenset(
+    proxy_skip_req_headers = frozenset(
         {"host", "connection", "transfer-encoding", "accept-encoding"}
     )
     # Headers de resposta gerenciados pelo FastAPI/Starlette — não encaminhar
     # para evitar conflitos (ex: content-length incorreto após descompressão)
-    _PROXY_SKIP_RESP_HEADERS = frozenset(
+    proxy_skip_resp_headers = frozenset(
         {"transfer-encoding", "connection", "content-encoding", "content-length"}
     )
+
+    if not serve_static:
+        return app
 
     @app.api_route("/{path:path}", methods=["GET", "HEAD"])
     async def _frontend_proxy(request: Request, path: str) -> FastAPIResponse:
@@ -233,7 +256,7 @@ def create_app() -> FastAPI:
         fwd_headers = {
             k: v
             for k, v in request.headers.items()
-            if k.lower() not in _PROXY_SKIP_REQ_HEADERS
+            if k.lower() not in proxy_skip_req_headers
         }
         # Pede conteúdo sem compressão — httpx decodifica gzip mas não atualiza
         # content-length, causando leitura truncada no browser.
@@ -250,7 +273,7 @@ def create_app() -> FastAPI:
             resp_headers = {
                 k: v
                 for k, v in upstream.headers.items()
-                if k.lower() not in _PROXY_SKIP_RESP_HEADERS
+                if k.lower() not in proxy_skip_resp_headers
             }
             return FastAPIResponse(
                 content=upstream.content,

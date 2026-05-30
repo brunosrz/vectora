@@ -100,7 +100,7 @@ def _resolve_cwd(workspace_id: str | None, config: RunnableConfig | None) -> str
 async def gh_pr_list(
     state: str = "open",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Lista pull requests do repositório.
 
@@ -143,7 +143,7 @@ async def gh_pr_create(
     base: str = "main",
     draft: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria um pull request a partir da branch atual.
 
@@ -175,7 +175,7 @@ async def gh_pr_create(
 async def gh_pr_view(
     pr_number: int = 0,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Exibe detalhes de um pull request.
 
@@ -217,7 +217,7 @@ async def gh_pr_merge(
     pr_number: int = 0,
     method: str = "squash",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Faz merge de um pull request.
 
@@ -247,7 +247,7 @@ async def gh_issue_list(
     state: str = "open",
     labels: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Lista issues do repositório.
 
@@ -290,7 +290,7 @@ async def gh_issue_create(
     body: str = "",
     labels: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria uma issue no repositório.
 
@@ -323,7 +323,7 @@ async def gh_issue_create(
 async def gh_issue_view(
     issue_number: int = 0,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Exibe detalhes de uma issue.
 
@@ -367,7 +367,7 @@ async def gh_issue_comment(
     issue_number: int = 0,
     body: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Adiciona um comentário a uma issue.
 

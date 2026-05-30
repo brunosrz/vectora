@@ -29,6 +29,7 @@ from vectora.api.adapters import adapt_stream
 from vectora.api.schemas import (
     Attachment,
     AttachmentKind,
+    ChatConfig,
     ErrorEvent,
     GetToolsResponse,
     ResumeChatRequest,
@@ -134,7 +135,7 @@ def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
 
             parts.append({"type": "text", "text": block})
 
-    return HumanMessage(content=parts)
+    return HumanMessage(content=parts)  # ty: ignore[no-matching-overload]
 
 
 # ---------------------------------------------------------------------------
@@ -224,6 +225,52 @@ def _user_id_from_request(http_request: Request) -> str:
     return "local"
 
 
+def _resolve_workspace_id(requested: str, thread_id: str, user_id: str) -> str:
+    """Resolve o workspace da sessão.
+
+    Se o cliente não escolheu uma pasta, cria/usa o workspace padrão da sessão
+    em ``~/Documents/vectora/<thread_id>``. Degrada para string vazia se a
+    criação falhar — nesse caso as tools usam o fallback de diretório atual.
+    """
+    if requested:
+        return requested
+    try:
+        from vectora.services.workspace import workspace_registry
+
+        ws = workspace_registry.get_or_create_session_workspace(thread_id, user_id)
+        workspace_registry.set_active(ws.id, user_id)
+        return ws.id
+    except Exception:
+        logger.warning(
+            "api/chat: falha ao criar workspace de sessão para %s", thread_id
+        )
+        return ""
+
+
+def _build_configurable(
+    config: ChatConfig, thread_id: str, user_id: str
+) -> dict[str, Any]:
+    """Monta o dict ``configurable`` do RunnableConfig a partir do ChatConfig.
+
+    Campos opcionais (workspace, prompt custom, modo de permissão, esforço de
+    raciocínio) só entram quando preenchidos — nós e o ``hitl_check`` aplicam
+    seus defaults quando ausentes.
+    """
+    configurable: dict[str, Any] = {
+        "thread_id": thread_id,
+        "user_id": user_id,
+    }
+    if config.workspace_id:
+        configurable["workspace_id"] = config.workspace_id
+    if config.custom_system_prompt:
+        configurable["custom_system_prompt"] = config.custom_system_prompt
+    if config.permission_mode:
+        configurable["permission_mode"] = config.permission_mode
+    if config.reasoning_effort:
+        configurable["reasoning_effort"] = config.reasoning_effort
+    return configurable
+
+
 @router.post("/vectora.chat.v1.ChatService/StreamChat")
 async def stream_chat(
     request: StreamChatRequest, http_request: Request
@@ -236,13 +283,26 @@ async def stream_chat(
     """
     thread_id = request.thread_id or str(uuid.uuid4())
 
+    # user_id alimenta o namespace de memória (user:<id>) — precisa bater com o
+    # namespace lido por GET /memory (handlers/memory.py). Sem isso, save_memory
+    # caía em session_<thread_id> e a aba Memória ficava vazia.
+    user_id = _user_id_from_request(http_request)
+
+    # Resolve o workspace da sessão (cria o padrão em Documents/vectora/<id>
+    # quando o cliente não escolheu uma pasta) e fixa no config da request.
+    workspace_id = _resolve_workspace_id(
+        request.config.workspace_id, thread_id, user_id
+    )
+    request.config.workspace_id = workspace_id
+
     # Registra thread em vectora_sessions para que ListThreads a inclua
     # mesmo após reinicialização do servidor (o checkpointer LangGraph persiste
-    # separadamente e não é consultado pelo endpoint de listagem).
+    # separadamente e não é consultado pelo endpoint de listagem). Persiste o
+    # workspace para que trocar de chat restaure a pasta correta.
     try:
         from vectora.api.handlers.threads import _upsert_session
 
-        await _upsert_session(thread_id)
+        await _upsert_session(thread_id, workspace_id=workspace_id or None)
     except Exception as exc:
         logger.warning(
             "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
@@ -254,17 +314,11 @@ async def stream_chat(
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    configurable: dict[str, Any] = {
-        "thread_id": thread_id,
-        # user_id alimenta o namespace de memória (user:<id>) — precisa bater
-        # com o namespace lido por GET /memory (handlers/memory.py). Sem isso,
-        # save_memory caía em session_<thread_id> e a aba Memória ficava vazia.
-        "user_id": _user_id_from_request(http_request),
-    }
-    if request.config.workspace_id:
-        configurable["workspace_id"] = request.config.workspace_id
-    if request.config.custom_system_prompt:
-        configurable["custom_system_prompt"] = request.config.custom_system_prompt
+    configurable = _build_configurable(request.config, thread_id, user_id)
+
+    from vectora.services.usage import usage_tracker
+
+    usage_tracker.record(user_id)
 
     config: dict[str, Any] = {
         "configurable": configurable,
@@ -357,16 +411,22 @@ async def resume_chat(
 
 
 @router.get("/vectora.chat.v1.ChatService/GetTools")
-async def get_tools() -> GetToolsResponse:
-    """Retorna o schema das ferramentas disponíveis para autodescoberta da UI."""
+async def get_tools(http_request: Request) -> GetToolsResponse:
+    """Retorna o schema das ferramentas disponíveis para o usuário autenticado.
+
+    Reflete a política de tools (deny por usuário) + as tools dos servidores MCP
+    do usuário — o mesmo toolset que o agente recebe (S4/S7).
+    """
     try:
-        from vectora.nodes.tools import ALL_TOOLS
+        from vectora.services.tool_resolver import resolve_tools
+
+        resolved = await resolve_tools(_user_id_from_request(http_request))
     except Exception as exc:
-        logger.warning("api/chat: não foi possível carregar ALL_TOOLS: %s", exc)
+        logger.warning("api/chat: não foi possível resolver tools: %s", exc)
         return GetToolsResponse(tools=[])
 
     tools: list[ToolSchema] = []
-    for t in ALL_TOOLS:
+    for t in resolved:
         meta = getattr(t, "extras", None) or getattr(t, "metadata", None) or {}
         render_hint = meta.get("render_hint", "json")
 

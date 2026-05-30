@@ -1,4 +1,15 @@
-import { Copy, Check, Settings, RefreshCw, ThumbsUp, ThumbsDown, MessageSquare, Brain, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Copy,
+  Check,
+  Settings,
+  RefreshCw,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+  Brain,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +21,10 @@ import { ThinkingTimer } from "./animations/thinking-timer";
 import { AnimatedThinking } from "./animations/animated-thinking";
 import { HITLPanel } from "./features/hitl-panel";
 import type { Message } from "@/lib/types";
-import { INPUT_TOO_LONG_MESSAGE, MAX_INPUT_CHARS } from "@/lib/constants/features";
+import {
+  INPUT_TOO_LONG_MESSAGE,
+  MAX_INPUT_CHARS,
+} from "@/lib/constants/features";
 import { stripMarkdownEnvelope } from "@/lib/utils/string";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
 import Image from "next/image";
@@ -133,62 +147,64 @@ const extractTextFromNode = (node: any): string => {
  * Individual code block component with its own copy state
  * This prevents the copy button from flickering during streaming
  */
-const CodeBlock = memo(({ codeString, language }: { codeString: string; language: string }) => {
-  const [isCopied, setIsCopied] = useState(false);
+const CodeBlock = memo(
+  ({ codeString, language }: { codeString: string; language: string }) => {
+    const [isCopied, setIsCopied] = useState(false);
 
-  const handleCopyCode = useCallback(() => {
-    navigator.clipboard.writeText(codeString);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), COPY_FEEDBACK_DURATION);
-  }, [codeString]);
+    const handleCopyCode = useCallback(() => {
+      navigator.clipboard.writeText(codeString);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), COPY_FEEDBACK_DURATION);
+    }, [codeString]);
 
-  return (
-    <div className="relative group my-4">
-      <SyntaxHighlighter
-        language={language}
-        style={customTheme}
-        customStyle={{
-          margin: "0.75rem 0",
-          background: CODE_COLORS.blockBackground,
-          border: `1px solid ${CODE_COLORS.blockBorder}`,
-          borderRadius: "8px",
-          padding: "1rem",
-        }}
-        codeTagProps={{
-          style: {
-            fontSize: "13px",
-            fontFamily: "var(--font-mono), ui-monospace, monospace",
-          },
-        }}
-      >
-        {codeString}
-      </SyntaxHighlighter>
-      <button
-        onClick={handleCopyCode}
-        className="absolute top-2 right-2 sm:top-3 sm:right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md text-xs flex items-center gap-1 sm:gap-1.5 backdrop-blur-sm"
-        style={{
-          background: "rgba(0, 0, 0, 0.7)",
-          color: CODE_COLORS.text,
-          border: `1px solid ${CODE_COLORS.blockBorder}`,
-          willChange: "opacity",
-        }}
-        aria-label="Copy code to clipboard"
-      >
-        {isCopied ? (
-          <>
-            <Check className="w-3.5 h-3.5" />
-            Copied
-          </>
-        ) : (
-          <>
-            <Copy className="w-3.5 h-3.5" />
-            Copy
-          </>
-        )}
-      </button>
-    </div>
-  );
-});
+    return (
+      <div className="relative group my-4">
+        <SyntaxHighlighter
+          language={language}
+          style={customTheme}
+          customStyle={{
+            margin: "0.75rem 0",
+            background: CODE_COLORS.blockBackground,
+            border: `1px solid ${CODE_COLORS.blockBorder}`,
+            borderRadius: "8px",
+            padding: "1rem",
+          }}
+          codeTagProps={{
+            style: {
+              fontSize: "13px",
+              fontFamily: "var(--font-mono), ui-monospace, monospace",
+            },
+          }}
+        >
+          {codeString}
+        </SyntaxHighlighter>
+        <button
+          onClick={handleCopyCode}
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md text-xs flex items-center gap-1 sm:gap-1.5 backdrop-blur-sm"
+          style={{
+            background: "rgba(0, 0, 0, 0.7)",
+            color: CODE_COLORS.text,
+            border: `1px solid ${CODE_COLORS.blockBorder}`,
+            willChange: "opacity",
+          }}
+          aria-label="Copy code to clipboard"
+        >
+          {isCopied ? (
+            <>
+              <Check className="w-3.5 h-3.5" />
+              Copied
+            </>
+          ) : (
+            <>
+              <Copy className="w-3.5 h-3.5" />
+              Copy
+            </>
+          )}
+        </button>
+      </div>
+    );
+  },
+);
 
 // ============================================================================
 // D1 — ThinkingBlock: raciocínio colapsável do orchestrator
@@ -205,7 +221,11 @@ interface ThinkingBlockProps {
   isDevMode: boolean;
 }
 
-const ThinkingBlock = memo(function ThinkingBlock({ thinking, isStreaming, isDevMode }: ThinkingBlockProps) {
+const ThinkingBlock = memo(function ThinkingBlock({
+  thinking,
+  isStreaming,
+  isDevMode,
+}: ThinkingBlockProps) {
   const [open, setOpen] = useState(!isStreaming);
 
   // Abre enquanto está em streaming, fecha sozinho ao terminar
@@ -223,32 +243,51 @@ const ThinkingBlock = memo(function ThinkingBlock({ thinking, isStreaming, isDev
 
   return (
     <div className="mb-3 rounded-md border border-border/50 bg-muted/30 overflow-hidden text-xs">
-      <button className="w-full flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-left" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+      <button
+        className="w-full flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-left"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
         <Brain className="w-3 h-3 flex-shrink-0 text-primary/70" />
         <span className="font-medium flex-1">Raciocínio</span>
-        {thinking.action && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary/80 font-mono">{actionLabel[thinking.action] ?? thinking.action}</span>}
-        {isStreaming && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
-        {open ? <ChevronDown className="w-3 h-3 flex-shrink-0" /> : <ChevronRight className="w-3 h-3 flex-shrink-0" />}
+        {thinking.action && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary/80 font-mono">
+            {actionLabel[thinking.action] ?? thinking.action}
+          </span>
+        )}
+        {isStreaming && (
+          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+        )}
+        {open ? (
+          <ChevronDown className="w-3 h-3 flex-shrink-0" />
+        ) : (
+          <ChevronRight className="w-3 h-3 flex-shrink-0" />
+        )}
       </button>
 
       {open && (
         <div className="px-3 pb-3 space-y-2">
-          <p className="text-muted-foreground leading-relaxed">{thinking.reason}</p>
+          <p className="text-muted-foreground leading-relaxed">
+            {thinking.reason}
+          </p>
 
           {/* D4 — Dev mode: campos extras */}
           {isDevMode && (
             <div className="mt-2 pt-2 border-t border-border/30 space-y-1 font-mono text-[10px] text-muted-foreground/70">
               <div>
-                <span className="text-primary/60">action:</span> {thinking.action}
+                <span className="text-primary/60">action:</span>{" "}
+                {thinking.action}
               </div>
               {thinking.delegate_to && (
                 <div>
-                  <span className="text-primary/60">delegate_to:</span> {thinking.delegate_to}
+                  <span className="text-primary/60">delegate_to:</span>{" "}
+                  {thinking.delegate_to}
                 </div>
               )}
               {thinking.task_query && (
                 <div>
-                  <span className="text-primary/60">task_query:</span> {thinking.task_query}
+                  <span className="text-primary/60">task_query:</span>{" "}
+                  {thinking.task_query}
                 </div>
               )}
             </div>
@@ -270,15 +309,25 @@ interface MessageItemProps {
   onEditAndRerun?: (messageId: string, newContent: string) => void;
   feedbackComment: { [messageId: string]: string };
   showCommentInput: string | null;
-  onFeedback: (messageId: string, feedbackType: "positive" | "negative", comment?: string) => void;
+  onFeedback: (
+    messageId: string,
+    feedbackType: "positive" | "negative",
+    comment?: string,
+  ) => void;
   onSubmitComment: (messageId: string) => void;
   onCancelComment: (messageId: string) => void;
   onToggleComment: (messageId: string) => void;
-  setFeedbackComment: React.Dispatch<React.SetStateAction<{ [messageId: string]: string }>>;
+  setFeedbackComment: React.Dispatch<
+    React.SetStateAction<{ [messageId: string]: string }>
+  >;
   /** D4 — modo dev (?dev=1 na URL): exibe campos extras do ThinkingBlock */
   isDevMode?: boolean;
   /** E2 — HITL: callback disparado quando o usuário aprova/rejeita/edita */
-  onHitlDecision?: (messageId: string, interruptId: string, decision: "approve" | "reject" | `edit:${string}`) => void;
+  onHitlDecision?: (
+    messageId: string,
+    interruptId: string,
+    decision: "approve" | "reject" | `edit:${string}`,
+  ) => void;
   /** E2 — threadId necessário para contextualizar o painel HITL */
   threadId?: string;
   /** M5 — callback de retry para mensagens com isError=true */
@@ -286,9 +335,31 @@ interface MessageItemProps {
 }
 
 export const MessageItem = memo(
-  function MessageItem({ message, showToolCalls, isLastAssistant, isRegenerating, copiedId, onCopy, onRegenerate, onEditAndRerun, feedbackComment, showCommentInput, onFeedback, onSubmitComment, onCancelComment, onToggleComment, setFeedbackComment, isDevMode = false, onHitlDecision, threadId = "", onRetry }: MessageItemProps) {
+  function MessageItem({
+    message,
+    showToolCalls,
+    isLastAssistant,
+    isRegenerating,
+    copiedId,
+    onCopy,
+    onRegenerate,
+    onEditAndRerun,
+    feedbackComment,
+    showCommentInput,
+    onFeedback,
+    onSubmitComment,
+    onCancelComment,
+    onToggleComment,
+    setFeedbackComment,
+    isDevMode = false,
+    onHitlDecision,
+    threadId = "",
+    onRetry,
+  }: MessageItemProps) {
     const [isEditing, setIsEditing] = useState(false);
-    const [editContent, setEditContent] = useState(message.content.slice(0, MAX_INPUT_CHARS));
+    const [editContent, setEditContent] = useState(
+      message.content.slice(0, MAX_INPUT_CHARS),
+    );
     const [editError, setEditError] = useState<string | null>(null);
     const prevContentRef = useRef(message.content);
 
@@ -314,7 +385,11 @@ export const MessageItem = memo(
     const handleStartEdit = useCallback(() => {
       const cappedContent = message.content.slice(0, MAX_INPUT_CHARS);
       setEditContent(cappedContent);
-      setEditError(message.content.length > MAX_INPUT_CHARS ? INPUT_TOO_LONG_MESSAGE : null);
+      setEditError(
+        message.content.length > MAX_INPUT_CHARS
+          ? INPUT_TOO_LONG_MESSAGE
+          : null,
+      );
       setIsEditing(true);
     }, [message.content]);
 
@@ -332,34 +407,42 @@ export const MessageItem = memo(
       setIsEditing(false);
     }, [message.content]);
 
-    const handleEditBeforeInput = useCallback((e: React.FormEvent<HTMLTextAreaElement>) => {
-      const nativeEvent = e.nativeEvent as InputEvent;
-      const insertedText = nativeEvent.data;
-      if (!insertedText) return;
+    const handleEditBeforeInput = useCallback(
+      (e: React.FormEvent<HTMLTextAreaElement>) => {
+        const nativeEvent = e.nativeEvent as InputEvent;
+        const insertedText = nativeEvent.data;
+        if (!insertedText) return;
 
-      const target = e.currentTarget;
-      const selectionLength = target.selectionEnd - target.selectionStart;
-      const nextLength = target.value.length - selectionLength + insertedText.length;
+        const target = e.currentTarget;
+        const selectionLength = target.selectionEnd - target.selectionStart;
+        const nextLength =
+          target.value.length - selectionLength + insertedText.length;
 
-      if (nextLength > MAX_INPUT_CHARS) {
-        e.preventDefault();
-        setEditError(INPUT_TOO_LONG_MESSAGE);
-      }
-    }, []);
+        if (nextLength > MAX_INPUT_CHARS) {
+          e.preventDefault();
+          setEditError(INPUT_TOO_LONG_MESSAGE);
+        }
+      },
+      [],
+    );
 
-    const handleEditPaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const pastedText = e.clipboardData?.getData("text") ?? "";
-      if (!pastedText) return;
+    const handleEditPaste = useCallback(
+      (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const pastedText = e.clipboardData?.getData("text") ?? "";
+        if (!pastedText) return;
 
-      const target = e.currentTarget;
-      const selectionLength = target.selectionEnd - target.selectionStart;
-      const nextLength = target.value.length - selectionLength + pastedText.length;
+        const target = e.currentTarget;
+        const selectionLength = target.selectionEnd - target.selectionStart;
+        const nextLength =
+          target.value.length - selectionLength + pastedText.length;
 
-      if (nextLength > MAX_INPUT_CHARS) {
-        e.preventDefault();
-        setEditError(INPUT_TOO_LONG_MESSAGE);
-      }
-    }, []);
+        if (nextLength > MAX_INPUT_CHARS) {
+          e.preventDefault();
+          setEditError(INPUT_TOO_LONG_MESSAGE);
+        }
+      },
+      [],
+    );
 
     // Track code block index to generate stable IDs during streaming
     const codeBlockIndexRef = useRef(0);
@@ -392,7 +475,8 @@ export const MessageItem = memo(
           const codeString = String(children).replace(/\n$/, "");
 
           // Check if it's inline code: single backticks or no newlines
-          const isInlineCode = inline === true || (!className && !codeString.includes("\n"));
+          const isInlineCode =
+            inline === true || (!className && !codeString.includes("\n"));
 
           // Inline code (single backticks) - Slack-style highlighting
           if (isInlineCode) {
@@ -418,7 +502,13 @@ export const MessageItem = memo(
           const codeBlockId = `${message.id}-code-${blockIndex}`;
 
           // Render a separate component for the code block with copy functionality
-          return <CodeBlock key={codeBlockId} codeString={codeString} language={language} />;
+          return (
+            <CodeBlock
+              key={codeBlockId}
+              codeString={codeString}
+              language={language}
+            />
+          );
         },
       }),
       [message.id],
@@ -483,8 +573,28 @@ export const MessageItem = memo(
           }
         `}</style>
         <div className="flex gap-3 sm:gap-4 items-start group/message">
-          <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 ${message.role === "assistant" && message.isThinking ? "dance-wrapper" : ""}`}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center">{message.role === "assistant" ? <Image src="/assets/images/Assistant Icon.svg" alt="Vectora Assistant" width={32} height={32} className="object-contain" /> : <Image src="/assets/images/User icon.png" alt="User" width={32} height={32} className="object-contain" />}</div>
+          <div
+            className={`w-8 h-8 flex items-center justify-center flex-shrink-0 ${message.role === "assistant" && message.isThinking ? "dance-wrapper" : ""}`}
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center">
+              {message.role === "assistant" ? (
+                <Image
+                  src="/assets/images/Assistant Icon.svg"
+                  alt="Vectora Assistant"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+              ) : (
+                <Image
+                  src="/assets/images/User icon.png"
+                  alt="User"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+              )}
+            </div>
           </div>
           <div className="flex-1 min-w-0 space-y-2">
             <div
@@ -495,31 +605,64 @@ export const MessageItem = memo(
               }}
             >
               {/* D1 — ThinkingBlock: raciocínio colapsável do orchestrator */}
-              {message.role === "assistant" && message.thinking && <ThinkingBlock thinking={message.thinking} isStreaming={!!message.isThinking} isDevMode={isDevMode} />}
+              {message.role === "assistant" && message.thinking && (
+                <ThinkingBlock
+                  thinking={message.thinking}
+                  isStreaming={!!message.isThinking}
+                  isDevMode={isDevMode}
+                />
+              )}
 
               {/* D2 — Progress semântico durante streaming */}
-              {message.role === "assistant" && (message.isThinking || message.thinkingStartTime || (message.thinkingSteps && message.thinkingSteps.length > 0)) && (
-                <details open className="mb-3 text-xs">
-                  <summary className="cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-                    {message.isThinking && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
-                    <span>
-                      {message.isThinking ? message.currentNodeLabel ? <span className="text-muted-foreground">{message.currentNodeLabel}</span> : <AnimatedThinking /> : <span className="font-medium">Agent steps</span>} ({message.thinkingSteps?.length || 0})
-                    </span>
-                    <span className="ml-1">•</span>
-                    <ThinkingTimer startTime={message.thinkingStartTime} duration={message.thinkingDuration} isThinking={!!message.isThinking} />
-                  </summary>
-                  {message.thinkingSteps && message.thinkingSteps.length > 0 && (
-                    <div className="mt-2 pl-4 space-y-1 text-muted-foreground font-mono text-[11px]">
-                      {message.thinkingSteps.map((step, idx) => (
-                        <div key={`${message.id}-step-${idx}`} className="flex items-start gap-2">
-                          <span className="text-primary opacity-50">{(idx + 1).toString().padStart(2, "0")}</span>
-                          <span>{step}</span>
+              {message.role === "assistant" &&
+                (message.isThinking ||
+                  message.thinkingStartTime ||
+                  (message.thinkingSteps &&
+                    message.thinkingSteps.length > 0)) && (
+                  <details open className="mb-3 text-xs">
+                    <summary className="cursor-pointer flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                      {message.isThinking && (
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      )}
+                      <span>
+                        {message.isThinking ? (
+                          message.currentNodeLabel ? (
+                            <span className="text-muted-foreground">
+                              {message.currentNodeLabel}
+                            </span>
+                          ) : (
+                            <AnimatedThinking />
+                          )
+                        ) : (
+                          <span className="font-medium">Agent steps</span>
+                        )}{" "}
+                        ({message.thinkingSteps?.length || 0})
+                      </span>
+                      <span className="ml-1">•</span>
+                      <ThinkingTimer
+                        startTime={message.thinkingStartTime}
+                        duration={message.thinkingDuration}
+                        isThinking={!!message.isThinking}
+                      />
+                    </summary>
+                    {message.thinkingSteps &&
+                      message.thinkingSteps.length > 0 && (
+                        <div className="mt-2 pl-4 space-y-1 text-muted-foreground font-mono text-[11px]">
+                          {message.thinkingSteps.map((step, idx) => (
+                            <div
+                              key={`${message.id}-step-${idx}`}
+                              className="flex items-start gap-2"
+                            >
+                              <span className="text-primary opacity-50">
+                                {(idx + 1).toString().padStart(2, "0")}
+                              </span>
+                              <span>{step}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </details>
-              )}
+                      )}
+                  </details>
+                )}
 
               {message.role === "user" ? (
                 isEditing ? (
@@ -546,7 +689,11 @@ export const MessageItem = memo(
                         e.target.select();
                       }}
                     />
-                    {editError && <div className="mt-1 text-xs text-destructive">{editError}</div>}
+                    {editError && (
+                      <div className="mt-1 text-xs text-destructive">
+                        {editError}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -556,8 +703,13 @@ export const MessageItem = memo(
                         {message.images.map((file) => {
                           const isImage = file.mimeType?.startsWith("image/");
                           const fileName = file.name || "File";
-                          const fileExt = fileName.split(".").pop()?.toLowerCase();
-                          const fileSizeKB = file.size ? Math.round(file.size / 1024) : 0;
+                          const fileExt = fileName
+                            .split(".")
+                            .pop()
+                            ?.toLowerCase();
+                          const fileSizeKB = file.size
+                            ? Math.round(file.size / 1024)
+                            : 0;
 
                           // Get file type icon color
                           const getFileColor = () => {
@@ -565,13 +717,26 @@ export const MessageItem = memo(
                           };
 
                           return (
-                            <div key={file.id} className="h-32 rounded-lg border-2 border-border bg-muted/30 hover:bg-muted/50 hover:border-primary transition-all flex flex-col overflow-hidden">
+                            <div
+                              key={file.id}
+                              className="h-32 rounded-lg border-2 border-border bg-muted/30 hover:bg-muted/50 hover:border-primary transition-all flex flex-col overflow-hidden"
+                            >
                               {isImage ? (
                                 // Image with filename overlay
                                 <div className="relative h-full w-full">
-                                  <img src={file.url || `data:${file.mimeType};base64,${file.base64}`} alt={fileName} className="h-full w-full object-cover" />
+                                  <img
+                                    src={
+                                      file.url ||
+                                      `data:${file.mimeType};base64,${file.base64}`
+                                    }
+                                    alt={fileName}
+                                    className="h-full w-full object-cover"
+                                  />
                                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1">
-                                    <p className="text-xs text-white truncate" title={fileName}>
+                                    <p
+                                      className="text-xs text-white truncate"
+                                      title={fileName}
+                                    >
                                       {fileName}
                                     </p>
                                   </div>
@@ -579,16 +744,36 @@ export const MessageItem = memo(
                               ) : (
                                 // File card with icon
                                 <div className="h-full flex flex-col items-center justify-center p-3 text-center">
-                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-10 h-10 mb-2 ${getFileColor()}`}>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className={`w-10 h-10 mb-2 ${getFileColor()}`}
+                                  >
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                   </svg>
-                                  <span className="text-xs font-medium text-foreground truncate w-full px-1 mb-1" title={fileName}>
+                                  <span
+                                    className="text-xs font-medium text-foreground truncate w-full px-1 mb-1"
+                                    title={fileName}
+                                  >
                                     {fileName}
                                   </span>
                                   <div className="flex items-center gap-1.5">
-                                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded bg-muted ${getFileColor()}`}>{fileExt?.toUpperCase().slice(0, 4)}</span>
-                                    {fileSizeKB > 0 && <span className="text-xs text-muted-foreground">{fileSizeKB}KB</span>}
+                                    <span
+                                      className={`text-xs font-bold px-1.5 py-0.5 rounded bg-muted ${getFileColor()}`}
+                                    >
+                                      {fileExt?.toUpperCase().slice(0, 4)}
+                                    </span>
+                                    {fileSizeKB > 0 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {fileSizeKB}KB
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -599,7 +784,11 @@ export const MessageItem = memo(
                     )}
                     {/* Text content */}
                     {message.content && (
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words cursor-pointer rounded px-2 py-1 -mx-2 -my-1 transition-colors overflow-wrap break-word" onClick={() => onEditAndRerun && handleStartEdit()} title="Click to edit and rerun from here">
+                      <p
+                        className="text-sm leading-relaxed whitespace-pre-wrap break-words cursor-pointer rounded px-2 py-1 -mx-2 -my-1 transition-colors overflow-wrap break-word"
+                        onClick={() => onEditAndRerun && handleStartEdit()}
+                        title="Click to edit and rerun from here"
+                      >
                         {String(message.content || "")}
                       </p>
                     )}
@@ -610,38 +799,63 @@ export const MessageItem = memo(
                   <div
                     className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none break-words overflow-wrap break-word transition-opacity duration-200 ease-out"
                     style={{
-                      animation: message.isThinking ? "none" : "fadeIn 0.3s ease-out",
-                      willChange: message.isThinking ? "contents, opacity" : "auto",
+                      animation: message.isThinking
+                        ? "none"
+                        : "fadeIn 0.3s ease-out",
+                      willChange: message.isThinking
+                        ? "contents, opacity"
+                        : "auto",
                       backfaceVisibility: "hidden",
                       transform: "translateZ(0)",
                     }}
                   >
                     {message.content && typeof message.content === "string" ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={markdownComponents}
+                      >
                         {stripMarkdownEnvelope(message.content)}
                       </ReactMarkdown>
                     ) : null}
                   </div>
 
                   {/* D3 — badges de duração por nó */}
-                  {!message.isThinking && message.nodeDurations && message.nodeDurations.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                      {message.nodeDurations.map((nd, i) => (
-                        <span key={`${nd.node}-${i}`} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-muted-foreground bg-muted/60 border border-border/50" title={nd.node}>
-                          {nd.label.replace(/[…\.]+$/, "")} <span className="text-primary/70">{nd.duration_ms >= 1000 ? `${(nd.duration_ms / 1000).toFixed(1)}s` : `${nd.duration_ms}ms`}</span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {!message.isThinking &&
+                    message.nodeDurations &&
+                    message.nodeDurations.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        {message.nodeDurations.map((nd, i) => (
+                          <span
+                            key={`${nd.node}-${i}`}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-muted-foreground bg-muted/60 border border-border/50"
+                            title={nd.node}
+                          >
+                            {nd.label.replace(/[…\.]+$/, "")}{" "}
+                            <span className="text-primary/70">
+                              {nd.duration_ms >= 1000
+                                ? `${(nd.duration_ms / 1000).toFixed(1)}s`
+                                : `${nd.duration_ms}ms`}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                   {/* Metadata — duração total e tokens */}
                   {!message.isThinking && message.thinkingDuration != null && (
                     <div className="flex items-center justify-end gap-2 mt-3 text-xs text-muted-foreground font-mono">
-                      <span>{(message.thinkingDuration / 1000).toFixed(1)}s</span>
+                      <span>
+                        {(message.thinkingDuration / 1000).toFixed(1)}s
+                      </span>
                       {message.usageMetadata?.total_tokens && (
                         <>
                           <span>•</span>
-                          <span>{(message.usageMetadata.total_tokens / 1000).toFixed(1)}k tokens</span>
+                          <span>
+                            {(
+                              message.usageMetadata.total_tokens / 1000
+                            ).toFixed(1)}
+                            k tokens
+                          </span>
                         </>
                       )}
                     </div>
@@ -655,7 +869,12 @@ export const MessageItem = memo(
                 <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
                   {/* M5 — Botão de retry para mensagens de erro */}
                   {message.isError && onRetry && (
-                    <Button variant="ghost" size="sm" onClick={onRetry} className="h-8 px-2 text-xs text-destructive hover:text-destructive">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onRetry}
+                      className="h-8 px-2 text-xs text-destructive hover:text-destructive"
+                    >
                       <RefreshCw className="w-3 h-3 mr-1" />
                       Tentar novamente
                     </Button>
@@ -663,7 +882,12 @@ export const MessageItem = memo(
 
                   {!message.isThinking && !message.isError && (
                     <>
-                      <Button variant="ghost" size="sm" onClick={() => onCopy(message.content, message.id)} className="h-8 px-2 text-xs">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onCopy(message.content, message.id)}
+                        className="h-8 px-2 text-xs"
+                      >
                         {copiedId === message.id ? (
                           <>
                             <Check className="w-3 h-3 mr-1" />
@@ -678,8 +902,16 @@ export const MessageItem = memo(
                       </Button>
 
                       {isLastAssistant && (
-                        <Button variant="ghost" size="sm" onClick={onRegenerate} disabled={isRegenerating} className="h-8 px-2 text-xs">
-                          <RefreshCw className={`w-3 h-3 mr-1 ${isRegenerating ? "animate-spin" : ""}`} />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={onRegenerate}
+                          disabled={isRegenerating}
+                          className="h-8 px-2 text-xs"
+                        >
+                          <RefreshCw
+                            className={`w-3 h-3 mr-1 ${isRegenerating ? "animate-spin" : ""}`}
+                          />
                           Regenerate
                         </Button>
                       )}
@@ -689,15 +921,60 @@ export const MessageItem = memo(
 
                   {!message.isThinking && message.runId && (
                     <>
-                      <Button variant="ghost" size="sm" onClick={() => onFeedback(message.id, "positive", feedbackComment[message.id])} aria-pressed={message.feedback === "positive"} className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${message.feedback === "positive" ? "text-white" : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"}`}>
-                        <ThumbsUp className="w-3 h-3 mr-1 transition-transform duration-150" aria-hidden="true" fill={message.feedback === "positive" ? "currentColor" : "none"} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          onFeedback(
+                            message.id,
+                            "positive",
+                            feedbackComment[message.id],
+                          )
+                        }
+                        aria-pressed={message.feedback === "positive"}
+                        className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${message.feedback === "positive" ? "text-white" : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"}`}
+                      >
+                        <ThumbsUp
+                          className="w-3 h-3 mr-1 transition-transform duration-150"
+                          aria-hidden="true"
+                          fill={
+                            message.feedback === "positive"
+                              ? "currentColor"
+                              : "none"
+                          }
+                        />
                         Good
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => onFeedback(message.id, "negative", feedbackComment[message.id])} aria-pressed={message.feedback === "negative"} className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${message.feedback === "negative" ? "text-white" : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"}`}>
-                        <ThumbsDown className="w-3 h-3 mr-1 transition-transform duration-150" aria-hidden="true" fill={message.feedback === "negative" ? "currentColor" : "none"} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          onFeedback(
+                            message.id,
+                            "negative",
+                            feedbackComment[message.id],
+                          )
+                        }
+                        aria-pressed={message.feedback === "negative"}
+                        className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${message.feedback === "negative" ? "text-white" : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"}`}
+                      >
+                        <ThumbsDown
+                          className="w-3 h-3 mr-1 transition-transform duration-150"
+                          aria-hidden="true"
+                          fill={
+                            message.feedback === "negative"
+                              ? "currentColor"
+                              : "none"
+                          }
+                        />
                         Bad
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => onToggleComment(message.id)} className="h-8 px-2 text-xs rounded-md transition-colors duration-150 ease-out text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onToggleComment(message.id)}
+                        className="h-8 px-2 text-xs rounded-md transition-colors duration-150 ease-out text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"
+                      >
                         <MessageSquare className="w-3 h-3 mr-1" />
                         Feedback
                       </Button>
@@ -721,7 +998,10 @@ export const MessageItem = memo(
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
-                          if (feedbackComment[message.id]?.trim() && message.feedback) {
+                          if (
+                            feedbackComment[message.id]?.trim() &&
+                            message.feedback
+                          ) {
                             onSubmitComment(message.id);
                           }
                         } else if (e.key === "Escape") {
@@ -729,55 +1009,90 @@ export const MessageItem = memo(
                         }
                       }}
                     />
-                    {!message.feedback && <p className="text-[10px] text-muted-foreground mt-1">Select thumbs up or down before submitting</p>}
+                    {!message.feedback && (
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Select thumbs up or down before submitting
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {showToolCalls && message.toolCalls && message.toolCalls.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {message.toolCalls.map((tool) => (
-                      <ToolCallRenderer key={tool.id} tool={tool} isStreaming={message.isThinking} />
-                    ))}
-                  </div>
-                )}
+                {showToolCalls &&
+                  message.toolCalls &&
+                  message.toolCalls.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {message.toolCalls.map((tool) => (
+                        <ToolCallRenderer
+                          key={tool.id}
+                          tool={tool}
+                          isStreaming={message.isThinking}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-                {message.subgraphOutputs && message.subgraphOutputs.length > 0 && (
-                  <div className="mt-3">
-                    <details className="group">
-                      <summary className="cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                        <span>Subagent Outputs ({message.subgraphOutputs.length})</span>
-                        <span className="text-[10px] opacity-50">Click to expand</span>
-                      </summary>
-                      <div className="mt-2 space-y-2">
-                        {message.subgraphOutputs.map((subgraph, idx) => (
-                          <details key={`${subgraph.name}-${idx}`} className="px-3 py-2 rounded-lg border border-primary/30 bg-primary/5">
-                            <summary className="cursor-pointer flex items-center gap-2 text-xs hover:opacity-80">
-                              <Settings className="w-3 h-3 text-primary" />
-                              <span className="font-semibold text-primary">{subgraph.name}</span>
-                              {subgraph.isStreaming && (
-                                <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                  Running...
+                {message.subgraphOutputs &&
+                  message.subgraphOutputs.length > 0 && (
+                    <div className="mt-3">
+                      <details className="group">
+                        <summary className="cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                          <span>
+                            Subagent Outputs ({message.subgraphOutputs.length})
+                          </span>
+                          <span className="text-[10px] opacity-50">
+                            Click to expand
+                          </span>
+                        </summary>
+                        <div className="mt-2 space-y-2">
+                          {message.subgraphOutputs.map((subgraph, idx) => (
+                            <details
+                              key={`${subgraph.name}-${idx}`}
+                              className="px-3 py-2 rounded-lg border border-primary/30 bg-primary/5"
+                            >
+                              <summary className="cursor-pointer flex items-center gap-2 text-xs hover:opacity-80">
+                                <Settings className="w-3 h-3 text-primary" />
+                                <span className="font-semibold text-primary">
+                                  {subgraph.name}
                                 </span>
+                                {subgraph.isStreaming && (
+                                  <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                    Running...
+                                  </span>
+                                )}
+                                {subgraph.isComplete && (
+                                  <span className="text-[10px] text-green-600 dark:text-green-400">
+                                    Complete
+                                  </span>
+                                )}
+                              </summary>
+                              {subgraph.output ? (
+                                <div className="mt-2 text-xs font-mono text-muted-foreground">
+                                  <pre className="whitespace-pre-wrap break-words text-[10px] max-h-60 overflow-y-auto">
+                                    {subgraph.output}
+                                  </pre>
+                                </div>
+                              ) : (
+                                <div className="mt-2 text-[10px] text-muted-foreground italic">
+                                  Waiting for output...
+                                </div>
                               )}
-                              {subgraph.isComplete && <span className="text-[10px] text-green-600 dark:text-green-400">Complete</span>}
-                            </summary>
-                            {subgraph.output ? (
-                              <div className="mt-2 text-xs font-mono text-muted-foreground">
-                                <pre className="whitespace-pre-wrap break-words text-[10px] max-h-60 overflow-y-auto">{subgraph.output}</pre>
-                              </div>
-                            ) : (
-                              <div className="mt-2 text-[10px] text-muted-foreground italic">Waiting for output...</div>
-                            )}
-                          </details>
-                        ))}
-                      </div>
-                    </details>
-                  </div>
-                )}
+                            </details>
+                          ))}
+                        </div>
+                      </details>
+                    </div>
+                  )}
 
                 {/* E2 — Painel HITL (aprovação humana antes de ação destrutiva) */}
-                {message.hitlPending && onHitlDecision && <HITLPanel messageId={message.id} pending={message.hitlPending} threadId={threadId} onDecision={onHitlDecision} />}
+                {message.hitlPending && onHitlDecision && (
+                  <HITLPanel
+                    messageId={message.id}
+                    pending={message.hitlPending}
+                    threadId={threadId}
+                    onDecision={onHitlDecision}
+                  />
+                )}
               </>
             )}
           </div>
@@ -793,24 +1108,49 @@ export const MessageItem = memo(
     }
 
     // copiedId changed - only re-render if it affects this message
-    const copiedIdAffectsThis = prevProps.copiedId !== nextProps.copiedId && (prevProps.copiedId === prevProps.message.id || nextProps.copiedId === nextProps.message.id);
+    const copiedIdAffectsThis =
+      prevProps.copiedId !== nextProps.copiedId &&
+      (prevProps.copiedId === prevProps.message.id ||
+        nextProps.copiedId === nextProps.message.id);
 
     // showCommentInput changed - only re-render if it affects this message
-    const commentInputAffectsThis = prevProps.showCommentInput !== nextProps.showCommentInput && (prevProps.showCommentInput === prevProps.message.id || nextProps.showCommentInput === nextProps.message.id);
+    const commentInputAffectsThis =
+      prevProps.showCommentInput !== nextProps.showCommentInput &&
+      (prevProps.showCommentInput === prevProps.message.id ||
+        nextProps.showCommentInput === nextProps.message.id);
 
     // feedbackComment changed for THIS message
-    const feedbackCommentChanged = prevProps.feedbackComment[prevProps.message.id] !== nextProps.feedbackComment[nextProps.message.id];
+    const feedbackCommentChanged =
+      prevProps.feedbackComment[prevProps.message.id] !==
+      nextProps.feedbackComment[nextProps.message.id];
 
     // Other props that affect rendering
-    const otherPropsChanged = prevProps.showToolCalls !== nextProps.showToolCalls || prevProps.isRegenerating !== nextProps.isRegenerating || prevProps.isLastAssistant !== nextProps.isLastAssistant || prevProps.isDevMode !== nextProps.isDevMode;
+    const otherPropsChanged =
+      prevProps.showToolCalls !== nextProps.showToolCalls ||
+      prevProps.isRegenerating !== nextProps.isRegenerating ||
+      prevProps.isLastAssistant !== nextProps.isLastAssistant ||
+      prevProps.isDevMode !== nextProps.isDevMode;
 
     // Re-render if any relevant prop changed
-    if (copiedIdAffectsThis || commentInputAffectsThis || feedbackCommentChanged || otherPropsChanged) {
+    if (
+      copiedIdAffectsThis ||
+      commentInputAffectsThis ||
+      feedbackCommentChanged ||
+      otherPropsChanged
+    ) {
       return false;
     }
 
     // Function references - if they changed, we need to re-render (shouldn't happen with useCallback)
-    const functionsChanged = prevProps.onCopy !== nextProps.onCopy || prevProps.onRegenerate !== nextProps.onRegenerate || prevProps.onEditAndRerun !== nextProps.onEditAndRerun || prevProps.onFeedback !== nextProps.onFeedback || prevProps.onSubmitComment !== nextProps.onSubmitComment || prevProps.onCancelComment !== nextProps.onCancelComment || prevProps.onToggleComment !== nextProps.onToggleComment || prevProps.setFeedbackComment !== nextProps.setFeedbackComment;
+    const functionsChanged =
+      prevProps.onCopy !== nextProps.onCopy ||
+      prevProps.onRegenerate !== nextProps.onRegenerate ||
+      prevProps.onEditAndRerun !== nextProps.onEditAndRerun ||
+      prevProps.onFeedback !== nextProps.onFeedback ||
+      prevProps.onSubmitComment !== nextProps.onSubmitComment ||
+      prevProps.onCancelComment !== nextProps.onCancelComment ||
+      prevProps.onToggleComment !== nextProps.onToggleComment ||
+      prevProps.setFeedbackComment !== nextProps.setFeedbackComment;
 
     if (functionsChanged) {
       return false;

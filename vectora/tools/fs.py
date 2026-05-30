@@ -7,19 +7,78 @@ import platform
 import re
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Annotated, Any
 
 from langchain.tools import tool
+from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import InjectedToolArg
 
 from vectora.services.ignore import is_ignored as _is_ignored
 from vectora.services.ignore import load_ignore_spec as _load_ignore_spec
 from vectora.services.security import (
-    is_safe_file_path,
     is_safe_regex_pattern,
     is_safe_shell_command,
+    resolve_within_workspace,
 )
 from vectora.services.terminal_stream import emit_terminal_line
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Q4 — Confinação ao workspace ativo (scope guard rails)
+# ---------------------------------------------------------------------------
+
+
+def _active_workspace(config: RunnableConfig | None) -> Any:
+    """Resolve o Workspace ativo a partir do config (workspace_id)."""
+    from vectora.services.workspace import workspace_registry
+
+    wid = None
+    if config is not None:
+        wid = (config.get("configurable") or {}).get("workspace_id")
+    if wid:
+        ws = workspace_registry.get(wid)
+        if ws is not None:
+            return ws
+    return workspace_registry.get_or_create()
+
+
+def _workspace_root(config: RunnableConfig | None) -> tuple[Path, Any]:
+    """Retorna (root, workspace). Honra a worktree associada à thread, se houver."""
+    ws = _active_workspace(config)
+    worktree_path = None
+    if config is not None:
+        worktree_path = (config.get("configurable") or {}).get("worktree_path")
+    root = Path(worktree_path) if worktree_path else Path(ws.cwd)
+    return root, ws
+
+
+def _confine(path: str, config: RunnableConfig | None) -> tuple[Path | None, str]:
+    """Resolve ``path`` dentro do workspace ativo.
+
+    Retorna (resolved_path, "") em sucesso ou (None, error_message) se o path
+    escapar do workspace.
+    """
+    root, _ws = _workspace_root(config)
+    resolved = resolve_within_workspace(path, root)
+    if resolved is None:
+        return None, (
+            f"Error: Path '{path}' fora do workspace '{root}'. "
+            "O Vectora só pode acessar arquivos dentro da pasta confiável."
+        )
+    return resolved, ""
+
+
+def _require_trust(config: RunnableConfig | None) -> str:
+    """Retorna mensagem de erro se o workspace ativo não for confiável, senão ""."""
+    _, ws = _workspace_root(config)
+    if not getattr(ws, "trusted", False):
+        return (
+            f"Error: Workspace '{ws.name}' não é confiável. Confirme a confiança "
+            "na pasta antes de executar ações de escrita ou terminal."
+        )
+    return ""
 
 
 @tool(
@@ -30,7 +89,10 @@ logger = logging.getLogger(__name__)
         "icon": "file-text",
     }
 )
-def file_read(file_path: str) -> str:
+def file_read(
+    file_path: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
     """Lê conteúdo completo de um arquivo de texto.
 
     Args:
@@ -39,12 +101,13 @@ def file_read(file_path: str) -> str:
     Returns:
         Conteúdo do arquivo como string
     """
-    if not is_safe_file_path(file_path, allowed_dirs=["."]):
-        logger.warning("file_read blocked by safety check", extra={"path": file_path})
-        return f"Error: File path '{file_path}' is not allowed"
+    resolved, err = _confine(file_path, config)
+    if resolved is None:
+        logger.warning("file_read blocked by scope check", extra={"path": file_path})
+        return err
 
     try:
-        content = Path(file_path).read_text(encoding="utf-8")
+        content = resolved.read_text(encoding="utf-8")
         logger.info(
             "file_read completed", extra={"path": file_path, "size": len(content)}
         )
@@ -65,7 +128,11 @@ def file_read(file_path: str) -> str:
     }
 )
 def file_edit(
-    file_path: str, old_text: str, new_text: str, replace_all: bool = False
+    file_path: str,
+    old_text: str,
+    new_text: str,
+    replace_all: bool = False,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Edita arquivo substituindo texto.
 
@@ -78,12 +145,17 @@ def file_edit(
     Returns:
         Confirmação da edição
     """
-    if not is_safe_file_path(file_path, allowed_dirs=["."]):
-        logger.warning("file_edit blocked by safety check", extra={"path": file_path})
-        return f"Error: File path '{file_path}' is not allowed"
+    trust_err = _require_trust(config)
+    if trust_err:
+        return trust_err
+
+    resolved, err = _confine(file_path, config)
+    if resolved is None:
+        logger.warning("file_edit blocked by scope check", extra={"path": file_path})
+        return err
 
     try:
-        path = Path(file_path)
+        path = resolved
 
         # Cria arquivo novo quando old_text="" e arquivo não existe
         if old_text == "" and not path.exists():
@@ -123,7 +195,11 @@ def file_edit(
         "icon": "file-plus",
     }
 )
-def file_write(file_path: str, content: str) -> str:
+def file_write(
+    file_path: str,
+    content: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
     """Cria ou sobrescreve completamente um arquivo com o conteúdo fornecido.
 
     Use para criar novos arquivos ou substituir o conteúdo completo de um existente.
@@ -136,12 +212,17 @@ def file_write(file_path: str, content: str) -> str:
     Returns:
         Confirmação com caminho e tamanho em bytes
     """
-    if not is_safe_file_path(file_path, allowed_dirs=["."]):
-        logger.warning("file_write blocked by safety check", extra={"path": file_path})
-        return f"Error: File path '{file_path}' is not allowed"
+    trust_err = _require_trust(config)
+    if trust_err:
+        return trust_err
+
+    resolved, err = _confine(file_path, config)
+    if resolved is None:
+        logger.warning("file_write blocked by scope check", extra={"path": file_path})
+        return err
 
     try:
-        path = Path(file_path)
+        path = resolved
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
 
@@ -163,7 +244,11 @@ def file_write(file_path: str, content: str) -> str:
         "icon": "search",
     }
 )
-def grep(pattern: str, path: str = ".") -> str:
+def grep(
+    pattern: str,
+    path: str = ".",
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
     """Busca padrão em arquivos usando regex.
 
     Args:
@@ -176,9 +261,13 @@ def grep(pattern: str, path: str = ".") -> str:
     if not is_safe_regex_pattern(pattern):
         return "Error: Invalid or unsafe regex pattern"
 
+    resolved, err = _confine(path, config)
+    if resolved is None:
+        return err
+
     try:
         results = []
-        search_path = Path(path)
+        search_path = resolved
         base_dir = search_path if search_path.is_dir() else search_path.parent
         spec = _load_ignore_spec(base_dir)
 
@@ -215,7 +304,12 @@ def grep(pattern: str, path: str = ".") -> str:
         "icon": "folder",
     }
 )
-def list_dir(path: str = ".", *, recursive: bool = False) -> str:
+def list_dir(
+    path: str = ".",
+    *,
+    recursive: bool = False,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
     """Lista arquivos em um diretório.
 
     Args:
@@ -225,8 +319,12 @@ def list_dir(path: str = ".", *, recursive: bool = False) -> str:
     Returns:
         Lista de arquivos e pastas com prefixo [DIR] ou [FILE]
     """
+    resolved, err = _confine(path, config)
+    if resolved is None:
+        return err
+
     try:
-        dir_path = Path(path)
+        dir_path = resolved
 
         if not dir_path.exists():
             return f"Error: Directory '{path}' not found"
@@ -267,10 +365,14 @@ def list_dir(path: str = ".", *, recursive: bool = False) -> str:
         "icon": "terminal",
     }
 )
-async def terminal(command: str) -> str:
+async def terminal(
+    command: str,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
     """Executa um comando shell de forma assíncrona (não bloqueia o event loop).
 
     Suporta comandos longos via streaming interno. Bloqueia destrutivos por whitelist.
+    O comando roda com o diretório de trabalho fixado no workspace ativo.
     Comandos multi-etapa ainda exigem invocações separadas (uma tool call por comando)
     pois o processo é finalizado ao retornar — não há sessão persistente de terminal.
 
@@ -280,6 +382,10 @@ async def terminal(command: str) -> str:
     Returns:
         Saída do comando (stdout + stderr) ou mensagem de erro se bloqueado
     """
+    trust_err = _require_trust(config)
+    if trust_err:
+        return trust_err
+
     # Normaliza comandos Unix → Windows quando necessário
     if platform.system() == "Windows":
         command = re.sub(r"\bmkdir\s+-p\s+", "mkdir ", command)
@@ -296,14 +402,18 @@ async def terminal(command: str) -> str:
             "and fork bombs are not permitted."
         )
 
+    root, _ = _workspace_root(config)
+
     proc: asyncio.subprocess.Process | None = None
     try:
         # asyncio.create_subprocess_shell não bloqueia o event loop
-        # permitindo que o UI (Rich panels) e outras tarefas continuem rodando
+        # permitindo que o UI (Rich panels) e outras tarefas continuem rodando.
+        # cwd confina o comando ao workspace ativo (Q4 — scope guard rails).
         proc = await asyncio.create_subprocess_shell(
             command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            cwd=str(root),
         )
 
         output_lines: list[str] = []

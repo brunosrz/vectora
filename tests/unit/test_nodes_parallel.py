@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -12,7 +13,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 # ---------------------------------------------------------------------------
 
 
-def _state(**kw) -> dict:
+def _state(**kw) -> Any:
     base = {
         "messages": [HumanMessage(content="compare JWT vs OAuth2 e mostre código")],
         "session_metadata": {},
@@ -21,7 +22,7 @@ def _state(**kw) -> dict:
     return base
 
 
-def _task(agent: str, query: str, reason: str = "") -> dict:
+def _task(agent: str, query: str, reason: str = "") -> Any:
     return {"agent": agent, "task_query": query, "reason": reason}
 
 
@@ -36,7 +37,7 @@ class TestParallelDispatch:
         """Sem tasks, retorna lista vazia sem chamar o LLM."""
         from vectora.graph import parallel_dispatch
 
-        config = {"configurable": {}}
+        config: Any = {"configurable": {}}
         result = await parallel_dispatch(_state(), config=config)
         assert result["parallel_results"] == []
 
@@ -45,7 +46,7 @@ class TestParallelDispatch:
         """Todas as tasks devem ser executadas e retornar resultados."""
         from vectora.graph import parallel_dispatch
 
-        config = {"configurable": {}}
+        config: Any = {"configurable": {}}
         tasks = [
             _task("search", "buscar documentação JWT"),
             _task("coder", "implementar verificação JWT em Python"),
@@ -68,7 +69,7 @@ class TestParallelDispatch:
         """Cada resultado deve conter agent, task, reason, response, success."""
         from vectora.graph import parallel_dispatch
 
-        config = {"configurable": {}}
+        config: Any = {"configurable": {}}
         tasks = [_task("search", "busca JWT", "precisamos de contexto")]
         state = _state(parallel_tasks=tasks)
 
@@ -92,7 +93,7 @@ class TestParallelDispatch:
         """Uma task que falha não deve derrubar as demais — marca success=False."""
         from vectora.graph import parallel_dispatch
 
-        config = {"configurable": {}}
+        config: Any = {"configurable": {}}
         tasks = [
             _task("search", "busca normal"),
             _task("coder", "código que vai falhar"),
@@ -125,7 +126,7 @@ class TestParallelDispatch:
         """Cada tipo de agente deve receber seu próprio system prompt."""
         from vectora.graph import _PARALLEL_AGENT_PROMPTS, parallel_dispatch
 
-        config = {"configurable": {}}
+        config: Any = {"configurable": {}}
         tasks = [
             _task("coder", "escrever função"),
             _task("search", "pesquisar docs"),
@@ -157,7 +158,7 @@ class TestParallelDispatch:
         """Agente desconhecido usa o prompt de search como fallback."""
         from vectora.graph import _PARALLEL_AGENT_PROMPTS, parallel_dispatch
 
-        config = {"configurable": {}}
+        config: Any = {"configurable": {}}
         tasks = [_task("inexistente", "tarefa desconhecida")]
         state = _state(parallel_tasks=tasks)
 
@@ -189,8 +190,9 @@ class TestParallelStateFields:
         s: State = {
             "messages": [],
             "session_metadata": {},
-            "parallel_tasks": [{"agent": "search", "task_query": "x"}],
+            "parallel_tasks": [{"agent": "search", "task_query": "x"}],  # ty: ignore[invalid-argument-type]
         }
+        assert s["parallel_tasks"] is not None
         assert s["parallel_tasks"][0]["agent"] == "search"
 
     def test_state_has_parallel_results_field(self):
@@ -200,10 +202,11 @@ class TestParallelStateFields:
         s: State = {
             "messages": [],
             "session_metadata": {},
-            "parallel_results": [
+            "parallel_results": [  # ty: ignore[invalid-argument-type]
                 {"agent": "search", "response": "ok", "success": True}
             ],
         }
+        assert s["parallel_results"] is not None
         assert s["parallel_results"][0]["success"] is True
 
     def test_routing_decision_accepts_parallel(self):
@@ -287,6 +290,7 @@ class TestSubTaskModel:
             reason="tasks independentes identificadas",
         )
         assert decision.action == "parallel"
+        assert decision.parallel_tasks is not None
         assert len(decision.parallel_tasks) == 2
 
     def test_orchestrator_decision_parallel_tasks_none_by_default(self):

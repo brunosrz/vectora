@@ -6,7 +6,10 @@
  */
 
 function getVectoraApiUrl(): string {
-  return process.env.NEXT_PUBLIC_VECTORA_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:8080" : "");
+  return (
+    process.env.NEXT_PUBLIC_VECTORA_API_URL ||
+    (process.env.NODE_ENV === "development" ? "http://localhost:8080" : "")
+  );
 }
 
 export const VECTORA_API_URL = getVectoraApiUrl();

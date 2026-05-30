@@ -27,26 +27,26 @@ class TestOAuthHandlerExists:
     def test_github_status_route_registered(self):
         from vectora.api.handlers.oauth import router
 
-        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]
+        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("github" in p and "status" in p for p in paths)
 
     def test_github_start_route_registered(self):
         from vectora.api.handlers.oauth import router
 
-        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]
+        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("github" in p for p in paths)
 
     def test_github_callback_route_registered(self):
         from vectora.api.handlers.oauth import router
 
-        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]
+        paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("callback" in p for p in paths)
 
     def test_github_disconnect_route_registered(self):
         from vectora.api.handlers.oauth import router
 
         methods_paths = [
-            (method, r.path)
+            (method, r.path)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             for r in router.routes  # type: ignore[attr-defined]
             for method in getattr(r, "methods", [])
         ]

@@ -30,7 +30,7 @@ def headless_app():
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
     from vectora.api.server import create_app
 
-    return create_app(serve_static=False)
+    return create_app()
 
 
 @pytest.fixture(scope="module")
@@ -132,13 +132,8 @@ class TestGetTools:
 
 
 class TestChatModeWithoutStaticDir:
-    def test_chat_mode_without_static_dir(self, tmp_path, monkeypatch):
-        """create_app(serve_static=True) sem vectora/chat_static/ não deve explodir."""
-        import vectora.api.server as server_module
-
-        # Aponta _CHAT_STATIC_DIR para pasta inexistente
-        monkeypatch.setattr(server_module, "_CHAT_STATIC_DIR", tmp_path / "nao_existe")
-
+    def test_chat_mode_with_frontend_proxy(self):
+        """create_app(serve_static=True) registra o proxy do frontend sem explodir."""
         from vectora.api.server import create_app
 
         app = create_app(serve_static=True)

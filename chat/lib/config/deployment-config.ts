@@ -315,9 +315,22 @@ export function getModelDescription(modelId: ModelOption): string {
   return model?.description ?? "";
 }
 
-export function getModelProvider(modelId: ModelOption): ModelConfig["provider"] {
+export function getModelProvider(
+  modelId: ModelOption,
+): ModelConfig["provider"] {
   const model = Object.values(MODELS).find((m) => m.id === modelId);
   return model?.provider ?? "google-genai";
+}
+
+/**
+ * Tamanho da janela de contexto (em tokens) do modelo, para o medidor de
+ * contexto (R5). Derivado por família quando não há valor explícito: Gemini
+ * trabalha em escala de milhão; os demais frontier models giram em torno de 200k.
+ */
+export function getContextWindow(modelId: ModelOption): number {
+  if (modelId.startsWith("google-genai:")) return 1_000_000;
+  if (modelId.startsWith("cohere:")) return 128_000;
+  return 200_000;
 }
 
 // =============================================================================

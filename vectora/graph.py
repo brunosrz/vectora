@@ -49,6 +49,8 @@ if TYPE_CHECKING:
     from langchain_core.runnables import RunnableConfig
     from langgraph.pregel.main import BaseCheckpointSaver
 
+    from vectora.types.agents import SubTask
+
 logger = logging.getLogger(__name__)
 
 
@@ -94,7 +96,8 @@ async def parallel_dispatch(state: State, config: RunnableConfig) -> dict:
         logger.info("parallel_dispatch: nenhuma task, retornando vazio")
         return {"parallel_results": []}
 
-    async def _run_task(task: dict) -> dict:
+    async def _run_task(task: SubTask | dict) -> dict:
+        # SubTask (Pydantic) e dict expõem ``.get`` graças ao mixin em SubTask.
         agent = task.get("agent", "search")
         task_query = task.get("task_query", "")
         reason = task.get("reason", "")

@@ -232,6 +232,150 @@ memory.error_save,Error saving,Error al guardar,Erro ao salvar
 memory.error_delete,Error deleting,Error al eliminar,Erro ao deletar
 memory.error_clear,Error clearing memories,Error al limpiar memorias,Erro ao limpar memórias
 memory.error_create,Error creating memory,Error al crear memoria,Erro ao criar memória
+# =============================================================================
+# Workspace selector + trust (Q6)
+# =============================================================================
+workspace.add_folder,Add folder…,Añadir carpeta…,Adicionar pasta…
+workspace.no_workspaces,No folders yet,Aún no hay carpetas,Nenhuma pasta ainda
+workspace.trusted,Trusted,Confiable,Confiável
+workspace.untrusted,Read-only,Solo lectura,Somente leitura
+workspace.select_title,Workspace,Espacio de trabajo,Workspace
+workspace.trust_title,Trust this folder?,¿Confiar en esta carpeta?,Confiar nesta pasta?
+workspace.trust_desc,"Vectora can only read, write and run commands inside trusted folders. Outside this folder nothing is accessible.","Vectora solo puede leer, escribir y ejecutar comandos dentro de carpetas confiables. Fuera de esta carpeta nada es accesible.","O Vectora só pode ler, escrever e rodar comandos dentro de pastas confiáveis. Fora dela nada é acessível."
+workspace.browse_title,Choose a folder,Elige una carpeta,Escolha uma pasta
+workspace.browse_up,Up one level,Subir un nivel,Subir um nível
+workspace.browse_empty,No subfolders here,No hay subcarpetas aquí,Nenhuma subpasta aqui
+workspace.git_init_label,Initialize git repository if needed,Inicializar repositorio git si es necesario,Inicializar repositório git se necessário
+workspace.git_not_repo,This folder is not a git repository.,Esta carpeta no es un repositorio git.,Esta pasta não é um repositório git.
+workspace.trust_confirm,I trust this folder,Confío en esta carpeta,Confio nesta pasta
+workspace.cancel,Cancel,Cancelar,Cancelar
+workspace.select_here,Use this folder,Usar esta carpeta,Usar esta pasta
+# =============================================================================
+# Auth onboarding (Q7)
+# =============================================================================
+auth.setup_title,Welcome to Vectora,Bienvenido a Vectora,Bem-vindo ao Vectora
+auth.setup_subtitle,Create the first account — it becomes the administrator (root).,Crea la primera cuenta — se convierte en administrador (root).,Crie a primeira conta — ela se torna o administrador (root).
+auth.signin_title,Sign in,Iniciar sesión,Entrar
+auth.no_public_signup,Public signup is disabled. Ask an administrator for an invite.,El registro público está deshabilitado. Pide una invitación a un administrador.,Cadastro público desabilitado. Peça um convite a um administrador.
+# =============================================================================
+# Invites (Q8)
+# =============================================================================
+invite.title,Invite user,Invitar usuario,Convidar usuário
+invite.role_label,Role,Función,Função
+invite.email_label,Email (optional),Email (opcional),Email (opcional)
+invite.ttl_label,Valid for (hours),Válido por (horas),Válido por (horas)
+invite.create,Generate invite,Generar invitación,Gerar convite
+invite.copy,Copy link,Copiar enlace,Copiar link
+invite.copied,Copied!,¡Copiado!,Copiado!
+invite.pending,Pending invites,Invitaciones pendientes,Convites pendentes
+invite.revoke,Revoke,Revocar,Revogar
+invite.none,No pending invites,Sin invitaciones pendientes,Nenhum convite pendente
+invite.expires,Expires,Expira,Expira
+invite.context,Invite for role: {role},Invitación para función: {role},Convite para função: {role}
+invite.invalid,Invalid or expired invite.,Invitación inválida o expirada.,Convite inválido ou expirado.
+invite.error_create,Error generating invite,Error al generar invitación,Erro ao gerar convite
+# =============================================================================
+# Permission modes (R2)
+# =============================================================================
+permission.title,Permission mode,Modo de permisos,Modo de permissão
+permission.mode.ask,Ask permissions,Solicitar permisos,Solicitar permissões
+permission.mode.accept_edits,Accept edits,Aceptar ediciones,Aceitar edições
+permission.mode.plan,Plan mode,Modo de planificación,Modo de planejamento
+permission.mode.auto,Auto mode,Modo automático,Modo automático
+permission.mode.bypass,Bypass permissions,Ignorar permisos,Ignorar permissões
+permission.desc.ask,Confirm every destructive action,Confirmar cada acción destructiva,Confirma toda ação destrutiva
+permission.desc.accept_edits,Auto-approve file writes; confirm terminal,Auto-aprueba escrituras; confirma terminal,Auto-aprova escrita de arquivos; confirma terminal
+permission.desc.plan,Propose only — never run destructive tools,Solo propone — nunca ejecuta acciones destructivas,Apenas propõe — não executa ações destrutivas
+permission.desc.auto,Auto-approve inside the trusted folder,Auto-aprueba dentro de la carpeta confiable,Auto-aprova dentro da pasta confiável
+permission.desc.bypass,Full auto — no confirmations,Totalmente automático — sin confirmaciones,Full-auto — sem confirmações
+# =============================================================================
+# Reasoning effort (R4)
+# =============================================================================
+effort.title,Effort,Esfuerzo,Esforço
+effort.low,Low,Baja,Baixa
+effort.medium,Medium,Media,Média
+effort.high,High,Alta,Alto
+effort.max,Max,Máx,Max
+effort.fast_mode,Fast mode,Modo rápido,Modo rápido
+effort.fast_mode_desc,Disable reasoning for minimum latency,Desactiva el razonamiento para mínima latencia,Desliga o raciocínio para latência mínima
+# =============================================================================
+# Command bar (R1)
+# =============================================================================
+commandbar.local,Local,Local,Local
+commandbar.local_tip,Running on this machine,Ejecutando en esta máquina,Executando nesta máquina
+commandbar.no_branch,no branch,sin rama,sem branch
+commandbar.worktree,Worktree,Worktree,Worktree
+# =============================================================================
+# Context meter (R5)
+# =============================================================================
+meter.context_window,Context window,Ventana de contexto,Janela de contexto
+meter.plan_usage,Plan usage,Uso del plan,Uso do plano
+meter.requests,requests,solicitudes,requisições
+meter.resets_in,resets in,reinicia en,reseta em
+# =============================================================================
+# Plus menu (R3)
+# =============================================================================
+plus.add_files,Add files or photos,Añadir archivos o fotos,Adicionar arquivos ou fotos
+plus.add_folder,Add folder,Añadir carpeta,Adicionar pasta
+plus.slash_commands,Slash commands,Comandos de barra,Comandos de barra
+plus.connectors,Connectors,Conectores,Conectores
+plus.plugins,Add plugins…,Añadir plugins…,Adicionar plugins…
+# =============================================================================
+# Slash commands (Bloco H)
+# =============================================================================
+slash.title,Commands,Comandos,Comandos
+slash.help,Show available commands,Mostrar comandos disponíveis,Mostrar comandos disponíveis
+slash.clear,Start a new chat,Iniciar un nuevo chat,Iniciar um novo chat
+slash.model,Switch the model for this chat,Cambiar el modelo de este chat,Trocar o modelo deste chat
+slash.unknown,Unknown command,Comando desconocido,Comando desconhecido
+slash.model_usage,"Usage: /model <name>. Available: {models}","Uso: /model <nombre>. Disponibles: {models}","Uso: /model <nome>. Disponíveis: {models}"
+slash.model_changed,Model changed to {model},Modelo cambiado a {model},Modelo alterado para {model}
+slash.model_not_found,Model "{name}" not found,Modelo "{name}" no encontrado,Modelo "{name}" não encontrado
+slash.help_intro,Available commands:,Comandos disponibles:,Comandos disponíveis:
+# =============================================================================
+# Plugins (MCP) — Bloco S
+# =============================================================================
+plugins.title,MCP Plugins,Plugins MCP,Plugins MCP
+plugins.subtitle,Connect external MCP servers; their tools become available in chat.,Conecta servidores MCP externos; sus herramientas quedan disponibles en el chat.,Conecte servidores MCP externos; as ferramentas deles ficam disponíveis no chat.
+plugins.empty,No plugins configured,Sin plugins configurados,Nenhum plugin configurado
+plugins.add,Add plugin,Añadir plugin,Adicionar plugin
+plugins.name,Name,Nombre,Nome
+plugins.transport,Transport,Transporte,Transporte
+plugins.command,Command,Comando,Comando
+plugins.args,"Arguments (one per line)","Argumentos (uno por línea)","Argumentos (um por linha)"
+plugins.url,URL,URL,URL
+plugins.save,Save,Guardar,Salvar
+plugins.cancel,Cancel,Cancelar,Cancelar
+plugins.remove,Remove,Eliminar,Remover
+plugins.verify,Verify,Verificar,Verificar
+plugins.verifying,Verifying…,Verificando…,Verificando…
+plugins.verify_ok,Connected · {n} tools,Conectado · {n} herramientas,Conectado · {n} ferramentas
+plugins.verify_fail,Connection failed,Falló la conexión,Falha na conexão
+plugins.error_save,Error saving plugin,Error al guardar plugin,Erro ao salvar plugin
+plugins.error_load,Error loading plugins,Error al cargar plugins,Erro ao carregar plugins
+# =============================================================================
+# Tool policy (S5)
+# =============================================================================
+toolpolicy.title,Tool access,Acceso a herramientas,Acesso às ferramentas
+toolpolicy.subtitle,Toggle which built-in tools the agent can use on your behalf.,Activa qué herramientas integradas el agente puede usar por ti.,Liga/desliga quais ferramentas integradas o agente pode usar em seu nome.
+toolpolicy.enabled,Enabled,Activada,Ativada
+toolpolicy.disabled,Disabled,Desactivada,Desativada
+toolpolicy.save,Save changes,Guardar cambios,Salvar alterações
+toolpolicy.saved,Saved,Guardado,Salvo
+toolpolicy.error_load,Error loading tools,Error al cargar herramientas,Erro ao carregar ferramentas
+toolpolicy.error_save,Error saving,Error al guardar,Erro ao salvar
+# =============================================================================
+# Embedded terminal (Bloco T)
+# =============================================================================
+terminal.title,Terminal,Terminal,Terminal
+terminal.toggle,Toggle terminal,Mostrar/ocultar terminal,Mostrar/ocultar terminal
+terminal.new,New terminal,Nuevo terminal,Novo terminal
+terminal.close,Close terminal,Cerrar terminal,Fechar terminal
+terminal.tab_default,shell,shell,shell
+terminal.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
+terminal.untrusted_title,Workspace not trusted,Espacio no confiable,Workspace não confiável
+terminal.untrusted_hint,The terminal only opens in folders you marked as trusted.,La terminal solo abre en carpetas marcadas como confiables.,O terminal só abre em pastas marcadas como confiáveis.
+terminal.no_sandbox_warning,Shell sem sandbox: tem o mesmo poder de um terminal local na pasta confiada.,Shell sin sandbox: tiene el mismo poder que un terminal local en la carpeta confiable.,Shell sem sandbox: tem o mesmo poder de um terminal local na pasta confiada.
 `;
 
 export default CSV;

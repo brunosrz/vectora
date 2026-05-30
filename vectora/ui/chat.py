@@ -262,7 +262,7 @@ def _render_tool_event_start(
         console.print(ToolCallPanel.render(tool_name, None))
     elif verbosity == 3:
         args_obj = tool_input if isinstance(tool_input, dict) else {"input": tool_input}
-        console.print(ToolCallPanel.render(tool_name, args_obj, max_len=200))  # ty: ignore[call-arg]
+        console.print(ToolCallPanel.render(tool_name, args_obj, max_len=200))  # ty: ignore[invalid-argument-type]
     else:
         args_obj = tool_input if isinstance(tool_input, dict) else {"input": tool_input}
         console.print(ToolCallPanel.render(tool_name, args_obj))  # ty: ignore[invalid-argument-type]
@@ -384,7 +384,7 @@ def _extract_text_chunk(chunk: Any) -> str:
 
 
 def _handle_stream_event(
-    event: dict,
+    event: Any,
     *,
     response_content: str,
     routing_decision: str,
@@ -810,7 +810,7 @@ async def chat_loop(
         )
     else:
         layout.update_header(provider=provider, message_count=message_count)
-        layout.update_body(WelcomeScreen.render(provider=provider))
+        layout.update_body(WelcomeScreen.render(provider=provider))  # ty: ignore[invalid-argument-type]
         layout.update_footer()
 
     console.print(layout.render())

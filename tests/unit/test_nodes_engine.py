@@ -124,6 +124,7 @@ class TestProcessRetrieval:
         assert len(result["retrieval_results"]["web_search"]) == 1
         assert "q-abc" in result["pending_embeds"]
         # O gate recebe a query do usuário para julgar relevância.
+        assert mock_curate.await_args is not None
         assert mock_curate.await_args.args[1] == "pesquisa X"
 
     @pytest.mark.asyncio

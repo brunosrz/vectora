@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -34,7 +35,7 @@ def _tc(name: str, args: dict | None = None) -> dict:
 @pytest.mark.asyncio
 async def test_coder_finalize_empty_messages():
     """Sem mensagens: retorna coder_result com valores padrão."""
-    state = {"messages": []}
+    state: Any = {"messages": []}
     result = await coder_finalize(state)
     assert "coder_result" in result
     cr = result["coder_result"]
@@ -53,7 +54,7 @@ async def test_coder_finalize_extracts_files():
         ]
     )
     final = _ai("Implementação concluída.")
-    state = {"messages": [msg, final]}
+    state: Any = {"messages": [msg, final]}
     result = await coder_finalize(state)
     cr = result["coder_result"]
     assert "src/foo.py" in cr["files_changed"]
@@ -66,7 +67,7 @@ async def test_coder_finalize_detects_pytest():
     """Detecta execução de pytest no terminal."""
     msg = _ai(tool_calls=[_tc("terminal", {"command": "pytest tests/ -v"})])
     final = _ai("Testes passaram.")
-    state = {"messages": [msg, final]}
+    state: Any = {"messages": [msg, final]}
     result = await coder_finalize(state)
     assert result["coder_result"]["tests_run"] is True
 
@@ -76,7 +77,7 @@ async def test_coder_finalize_detects_npm_test():
     """Detecta npm test no terminal."""
     msg = _ai(tool_calls=[_tc("terminal", {"command": "npm test"})])
     final = _ai("OK.")
-    state = {"messages": [msg, final]}
+    state: Any = {"messages": [msg, final]}
     result = await coder_finalize(state)
     assert result["coder_result"]["tests_run"] is True
 
@@ -86,7 +87,7 @@ async def test_coder_finalize_no_tests_for_git():
     """git não conta como teste."""
     msg = _ai(tool_calls=[_tc("terminal", {"command": "git commit -m 'feat'"})])
     final = _ai("Commit feito.")
-    state = {"messages": [msg, final]}
+    state: Any = {"messages": [msg, final]}
     result = await coder_finalize(state)
     assert result["coder_result"]["tests_run"] is False
 
@@ -96,7 +97,7 @@ async def test_coder_finalize_summary_from_last_ai_message():
     """Resumo vem do último AIMessage sem tool_calls."""
     m1 = _ai("Rascunho")
     m2 = _ai("Versão final da resposta.")
-    state = {"messages": [m1, m2]}
+    state: Any = {"messages": [m1, m2]}
     result = await coder_finalize(state)
     assert result["coder_result"]["summary"] == "Versão final da resposta."
 
@@ -111,7 +112,7 @@ async def test_coder_finalize_deduplicates_files():
         ]
     )
     final = _ai("OK.")
-    state = {"messages": [msg, final]}
+    state: Any = {"messages": [msg, final]}
     result = await coder_finalize(state)
     assert result["coder_result"]["files_changed"].count("a.py") == 1
 
@@ -122,7 +123,7 @@ async def test_coder_finalize_tool_message_ignored():
     tm = MagicMock(spec=ToolMessage)
     tm.content = "saída do terminal"
     final = _ai("Tarefa concluída.")
-    state = {"messages": [tm, final]}
+    state: Any = {"messages": [tm, final]}
     result = await coder_finalize(state)
     assert result["coder_result"]["summary"] == "Tarefa concluída."
 
@@ -135,7 +136,7 @@ async def test_coder_finalize_tool_message_ignored():
 @pytest.mark.asyncio
 async def test_search_finalize_empty_messages():
     """Sem mensagens: retorna search_result com valores padrão."""
-    state = {"messages": []}
+    state: Any = {"messages": []}
     result = await search_finalize(state)
     sr = result["search_result"]
     assert sr["sources"] == []
@@ -148,7 +149,7 @@ async def test_search_finalize_detects_web_search():
     """Detecta uso de web_search."""
     msg = _ai(tool_calls=[_tc("web_search", {"query": "langgraph tutorial"})])
     final = _ai("Achei o seguinte.")
-    state = {"messages": [msg, final]}
+    state: Any = {"messages": [msg, final]}
     result = await search_finalize(state)
     sr = result["search_result"]
     assert sr["web_search_used"] is True
@@ -160,7 +161,7 @@ async def test_search_finalize_detects_fetch_url():
     """Detecta fetch_url e coleta a URL como fonte."""
     msg = _ai(tool_calls=[_tc("fetch_url", {"url": "https://example.com"})])
     final = _ai("Conteúdo extraído.")
-    state = {"messages": [msg, final]}
+    state: Any = {"messages": [msg, final]}
     result = await search_finalize(state)
     sr = result["search_result"]
     assert sr["web_search_used"] is True
@@ -171,7 +172,7 @@ async def test_search_finalize_detects_fetch_url():
 async def test_search_finalize_summary_from_last_ai():
     """Resumo vem do último AIMessage sem tool_calls."""
     final = _ai("Resultado da busca: X, Y, Z.")
-    state = {"messages": [final]}
+    state: Any = {"messages": [final]}
     result = await search_finalize(state)
     assert result["search_result"]["summary"] == "Resultado da busca: X, Y, Z."
 
@@ -181,7 +182,7 @@ async def test_search_finalize_no_web_search():
     """vector_search não conta como web_search."""
     msg = _ai(tool_calls=[_tc("vector_search", {"query": "foo"})])
     final = _ai("Resultado do RAG.")
-    state = {"messages": [msg, final]}
+    state: Any = {"messages": [msg, final]}
     result = await search_finalize(state)
     assert result["search_result"]["web_search_used"] is False
 

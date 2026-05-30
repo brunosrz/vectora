@@ -18,7 +18,41 @@ import { renderPdfFirstPage } from "@/lib/utils/files/pdf-preview";
 // Helpers
 // ============================================================================
 
-const CODE_EXTENSIONS = new Set(["py", "js", "jsx", "ts", "tsx", "json", "md", "sh", "bash", "html", "css", "scss", "sql", "yaml", "yml", "toml", "rs", "go", "java", "c", "cpp", "h", "rb", "php", "swift", "kt", "scala", "r", "tf", "xml", "txt", "csv", "log"]);
+const CODE_EXTENSIONS = new Set([
+  "py",
+  "js",
+  "jsx",
+  "ts",
+  "tsx",
+  "json",
+  "md",
+  "sh",
+  "bash",
+  "html",
+  "css",
+  "scss",
+  "sql",
+  "yaml",
+  "yml",
+  "toml",
+  "rs",
+  "go",
+  "java",
+  "c",
+  "cpp",
+  "h",
+  "rb",
+  "php",
+  "swift",
+  "kt",
+  "scala",
+  "r",
+  "tf",
+  "xml",
+  "txt",
+  "csv",
+  "log",
+]);
 
 function _ext(filename: string): string {
   return filename.includes(".") ? filename.split(".").pop()!.toLowerCase() : "";
@@ -78,7 +112,11 @@ function PdfThumbnail({ file }: { file: ImageAttachment }) {
   if (thumbUrl) {
     return (
       <div className="relative h-full w-full">
-        <img src={thumbUrl} alt={fileName} className="h-full w-full object-cover" />
+        <img
+          src={thumbUrl}
+          alt={fileName}
+          className="h-full w-full object-cover"
+        />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-1.5 py-1">
           <p className="text-xs text-white truncate" title={fileName}>
             {fileName}
@@ -92,18 +130,36 @@ function PdfThumbnail({ file }: { file: ImageAttachment }) {
   const fileSizeKB = file.size ? Math.round(file.size / 1024) : 0;
   return (
     <div className="h-full flex flex-col items-center justify-center p-2 text-center">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 mb-1.5 text-red-400">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-8 h-8 mb-1.5 text-red-400"
+      >
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <polyline points="14 2 14 8 20 8" />
         <line x1="9" y1="13" x2="15" y2="13" />
         <line x1="9" y1="17" x2="15" y2="17" />
       </svg>
-      <span className="text-[11px] font-medium text-foreground truncate w-full px-1 mb-0.5" title={fileName}>
+      <span
+        className="text-[11px] font-medium text-foreground truncate w-full px-1 mb-0.5"
+        title={fileName}
+      >
         {fileName}
       </span>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-red-900/40 text-red-300">{error ? "PDF" : "PDF…"}</span>
-        {fileSizeKB > 0 && <span className="text-[10px] text-muted-foreground">{fileSizeKB}KB</span>}
+        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-red-900/40 text-red-300">
+          {error ? "PDF" : "PDF…"}
+        </span>
+        {fileSizeKB > 0 && (
+          <span className="text-[10px] text-muted-foreground">
+            {fileSizeKB}KB
+          </span>
+        )}
       </div>
     </div>
   );
@@ -115,20 +171,39 @@ function CodePreview({ file }: { file: ImageAttachment }) {
   const fileExt = _ext(fileName);
   const fileSizeKB = file.size ? Math.round(file.size / 1024) : 0;
 
-  const snippet = file.base64 ? _firstLines(_decodeBase64Text(file.base64)) : "";
+  const snippet = file.base64
+    ? _firstLines(_decodeBase64Text(file.base64))
+    : "";
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header com nome e extensão */}
       <div className="flex items-center gap-1 px-2 pt-1.5 pb-0.5 shrink-0">
-        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground">{fileExt.toUpperCase().slice(0, 4) || "TXT"}</span>
-        <span className="text-[10px] text-foreground truncate flex-1" title={fileName}>
+        <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground">
+          {fileExt.toUpperCase().slice(0, 4) || "TXT"}
+        </span>
+        <span
+          className="text-[10px] text-foreground truncate flex-1"
+          title={fileName}
+        >
           {fileName}
         </span>
-        {fileSizeKB > 0 && <span className="text-[10px] text-muted-foreground shrink-0">{fileSizeKB}KB</span>}
+        {fileSizeKB > 0 && (
+          <span className="text-[10px] text-muted-foreground shrink-0">
+            {fileSizeKB}KB
+          </span>
+        )}
       </div>
       {/* Snippet de código */}
-      {snippet ? <pre className="flex-1 text-[9px] leading-[1.35] font-mono text-green-300/80 px-2 pb-1.5 overflow-hidden whitespace-pre-wrap break-all">{snippet}</pre> : <div className="flex-1 flex items-center justify-center text-[10px] text-muted-foreground">vazio</div>}
+      {snippet ? (
+        <pre className="flex-1 text-[9px] leading-[1.35] font-mono text-green-300/80 px-2 pb-1.5 overflow-hidden whitespace-pre-wrap break-all">
+          {snippet}
+        </pre>
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-[10px] text-muted-foreground">
+          vazio
+        </div>
+      )}
     </div>
   );
 }
@@ -137,7 +212,13 @@ function CodePreview({ file }: { file: ImageAttachment }) {
 // FilePreviewCard
 // ============================================================================
 
-function FilePreviewCard({ file, onRemove }: { file: ImageAttachment; onRemove: (id: string) => void }) {
+function FilePreviewCard({
+  file,
+  onRemove,
+}: {
+  file: ImageAttachment;
+  onRemove: (id: string) => void;
+}) {
   const isImage = file.mimeType?.startsWith("image/");
   const isPdf = file.mimeType === "application/pdf";
   const isCode = _isCode(file);
@@ -150,7 +231,11 @@ function FilePreviewCard({ file, onRemove }: { file: ImageAttachment; onRemove: 
       {isImage ? (
         // ── Imagem — thumbnail direto
         <div className="relative h-full w-full">
-          <img src={file.url} alt={fileName} className="h-full w-full object-cover" />
+          <img
+            src={file.url}
+            alt={fileName}
+            className="h-full w-full object-cover"
+          />
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-1.5 py-1">
             <p className="text-xs text-white truncate" title={fileName}>
               {fileName}
@@ -166,16 +251,34 @@ function FilePreviewCard({ file, onRemove }: { file: ImageAttachment; onRemove: 
       ) : (
         // ── Outros — ícone genérico
         <div className="h-full flex flex-col items-center justify-center p-2 text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 mb-1.5 text-white">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-8 h-8 mb-1.5 text-white"
+          >
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
           </svg>
-          <span className="text-[11px] font-medium text-foreground truncate w-full px-1 mb-0.5" title={fileName}>
+          <span
+            className="text-[11px] font-medium text-foreground truncate w-full px-1 mb-0.5"
+            title={fileName}
+          >
             {fileName}
           </span>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-white">{fileExt.toUpperCase().slice(0, 4) || "FILE"}</span>
-            {fileSizeKB > 0 && <span className="text-[10px] text-muted-foreground">{fileSizeKB}KB</span>}
+            <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-muted text-white">
+              {fileExt.toUpperCase().slice(0, 4) || "FILE"}
+            </span>
+            {fileSizeKB > 0 && (
+              <span className="text-[10px] text-muted-foreground">
+                {fileSizeKB}KB
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -191,7 +294,16 @@ function FilePreviewCard({ file, onRemove }: { file: ImageAttachment; onRemove: 
         type="button"
         title="Remover arquivo"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="w-3 h-3"
+        >
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>

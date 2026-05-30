@@ -23,8 +23,8 @@ from vectora.config.settings import settings
 try:
     from langchain_tavily import TavilyExtract, TavilySearch
 except ImportError:
-    TavilySearch = None  # type: ignore[assignment,misc]
-    TavilyExtract = None  # type: ignore[assignment,misc]
+    TavilySearch = None  # type: ignore[assignment,misc]  # ty: ignore[invalid-assignment]
+    TavilyExtract = None  # type: ignore[assignment,misc]  # ty: ignore[invalid-assignment]
 
 logger = logging.getLogger(__name__)
 

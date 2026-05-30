@@ -6,6 +6,7 @@ import { ChevronDown, Settings } from "lucide-react";
 import { AgentSettings, type AgentConfig } from "./agent-settings";
 import { GitStatusBadge } from "./git-status-badge";
 import { UserMenu } from "./user-menu";
+import { WorkspaceSelector } from "./workspace-selector";
 import { useT } from "@/lib/i18n";
 
 interface HeaderProps {
@@ -50,6 +51,8 @@ export function Header({
           >
             Vectora
           </span>
+          <div className="hidden sm:block h-5 w-px bg-border/60 mx-1" />
+          <WorkspaceSelector />
         </div>
 
         <div className="flex items-center gap-3">

@@ -53,7 +53,7 @@ class TestBuildMessages:
     async def test_returns_list_with_system_message(self):
         state: State = {
             "messages": [HumanMessage(content="oi")],
-            "session_metadata": {"thread_id": 1},
+            "session_metadata": {"thread_id": "1"},
         }
         with patch("vectora.nodes.base.get_memory_store") as mock_store:
             store = AsyncMock()

@@ -323,10 +323,10 @@ async def _hyde_search(query: str, workspace_id: str | None = None) -> list[Docu
     abstratas onde a query tem pouca sobreposição lexical com os documentos.
     O LLM gera um "modelo de resposta", que é embeddado e buscado.
     """
-    from vectora.agents.orchestrator import _load_llm
+    from vectora.services.utils import load_llm
 
     try:
-        llm = _load_llm()
+        llm = load_llm()
         hyde_prompt = (
             "Escreva um trecho técnico conciso (2-4 parágrafos) que responderia "
             "diretamente a esta pergunta. Seja específico e use terminologia técnica.\n\n"
@@ -404,9 +404,9 @@ async def rag_retrieve(state: State, config: RunnableConfig) -> dict:
 
     from vectora.services.tracer import tracer
 
-    session_id: int | None = None
+    session_id: str | None = None
     with contextlib.suppress(Exception):
-        session_id = state.get("session_metadata", {}).get("thread_id")  # type: ignore[assignment]
+        session_id = state.get("session_metadata", {}).get("thread_id")
 
     # workspace_id: prioritiza config (runtime), fallback ao state
     workspace_id: str | None = None
@@ -427,7 +427,7 @@ async def rag_retrieve(state: State, config: RunnableConfig) -> dict:
     queries_to_search = variants or [query]
 
     try:
-        async with tracer.span("rag_retrieve", "search", session_id=session_id) as s:
+        async with tracer.span("rag_retrieve", "search", session_id=session_id) as s:  # ty: ignore[invalid-argument-type]
             if len(queries_to_search) > 1:
                 # Busca paralela para cada variante
                 batch_results = await asyncio.gather(
@@ -663,7 +663,7 @@ def _get_audit_llm() -> object:
     if _audit_llm is None:
         from vectora.services.utils import load_llm
 
-        _audit_llm = load_llm().bind_tools(_get_audit_tools())  # type: ignore[attr-defined]
+        _audit_llm = load_llm().bind_tools(_get_audit_tools())  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         logger.debug("audit LLM inicializado")
     return _audit_llm
 
@@ -761,7 +761,7 @@ Sua tarefa é validar se esses documentos são genuinamente relevantes.
     max_audit_steps = 3
     for step in range(max_audit_steps):
         try:
-            response = await llm.ainvoke(audit_messages)  # type: ignore[attr-defined]
+            response = await llm.ainvoke(audit_messages)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             audit_messages.append(response)
 
             tool_calls = getattr(response, "tool_calls", None) or []
@@ -775,7 +775,7 @@ Sua tarefa é validar se esses documentos são genuinamente relevantes.
                 break
 
             # Executa as tool_calls via ToolNode
-            tool_input: State = {"messages": audit_messages}  # type: ignore[assignment]
+            tool_input: State = {"messages": audit_messages}  # type: ignore[assignment]  # ty: ignore[missing-typed-dict-key]
             tool_output = await asyncio.to_thread(
                 lambda ti=tool_input: audit_tool_node.invoke(ti)
             )

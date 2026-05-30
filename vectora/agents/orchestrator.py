@@ -440,7 +440,7 @@ def _get_orchestrator_llm() -> object:
 
         _orchestrator_llm = (
             load_llm()
-            .bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]
+            .bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             .with_structured_output(OrchestratorDecision)
         )
         logger.debug("orchestrator LLM inicializado com structured output + tools")
@@ -671,7 +671,7 @@ async def _synthesize_after_rag(
     answer = ""
     try:
         llm = _get_synthesis_llm()
-        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]
+        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         answer = str(getattr(result, "content", "") or "").strip()
     except Exception as e:
         err_str = str(e)
@@ -774,7 +774,7 @@ async def _synthesize_after_coder(
     answer = ""
     try:
         llm = _get_synthesis_llm()
-        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]
+        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         answer = str(getattr(result, "content", "") or "").strip()
     except Exception as e:
         err_str = str(e)
@@ -862,7 +862,7 @@ async def _synthesize_after_search(
     answer = ""
     try:
         llm = _get_synthesis_llm()
-        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]
+        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         answer = str(getattr(result, "content", "") or "").strip()
     except Exception as e:
         err_str = str(e)
@@ -940,7 +940,7 @@ async def _synthesize_after_parallel(
     answer = ""
     try:
         llm = _get_synthesis_llm()
-        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]
+        result = await llm.ainvoke(payload)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         answer = str(getattr(result, "content", "") or "").strip()
     except Exception as e:
         logger.warning("orchestrator: síntese pós-parallel falhou: %s", e)
@@ -1128,7 +1128,7 @@ async def orchestrator(state: State, config: RunnableConfig) -> Command:
 
     try:
         llm = _get_orchestrator_llm()
-        result: OrchestratorDecision = await llm.ainvoke(llm_messages)  # type: ignore[assignment]
+        result: OrchestratorDecision = await llm.ainvoke(llm_messages)  # type: ignore[assignment]  # ty: ignore[unresolved-attribute]
         action = result.action
         response = result.response or ""
         delegate_to = result.delegate_to

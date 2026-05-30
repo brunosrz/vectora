@@ -67,6 +67,8 @@ dependencies = [
     "pykeepass>=4.1",
     "gitpython>=3.1.50",
     "httpx>=0.28",
+    "pywinpty>=2.0 ; sys_platform == 'win32'",
+    "ptyprocess>=0.7 ; sys_platform != 'win32'",
 ]
 
 [project.scripts]
@@ -91,7 +93,7 @@ target-version = "py313"
 fix = true
 show-fixes = true
 indent-width = 4
-exclude = [".venv", "data", "logs"]
+exclude = [".venv", "data", "logs", "vectora/api/gen"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -127,6 +129,7 @@ ignore = [
 "vectora/agents/*.py" = ["PLR0911"]
 "vectora/nodes/engine.py" = ["E501"]
 "vectora/nodes/base.py" = ["PLR0911"]
+"vectora/nodes/hitl.py" = ["PLR0911"]
 "vectora/ui/setup_wizard.py" = ["S603", "RUF006"]
 "vectora/services/checkpoint.py" = ["N802"]
 
@@ -134,6 +137,12 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
+
+# ─── ty (Astral type checker) ──────────────────────────────────────────────────
+# Excluímos código auto-gerado (protoc/grpcio) — a tipagem desses arquivos é
+# responsabilidade do gerador, não nossa.
+[tool.ty.src]
+exclude = ["vectora/api/gen"]
 
 [tool.bandit]
 exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py"]

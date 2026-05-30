@@ -54,6 +54,7 @@ class TestCurateWebResults:
         assert approved[0]["url"] == results[0]["url"]
         assert len(rejected) == 1
         # O judge só avalia os sobreviventes do reranker (1, não 2).
+        assert mj.await_args is not None
         assert len(mj.await_args.args[0]) == 1
 
     @pytest.mark.asyncio

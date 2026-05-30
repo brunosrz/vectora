@@ -142,6 +142,7 @@ class TestOrchestrator:
         }
         cmd = await orchestrator(state, config=_CONFIG)
         if cmd.goto == "coder":
+            assert cmd.update is not None
             task = cmd.update.get("orchestrator_task", "")
             assert isinstance(task, str)
             assert len(task) >= 10
@@ -155,6 +156,7 @@ class TestOrchestrator:
         }
         cmd = await orchestrator(state, config=_CONFIG)
         if cmd.goto == END:
+            assert cmd.update is not None
             assert cmd.update.get("orchestrator_task") is None
             messages = cmd.update.get("messages", [])
             assert len(messages) == 1
@@ -222,6 +224,7 @@ class TestOrchestratorPostRAG:
 
         assert cmd.goto == END
         assert cmd.goto != "rag_subgraph"
+        assert cmd.update is not None
         assert cmd.update["routing_decision"] == "respond"
         msgs = cmd.update.get("messages", [])
         assert len(msgs) == 1
@@ -250,6 +253,7 @@ class TestOrchestratorPostRAG:
             cmd = await orchestrator(state, config=_CONFIG)
 
         assert cmd.goto == END
+        assert cmd.update is not None
         msgs = cmd.update.get("messages", [])
         assert len(msgs) == 1
         assert isinstance(msgs[0], AIMessage)

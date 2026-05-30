@@ -114,7 +114,7 @@ def auth_client(tmp_path, monkeypatch):
     import vectora.services.auth as auth_mod
 
     auth_mod._db_conn = None
-    auth_mod._get_secret = lambda: "middleware-test-secret-abcdef"
+    auth_mod._get_secret = lambda: "middleware-test-secret-abcdef"  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     db_file = str(tmp_path / "mw_test.db")
 

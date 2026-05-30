@@ -5,7 +5,7 @@ import grpc
 from vectora.chat.v1 import chat_pb2 as vectora_dot_chat_dot_v1_dot_chat__pb2
 
 
-class ChatServiceStub(object):
+class ChatServiceStub:
     """── Serviços ──────────────────────────────────────────────────────────────"""
 
     def __init__(self, channel):
@@ -34,7 +34,7 @@ class ChatServiceStub(object):
         )
 
 
-class ChatServiceServicer(object):
+class ChatServiceServicer:
     """── Serviços ──────────────────────────────────────────────────────────────"""
 
     def StreamChat(self, request, context):
@@ -86,7 +86,7 @@ def add_ChatServiceServicer_to_server(servicer, server):
 
 
 # This class is part of an EXPERIMENTAL API.
-class ChatService(object):
+class ChatService:
     """── Serviços ──────────────────────────────────────────────────────────────"""
 
     @staticmethod
@@ -180,7 +180,7 @@ class ChatService(object):
         )
 
 
-class ThreadServiceStub(object):
+class ThreadServiceStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -221,7 +221,7 @@ class ThreadServiceStub(object):
         )
 
 
-class ThreadServiceServicer(object):
+class ThreadServiceServicer:
     """Missing associated documentation comment in .proto file."""
 
     def CreateThread(self, request, context):
@@ -293,7 +293,7 @@ def add_ThreadServiceServicer_to_server(servicer, server):
 
 
 # This class is part of an EXPERIMENTAL API.
-class ThreadService(object):
+class ThreadService:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod

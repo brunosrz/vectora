@@ -3,7 +3,11 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import type { ClientProfile } from "@/lib/hooks";
 import type { Message, ImageAttachment } from "@/lib/types";
-import { createUserMessage, generateMessageId, extractTextFromContent } from "@/lib/utils/chat";
+import {
+  createUserMessage,
+  generateMessageId,
+  extractTextFromContent,
+} from "@/lib/utils/chat";
 import { truncate } from "@/lib/utils/string";
 import { useStreamHandler, useFeedback, useChatState } from "@/lib/hooks/chat";
 import { useUserId } from "@/lib/hooks/auth";
@@ -13,14 +17,39 @@ import { WelcomeScreen } from "./features/welcome-screen";
 import { ChatInput } from "./chat-input";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { VECTORA_API_URL } from "@/lib/constants/api";
-import { getHistory } from "@/lib/api/vectora-client";
+import { getHistory, getThread } from "@/lib/api/vectora-client";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
+import { estimateTokens } from "@/lib/utils/tokens";
 import { useThreadsStore } from "@/lib/stores/threads-store";
+import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
+import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n";
+import {
+  getAllowedModels,
+  getModelDisplayName,
+  type ModelOption,
+} from "@/lib/config/deployment-config";
+import {
+  SLASH_COMMANDS,
+  parseSlashCommand,
+  isKnownCommand,
+} from "@/lib/constants/slash-commands";
+
+/** Idioma da UI → código BCP-47 do reconhecimento de voz. */
+const VOICE_LANG: Record<Lang, string> = {
+  en: "en-US",
+  es: "es-ES",
+  pt: "pt-BR",
+};
 
 // Stubs de compatibilidade — LangSmith removido
 const readRun = async (_runId: string) => null;
 const shareRun = async (_runId: string): Promise<string> => "";
-import { INPUT_TOO_LONG_MESSAGE, MAX_INPUT_CHARS } from "@/lib/constants/features";
+import {
+  INPUT_TOO_LONG_MESSAGE,
+  MAX_INPUT_CHARS,
+} from "@/lib/constants/features";
 
 // Enhanced scrollbar styles with smooth transitions
 const scrollbarStyles = `
@@ -50,7 +79,13 @@ const scrollbarStyles = `
 interface ChatInterfaceProps {
   showToolCalls?: boolean;
   threadId: string;
-  onThreadUpdate?: (threadId: string, title: string, lastMessage: string, client?: ClientProfile, messageCount?: number) => void;
+  onThreadUpdate?: (
+    threadId: string,
+    title: string,
+    lastMessage: string,
+    client?: ClientProfile,
+    messageCount?: number,
+  ) => void;
   onThreadNotFound?: () => void;
   agentConfig?: AgentConfig;
   onAgentConfigChange?: (config: AgentConfig) => void;
@@ -70,7 +105,19 @@ interface QueuedMessage {
   userMessage: Message;
 }
 
-export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate, onThreadNotFound, initialMessage, customTitle, agentConfig, onAgentConfigChange, isNewThread = false, autoSend = false, onInitialMessageSent }: ChatInterfaceProps) {
+export function ChatInterface({
+  showToolCalls = false,
+  threadId,
+  onThreadUpdate,
+  onThreadNotFound,
+  initialMessage,
+  customTitle,
+  agentConfig,
+  onAgentConfigChange,
+  isNewThread = false,
+  autoSend = false,
+  onInitialMessageSent,
+}: ChatInterfaceProps) {
   // ============================================================================
   // State Management
   // ============================================================================
@@ -78,13 +125,55 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
   // Cached por threadId via Zustand — switching back não causa flash vazio.
   const [messages, setMessages] = useThreadMessages(threadId);
 
+  // Idioma do reconhecimento de voz acompanha o idioma da interface.
+  const voiceLang = useSettingsStore((s) => s.language);
+
+  const router = useRouter();
+  const t = useT();
+
+  // Workspace acompanha a sessão: ao abrir/trocar de chat, ativa o workspace
+  // gravado naquela thread. Threads novas (sem workspace ainda) são ignoradas —
+  // o backend cria o padrão em Documents/vectora/<id> na primeira mensagem.
+  useEffect(() => {
+    if (!threadId) return;
+    let cancelled = false;
+    getThread(threadId)
+      .then((t) => {
+        if (!cancelled && t.workspace_id) {
+          void useWorkspacesStore.getState().setActive(t.workspace_id);
+        }
+      })
+      .catch(() => {
+        /* thread nova ou inexistente — sem workspace a restaurar */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [threadId]);
+
   // UI state with reducer
-  const { state: uiState, dispatch: uiDispatch, setInput } = useChatState(threadId);
+  const {
+    state: uiState,
+    dispatch: uiDispatch,
+    setInput,
+  } = useChatState(threadId);
   const [inputError, setInputError] = useState<string | null>(null);
   const inputLengthRef = useRef(uiState.input.length);
 
   // File upload state
-  const { attachedFiles, uploadError, isDragging, handleFileSelect, handlePaste, handleDrop, handleDragOver, handleDragLeave, removeFile, clearFiles, setUploadError } = useFileUpload({
+  const {
+    attachedFiles,
+    uploadError,
+    isDragging,
+    handleFileSelect,
+    handlePaste,
+    handleDrop,
+    handleDragOver,
+    handleDragLeave,
+    removeFile,
+    clearFiles,
+    setUploadError,
+  } = useFileUpload({
     getInputLength: () => inputLengthRef.current,
     disableImageUploads: false,
   });
@@ -98,14 +187,19 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
   // Message queue for sending while AI is responding
   const messageQueueRef = useRef<QueuedMessage[]>([]);
   const isProcessingQueueRef = useRef(false);
-  const [queuedMessagesDisplay, setQueuedMessagesDisplay] = useState<{ content: string; id: string }[]>([]);
+  const [queuedMessagesDisplay, setQueuedMessagesDisplay] = useState<
+    { content: string; id: string }[]
+  >([]);
 
   // Track the "base" input text (before voice input started + finalized transcripts)
   const baseInputRef = useRef(uiState.input);
 
   const setLimitedInput = useCallback(
     (value: string) => {
-      const maxInputLength = Math.max(0, MAX_INPUT_CHARS - attachedTextLengthRef.current);
+      const maxInputLength = Math.max(
+        0,
+        MAX_INPUT_CHARS - attachedTextLengthRef.current,
+      );
       if (value.length > maxInputLength) {
         setInputError(INPUT_TOO_LONG_MESSAGE);
         setInput(value.slice(0, maxInputLength));
@@ -126,9 +220,12 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
     interimTranscript,
     toggleListening: handleVoiceToggle,
   } = useVoiceInput({
+    lang: VOICE_LANG[voiceLang] ?? "en-US",
     onTranscript: (text) => {
       // When final transcript comes in, add it to the base and update input
-      const newBase = baseInputRef.current ? `${baseInputRef.current} ${text}` : text;
+      const newBase = baseInputRef.current
+        ? `${baseInputRef.current} ${text}`
+        : text;
       const maxInputLength = Math.max(0, MAX_INPUT_CHARS - attachedTextLength);
       const cappedBase = newBase.slice(0, maxInputLength);
       baseInputRef.current = cappedBase;
@@ -149,8 +246,16 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
   }, [uiState.input, isVoiceListening, interimTranscript]);
 
   // Combine base input with interim transcript for display
-  const displayInput = isVoiceListening && interimTranscript ? (baseInputRef.current ? `${baseInputRef.current} ${interimTranscript}` : interimTranscript) : uiState.input;
-  const maxDisplayInputLength = Math.max(0, MAX_INPUT_CHARS - attachedTextLength);
+  const displayInput =
+    isVoiceListening && interimTranscript
+      ? baseInputRef.current
+        ? `${baseInputRef.current} ${interimTranscript}`
+        : interimTranscript
+      : uiState.input;
+  const maxDisplayInputLength = Math.max(
+    0,
+    MAX_INPUT_CHARS - attachedTextLength,
+  );
   const cappedDisplayInput = displayInput.slice(0, maxDisplayInputLength);
   inputLengthRef.current = cappedDisplayInput.length;
 
@@ -190,7 +295,10 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
 
   // Memoize user metadata (usado por subcomponentes)
   const userEmail = useMemo(() => userId || null, [userId]);
-  const userName = useMemo(() => (userId ? `User ${userId.slice(0, 8)}` : null), [userId]);
+  const userName = useMemo(
+    () => (userId ? `User ${userId.slice(0, 8)}` : null),
+    [userId],
+  );
 
   // ============================================================================
   // Custom Hooks
@@ -208,12 +316,23 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
 
   // E2 — HITL: retoma execução pausada após decisão do usuário
   const handleHitlDecision = useCallback(
-    async (messageId: string, interruptId: string, decision: "approve" | "reject" | `edit:${string}`) => {
+    async (
+      messageId: string,
+      interruptId: string,
+      decision: "approve" | "reject" | `edit:${string}`,
+    ) => {
       uiDispatch({ type: "START_SEND" });
       try {
-        const { assistantContent } = await processResume({ thread_id: threadId, interrupt_id: interruptId, decision }, messageId);
+        const { assistantContent } = await processResume(
+          { thread_id: threadId, interrupt_id: interruptId, decision },
+          messageId,
+        );
         if (assistantContent && onThreadUpdate) {
-          onThreadUpdate(threadId, customTitle || "Continuação", truncate(assistantContent, 100));
+          onThreadUpdate(
+            threadId,
+            customTitle || "Continuação",
+            truncate(assistantContent, 100),
+          );
         }
       } catch (error) {
         console.error("Erro ao retomar após HITL:", error);
@@ -224,7 +343,15 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
     [processResume, threadId, onThreadUpdate, customTitle, uiDispatch],
   );
 
-  const { feedbackComment, showCommentInput, handleFeedback, handleSubmitComment, handleCancelComment, handleToggleComment, setFeedbackComment } = useFeedback({
+  const {
+    feedbackComment,
+    showCommentInput,
+    handleFeedback,
+    handleSubmitComment,
+    handleCancelComment,
+    handleToggleComment,
+    setFeedbackComment,
+  } = useFeedback({
     messages,
     setMessages,
   });
@@ -278,14 +405,18 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
       }
 
       if (!VECTORA_API_URL) {
-        console.error("Missing NEXT_PUBLIC_VECTORA_API_URL; cannot load thread history");
+        console.error(
+          "Missing NEXT_PUBLIC_VECTORA_API_URL; cannot load thread history",
+        );
         uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
         return;
       }
 
       try {
         console.log("Loading thread history for:", currentThreadId);
-        const { messages: historyMessages } = await getHistory(currentThreadId).catch((err) => {
+        const { messages: historyMessages } = await getHistory(
+          currentThreadId,
+        ).catch((err) => {
           const msg = err instanceof Error ? err.message : String(err);
           if (msg.includes("404")) {
             console.log("Thread not found (404)");
@@ -309,18 +440,24 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
                 id: `history-${currentThreadId}-${idx}`,
                 role: msg.role === "human" ? "user" : "assistant",
                 content: msg.content,
-                timestamp: msg.created_at ? new Date(msg.created_at) : new Date(),
+                timestamp: msg.created_at
+                  ? new Date(msg.created_at)
+                  : new Date(),
               }) as Message,
           )
           .filter((msg) => msg.content.trim().length > 0);
 
-        console.log(`SUCCESS: Loaded ${convertedMessages.length} messages from thread history`);
+        console.log(
+          `SUCCESS: Loaded ${convertedMessages.length} messages from thread history`,
+        );
 
         if (currentThreadId === threadId) {
           setMessages(convertedMessages);
           uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
         } else {
-          console.log(`Discarding messages for ${currentThreadId} - now on ${threadId}`);
+          console.log(
+            `Discarding messages for ${currentThreadId} - now on ${threadId}`,
+          );
         }
       } catch (error) {
         console.error("Unexpected error loading thread history:", error);
@@ -337,7 +474,8 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
     // IMPORTANTE: lemos o cache via `getState()` (não reativo) para não
     // adicionar `hasCachedMessages` como dep — caso contrário o effect
     // re-roda toda vez que o cache muda, causando re-fetch em loop.
-    const hasCached = (useThreadsStore.getState().cache[threadId]?.messages.length ?? 0) > 0;
+    const hasCached =
+      (useThreadsStore.getState().cache[threadId]?.messages.length ?? 0) > 0;
     uiDispatch({ type: "SET_LOADING_THREAD", payload: !hasCached });
 
     // Clear the "sent message" flag if we're switching to a completely different thread
@@ -371,7 +509,13 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
     prevIsLoadingRef.current = isCurrentlyLoading;
 
     // Focus only when transitioning from loading to not loading
-    if (wasLoading && !isCurrentlyLoading && userId && textareaRef.current && messages.length > 0) {
+    if (
+      wasLoading &&
+      !isCurrentlyLoading &&
+      userId &&
+      textareaRef.current &&
+      messages.length > 0
+    ) {
       // Small delay to ensure DOM is ready and smooth transition
       const timeoutId = setTimeout(() => {
         textareaRef.current?.focus();
@@ -393,17 +537,34 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
 
       try {
         const assistantMessageId = generateMessageId();
-        const { assistantContent } = await processStream(content, assistantMessageId, files);
+        const { assistantContent } = await processStream(
+          content,
+          assistantMessageId,
+          files,
+        );
 
         if (onThreadUpdate && assistantContent) {
-          const firstUserMsg = messages.find((m) => m.role === "user") || userMessage;
-          const title = customTitle || truncate(firstUserMsg.content, 60) || "New conversation";
+          const firstUserMsg =
+            messages.find((m) => m.role === "user") || userMessage;
+          const title =
+            customTitle ||
+            truncate(firstUserMsg.content, 60) ||
+            "New conversation";
           const messageCount = messages.length + 2;
-          onThreadUpdate(threadId, title, truncate(assistantContent, 100), undefined, messageCount);
+          onThreadUpdate(
+            threadId,
+            title,
+            truncate(assistantContent, 100),
+            undefined,
+            messageCount,
+          );
         }
       } catch (error) {
         console.error("Error streaming from LangGraph:", error);
-        const errorMsg = error instanceof Error ? error.message : "Failed to connect to the agent";
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : "Failed to connect to the agent";
         const errorMessage = createUserMessage(errorMsg);
         errorMessage.role = "assistant";
         // M5 — marcado para exibir botão de retry no MessageItem
@@ -413,27 +574,49 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
 
         if (onThreadUpdate) {
           const messageCount = messages.length + 2;
-          onThreadUpdate(threadId, customTitle || truncate(userMessage.content, 60) || "New conversation", truncate(errorMessage.content, 100), undefined, messageCount);
+          onThreadUpdate(
+            threadId,
+            customTitle ||
+              truncate(userMessage.content, 60) ||
+              "New conversation",
+            truncate(errorMessage.content, 100),
+            undefined,
+            messageCount,
+          );
         }
       } finally {
         uiDispatch({ type: "FINISH_SEND" });
       }
     },
-    [threadId, onThreadUpdate, processStream, messages, customTitle, uiDispatch],
+    [
+      threadId,
+      onThreadUpdate,
+      processStream,
+      messages,
+      customTitle,
+      uiDispatch,
+    ],
   );
 
   // Process queued messages one by one
   const processQueue = useCallback(async () => {
-    if (isProcessingQueueRef.current || messageQueueRef.current.length === 0) return;
+    if (isProcessingQueueRef.current || messageQueueRef.current.length === 0)
+      return;
 
     isProcessingQueueRef.current = true;
     const nextMessage = messageQueueRef.current.shift()!;
 
     // Remove from queue display and add to chat
-    setQueuedMessagesDisplay((prev) => prev.filter((m) => m.id !== nextMessage.userMessage.id));
+    setQueuedMessagesDisplay((prev) =>
+      prev.filter((m) => m.id !== nextMessage.userMessage.id),
+    );
     setMessages((prev) => [...prev, nextMessage.userMessage]);
 
-    await processMessage(nextMessage.content, nextMessage.files, nextMessage.userMessage);
+    await processMessage(
+      nextMessage.content,
+      nextMessage.files,
+      nextMessage.userMessage,
+    );
 
     isProcessingQueueRef.current = false;
 
@@ -449,7 +632,11 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
     const isCurrentlyLoading = uiState.isLoading || uiState.isRegenerating;
 
     // When loading finishes and there are queued messages, process them
-    if (wasLoading && !isCurrentlyLoading && messageQueueRef.current.length > 0) {
+    if (
+      wasLoading &&
+      !isCurrentlyLoading &&
+      messageQueueRef.current.length > 0
+    ) {
       processQueue();
     }
   }, [uiState.isLoading, uiState.isRegenerating, processQueue]);
@@ -457,7 +644,12 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
   // Auto-send initial message (for ?q= URL param)
   useEffect(() => {
     const trimmedMessage = initialMessage?.trim();
-    if (!trimmedMessage || uiState.hasAutoSent || uiState.isLoadingThread || !userId) {
+    if (
+      !trimmedMessage ||
+      uiState.hasAutoSent ||
+      uiState.isLoadingThread ||
+      !userId
+    ) {
       return;
     }
 
@@ -480,7 +672,73 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
       // Just populate input (existing behavior for ticket page, etc.)
       setLimitedInput(trimmedMessage);
     }
-  }, [initialMessage, autoSend, uiState.hasAutoSent, uiState.isLoadingThread, userId, setLimitedInput, uiDispatch, processMessage, onInitialMessageSent]);
+  }, [
+    initialMessage,
+    autoSend,
+    uiState.hasAutoSent,
+    uiState.isLoadingThread,
+    userId,
+    setLimitedInput,
+    uiDispatch,
+    processMessage,
+    onInitialMessageSent,
+  ]);
+
+  // Dispatch de slash commands (Bloco H) — executa ações locais cuja
+  // funcionalidade já existe, sem enviar a mensagem ao agente.
+  const dispatchSlash = useCallback(
+    (name: string, arg: string) => {
+      const addSystemMsg = (content: string) => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: generateMessageId(),
+            role: "assistant",
+            content,
+            timestamp: new Date(),
+          },
+        ]);
+      };
+
+      if (name === "help") {
+        const lines = SLASH_COMMANDS.map(
+          (c) => `- \`${c.usage}\` — ${t(c.descKey)}`,
+        ).join("\n");
+        addSystemMsg(`${t("slash.help_intro")}\n\n${lines}`);
+        return;
+      }
+      if (name === "clear") {
+        router.push("/");
+        return;
+      }
+      if (name === "model") {
+        const models = getAllowedModels();
+        if (!arg) {
+          addSystemMsg(
+            t("slash.model_usage", {
+              models: models.map((m) => getModelDisplayName(m)).join(", "),
+            }),
+          );
+          return;
+        }
+        const term = arg.toLowerCase();
+        const found = models.find(
+          (m) =>
+            m.toLowerCase().includes(term) ||
+            getModelDisplayName(m).toLowerCase().includes(term),
+        );
+        if (found && onAgentConfigChange && agentConfig) {
+          onAgentConfigChange({ ...agentConfig, model: found });
+          addSystemMsg(
+            t("slash.model_changed", { model: getModelDisplayName(found) }),
+          );
+        } else {
+          addSystemMsg(t("slash.model_not_found", { name: arg }));
+        }
+      }
+    },
+    [setMessages, router, t, onAgentConfigChange, agentConfig],
+  );
 
   const handleSend = useCallback(async () => {
     if (!uiState.input.trim() && attachedFiles.length === 0) {
@@ -488,6 +746,16 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
     }
 
     if (!userId) {
+      return;
+    }
+
+    // Slash command? Executa localmente e não envia ao agente.
+    const parsed = parseSlashCommand(uiState.input);
+    if (parsed && isKnownCommand(parsed.name)) {
+      setInput("");
+      setInputError(null);
+      clearFiles();
+      dispatchSlash(parsed.name, parsed.arg);
       return;
     }
 
@@ -512,7 +780,10 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
         userMessage,
       };
       messageQueueRef.current.push(queuedItem);
-      setQueuedMessagesDisplay((prev) => [...prev, { content: currentInput, id: userMessage.id }]);
+      setQueuedMessagesDisplay((prev) => [
+        ...prev,
+        { content: currentInput, id: userMessage.id },
+      ]);
       return;
     }
 
@@ -524,7 +795,21 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
     if (messageQueueRef.current.length > 0) {
       processQueue();
     }
-  }, [uiState.input, uiState.isLoading, uiState.isRegenerating, attachedFiles, userId, agentConfig?.model, setInput, setUploadError, clearFiles, processMessage, processQueue]);
+  }, [
+    uiState.input,
+    uiState.isLoading,
+    uiState.isRegenerating,
+    attachedFiles,
+    userId,
+    agentConfig?.model,
+    setInput,
+    setUploadError,
+    clearFiles,
+    processMessage,
+    processQueue,
+    dispatchSlash,
+    setMessages,
+  ]);
 
   const handleStop = useCallback(async () => {
     console.log("User requested stop");
@@ -535,37 +820,72 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
   const handleRegenerate = useCallback(async () => {
     if (uiState.isLoading || uiState.isRegenerating) return;
 
-    const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
+    const lastUserMessage = [...messages]
+      .reverse()
+      .find((m) => m.role === "user");
     if (!lastUserMessage) return;
 
-    const messagesUpToLastUser = messages.slice(0, messages.findIndex((m) => m.id === lastUserMessage.id) + 1);
+    const messagesUpToLastUser = messages.slice(
+      0,
+      messages.findIndex((m) => m.id === lastUserMessage.id) + 1,
+    );
     setMessages(messagesUpToLastUser);
     uiDispatch({ type: "START_REGENERATE" });
     shouldInterruptRef.current = false;
 
     try {
       const assistantMessageId = generateMessageId();
-      const { assistantContent } = await processStream(lastUserMessage.content, assistantMessageId);
+      const { assistantContent } = await processStream(
+        lastUserMessage.content,
+        assistantMessageId,
+      );
 
       if (onThreadUpdate && assistantContent) {
-        const firstUserMsg = messagesUpToLastUser.find((m) => m.role === "user");
-        const title = customTitle || (firstUserMsg ? truncate(firstUserMsg.content, 60) : "New conversation");
+        const firstUserMsg = messagesUpToLastUser.find(
+          (m) => m.role === "user",
+        );
+        const title =
+          customTitle ||
+          (firstUserMsg
+            ? truncate(firstUserMsg.content, 60)
+            : "New conversation");
         const messageCount = messagesUpToLastUser.length + 1;
-        onThreadUpdate(threadId, title, truncate(assistantContent, 100), undefined, messageCount);
+        onThreadUpdate(
+          threadId,
+          title,
+          truncate(assistantContent, 100),
+          undefined,
+          messageCount,
+        );
       }
     } catch (error) {
       console.error("Error regenerating:", error);
-      const errorMessage = createUserMessage(`Error: ${error instanceof Error ? error.message : "Failed to regenerate response"}`);
+      const errorMessage = createUserMessage(
+        `Error: ${error instanceof Error ? error.message : "Failed to regenerate response"}`,
+      );
       errorMessage.role = "assistant";
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       uiDispatch({ type: "FINISH_REGENERATE" });
     }
-  }, [uiState.isLoading, uiState.isRegenerating, messages, processStream, onThreadUpdate, threadId, uiDispatch]);
+  }, [
+    uiState.isLoading,
+    uiState.isRegenerating,
+    messages,
+    processStream,
+    onThreadUpdate,
+    threadId,
+    uiDispatch,
+  ]);
 
   const handleEditAndRerun = useCallback(
     async (messageId: string, newContent: string) => {
-      console.log("Edit and rerun from message:", messageId, "new content:", newContent.slice(0, 50));
+      console.log(
+        "Edit and rerun from message:",
+        messageId,
+        "new content:",
+        newContent.slice(0, 50),
+      );
 
       if (uiState.isLoading || uiState.isRegenerating) return;
 
@@ -584,18 +904,36 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
 
       try {
         const assistantMessageId = generateMessageId();
-        console.log("Rerunning from edited message with assistantMessageId:", assistantMessageId);
-        const { assistantContent } = await processStream(newContent, assistantMessageId);
+        console.log(
+          "Rerunning from edited message with assistantMessageId:",
+          assistantMessageId,
+        );
+        const { assistantContent } = await processStream(
+          newContent,
+          assistantMessageId,
+        );
 
         if (onThreadUpdate && assistantContent) {
-          const firstUserMsg = messagesUpToEdit.find((m) => m.role === "user") || updatedMessage;
-          const title = customTitle || truncate(firstUserMsg.content, 60) || "New conversation";
+          const firstUserMsg =
+            messagesUpToEdit.find((m) => m.role === "user") || updatedMessage;
+          const title =
+            customTitle ||
+            truncate(firstUserMsg.content, 60) ||
+            "New conversation";
           const messageCount = messagesUpToEdit.length + 2;
-          onThreadUpdate(threadId, title, truncate(assistantContent, 100), undefined, messageCount);
+          onThreadUpdate(
+            threadId,
+            title,
+            truncate(assistantContent, 100),
+            undefined,
+            messageCount,
+          );
         }
       } catch (error) {
         console.error("Error rerunning from edit:", error);
-        const errorMessage = createUserMessage(`Error: ${error instanceof Error ? error.message : "Failed to rerun from edit"}`);
+        const errorMessage = createUserMessage(
+          `Error: ${error instanceof Error ? error.message : "Failed to rerun from edit"}`,
+        );
         errorMessage.role = "assistant";
         setMessages((prev) => [...prev, errorMessage]);
       } finally {
@@ -603,13 +941,24 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
         uiDispatch({ type: "SET_STOPPING", payload: false });
       }
     },
-    [uiState.isLoading, uiState.isRegenerating, messages, processStream, onThreadUpdate, threadId, uiDispatch],
+    [
+      uiState.isLoading,
+      uiState.isRegenerating,
+      messages,
+      processStream,
+      onThreadUpdate,
+      threadId,
+      uiDispatch,
+    ],
   );
 
   const handleCopy = async (content: string, messageId: string) => {
     await navigator.clipboard.writeText(content);
     uiDispatch({ type: "SET_COPIED_ID", payload: messageId });
-    setTimeout(() => uiDispatch({ type: "SET_COPIED_ID", payload: null }), 2000);
+    setTimeout(
+      () => uiDispatch({ type: "SET_COPIED_ID", payload: null }),
+      2000,
+    );
   };
 
   const handleKeyDown = useCallback(
@@ -640,7 +989,8 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
 
       const target = e.currentTarget;
       const selectionLength = target.selectionEnd - target.selectionStart;
-      const nextLength = target.value.length - selectionLength + insertedText.length;
+      const nextLength =
+        target.value.length - selectionLength + insertedText.length;
 
       if (nextLength + attachedTextLength > MAX_INPUT_CHARS) {
         e.preventDefault();
@@ -656,7 +1006,8 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
       if (pastedText) {
         const target = e.currentTarget;
         const selectionLength = target.selectionEnd - target.selectionStart;
-        const nextLength = target.value.length - selectionLength + pastedText.length;
+        const nextLength =
+          target.value.length - selectionLength + pastedText.length;
 
         if (nextLength + attachedTextLength > MAX_INPUT_CHARS) {
           e.preventDefault();
@@ -685,12 +1036,94 @@ export function ChatInterface({ showToolCalls = false, threadId, onThreadUpdate,
     <>
       <style>{scrollbarStyles}</style>
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        <MessageList messages={messages} showToolCalls={showToolCalls} isRegenerating={uiState.isRegenerating} isLoadingThread={uiState.isLoadingThread} copiedId={uiState.copiedId} onCopy={handleCopy} onRegenerate={handleRegenerate} onEditAndRerun={handleEditAndRerun} feedbackComment={feedbackComment} showCommentInput={showCommentInput} onFeedback={handleFeedback} onSubmitComment={handleSubmitComment} onCancelComment={handleCancelComment} onToggleComment={handleToggleComment} setFeedbackComment={setFeedbackComment} onHitlDecision={handleHitlDecision} threadId={threadId} onRetry={handleRegenerate} />
+        <MessageList
+          messages={messages}
+          showToolCalls={showToolCalls}
+          isRegenerating={uiState.isRegenerating}
+          isLoadingThread={uiState.isLoadingThread}
+          copiedId={uiState.copiedId}
+          onCopy={handleCopy}
+          onRegenerate={handleRegenerate}
+          onEditAndRerun={handleEditAndRerun}
+          feedbackComment={feedbackComment}
+          showCommentInput={showCommentInput}
+          onFeedback={handleFeedback}
+          onSubmitComment={handleSubmitComment}
+          onCancelComment={handleCancelComment}
+          onToggleComment={handleToggleComment}
+          setFeedbackComment={setFeedbackComment}
+          onHitlDecision={handleHitlDecision}
+          threadId={threadId}
+          onRetry={handleRegenerate}
+        />
 
         {isNewChat ? (
-          <WelcomeScreen input={cappedDisplayInput} onInputChange={setLimitedInput} onBeforeInput={handleInputBeforeInput} onSend={handleSend} onKeyDown={handleKeyDown} isLoading={uiState.isLoading} isStopping={uiState.isStopping} onStop={handleStop} userId={userId} attachedFiles={attachedFiles} uploadError={uploadError} inputError={inputError} isDragging={isDragging} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onPaste={handleInputPaste} onRemoveFile={removeFile} onFileButtonClick={handleFileButtonClick} fileInputRef={fileInputRef} onFileSelect={handleFileSelect} textareaRef={textareaRef} isVoiceListening={isVoiceListening} isVoiceSupported={isVoiceSupported} onVoiceToggle={toggleVoiceListening} voiceError={voiceError} agentConfig={agentConfig} onAgentConfigChange={onAgentConfigChange} />
+          <WelcomeScreen
+            input={cappedDisplayInput}
+            onInputChange={setLimitedInput}
+            onBeforeInput={handleInputBeforeInput}
+            onSend={handleSend}
+            onKeyDown={handleKeyDown}
+            isLoading={uiState.isLoading}
+            isStopping={uiState.isStopping}
+            onStop={handleStop}
+            userId={userId}
+            attachedFiles={attachedFiles}
+            uploadError={uploadError}
+            inputError={inputError}
+            isDragging={isDragging}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onPaste={handleInputPaste}
+            onRemoveFile={removeFile}
+            onFileButtonClick={handleFileButtonClick}
+            fileInputRef={fileInputRef}
+            onFileSelect={handleFileSelect}
+            textareaRef={textareaRef}
+            isVoiceListening={isVoiceListening}
+            isVoiceSupported={isVoiceSupported}
+            onVoiceToggle={toggleVoiceListening}
+            voiceError={voiceError}
+            agentConfig={agentConfig}
+            onAgentConfigChange={onAgentConfigChange}
+          />
         ) : (
-          <ChatInput input={cappedDisplayInput} onInputChange={setLimitedInput} onBeforeInput={handleInputBeforeInput} onSend={handleSend} onKeyDown={handleKeyDown} isLoading={uiState.isLoading} isStopping={uiState.isStopping} onStop={handleStop} userId={userId} attachedFiles={attachedFiles} uploadError={uploadError} inputError={inputError} isDragging={isDragging} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onPaste={handleInputPaste} onRemoveFile={removeFile} onFileButtonClick={handleFileButtonClick} fileInputRef={fileInputRef} onFileSelect={handleFileSelect} textareaRef={textareaRef} isVoiceListening={isVoiceListening} isVoiceSupported={isVoiceSupported} onVoiceToggle={toggleVoiceListening} voiceError={voiceError} queuedMessages={queuedMessagesDisplay} />
+          <ChatInput
+            input={cappedDisplayInput}
+            onInputChange={setLimitedInput}
+            onBeforeInput={handleInputBeforeInput}
+            onSend={handleSend}
+            onKeyDown={handleKeyDown}
+            isLoading={uiState.isLoading}
+            isStopping={uiState.isStopping}
+            onStop={handleStop}
+            userId={userId}
+            attachedFiles={attachedFiles}
+            uploadError={uploadError}
+            inputError={inputError}
+            isDragging={isDragging}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onPaste={handleInputPaste}
+            onRemoveFile={removeFile}
+            onFileButtonClick={handleFileButtonClick}
+            fileInputRef={fileInputRef}
+            onFileSelect={handleFileSelect}
+            textareaRef={textareaRef}
+            isVoiceListening={isVoiceListening}
+            isVoiceSupported={isVoiceSupported}
+            onVoiceToggle={toggleVoiceListening}
+            voiceError={voiceError}
+            queuedMessages={queuedMessagesDisplay}
+            modelId={agentConfig?.model}
+            tokensUsed={estimateTokens(
+              messages.map((m) =>
+                typeof m.content === "string" ? m.content : "",
+              ),
+            )}
+          />
         )}
       </main>
     </>

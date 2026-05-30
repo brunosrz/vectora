@@ -311,6 +311,118 @@ def _git_stash_impl(
     return {"status": "error", "message": f"Ação desconhecida: {action}"}
 
 
+def git_init_repo(cwd: str) -> dict:
+    """Inicializa um repositório git no diretório informado.
+
+    Idempotente: se já houver um repositório, retorna status ``already``.
+    """
+    from pathlib import Path
+
+    try:
+        existing = git.Repo(cwd, search_parent_directories=False)
+        return {
+            "status": "already",
+            "path": str(Path(existing.working_dir)),
+            "branch": _safe_branch(existing),
+        }
+    except git.InvalidGitRepositoryError:
+        pass
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+    try:
+        repo = git.Repo.init(cwd)
+        return {
+            "status": "ok",
+            "path": str(Path(repo.working_dir)),
+            "branch": _safe_branch(repo),
+        }
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+def _safe_branch(repo: git.Repo) -> str | None:
+    """Nome da branch ativa, ou None em repo recém-criado sem commits."""
+    try:
+        return repo.active_branch.name
+    except (TypeError, ValueError):
+        with contextlib.suppress(Exception):
+            return repo.head.ref.name
+        return None
+
+
+def _worktrees_root(workspace_id: str) -> Any:
+    """Diretório base das worktrees de um workspace."""
+    from pathlib import Path
+
+    return Path.home() / ".vectora" / "worktrees" / workspace_id
+
+
+def _git_worktree_impl(
+    repo: git.Repo,
+    workspace_id: str,
+    action: str,
+    name: str | None = None,
+    branch: str | None = None,
+) -> dict:
+    """Operações de worktree: add / list / remove."""
+    from pathlib import Path
+
+    if action == "list":
+        try:
+            out = repo.git.worktree("list", "--porcelain")
+            entries: list[dict] = []
+            current: dict = {}
+            for line in out.splitlines():
+                if line.startswith("worktree "):
+                    if current:
+                        entries.append(current)
+                    current = {"path": line[len("worktree ") :]}
+                elif line.startswith("branch "):
+                    current["branch"] = line[len("branch ") :]
+                elif line.startswith("HEAD "):
+                    current["head"] = line[len("HEAD ") :][:7]
+            if current:
+                entries.append(current)
+            return {"status": "ok", "action": "list", "worktrees": entries}
+        except git.GitCommandError as exc:
+            return {"status": "error", "message": str(exc)}
+
+    if action == "add":
+        if not name:
+            return {"status": "error", "message": "Nome da worktree é obrigatório."}
+        wt_path = _worktrees_root(workspace_id) / name
+        wt_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            args = ["add"]
+            if branch:
+                args += ["-b", branch, str(wt_path)]
+            else:
+                args += [str(wt_path)]
+            repo.git.worktree(*args)
+            return {
+                "status": "ok",
+                "action": "add",
+                "name": name,
+                "path": str(wt_path),
+                "branch": branch,
+            }
+        except git.GitCommandError as exc:
+            return {"status": "error", "message": str(exc)}
+
+    if action == "remove":
+        if not name:
+            return {"status": "error", "message": "Nome da worktree é obrigatório."}
+        wt_path = _worktrees_root(workspace_id) / name
+        try:
+            repo.git.worktree("remove", str(wt_path), "--force")
+            return {"status": "ok", "action": "remove", "name": name}
+        except git.GitCommandError as exc:
+            return {"status": "error", "message": str(exc)}
+
+    return {"status": "error", "message": f"Ação desconhecida: {action}"}
+
+
 # ---------------------------------------------------------------------------
 # @tool wrappers (G3)
 # ---------------------------------------------------------------------------
@@ -326,7 +438,7 @@ def _git_stash_impl(
 )
 async def git_status(
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Mostra o estado do repositório git: arquivos modificados, staged, untracked.
 
@@ -354,7 +466,7 @@ async def git_log(
     n: int = 10,
     branch: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Exibe o histórico de commits do repositório.
 
@@ -380,7 +492,7 @@ async def git_log(
 async def git_diff(
     ref: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Mostra o diff do working tree ou em relação a um commit/branch.
 
@@ -406,7 +518,7 @@ async def git_branch(
     action: str = "list",
     name: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Gerencia branches: lista, cria ou deleta.
 
@@ -432,7 +544,7 @@ async def git_branch(
 async def git_checkout(
     ref: str = "",
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Troca para uma branch ou commit.
 
@@ -462,7 +574,7 @@ async def git_commit(
     message: str = "",
     all: bool = False,  # noqa: A002
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Cria um commit com os arquivos staged.
 
@@ -497,7 +609,7 @@ async def git_push(
     branch: str | None = None,
     force: bool = False,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Envia commits locais para o remote.
 
@@ -527,7 +639,7 @@ async def git_pull(
     remote: str = "origin",
     branch: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Baixa e integra commits do remote.
 
@@ -554,7 +666,7 @@ async def git_stash(
     action: str = "push",
     name: str | None = None,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Gerencia o stash: salva, aplica ou lista mudanças temporárias.
 
@@ -569,6 +681,67 @@ async def git_stash(
     return json.dumps(_git_stash_impl(repo, action=action, name=name))
 
 
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": False,
+        "icon": "git-branch",
+    }
+)
+async def git_init(
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Inicializa um repositório git no workspace ativo.
+
+    Útil quando a pasta selecionada ainda não é um repositório. Idempotente —
+    se já houver um repositório, apenas reporta o estado atual.
+
+    Args:
+        workspace_id: ID do workspace (usa o workspace ativo se omitido).
+    """
+    ws = _resolve_workspace(workspace_id, config)
+    if ws is None:
+        return json.dumps({"status": "error", "message": "Workspace não encontrado."})
+    return json.dumps(git_init_repo(ws.cwd))
+
+
+@tool(
+    extras={
+        "render_hint": "table",
+        "category": "git",
+        "destructive": True,
+        "icon": "git-branch",
+    }
+)
+async def git_worktree(
+    action: str = "list",
+    name: str | None = None,
+    branch: str | None = None,
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Gerencia worktrees do repositório: lista, adiciona ou remove.
+
+    Worktrees permitem trabalhar em múltiplas branches em paralelo sem trocar
+    o checkout principal. Ficam em ~/.vectora/worktrees/<workspace>/<name>.
+
+    Args:
+        action: "list" | "add" | "remove"
+        name: Nome da worktree (obrigatório para add/remove).
+        branch: Branch a criar na worktree (apenas para add).
+        workspace_id: ID do workspace.
+    """
+    ws = _resolve_workspace(workspace_id, config)
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    return json.dumps(
+        _git_worktree_impl(repo, ws.id, action=action, name=name, branch=branch)
+    )
+
+
 # Sincroniza .extras → .metadata para compatibilidade com testes e endpoint GetTools
 for _t in (
     git_status,
@@ -580,6 +753,8 @@ for _t in (
     git_push,
     git_pull,
     git_stash,
+    git_init,
+    git_worktree,
 ):
     if _t.extras:
         _t.metadata = _t.extras

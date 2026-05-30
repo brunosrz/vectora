@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { FilePreviewGrid } from "./file-preview-grid";
 import { VoiceInputButton } from "./voice-input-button";
+import { SlashCommandMenu } from "./slash-command-menu";
 import type { ImageAttachment } from "@/lib/types";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { MAX_INPUT_CHARS } from "@/lib/constants/features";
@@ -158,6 +159,14 @@ export function WelcomeScreen({
 
         {/* Centered Input Container */}
         <div className="relative group">
+          {/* Autocomplete de slash commands (Bloco H) */}
+          <SlashCommandMenu
+            input={input}
+            onSelect={(cmd) => {
+              onInputChange(cmd.takesArg ? `/${cmd.name} ` : `/${cmd.name}`);
+              textareaRef?.current?.focus();
+            }}
+          />
           <div
             className={`relative border-2 rounded-2xl shadow-2xl transition-all duration-300 border-primary/60 ring-1 ring-primary/20 ${isDragging ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "group-hover:border-primary/80 group-focus-within:border-primary/90 group-focus-within:ring-2 group-focus-within:ring-primary/30"}`}
             onDragOver={onDragOver}

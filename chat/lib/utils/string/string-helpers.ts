@@ -8,7 +8,8 @@
  * Truncate text to a maximum length.
  * Appends "..." if truncated.
  */
-export const truncate = (text: string, max: number): string => (text.length > max ? `${text.slice(0, max)}...` : text);
+export const truncate = (text: string, max: number): string =>
+  text.length > max ? `${text.slice(0, max)}...` : text;
 
 /**
  * Thread Title Generation
@@ -48,7 +49,10 @@ interface TitleGenerationOptions {
  * @param options - Configuration for title generation
  * @returns A concise title (max 60 chars by default)
  */
-export async function generateThreadTitle({ userMessage, maxLength = DEFAULT_MAX_LENGTH }: TitleGenerationOptions): Promise<string> {
+export async function generateThreadTitle({
+  userMessage,
+  maxLength = DEFAULT_MAX_LENGTH,
+}: TitleGenerationOptions): Promise<string> {
   return truncateTitle(userMessage, maxLength);
 }
 
@@ -85,7 +89,9 @@ export function generateQuickTitle(userMessage: string): string {
 
   // Pattern: Error/issue mentions
   if (message.match(/error|issue|problem|bug/i)) {
-    const errorMatch = message.match(/(error|issue|problem|bug)[:\s]+([^.!?]+)/i);
+    const errorMatch = message.match(
+      /(error|issue|problem|bug)[:\s]+([^.!?]+)/i,
+    );
     if (errorMatch) {
       return `Error: ${errorMatch[2].slice(0, 50)}`;
     }
@@ -110,7 +116,10 @@ function truncateTitle(message: string, maxLength: number): string {
   let title = message.trim();
 
   // Remove common prefixes
-  title = title.replace(/^(how do i|how to|can you|please|help me with|i need help with)\s+/i, "");
+  title = title.replace(
+    /^(how do i|how to|can you|please|help me with|i need help with)\s+/i,
+    "",
+  );
 
   // Capitalize first letter
   if (title) {

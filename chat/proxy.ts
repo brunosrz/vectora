@@ -14,9 +14,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const AUTH_REQUIRED = process.env.VECTORA_AUTH_REQUIRED?.toLowerCase() !== "false";
+const AUTH_REQUIRED =
+  process.env.VECTORA_AUTH_REQUIRED?.toLowerCase() !== "false";
 
-const PUBLIC_PATHS = ["/auth/signin", "/auth/signup", "/api/auth/", "/_next/", "/favicon", "/vectora", "/assets/"];
+const PUBLIC_PATHS = [
+  "/auth/signin",
+  "/auth/signup",
+  "/api/auth/",
+  "/_next/",
+  "/favicon",
+  "/vectora",
+  "/assets/",
+];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname.startsWith(p));
@@ -53,14 +62,17 @@ export async function proxy(request: NextRequest) {
   // Só tem refresh token → tenta refresh silencioso
   if (refreshToken) {
     try {
-      const refreshRes = await fetch(new URL("/api/auth/refresh", request.url).toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: request.headers.get("cookie") ?? "",
+      const refreshRes = await fetch(
+        new URL("/api/auth/refresh", request.url).toString(),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: request.headers.get("cookie") ?? "",
+          },
+          body: JSON.stringify({ refresh_token: refreshToken }),
         },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
+      );
 
       if (refreshRes.ok) {
         const response = NextResponse.next();

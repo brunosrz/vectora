@@ -197,16 +197,16 @@ async def invoke_llm(llm: Runnable, state: State, system_prompt: str = "") -> di
 
     from vectora.services.tracer import tracer
 
-    session_id: int | None = None
+    session_id: str | None = None
     with contextlib.suppress(Exception):
-        session_id = state.get("session_metadata", {}).get("thread_id")  # type: ignore[assignment]
+        session_id = state.get("session_metadata", {}).get("thread_id")
 
     messages = await build_messages(state, system_prompt=system_prompt)
 
     response_content = ""
     tool_calls_collected = []
 
-    async with tracer.span("invoke_llm", "call", session_id=session_id) as span:
+    async with tracer.span("invoke_llm", "call", session_id=session_id) as span:  # ty: ignore[invalid-argument-type]
         try:
             async for chunk in llm.astream(messages):
                 if hasattr(chunk, "content") and chunk.content:

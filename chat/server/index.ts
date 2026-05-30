@@ -13,7 +13,9 @@ import chatRoutes from "./routes/chat";
 import healthRoutes from "./routes/health";
 import integrationsRoutes from "./routes/integrations";
 import memoryRoutes from "./routes/memory";
+import pluginsRoutes from "./routes/plugins";
 import threadRoutes from "./routes/threads";
+import toolsRoutes from "./routes/tools";
 import workspacesRoutes from "./routes/workspaces";
 
 const app = new Hono().basePath("/api");
@@ -26,10 +28,13 @@ app.route("/memory", memoryRoutes);
 app.route("/integrations", integrationsRoutes);
 app.route("/admin", adminRoutes);
 app.route("/workspaces", workspacesRoutes);
+app.route("/plugins", pluginsRoutes);
+app.route("/tools", toolsRoutes);
 
 // Métricas: proxy para o endpoint /metrics do FastAPI
 app.get("/metrics", async (c) => {
-  const VECTORA_API_URL = process.env.VECTORA_API_URL ?? "http://localhost:8080";
+  const VECTORA_API_URL =
+    process.env.VECTORA_API_URL ?? "http://localhost:8080";
   try {
     const res = await fetch(`${VECTORA_API_URL}/metrics`);
     if (!res.ok) return c.json({ spans: [] });

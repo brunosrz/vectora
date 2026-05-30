@@ -37,7 +37,7 @@ def _b64_bytes(data: bytes) -> str:
 class TestAttachmentSchema:
     def test_image_attachment_valid(self) -> None:
         att = Attachment(
-            kind="image",
+            kind=AttachmentKind.IMAGE,
             name="photo.png",
             mime_type="image/png",
             base64_data="abc123",
@@ -47,7 +47,7 @@ class TestAttachmentSchema:
 
     def test_code_attachment_valid(self) -> None:
         att = Attachment(
-            kind="code",
+            kind=AttachmentKind.CODE,
             name="main.py",
             mime_type="text/x-python",
             base64_data="abc",
@@ -56,7 +56,7 @@ class TestAttachmentSchema:
 
     def test_pdf_attachment_valid(self) -> None:
         att = Attachment(
-            kind="pdf",
+            kind=AttachmentKind.PDF,
             name="doc.pdf",
             mime_type="application/pdf",
             base64_data="abc",
@@ -65,7 +65,7 @@ class TestAttachmentSchema:
 
     def test_text_attachment_valid(self) -> None:
         att = Attachment(
-            kind="text",
+            kind=AttachmentKind.TEXT,
             name="readme.txt",
             mime_type="text/plain",
             base64_data="abc",
@@ -77,7 +77,7 @@ class TestAttachmentSchema:
 
         with pytest.raises(ValidationError):
             Attachment(
-                kind="video",  # tipo inválido
+                kind="video",  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]  # tipo inválido
                 name="clip.mp4",
                 mime_type="video/mp4",
                 base64_data="abc",
@@ -96,7 +96,7 @@ class TestStreamChatRequestAttachments:
 
     def test_request_with_single_attachment(self) -> None:
         att = Attachment(
-            kind="image",
+            kind=AttachmentKind.IMAGE,
             name="img.png",
             mime_type="image/png",
             base64_data="abc",
@@ -107,7 +107,7 @@ class TestStreamChatRequestAttachments:
 
     def test_request_json_roundtrip(self) -> None:
         att = Attachment(
-            kind="code",
+            kind=AttachmentKind.CODE,
             name="main.py",
             mime_type="text/x-python",
             base64_data=_b64("print('hi')"),
@@ -144,7 +144,7 @@ class TestBuildHumanMessage:
 
         raw = _b64_bytes(b"fake_image_bytes")
         att = Attachment(
-            kind="image",
+            kind=AttachmentKind.IMAGE,
             name="img.png",
             mime_type="image/png",
             base64_data=raw,
@@ -164,7 +164,7 @@ class TestBuildHumanMessage:
 
         code = "def hello():\n    print('hi')"
         att = Attachment(
-            kind="code",
+            kind=AttachmentKind.CODE,
             name="hello.py",
             mime_type="text/x-python",
             base64_data=_b64(code),
@@ -182,7 +182,7 @@ class TestBuildHumanMessage:
 
         content = "Este é o conteúdo do PDF"
         att = Attachment(
-            kind="pdf",
+            kind=AttachmentKind.PDF,
             name="relatorio.pdf",
             mime_type="application/pdf",
             base64_data=_b64(content),
@@ -199,7 +199,7 @@ class TestBuildHumanMessage:
 
         content = "Olá, Mundo! 🌍"
         att = Attachment(
-            kind="text",
+            kind=AttachmentKind.TEXT,
             name="nota.txt",
             mime_type="text/plain",
             base64_data=_b64(content),
@@ -213,13 +213,13 @@ class TestBuildHumanMessage:
         from vectora.api.handlers.chat import _build_human_message
 
         img_att = Attachment(
-            kind="image",
+            kind=AttachmentKind.IMAGE,
             name="img.png",
             mime_type="image/png",
             base64_data=_b64_bytes(b"img"),
         )
         code_att = Attachment(
-            kind="code",
+            kind=AttachmentKind.CODE,
             name="script.py",
             mime_type="text/x-python",
             base64_data=_b64("x = 1"),
@@ -235,13 +235,13 @@ class TestBuildHumanMessage:
         from vectora.api.handlers.chat import _build_human_message
 
         att1 = Attachment(
-            kind="image",
+            kind=AttachmentKind.IMAGE,
             name="a.png",
             mime_type="image/png",
             base64_data=_b64_bytes(b"img1"),
         )
         att2 = Attachment(
-            kind="image",
+            kind=AttachmentKind.IMAGE,
             name="b.jpg",
             mime_type="image/jpeg",
             base64_data=_b64_bytes(b"img2"),

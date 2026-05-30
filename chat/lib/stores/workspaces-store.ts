@@ -1,9 +1,9 @@
 /**
- * Workspaces Store — Zustand (G1)
+ * Workspaces Store — Zustand (G1, Q6)
  *
  * Cache client-side da lista de workspaces e do workspace ativo.
  * Padrão stale-while-revalidate: exibe cache imediatamente e revalida
- * em background.
+ * em background. Ações async conversam com o proxy Hono em /api/workspaces.
  */
 
 import { create } from "zustand";
@@ -12,35 +12,62 @@ export interface WorkspaceInfo {
   id: string;
   name: string;
   cwd: string;
-  created_at: string;
-  /** true se o cwd contém um repositório git (G7) */
+  /** true quando o usuário confiou na pasta — libera write/terminal/git */
+  trusted: boolean;
+  /** true se o cwd contém um repositório git */
   is_git_repo: boolean;
   git_remote: string | null;
   git_current_branch: string | null;
   git_default_branch: string | null;
-  bucket_names: string[];
-  manifest_version: number;
+}
+
+export interface DirEntry {
+  name: string;
+  path: string;
+  is_dir: boolean;
+}
+
+export interface BrowseResult {
+  path: string;
+  parent: string | null;
+  entries: DirEntry[];
 }
 
 interface WorkspacesState {
-  /** Lista de workspaces conhecidos (cache). */
   workspaces: WorkspaceInfo[];
-  /** ID do workspace ativo (null = não carregado ainda). */
   active_id: string | null;
-  /** Timestamp da última busca bem-sucedida. */
   fetchedAt: number | null;
-  /** true enquanto está buscando. */
   loading: boolean;
 
   // ── Reads ─────────────────────────────────────────────────────────────────
   getActive: () => WorkspaceInfo | null;
   getById: (id: string) => WorkspaceInfo | null;
 
-  // ── Writes ────────────────────────────────────────────────────────────────
+  // ── Local writes ────────────────────────────────────────────────────────────
   setWorkspaces: (list: WorkspaceInfo[], activeId: string | null) => void;
-  setActive: (id: string) => void;
   setLoading: (v: boolean) => void;
   invalidate: () => void;
+
+  // ── Async (proxy Hono) ──────────────────────────────────────────────────────
+  hydrate: () => Promise<void>;
+  setActive: (id: string) => Promise<void>;
+  create: (
+    path: string,
+    opts?: { trust?: boolean; git_init?: boolean },
+  ) => Promise<WorkspaceInfo | null>;
+  trust: (id: string) => Promise<WorkspaceInfo | null>;
+  gitInit: (id: string) => Promise<WorkspaceInfo | null>;
+  browse: (path?: string) => Promise<BrowseResult | null>;
+}
+
+async function fetchJson(url: string, init?: RequestInit): Promise<any | null> {
+  try {
+    const res = await fetch(url, init);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
@@ -57,11 +84,87 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
 
   getById: (id) => get().workspaces.find((w) => w.id === id) ?? null,
 
-  setWorkspaces: (list, activeId) => set({ workspaces: list, active_id: activeId, fetchedAt: Date.now() }),
-
-  setActive: (id) => set({ active_id: id }),
+  setWorkspaces: (list, activeId) =>
+    set({ workspaces: list, active_id: activeId, fetchedAt: Date.now() }),
 
   setLoading: (v) => set({ loading: v }),
 
   invalidate: () => set({ fetchedAt: null }),
+
+  hydrate: async () => {
+    set({ loading: true });
+    const data = await fetchJson("/api/workspaces");
+    if (data?.workspaces) {
+      set({
+        workspaces: data.workspaces,
+        active_id: data.active_id ?? null,
+        fetchedAt: Date.now(),
+      });
+    }
+    set({ loading: false });
+  },
+
+  setActive: async (id) => {
+    set({ active_id: id });
+    await fetchJson("/api/workspaces/set-active", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace_id: id }),
+    });
+  },
+
+  create: async (path, opts) => {
+    const data = await fetchJson("/api/workspaces/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path,
+        trust: opts?.trust ?? false,
+        git_init: opts?.git_init ?? false,
+      }),
+    });
+    if (data?.status === "ok" && data.workspace) {
+      await get().hydrate();
+      set({ active_id: data.workspace.id });
+      return data.workspace as WorkspaceInfo;
+    }
+    return null;
+  },
+
+  trust: async (id) => {
+    const data = await fetchJson("/api/workspaces/trust", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace_id: id }),
+    });
+    if (data?.status === "ok" && data.workspace) {
+      set((s) => ({
+        workspaces: s.workspaces.map((w) => (w.id === id ? data.workspace : w)),
+      }));
+      return data.workspace as WorkspaceInfo;
+    }
+    return null;
+  },
+
+  gitInit: async (id) => {
+    const data = await fetchJson("/api/workspaces/git-init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace_id: id }),
+    });
+    if (data?.status === "ok" && data.workspace) {
+      set((s) => ({
+        workspaces: s.workspaces.map((w) => (w.id === id ? data.workspace : w)),
+      }));
+      return data.workspace as WorkspaceInfo;
+    }
+    return null;
+  },
+
+  browse: async (path) => {
+    const q = path ? `?path=${encodeURIComponent(path)}` : "";
+    const data = await fetchJson(`/api/workspaces/browse${q}`);
+    if (data?.path !== undefined) return data as BrowseResult;
+    return null;
+  },
 }));

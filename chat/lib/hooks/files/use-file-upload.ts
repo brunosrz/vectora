@@ -11,7 +11,11 @@
 import { useState, useCallback } from "react";
 import type { ImageAttachment } from "../../types";
 import { createImageAttachment, validateImageFile } from "../../utils/chat";
-import { FILE_TOO_LARGE_MESSAGE, IMAGE_UNSUPPORTED_MODEL_MESSAGE, MAX_INPUT_CHARS } from "../../constants/features";
+import {
+  FILE_TOO_LARGE_MESSAGE,
+  IMAGE_UNSUPPORTED_MODEL_MESSAGE,
+  MAX_INPUT_CHARS,
+} from "../../constants/features";
 
 // ============================================================================
 // Types
@@ -21,7 +25,9 @@ export interface UseFileUploadReturn {
   attachedFiles: ImageAttachment[];
   uploadError: string | null;
   isDragging: boolean;
-  handleFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  handleFileSelect: (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => Promise<void>;
   handlePaste: (event: React.ClipboardEvent) => Promise<void>;
   handleDrop: (event: React.DragEvent) => Promise<void>;
   handleDragOver: (event: React.DragEvent) => void;
@@ -36,7 +42,8 @@ interface UseFileUploadOptions {
   disableImageUploads?: boolean;
 }
 
-const isImageFile = (file: File): boolean => file.type.startsWith("image/") || /\.(jpe?g|png|gif|webp)$/i.test(file.name);
+const isImageFile = (file: File): boolean =>
+  file.type.startsWith("image/") || /\.(jpe?g|png|gif|webp)$/i.test(file.name);
 
 // ============================================================================
 // Hook Implementation
@@ -61,7 +68,9 @@ const isImageFile = (file: File): boolean => file.type.startsWith("image/") || /
  * )
  * ```
  */
-export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUploadReturn {
+export function useFileUpload(
+  options: UseFileUploadOptions = {},
+): UseFileUploadReturn {
   const [attachedFiles, setAttachedFiles] = useState<ImageAttachment[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -106,7 +115,10 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
               continue;
             }
 
-            if (getInputLength() + acceptedTextLength + textLength > MAX_INPUT_CHARS) {
+            if (
+              getInputLength() + acceptedTextLength + textLength >
+              MAX_INPUT_CHARS
+            ) {
               setUploadError(FILE_TOO_LARGE_MESSAGE);
               continue;
             }
@@ -177,7 +189,10 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
             // Convert to image attachment
             const imageAttachment = await createImageAttachment(file);
             setAttachedFiles((prev) => [...prev, imageAttachment]);
-            console.log("Pasted image from clipboard:", file.name || "screenshot");
+            console.log(
+              "Pasted image from clipboard:",
+              file.name || "screenshot",
+            );
           } catch (error) {
             console.error("Error processing pasted image:", error);
             setUploadError("Failed to process pasted image");

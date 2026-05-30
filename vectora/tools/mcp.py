@@ -26,7 +26,7 @@ from vectora.config.settings import settings
 try:
     from langchain_mcp_adapters.client import MultiServerMCPClient
 except ImportError:
-    MultiServerMCPClient = None  # type: ignore[assignment,misc]
+    MultiServerMCPClient = None  # type: ignore[assignment,misc]  # ty: ignore[invalid-assignment]
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable

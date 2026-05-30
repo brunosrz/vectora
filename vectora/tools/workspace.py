@@ -50,7 +50,7 @@ def _resolve_workspace(
 )
 async def workspace_describe(
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Descreve o workspace ativo: base de conhecimento indexada, buckets e tópicos.
 
@@ -145,7 +145,7 @@ async def workspace_list() -> str:
 async def bucket_summary(
     bucket: str,
     workspace_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
 ) -> str:
     """Retorna o resumo de um bucket específico do workspace.
 

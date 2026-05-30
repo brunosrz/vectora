@@ -486,3 +486,111 @@ class TestEnvOverrides:
         user, _, _ = await signup("empty@example.com", "senhasegura1234")
         overrides = await get_env_overrides(user.id)
         assert overrides == {}
+
+
+# ---------------------------------------------------------------------------
+# Convites de signup (Q8)
+# ---------------------------------------------------------------------------
+
+
+class TestInvites:
+    @pytest.mark.asyncio
+    async def test_create_and_validate_invite(self):
+        from vectora.services.auth import create_invite, signup, validate_invite
+
+        root, _, _ = await signup("root@example.com", "senharootok1234")
+        token, expires_at = await create_invite(root.id, role="member")
+        assert token
+        assert expires_at
+
+        info = await validate_invite(token)
+        assert info is not None
+        assert info["role"] == "member"
+
+    @pytest.mark.asyncio
+    async def test_signup_with_invite_uses_invite_role(self):
+        from vectora.services.auth import create_invite, signup, validate_invite
+
+        root, _, _ = await signup("root@example.com", "senharootok1234")
+        token, _ = await create_invite(root.id, role="admin")
+        info = await validate_invite(token)
+        assert info is not None
+
+        user, _, _ = await signup(
+            "invited@example.com", "senhasegura1234", role=info["role"]
+        )
+        assert user.role == "admin"
+
+    @pytest.mark.asyncio
+    async def test_consume_invalidates_invite(self):
+        from vectora.services.auth import (
+            consume_invite,
+            create_invite,
+            signup,
+            validate_invite,
+        )
+
+        root, _, _ = await signup("root@example.com", "senharootok1234")
+        token, _ = await create_invite(root.id, role="member")
+        user, _, _ = await signup("m@example.com", "senhasegura1234", role="member")
+
+        await consume_invite(token, user.id)
+        assert await validate_invite(token) is None
+
+    @pytest.mark.asyncio
+    async def test_unknown_token_is_invalid(self):
+        from vectora.services.auth import validate_invite
+
+        assert await validate_invite("token-inexistente") is None
+
+    @pytest.mark.asyncio
+    async def test_expired_invite_is_invalid(self):
+        from datetime import UTC, datetime, timedelta
+
+        from vectora.services.auth import (
+            _get_db,
+            _hash_token,
+            create_invite,
+            signup,
+            validate_invite,
+        )
+
+        root, _, _ = await signup("root@example.com", "senharootok1234")
+        token, _ = await create_invite(root.id, role="member")
+
+        db = await _get_db()
+        past = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+        await db.execute(
+            "UPDATE invites SET expires_at = ? WHERE token_hash = ?",
+            (past, _hash_token(token)),
+        )
+        await db.commit()
+
+        assert await validate_invite(token) is None
+
+    @pytest.mark.asyncio
+    async def test_list_and_revoke_invite(self):
+        from vectora.services.auth import (
+            create_invite,
+            list_invites,
+            revoke_invite,
+            signup,
+        )
+
+        root, _, _ = await signup("root@example.com", "senharootok1234")
+        await create_invite(root.id, role="viewer")
+
+        invites = await list_invites()
+        assert len(invites) == 1
+        token_hash = invites[0]["token_hash"]
+
+        assert await revoke_invite(token_hash) is True
+        assert await list_invites() == []
+
+    @pytest.mark.asyncio
+    async def test_first_user_ignores_invite_role(self):
+        from vectora.services.auth import signup
+
+        # Sem usuários ainda: a role do convite é ignorada, o 1º vira root
+        user, _, _ = await signup("first@example.com", "senhasegura1234", role="viewer")
+        assert user.role == "root"

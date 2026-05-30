@@ -41,9 +41,16 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 | **N** | Per-User Memory                                                                           | ✅ Concluído |
 | **O** | Workspace Integrations (OAuth + API keys)                                                 | ✅ Concluído |
 | **P** | Root Admin Panel (RBAC/ABAC global)                                                       | ✅ Concluído |
-| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites      | ⏳ Planejado |
-| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish | ⏳ Planejado |
-| **S** | Connectors & Plugins Manager (cont. de O)                                                 | ⏳ Planejado |
+| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites      | ✅ Concluído |
+| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish | ✅ Concluído |
+| **S** | Connectors & Plugins Manager (cont. de O)                                                 | ✅ Concluído |
+| **T** | Embedded Terminal — PTY persistente cross-platform + painel split com xterm.js            | ✅ Concluído |
+| **U** | Deep Agents — refactor do harness para `create_deep_agent` (sem features novas)           | ⏳ Planejado |
+| **V** | PostgreSQL + Qdrant — modo "completo" opt-in (lite=sqlite+lancedb continua default)       | ⏳ Planejado |
+| **W** | Redis — cache distribuído (LLM bind, MCP, rate limit, embeddings) no modo completo        | ⏳ Planejado |
+| **X** | Deep Agents 1 — skills (langchain-skills), AGENTS.md memory, prompt caching, compressão   | ⏳ Planejado |
+| **Y** | Deep Agents 2 — sandboxes, interpreters, async subagents, ACP, remote backends            | ⏳ Planejado |
+| **Z** | REST API pública v1 — OAuth2 client credentials + OpenAI-compat + escopo completo         | ⏳ Planejado |
 
 ---
 
@@ -1922,6 +1929,901 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 - `+` → "Adicionar plugins…" abre aba Plugins; adicionar um MCP server stdio →
   health-check ✓ → suas tools aparecem em `/tools/schema` e ficam usáveis no chat
 - User B não vê os plugins/conectores de User A (isolamento por user)
+
+---
+
+### S4–S7 — Tools & MCP por usuário (runtime) [✅ Concluído]
+
+> **Contexto.** O Bloco S entregou o _gerenciador_ (registry de servidores MCP
+> por usuário, CRUD, health-check, UI). Mas as tools ainda **não chegam ao
+> grafo por usuário**: os agents (`orchestrator`/`coder`/`search`) fazem
+> `load_llm().bind_tools(ALL_TOOLS)` com o LLM **cacheado em módulo**
+> (`_coder_llm` etc.), os `ToolNode`/`DiagnosticToolNode` são compilados uma vez
+> com `ALL_TOOLS`, e o grafo é singleton. Pior: `call_mcp_tool` **nem está em
+> `ALL_TOOLS`** — os servidores MCP cadastrados não viram tools usáveis. Não há
+> política de habilitação de tools por usuário (a ABAC "User X não usa terminal"
+> do P1 nunca foi implementada). Este adendo fecha esse gap: cada request resolve
+> o **toolset do usuário** (built-ins permitidas + tools dos MCP servers dele),
+> liga nativamente no LLM e executa no ToolNode — mantendo o grafo singleton.
+>
+> **Decisões (confirmadas):** tools MCP **nativas** (LLM vê o schema); governança
+> **admin + usuário**; **cache por user** (sem grafo por usuário).
+
+#### S4 — Resolução de toolset por usuário (fundação)
+
+- **Novo** `vectora/services/tool_resolver.py`:
+  `async resolve_tools(user_id) -> list[BaseTool]` =
+  `[t for t in ALL_TOOLS if tool_policy.is_allowed(user_id, t.name)]`
+  `+ await plugins.get_user_mcp_tools(user_id)`. Cache em
+  `dict[(user_id, version) -> list[BaseTool]]`; `version` vem de um contador
+  por user bumpado quando a política ou os plugins MCP mudam (invalida o cache
+  sem reiniciar). Helper `tools_version(user_id) -> int`.
+- **Estende** `vectora/services/plugins.py`:
+  `async get_user_mcp_tools(user_id) -> list[BaseTool]` — monta um
+  `MultiServerMCPClient` com os servers do registry do user (reusa
+  `build_connection`), chama `get_tools()`, cacheia por `(user_id, version)`;
+  `add_server`/`remove_server` bumpam a versão. Falha de um server não derruba
+  os demais (degrada para lista parcial + log).
+
+#### S5 — Política de tools por usuário (ABAC: admin + self)
+
+- **Novo** `vectora/services/tool_policy.py`: persistência
+  `~/.vectora/tools/<user_id>.json` → `{"disabled": [names]}` (default
+  allow-all). `is_allowed(user_id, name)`, `get_disabled(user_id)`,
+  `set_disabled(user_id, names)` (bump de versão no resolver).
+- **Backend admin** (`vectora/api/handlers/admin.py`): `GET/POST
+/admin/users/{id}/tools` (require_admin) — o "override de tools por user" do
+  P2. **Self-service** (`vectora/api/handlers/plugins.py` ou novo
+  `tools.py`): `GET/PUT /tools/policy` para o user atual.
+- **Frontend**: painel admin em `admin-tab.tsx` (toggles por tool, lista de
+  `GET /tools/schema`) e uma seção self-service no Settings. i18n `toolpolicy.*`.
+
+#### S6 — Agents + ToolNode user-aware (hot path)
+
+- **Agents** (`orchestrator.py`, `coder.py`, `search.py`): os nós passam a
+  aceitar `config: RunnableConfig` (LangGraph injeta por nome do parâmetro —
+  mesmo padrão já usado em `nodes/hitl.py::hitl_check`). Extraem `user_id` de
+  `config.configurable`. Trocam o LLM global por cache
+  `dict[(user_id, version) -> bound LLM]` via `async _get_coder_llm(user_id)`
+  que faz `load_llm().bind_tools(await resolve_tools(user_id))`. Fallback para
+  `ALL_TOOLS` quando `user_id` ausente (CLI/local).
+- **`vectora/nodes/debug.py` `DiagnosticToolNode`**: subclasse dinâmica que, no
+  `ainvoke`, resolve as tools do user (de `config.configurable.user_id` via
+  `resolve_tools`) e despacha — incluindo tools MCP (async) e respeitando o
+  deny. Substitui os `DiagnosticToolNode(tools=ALL_TOOLS)` estáticos em
+  `graph.py` (linhas 160-161). O grafo continua singleton.
+- **Invalidação**: bump de versão (S4/S5) faz o próximo request rebindar LLM +
+  rebuildar o ToolNode resolvido. Sem reinício do servidor.
+
+#### S7 — `/tools/schema` por usuário (A10)
+
+- O endpoint `GET /tools/schema` passa a refletir o usuário autenticado:
+  `ALL_TOOLS` menos as desabilitadas + as tools MCP do user. A renderização
+  schema-driven do chat (A6/A10) já consome isso sem mudança no front.
+
+#### Dependências
+
+- Nenhuma nova. Reusa `langchain-mcp-adapters` (já presente) e o registry do S2.
+
+#### Arquivos críticos (S4–S7)
+
+| Sub | Arquivos chat                                                           | Arquivos vectora (Python)                                                                                                                                              |
+| --- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S4  | —                                                                       | `vectora/services/tool_resolver.py` (novo), `vectora/services/plugins.py` (+`get_user_mcp_tools`, bump de versão)                                                      |
+| S5  | `admin/admin-tab.tsx` (painel de tools por user), Settings (seção self) | `vectora/services/tool_policy.py` (novo), `vectora/api/handlers/admin.py` (+`/admin/users/{id}/tools`), self `GET/PUT /tools/policy`                                   |
+| S6  | —                                                                       | `vectora/agents/{orchestrator,coder,search}.py` (config + cache por user), `vectora/nodes/debug.py` (ToolNode dinâmico), `vectora/graph.py` (usar o ToolNode dinâmico) |
+| S7  | —                                                                       | endpoint `GET /tools/schema` (filtra por user)                                                                                                                         |
+
+#### Testes (TDD)
+
+- `tool_policy`: allow-all default, disable/enable, persistência, isolamento por user.
+- `tool_resolver`: filtra deny, anexa MCP tools (mock `get_user_mcp_tools`), cache + invalidação por versão, fallback sem user.
+- `DiagnosticToolNode` dinâmico: resolve por `config.configurable.user_id`, executa tool permitida, recusa/omite tool desabilitada (com tools mockadas).
+- `get_user_mcp_tools`: monta client a partir do registry, degrada em falha (mock).
+
+#### Verificação (S4–S7)
+
+- User cadastra um MCP server stdio → as tools dele aparecem em
+  `/tools/schema` **e** o agente as chama nativamente numa conversa.
+- Admin desabilita `terminal` para o User X → numa conversa do User X o LLM não
+  recebe `terminal` e o ToolNode recusa; outros users seguem com `terminal`.
+- User desabilita uma tool para si nas Settings → efeito imediato no próximo
+  request (sem reiniciar o servidor).
+- User A não vê nem usa as tools MCP do User B (isolamento por user_id).
+
+---
+
+### S8 — Skills Manager (langchain-skills) [PLANEJADO]
+
+> **Contexto.** O Deep Agents (Bloco U) adota `skills=[paths]` como mecanismo de
+> capacidades reutilizáveis — pastas com `SKILL.md` (frontmatter YAML + corpo
+> Markdown, progressive disclosure). O ecossistema `langchain-skills` distribui
+> skills oficiais (Deep Agents / LangChain / LangGraph). Hoje o Vectora gerencia
+> **plugins MCP** e **conectores** por usuário; falta gerenciar **skills**
+> por usuário com o mesmo princípio de isolamento (S2/S4/S6).
+
+- **S8.1 — Registry de skills por usuário** (`vectora/services/skills.py`,
+  novo): modelo `Skill(name, description, source_url, path, installed_at)`;
+  persistência em `~/.vectora/skills/<user_id>/index.json` + extração de cada
+  skill em `~/.vectora/skills/<user_id>/<name>/`. Validação: existe `SKILL.md`
+  no root e frontmatter declara `name`/`description`. Versão bumpada em
+  add/remove (mesmo padrão do plugins-S4).
+- **S8.2 — Instalação**: aceita git URL (clone shallow) ou tarball/zip (upload).
+  Whitelist de fontes opcional (`~/.vectora/skills_allowlist.toml`). Skills só
+  rodam quando o usuário registra explicitamente — não há descoberta automática.
+- **S8.3 — Backend endpoints** (`vectora/api/handlers/skills.py`, novo, auth):
+  `GET /skills` (lista do user), `POST /skills` (body: `{source, name?}` —
+  instala), `DELETE /skills/{name}`, `POST /skills/{name}/verify` (re-valida).
+- **S8.4 — Integração com o agente** (Bloco U): `services/skills.py` expõe
+  `list_skill_paths(user_id) -> list[Path]` consumido pelo
+  `services/agent_factory.py` (U1) ao montar o `create_deep_agent`.
+  `/v1/tools/schema` (S7) ganha `skills_loaded` no resumo.
+- **S8.5 — Frontend** (`chat/components/layout/settings-dialog/tabs/skills-tab.tsx`,
+  novo): aba "Skills" no Settings — lista (nome/descrição/fonte), instalar via
+  URL, remover, verificar. Proxy Hono `chat/server/routes/skills.ts` (CRUD).
+- **S8.6 — i18n**: chaves `skills.*` (en/es/pt).
+- **Verificação**: usuário instala `https://github.com/langchain-ai/langchain-skills`
+  filtrando `deepagents/*` → aparece em `GET /skills`; o agente do usuário
+  (Bloco U) lê o frontmatter sob demanda e usa a skill quando relevante.
+
+---
+
+## BLOCO T — Embedded Terminal (PTY persistente + painel split)
+
+> **Contexto.** Hoje a tool `terminal` (`vectora/tools/fs.py`) roda cada comando
+> como um `asyncio.create_subprocess_shell` **efêmero**: sem TTY, sem stdin, o
+> processo morre ao retornar (timeout 30s), confinado ao `cwd` do workspace
+> (Bloco Q) e filtrado por `is_safe_shell_command` + HITL. Isso serve para
+> comandos pontuais do agente, mas **não** é um terminal real: não preserva
+> estado entre comandos (`cd`, venv, variáveis), não roda programas interativos
+> (vim, REPLs) e o usuário não consegue digitar.
+>
+> **Objetivo.** Um **terminal embarcado**, persistente por sessão, exibido num
+> **painel à direita do chat** (split), onde: (a) o Vectora mantém UM shell
+> aberto durante a sessão e injeta nele os comandos que executa; (b) o **usuário
+> também digita** no mesmo terminal; (c) é possível **split** para abrir um novo
+> terminal. Cross-platform: Windows, macOS e Linux.
+
+### Decisões de arquitetura (validadas por análise do código)
+
+1. **PTY real cross-platform.** `subprocess` não é TTY. Usa-se um pseudo-terminal:
+   `pywinpty` (ConPTY) no Windows + `ptyprocess`/`pty` (stdlib) no Unix, atrás de
+   um wrapper único selecionado por `platform.system()`. Um **PTY por sessão**
+   atende "agente e usuário compartilham o mesmo shell". WebSocket já vem com
+   `uvicorn[standard]` (websockets) — **sem dep nova de WS**.
+
+2. **WebSocket conecta DIRETO ao uvicorn.** O proxy Hono/Next (App Router +
+   `hono/vercel`) **não faz upgrade de WebSocket** (não há `server.on('upgrade')`).
+   Logo o browser abre `ws://<VECTORA_API_URL>/...` direto ao FastAPI — mesmo host
+   já usado por `NEXT_PUBLIC_VECTORA_API_URL`. Auth: token via query/subprotocolo
+   (cookies httpOnly não trafegam bem em WS cross-origin); o `AuthMiddleware`
+   precisa autorizar o upgrade.
+
+3. **Split já disponível.** `react-resizable-panels@^4.11.2` **já está no
+   `package.json`** (sem uso). Cobre o split horizontal `[Chat | Terminal]` e
+   splits verticais aninhados (múltiplos terminais) — **sem dep nova de split**.
+
+4. **`xterm.js` client-only.** `@xterm/xterm` toca `window`/DOM → `dynamic(import,
+{ ssr:false })` no Next 16 / React 19.
+
+5. **Cleanup obrigatório.** `vectora/main.py` chama `os._exit(0)` após o uvicorn —
+   mata PTYs abruptamente. O `_lifespan` (`server.py`) precisa **encerrar os PTYs
+   vivos antes** do hard-exit.
+
+6. **Segurança (cardinal).** Um PTY livre **contorna os guard rails do Bloco Q**:
+   input do usuário não passa pelo grafo/`hitl_check`, e `resolve_within_workspace`
+   não confina um shell interativo (`cd /` é possível). Portanto:
+   - O terminal abre **apenas** em workspace `trusted=True`.
+   - O PTY inicia com `cwd = workspace.cwd` e herda o `effective_env` do usuário (C10).
+   - A UI deixa explícito que é um terminal **sem sandbox** (mesma confiança de um
+     shell local — coerente com o princípio "quem tem shell já tem root").
+   - Gate adicional por `permission_mode`: em `plan`, o terminal abre read-only
+     (sem stdin do agente); o usuário ainda pode abrir manualmente.
+
+### T1 — PTY manager backend (cross-platform)
+
+- **Novo** `vectora/services/pty_session.py`: classe `PtySession` que abre um
+  shell (`pwsh`/`cmd` no Windows; `$SHELL`/`bash` no Unix) num PTY, com API
+  `write(data)`, `resize(cols, rows)`, `read()` (async, via thread/executor →
+  fila asyncio) e `close()`. Wrapper condicional `pywinpty` vs `ptyprocess`.
+- **Novo** `vectora/services/pty_registry.py`: `dict[terminal_id → PtySession]`,
+  com `create(thread_id, workspace_id, shell?)`, `get`, `close`, `close_all`.
+  `terminal_id` permite múltiplos terminais por sessão (split).
+- Cleanup em `server.py::_lifespan` → `pty_registry.close_all()` antes do shutdown.
+
+### T2 — WebSocket endpoint
+
+- **Novo** `vectora/api/handlers/terminal.py`:
+  `@router.websocket("/vectora.terminal.v1/ws")` (query: `thread_id`,
+  `workspace_id`, `terminal_id?`, `token`). Fluxo: valida auth + `trusted` →
+  cria/recupera `PtySession` (cwd do workspace) → bombeia bytes PTY→WS e WS→PTY;
+  mensagens de controle JSON para `resize`. Registra em `server.py`.
+- **Novo** `vectora/api/handlers/terminal.py` REST auxiliar (opcional):
+  `POST …/spawn` e `GET …/list` para metadados dos terminais da sessão.
+- O **agente** injeta comandos no mesmo PTY: a tool `terminal` ganha modo
+  "enviar para o PTY da sessão" quando há terminal aberto (senão mantém o modo
+  efêmero atual como fallback). Streaming reaproveita `terminal_stream.py`.
+
+### T3 — Painel de terminal (frontend)
+
+- **Novo dir** `chat/components/terminal/`:
+  - `terminal-panel.tsx` — container do split direito; `PanelGroup` vertical
+    aninhado para múltiplos terminais; botão "split" e "fechar".
+  - `xterm-view.tsx` — wrapper client-only do `@xterm/xterm` (+ `addon-fit`,
+    `addon-web-links`); instancia `Terminal` num `useRef`/`useEffect`; liga
+    `term.onData → ws.send` e `ws.onmessage → term.write`; `ResizeObserver` →
+    `fit()` + envia `resize` ao backend.
+- **Layout**: `chat/app/session/[threadId]/page.tsx` envolve `[Header+Chat]` e
+  o `TerminalPanel` num `PanelGroup` horizontal; toggle `showTerminal` (atalho
+  `Ctrl+\``). Em `<768px` o terminal vira sheet/full-screen (mobile).
+- **Store** `chat/lib/stores/terminals-store.ts`: `Record<threadId,
+TerminalInstance[]>` (`{id, title, workspaceId, status}`); ações
+  `open/close/setActive`. O socket/xterm vivem em refs no componente — o store
+  guarda só metadados (padrão dos demais stores). Terminais keyed por `threadId`
+  e atrelados ao `workspaceId` da sessão (workspace por-sessão já implementado).
+- **Conexão**: `ws://${VECTORA_API_URL→ws}/vectora.terminal.v1/ws?...&token=`.
+
+### T4 — i18n & polish
+
+- Chaves `terminal.*` (en/es/pt): título, "Novo terminal", "Fechar",
+  "Terminal não disponível", aviso de "sem sandbox", estado de conexão.
+- Indicador de status (conectado/encerrado) e reconexão automática leve.
+
+### Dependências novas
+
+```toml
+# pyproject.toml — backend
+pywinpty = { version = ">=2.0", markers = "sys_platform == 'win32'" }
+ptyprocess = { version = ">=0.7", markers = "sys_platform != 'win32'" }
+# WebSocket já coberto por uvicorn[standard]
+```
+
+```jsonc
+// chat/package.json — frontend
+"@xterm/xterm": "^5.5.0",
+"@xterm/addon-fit": "^0.10.0",
+"@xterm/addon-web-links": "^0.11.0"
+// split: react-resizable-panels já presente (^4.11.2)
+```
+
+### Arquivos críticos (Bloco T)
+
+| Sub | Arquivos chat                                                                                                                                                                          | Arquivos vectora (Python)                                                                                                                                                                                                    |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T1  | —                                                                                                                                                                                      | `vectora/services/pty_session.py` (novo), `vectora/services/pty_registry.py` (novo), `vectora/api/server.py` (cleanup no `_lifespan`)                                                                                        |
+| T2  | —                                                                                                                                                                                      | `vectora/api/handlers/terminal.py` (novo, WS + REST), `vectora/api/server.py` (registrar), `vectora/api/middleware/auth.py` (autorizar upgrade WS), `vectora/tools/fs.py` (`terminal` injeta no PTY da sessão quando aberto) |
+| T3  | `chat/components/terminal/terminal-panel.tsx`, `chat/components/terminal/xterm-view.tsx`, `chat/lib/stores/terminals-store.ts` (novos), `chat/app/session/[threadId]/page.tsx` (split) | —                                                                                                                                                                                                                            |
+| T4  | `chat/lib/i18n/strings.csv.ts` (+`terminal.*`)                                                                                                                                         | —                                                                                                                                                                                                                            |
+
+### Verificação (Bloco T)
+
+- Abrir o painel → conecta ao PTY → `cd subpasta && pwd` mantém o diretório no
+  comando seguinte (estado persistente, ao contrário da tool efêmera)
+- Pedir ao agente "rode `npm install`" → a saída aparece **no mesmo terminal**
+  que o usuário vê e pode interagir
+- Split → segundo terminal independente na mesma sessão
+- Trocar de sessão → terminais acompanham (keyed por `threadId`); workspace
+  inicial = pasta da sessão
+- Workspace **não-confiável** → painel mostra aviso e não abre o PTY
+- Windows (pwsh/cmd), macOS e Linux (bash/zsh) abrem shell nativo
+- Encerrar o servidor → PTYs são mortos no `_lifespan` antes do `os._exit`
+
+---
+
+## Modos de operação: Lite vs Completo
+
+> **Princípio.** Lite = zero infra externa (SQLite + LanceDB + cache em
+> memória, default). Completo = Postgres + Qdrant + Redis para multi-server e
+> alta concorrência. Selecionado por env/config; **o código de aplicação é o
+> mesmo** — a diferença vive em uma camada de abstração de storage/cache.
+
+- **Seleção** (`~/.vectora/config.toml`):
+
+  ```toml
+  [storage]
+  mode = "lite"            # ou "complete" — preset
+  # ou override granular:
+  # checkpoint_backend = "postgres" | "sqlite"
+  # vector_backend     = "qdrant"   | "lancedb"
+  # cache_backend      = "redis"    | "memory"
+
+  [postgres]              # usado quando algum backend é "postgres"
+  dsn = "postgresql://user:pass@host:5432/vectora"
+
+  [qdrant]                # usado quando vector_backend = "qdrant"
+  url = "http://localhost:6333"
+  api_key = ""
+
+  [redis]                 # usado quando cache_backend = "redis"
+  url = "redis://localhost:6379/0"
+  ```
+
+- **Override por env**: `VECTORA_MODE`, `VECTORA_DATABASE_URL`,
+  `VECTORA_QDRANT_URL`, `VECTORA_REDIS_URL`.
+- **Camada de abstração** (`vectora/services/storage/`, nova): `Protocol`s para
+  `Checkpointer`, `AuthDB`, `MemoryDB`, `SessionDB`, `VectorStore`, `KVCache`.
+  Cada um tem impl Lite e Completo. Factories em `storage/__init__.py`
+  selecionam por config. **Esta camada é introduzida nos Blocos V e W**;
+  o restante do código (handlers, services existentes) é refatorado para
+  consumir os Protocols.
+- **Bloco T** (PTY) é independente — local ao processo, não muda entre modos.
+- **Bloco U** (Deep Agents) é independente — funciona em ambos os modos
+  (checkpointer vem da camada storage).
+- **Bloco Z** (REST API) também é independente — o OAuth2 client registry
+  persiste pela camada storage (sqlite ou postgres).
+
+---
+
+## BLOCO U — Deep Agents (refactor do harness)
+
+> **Contexto.** Hoje o Vectora tem um harness **custom** sobre LangGraph:
+> `vectora/graph.py` compõe orchestrator (router via `structured_output`
+> `OrchestratorDecision`) + 2 subagents (coder, search) + nó `hitl_check` +
+> pipeline RAG achatado + `parallel_dispatch` (C5). Cada agent cacheia o LLM
+> bindado por user (S6) via `services/llm_tools.py`. Os tool nodes
+> (`DiagnosticToolNode`) já são user-aware (S6).
+>
+> O framework `deepagents` da LangChain entrega o mesmo padrão (main agent +
+> subagents + planning + filesystem virtual + skills + HITL nativo via
+> `interrupt_on` + tool gating). Adotar o framework reduz código próprio,
+> alinha o Vectora ao ecossistema (skills, profiles, ACP futuro), e mantém o
+> harness atualizado conforme a LangChain evolui.
+>
+> **Cardinal: Bloco U é APENAS refactor.** Nada de feature nova (skills,
+> AGENTS.md, sandboxes, ACP, async subagents, interpreters) entra aqui — esses
+> são X/Y. Comportamento observável do agente, eventos SSE e contratos da API
+> permanecem **idênticos**.
+
+### Decisões fixadas pela investigação
+
+- **Nada quebra no front:** os eventos SSE (`ThinkingEvent`, `TokenEvent`,
+  `ToolCallEvent`, `HITLEvent`, `NodeEvent`, etc., em `vectora/api/schemas.py`)
+  permanecem; o `adapters.py` (LangGraph events → SSE) é adaptado para
+  reconhecer os nomes de nó do DeepAgent (mapeamento em `api/node_labels.py`).
+- **Reuso obrigatório**: `services/tool_resolver.py` (S4),
+  `services/llm_tools.py` (S6), `services/tool_policy.py` (S5),
+  `services/plugins.py::get_user_mcp_tools` (S2), `services/secrets/*`,
+  `services/usage.py`, `services/tracer.py`, `services/checkpoint.py`,
+  `services/memory.py`, `services/workspace.py`, `services/security.py`.
+- **`OrchestratorDecision` schema** (`vectora/types/agents.py`): pode ser
+  preservado como structured-output do main agent OU descontinuado em favor da
+  delegação nativa do DeepAgent (`task` tool). Optamos por **descontinuar**
+  no Bloco U — o DeepAgent já implementa `respond`/`delegate`/`parallel` no
+  formato nativo dele; `ThinkingEvent` é alimentado pelos campos equivalentes
+  do harness. Schemas `CoderResult`/`SearchResult` continuam para o
+  pós-processamento dos `*_finalize` (que viram middleware do DeepAgent).
+- **HITL** (`vectora/nodes/hitl.py`): substituído pelo `interrupt_on` nativo
+  do DeepAgent, parametrizado por `permission_mode` (R2). Os 5 modos do R2
+  mapeiam para combinações de `interrupt_on`/`auto_approve` por nome de tool.
+- **RAG** (`nodes/rag_subgraph.py`): mantido como **subagent** do DeepAgent
+  (não middleware) — preserva a arquitetura achatada do grafo principal sem
+  reimplementar BM25/rerank/inject.
+- **`parallel_dispatch`** (`graph.py:76-137`): substituído pelo paralelismo
+  nativo de subagents do DeepAgent (Bloco Y traz async-subagents para
+  paralelismo de fato; em U o paralelismo é sequencial mas a API é a mesma).
+
+### U1 — `agent_factory` por usuário (núcleo)
+
+- **Novo** `vectora/services/agent_factory.py`:
+  `async def get_user_agent(user_id) -> DeepAgent` com cache por
+  `(user_id, llm_version, plugins_version, policy_version)` (mesma chave do
+  S6). Internamente:
+  - LLM: `services/utils.load_llm()` (já fala provider/model);
+  - Tools: `services/tool_resolver.resolve_tools(user_id)` (S4 — built-ins
+    permitidas + MCP do user);
+  - `subagents=[coder, search, rag]` (U2);
+  - `system_prompt = VECTORA_IDENTITY + ORCHESTRATOR_PROMPT`
+    (mantém B7 — markdown envelope; mantém a identidade Vectora);
+  - `interrupt_on` derivado do `permission_mode` (R2) — ver U4;
+  - `checkpointer = services.checkpoint.get_checkpointer()` (factory já
+    abstrai sqlite/postgres pelo Bloco V).
+- Substitui `_get_orchestrator_llm()` / `_get_coder_llm()` / `_get_search_llm()`
+  e `services/llm_tools.get_user_bound_llm()` (este é reusado **internamente**
+  por DeepAgent quando precisa rebindar tools).
+
+### U2 — Subagents (coder/search/rag)
+
+- Subagents declarados como dicts (formato `deepagents`): `{name,
+description, prompt, tools, model?}`. Os prompts são exatamente os atuais
+  (`agents/coder.py::SYSTEM_PROMPT`, `agents/search.py::SYSTEM_PROMPT`,
+  `agents/_identity.py::VECTORA_IDENTITY`).
+- `coder`/`search`: `tools` herda do main (toolset resolvido por user). O
+  pós-processamento (`coder_finalize`/`search_finalize` em `graph.py:243-257`)
+  vira **middleware** do DeepAgent (extrai `CoderResult`/`SearchResult` do
+  histórico e injeta em `state["coder_result"]`/`state["search_result"]` para
+  o orchestrator sintetizar).
+- `rag`: subagent dedicado que executa o pipeline atual de
+  `rag_subgraph.py` (expand → retrieve → decide → rerank|search → inject).
+  Mantém `rag_pending` para o caminho "score baixo → search real".
+
+### U3 — Adapters SSE & node labels
+
+- `vectora/api/adapters.py` mapeia eventos LangGraph do DeepAgent para SSE.
+  O DeepAgent emite eventos com nomes diferentes (`main_agent`,
+  `subagent:coder`, `subagent:search`, etc.) — adicionar entradas em
+  `vectora/api/node_labels.py` para preservar `node_label` legível no
+  `NodeEvent`. **B14 (Zustand stale-while-revalidate) não muda.**
+- `ThinkingEvent` (D1) — extrai do raciocínio do main agent (DeepAgent
+  expõe via callback/middleware); preserva os campos `reason`, `action`,
+  `delegate_to`, `task_query` que o frontend já consome
+  (`chat/lib/types/messages.ts:38-43`).
+
+### U4 — HITL via `interrupt_on` (R2 preservado)
+
+- Substitui o nó `hitl_check`. Tabela de mapping `permission_mode` → config:
+  | Modo (R2) | `interrupt_on` |
+  |-----------|----------------|
+  | `ask` | `{"terminal": True, "file_write": True, ...}` (REQUIRE_APPROVAL atual) |
+  | `accept_edits` | `{"terminal": True}` (file_write auto) |
+  | `plan` | `{*: "reject"}` — recusa toda tool destrutiva (envia ToolMessage) |
+  | `auto` / `bypass` | `{}` — sem interrupts |
+- HITL endpoints (`/ResumeChat`) e `interrupt_id` continuam idênticos —
+  DeepAgent usa `interrupt` do LangGraph (mesmo mecanismo de hoje).
+
+### U5 — Sumiço de código (delete after migration)
+
+- `vectora/graph.py` (substituído por `agent_factory.get_user_agent()`);
+- `vectora/agents/{orchestrator,coder,search}.py` — caches LLM e nodes
+  vão embora; system prompts viram constantes consumidas pelo factory;
+- `vectora/nodes/hitl.py` — `hitl_check` removido (a constante
+  `REQUIRE_APPROVAL` migra para `agent_factory` como mapping do `interrupt_on`);
+- `vectora/nodes/debug.py::DiagnosticToolNode` — o DeepAgent já tem
+  observabilidade; preservamos o tracing via middleware (logging + tracer).
+
+### U6 — Testes (regressão obrigatória)
+
+- Testes que **devem continuar passando**: `test_nodes_hitl.py` (rebatizado
+  para validar o `interrupt_on` por modo), `test_api_chat_config.py`,
+  `test_api_auth.py`, `test_nodes_debug_dynamic.py` (S6) — a resolução por
+  user permanece via tool_resolver.
+- Novo `test_agent_factory.py`: monta agent para 2 users, valida que cada um
+  recebe seu próprio toolset (deny + MCP) e cache é por (user_id, versions).
+- Verificação E2E: enviar mensagem "rode `ls` na pasta" em
+  `permission_mode=ask` → 1 evento HITL chega ao chat → approve → execução.
+  Em `plan` → recusa imediata sem HITL.
+
+### Dependências
+
+```toml
+deepagents = ">=0.1"   # pyproject.toml; ainda pré-1.0, fixar versão exata
+```
+
+### Arquivos críticos (Bloco U)
+
+| Sub | Arquivos vectora (Python)                                                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| U1  | `vectora/services/agent_factory.py` (novo), `vectora/api/handlers/chat.py` (chama o factory em vez de `_get_graph`)                      |
+| U2  | `vectora/agents/coder.py`, `agents/search.py`, `agents/_identity.py` (prompts viram constantes), `nodes/rag_subgraph.py` (vira subagent) |
+| U3  | `vectora/api/adapters.py`, `vectora/api/node_labels.py`                                                                                  |
+| U4  | `vectora/services/agent_factory.py` (mapping permission_mode → interrupt_on), remoção de `nodes/hitl.py`                                 |
+| U5  | deletar `vectora/graph.py`, `vectora/nodes/hitl.py`, partes de `agents/{orchestrator,coder,search}.py`                                   |
+| U6  | `tests/unit/test_agent_factory.py` (novo); migrar `test_nodes_hitl.py`; manter `test_api_chat_config.py`                                 |
+
+### Verificação E2E
+
+- Mesmas perguntas que hoje produzem `delegate_to=coder|search|rag` no
+  ThinkingEvent → continuam produzindo o mesmo label de nó na UI.
+- HITL: aprovar/rejeitar/editar terminal funciona em todos os 5 modos R2.
+- MCP por usuário (S2/S4): user adiciona MCP server → tools aparecem
+  no `GetTools` e o agente as chama.
+- Workspace por sessão (Q): coder respeita `cwd` do workspace ativo.
+- Performance: primeiro request por user paga o bind; subsequentes (mesma
+  versão) usam cache (sem rebind do LLM).
+
+---
+
+## BLOCO V — PostgreSQL + Qdrant (modo "completo" opt-in)
+
+> **Contexto.** Modo lite (SQLite + LanceDB) continua o default — instala-se o
+> Vectora e ele roda sem infra. Modo completo adiciona Postgres (auth, threads,
+> memórias, secrets, audit, OAuth clients, embedding queue, LangGraph
+> checkpointer) e Qdrant (vetores) — necessário para multi-server, alta
+> concorrência e clusters corporativos.
+>
+> A investigação do backend mapeou **todos os call sites** de `aiosqlite` e
+> `lancedb.connect_async`. Os Blocos V/W introduzem uma **camada de abstração**
+> (`vectora/services/storage/`) que isola backend selecionado das chamadas dos
+> handlers/services.
+
+### V1 — Camada `storage/` (Protocols)
+
+- **Novo** `vectora/services/storage/__init__.py` com factories
+  `get_checkpointer()`, `get_auth_db()`, `get_memory_db()`, `get_session_db()`,
+  `get_vector_store(name)`, `get_queue_db()` — selecionam impl conforme
+  `[storage]` da config.
+- **Protocols** (`storage/protocols.py`): `AuthDB`, `MemoryDB`, `SessionDB`,
+  `VectorStore`, `QueueDB` — métodos curtos que cobrem os casos atuais.
+- **Impl lite** (`storage/sqlite/*`, `storage/lancedb/*`): wraps das
+  conexões atuais; comportamento idêntico.
+
+### V2 — Checkpointer Postgres
+
+- Dep: `langgraph-checkpoint-postgres>=2.0` (AsyncPostgresSaver).
+- `storage/postgres/checkpoint.py`: factory que cria pool e devolve
+  `AsyncPostgresSaver`. Substitui `services/checkpoint.py` no modo completo
+  (no lite, continua `AsyncSqliteSaver`).
+- Schema versionado (langgraph cuida das migrations).
+
+### V3 — Auth/Sessions/Memories/Secrets/Audit/Invites em Postgres
+
+- Dep: `asyncpg>=0.29` (+ `sqlalchemy[asyncio]>=2.0` opcional para queries
+  estruturadas — fica como decisão de implementação).
+- **Migração de schema**: tabelas com prefixo `vectora_*`. Cada
+  service (auth, memory, session, secrets/internal, audit, invites) ganha:
+  - Impl `sqlite/` (extrai o SQL atual);
+  - Impl `postgres/` (mesmo SQL, ajuste de placeholders `$1` vs `?` e
+    `INSERT … ON CONFLICT … DO UPDATE`).
+- **Compatibilidade**: o serviço fala com a abstração; quem trocou foi a
+  config — o handler não muda.
+
+### V4 — Memory com pgvector (opcional)
+
+- A memória semântica (`services/memory.py`, C4) hoje usa LanceDB para o
+  embedding. No modo completo: usa pgvector quando o operador instala a
+  extensão; senão delega a busca semântica ao Qdrant. Decisão do operador.
+
+### V5 — Embedding queue em Postgres
+
+- `services/queue.py` + `services/background.py` migram para tabela
+  `vectora_embedding_queue` com `SELECT ... FOR UPDATE SKIP LOCKED` (Postgres)
+  para concorrência segura entre workers — substitui o lock por arquivo do
+  SQLite.
+
+### V6 — Qdrant Vector Store
+
+- Dep: `qdrant-client>=1.10` (AsyncQdrantClient).
+- `storage/qdrant/vector_store.py`: impl do `VectorStore` Protocol que cobre
+  `upsert`, `search`, `delete`, `list_collections`. Mapeia para coleções
+  Qdrant nomeadas como hoje (`articles`, `web_cache`, `search`, custom).
+- Embedding model continua `embed-multilingual-v3.0` (Cohere) — vetores 1024
+  dim alimentam Qdrant.
+
+### V7 — Migração de dados
+
+- **Novo** subcomando: `uv run vectora migrate <to_postgres|to_qdrant>`.
+- `to_postgres`: lê SQLite local, exporta → cria schema → bulk insert
+  via COPY. Idempotente (skip se tabela já tem linhas).
+- `to_qdrant`: lê LanceDB, cria coleções no Qdrant com schema correto,
+  bulk upsert. Mantém os payload fields.
+
+### V8 — `docker-compose.yml` de referência
+
+- **Novo** `deploy/compose.complete.yml`: serviços `postgres:16`,
+  `qdrant/qdrant:latest`, `redis:7` (Bloco W), `vectora` (build do projeto).
+  Volumes nomeados para persistência. Healthchecks.
+
+### V9 — Tests
+
+- Fixtures parametrizadas (`@pytest.fixture(params=["lite","complete"])`) nos
+  testes de auth/memory/sessions. CI Lite (default) roda todos; CI Complete
+  (job opcional com docker services) re-roda os mesmos.
+- Smoke test: `vectora migrate` em sentido lite→complete preserva os
+  registros.
+
+### Arquivos críticos (Bloco V)
+
+| Sub | Arquivos                                                                                                                                                         |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V1  | `vectora/services/storage/{__init__,protocols}.py` (novos), `storage/sqlite/*`, `storage/lancedb/*`                                                              |
+| V2  | `storage/postgres/checkpoint.py` (novo), `vectora/services/checkpoint.py` (vira fino wrapper que delega ao factory)                                              |
+| V3  | `storage/postgres/{auth,memory,session,secrets,audit,invites}.py` (novos); `services/{auth,memory,session,secrets/internal}.py` (refactor p/ consumir Protocols) |
+| V4  | `storage/postgres/memory_pgvector.py` (opcional)                                                                                                                 |
+| V5  | `storage/postgres/queue.py` (novo); `services/{queue,background}.py` (refactor)                                                                                  |
+| V6  | `storage/qdrant/vector_store.py` (novo); `tools/rag.py`, `nodes/rag_subgraph.py`, `mcp/server.py`, `services/background.py` (refactor p/ consumir Protocol)      |
+| V7  | `vectora/main.py` (subcomando `migrate`), `vectora/services/migrate.py` (novo)                                                                                   |
+| V8  | `deploy/compose.complete.yml`, `deploy/postgres/init.sql`                                                                                                        |
+| V9  | `tests/unit/test_storage_protocols.py` (novo), parametrização dos testes existentes                                                                              |
+
+### Verificação (Bloco V)
+
+- `VECTORA_MODE=lite` → comportamento atual idêntico (todos os testes verdes).
+- `VECTORA_MODE=complete` → docker compose up; signup, signin, chat com
+  RAG, save_memory, ingest_docs, vector_search funcionam exatamente como no
+  lite, mas backed por Postgres+Qdrant.
+- `vectora migrate to-postgres` em uma instância usada copia auth/sessions
+  para Postgres sem perda.
+
+---
+
+## BLOCO W — Redis (cache distribuído, modo completo)
+
+> **Contexto.** O backend tem 7 caches em memória que travam o Vectora em
+> single-process: `llm_tools._bound_cache` (S6), `plugins._mcp_tools_cache` +
+> `_versions` (S2/S4), `services/usage.usage_tracker` (R5),
+> `services/workspace.workspace_registry._active` (Q),
+> `services/session._session_cache`, embedding cache implícito. Multi-server
+> exige externalização. Redis também alimenta o rate limiter (W7 → completa
+> o C13/R5).
+
+### W1 — Cache abstrato
+
+- **Novo** `vectora/services/cache.py`: Protocol `KVCache` (`get`, `set`,
+  `incr`, `delete`, `hset`/`hget`, `zadd`/`zrangebyscore`/`zremrangebyscore`).
+- Impl `memory` (dict atual, default) e `redis` (`redis-py>=5.0` asyncio).
+
+### W2 — LLM bind cache em Redis
+
+- `services/llm_tools._bound_cache` deixa de armazenar o objeto LLM (não
+  serializável); passa a guardar **assinaturas** (versão das tools que o
+  bind reflete). O LLM em si fica no cache em memória local **por processo**
+  (cold start paga 1 bind; mas a INVALIDAÇÃO é coordenada via Redis pub/sub
+  ou polling de versão). Resultado: multi-server sem rebind desnecessário.
+
+### W3 — MCP tools cache + versions
+
+- `services/plugins._mcp_tools_cache` mantém-se em memória local por
+  processo (objetos BaseTool não serializam). `_versions` migra para Redis
+  hash (`vectora:plugins:version:<user_id>` → int). Add/remove faz `INCR`.
+
+### W4 — Usage tracker
+
+- `services/usage.UsageTracker` migra para Redis sorted set por user
+  (`ZADD usage:<user_id> <ts> <id>`; `ZREMRANGEBYSCORE` para janela
+  deslizante; `ZCARD` para uso atual). Endpoint `GET /auth/usage` (R5)
+  passa a ler de lá. Modo lite continua dict em memória.
+
+### W5 — Workspace active
+
+- `workspace_registry._active` migra para Redis hash
+  (`workspace:active` → `user_id → workspace_id`). Persistência ainda em
+  JSON (lista de workspaces); ativo é volátil.
+
+### W6 — Rate limit
+
+- O middleware `services/rate_limit.py` substitui `slowapi` em memória por
+  contagem Redis (sliding window). Suporta limites por user_id E por
+  OAuth client (Bloco Z).
+
+### W7 — Cache opcional de embeddings
+
+- **Novo** `services/cache_embeddings.py`: `hash(text+model) → vector` em
+  Redis com TTL longo (24h). Reduz custo de chamadas Cohere repetidas no
+  RAG e nas memórias. Lite: ignora.
+
+### W8 — Tests
+
+- Fixtures `fakeredis` para CI sem docker; CI complete usa Redis real.
+
+### Arquivos críticos (Bloco W)
+
+| Sub | Arquivos                                                                                            |
+| --- | --------------------------------------------------------------------------------------------------- |
+| W1  | `vectora/services/cache.py` (novo, Protocol + impls memory/redis)                                   |
+| W2  | `services/llm_tools.py` (refactor: caching local + invalidação Redis)                               |
+| W3  | `services/plugins.py` (versions em Redis)                                                           |
+| W4  | `services/usage.py` (sorted set Redis)                                                              |
+| W5  | `services/workspace.py` (active map em Redis)                                                       |
+| W6  | `services/rate_limit.py` (novo) substitui `api/middleware/rate_limit.py` (refactor)                 |
+| W7  | `services/cache_embeddings.py` (novo); `services/background.py`, `tools/rag.py` (consultam o cache) |
+| W8  | `tests/unit/test_cache_*.py` (novos)                                                                |
+
+### Verificação (Bloco W)
+
+- Rodar 2 instâncias do Vectora atrás de um load balancer: trocar
+  `permission_mode` numa requisição → próxima requisição em qualquer
+  instância já reflete (invalidação via Redis).
+- Rate limit 60/min compartilhado entre instâncias.
+- Cache de embedding: 2ª requisição idêntica não chama Cohere.
+
+---
+
+## BLOCO X — Deep Agents features (parte 1) [PLACEHOLDER]
+
+> Depende do **Bloco U** estar consolidado. Aqui ficam as features que a
+> arquitetura DeepAgent destrava sem rewrites: **skills, AGENTS.md memory,
+> prompt caching, compressão de contexto, profiles**.
+
+- **X1 — Skills nativas** (continuação do S8): `skills=[paths]` do user é
+  injetado pelo `agent_factory`. UI mostra "skill carregada" no Thinking.
+- **X2 — AGENTS.md memory**: convenção do DeepAgent para "memória de longo
+  prazo" via filesystem virtual. Integra com `services/memory.py` C4 — o
+  AGENTS.md do user vira a visão consolidada das memórias salvas; o
+  `save_memory` continua escrevendo para memory, mas o agente lê o `AGENTS.md`
+  no boot da conversa.
+- **X3 — Prompt caching**: Anthropic prompt cache para o `system_prompt`
+  longo (`VECTORA_IDENTITY` + `ORCHESTRATOR_PROMPT`) — economia significativa
+  em tokens.
+- **X4 — Compressão de contexto**: middleware default do DeepAgent
+  (summarization). Ligar com janela configurável.
+- **X5 — Profiles** (`vectora/services/profiles.py`, novo): perfil por
+  provider/modelo (defaults para Anthropic, OpenAI, Google) consumido pelo
+  `agent_factory`.
+
+### Arquivos críticos (X)
+
+| Sub | Arquivos                                                            |
+| --- | ------------------------------------------------------------------- |
+| X1  | `services/skills.py` (S8) + `services/agent_factory.py`             |
+| X2  | `services/memory.py` (gera AGENTS.md a partir das memórias do user) |
+| X3  | `services/agent_factory.py` (config Anthropic cache)                |
+| X4  | `services/agent_factory.py` (compressão como middleware)            |
+| X5  | `services/profiles.py` (novo)                                       |
+
+### Verificação
+
+- Skill instalada via S8 muda comportamento do agente (carregamento on-demand
+  do SKILL.md).
+- Cache hit visível no `usage_metadata` da Anthropic.
+
+---
+
+## BLOCO Y — Deep Agents features (parte 2) [PLACEHOLDER]
+
+> **Y1 — Sandboxes** (`modal`, `e2b`): execução de código em containers
+> remotos, isolado do host. Substitui `terminal` quando o user quer
+> sandbox forte (preserva o PTY do Bloco T para o caso "local trusted").
+> **Y2 — Interpretadores** (Python/JS REPL persistentes no DeepAgent).
+> **Y3 — Async subagents** (paralelismo real entre subagents).
+> **Y4 — ACP** (Agent Communication Protocol) — interop com outros agentes
+> deepagents/LangChain.
+> **Y5 — Remote backends** (filesystem/sandbox remoto).
+
+### Arquivos críticos (Y)
+
+| Sub | Arquivos                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------- |
+| Y1  | `services/sandboxes/{modal,e2b}.py` (novos); `tools/sandbox_exec.py` (novo); HITL gate específico |
+| Y2  | `services/interpreters/{python,js}.py` (novos)                                                    |
+| Y3  | `services/agent_factory.py` (async subagents)                                                     |
+| Y4  | `services/acp.py` (novo, ACP transport)                                                           |
+| Y5  | `storage/protocols.py` extension (remote FS)                                                      |
+
+---
+
+## BLOCO Z — REST API pública v1
+
+> **Contexto.** Vectora já fala 4 modos: CLI, Chat (Connect-RPC + SSE),
+> MCP (stdio/SSE), Headless (CLI sem cabeça). Falta o 5º: **REST público**
+> para integradores externos (n8n, Slack/Discord/Telegram bots, soluções RAG
+> corporativas, chatbots, ferramentas BI). O argumento de venda é que o
+> Vectora vira "kit completo" — armazenamento (RAG), IA (LLM + skills),
+> autenticação e governança per-user — atrás de uma API REST limpa.
+>
+> **Decisões fixadas (confirmadas pelo usuário):**
+>
+> 1. **OAuth2 client credentials** (sem API Key estática, sem reuso de
+>    cookie/JWT do chat).
+> 2. **Prefixo `/v1/...`** na raiz (não `/api/v1`, não `/external/v1`).
+> 3. **Compat OpenAI**: expor `POST /v1/chat/completions` no shape OpenAI.
+> 4. **Escopo v1 = tudo**: chat + threads, RAG (ingest + search), workspaces
+>    CRUD, memory, tools/schema, plugins.
+
+### Z1 — OAuth2 client credentials
+
+- **Novo** `vectora/services/oauth_clients.py`: modelo `OAuthClient`
+  (`client_id`, `client_secret_hash`, `name`, `owner_user_id`, `scopes`,
+  `created_at`, `revoked_at`). Persistido pela camada storage (V) — tabela
+  `vectora_oauth_clients` ou JSON no lite.
+- **Endpoints** (`vectora/api/handlers/oauth_clients.py`, novo):
+  - `POST /v1/oauth/clients` (auth cookie/JWT — só o dono cria) → retorna
+    `{client_id, client_secret}` **uma única vez**.
+  - `GET /v1/oauth/clients` — lista os clients do user atual.
+  - `DELETE /v1/oauth/clients/{id}` — revoga.
+- **Token endpoint** (público):
+  - `POST /v1/oauth/token` (`grant_type=client_credentials`,
+    `client_id`/`client_secret`, `scope=` opcional).
+  - Retorna JWT 1h `{access_token, token_type:"Bearer", expires_in:3600,
+scope}`. Claim `sub = owner_user_id`, `client_id`, `scopes`.
+- **Scopes** iniciais: `chat`, `threads`, `rag.read`, `rag.write`,
+  `workspaces.read`, `workspaces.write`, `memory.read`, `memory.write`,
+  `tools.read`, `plugins.read`, `plugins.write`, `openai-compat`.
+
+### Z2 — Middleware de auth REST
+
+- **Novo** `vectora/api/middleware/oauth_bearer.py`: valida `Authorization:
+Bearer <jwt>` para qualquer rota `/v1/*`. Resolve `user_id` do JWT do Z1
+  e injeta em `request.state.user` (mesmo `User` do Bloco C — todo o stack
+  downstream — tool_policy, plugins, workspaces, secrets — funciona sem
+  mudança). `request.state.client_id` e `request.state.scopes` ficam
+  disponíveis para gating fino.
+- Rate limit do Z (W6 Redis) usa `client_id` como chave (não user_id) — um
+  user pode ter múltiplos clients com limites independentes.
+- 401/403 conforme RFC 6749 (`error="invalid_token"`,
+  `error="insufficient_scope"`).
+
+### Z3 — Endpoints Vectora-nativos sob `/v1`
+
+- **Chat & Threads**:
+  `POST /v1/chat/stream` (SSE — mesma payload do `StreamChat` interno,
+  resposta sem mudança); `POST /v1/chat/resume` (HITL);
+  `POST/GET/DELETE /v1/threads(/{id})`, `GET /v1/threads/{id}/history`.
+- **RAG**:
+  `POST /v1/rag/ingest` (body: `{source: "path|url|text", content?,
+path?, url?, collection="articles", metadata}`);
+  `GET /v1/rag/search` (`?q=...&collection=articles&k=5`);
+  `GET /v1/rag/collections`; `DELETE /v1/rag/collections/{name}` (scope
+  `rag.write`).
+- **Workspaces**:
+  `GET/POST /v1/workspaces`, `GET /v1/workspaces/{id}`,
+  `POST /v1/workspaces/{id}/trust`, `POST /v1/workspaces/{id}/git-init`,
+  `GET /v1/workspaces/{id}/worktrees`, `POST /v1/workspaces/{id}/worktrees`,
+  `DELETE /v1/workspaces/{id}`.
+- **Memory**:
+  `GET/POST /v1/memory`, `GET/PUT/DELETE /v1/memory/{key}`.
+- **Tools**:
+  `GET /v1/tools` (toolset efetivo do user/client — built-ins minus deny +
+  MCP), `GET/PUT /v1/tools/policy`.
+- **Plugins/Skills**:
+  `GET/POST /v1/plugins`, `DELETE /v1/plugins/{name}`, `POST
+/v1/plugins/{name}/verify`; e `GET/POST /v1/skills`, `DELETE
+/v1/skills/{name}` (depende de S8).
+- **Headers semânticos** (opcionais): `X-Vectora-Workspace-Id` força
+  workspace específico para a requisição (em vez do "ativo" do user);
+  `X-Vectora-Rag-Collection`, `X-Vectora-Permission-Mode`.
+
+### Z4 — Compatibilidade OpenAI
+
+- **Novo** `vectora/api/handlers/openai_compat.py`:
+  - `GET /v1/models` — devolve `{data:[{id, object:"model", ...}], object:"list"}`
+    a partir de `vectora/config/settings.py::AVAILABLE_MODELS`.
+  - `POST /v1/chat/completions` — aceita o shape OpenAI:
+    `{model, messages:[{role,content}], stream, temperature?, max_tokens?,
+response_format?}`. Tradutor (`_translate_openai_to_streamchat()`)
+    monta `StreamChatRequest`; chama o mesmo handler interno; transforma a
+    saída de volta: - `stream=true` (SSE): emite `data: {choices:[{delta:{content}}]}\n\n`
+    por chunk + `data: [DONE]\n\n`. - `stream=false`: agrega e devolve `{choices:[{message:{content}}],
+usage, model, ...}` no shape `chat.completion`.
+  - `POST /v1/embeddings` (opcional v1.1): wrapper sobre Cohere para clientes
+    que esperam endpoint OpenAI.
+- Multimodal: `messages[].content` array com `{type:"image_url"}` é mapeado
+  para `Attachment(kind=IMAGE)` do schema interno.
+
+### Z5 — OpenAPI / Docs
+
+- FastAPI já gera. Expor:
+  - `GET /v1/openapi.json` (público).
+  - `GET /v1/docs` (Swagger UI público; "Try it out" requer Bearer
+    obtido em /v1/oauth/token).
+- Documentação curta em `docs/rest-api.md` com exemplos de OpenAI-compat
+  (curl + n8n HTTP node + Python OpenAI SDK apontando `base_url=https://
+<host>/v1`).
+
+### Z6 — Frontend (Settings tab "API")
+
+- `chat/components/layout/settings-dialog/tabs/api-tab.tsx` (novo):
+  - Listar OAuth clients do user (nome, criado em, scopes, último uso).
+  - "Criar client" → modal com nome + scopes → mostra `client_secret` UMA
+    VEZ (com botão copiar) + warning de que não será exibido de novo.
+  - Revogar.
+  - Link para `/v1/docs`.
+- Proxy Hono `chat/server/routes/oauth_clients.ts` (CRUD via cookie).
+- i18n `api.*`.
+
+### Z7 — Tests
+
+- `tests/unit/test_api_v1_oauth.py`: criação de client, token grant,
+  scope enforcement, revogação, expiração.
+- `tests/unit/test_api_v1_chat.py`: streaming nativo + OpenAI-compat
+  (stream e non-stream).
+- `tests/unit/test_api_v1_rag.py`: ingest + search com OAuth.
+- `tests/unit/test_api_v1_workspaces.py`, `_memory.py`, `_tools.py`,
+  `_plugins.py`.
+- `tests/unit/test_api_v1_openai_compat.py`: emparelha o shape OpenAI
+  (validação de JSON schema dos response objects).
+
+### Arquivos críticos (Bloco Z)
+
+| Sub | Arquivos chat                                                                                          | Arquivos vectora (Python)                                                                                                                                                     |
+| --- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Z1  | —                                                                                                      | `services/oauth_clients.py` (novo), `storage/{sqlite,postgres}/oauth_clients.py`, `api/handlers/oauth_clients.py` (novo)                                                      |
+| Z2  | —                                                                                                      | `api/middleware/oauth_bearer.py` (novo), `api/server.py` (registrar middleware), `api/middleware/auth.py` (`/v1/` é público p/ esse middleware — cobertura é do oauth_bearer) |
+| Z3  | —                                                                                                      | `api/handlers/v1/{chat,threads,rag,workspaces,memory,tools,plugins,skills}.py` (delgam aos services internos já existentes)                                                   |
+| Z4  | —                                                                                                      | `api/handlers/openai_compat.py` (novo, `/v1/chat/completions`, `/v1/models`, `/v1/embeddings`)                                                                                |
+| Z5  | —                                                                                                      | `vectora/api/server.py` (rotas docs /v1), `docs/rest-api.md`                                                                                                                  |
+| Z6  | `chat/components/layout/settings-dialog/tabs/api-tab.tsx`, `chat/server/routes/oauth_clients.ts`, i18n | —                                                                                                                                                                             |
+| Z7  | —                                                                                                      | `tests/unit/test_api_v1_*.py` (novos)                                                                                                                                         |
+
+### Verificação (Bloco Z)
+
+- `POST /v1/oauth/token` com client creds devolve JWT 1h.
+- n8n HTTP node `Authorization: Bearer <token>` em `POST /v1/chat/stream`
+  → SSE chega no n8n.
+- Cliente OpenAI Python apontando `base_url=https://<host>/v1` e
+  `api_key=<token>` chama `client.chat.completions.create(model="...",
+messages=[...], stream=True)` e recebe streaming compatível.
+- Scope `rag.write` consegue `POST /v1/rag/ingest`; sem o scope → 403.
+- Revogar client invalida tokens existentes (token check via `client_id`).
+- 2 clients do mesmo user têm rate limits independentes (W6 Redis).
 
 ---
 

@@ -32,6 +32,18 @@ class Workspace(BaseModel):
         default=None, description="Branch padrão (main/master)."
     )
 
+    trusted: bool = Field(
+        default=False,
+        description="True quando o usuário confiou na pasta. Tools de escrita, "
+        "terminal e git só executam em workspaces confiáveis.",
+    )
+    trusted_at: str | None = Field(
+        default=None, description="Timestamp ISO 8601 da confirmação de confiança."
+    )
+    trusted_by: str | None = Field(
+        default=None, description="ID do usuário que confiou na pasta."
+    )
+
     def manifest_dir(self) -> Path:
         """Diretório de manifests do workspace."""
         return Path.home() / ".vectora" / "workspaces" / self.id

@@ -39,12 +39,12 @@ async def retrieval_node(state: State) -> dict:
 
     from vectora.services.tracer import tracer
 
-    session_id: int | None = None
+    session_id: str | None = None
     with contextlib.suppress(Exception):
-        session_id = state.get("session_metadata", {}).get("thread_id")  # type: ignore[assignment]
+        session_id = state.get("session_metadata", {}).get("thread_id")
 
     try:
-        async with tracer.span("retrieval_node", "search", session_id=session_id) as s:
+        async with tracer.span("retrieval_node", "search", session_id=session_id) as s:  # ty: ignore[invalid-argument-type]
             docs = await _call_vector_search_all(query)
             if not docs:
                 logger.info("retrieval_node: sem resultados para '%s'", query[:60])

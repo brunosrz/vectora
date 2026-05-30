@@ -36,19 +36,48 @@ interface MessageListProps {
   onEditAndRerun?: (messageId: string, newContent: string) => void;
   feedbackComment: { [messageId: string]: string };
   showCommentInput: string | null;
-  onFeedback: (messageId: string, feedbackType: "positive" | "negative", comment?: string) => void;
+  onFeedback: (
+    messageId: string,
+    feedbackType: "positive" | "negative",
+    comment?: string,
+  ) => void;
   onSubmitComment: (messageId: string) => void;
   onCancelComment: (messageId: string) => void;
   onToggleComment: (messageId: string) => void;
-  setFeedbackComment: React.Dispatch<React.SetStateAction<{ [messageId: string]: string }>>;
+  setFeedbackComment: React.Dispatch<
+    React.SetStateAction<{ [messageId: string]: string }>
+  >;
   /** E2 — HITL */
-  onHitlDecision?: (messageId: string, interruptId: string, decision: "approve" | "reject" | `edit:${string}`) => void;
+  onHitlDecision?: (
+    messageId: string,
+    interruptId: string,
+    decision: "approve" | "reject" | `edit:${string}`,
+  ) => void;
   /** M5 — retry ao clicar no botão de erro */
   onRetry?: () => void;
   threadId?: string;
 }
 
-export const MessageList = memo(function MessageList({ messages, showToolCalls, isRegenerating, isLoadingThread = false, copiedId, onCopy, onRegenerate, onEditAndRerun, feedbackComment, showCommentInput, onFeedback, onSubmitComment, onCancelComment, onToggleComment, setFeedbackComment, onHitlDecision, onRetry, threadId }: MessageListProps) {
+export const MessageList = memo(function MessageList({
+  messages,
+  showToolCalls,
+  isRegenerating,
+  isLoadingThread = false,
+  copiedId,
+  onCopy,
+  onRegenerate,
+  onEditAndRerun,
+  feedbackComment,
+  showCommentInput,
+  onFeedback,
+  onSubmitComment,
+  onCancelComment,
+  onToggleComment,
+  setFeedbackComment,
+  onHitlDecision,
+  onRetry,
+  threadId,
+}: MessageListProps) {
   // D4 — dev mode detectado uma vez por render de lista
   const searchParams = useSearchParams();
   const isDevMode = searchParams?.get("dev") === "1";
@@ -81,13 +110,18 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
     estimateSize: () => ESTIMATE_SIZE_PX,
     overscan: 4,
     // measureElement usa ResizeObserver — mede alturas reais (incluindo streaming)
-    measureElement: typeof window !== "undefined" ? (el) => el?.getBoundingClientRect().height ?? ESTIMATE_SIZE_PX : undefined,
+    measureElement:
+      typeof window !== "undefined"
+        ? (el) => el?.getBoundingClientRect().height ?? ESTIMATE_SIZE_PX
+        : undefined,
   });
 
   // Último ID de mensagem assistant (para controles de ação)
   const lastAssistantId = useMemo(() => {
     const assistantMessages = messages.filter((m) => m.role === "assistant");
-    return assistantMessages.length > 0 ? assistantMessages[assistantMessages.length - 1]?.id : undefined;
+    return assistantMessages.length > 0
+      ? assistantMessages[assistantMessages.length - 1]?.id
+      : undefined;
   }, [messages]);
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -130,7 +164,9 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
 
     const currentFirstMessageId = messages[0]?.id;
     const isInitialLoad = firstMessageIdRef.current === null;
-    const threadChanged = firstMessageIdRef.current !== null && firstMessageIdRef.current !== currentFirstMessageId;
+    const threadChanged =
+      firstMessageIdRef.current !== null &&
+      firstMessageIdRef.current !== currentFirstMessageId;
 
     if (isInitialLoad || threadChanged) {
       isProgrammaticScrollRef.current = true;
@@ -151,7 +187,10 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
 
       const scrollAndCheck = () => {
         if (!isAutoScrollingRef.current) return;
-        if (!scrollContainer || scrollAttemptsRef.current >= MAX_SCROLL_ATTEMPTS) {
+        if (
+          !scrollContainer ||
+          scrollAttemptsRef.current >= MAX_SCROLL_ATTEMPTS
+        ) {
           scrollToAbsoluteBottom();
           setTimeout(() => {
             scrollToAbsoluteBottom();
@@ -169,7 +208,8 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
         if (currentScrollHeight === lastScrollHeight) {
           stabilityCheckCount++;
           if (stabilityCheckCount >= STABILITY_THRESHOLD) {
-            const maxScrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+            const maxScrollTop =
+              scrollContainer.scrollHeight - scrollContainer.clientHeight;
             const distanceFromBottom = maxScrollTop - scrollContainer.scrollTop;
             if (distanceFromBottom <= 10) {
               setTimeout(() => {
@@ -234,7 +274,8 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
     const lastMessage = messages[messages.length - 1];
     const currentContent = lastMessage?.content || "";
     const isNewMessage = messages.length > lastMessageCountRef.current;
-    const isStreaming = currentContent !== lastContentRef.current && !isNewMessage;
+    const isStreaming =
+      currentContent !== lastContentRef.current && !isNewMessage;
 
     if (shouldAutoScrollRef.current && (isNewMessage || isStreaming)) {
       isProgrammaticScrollRef.current = true;
@@ -296,7 +337,8 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
     }
 
     setTimeout(() => {
-      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      if (scrollRef.current)
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       isProgrammaticScrollRef.current = false;
     }, 400);
   }, [shouldVirtualize, virtualizer, messages.length]);
@@ -397,10 +439,17 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
                   <div
                     className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-3"
                     style={{
-                      animation: isLastMessage && message.role === "user" ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)" : "none",
+                      animation:
+                        isLastMessage && message.role === "user"
+                          ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                          : "none",
                     }}
                   >
-                    <MessageItem message={message} isLastAssistant={message.id === lastAssistantId} {...commonItemProps} />
+                    <MessageItem
+                      message={message}
+                      isLastAssistant={message.id === lastAssistantId}
+                      {...commonItemProps}
+                    />
                   </div>
                 </div>
               );
@@ -415,10 +464,17 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
                 <div
                   key={message.id}
                   style={{
-                    animation: isLastMessage && message.role === "user" ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)" : "none",
+                    animation:
+                      isLastMessage && message.role === "user"
+                        ? "slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+                        : "none",
                   }}
                 >
-                  <MessageItem message={message} isLastAssistant={message.id === lastAssistantId} {...commonItemProps} />
+                  <MessageItem
+                    message={message}
+                    isLastAssistant={message.id === lastAssistantId}
+                    {...commonItemProps}
+                  />
                 </div>
               );
             })}
@@ -428,7 +484,12 @@ export const MessageList = memo(function MessageList({ messages, showToolCalls, 
 
       {/* M3 — Botão "Voltar ao fim" */}
       {showScrollButton && !isLoadingThread && (
-        <button onClick={scrollToBottom} className="scroll-button fixed bottom-32 right-4 sm:right-8 p-3 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform z-50" style={{ background: "#7FC8FF", color: "white" }} aria-label="Voltar ao fim">
+        <button
+          onClick={scrollToBottom}
+          className="scroll-button fixed bottom-32 right-4 sm:right-8 p-3 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform z-50"
+          style={{ background: "#7FC8FF", color: "white" }}
+          aria-label="Voltar ao fim"
+        >
           <ArrowDown className="w-5 h-5" />
         </button>
       )}

@@ -6,14 +6,43 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
+from vectora.types import Workspace
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _allow_all_paths(file_path, **kwargs):
-    """Substituto para is_safe_file_path que aprova qualquer caminho nos testes."""
-    return True
+@pytest.fixture
+def trusted_ws(tmp_path, monkeypatch):
+    """Workspace confiável apontando para tmp_path + config para as tools.
+
+    As tools de fs confinam toda operação ao workspace ativo (Q4). Os testes
+    registram um workspace confiável em tmp_path e passam seu id no config para
+    que leituras/escritas ocorram dentro da pasta de teste.
+    """
+    from vectora.services import workspace as ws_mod
+
+    ws = Workspace(
+        id="testws",
+        name="testws",
+        cwd=str(tmp_path),
+        created_at="2024-01-01T00:00:00+00:00",
+        trusted=True,
+    )
+    monkeypatch.setattr(
+        ws_mod.workspace_registry,
+        "get",
+        lambda wid: ws if wid == "testws" else None,
+    )
+    monkeypatch.setattr(
+        ws_mod.workspace_registry,
+        "get_or_create",
+        lambda cwd=None: ws,
+    )
+    return {"configurable": {"workspace_id": "testws"}}
 
 
 # ---------------------------------------------------------------------------
@@ -22,28 +51,28 @@ def _allow_all_paths(file_path, **kwargs):
 
 
 class TestFileRead:
-    def test_reads_existing_file(self, tmp_path):
+    def test_reads_existing_file(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_read
 
         f = tmp_path / "hello.txt"
         f.write_text("conteudo do arquivo", encoding="utf-8")
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            result = file_read.invoke({"file_path": str(f)})
+        result = file_read.invoke({"file_path": str(f)}, config=trusted_ws)
         assert result == "conteudo do arquivo"
 
-    def test_file_not_found(self, tmp_path):
+    def test_file_not_found(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_read
 
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            result = file_read.invoke({"file_path": str(tmp_path / "nao_existe.txt")})
+        result = file_read.invoke(
+            {"file_path": str(tmp_path / "nao_existe.txt")}, config=trusted_ws
+        )
         assert "not found" in result.lower() or "error" in result.lower()
 
-    def test_blocked_path(self):
+    def test_blocked_path(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_read
 
-        with patch("vectora.tools.fs.is_safe_file_path", return_value=False):
-            result = file_read.invoke({"file_path": "/etc/passwd"})
-        assert "not allowed" in result.lower() or "error" in result.lower()
+        outside = tmp_path.parent / "fora_do_workspace.txt"
+        result = file_read.invoke({"file_path": str(outside)}, config=trusted_ws)
+        assert "fora do workspace" in result.lower() or "error" in result.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -52,38 +81,67 @@ class TestFileRead:
 
 
 class TestFileWrite:
-    def test_creates_new_file(self, tmp_path):
+    def test_creates_new_file(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_write
 
         dest = tmp_path / "novo.txt"
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            result = file_write.invoke({"file_path": str(dest), "content": "ola mundo"})
+        result = file_write.invoke(
+            {"file_path": str(dest), "content": "ola mundo"}, config=trusted_ws
+        )
         assert "ok" in result.lower() or "written" in result.lower()
         assert dest.read_text(encoding="utf-8") == "ola mundo"
 
-    def test_overwrites_existing_file(self, tmp_path):
+    def test_overwrites_existing_file(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_write
 
         dest = tmp_path / "existente.txt"
         dest.write_text("velho", encoding="utf-8")
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            file_write.invoke({"file_path": str(dest), "content": "novo"})
+        file_write.invoke(
+            {"file_path": str(dest), "content": "novo"}, config=trusted_ws
+        )
         assert dest.read_text(encoding="utf-8") == "novo"
 
-    def test_creates_parent_dirs(self, tmp_path):
+    def test_creates_parent_dirs(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_write
 
         dest = tmp_path / "sub" / "dir" / "arquivo.txt"
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            file_write.invoke({"file_path": str(dest), "content": "x"})
+        file_write.invoke({"file_path": str(dest), "content": "x"}, config=trusted_ws)
         assert dest.exists()
 
-    def test_blocked_path(self):
+    def test_blocked_path(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_write
 
-        with patch("vectora.tools.fs.is_safe_file_path", return_value=False):
-            result = file_write.invoke({"file_path": "/etc/evil", "content": "x"})
-        assert "not allowed" in result.lower() or "error" in result.lower()
+        outside = tmp_path.parent / "evil.txt"
+        result = file_write.invoke(
+            {"file_path": str(outside), "content": "x"}, config=trusted_ws
+        )
+        assert "fora do workspace" in result.lower() or "error" in result.lower()
+
+    def test_requires_trust(self, tmp_path, monkeypatch):
+        from vectora.services import workspace as ws_mod
+        from vectora.tools.fs import file_write
+
+        untrusted = Workspace(
+            id="untrusted",
+            name="untrusted",
+            cwd=str(tmp_path),
+            created_at="2024-01-01T00:00:00+00:00",
+            trusted=False,
+        )
+        monkeypatch.setattr(
+            ws_mod.workspace_registry,
+            "get",
+            lambda wid: untrusted if wid == "untrusted" else None,
+        )
+        monkeypatch.setattr(
+            ws_mod.workspace_registry, "get_or_create", lambda cwd=None: untrusted
+        )
+        cfg = {"configurable": {"workspace_id": "untrusted"}}
+        result = file_write.invoke(
+            {"file_path": str(tmp_path / "x.txt"), "content": "x"},
+            config=cfg,  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        )
+        assert "confi" in result.lower()  # "não é confiável" / "confiança"
 
 
 # ---------------------------------------------------------------------------
@@ -92,54 +150,54 @@ class TestFileWrite:
 
 
 class TestFileEdit:
-    def test_replaces_text(self, tmp_path):
+    def test_replaces_text(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_edit
 
         f = tmp_path / "code.py"
         f.write_text("foo = 1\nbar = 2\n", encoding="utf-8")
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            result = file_edit.invoke(
-                {"file_path": str(f), "old_text": "foo = 1", "new_text": "foo = 99"}
-            )
+        result = file_edit.invoke(
+            {"file_path": str(f), "old_text": "foo = 1", "new_text": "foo = 99"},
+            config=trusted_ws,
+        )
         assert "ok" in result.lower()
         assert "foo = 99" in f.read_text(encoding="utf-8")
 
-    def test_replace_all(self, tmp_path):
+    def test_replace_all(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_edit
 
         f = tmp_path / "rep.txt"
         f.write_text("a a a", encoding="utf-8")
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            file_edit.invoke(
-                {
-                    "file_path": str(f),
-                    "old_text": "a",
-                    "new_text": "b",
-                    "replace_all": True,
-                }
-            )
+        file_edit.invoke(
+            {
+                "file_path": str(f),
+                "old_text": "a",
+                "new_text": "b",
+                "replace_all": True,
+            },
+            config=trusted_ws,
+        )
         assert f.read_text(encoding="utf-8") == "b b b"
 
-    def test_creates_file_when_old_text_empty(self, tmp_path):
+    def test_creates_file_when_old_text_empty(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_edit
 
         dest = tmp_path / "new.txt"
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            result = file_edit.invoke(
-                {"file_path": str(dest), "old_text": "", "new_text": "criado"}
-            )
+        result = file_edit.invoke(
+            {"file_path": str(dest), "old_text": "", "new_text": "criado"},
+            config=trusted_ws,
+        )
         assert "ok" in result.lower() or "created" in result.lower()
         assert dest.read_text(encoding="utf-8") == "criado"
 
-    def test_text_not_found(self, tmp_path):
+    def test_text_not_found(self, tmp_path, trusted_ws):
         from vectora.tools.fs import file_edit
 
         f = tmp_path / "f.txt"
         f.write_text("abc", encoding="utf-8")
-        with patch("vectora.tools.fs.is_safe_file_path", side_effect=_allow_all_paths):
-            result = file_edit.invoke(
-                {"file_path": str(f), "old_text": "xyz", "new_text": "nope"}
-            )
+        result = file_edit.invoke(
+            {"file_path": str(f), "old_text": "xyz", "new_text": "nope"},
+            config=trusted_ws,
+        )
         assert "not found" in result.lower() or "error" in result.lower()
 
 
@@ -149,27 +207,33 @@ class TestFileEdit:
 
 
 class TestGrep:
-    def test_finds_pattern_in_file(self, tmp_path):
+    def test_finds_pattern_in_file(self, tmp_path, trusted_ws):
         from vectora.tools.fs import grep
 
         f = tmp_path / "src.py"
         f.write_text("def foo():\n    pass\n", encoding="utf-8")
-        result = grep.invoke({"pattern": "def foo", "path": str(tmp_path)})
+        result = grep.invoke(
+            {"pattern": "def foo", "path": str(tmp_path)}, config=trusted_ws
+        )
         assert "def foo" in result
 
-    def test_no_match_returns_message(self, tmp_path):
+    def test_no_match_returns_message(self, tmp_path, trusted_ws):
         from vectora.tools.fs import grep
 
         f = tmp_path / "empty.py"
         f.write_text("nothing here", encoding="utf-8")
-        result = grep.invoke({"pattern": "xyz_not_present", "path": str(tmp_path)})
+        result = grep.invoke(
+            {"pattern": "xyz_not_present", "path": str(tmp_path)}, config=trusted_ws
+        )
         assert "no matches" in result.lower()
 
-    def test_invalid_pattern(self):
+    def test_invalid_pattern(self, trusted_ws):
         from vectora.tools.fs import grep
 
         with patch("vectora.tools.fs.is_safe_regex_pattern", return_value=False):
-            result = grep.invoke({"pattern": "[invalid", "path": "."})
+            result = grep.invoke(
+                {"pattern": "[invalid", "path": "."}, config=trusted_ws
+            )
         assert "invalid" in result.lower() or "error" in result.lower()
 
 
@@ -179,28 +243,30 @@ class TestGrep:
 
 
 class TestListDir:
-    def test_lists_files(self, tmp_path):
+    def test_lists_files(self, tmp_path, trusted_ws):
         from vectora.tools.fs import list_dir
 
         (tmp_path / "a.txt").write_text("x")
         (tmp_path / "b.txt").write_text("y")
-        result = list_dir.invoke({"path": str(tmp_path)})
+        result = list_dir.invoke({"path": str(tmp_path)}, config=trusted_ws)
         assert "a.txt" in result
         assert "b.txt" in result
 
-    def test_recursive(self, tmp_path):
+    def test_recursive(self, tmp_path, trusted_ws):
         from vectora.tools.fs import list_dir
 
         sub = tmp_path / "sub"
         sub.mkdir()
         (sub / "deep.txt").write_text("z")
-        result = list_dir.invoke({"path": str(tmp_path), "recursive": True})
+        result = list_dir.invoke(
+            {"path": str(tmp_path), "recursive": True}, config=trusted_ws
+        )
         assert "deep.txt" in result
 
-    def test_nonexistent_dir(self, tmp_path):
+    def test_nonexistent_dir(self, tmp_path, trusted_ws):
         from vectora.tools.fs import list_dir
 
-        result = list_dir.invoke({"path": str(tmp_path / "nope")})
+        result = list_dir.invoke({"path": str(tmp_path / "nope")}, config=trusted_ws)
         assert "not found" in result.lower() or "error" in result.lower()
 
 

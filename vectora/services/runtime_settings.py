@@ -105,7 +105,8 @@ class RuntimeSettings:
     @property
     def verbosity(self) -> int:
         """Verbosity level 0-5. 0 = silent, 5 = full debug panel."""
-        return int(self.get("verbosity", 0))  # type: ignore[arg-type]
+        raw = self.get("verbosity", 0)
+        return int(raw) if isinstance(raw, (int, float, str)) else 0
 
     @property
     def debug_mode(self) -> bool:
@@ -134,7 +135,9 @@ class RuntimeSettings:
     def last_session_by_dir(self) -> dict[str, str]:
         """Mapping of working directory path -> thread_id (6-digit string)."""
         val = self.get("last_session_by_dir", {})
-        return val if isinstance(val, dict) else {}
+        if not isinstance(val, dict):
+            return {}
+        return {str(k): str(v) for k, v in val.items()}
 
     def get_session_for_dir(self, cwd: str) -> str | None:
         """Return the last thread_id used in the given directory, or None."""

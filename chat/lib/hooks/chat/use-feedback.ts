@@ -12,7 +12,8 @@ interface UseFeedbackProps {
 }
 
 const DEFAULT_POSITIVE_COMMENT = "User rated this as helpful";
-const DEFAULT_NEGATIVE_COMMENT = "User indicated the answer wasn't satisfactory";
+const DEFAULT_NEGATIVE_COMMENT =
+  "User indicated the answer wasn't satisfactory";
 
 /**
  * Custom hook for managing user feedback on LangSmith traces.
@@ -29,15 +30,23 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
    * Applies feedback state changes to the messages array.
    */
   const applyFeedback = useCallback(
-    (messageId: string, value: "positive" | "negative" | null, opts?: { id?: string | null; comment?: string | null }) => {
+    (
+      messageId: string,
+      value: "positive" | "negative" | null,
+      opts?: { id?: string | null; comment?: string | null },
+    ) => {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === messageId
             ? {
                 ...m,
                 feedback: value,
-                ...(opts?.id !== undefined ? { feedbackId: opts.id ?? undefined } : {}),
-                ...(opts?.comment !== undefined ? { feedbackComment: opts.comment ?? undefined } : {}),
+                ...(opts?.id !== undefined
+                  ? { feedbackId: opts.id ?? undefined }
+                  : {}),
+                ...(opts?.comment !== undefined
+                  ? { feedbackComment: opts.comment ?? undefined }
+                  : {}),
               }
             : m,
         ),
@@ -51,7 +60,12 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
    * Supports toggling feedback and adding comments.
    */
   const handleFeedback = useCallback(
-    async (messageId: string, feedbackType: "positive" | "negative", comment?: string, options?: { toggle?: boolean }) => {
+    async (
+      messageId: string,
+      feedbackType: "positive" | "negative",
+      comment?: string,
+      options?: { toggle?: boolean },
+    ) => {
       const message = messages.find((m) => m.id === messageId);
       if (!message || !message.runId) {
         console.warn("Cannot submit feedback: missing runId on message");
@@ -62,7 +76,11 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
       const isSameFeedback = message.feedback === feedbackType;
       const trimmedComment = comment?.trim();
       const hasComment = Boolean(trimmedComment);
-      const commentPayload = hasComment ? trimmedComment! : feedbackType === "positive" ? DEFAULT_POSITIVE_COMMENT : DEFAULT_NEGATIVE_COMMENT;
+      const commentPayload = hasComment
+        ? trimmedComment!
+        : feedbackType === "positive"
+          ? DEFAULT_POSITIVE_COMMENT
+          : DEFAULT_NEGATIVE_COMMENT;
 
       // Save previous state for rollback on error
       const previousFeedback = message.feedback ?? null;
@@ -91,7 +109,9 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
             console.error("Error deleting feedback:", error);
             // Rollback on error
             applyFeedback(messageId, previousFeedback, {
-              ...(previousFeedbackId !== undefined ? { id: previousFeedbackId } : {}),
+              ...(previousFeedbackId !== undefined
+                ? { id: previousFeedbackId }
+                : {}),
               comment: previousComment,
             });
             setFeedbackComment((prev) => {
@@ -111,7 +131,11 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
       }
 
       // Apply feedback optimistically
-      applyFeedback(messageId, feedbackType, hasComment ? { comment: commentPayload } : undefined);
+      applyFeedback(
+        messageId,
+        feedbackType,
+        hasComment ? { comment: commentPayload } : undefined,
+      );
 
       try {
         let feedbackId = message.feedbackId;
@@ -149,7 +173,9 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
 
         // Rollback optimistic update on error
         applyFeedback(messageId, previousFeedback, {
-          ...(previousFeedbackId !== undefined ? { id: previousFeedbackId } : {}),
+          ...(previousFeedbackId !== undefined
+            ? { id: previousFeedbackId }
+            : {}),
           comment: previousComment,
         });
 
@@ -173,7 +199,9 @@ export function useFeedback({ messages, setMessages }: UseFeedbackProps) {
       const comment = feedbackComment[messageId]?.trim();
 
       if (!message || !message.feedback || !comment) {
-        console.warn("Cannot submit comment: ensure feedback is selected and comment is provided");
+        console.warn(
+          "Cannot submit comment: ensure feedback is selected and comment is provided",
+        );
         return;
       }
 

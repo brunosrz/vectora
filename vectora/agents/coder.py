@@ -15,11 +15,12 @@ from langchain_core.messages import AIMessage
 from vectora.agents._identity import VECTORA_IDENTITY
 from vectora.nodes.base import invoke_llm
 from vectora.nodes.tools import ALL_TOOLS
+from vectora.services.llm_tools import get_user_bound_llm, user_id_from_config
 from vectora.services.utils import load_llm
 from vectora.types import CoderResult
 
 if TYPE_CHECKING:
-    from langchain_core.runnables import Runnable
+    from langchain_core.runnables import Runnable, RunnableConfig
 
     from vectora.state import State
 
@@ -77,14 +78,14 @@ automaticamente pela tool.
 _coder_llm = None
 
 
-def _get_coder_llm() -> Runnable:
+def _get_coder_llm() -> Runnable:  # mantido p/ Studio/local; o nó usa bind por user
     global _coder_llm
     if _coder_llm is None:
         if not ALL_TOOLS:
             _coder_llm = load_llm()
             logger.warning("coder_worker: sem ferramentas disponíveis")
         else:
-            _coder_llm = load_llm().bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]
+            _coder_llm = load_llm().bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             logger.debug("coder_worker LLM inicializado com %d tools", len(ALL_TOOLS))
     return _coder_llm
 
@@ -160,7 +161,7 @@ async def coder_finalize(state: State) -> dict:
     return {"coder_result": result}
 
 
-async def coder(state: State) -> dict:
+async def coder(state: State, config: RunnableConfig = None) -> dict:  # type: ignore[assignment]  # ty: ignore[invalid-parameter-default]
     """Agent de código: cria/edita arquivos, executa terminal e git.
 
     Especializado em tarefas de desenvolvimento:
@@ -169,14 +170,13 @@ async def coder(state: State) -> dict:
     - Criar estrutura de projeto
     - Grep e navegação em arquivos
 
-    Quando recebe orchestrator_task, injeta a instrução no topo do system prompt
-    para que o LLM saiba exatamente o que o orchestrator delegou — sem precisar
-    inferir intent do histórico bruto.
+    O LLM é bindado ao toolset do usuário (built-ins permitidas + MCP) a partir
+    do user_id do config. Quando recebe orchestrator_task, injeta a instrução no
+    topo do system prompt.
     """
     task = state.get("orchestrator_task")
     task_block = f"\n\n## Task delegada pelo Orchestrator\n{task}" if task else ""
 
     logger.info("coder: processando mensagem%s", " (task delegada)" if task else "")
-    return await invoke_llm(
-        _get_coder_llm(), state, system_prompt=SYSTEM_PROMPT + task_block
-    )
+    llm = await get_user_bound_llm(user_id_from_config(config))
+    return await invoke_llm(llm, state, system_prompt=SYSTEM_PROMPT + task_block)

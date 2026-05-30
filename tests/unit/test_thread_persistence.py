@@ -264,7 +264,7 @@ class TestStreamChatRegistersThread:
             importlib.reload(chat_mod)
 
             request = StreamChatRequest(content="Olá", thread_id="explicit-thread-id")
-            _response = await chat_mod.stream_chat(request)
+            _response = await chat_mod.stream_chat(request)  # type: ignore[call-arg]  # ty: ignore[missing-argument]
 
         assert "explicit-thread-id" in upsert_calls, (
             "stream_chat deve chamar _upsert_session com o thread_id fornecido"
@@ -304,7 +304,7 @@ class TestStreamChatRegistersThread:
             importlib.reload(chat_mod)
 
             request = StreamChatRequest(content="Sem thread id")
-            _response = await chat_mod.stream_chat(request)
+            _response = await chat_mod.stream_chat(request)  # type: ignore[call-arg]  # ty: ignore[missing-argument]
 
         assert len(upsert_calls) == 1, "Deve ter sido chamado exatamente uma vez"
         thread_id_used = upsert_calls[0]
@@ -327,7 +327,7 @@ def _make_app_with_db(tmp_db: FakeDB) -> tuple:
     async def patched_get_db():
         return tmp_db
 
-    t_mod._get_db = patched_get_db
+    t_mod._get_db = patched_get_db  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     from vectora.api.server import create_app
 

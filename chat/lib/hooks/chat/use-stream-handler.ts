@@ -17,10 +17,21 @@
 
 import { useCallback, useRef } from "react";
 import type { Message, ToolCall, ImageAttachment } from "../../types";
-import { streamChat, resumeChat, type StreamEvent, type ChatConfig, type ResumeChatRequest } from "../../api/vectora-client";
-import { ensureMessageExists, updateMessageInList, toApiAttachments } from "../../utils/chat";
+import {
+  streamChat,
+  resumeChat,
+  type StreamEvent,
+  type ChatConfig,
+  type ResumeChatRequest,
+} from "../../api/vectora-client";
+import {
+  ensureMessageExists,
+  updateMessageInList,
+  toApiAttachments,
+} from "../../utils/chat";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
 // ============================================================================
 // Types
@@ -40,21 +51,37 @@ interface UseStreamHandlerProps {
 }
 
 interface UseStreamHandlerReturn {
-  processStream: (userContent: string, assistantMessageId: string, images?: ImageAttachment[]) => Promise<{ assistantContent: string; runId: string | undefined }>;
+  processStream: (
+    userContent: string,
+    assistantMessageId: string,
+    images?: ImageAttachment[],
+  ) => Promise<{ assistantContent: string; runId: string | undefined }>;
   /** Retoma uma execução pausada por HITL (approve / reject / edit:<json>). */
-  processResume: (request: ResumeChatRequest, assistantMessageId: string) => Promise<{ assistantContent: string }>;
+  processResume: (
+    request: ResumeChatRequest,
+    assistantMessageId: string,
+  ) => Promise<{ assistantContent: string }>;
 }
 
 // ============================================================================
 // Hook
 // ============================================================================
 
-export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInterruptRef }: UseStreamHandlerProps): UseStreamHandlerReturn {
+export function useStreamHandler({
+  threadId,
+  setMessages,
+  agentConfig,
+  shouldInterruptRef,
+}: UseStreamHandlerProps): UseStreamHandlerReturn {
   // AbortController para interromper o stream quando shouldInterruptRef === true
   const abortRef = useRef<AbortController | null>(null);
 
   const processStream = useCallback(
-    async (userContent: string, assistantMessageId: string, images?: ImageAttachment[]): Promise<{ assistantContent: string; runId: string | undefined }> => {
+    async (
+      userContent: string,
+      assistantMessageId: string,
+      images?: ImageAttachment[],
+    ): Promise<{ assistantContent: string; runId: string | undefined }> => {
       // Cancela stream anterior se ainda em andamento
       abortRef.current?.abort();
       const abort = new AbortController();
@@ -70,7 +97,9 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
         isThinking: true,
         thinkingStartTime,
       };
-      setMessages((prev) => ensureMessageExists(prev, assistantMessageId, baseAssistantMessage));
+      setMessages((prev) =>
+        ensureMessageExists(prev, assistantMessageId, baseAssistantMessage),
+      );
 
       let assistantContent = "";
       let resolvedRunId: string | undefined;
@@ -80,9 +109,18 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
       if (agentConfig?.model) config.model = agentConfig.model;
       const customSystemPrompt = useSettingsStore.getState().customSystemPrompt;
       if (customSystemPrompt) config.custom_system_prompt = customSystemPrompt;
+      const activeWorkspaceId = useWorkspacesStore.getState().active_id;
+      if (activeWorkspaceId) config.workspace_id = activeWorkspaceId;
+      const settings = useSettingsStore.getState();
+      config.permission_mode = settings.permissionMode;
+      // Modo rápido força esforço mínimo; senão usa o nível escolhido.
+      config.reasoning_effort = settings.fastMode
+        ? "low"
+        : settings.reasoningEffort;
 
       // Converte ImageAttachment[] → Attachment[] para a API (F1)
-      const attachments = images && images.length > 0 ? toApiAttachments(images) : undefined;
+      const attachments =
+        images && images.length > 0 ? toApiAttachments(images) : undefined;
 
       // M2 — Token buffering: acumula tokens dentro de um animation frame (≤16ms)
       // e faz um único setMessages por frame. Evita layout thrashing em modelos
@@ -175,7 +213,10 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
             updateMessageInList(prev, assistantMessageId, (m) => ({
               ...m,
               isThinking: false,
-              thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
+              thinkingDuration:
+                m.thinkingStartTime !== undefined
+                  ? Date.now() - m.thinkingStartTime
+                  : undefined,
             })),
           );
         } else {
@@ -185,7 +226,10 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
               ...m,
               content: assistantContent || `Erro no stream: ${msg}`,
               isThinking: false,
-              thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
+              thinkingDuration:
+                m.thinkingStartTime !== undefined
+                  ? Date.now() - m.thinkingStartTime
+                  : undefined,
             })),
           );
         }
@@ -197,7 +241,10 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
               ? {
                   ...m,
                   isThinking: false,
-                  thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
+                  thinkingDuration:
+                    m.thinkingStartTime !== undefined
+                      ? Date.now() - m.thinkingStartTime
+                      : undefined,
                 }
               : m,
           ),
@@ -213,7 +260,10 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
   // processResume — retoma stream após aprovação/rejeição HITL
   // ---------------------------------------------------------------------------
   const processResume = useCallback(
-    async (request: ResumeChatRequest, assistantMessageId: string): Promise<{ assistantContent: string }> => {
+    async (
+      request: ResumeChatRequest,
+      assistantMessageId: string,
+    ): Promise<{ assistantContent: string }> => {
       // Limpa hitlPending e reativa o spinner de thinking
       setMessages((prev) =>
         updateMessageInList(prev, assistantMessageId, (m) => ({
@@ -283,7 +333,8 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
           await handleEvent(event, assistantMessageId, setMessages);
 
           if (event.type === "done") break;
-          if (event.type === "error") throw new Error(event.message || "Resume error");
+          if (event.type === "error")
+            throw new Error(event.message || "Resume error");
         }
 
         flushNow();
@@ -305,7 +356,10 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
               ? {
                   ...m,
                   isThinking: false,
-                  thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
+                  thinkingDuration:
+                    m.thinkingStartTime !== undefined
+                      ? Date.now() - m.thinkingStartTime
+                      : undefined,
                 }
               : m,
           ),
@@ -326,7 +380,11 @@ export function useStreamHandler({ threadId, setMessages, agentConfig, shouldInt
 
 // handleEvent processa todos os eventos exceto "token"
 // (tokens são buffered diretamente nos loops de processStream/processResume — M2)
-async function handleEvent(event: StreamEvent, assistantMessageId: string, setMessages: React.Dispatch<React.SetStateAction<Message[]>>): Promise<void> {
+async function handleEvent(
+  event: StreamEvent,
+  assistantMessageId: string,
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+): Promise<void> {
   switch (event.type) {
     case "token":
       // tokens handled by caller (buffered via rAF)
@@ -371,7 +429,11 @@ async function handleEvent(event: StreamEvent, assistantMessageId: string, setMe
       setMessages((prev) =>
         updateMessageInList(prev, assistantMessageId, (m) => ({
           ...m,
-          toolCalls: (m.toolCalls ?? []).map((tc) => (tc.id === event.tool_call_id ? { ...tc, output, isError: event.is_error } : tc)),
+          toolCalls: (m.toolCalls ?? []).map((tc) =>
+            tc.id === event.tool_call_id
+              ? { ...tc, output, isError: event.is_error }
+              : tc,
+          ),
         })),
       );
       break;
@@ -402,7 +464,11 @@ async function handleEvent(event: StreamEvent, assistantMessageId: string, setMe
             currentNodeLabel: event.node_label,
           })),
         );
-      } else if (event.status === "finished" && event.duration_ms != null && event.duration_ms > 0) {
+      } else if (
+        event.status === "finished" &&
+        event.duration_ms != null &&
+        event.duration_ms > 0
+      ) {
         setMessages((prev) =>
           updateMessageInList(prev, assistantMessageId, (m) => ({
             ...m,
@@ -430,7 +496,10 @@ async function handleEvent(event: StreamEvent, assistantMessageId: string, setMe
         updateMessageInList(prev, assistantMessageId, (m) => ({
           ...m,
           isThinking: false,
-          thinkingDuration: m.thinkingStartTime !== undefined ? Date.now() - m.thinkingStartTime : undefined,
+          thinkingDuration:
+            m.thinkingStartTime !== undefined
+              ? Date.now() - m.thinkingStartTime
+              : undefined,
           hitlPending: {
             toolName: event.tool_name,
             argsJson: event.args_json,

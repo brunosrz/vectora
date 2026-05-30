@@ -20,6 +20,10 @@ export interface ChatConfig {
   workspace_id?: string;
   /** L4 — instrução personalizada prefixada ao system prompt */
   custom_system_prompt?: string;
+  /** R2 — ask|accept_edits|plan|auto|bypass */
+  permission_mode?: string;
+  /** R4 — low|medium|high|max (vazio = default do modelo) */
+  reasoning_effort?: string;
 }
 
 /** Tipo semântico do attachment — espelha AttachmentKind do backend. */
@@ -101,6 +105,8 @@ export interface Thread {
   created_at: string;
   updated_at: string;
   title?: string;
+  /** Workspace associado à sessão (R — workspace por sessão). */
+  workspace_id?: string;
 }
 
 export interface HistoryMessage {
@@ -160,7 +166,10 @@ function _redirectToLogin(): void {
  *
  * @yields StreamEvent — eventos tipados (token, tool_call, done, etc.)
  */
-export async function* streamChat(request: StreamChatRequest, signal?: AbortSignal): AsyncGenerator<StreamEvent> {
+export async function* streamChat(
+  request: StreamChatRequest,
+  signal?: AbortSignal,
+): AsyncGenerator<StreamEvent> {
   const url = `${VECTORA_API_URL}/vectora.chat.v1.ChatService/StreamChat`;
 
   const doFetch = () =>
@@ -195,7 +204,10 @@ export async function* streamChat(request: StreamChatRequest, signal?: AbortSign
 /**
  * Retoma uma execução pausada (HITL).
  */
-export async function* resumeChat(request: ResumeChatRequest, signal?: AbortSignal): AsyncGenerator<StreamEvent> {
+export async function* resumeChat(
+  request: ResumeChatRequest,
+  signal?: AbortSignal,
+): AsyncGenerator<StreamEvent> {
   const url = `${VECTORA_API_URL}/vectora.chat.v1.ChatService/ResumeChat`;
 
   const doFetch = () =>
@@ -230,7 +242,11 @@ export async function* resumeChat(request: ResumeChatRequest, signal?: AbortSign
 // Thread management
 // ============================================================================
 
-async function _post<T>(path: string, body: object, isRetry = false): Promise<T> {
+async function _post<T>(
+  path: string,
+  body: object,
+  isRetry = false,
+): Promise<T> {
   const response = await fetch(`${VECTORA_API_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -250,27 +266,39 @@ async function _post<T>(path: string, body: object, isRetry = false): Promise<T>
   return response.json();
 }
 
-export const createThread = (): Promise<Thread> => _post("/vectora.chat.v1.ThreadService/CreateThread", {});
+export const createThread = (): Promise<Thread> =>
+  _post("/vectora.chat.v1.ThreadService/CreateThread", {});
 
-export const getThread = (thread_id: string): Promise<Thread> => _post("/vectora.chat.v1.ThreadService/GetThread", { thread_id });
+export const getThread = (thread_id: string): Promise<Thread> =>
+  _post("/vectora.chat.v1.ThreadService/GetThread", { thread_id });
 
-export const listThreads = (limit = 50): Promise<{ threads: Thread[] }> => _post("/vectora.chat.v1.ThreadService/ListThreads", { limit });
+export const listThreads = (limit = 50): Promise<{ threads: Thread[] }> =>
+  _post("/vectora.chat.v1.ThreadService/ListThreads", { limit });
 
-export const deleteThread = (thread_id: string): Promise<{}> => _post("/vectora.chat.v1.ThreadService/DeleteThread", { thread_id });
+export const deleteThread = (thread_id: string): Promise<{}> =>
+  _post("/vectora.chat.v1.ThreadService/DeleteThread", { thread_id });
 
-export const updateThread = (thread_id: string, updates: { title?: string }): Promise<Thread> =>
+export const updateThread = (
+  thread_id: string,
+  updates: { title?: string },
+): Promise<Thread> =>
   _post("/vectora.chat.v1.ThreadService/UpdateThread", {
     thread_id,
     title: updates.title ?? "",
   });
 
-export const getHistory = (thread_id: string): Promise<{ messages: HistoryMessage[] }> => _post("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
+export const getHistory = (
+  thread_id: string,
+): Promise<{ messages: HistoryMessage[] }> =>
+  _post("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
 
 // ============================================================================
 // SSE parser interno
 // ============================================================================
 
-async function* _readSSEStream(body: ReadableStream<Uint8Array>): AsyncGenerator<StreamEvent> {
+async function* _readSSEStream(
+  body: ReadableStream<Uint8Array>,
+): AsyncGenerator<StreamEvent> {
   const decoder = new TextDecoder();
   const reader = body.getReader();
   let buffer = "";

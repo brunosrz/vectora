@@ -13,7 +13,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { listThreads, getThread as fetchThread, deleteThread as deleteThreadApi, updateThread as updateThreadApi, type Thread as VectoraThread } from "../../api/vectora-client";
+import {
+  listThreads,
+  getThread as fetchThread,
+  deleteThread as deleteThreadApi,
+  updateThread as updateThreadApi,
+  type Thread as VectoraThread,
+} from "../../api/vectora-client";
 import { logger } from "../../utils/logger";
 import { THREAD_FETCH_LIMIT } from "../../constants/features";
 
@@ -109,7 +115,10 @@ export function useThreads(userId: string | undefined) {
   // Update metadata (otimista, sem persistência extra — título fica local)
   // --------------------------------------------------------------------------
 
-  const updateThreadMetadata = async (threadId: string, metadata: Partial<ThreadMetadata>): Promise<void> => {
+  const updateThreadMetadata = async (
+    threadId: string,
+    metadata: Partial<ThreadMetadata>,
+  ): Promise<void> => {
     // Update otimista imediato
     setThreads((prev) =>
       prev.map((t) =>
@@ -147,7 +156,10 @@ export function useThreads(userId: string | undefined) {
   // Delete
   // --------------------------------------------------------------------------
 
-  const deleteThread = async (id: string, onDeleteCurrent?: () => void): Promise<void> => {
+  const deleteThread = async (
+    id: string,
+    onDeleteCurrent?: () => void,
+  ): Promise<void> => {
     // Update otimista
     setThreads((prev) => prev.filter((t) => t.thread_id !== id));
 

@@ -712,8 +712,9 @@ async def get_tools_schema() -> str:
     for t in ALL_TOOLS:
         schema: dict = {}
         try:
-            if hasattr(t, "args_schema") and t.args_schema is not None:
-                schema = t.args_schema.model_json_schema()
+            args_schema = getattr(t, "args_schema", None)
+            if args_schema is not None and hasattr(args_schema, "model_json_schema"):
+                schema = args_schema.model_json_schema()
         except Exception:
             pass
         tools_data.append(
@@ -952,11 +953,11 @@ def _run_sse_with_heartbeat(mcp_instance: Any, host: str, port: int) -> None:
                 )
 
         # Substituir em sse_starlette.sse e em mcp.server.sse (já importado)
-        _sse_mod.EventSourceResponse = _ESRWithHeartbeat  # type: ignore[assignment]
+        _sse_mod.EventSourceResponse = _ESRWithHeartbeat  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
         with contextlib.suppress(Exception):
             import mcp.server.sse as _mcp_sse  # type: ignore[import-untyped]
 
-            _mcp_sse.EventSourceResponse = _ESRWithHeartbeat  # type: ignore[assignment]
+            _mcp_sse.EventSourceResponse = _ESRWithHeartbeat  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
         logger.info("SSE heartbeat enabled: ping every %ds", _SSE_HEARTBEAT_INTERVAL)
     except ImportError:
@@ -976,8 +977,11 @@ def _run_sse_with_heartbeat(mcp_instance: Any, host: str, port: int) -> None:
             for t in ALL_TOOLS:
                 schema: dict = {}
                 try:
-                    if hasattr(t, "args_schema") and t.args_schema is not None:
-                        schema = t.args_schema.model_json_schema()
+                    args_schema = getattr(t, "args_schema", None)
+                    if args_schema is not None and hasattr(
+                        args_schema, "model_json_schema"
+                    ):
+                        schema = args_schema.model_json_schema()
                 except Exception:
                     pass
                 tools_data.append(

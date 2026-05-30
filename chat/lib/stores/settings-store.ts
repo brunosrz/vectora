@@ -17,6 +17,32 @@ import { persist, createJSONStorage } from "zustand/middleware";
 export type Verbosity = "concise" | "normal" | "detailed";
 export type Theme = "light" | "dark" | "system";
 export type Lang = "en" | "es" | "pt";
+/** Modos de permissão (R2) — espelham o permission_mode do backend. */
+export type PermissionMode =
+  | "ask"
+  | "accept_edits"
+  | "plan"
+  | "auto"
+  | "bypass";
+/** Nível de esforço de raciocínio do modelo (R4). */
+export type ReasoningEffort = "low" | "medium" | "high" | "max";
+
+/** Modos de permissão em ordem de exibição no seletor (R2). */
+export const PERMISSION_MODES: PermissionMode[] = [
+  "ask",
+  "accept_edits",
+  "plan",
+  "auto",
+  "bypass",
+];
+
+/** Níveis de esforço em ordem de exibição (R4). */
+export const REASONING_EFFORTS: ReasoningEffort[] = [
+  "low",
+  "medium",
+  "high",
+  "max",
+];
 
 /** Idiomas suportados — ordem de exibição no seletor */
 export const SUPPORTED_LANGS: { value: Lang; label: string }[] = [
@@ -53,6 +79,12 @@ export interface SettingsState {
   customSystemPrompt: string;
   /** Idioma da interface */
   language: Lang;
+  /** Modo de permissão para ações destrutivas (R2) */
+  permissionMode: PermissionMode;
+  /** Esforço de raciocínio do modelo (R4) */
+  reasoningEffort: ReasoningEffort;
+  /** Modo rápido — desliga reasoning/thinking para latência mínima (R4) */
+  fastMode: boolean;
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
@@ -62,6 +94,9 @@ export interface SettingsState {
   setHistoryLimit: (v: number) => void;
   setCustomSystemPrompt: (v: string) => void;
   setLanguage: (v: Lang) => void;
+  setPermissionMode: (v: PermissionMode) => void;
+  setReasoningEffort: (v: ReasoningEffort) => void;
+  setFastMode: (v: boolean) => void;
   resetSettings: () => void;
 }
 
@@ -77,6 +112,9 @@ const DEFAULTS = {
   historyLimit: 50,
   customSystemPrompt: "",
   language: "en" as Lang, // Sobrescrito pelo detectLanguage() no create()
+  permissionMode: "ask" as PermissionMode,
+  reasoningEffort: "medium" as ReasoningEffort,
+  fastMode: false,
 };
 
 // ---------------------------------------------------------------------------
@@ -110,6 +148,9 @@ export const useSettingsStore = create<SettingsState>()(
       setHistoryLimit: (v) => set({ historyLimit: v }),
       setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
       setLanguage: (v) => set({ language: v }),
+      setPermissionMode: (v) => set({ permissionMode: v }),
+      setReasoningEffort: (v) => set({ reasoningEffort: v }),
+      setFastMode: (v) => set({ fastMode: v }),
       resetSettings: () => set({ ...DEFAULTS, language: detectLanguage() }),
     }),
     {
@@ -131,6 +172,9 @@ export const useSettingsStore = create<SettingsState>()(
         historyLimit: state.historyLimit,
         customSystemPrompt: state.customSystemPrompt,
         language: state.language,
+        permissionMode: state.permissionMode,
+        reasoningEffort: state.reasoningEffort,
+        fastMode: state.fastMode,
       }),
     },
   ),
