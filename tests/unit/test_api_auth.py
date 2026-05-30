@@ -229,6 +229,92 @@ class TestMeEndpoint:
 
 
 # ---------------------------------------------------------------------------
+# PATCH /auth/me — atualizar perfil (campo name)
+# ---------------------------------------------------------------------------
+
+
+class TestUpdateMeEndpoint:
+    def test_patch_name_updates_and_returns_new_value(self, client, root_tokens):
+        access, _, _ = root_tokens
+        r = client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {access}"},
+            json={"name": "Bruno Soares"},
+        )
+        assert r.status_code == 200
+        assert r.json()["name"] == "Bruno Soares"
+
+    def test_patch_name_persists_visible_in_get_me(self, client, root_tokens):
+        """Após PATCH, GET /me devolve o name novo (não cache stale)."""
+        access, _, _ = root_tokens
+        client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {access}"},
+            json={"name": "Persistente"},
+        )
+        r = client.get("/auth/me", headers={"Authorization": f"Bearer {access}"})
+        assert r.status_code == 200
+        assert r.json()["name"] == "Persistente"
+
+    def test_patch_name_accepts_utf8(self, client, root_tokens):
+        """UTF-8 livre — acentos, apóstrofo, espaços."""
+        access, _, _ = root_tokens
+        r = client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {access}"},
+            json={"name": "João D'Ávila"},
+        )
+        assert r.status_code == 200
+        assert r.json()["name"] == "João D'Ávila"
+
+    def test_patch_name_sanitizes_whitespace(self, client, root_tokens):
+        """Trim e collapse de espaços internos via service layer."""
+        access, _, _ = root_tokens
+        r = client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {access}"},
+            json={"name": "   Bruno   de    Souza   "},
+        )
+        assert r.status_code == 200
+        assert r.json()["name"] == "Bruno de Souza"
+
+    def test_patch_name_caps_at_100(self, client, root_tokens):
+        access, _, _ = root_tokens
+        r = client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {access}"},
+            json={"name": "B" * 500},
+        )
+        assert r.status_code == 200
+        assert len(r.json()["name"]) == 100
+
+    def test_patch_empty_body_does_nothing(self, client, root_tokens):
+        """Body sem 'name' (None) — endpoint não mexe e devolve user atual."""
+        access, _, _ = root_tokens
+        # Garante um estado conhecido
+        client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {access}"},
+            json={"name": "Original"},
+        )
+        r = client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {access}"},
+            json={},
+        )
+        assert r.status_code == 200
+        assert r.json()["name"] == "Original"
+
+    def test_patch_without_auth_returns_401(self, app_and_db):
+        from fastapi.testclient import TestClient
+
+        app, _ = app_and_db
+        fresh = TestClient(app, raise_server_exceptions=False)
+        r = fresh.patch("/auth/me", json={"name": "Anônimo"})
+        assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
 # usage (R5)
 # ---------------------------------------------------------------------------
 
