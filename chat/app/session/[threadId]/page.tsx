@@ -425,7 +425,7 @@ function SessionContent() {
           >
             <Panel
               id="vectora-chat-pane"
-              defaultSize={showWorkbench ? 60 : 100}
+              defaultSize={showWorkbench ? 100 - workbenchSplitSize : 100}
               minSize={30}
             >
               <div className="h-full flex flex-col">
@@ -455,22 +455,27 @@ function SessionContent() {
                 />
               </div>
             </Panel>
-            {showWorkbench && (
-              <>
-                <PanelResizeHandle
-                  id="vectora-split-handle"
-                  className="w-1 bg-border/40 hover:bg-border transition-colors"
-                />
-                <Panel
-                  id="vectora-workbench-pane"
-                  defaultSize={workbenchSplitSize}
-                  minSize={20}
-                  onResize={(size) => setSplitSize(Number(size))}
-                >
-                  <WorkbenchPanel threadId={threadId} />
-                </Panel>
-              </>
-            )}
+            <PanelResizeHandle
+              id="vectora-split-handle"
+              className={
+                showWorkbench
+                  ? "w-1 bg-border/40 hover:bg-border transition-colors"
+                  : "w-0 overflow-hidden"
+              }
+            />
+            <Panel
+              id="vectora-workbench-pane"
+              collapsible
+              collapsedSize={0}
+              defaultSize={showWorkbench ? workbenchSplitSize : 0}
+              minSize={showWorkbench ? 20 : 0}
+              onResize={(size) => {
+                const n = Number(size);
+                if (n > 0) setSplitSize(n);
+              }}
+            >
+              {showWorkbench && <WorkbenchPanel threadId={threadId} />}
+            </Panel>
           </PanelGroup>
         </div>
       </div>
