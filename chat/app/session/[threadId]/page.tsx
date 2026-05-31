@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -24,12 +24,7 @@ import {
 } from "@/lib/config/deployment-config";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { markAsNew, isNew } from "@/lib/stores/new-thread-registry";
-import {
-  Group as PanelGroup,
-  Panel,
-  Separator as PanelResizeHandle,
-  type PanelImperativeHandle,
-} from "react-resizable-panels";
+import { HorizontalSplit } from "@/components/layout/horizontal-split";
 import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
@@ -309,28 +304,6 @@ function SessionContent() {
   const workbenchSplitSize = useWorkbenchStore((s) => s.splitSize);
   const setSplitSize = useWorkbenchStore((s) => s.setSplitSize);
 
-  // PanelGroup árvore estável (corrige `bt(...) is undefined: Symbol.iterator`):
-  // - mesmos 3 filhos sempre montados (Panel + Separator + Panel)
-  // - props NUMÉRICAS estáveis em todo render (defaultSize/minSize/collapsedSize)
-  // - mudanças de visibilidade são aplicadas por API imperativa
-  //   (panelRef.collapse()/.expand()) ou pelo `disabled` do Separator
-  //
-  // Trade-off conhecido: no mount o workbench renderiza brevemente em 40%
-  // antes do effect colapsar — flash de < 1 frame, aceitável.
-  const workbenchPanelRef = useRef<PanelImperativeHandle | null>(null);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    const panel = workbenchPanelRef.current;
-    if (!panel) return;
-    const collapsed = panel.isCollapsed();
-    if (showWorkbench && collapsed) {
-      panel.expand();
-    } else if (!showWorkbench && !collapsed) {
-      panel.collapse();
-    }
-  }, [hydrated, showWorkbench]);
-
   useKeyboardShortcuts([
     {
       shortcut: {
@@ -457,16 +430,11 @@ function SessionContent() {
           isLoading={threadsLoading}
         />
         <div className="flex-1 overflow-hidden relative">
-          <PanelGroup
-            id="vectora-session-split"
-            orientation="horizontal"
-            className="h-full"
-          >
-            <Panel
-              id="vectora-chat-pane"
-              defaultSize={100 - workbenchSplitSize}
-              minSize={30}
-            >
+          <HorizontalSplit
+            showRight={showWorkbench}
+            rightSize={workbenchSplitSize}
+            onResize={setSplitSize}
+            left={
               <div className="h-full flex flex-col">
                 <Header
                   showToolCalls={showToolCalls}
@@ -498,28 +466,11 @@ function SessionContent() {
                   onInitialMessageSent={() => setInitialPrompt(null)}
                 />
               </div>
-            </Panel>
-            <PanelResizeHandle
-              id="vectora-split-handle"
-              disabled={!showWorkbench}
-              className="w-1 bg-border/40 hover:bg-border transition-colors data-[disabled=true]:w-0 data-[disabled=true]:overflow-hidden data-[disabled=true]:pointer-events-none"
-              data-disabled={!showWorkbench}
-            />
-            <Panel
-              id="vectora-workbench-pane"
-              panelRef={workbenchPanelRef}
-              collapsible
-              collapsedSize={0}
-              defaultSize={workbenchSplitSize}
-              minSize={20}
-              onResize={(size) => {
-                const n = Number(size);
-                if (n > 0) setSplitSize(n);
-              }}
-            >
-              {showWorkbench ? <WorkbenchPanel threadId={threadId} /> : null}
-            </Panel>
-          </PanelGroup>
+            }
+            right={
+              showWorkbench ? <WorkbenchPanel threadId={threadId} /> : null
+            }
+          />
         </div>
       </div>
     </>
