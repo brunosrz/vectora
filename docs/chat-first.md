@@ -23,34 +23,34 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 
 ## Sumário (TOC)
 
-| Bloco | Tema                                                                                      | Status       |
-| ----- | ----------------------------------------------------------------------------------------- | ------------ |
-| **A** | Chat Foundations                                                                          | ✅ Concluído |
-| **B** | Polish, Bugfixes & Infra                                                                  | ✅ Concluído |
-| **C** | Authentication & RBAC                                                                     | ✅ Concluído |
-| **D** | Reasoning Reveal & Thinking UX                                                            | ✅ Concluído |
-| **E** | HITL em Chat                                                                              | ✅ Concluído |
-| **F** | File Handling Completo                                                                    | ✅ Concluído |
-| **G** | Workspaces + Git Integration                                                              | ✅ Concluído |
-| **H** | Slash Commands                                                                            | ✅ Concluído |
-| **I** | Conversation Features (search, export, share)                                             | ✅ Concluído |
-| **J** | Mobile & PWA                                                                              | ✅ Concluído |
-| **K** | Live Metrics Dashboard                                                                    | ✅ Concluído |
-| **L** | Settings Architecture                                                                     | ✅ Concluído |
-| **M** | Performance, UX Polish & i18n/L10n                                                        | ✅ Concluído |
-| **N** | Per-User Memory                                                                           | ✅ Concluído |
-| **O** | Workspace Integrations (OAuth + API keys)                                                 | ✅ Concluído |
-| **P** | Root Admin Panel (RBAC/ABAC global)                                                       | ✅ Concluído |
-| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites      | ✅ Concluído |
-| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish | ✅ Concluído |
-| **S** | Connectors & Plugins Manager (cont. de O)                                                 | ✅ Concluído |
-| **T** | Embedded Terminal — PTY persistente cross-platform + painel split com xterm.js            | ✅ Concluído |
-| **U** | Deep Agents — refactor do harness para `create_deep_agent` (sem features novas)           | ⏳ Planejado |
-| **V** | PostgreSQL + Qdrant — modo "completo" opt-in (lite=sqlite+lancedb continua default)       | ⏳ Planejado |
-| **W** | Redis — cache distribuído (LLM bind, MCP, rate limit, embeddings) no modo completo        | ⏳ Planejado |
-| **X** | Deep Agents 1 — skills (langchain-skills), AGENTS.md memory, prompt caching, compressão   | ⏳ Planejado |
-| **Y** | Deep Agents 2 — sandboxes, interpreters, async subagents, ACP, remote backends            | ⏳ Planejado |
-| **Z** | REST API pública v1 — OAuth2 client credentials + OpenAI-compat + escopo completo         | ⏳ Planejado |
+| Bloco | Tema                                                                                                                                       | Status                                          |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| **A** | Chat Foundations                                                                                                                           | ✅ Concluído                                    |
+| **B** | Polish, Bugfixes & Infra                                                                                                                   | ✅ Concluído                                    |
+| **C** | Authentication & RBAC                                                                                                                      | ✅ Concluído                                    |
+| **D** | Reasoning Reveal & Thinking UX                                                                                                             | ✅ Concluído                                    |
+| **E** | HITL em Chat                                                                                                                               | ✅ Concluído                                    |
+| **F** | File Handling Completo                                                                                                                     | ✅ Concluído                                    |
+| **G** | Workspaces + Git Integration                                                                                                               | ✅ Concluído                                    |
+| **H** | Slash Commands                                                                                                                             | ✅ Concluído                                    |
+| **I** | Conversation Features (search, export, share)                                                                                              | ✅ Concluído                                    |
+| **J** | Mobile & PWA                                                                                                                               | ✅ Concluído                                    |
+| **K** | Live Metrics Dashboard                                                                                                                     | ✅ Concluído                                    |
+| **L** | Settings Architecture                                                                                                                      | ✅ Concluído                                    |
+| **M** | Performance, UX Polish & i18n/L10n                                                                                                         | ✅ Concluído                                    |
+| **N** | Per-User Memory                                                                                                                            | ✅ Concluído                                    |
+| **O** | Workspace Integrations (OAuth + API keys)                                                                                                  | ✅ Concluído                                    |
+| **P** | Root Admin Panel (RBAC/ABAC global)                                                                                                        | ✅ Concluído                                    |
+| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites                                                       | ✅ Concluído                                    |
+| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish                                                  | ✅ Concluído                                    |
+| **S** | Connectors & Plugins Manager (cont. de O)                                                                                                  | ✅ Concluído                                    |
+| **T** | Embedded Terminal — PTY persistente cross-platform + painel split com xterm.js                                                             | ✅ T1–T8 / ⏳ T9–T11 (Workbench + persistência) |
+| **U** | Deep Agents — refactor para `create_deep_agent` + **CLI rich → textual (U7)**                                                              | ⏳ Planejado                                    |
+| **V** | PostgreSQL + Qdrant + **langchain-postgres/qdrant/genai/openai/anthropic + cohere completo (Chat/Embeddings/Rerank/ReActParser) (V10-11)** | ⏳ Planejado                                    |
+| **W** | Redis cache distribuído + **langchain-redis (RedisCache/SemanticCache/History) (W9)**                                                      | ⏳ Planejado                                    |
+| **X** | Deep Agents 1 — skills, AGENTS.md, prompt cache, compressão + **6 web tools full (X6: search/fetch/crawl/map/research/get_research)**      | ⏳ Planejado                                    |
+| **Y** | Deep Agents 2 — **sandbox + git worktree (Y1)**, interpreters, async, **ACP (Y4)**, remote backends, **dcode TUI opcional (Y6)**           | ⏳ Planejado                                    |
+| **Z** | REST API v1 — OAuth2 client credentials + OpenAI-compat + **endpoint ACP público (Z8)**                                                    | ⏳ Planejado                                    |
 
 ---
 
@@ -1291,7 +1291,9 @@ O agente usa `user.env_overrides` (C10) que já é mergeado no `effective_env`.
 | Anthropic   | `ANTHROPIC_API_KEY`   | LLM (Claude 4.x)                      |
 | Cohere      | `COHERE_API_KEY`      | Reranker + LLM (Command)              |
 | Tavily      | `TAVILY_API_KEY`      | Web search tool                       |
+| Groq        | `GROQ_API_KEY`        | LLM ultrafast (Llama, Mixtral)        |
 | HuggingFace | `HUGGINGFACE_API_KEY` | Modelos open source via Inference API |
+| Perplexity  | `PERPLEXITY_API_KEY`  | Busca com citações                    |
 
 **UI** (aba Integrações no Settings Dialog):
 
@@ -2208,6 +2210,378 @@ ptyprocess = { version = ">=0.7", markers = "sys_platform != 'win32'" }
 
 ---
 
+## BLOCO T (cont.) — Workbench lateral multi-aba (Terminal · Arquivos · Diff · Plano)
+
+> **Contexto.** T1–T4 entregaram um painel lateral com **apenas terminais**
+> (tabs internas para múltiplos PTYs). A referência visual passou a ser o
+> painel lateral do **Claude Code desktop** (prints fornecidas pelo usuário):
+> um _workbench_ com múltiplas abas — Terminal, Arquivos, Diff, Plano —
+> abertas no mesmo lado direito, com botão único no header (não flutuante)
+> e seletor de painel. Esta continuação generaliza o `TerminalPanel` atual
+> num `WorkbenchPanel` poliédrico, sem perder nada do T1–T4.
+>
+> **Decisões fixadas (referência Claude Code + prints):**
+>
+> 1. **Um único painel lateral**, abas selecionáveis no topo. Substitui o
+>    botão flutuante atual por um botão único no header (`PanelRight`) que
+>    abre o painel, e o seletor de aba fica dentro dele.
+> 2. **Aba ativa persistida por sessão** (mesmo padrão dos terminais hoje
+>    por `threadId`).
+> 3. **Arquivos e Diff são read-only no MVP** — escrita continua pelo
+>    chat/agente (`file_write`, `file_edit` via HITL do R2).
+> 4. **Plano = artifacts** (`vectora/types/documents.py::ArtifactMetadata`,
+>    já persistidos em `~/.vectora/artifacts/<session_id>/<slug>.md`).
+>    Reuso direto — sem novo conceito.
+> 5. **Workspace cardinal**: as três novas abas operam **sempre no workspace
+>    ativo da sessão** (workspaces-store) — mesmo escopo dos guard rails Q4.
+
+### T5 — Workbench shell + botão único no header
+
+- **Renomeia** `chat/lib/stores/terminals-store.ts` → `workbench-store.ts`,
+  mantendo a API atual de terminais (referência estável `EMPTY_LIST` do fix
+  recente preservada) e estendendo com:
+  - `activeTabByThread: Record<string, WorkbenchTab>` (`"terminal" | "files"
+| "diff" | "plan"`), default `"terminal"`;
+  - `setActiveTab(threadId, tab)`.
+- **Novo** `chat/components/workbench/workbench-panel.tsx`: container com
+  uma barra de abas no topo (Terminal · Arquivos · Diff · Plano), lê o
+  estado do store, despacha para o sub-painel correspondente.
+- **Botão único no header** (`chat/components/layout/header.tsx`):
+  `PanelRight` à direita, abre/fecha o workbench. **Remove** o botão
+  flutuante atual em `chat/app/session/[threadId]/page.tsx` (linhas
+  408–416). Atalho ⌃⇧E para ciclar abas, mantém ⌃` para Terminal.
+- **Mobile**: <768px o workbench vira `Sheet` overlay (consistente com J).
+
+### T6 — Aba **Arquivos** (file tree do workspace ativo)
+
+- **Backend** `vectora/api/handlers/workspaces.py` — novo endpoint
+  `GET /workspaces/{id}/tree?path=&depth=1` reusando os guard rails de
+  `vectora/services/security.py::resolve_within_workspace` (Q4). Retorna
+  entradas `{name, path, kind: "dir"|"file", size?, is_git_ignored?}`.
+  Sem listar `.git/`, `node_modules/`, `.venv/` por default — reusa
+  `vectora/services/ignore_validator.py`.
+- **Visualização de arquivo**: `GET /workspaces/{id}/file?path=` (texto
+  truncado a N kB, binários retornam `kind: "binary"` para mostrar
+  metadata só).
+- **Frontend** `chat/components/workbench/tabs/files-tab.tsx`:
+  filtro/busca no topo (placeholder das prints: "Filtrar arquivos…"),
+  árvore lazy-expanded, click abre o arquivo num viewer inline read-only
+  (reusa `CodeBlockViewer` do `tool-call-renderer.tsx` por extensão).
+- **Hidrata** via SWR-like: cache em memória por `(workspace_id, path)`;
+  refetch ao trocar de workspace ou expandir nó novo.
+
+### T7 — Aba **Diff** (diff do workspace, modelo Claude Code)
+
+- **Backend** `vectora/api/handlers/workspaces.py` —
+  `GET /workspaces/{id}/git/diff?ref=` (default `HEAD` se for repo git).
+  Reusa `vectora/tools/git.py` (`git diff`); retorna lista de
+  `{path, status: "M"|"A"|"D"|"R", additions, deletions, hunks: [...]}`.
+- **Frontend** `chat/components/workbench/tabs/diff-tab.tsx`:
+  cabeçalho com contagem (`+N -M` igual à print 4 — `+132.291 -3.409`),
+  lista de arquivos modificados com expand inline (lazy load do hunk).
+  Reusa `DiffViewer` (`tool-call-renderer.tsx:50`).
+- **Workspace não-git**: estado vazio explicativo ("Esta pasta não é um
+  repositório git").
+
+### T8 — Aba **Plano** (artifacts do `session_id`)
+
+- **Backend** `vectora/api/handlers/artifacts.py` (novo, auth):
+  `GET /artifacts/?session_id=` lê `~/.vectora/artifacts/<session_id>/*.md`,
+  retorna `ArtifactMetadata[]` (reuso direto do modelo Pydantic
+  `vectora/types/documents.py:26`). `GET /artifacts/{slug}?session_id=`
+  devolve o markdown bruto.
+- **Frontend** `chat/components/workbench/tabs/plan-tab.tsx`: lista de
+  cards (título, tipo, timestamp), click renderiza markdown completo num
+  pane lateral; segue o padrão de `ArtifactCard` (`tool-call-renderer.tsx:317`).
+- **Eventos novos = invalidate**: quando o agente cria um artifact via
+  `create_artifact` (fs.py:513), o SSE já emite `ToolCallEvent` —
+  o frontend escuta e revalida a aba.
+
+### T9 — Plus-menu de anexos (R3): conectar "Comandos de barra" e "Adicionar pasta…"
+
+- Os menus do plus-menu já apontam para _deep-links_; conectar
+  "Adicionar pasta…" abre direto o trust dialog (Q6) com o WorkbenchPanel
+  no estado correto (aba `files` revalida após o workspace ativo trocar).
+
+### T10 — Quality of life ("subblocos" pedidos)
+
+- **T10.1 — Indicador de status no header do workbench**: chip discreto
+  na barra de abas — terminal ativo (qtd PTYs), arquivos modificados (
+  `+N -M`), plans (qtd artifacts). Cada chip alterna a aba ao clicar.
+- **T10.2 — Pin de arquivo**: usuário pode "pinar" um arquivo na aba
+  Arquivos para manter ele visível ao trocar de pasta (LocalStorage por
+  `(threadId, workspace_id)`).
+- **T10.3 — Stale-while-revalidate em todas as abas**: cache em memória
+  igual ao de threads (B14); trocar de aba volta instantâneo, refetch
+  silencioso.
+- **T10.4 — Empty states acionáveis**: a aba Diff sem changes mostra
+  "tudo limpo" + atalho para `git_log`; aba Plano vazia oferece "Pedir
+  ao Vectora um plano para…" (envia ao chat um prompt template).
+- **T10.5 — Atalhos por aba**: ⌃⇧T (terminal), ⌃⇧F (arquivos),
+  ⌃⇧D (diff), ⌃⇧P (plano). Espelha o que aparece na print 1.
+- **T10.6 — i18n**: chaves `workbench.*` (en/es/pt) cobrindo títulos
+  das abas, empty states, busca, filtros.
+
+### Dependências adicionais (nenhuma)
+
+- Reuso: `gitpython` (G/Q já presente), `react-resizable-panels` (já
+  em uso pelo split), `@xterm/xterm` (T3), `DiffViewer` + `CodeBlockViewer`
+  - `ArtifactCard` (A6), `ignore_validator` (S), `resolve_within_workspace`
+    (Q4).
+
+### Arquivos críticos (Bloco T cont.)
+
+| Sub | Arquivos chat                                                                                                                                                                                                                                                                         | Arquivos vectora (Python)                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| T5  | `chat/lib/stores/workbench-store.ts` (rename + extend de `terminals-store.ts`), `chat/components/workbench/workbench-panel.tsx` (novo), `chat/components/layout/header.tsx` (botão PanelRight), `chat/app/session/[threadId]/page.tsx` (remove botão flutuante, monta WorkbenchPanel) | —                                                                                            |
+| T6  | `chat/components/workbench/tabs/files-tab.tsx` (novo), `chat/server/routes/workspaces.ts` (proxy `/tree`, `/file`)                                                                                                                                                                    | `vectora/api/handlers/workspaces.py` (+ `/tree`, `/file`), reusa `services/security.py` (Q4) |
+| T7  | `chat/components/workbench/tabs/diff-tab.tsx` (novo), `chat/server/routes/workspaces.ts` (proxy `/git/diff`)                                                                                                                                                                          | `vectora/api/handlers/workspaces.py` (+ `/git/diff`), reusa `tools/git.py`                   |
+| T8  | `chat/components/workbench/tabs/plan-tab.tsx` (novo), `chat/server/routes/artifacts.ts` (novo)                                                                                                                                                                                        | `vectora/api/handlers/artifacts.py` (novo), reusa `types/documents.py::ArtifactMetadata`     |
+| T9  | `chat/components/chat/features/plus-menu.tsx` (já existe — só ajustar deep-links)                                                                                                                                                                                                     | —                                                                                            |
+| T10 | `chat/components/workbench/*.tsx` (chips, pin, atalhos), `chat/lib/i18n/strings.csv.ts` (+`workbench.*`)                                                                                                                                                                              | —                                                                                            |
+| T11 | `chat/lib/stores/workbench-store.ts` (extend + persist), `chat/components/workbench/tabs/{files,diff,plan}-tab.tsx` (consomem o store), `chat/lib/hooks/chat/use-stream-handler.ts` (invalidate em ToolCallEvent)                                                                     | —                                                                                            |
+
+### T11 — Persistência e cache do Workbench (Zustand persist + SWR)
+
+> **Diagnóstico (estado atual, dezembro/2026).**
+>
+> O `workbench-store.ts` entregue em T5 guarda **apenas** metadados em
+> memória (`byThread`, `activeByThread`, `panelOpen`, `activeTabByThread`)
+> sem nenhum middleware de persistência. Cada aba mantém o restante do
+> estado em `useState` local (`files-tab.tsx`: `filter`, `openFile`,
+> `loadingFile`, e em cada `DirNode` `[open, entries]`; `diff-tab.tsx`:
+> `data`, `loading`, e em cada `FileRow` `[open, hunks]`; `plan-tab.tsx`:
+> `items`, `openSlug`, `openContent`).
+>
+> Consequências observáveis:
+>
+> 1. **Reload do navegador zera tudo**: aba ativa, painel aberto/fechado,
+>    abas internas de terminal — tudo volta ao default. O usuário recarrega
+>    e tem que reabrir o workbench, escolher a aba, reabrir os terminais.
+> 2. **Troca de aba interna desmonta o componente**: ir Terminal →
+>    Arquivos → Diff colapsa toda a árvore expandida em Files, fecha o
+>    arquivo que estava aberto, fecha os hunks expandidos em Diff,
+>    re-fetcha tudo do zero ao voltar.
+> 3. **Trocar de sessão (`threadId`) descarta o cache** das listas
+>    (`items` em PlanTab, `data` em DiffTab, árvore em FilesTab) — mesmo
+>    voltando para a sessão anterior 1s depois.
+>
+> Já temos dois padrões maduros no repo: `settings-store.ts`
+> (Zustand `persist` + `partialize` + `createJSONStorage`, chave por user)
+> e `threads-store.ts` (cache em memória sobrevivente a remounts, SWR
+> sem persist). Vamos aplicar ambos no workbench, cada um onde faz sentido.
+>
+> **Decisões cardinais (fundamentadas):**
+>
+> 1. **Persistir o "shell" sim, persistir conteúdo dinâmico não.**
+>    Persistir `panelOpen`, `activeTab`, tamanhos do split, pins (T10.2)
+>    e a _lista_ de terminais (metadados; o PTY em si some quando o
+>    servidor reinicia). Não persistir árvore expandida, conteúdo de
+>    arquivo, hunks de diff, markdown de artifact — esses são revalidados
+>    rápido e a verdade vive no backend.
+> 2. **Cache volátil em store para o resto.** Move tudo o que está em
+>    `useState` de Files/Diff/Plan para o `workbench-store` (sem persist).
+>    Mesmo padrão de `threads-store`: sobrevive a remounts, hidrata
+>    instantâneo, revalida em background (SWR).
+> 3. **Invalidação dirigida por SSE.** Quando o stream emite
+>    `ToolCallEvent` de tools que mudam o disco, o handler invalida a
+>    seção certa do cache — sem polling.
+
+#### T11.1 — Persist do shell (`zustand/middleware`)
+
+Adiciona `persist` ao `workbench-store` com `partialize` cobrindo só o
+"chassi":
+
+```ts
+{
+  panelOpen,
+  activeTabByThread,
+  byThread,           // metadados (id, title, workspaceId)
+  activeByThread,
+  splitSize,          // % do painel direito (40 default)
+  pinnedFiles,        // T10.2 — Record<threadId, string[]>
+}
+```
+
+- Chave: `vectora-workbench-{user_id}` (mesmo padrão do settings-store).
+- `storage: createJSONStorage(() => localStorage)`; em SSR retorna noop
+  para evitar hidratação inconsistente (mesmo guarda do settings-store).
+- **PTYs**: o `id` dos terminais persiste; ao reabrir, o `XtermView`
+  reconecta. Se o servidor reiniciou e o `pty_registry` esqueceu o id,
+  o handler WS responde `4404` e o front fecha aquela aba (já existe).
+
+#### T11.2 — Cache de Files no store (volátil)
+
+Move de `files-tab.tsx` para o store:
+
+```ts
+files: {
+  byWorkspace: Record<
+    wsId,
+    {
+      expandedDirs: Set<string>; // paths abertos
+      entriesByDir: Record<path, Entry[]>; // árvore já carregada
+      openPath: string | null; // arquivo aberto no viewer
+      contents: Record<path, FileResponse>; // até N kB cacheados
+      filter: string;
+      fetchedAt: Record<path, number>;
+    }
+  >;
+  (setExpanded(wsId, path, open),
+    setEntries(wsId, path, entries),
+    setOpenFile(wsId, path),
+    setContent(wsId, path, response),
+    setFilter(wsId, filter),
+    invalidate(wsId));
+}
+```
+
+- `DirNode` deixa de ter state local: lê `expandedDirs` e `entriesByDir`
+  do store. Click no chevron alterna no store.
+- Stale-while-revalidate por entrada: ao montar, renderiza o que o store
+  tem (instantâneo); em paralelo, refetch se `fetchedAt[path]` >
+  staleMs (default 30s). Padrão idêntico ao `threads-store`.
+- Trocar de aba ou de sessão **não derruba** a árvore — apenas desmonta
+  o componente, o store sobrevive.
+- LRU implícito: `contents` mantém só os últimos 8 arquivos abertos por
+  workspace (evita inchar memória).
+
+#### T11.3 — Cache de Diff no store (volátil)
+
+Mesma estrutura, escopo workspace:
+
+```ts
+diff: {
+  byWorkspace: Record<
+    wsId,
+    {
+      summary: DiffSummary | null;
+      openFiles: Set<string>; // arquivos com hunks expandidos
+      hunksByFile: Record<path, DiffHunk[]>;
+      fetchedAt: number; // do summary
+      fileFetchedAt: Record<path, number>;
+    }
+  >;
+  (setSummary(wsId, summary),
+    setOpenFile(wsId, path, open),
+    setHunks(wsId, path, hunks),
+    invalidate(wsId));
+}
+```
+
+Mesmo SWR. Voltar à aba Diff renderiza o último resumo instantâneo,
+refetch em background.
+
+#### T11.4 — Cache de Plan no store (volátil)
+
+```ts
+plan: {
+  byThread: Record<
+    threadId,
+    {
+      items: ArtifactItem[];
+      openSlug: string | null;
+      contentsBySlug: Record<slug, string>;
+      fetchedAt: number;
+    }
+  >;
+  (setItems(threadId, items),
+    setOpenSlug(threadId, slug),
+    setContent(threadId, slug, content),
+    invalidate(threadId));
+}
+```
+
+#### T11.5 — Invalidação por SSE (sem polling)
+
+`chat/lib/hooks/chat/use-stream-handler.ts` já trata o evento `tool_call`
+(case linha 393). Adicionar um _side effect_ depois do `setMessages`:
+
+```ts
+switch (event.tool_name) {
+  case "create_artifact":
+    useWorkbenchStore.getState().plan.invalidate(threadId);
+    break;
+  case "file_write":
+  case "file_edit":
+  case "terminal":
+  case "git_commit":
+  case "git_checkout":
+    if (workspaceId) {
+      useWorkbenchStore.getState().files.invalidate(workspaceId);
+      useWorkbenchStore.getState().diff.invalidate(workspaceId);
+    }
+    break;
+}
+```
+
+`workspaceId` vem do `agentConfig.workspace_id` do request. O cache
+invalidado força refetch silencioso na próxima montagem **ou** dispara
+revalidate imediato se a aba estiver visível (igual ao `threads-store`
+com `revalidating`).
+
+#### T11.6 — Stale-while-revalidate padronizado
+
+Hook auxiliar `useWorkbenchSWR(key, fetcher, staleMs)` em
+`chat/lib/hooks/workbench/use-swr.ts` (novo, pequeno: ~30 linhas).
+Encapsula o padrão "lê do store → render imediato → refetch se stale →
+escreve no store". Cada `FilesTab`, `DiffTab`, `PlanTab` deixa de chamar
+`fetch` direto; pede ao hook.
+
+#### Arquivos críticos (T11)
+
+| Sub   | Arquivos chat                                                                                                                   |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------- |
+| T11.1 | `chat/lib/stores/workbench-store.ts` (+`persist`+`partialize`, +`splitSize`, +`pinnedFiles`)                                    |
+| T11.2 | `chat/lib/stores/workbench-store.ts` (+slice `files`), `chat/components/workbench/tabs/files-tab.tsx` (refactor: state → store) |
+| T11.3 | `chat/lib/stores/workbench-store.ts` (+slice `diff`), `chat/components/workbench/tabs/diff-tab.tsx` (refactor)                  |
+| T11.4 | `chat/lib/stores/workbench-store.ts` (+slice `plan`), `chat/components/workbench/tabs/plan-tab.tsx` (refactor)                  |
+| T11.5 | `chat/lib/hooks/chat/use-stream-handler.ts` (invalidate em `tool_call`)                                                         |
+| T11.6 | `chat/lib/hooks/workbench/use-swr.ts` (novo)                                                                                    |
+
+#### Verificação (T11)
+
+- Reload do navegador → painel reabre na mesma aba; terminais reabrem
+  (reconnect WS); split mantém tamanho; pinned files reaparecem.
+- Trocar Terminal → Arquivos → Diff → voltar a Arquivos: árvore segue
+  expandida, arquivo continua aberto no viewer, filtro preservado —
+  **sem fetch** se ainda dentro da janela stale (30s).
+- Pedir ao agente "edita README.md" → após `tool_call=file_write`, a
+  aba Diff atualiza sozinha (badge `+N −M` muda) e a aba Files
+  re-fetcha o conteúdo do README ao reabri-lo, sem ação manual.
+- Pedir "crie um plano para X" → `tool_call=create_artifact` invalida
+  Plan; aba mostra o card novo sem F5.
+- Trocar de sessão (`threadId`) e voltar: Plan reabre com o último
+  artifact aberto; árvore da pasta retém o estado expandido daquela
+  sessão (sessão e workspace são chaves separadas).
+- DevTools → Application → localStorage: a chave
+  `vectora-workbench-{user_id}` contém só o "shell" (não vaza conteúdo
+  de arquivos).
+
+### Verificação (Bloco T cont.)
+
+- Header mostra **um** botão PanelRight; o botão flutuante anterior
+  some; clicar abre o WorkbenchPanel com a aba persistida da sessão.
+- Trocar de aba (Terminal → Arquivos → Diff → Plano) com ⌃⇧T/F/D/P
+  funciona; persistência da aba ativa sobrevive a reload.
+- Aba **Arquivos**: lista a raiz do workspace ativo; click em pasta
+  expande; click em arquivo abre viewer read-only com syntax highlight;
+  tentativa de ler `..` ou path absoluto externo retorna 403 (Q4).
+- Aba **Diff**: workspace git → mostra `+N -M` igual ao header da print
+  4 + lista de arquivos com hunks expansíveis; workspace não-git mostra
+  estado vazio explicativo.
+- Aba **Plano**: pedir ao agente "crie um plano de implementação para X"
+  → `create_artifact` (`fs.py:513`) grava em `~/.vectora/artifacts/<sid>/`
+  → aba revalida automaticamente e mostra o card; click abre o markdown.
+- Trocar de sessão → workbench acompanha (mesmo padrão dos PTYs por
+  `threadId`); workspace ativo da nova sessão substitui o conteúdo.
+- Workspace não-confiável (Q2) → Terminal continua bloqueado; Arquivos
+  funciona em **read-only** (consistente com a regra "leitura é ok").
+- Mobile (<768px) → workbench abre como sheet overlay, com swipe-down
+  para fechar.
+
+---
+
 ## Modos de operação: Lite vs Completo
 
 > **Princípio.** Lite = zero infra externa (SQLite + LanceDB + cache em
@@ -2380,22 +2754,82 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
   `permission_mode=ask` → 1 evento HITL chega ao chat → approve → execução.
   Em `plan` → recusa imediata sem HITL.
 
+### U7 — Migração do CLI interativo (`vectora chat`) de `rich` → `textual`
+
+> **Contexto.** O `vectora chat` (CLI interativo no terminal) hoje é uma
+> orquestração de **~3 000 linhas** entre `vectora/ui/chat.py` (1 126 l),
+> `vectora/ui/main.py` (658 l) e `vectora/ui/setup_wizard.py` (410 l)
+> usando `rich` (Console/Panel/Live/Markdown/Layout) + `prompt_toolkit`
+> para o input. O DeepAgent traz nativamente um TUI baseado em `textual`
+> (`dcode`); aproveitando o redesign do harness em U1–U6, migramos o
+> `vectora chat` para um app `textual` próprio, alinhado ao mesmo stack
+> que a comunidade do DeepAgent já usa.
+
+#### Decisões fixadas
+
+1. **Migrar só o interativo.** `vectora traces`, `vectora sessions` e
+   `vectora config` produzem output **one-shot** — continuam com `rich`
+   (tabelas + panels). Textual seria overkill e a manutenção é trivial.
+2. **`dcode` não substitui o `vectora chat`.** `dcode` é um TUI
+   alternativo do DeepAgent (escopo em Y6). U7 entrega o **nosso** chat
+   com a mesma UX que o usuário já tem hoje, mas em `textual`.
+3. **Render schema-driven.** Os mesmos `render_hint`s do chat web
+   (`diff`, `code_block`, `table`, `terminal_block`, `artifact_card`)
+   ganham widgets `textual` correspondentes em `vectora/ui/textual/widgets/`.
+
+#### Trabalho
+
+- **`vectora/ui/textual/app.py`** (novo): `VectoraChatApp(App)` com layout
+  split (mensagens à esquerda, painel lateral à direita igual ao
+  Workbench do web — Terminal · Files · Diff · Plan), screens para
+  configurações/RAG/workspaces, key bindings espelhando os atalhos web
+  (⌃` terminal, ⌃⇧F arquivos, etc.).
+- **`vectora/ui/textual/streaming.py`**: handler de `astream_events`
+  v2 que escreve nos widgets via `call_from_thread` (mesmo padrão do
+  `dcode`); compartilha o adapter SSE→evento já existente
+  (`vectora/api/adapters.py`) — não duplica lógica.
+- **`vectora/ui/textual/widgets/`**: um widget por `render_hint`
+  (DiffWidget, CodeBlockWidget, TableWidget, TerminalBlockWidget,
+  ArtifactCardWidget, ThinkingWidget) — reuso direto dos tipos em
+  `chat/lib/types/render.ts` (espelhamento).
+- **Input**: `textual.widgets.Input` com history + autocomplete
+  (substitui `prompt_toolkit.PromptSession`). Slash commands do Bloco
+  H ganham `Suggester` nativo do textual.
+- **HITL**: modal `ModalScreen` para aprovar/editar/rejeitar tool calls
+  (mesmo schema do `HITLEvent`).
+- **Comandos in-chat** (`vectora/ui/commands/{debug,help,model,rag,
+session,traces,workspaces}.py`) são portados para "actions" do app
+  textual; output flui pelos widgets em vez de `Console.print`.
+- **Setup wizard** (`vectora/ui/setup_wizard.py`) vira `Screen` do app
+  ao detectar `~/.vectora/config.toml` ausente.
+- **`vectora/main.py`**: subcomando `chat` instancia `VectoraChatApp`
+  em vez do loop atual. `--legacy` mantém o caminho `rich` por 1
+  versão (rollback rápido se algum usuário quebrar).
+
+#### Não-objetivo
+
+- Reescrever os comandos one-shot (`traces`, `sessions`, `config`).
+- Substituir `prompt_toolkit` em scripts auxiliares fora de
+  `vectora/ui/` (CLI de auth continua simples).
+
 ### Dependências
 
 ```toml
-deepagents = ">=0.1"   # pyproject.toml; ainda pré-1.0, fixar versão exata
+deepagents = ">=0.6.3"     # já presente em pyproject; fixar exato
+textual    = ">=0.83"      # NOVO — TUI do vectora chat (U7)
 ```
 
 ### Arquivos críticos (Bloco U)
 
-| Sub | Arquivos vectora (Python)                                                                                                                |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| U1  | `vectora/services/agent_factory.py` (novo), `vectora/api/handlers/chat.py` (chama o factory em vez de `_get_graph`)                      |
-| U2  | `vectora/agents/coder.py`, `agents/search.py`, `agents/_identity.py` (prompts viram constantes), `nodes/rag_subgraph.py` (vira subagent) |
-| U3  | `vectora/api/adapters.py`, `vectora/api/node_labels.py`                                                                                  |
-| U4  | `vectora/services/agent_factory.py` (mapping permission_mode → interrupt_on), remoção de `nodes/hitl.py`                                 |
-| U5  | deletar `vectora/graph.py`, `vectora/nodes/hitl.py`, partes de `agents/{orchestrator,coder,search}.py`                                   |
-| U6  | `tests/unit/test_agent_factory.py` (novo); migrar `test_nodes_hitl.py`; manter `test_api_chat_config.py`                                 |
+| Sub | Arquivos vectora (Python)                                                                                                                                                                                                                                                                          |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U1  | `vectora/services/agent_factory.py` (novo), `vectora/api/handlers/chat.py` (chama o factory em vez de `_get_graph`)                                                                                                                                                                                |
+| U2  | `vectora/agents/coder.py`, `agents/search.py`, `agents/_identity.py` (prompts viram constantes), `nodes/rag_subgraph.py` (vira subagent)                                                                                                                                                           |
+| U3  | `vectora/api/adapters.py`, `vectora/api/node_labels.py`                                                                                                                                                                                                                                            |
+| U4  | `vectora/services/agent_factory.py` (mapping permission_mode → interrupt_on), remoção de `nodes/hitl.py`                                                                                                                                                                                           |
+| U5  | deletar `vectora/graph.py`, `vectora/nodes/hitl.py`, partes de `agents/{orchestrator,coder,search}.py`                                                                                                                                                                                             |
+| U6  | `tests/unit/test_agent_factory.py` (novo); migrar `test_nodes_hitl.py`; manter `test_api_chat_config.py`                                                                                                                                                                                           |
+| U7  | `vectora/ui/textual/app.py` (novo), `vectora/ui/textual/streaming.py` (novo), `vectora/ui/textual/widgets/*.py` (novos), `vectora/ui/commands/*.py` (portar para actions), `vectora/ui/setup_wizard.py` (vira Screen), `vectora/main.py` (subcomando `chat` instancia App; `--legacy` mantém rich) |
 
 ### Verificação E2E
 
@@ -2498,19 +2932,76 @@ deepagents = ">=0.1"   # pyproject.toml; ainda pré-1.0, fixar versão exata
 - Smoke test: `vectora migrate` em sentido lite→complete preserva os
   registros.
 
+### V10 — Integrações LangChain de 1ª parte (Postgres / Qdrant nativas)
+
+> **Princípio.** Em vez de reimplementar checkpointer, vector store e
+> chat history sobre `asyncpg`/`qdrant-client` cru, usamos as integrações
+> oficiais do LangChain. Menos código nosso, melhor cobertura de borda
+> (transações, schema migrations, async session pool).
+
+- **`langchain-postgres`** (`>=0.0.13`): usa `PGVector`/`PGEngine` para
+  o `VectorStore` do modo completo (alternativa ao Qdrant — escolha por
+  config). `PostgresChatMessageHistory` para histórico de threads quando
+  o operador prefere Postgres ao SQLite. `PostgresSaver`/
+  `AsyncPostgresSaver` (do `langgraph-checkpoint-postgres`) continua
+  sendo o checkpointer canônico do V2.
+- **`langchain-qdrant`** (`>=0.2`): substitui o wrapper manual de V6 por
+  `QdrantVectorStore.from_existing_collection()`. Hybrid search (BM25 +
+  dense via `FastEmbedSparse`) sai de graça.
+- Quem decide: `[storage] vector_backend = "qdrant" | "pgvector" | "lancedb"`.
+  Default `lancedb` (lite) → `qdrant` no compose default (V8).
+
+### V11 — Provedores LLM via SDKs oficiais (consistência + Cohere completo)
+
+Hoje `services/utils.load_llm()` mistura `init_chat_model` da LangChain
+com paths legados, e `tools/memory.py` usa `cohere.AsyncClient` direto
+(furo do princípio 11). Padronizar tudo nas integrações oficiais
+mais recentes:
+
+- **`langchain-google-genai`**: `ChatGoogleGenerativeAI` para Gemini
+  2.5/3.x — substitui qualquer uso de `google-generativeai` direto.
+- **`langchain-openai`**: `ChatOpenAI` (`gpt-5.x`, `o3`, `o4-mini`) +
+  `OpenAIEmbeddings` (fallback do Cohere quando a key Cohere não
+  está setada).
+- **`langchain-anthropic`**: `ChatAnthropic` (Claude 4.5/4.6/4.7) —
+  prompt caching automático via `cache_control` (X3).
+- **`langchain-cohere` — uso completo** (sem `cohere.Client` direto):
+  - `ChatCohere` — chat (Command-R+, Command-A). Tool calling nativo.
+  - `CohereEmbeddings` (`embed-multilingual-v3.0`, 1024-dim) — único
+    embedding model do RAG.
+  - `CohereRerank` (`rerank-multilingual-v3.0`) — único reranker em
+    `services/utils.rerank_documents` + `nodes/rag_subgraph`.
+  - **`CohereToolsReactAgentOutputParser`** — parser ReAct multi-hop
+    usado quando o modelo é Command-R+ e o orchestrator opta pelo
+    fluxo ReAct (alternativa ao tool-calling estruturado para queries
+    complexas que se beneficiam de raciocínio explícito iterativo).
+  - **Remoção**: `tools/memory.py` (linhas 49, 274) usa hoje
+    `cohere.AsyncClient` direto — substituir por `CohereEmbeddings`
+    - `CohereRerank` das langchain-cohere já carregadas. Reduz
+      superfície e desacopla do SDK puro.
+  - `BaseCohere` é a base interna do pacote — **não** usar
+    diretamente em código nosso.
+- `services/utils.load_llm()` vira `match provider:` sobre essas 4
+  classes; remove imports diretos espalhados (`from cohere import …`,
+  `from google.generativeai import …`, etc.).
+- **pyproject** sem version pins fixos (princípio 11): faixas abertas
+  `>=` com major estável; CI valida que upgrade automático passa.
+
 ### Arquivos críticos (Bloco V)
 
-| Sub | Arquivos                                                                                                                                                         |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| V1  | `vectora/services/storage/{__init__,protocols}.py` (novos), `storage/sqlite/*`, `storage/lancedb/*`                                                              |
-| V2  | `storage/postgres/checkpoint.py` (novo), `vectora/services/checkpoint.py` (vira fino wrapper que delega ao factory)                                              |
-| V3  | `storage/postgres/{auth,memory,session,secrets,audit,invites}.py` (novos); `services/{auth,memory,session,secrets/internal}.py` (refactor p/ consumir Protocols) |
-| V4  | `storage/postgres/memory_pgvector.py` (opcional)                                                                                                                 |
-| V5  | `storage/postgres/queue.py` (novo); `services/{queue,background}.py` (refactor)                                                                                  |
-| V6  | `storage/qdrant/vector_store.py` (novo); `tools/rag.py`, `nodes/rag_subgraph.py`, `mcp/server.py`, `services/background.py` (refactor p/ consumir Protocol)      |
-| V7  | `vectora/main.py` (subcomando `migrate`), `vectora/services/migrate.py` (novo)                                                                                   |
-| V8  | `deploy/compose.complete.yml`, `deploy/postgres/init.sql`                                                                                                        |
-| V9  | `tests/unit/test_storage_protocols.py` (novo), parametrização dos testes existentes                                                                              |
+| Sub | Arquivos                                                                                                                                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V1  | `vectora/services/storage/{__init__,protocols}.py` (novos), `storage/sqlite/*`, `storage/lancedb/*`                                                                                                         |
+| V2  | `storage/postgres/checkpoint.py` (novo), `vectora/services/checkpoint.py` (vira fino wrapper que delega ao factory)                                                                                         |
+| V3  | `storage/postgres/{auth,memory,session,secrets,audit,invites}.py` (novos); `services/{auth,memory,session,secrets/internal}.py` (refactor p/ consumir Protocols)                                            |
+| V4  | `storage/postgres/memory_pgvector.py` (opcional)                                                                                                                                                            |
+| V5  | `storage/postgres/queue.py` (novo); `services/{queue,background}.py` (refactor)                                                                                                                             |
+| V6  | `storage/qdrant/vector_store.py` (novo); `tools/rag.py`, `nodes/rag_subgraph.py`, `mcp/server.py`, `services/background.py` (refactor p/ consumir Protocol)                                                 |
+| V7  | `vectora/main.py` (subcomando `migrate`), `vectora/services/migrate.py` (novo)                                                                                                                              |
+| V8  | `deploy/compose.complete.yml`, `deploy/postgres/init.sql`                                                                                                                                                   |
+| V9  | `tests/unit/test_storage_protocols.py` (novo), parametrização dos testes existentes                                                                                                                         |
+| V10 | `storage/postgres/vector_pgvector.py` (novo, usa `langchain-postgres`), `storage/qdrant/vector_store.py` (refactor para `QdrantVectorStore`), `pyproject.toml` (+`langchain-postgres`, +`langchain-qdrant`) |
+| V11 | `vectora/services/utils.py` (`load_llm` consolidado), `pyproject.toml` (+`langchain-google-genai`, +`langchain-openai`, +`langchain-anthropic`, +`langchain-cohere`)                                        |
 
 ### Verificação (Bloco V)
 
@@ -2582,18 +3073,39 @@ deepagents = ">=0.1"   # pyproject.toml; ainda pré-1.0, fixar versão exata
 
 - Fixtures `fakeredis` para CI sem docker; CI complete usa Redis real.
 
+### W9 — `langchain-redis` para caches semânticos e history
+
+> Os caches W2/W7 são `KV{string→bytes}`. Para 3 features de mais valor,
+> usar a integração oficial `langchain-redis` em vez de cozinhar à mão:
+
+- **`RedisCache`** (`langchain_redis.RedisCache`): cache global de LLM
+  completions — drop-in no `set_llm_cache(...)` da LangChain. Mata
+  re-chamadas idênticas dentro da janela (default 1 h, configurável
+  por modelo).
+- **`RedisSemanticCache`**: cache **semântico** de respostas — usa o
+  embedding do prompt para hit fuzzy. Reduz custo quando o usuário
+  reformula a mesma pergunta. Habilitado opt-in (`[cache] semantic =
+true`); compartilha o `Embeddings` do Cohere (V11) para gerar o
+  índice.
+- **`RedisChatMessageHistory`**: histórico de threads alternativo ao
+  SQLite/Postgres — útil quando o operador roda Vectora atrás de várias
+  réplicas e quer um único store de history coerente.
+- Convive com W1–W7: KV cru continua para usage/plugins/workspace;
+  Redis "semântico" só entra para caches de LLM/embedding.
+
 ### Arquivos críticos (Bloco W)
 
-| Sub | Arquivos                                                                                            |
-| --- | --------------------------------------------------------------------------------------------------- |
-| W1  | `vectora/services/cache.py` (novo, Protocol + impls memory/redis)                                   |
-| W2  | `services/llm_tools.py` (refactor: caching local + invalidação Redis)                               |
-| W3  | `services/plugins.py` (versions em Redis)                                                           |
-| W4  | `services/usage.py` (sorted set Redis)                                                              |
-| W5  | `services/workspace.py` (active map em Redis)                                                       |
-| W6  | `services/rate_limit.py` (novo) substitui `api/middleware/rate_limit.py` (refactor)                 |
-| W7  | `services/cache_embeddings.py` (novo); `services/background.py`, `tools/rag.py` (consultam o cache) |
-| W8  | `tests/unit/test_cache_*.py` (novos)                                                                |
+| Sub | Arquivos                                                                                                                                               |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W1  | `vectora/services/cache.py` (novo, Protocol + impls memory/redis)                                                                                      |
+| W2  | `services/llm_tools.py` (refactor: caching local + invalidação Redis)                                                                                  |
+| W3  | `services/plugins.py` (versions em Redis)                                                                                                              |
+| W4  | `services/usage.py` (sorted set Redis)                                                                                                                 |
+| W5  | `services/workspace.py` (active map em Redis)                                                                                                          |
+| W6  | `services/rate_limit.py` (novo) substitui `api/middleware/rate_limit.py` (refactor)                                                                    |
+| W7  | `services/cache_embeddings.py` (novo); `services/background.py`, `tools/rag.py` (consultam o cache)                                                    |
+| W8  | `tests/unit/test_cache_*.py` (novos)                                                                                                                   |
+| W9  | `services/cache_llm.py` (novo, wraps `RedisCache`/`RedisSemanticCache`); `storage/redis/chat_history.py` (novo); `pyproject.toml` (+`langchain-redis`) |
 
 ### Verificação (Bloco W)
 
@@ -2627,21 +3139,66 @@ deepagents = ">=0.1"   # pyproject.toml; ainda pré-1.0, fixar versão exata
   provider/modelo (defaults para Anthropic, OpenAI, Google) consumido pelo
   `agent_factory`.
 
+### X6 — Web tools completas via `langchain-tavily` (`tavily_*` → `web_*`)
+
+> **Diagnóstico.** Hoje `vectora/tools/web.py` expõe só 2 tools
+> (`web_search`, `fetch_url`) sobre `TavilySearch`+`TavilyExtract`. A
+> integração `langchain-tavily` traz **6 classes** que o agente não
+> consegue usar inteiras: além de search/extract, **crawl** (varredura
+> em profundidade), **map** (mapa do site) e o par **research /
+> get_research** (jobs assíncronos de pesquisa profunda). Migra-se
+> para a suite completa **mantendo a convenção de naming "web"** —
+> nenhuma string com "tavily" aparece em tools ou ícones (provider
+> continua sendo Tavily por trás).
+
+| Tool nova                            | Classe `langchain-tavily` | `render_hint`    | `destructive` |
+| ------------------------------------ | ------------------------- | ---------------- | ------------- |
+| `web_search` (existente, polir args) | `TavilySearch`            | `search_results` | false         |
+| `web_fetch` (renomeia `fetch_url`)   | `TavilyExtract`           | `code_block`     | false         |
+| `web_crawl`                          | `TavilyCrawl`             | `table`          | false         |
+| `web_map`                            | `TavilyMap`               | `table`          | false         |
+| `web_research`                       | `TavilyResearch`          | `queue_badge`    | false         |
+| `web_get_research`                   | `TavilyGetResearch`       | `search_results` | false         |
+
+- **Pareamento research / get_research**: `web_research` dispara um job
+  assíncrono (devolve `request_id` imediatamente — renderizado como
+  `queue_badge` no chat); `web_get_research` consulta pelo `request_id`
+  e devolve os achados quando prontos. Padrão idêntico ao
+  `queue_progress` já usado no RAG (background embedding worker —
+  reuso direto no front, sem widget novo).
+- **Convenção**: nomes de tool, args, descrições e `metadata.icon`
+  usam **"web"**; provider é transparente. Permite trocar de provider
+  no futuro sem rebatizar tools no front.
+- **Permission**: `web_crawl`, `web_map` e `web_research` consomem mais
+  quota da API — entram no conjunto que `tool_policy` (S5) pode
+  desabilitar por user. `web_research` em particular pode rodar por
+  minutos e é mais cara — opt-in por workspace via `tool_policy`.
+- **Render**: frontend já tem `SearchResultsViewer` (search_results),
+  `TableViewer` (table) e `QueueBadge` (queue_badge) — zero código
+  novo no chat.
+- **Sempre versão atual de `langchain-tavily`** (princípio 11): fixar
+  range no pyproject para sempre buscar a última, e remover qualquer
+  uso direto de `tavily-python` (substituído integralmente).
+
 ### Arquivos críticos (X)
 
-| Sub | Arquivos                                                            |
-| --- | ------------------------------------------------------------------- |
-| X1  | `services/skills.py` (S8) + `services/agent_factory.py`             |
-| X2  | `services/memory.py` (gera AGENTS.md a partir das memórias do user) |
-| X3  | `services/agent_factory.py` (config Anthropic cache)                |
-| X4  | `services/agent_factory.py` (compressão como middleware)            |
-| X5  | `services/profiles.py` (novo)                                       |
+| Sub | Arquivos                                                                                                                                                                                     |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| X1  | `services/skills.py` (S8) + `services/agent_factory.py`                                                                                                                                      |
+| X2  | `services/memory.py` (gera AGENTS.md a partir das memórias do user)                                                                                                                          |
+| X3  | `services/agent_factory.py` (config Anthropic cache)                                                                                                                                         |
+| X4  | `services/agent_factory.py` (compressão como middleware)                                                                                                                                     |
+| X5  | `services/profiles.py` (novo)                                                                                                                                                                |
+| X6  | `vectora/tools/web.py` (+`web_crawl`, +`web_map`; rename `fetch_url`→`web_fetch`), `vectora/agents/search.py` (registra as 4 tools no toolset), `pyproject.toml` (já tem `langchain-tavily`) |
 
 ### Verificação
 
 - Skill instalada via S8 muda comportamento do agente (carregamento on-demand
   do SKILL.md).
 - Cache hit visível no `usage_metadata` da Anthropic.
+- Pedir "mapeia o domínio brunosrz.dev" → agente chama `web_map`,
+  resultado renderiza em TableViewer. Idem para `web_crawl` em
+  "indexe a documentação de https://example.com até 3 níveis".
 
 ---
 
@@ -2656,15 +3213,94 @@ deepagents = ">=0.1"   # pyproject.toml; ainda pré-1.0, fixar versão exata
 > deepagents/LangChain.
 > **Y5 — Remote backends** (filesystem/sandbox remoto).
 
+### Y1 — Sandbox + git worktree integrado (workspace isolado por usuário)
+
+> **Cardinal.** No modo lite (Bloco T) o terminal opera direto no
+> filesystem do host, confinado por `resolve_within_workspace` (Q4). No
+> modo "sandbox" cada user ganha uma **sandbox isolada** que monta
+> automaticamente uma **git worktree** do workspace ativo — combinando
+> `deepagents.sandboxes` (`LocalSandbox`, `ModalSandbox`, `E2BSandbox`)
+> com `git_worktree` (Q5). Resultado: dois engenheiros podem editar
+> o mesmo repo do Vectora ao mesmo tempo, cada um na sua worktree,
+> sem pisar no outro.
+
+- **Backends de sandbox**:
+  - `LocalSandbox` (default) — namespace POSIX/Job Object no Windows;
+    rápido e sem custo. Já é o que `deepagents` usa por padrão.
+  - `ModalSandbox` — containers Modal, ideal para workloads pesados.
+  - `E2BSandbox` — VM E2B, máximo isolamento para código não-confiável.
+- **Provisionamento** (`services/sandboxes/registry.py`, novo):
+  ao abrir um chat com `permission_mode in {auto, bypass}` num workspace
+  git, cria `git_worktree add ~/.vectora/sandboxes/<user_id>/<thread_id>
+<branch=feat/auto/<thread_id>>` e monta a sandbox apontando ali.
+  Worktree fica isolada por (user_id, thread_id).
+- **Cleanup**: encerrar a thread chama `git_worktree remove` + termina
+  a sandbox. TTL configurável (default: 7 dias inativa).
+- **HITL**: tools destrutivas dentro da sandbox **não pedem aprovação
+  por default** — o isolamento já é a barreira. `permission_mode=ask`
+  continua pedindo se o operador quiser belt-and-suspenders.
+- Reuso: `tools/git.py::git_worktree` (Q5), `services/security.py::
+resolve_within_workspace` (Q4) — os guards apontam para o path da
+  worktree em vez do workspace original.
+
+### Y2 — Interpretadores Python/JS persistentes
+
+- `deepagents` expõe `PythonInterpreter`/`JSInterpreter` como tools
+  stateful (mantêm variáveis entre calls). Substitui parte do uso de
+  `terminal` para tarefas de análise/cálculo. Atalho: o orchestrator
+  prefere o interpreter quando a tarefa é "compute" puro.
+
+### Y3 — Async subagents (paralelismo real)
+
+- DeepAgent ≥0.7 permite subagents async-first. Substitui o
+  `parallel_dispatch` artesanal (C5) que hoje roda sequencial; chega a
+  paralelismo real entre coder/search/rag quando o orchestrator escolhe
+  `action: "parallel"`. O `_synthesize_after_parallel` (orchestrator)
+  continua intacto.
+
+### Y4 — ACP — Vectora como servidor e cliente de outros agentes
+
+- **Server** (`deepagents-acp.server`): expõe o agent do Vectora via
+  endpoint ACP em `/acp/v1` — clientes ACP (Claude Code, dcode, IDEs
+  com plugin ACP) podem invocar o Vectora como sub-agente.
+- **Adapter** (`deepagents-acp.adapter`): permite consumir agentes ACP
+  externos como sub-agente do nosso. Útil para terceirizar tarefas
+  específicas (ex.: agente especialista em pentest).
+- **IDE integration** (`deepagents-acp.ide-integration`): conector
+  bidirecional com VSCode/JetBrains via extensão oficial — o usuário
+  invoca o Vectora dentro do editor.
+- Auth via Bloco Z (OAuth2 client credentials) — mesmo mecanismo do
+  REST público.
+
+### Y5 — Remote backends (filesystem/sandbox remoto)
+
+- `deepagents.backends.RemoteFileSystem` (S3, GCS, Azure Blob) como
+  backend opcional para o filesystem virtual do DeepAgent. Útil para
+  deploys que precisam de filesystem multi-host.
+
+### Y6 — `dcode` como TUI alternativo (opt-in)
+
+> O DeepAgent ecosystem traz seu próprio TUI textual (`deepagents-code`,
+> aka `dcode`). É um **app textual completo** já alinhado ao DeepAgent
+> harness, com Workbench-like sidebar, slash commands, HITL inline.
+
+- `vectora chat --dcode` instancia o app `dcode` apontando para o
+  `agent_factory.get_user_agent()` (mesma fábrica do U1).
+- Não substitui o `vectora chat` próprio (U7) — convive lado a lado.
+  Quem prefere a UX padrão do ecossistema usa `--dcode`; quem prefere
+  a UX customizada do Vectora usa o default.
+- Reuso: ambos compartilham agent, auth, secrets, tools.
+
 ### Arquivos críticos (Y)
 
-| Sub | Arquivos                                                                                          |
-| --- | ------------------------------------------------------------------------------------------------- |
-| Y1  | `services/sandboxes/{modal,e2b}.py` (novos); `tools/sandbox_exec.py` (novo); HITL gate específico |
-| Y2  | `services/interpreters/{python,js}.py` (novos)                                                    |
-| Y3  | `services/agent_factory.py` (async subagents)                                                     |
-| Y4  | `services/acp.py` (novo, ACP transport)                                                           |
-| Y5  | `storage/protocols.py` extension (remote FS)                                                      |
+| Sub | Arquivos                                                                                                                                                                                                                   |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Y1  | `services/sandboxes/{registry,local,modal,e2b}.py` (novos); `tools/sandbox_exec.py` (novo); `tools/git.py` (`git_worktree` reusado); `services/security.py` (resolve para path da worktree); HITL gate por permission_mode |
+| Y2  | `services/interpreters/{python,js}.py` (novos); registra como tools do `agent_factory`                                                                                                                                     |
+| Y3  | `services/agent_factory.py` (subagents async, substituir parallel_dispatch)                                                                                                                                                |
+| Y4  | `services/acp/server.py` + `services/acp/adapter.py` (novos); `api/handlers/acp.py` (mount em `/acp/v1`); `pyproject.toml` (+`deepagents-acp`)                                                                             |
+| Y5  | `storage/protocols.py` (+`RemoteFileSystem`); `storage/backends/{s3,gcs,azure}.py` (novos)                                                                                                                                 |
+| Y6  | `vectora/main.py` (subcomando `chat --dcode`); `pyproject.toml` (+`deepagents-code`)                                                                                                                                       |
 
 ---
 
@@ -2799,6 +3435,15 @@ usage, model, ...}` no shape `chat.completion`.
 - `tests/unit/test_api_v1_openai_compat.py`: emparelha o shape OpenAI
   (validação de JSON schema dos response objects).
 
+### Z8 — Endpoint ACP público (depende de Y4)
+
+- Expõe o ACP server (Y4) em `/v1/acp/*` sob OAuth2 client credentials
+  do Bloco Z — clientes externos (Claude Code, dcode, IDEs) podem
+  conectar usando o mesmo client_id/client_secret que já usam para
+  REST/chat. Scope dedicado: `acp`.
+- A IDE-integration (Y4) aponta para esse endpoint quando o usuário
+  conecta seu editor a um servidor Vectora remoto.
+
 ### Arquivos críticos (Bloco Z)
 
 | Sub | Arquivos chat                                                                                          | Arquivos vectora (Python)                                                                                                                                                     |
@@ -2810,6 +3455,7 @@ usage, model, ...}` no shape `chat.completion`.
 | Z5  | —                                                                                                      | `vectora/api/server.py` (rotas docs /v1), `docs/rest-api.md`                                                                                                                  |
 | Z6  | `chat/components/layout/settings-dialog/tabs/api-tab.tsx`, `chat/server/routes/oauth_clients.ts`, i18n | —                                                                                                                                                                             |
 | Z7  | —                                                                                                      | `tests/unit/test_api_v1_*.py` (novos)                                                                                                                                         |
+| Z8  | —                                                                                                      | `api/handlers/v1/acp.py` (mount Y4 server sob `/v1/acp`); `services/acp/server.py` (reuso de Y4)                                                                              |
 
 ### Verificação (Bloco Z)
 
@@ -2861,6 +3507,16 @@ messages=[...], stream=True)` e recebe streaming compatível.
 10. **CLI root local é design feature, não bug.** Quem tem shell no servidor
     tem root no Vectora — exigir login ali seria teatro. Server endpoints
     são o perímetro de segurança.
+
+11. **Integrações sempre via SDK oficial mais recente, zero deprecated.**
+    Toda LLM, embedding, vector store, cache e rerank entra via o pacote
+    `langchain-<provider>` ou o SDK oficial do provider, **na última
+    versão estável**. Nada de `cohere.Client` solto em `tools/` quando
+    `langchain-cohere` cobre o caso; nada de imports legados
+    (`langchain.llms.OpenAI`, `langchain.embeddings.OpenAIEmbeddings`)
+    quando há `langchain-openai`. Quando uma versão nova quebra API,
+    migramos — não pinamos em deprecated. Pyproject revisado a cada
+    bloco que toca integrações (V, W, X).
 
 ---
 
