@@ -254,12 +254,20 @@ export default function SignUpPage() {
                 // do input que silenciava o click em iOS/Android.
                 onPointerDown={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
+                  setShowPassword((v) => !v);
+                }}
+                // Fallback para Android Chrome legado que não emite
+                // PointerEvent na sequência touch → click.
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setShowPassword((v) => !v);
                 }}
                 onClick={(e) => {
                   if (e.detail === 0) setShowPassword((v) => !v);
                 }}
-                className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+                className="absolute inset-y-0 right-0 flex items-center justify-center w-11 min-h-[44px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? (
@@ -296,12 +304,18 @@ export default function SignUpPage() {
                 type="button"
                 onPointerDown={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
+                  setShowConfirm((v) => !v);
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setShowConfirm((v) => !v);
                 }}
                 onClick={(e) => {
                   if (e.detail === 0) setShowConfirm((v) => !v);
                 }}
-                className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+                className="absolute inset-y-0 right-0 flex items-center justify-center w-11 min-h-[44px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={
                   showConfirm ? "Ocultar confirmação" : "Mostrar confirmação"
                 }

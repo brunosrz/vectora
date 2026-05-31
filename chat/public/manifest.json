@@ -1,0 +1,31 @@
+{
+  "name": "Vectora",
+  "short_name": "Vectora",
+  "description": "Vectora — assistente self-hosted com RAG, terminal e workbench embarcados.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-600x600.png",
+      "sizes": "600x600",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/vectora.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

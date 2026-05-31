@@ -5,11 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "vectora-agent"
 version = "0.1.0"
-description = "Vectora - Advanced AI Assistant with RAG and MCP capabilities"
+description = "Vectora - Advanced AI Assistant"
 readme = "README.md"
-license = {text = "Apache-2.0"}
 authors = [{name = "Bruno Soares", email = "bruno.soarxz@gmail.com"}]
-requires-python = ">=3.13.13"
+requires-python = ">=3.13"
 
 dependencies = [
     "fastapi>=0.115",
@@ -69,6 +68,7 @@ dependencies = [
     "httpx>=0.28",
     "pywinpty>=2.0 ; sys_platform == 'win32'",
     "ptyprocess>=0.7 ; sys_platform != 'win32'",
+    "nuitka[all]>=4.1.2",
 ]
 
 [project.scripts]
@@ -147,7 +147,7 @@ skips = ["B110", "B101"]
 
 [tool.pyright]
 typeCheckingMode = "standard"
-pythonVersion = "3.13.13"
+pythonVersion = "3.13"
 include = ["vectora", "tests"]
 exclude = ["**/venv", "**/.venv", "**/env", "**/.env", "**/node_modules", "**/__pycache__"]
 venv = ".venv"

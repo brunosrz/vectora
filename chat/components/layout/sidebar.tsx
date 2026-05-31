@@ -211,6 +211,8 @@ export const Sidebar = memo(function Sidebar({
 
   // Early return for collapsed state (after all hooks)
   if (isCollapsed) {
+    // Mobile: sem barra slim — só a hamburger no Header reabre.
+    // Desktop: barra de 64px com botão de expandir.
     return (
       <aside className="hidden md:flex w-16 bg-gradient-to-b from-sidebar via-sidebar-light to-sidebar border-r border-border/60 flex-col shadow-depth-sm">
         <div className="px-3 py-4 border-b border-border/60 h-16 flex items-center justify-center">
@@ -230,7 +232,13 @@ export const Sidebar = memo(function Sidebar({
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <aside className="hidden md:flex w-56 bg-gradient-to-b from-sidebar via-sidebar-light to-sidebar-lighter border-r border-border/60 flex-col shadow-depth-md">
+      {/* J.2.5 — Backdrop atrás do overlay no mobile. Click fecha. */}
+      <div
+        className="md:hidden fixed inset-0 z-30 bg-background/60 backdrop-blur-sm"
+        onClick={onToggle}
+        aria-hidden
+      />
+      <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-56 bg-gradient-to-b from-sidebar via-sidebar-light to-sidebar-lighter border-r border-border/60 flex-col shadow-depth-md">
         <div className="px-3 pt-[13px] pb-[14px] border-b border-border/60 bg-gradient-to-r from-sidebar-accent/20 via-sidebar-accent/10 to-transparent">
           <div className="flex items-center justify-between">
             <Button

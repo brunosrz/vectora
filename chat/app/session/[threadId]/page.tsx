@@ -28,6 +28,7 @@ import {
   Group as PanelGroup,
   Panel,
   Separator as PanelResizeHandle,
+  type PanelImperativeHandle,
 } from "react-resizable-panels";
 import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
@@ -38,7 +39,17 @@ function SessionContent() {
   const router = useRouter();
   const threadId = params.threadId as string;
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // Inicia collapsed para evitar overlay cobrindo a tela no primeiro paint
+  // em mobile. Effect abaixo expande automaticamente em viewports ≥768px.
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 768px)").matches
+    ) {
+      setIsSidebarCollapsed(false);
+    }
+  }, []);
   const [showToolCalls, setShowToolCalls] = useState(false);
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -201,31 +212,37 @@ function SessionContent() {
         client: resolvedClient,
       });
 
-      generateThreadTitle({
-        userMessage: title,
-        assistantResponse: lastMessage,
-      })
-        .then((aiTitle) => {
-          if (aiTitle.length > 0) {
-            console.log("Setting AI title:", aiTitle);
+      // F.2.5 — Adições otimistas no envio da 1ª mensagem chegam aqui
+      // com `lastMessage === ""`. Geração de título pela IA precisa do
+      // par (pergunta, resposta); sem resposta, apenas registra a
+      // thread e espera o 2º call (pós-stream) gerar o título.
+      if (lastMessage.length > 0) {
+        generateThreadTitle({
+          userMessage: title,
+          assistantResponse: lastMessage,
+        })
+          .then((aiTitle) => {
+            if (aiTitle.length > 0) {
+              console.log("Setting AI title:", aiTitle);
+              updateThreadMetadata(currentThreadId, {
+                user_id: userId,
+                title: aiTitle,
+                lastMessage,
+                client: resolvedClient,
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to generate AI title:", error);
+            const quickTitle = generateQuickTitle(title);
             updateThreadMetadata(currentThreadId, {
               user_id: userId,
-              title: aiTitle,
+              title: quickTitle,
               lastMessage,
               client: resolvedClient,
             });
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to generate AI title:", error);
-          const quickTitle = generateQuickTitle(title);
-          updateThreadMetadata(currentThreadId, {
-            user_id: userId,
-            title: quickTitle,
-            lastMessage,
-            client: resolvedClient,
           });
-        });
+      }
     } else if (shouldGenerateAITitle && messageCount) {
       console.log(`Regenerating AI title at message ${messageCount}`);
 
@@ -291,6 +308,28 @@ function SessionContent() {
   const setActiveTab = useWorkbenchStore((s) => s.setActiveTab);
   const workbenchSplitSize = useWorkbenchStore((s) => s.splitSize);
   const setSplitSize = useWorkbenchStore((s) => s.setSplitSize);
+
+  // PanelGroup árvore estável (corrige `bt(...) is undefined: Symbol.iterator`):
+  // - mesmos 3 filhos sempre montados (Panel + Separator + Panel)
+  // - props NUMÉRICAS estáveis em todo render (defaultSize/minSize/collapsedSize)
+  // - mudanças de visibilidade são aplicadas por API imperativa
+  //   (panelRef.collapse()/.expand()) ou pelo `disabled` do Separator
+  //
+  // Trade-off conhecido: no mount o workbench renderiza brevemente em 40%
+  // antes do effect colapsar — flash de < 1 frame, aceitável.
+  const workbenchPanelRef = useRef<PanelImperativeHandle | null>(null);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const panel = workbenchPanelRef.current;
+    if (!panel) return;
+    const collapsed = panel.isCollapsed();
+    if (showWorkbench && collapsed) {
+      panel.expand();
+    } else if (!showWorkbench && !collapsed) {
+      panel.collapse();
+    }
+  }, [hydrated, showWorkbench]);
 
   useKeyboardShortcuts([
     {
@@ -425,7 +464,7 @@ function SessionContent() {
           >
             <Panel
               id="vectora-chat-pane"
-              defaultSize={showWorkbench ? 100 - workbenchSplitSize : 100}
+              defaultSize={100 - workbenchSplitSize}
               minSize={30}
             >
               <div className="h-full flex flex-col">
@@ -439,6 +478,11 @@ function SessionContent() {
                   forceShowTooltip={forceShowTooltip}
                   showSettingsDialog={showSettingsDialog}
                   onSettingsDialogChange={setShowSettingsDialog}
+                  onOpenSidebar={
+                    isSidebarCollapsed
+                      ? () => setIsSidebarCollapsed(false)
+                      : undefined
+                  }
                 />
                 <ChatInterface
                   key={threadId}
@@ -457,24 +501,23 @@ function SessionContent() {
             </Panel>
             <PanelResizeHandle
               id="vectora-split-handle"
-              className={
-                showWorkbench
-                  ? "w-1 bg-border/40 hover:bg-border transition-colors"
-                  : "w-0 overflow-hidden"
-              }
+              disabled={!showWorkbench}
+              className="w-1 bg-border/40 hover:bg-border transition-colors data-[disabled=true]:w-0 data-[disabled=true]:overflow-hidden data-[disabled=true]:pointer-events-none"
+              data-disabled={!showWorkbench}
             />
             <Panel
               id="vectora-workbench-pane"
+              panelRef={workbenchPanelRef}
               collapsible
               collapsedSize={0}
-              defaultSize={showWorkbench ? workbenchSplitSize : 0}
-              minSize={showWorkbench ? 20 : 0}
+              defaultSize={workbenchSplitSize}
+              minSize={20}
               onResize={(size) => {
                 const n = Number(size);
                 if (n > 0) setSplitSize(n);
               }}
             >
-              {showWorkbench && <WorkbenchPanel threadId={threadId} />}
+              {showWorkbench ? <WorkbenchPanel threadId={threadId} /> : null}
             </Panel>
           </PanelGroup>
         </div>

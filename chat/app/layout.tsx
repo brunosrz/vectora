@@ -20,6 +20,7 @@ const inconsolata = Inconsolata({
 
 export const metadata: Metadata = {
   title: "Vectora",
+  manifest: "/manifest.json",
   icons: {
     icon: [
       { url: "/vectora.ico", sizes: "any" },
@@ -30,11 +31,23 @@ export const metadata: Metadata = {
     shortcut: "/vectora.ico",
     apple: "/favicon-600x600.png",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Vectora",
+  },
   robots: {
     index: false,
     follow: false,
     googleBot: { index: false, follow: false },
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0a0e1a",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -47,6 +60,26 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* PWA: registra o service worker apenas em produção. Em dev a UI
+            é servida pelo Turbopack com HMR, e cachear assets quebra o
+            ciclo de desenvolvimento. */}
+        {process.env.NODE_ENV === "production" && (
+          <Script
+            id="vectora-sw-register"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker
+      .register("/service-worker.js", { scope: "/" })
+      .catch(function (err) { console.warn("SW register failed:", err); });
+  });
+}
+              `,
+            }}
+          />
+        )}
         {/* Segment Analytics */}
         {segmentWriteKey && (
           <Script

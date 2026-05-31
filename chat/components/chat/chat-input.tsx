@@ -7,13 +7,26 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FilePreviewGrid } from "./features/file-preview-grid";
 import { VoiceInputButton } from "./features/voice-input-button";
 import { CommandBar } from "./features/command-bar";
 import { PlusMenu } from "./features/plus-menu";
-import { ContextMeter } from "./features/context-meter";
+import { UsagePopover } from "./features/usage-popover";
 import { SlashCommandMenu } from "./features/slash-command-menu";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
+import type { AgentConfig } from "@/components/layout/agent-settings";
+import {
+  getAllowedModels,
+  getModelDisplayName,
+  type ModelOption,
+} from "@/lib/config/deployment-config";
 import type { ImageAttachment } from "@/lib/types";
 import { MAX_INPUT_CHARS } from "@/lib/constants/features";
 import { useT } from "@/lib/i18n";
@@ -56,6 +69,13 @@ interface ChatInputProps {
   // Context meter (R5)
   tokensUsed?: number;
   modelId?: string;
+
+  // Modelo (seletor permanente no rodapé) — F.2.2/F.2.3
+  agentConfig?: AgentConfig;
+  onAgentConfigChange?: (config: AgentConfig) => void;
+
+  // F.2.3 — overlay de drop zone mais explícito no estado vazio
+  dropHintExpanded?: boolean;
 }
 
 /**
@@ -92,8 +112,17 @@ export function ChatInput({
   queuedMessages = [],
   tokensUsed,
   modelId,
+  agentConfig,
+  onAgentConfigChange,
+  dropHintExpanded = false,
 }: ChatInputProps) {
   const t = useT();
+  const allowedModels = getAllowedModels();
+  const handleModelChange = (model: string) => {
+    if (agentConfig && onAgentConfigChange) {
+      onAgentConfigChange({ ...agentConfig, model });
+    }
+  };
   return (
     <div className="relative">
       {/* Enhanced visibility layer */}
@@ -173,7 +202,13 @@ export function ChatInput({
                 onDrop={onDrop}
               >
                 {isDragging && (
-                  <div className="absolute inset-0 bg-primary/10 rounded-xl flex items-center justify-center z-20 pointer-events-none">
+                  <div
+                    className={
+                      dropHintExpanded
+                        ? "absolute inset-0 bg-primary/15 rounded-xl flex items-center justify-center z-20 pointer-events-none border-2 border-dashed border-primary"
+                        : "absolute inset-0 bg-primary/10 rounded-xl flex items-center justify-center z-20 pointer-events-none"
+                    }
+                  >
                     <div className="text-primary font-medium">
                       {t("welcome.drop_files")}
                     </div>
@@ -262,9 +297,30 @@ export function ChatInput({
             </div>
           )}
 
-          {/* Simple help text - hidden on mobile */}
-          <div className="hidden sm:flex items-center justify-between mt-1 px-2">
-            <p className="text-[11px] text-muted-foreground/60">
+          {/* Rodapé do input: seletor de modelo + atalho + medidor */}
+          <div className="flex items-center justify-between gap-2 mt-1 px-2 flex-wrap">
+            {/* Seletor de modelo permanente — F.2.2 */}
+            {agentConfig && onAgentConfigChange ? (
+              <Select
+                value={agentConfig.model}
+                onValueChange={handleModelChange}
+              >
+                <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:text-primary px-2 gap-1 w-auto">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {allowedModels.map((model) => (
+                    <SelectItem key={model} value={model}>
+                      {getModelDisplayName(model as ModelOption)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span />
+            )}
+
+            <p className="hidden sm:block text-[11px] text-muted-foreground/60">
               <kbd className="px-1 py-0.5 bg-muted/50 rounded text-[10px] font-medium text-foreground/70">
                 Enter
               </kbd>{" "}
@@ -276,9 +332,9 @@ export function ChatInput({
               {t("input.new_line_hint")}
             </p>
 
-            {/* Medidor de contexto + uso do plano (R5) */}
+            {/* Medidor de uso estilo Claude Code (K.2.2) — janela de contexto + 5h + semanal */}
             {modelId && (
-              <ContextMeter tokensUsed={tokensUsed ?? 0} modelId={modelId} />
+              <UsagePopover tokensUsed={tokensUsed ?? 0} modelId={modelId} />
             )}
           </div>
         </div>

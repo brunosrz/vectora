@@ -598,7 +598,7 @@ export const MessageItem = memo(
           </div>
           <div className="flex-1 min-w-0 space-y-2">
             <div
-              className={`rounded-lg px-4 py-3 transition-all duration-150 ease-out ${message.role === "user" ? "bg-muted/50 text-foreground" : "bg-muted text-foreground"}`}
+              className={`rounded-lg px-4 py-2.5 transition-all duration-150 ease-out ${message.role === "user" ? "bg-muted/50 text-foreground" : "bg-muted text-foreground"}`}
               style={{
                 willChange: message.isThinking ? "contents" : "auto",
                 contain: "layout style paint",
@@ -843,7 +843,7 @@ export const MessageItem = memo(
 
                   {/* Metadata — duração total e tokens */}
                   {!message.isThinking && message.thinkingDuration != null && (
-                    <div className="flex items-center justify-end gap-2 mt-3 text-xs text-muted-foreground font-mono">
+                    <div className="flex items-center justify-end gap-2 mt-1 text-xs text-muted-foreground font-mono">
                       <span>
                         {(message.thinkingDuration / 1000).toFixed(1)}s
                       </span>

@@ -138,15 +138,15 @@ repos:
         pass_filenames: false
 
   # ==========================================
-  # Type Checking — TypeScript (tsgo, port Go oficial da Microsoft)
+  # Type Checking — TypeScript (tsc)
   # ==========================================
-  # Equivalente do `ty` para TS: ~10x mais rápido que tsc clássico.
-  # Roda só quando arquivos .ts/.tsx do chat/ mudam.
+  # `pnpm --dir chat exec tsc` é cross-platform (Windows/Linux/macOS) e
+  # não depende de `bash` — sem dependência de WSL no Windows.
   - repo: local
     hooks:
-      - id: tsgo
-        name: Type Check — TypeScript (tsgo)
-        entry: bash -c 'cd chat && pnpm exec tsgo --noEmit'
+      - id: tsc
+        name: Type Check — TypeScript (tsc)
+        entry: pnpm --dir chat exec tsc --noEmit -p tsconfig.json
         language: system
         files: ^chat/.*\.(ts|tsx)$
         pass_filenames: false

@@ -53,21 +53,33 @@ _COOKIE_MAX_AGE_REFRESH = 7 * 24 * 3600  # 7 dias
 def _set_auth_cookies(
     response: Response, access_token: str, refresh_token: str
 ) -> None:
-    """Grava cookies httpOnly + SameSite=Strict nos dois tokens."""
+    """Grava cookies httpOnly nos dois tokens.
+
+    SameSite=Lax (não Strict): cobre primary navigation + first-party
+    submissões de formulário, que é o que a UI precisa. Strict quebrava
+    login no celular via Tailscale porque alguns navegadores tratam o
+    Set-Cookie pós-POST de cross-origin (frontend → proxy Hono → FastAPI)
+    como segunda hop e descartavam o cookie com Strict. HttpOnly continua
+    sendo a defesa contra XSS, não SameSite.
+
+    Secure permanece False em HTTP. Em produção atrás de HTTPS reverso, o
+    cookie ganha Secure via header `X-Forwarded-Proto: https` traduzido
+    pelo proxy (ou config explícita por env).
+    """
     response.set_cookie(
         _ACCESS_COOKIE,
         access_token,
         max_age=_COOKIE_MAX_AGE_ACCESS,
         httponly=True,
-        samesite="strict",
-        secure=False,  # True em produção com HTTPS
+        samesite="lax",
+        secure=False,
     )
     response.set_cookie(
         _REFRESH_COOKIE,
         refresh_token,
         max_age=_COOKIE_MAX_AGE_REFRESH,
         httponly=True,
-        samesite="strict",
+        samesite="lax",
         secure=False,
     )
 

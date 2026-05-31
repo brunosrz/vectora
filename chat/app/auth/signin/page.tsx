@@ -138,6 +138,15 @@ export default function SignInPage() {
                 // browsers). Cobre mouse, touch e pen num só handler.
                 onPointerDown={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
+                  setShowPassword((v) => !v);
+                }}
+                // Fallback redundante para Android Chrome quando o
+                // navegador resolve a sequência touch → click sem
+                // emitir PointerEvent (versões antigas / WebView).
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setShowPassword((v) => !v);
                 }}
                 onClick={(e) => {
@@ -145,7 +154,7 @@ export default function SignInPage() {
                   // não dispara nessas vias.
                   if (e.detail === 0) setShowPassword((v) => !v);
                 }}
-                className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+                className="absolute inset-y-0 right-0 flex items-center justify-center w-11 min-h-[44px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? (

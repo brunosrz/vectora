@@ -13,7 +13,7 @@ import { useStreamHandler, useFeedback, useChatState } from "@/lib/hooks/chat";
 import { useUserId } from "@/lib/hooks/auth";
 import { useFileUpload, useVoiceInput } from "@/lib/hooks/files";
 import { MessageList } from "./message-list";
-import { WelcomeScreen } from "./features/welcome-screen";
+import { EmptyStateHeader } from "./features/empty-state-header";
 import { ChatInput } from "./chat-input";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { VECTORA_API_URL } from "@/lib/constants/api";
@@ -802,7 +802,20 @@ export function ChatInterface({
     }
 
     // Show message in chat and process immediately
+    const previousMessages = messages;
     setMessages((prev) => [...prev, userMessage]);
+
+    // F.2.5 — Otimismo da sidebar: avisa o pai já no envio da primeira
+    // mensagem, com lastMessage vazio. handleThreadUpdate adiciona a
+    // thread otimisticamente; o título da IA é gerado depois (no
+    // segundo onThreadUpdate, ao final do stream). Sem isso, a sidebar
+    // só descobria a thread quando a resposta da IA terminava.
+    if (previousMessages.length === 0 && onThreadUpdate) {
+      const optimisticTitle =
+        customTitle || truncate(currentInput, 60) || "New conversation";
+      onThreadUpdate(threadId, optimisticTitle, "", undefined, 1);
+    }
+
     await processMessage(currentInput, currentFiles, userMessage);
 
     // Check if anything was queued while processing
@@ -816,6 +829,10 @@ export function ChatInterface({
     attachedFiles,
     userId,
     agentConfig?.model,
+    customTitle,
+    messages,
+    onThreadUpdate,
+    threadId,
     setInput,
     setUploadError,
     clearFiles,
@@ -1050,95 +1067,69 @@ export function ChatInterface({
     <>
       <style>{scrollbarStyles}</style>
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        <MessageList
-          messages={messages}
-          showToolCalls={showToolCalls}
-          isRegenerating={uiState.isRegenerating}
-          isLoadingThread={uiState.isLoadingThread}
-          copiedId={uiState.copiedId}
-          onCopy={handleCopy}
-          onRegenerate={handleRegenerate}
-          onEditAndRerun={handleEditAndRerun}
-          feedbackComment={feedbackComment}
-          showCommentInput={showCommentInput}
-          onFeedback={handleFeedback}
-          onSubmitComment={handleSubmitComment}
-          onCancelComment={handleCancelComment}
-          onToggleComment={handleToggleComment}
-          setFeedbackComment={setFeedbackComment}
-          onHitlDecision={handleHitlDecision}
-          threadId={threadId}
-          onRetry={handleRegenerate}
-        />
-
         {isNewChat ? (
-          <WelcomeScreen
-            input={cappedDisplayInput}
-            onInputChange={setLimitedInput}
-            onBeforeInput={handleInputBeforeInput}
-            onSend={handleSend}
-            onKeyDown={handleKeyDown}
-            isLoading={uiState.isLoading}
-            isStopping={uiState.isStopping}
-            onStop={handleStop}
-            userId={userId}
-            attachedFiles={attachedFiles}
-            uploadError={uploadError}
-            inputError={inputError}
-            isDragging={isDragging}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onPaste={handleInputPaste}
-            onRemoveFile={removeFile}
-            onFileButtonClick={handleFileButtonClick}
-            fileInputRef={fileInputRef}
-            onFileSelect={handleFileSelect}
-            textareaRef={textareaRef}
-            isVoiceListening={isVoiceListening}
-            isVoiceSupported={isVoiceSupported}
-            onVoiceToggle={toggleVoiceListening}
-            voiceError={voiceError}
-            agentConfig={agentConfig}
-            onAgentConfigChange={onAgentConfigChange}
-          />
+          <EmptyStateHeader />
         ) : (
-          <ChatInput
-            input={cappedDisplayInput}
-            onInputChange={setLimitedInput}
-            onBeforeInput={handleInputBeforeInput}
-            onSend={handleSend}
-            onKeyDown={handleKeyDown}
-            isLoading={uiState.isLoading}
-            isStopping={uiState.isStopping}
-            onStop={handleStop}
-            userId={userId}
-            attachedFiles={attachedFiles}
-            uploadError={uploadError}
-            inputError={inputError}
-            isDragging={isDragging}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onPaste={handleInputPaste}
-            onRemoveFile={removeFile}
-            onFileButtonClick={handleFileButtonClick}
-            fileInputRef={fileInputRef}
-            onFileSelect={handleFileSelect}
-            textareaRef={textareaRef}
-            isVoiceListening={isVoiceListening}
-            isVoiceSupported={isVoiceSupported}
-            onVoiceToggle={toggleVoiceListening}
-            voiceError={voiceError}
-            queuedMessages={queuedMessagesDisplay}
-            modelId={agentConfig?.model}
-            tokensUsed={estimateTokens(
-              messages.map((m) =>
-                typeof m.content === "string" ? m.content : "",
-              ),
-            )}
+          <MessageList
+            messages={messages}
+            showToolCalls={showToolCalls}
+            isRegenerating={uiState.isRegenerating}
+            isLoadingThread={uiState.isLoadingThread}
+            copiedId={uiState.copiedId}
+            onCopy={handleCopy}
+            onRegenerate={handleRegenerate}
+            onEditAndRerun={handleEditAndRerun}
+            feedbackComment={feedbackComment}
+            showCommentInput={showCommentInput}
+            onFeedback={handleFeedback}
+            onSubmitComment={handleSubmitComment}
+            onCancelComment={handleCancelComment}
+            onToggleComment={handleToggleComment}
+            setFeedbackComment={setFeedbackComment}
+            onHitlDecision={handleHitlDecision}
+            threadId={threadId}
+            onRetry={handleRegenerate}
           />
         )}
+
+        <ChatInput
+          input={cappedDisplayInput}
+          onInputChange={setLimitedInput}
+          onBeforeInput={handleInputBeforeInput}
+          onSend={handleSend}
+          onKeyDown={handleKeyDown}
+          isLoading={uiState.isLoading}
+          isStopping={uiState.isStopping}
+          onStop={handleStop}
+          userId={userId}
+          attachedFiles={attachedFiles}
+          uploadError={uploadError}
+          inputError={inputError}
+          isDragging={isDragging}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onPaste={handleInputPaste}
+          onRemoveFile={removeFile}
+          onFileButtonClick={handleFileButtonClick}
+          fileInputRef={fileInputRef}
+          onFileSelect={handleFileSelect}
+          textareaRef={textareaRef}
+          isVoiceListening={isVoiceListening}
+          isVoiceSupported={isVoiceSupported}
+          onVoiceToggle={toggleVoiceListening}
+          voiceError={voiceError}
+          queuedMessages={queuedMessagesDisplay}
+          modelId={agentConfig?.model}
+          tokensUsed={estimateTokens(
+            messages.map((m) =>
+              typeof m.content === "string" ? m.content : "",
+            ),
+          )}
+          agentConfig={agentConfig}
+          onAgentConfigChange={onAgentConfigChange}
+          dropHintExpanded={isNewChat}
+        />
       </main>
     </>
   );

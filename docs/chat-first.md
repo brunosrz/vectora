@@ -23,34 +23,133 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 
 ## Sumário (TOC)
 
-| Bloco | Tema                                                                                                                                                                                                                                      | Status                                          |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **A** | Chat Foundations                                                                                                                                                                                                                          | ✅ Concluído                                    |
-| **B** | Polish, Bugfixes & Infra                                                                                                                                                                                                                  | ✅ Concluído                                    |
-| **C** | Authentication & RBAC                                                                                                                                                                                                                     | ✅ Concluído                                    |
-| **D** | Reasoning Reveal & Thinking UX                                                                                                                                                                                                            | ✅ Concluído                                    |
-| **E** | HITL em Chat                                                                                                                                                                                                                              | ✅ Concluído                                    |
-| **F** | File Handling Completo                                                                                                                                                                                                                    | ✅ Concluído                                    |
-| **G** | Workspaces + Git Integration                                                                                                                                                                                                              | ✅ Concluído                                    |
-| **H** | Slash Commands                                                                                                                                                                                                                            | ✅ Concluído                                    |
-| **I** | Conversation Features (search, export, share)                                                                                                                                                                                             | ✅ Concluído                                    |
-| **J** | Mobile & PWA                                                                                                                                                                                                                              | ✅ Concluído                                    |
-| **K** | Live Metrics Dashboard                                                                                                                                                                                                                    | ✅ Concluído                                    |
-| **L** | Settings Architecture                                                                                                                                                                                                                     | ✅ Concluído                                    |
-| **M** | Performance, UX Polish & i18n/L10n                                                                                                                                                                                                        | ✅ Concluído                                    |
-| **N** | Per-User Memory                                                                                                                                                                                                                           | ✅ Concluído                                    |
-| **O** | Workspace Integrations (OAuth + API keys)                                                                                                                                                                                                 | ✅ Concluído                                    |
-| **P** | Root Admin Panel (RBAC/ABAC global)                                                                                                                                                                                                       | ✅ Concluído                                    |
-| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites                                                                                                                                                      | ✅ Concluído                                    |
-| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish                                                                                                                                                 | ✅ Concluído                                    |
-| **S** | Connectors & Plugins Manager (cont. de O)                                                                                                                                                                                                 | ✅ Concluído                                    |
-| **T** | Embedded Terminal — PTY persistente cross-platform + painel split com xterm.js                                                                                                                                                            | ✅ T1–T8 / ⏳ T9–T11 (Workbench + persistência) |
-| **U** | Deep Agents — refactor para `create_deep_agent` + **CLI rich → textual (U7)**                                                                                                                                                             | ⏳ Planejado                                    |
-| **V** | **Storage Infra**: hardening lite (SQLite pool + LanceDB cache/FTS) + schema versioning + `langgraph.{checkpoint,store}` + `langchain-{qdrant,postgres,community}` + BaaS (Supabase/Neon/Qdrant Cloud) + admin UI + CLI `vectora storage` | ⏳ Planejado                                    |
-| **W** | Redis cache distribuído + **langchain-redis (RedisCache/SemanticCache/History) (W9)**                                                                                                                                                     | ⏳ Planejado                                    |
-| **X** | Deep Agents 1 — skills, AGENTS.md, prompt cache, compressão + **6 web tools full (X6: search/fetch/crawl/map/research/get_research)**                                                                                                     | ⏳ Planejado                                    |
-| **Y** | Deep Agents 2 — **sandbox + git worktree (Y1)**, interpreters, async, **ACP (Y4)**, remote backends, **dcode TUI opcional (Y6)**                                                                                                          | ⏳ Planejado                                    |
-| **Z** | REST API v1 — OAuth2 client credentials + OpenAI-compat + **endpoint ACP público (Z8)**                                                                                                                                                   | ⏳ Planejado                                    |
+| Bloco | Tema                                                                                                                                                                                                                                      | Status                        |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| **A** | Chat Foundations                                                                                                                                                                                                                          | ✅ Concluído                  |
+| **B** | Polish, Bugfixes & Infra                                                                                                                                                                                                                  | ✅ Concluído                  |
+| **C** | Authentication & RBAC                                                                                                                                                                                                                     | ✅ Concluído                  |
+| **D** | Reasoning Reveal & Thinking UX                                                                                                                                                                                                            | ✅ Concluído                  |
+| **E** | HITL em Chat                                                                                                                                                                                                                              | ✅ Concluído                  |
+| **F** | File Handling Completo                                                                                                                                                                                                                    | ✅ Concluído                  |
+| **G** | Workspaces + Git Integration                                                                                                                                                                                                              | ✅ Concluído                  |
+| **H** | Slash Commands                                                                                                                                                                                                                            | ✅ Concluído                  |
+| **I** | Conversation Features (search, export, share)                                                                                                                                                                                             | ✅ Concluído                  |
+| **J** | Mobile & PWA                                                                                                                                                                                                                              | ✅ Concluído                  |
+| **K** | Live Metrics Dashboard                                                                                                                                                                                                                    | ✅ Concluído                  |
+| **L** | Settings Architecture                                                                                                                                                                                                                     | ✅ Concluído                  |
+| **M** | Performance, UX Polish & i18n/L10n                                                                                                                                                                                                        | ✅ Concluído                  |
+| **N** | Per-User Memory                                                                                                                                                                                                                           | ✅ Concluído                  |
+| **O** | Workspace Integrations (OAuth + API keys)                                                                                                                                                                                                 | ✅ Concluído                  |
+| **P** | Root Admin Panel (RBAC/ABAC global)                                                                                                                                                                                                       | ✅ Concluído                  |
+| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites                                                                                                                                                      | ✅ Concluído                  |
+| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish                                                                                                                                                 | ✅ Concluído                  |
+| **S** | Connectors & Plugins Manager (cont. de O)                                                                                                                                                                                                 | ✅ Concluído                  |
+| **T** | Embedded Terminal + Workbench / **Distribuição comercial (T.12: Nuitka + Electron + Launcher)** / **OXC toolchain (T.13)**                                                                                                                | ✅ T1–T11 / ⏳ T.12 / ⏳ T.13 |
+| **U** | Deep Agents — refactor para `create_deep_agent` + **CLI rich → textual (U7)**                                                                                                                                                             | ⏳ Planejado                  |
+| **V** | **Storage Infra**: hardening lite (SQLite pool + LanceDB cache/FTS) + schema versioning + `langgraph.{checkpoint,store}` + `langchain-{qdrant,postgres,community}` + BaaS (Supabase/Neon/Qdrant Cloud) + admin UI + CLI `vectora storage` | ⏳ Planejado                  |
+| **W** | Redis cache distribuído + **langchain-redis (RedisCache/SemanticCache/History) (W9)**                                                                                                                                                     | ⏳ Planejado                  |
+| **X** | Deep Agents 1 — skills, AGENTS.md, prompt cache, compressão + **6 web tools full (X6: search/fetch/crawl/map/research/get_research)**                                                                                                     | ⏳ Planejado                  |
+| **Y** | Deep Agents 2 — **sandbox + git worktree (Y1)**, interpreters, async, **ACP (Y4)**, remote backends, **dcode TUI opcional (Y6)**                                                                                                          | ⏳ Planejado                  |
+| **Z** | REST API v1 — OAuth2 client credentials + OpenAI-compat + **endpoint ACP público (Z8)**                                                                                                                                                   | ⏳ Planejado                  |
+
+---
+
+## Diretrizes (vinculantes para todo código contribuído)
+
+> Regras de engenharia que **todo PR** deve respeitar. Elas existem
+> porque o plano tem prazo de validade — referências a sub-blocos
+> (`T10.4`, `V8`, `R2`) ficam órfãs quando o bloco é encerrado e
+> aposentado da documentação. Um novo contribuidor que entre daqui
+> a um ano precisa entender o código sem ter lido este arquivo.
+
+### 1. Comentários em código são documentação, não diário
+
+Comentários descrevem **o que o código faz** e os invariantes que ele
+precisa preservar — nada mais.
+
+**Proibido em comentários:**
+
+- Identificadores de planejamento (`Bloco T`, `T10.4`, `V8`, `R2`, `S6`,
+  números de issue, números de tarefa).
+- Justificativa histórica (`antes era X`, `mudamos por causa de Y`,
+  `era hardcoded antes`). O `git log` já guarda isso.
+- "Por quê" estratégico (`para alinhar ao roadmap`, `como pediu o
+usuário`, `decisão arquitetural do bloco …`). Comentário de código
+  não é PRD.
+- TODOs sem dono e sem prazo (`TODO: melhorar isso depois`).
+
+**Esperado em comentários:**
+
+- Invariantes não-óbvios. _"O lock SQLite assume `journal_mode=WAL`."_
+- Restrições que o tipo não captura. _"Lista ordenada por mtime
+  decrescente — callers podem fazer binary search."_
+- Mapeamentos sutis a APIs externas. _"`@@` é o cabeçalho de um hunk
+  unificado conforme RFC do `diff`."_
+- Pegadinhas que travariam o leitor. _"O `onPointerDown` precede o
+  `onClick`; sem `preventDefault` o input do form rouba o foco em
+  mobile."_
+
+**Padrão de docstring/JSDoc**: descreva contrato (entradas, saídas,
+exceções, efeitos colaterais). Sem fazer arqueologia.
+
+**Refactor imediato**: qualquer comentário existente que referencie
+sub-bloco (`Bloco T cont.`, `T11.x`, `(T10.4)`, etc.) deve ser
+reescrito ao ser editado. PRs novos não podem introduzir esse
+padrão.
+
+### 2. Strings de UI sempre via i18n — nada hardcoded
+
+Qualquer string visível ao usuário no frontend (chat, settings, auth,
+workbench, modais, toasts) **obrigatoriamente** passa por `useT()` e
+existe em `chat/lib/i18n/strings.csv.ts` nas 3 línguas suportadas.
+
+- **Proibido**: literais como `"Salvar"`, `"Cancelar"`, `"Erro ao
+buscar threads"` direto no JSX/handler.
+- **Exceção**: identificadores técnicos não-localizáveis (atalhos
+  visíveis tipo `⌃⇧F`, nomes de comandos `/clone`, IDs internos).
+- **Empty states, tooltips, `aria-label`, `placeholder`, mensagens de
+  erro, títulos de modal** — todos via `t("…")`.
+- Adicionar string nova = adicionar 3 colunas (`en,es,pt-BR`) no CSV.
+  PRs que adicionam string nova sem cobertura nas 3 línguas são
+  rejeitados.
+- Mesma regra vale para `vectora/ui/` (rich/textual) — strings do CLI
+  passam por `vectora/services/i18n.py` (ou equivalente) e ficam em
+  catálogo dedicado.
+
+### 3. TDD + type hints são obrigatórios
+
+- **Test-Driven Development**: para todo bug fix, escrever o teste que
+  reproduz o bug **antes** do patch (red → green). Para toda feature
+  nova, escrever pelo menos 1 teste happy-path + 1 teste de erro
+  **antes** da implementação considerada "pronta". Sem teste, o PR
+  não passa review.
+- **Type hints obrigatórios** em todo Python novo. `Any` é permitido
+  apenas em interop com lib externa não-tipada — comentar a razão.
+  `ty check vectora tests` precisa ficar em `All checks passed!`.
+- **TypeScript estrito** no `chat/`. `pnpm tsc --noEmit` em verde.
+  `any` só com `// eslint-disable-next-line @typescript-eslint/no-explicit-any`
+  - justificativa.
+- Cobertura mínima por PR não é numérica, é **comportamental**: cada
+  branch novo da feature tem teste. O reviewer rejeita PR cujo diff
+  toca lógica e a suite não tem teste tocando essa lógica.
+
+### 4. Comentários referenciam o presente, código também
+
+Pareando com a Diretriz 1: nomes de tipos, funções e variáveis também
+descrevem o que **são**, não o que **foram**. Sem `LegacyFoo`,
+`NewFoo`, `FooV2`, `OldFoo` — quando renomeamos, renomeamos por
+completo; o nome final descreve a coisa.
+
+### 5. Refatoração imediata ao editar
+
+Ao tocar um arquivo, se você encontrar:
+
+- Comentário com referência de bloco/sub-bloco → reescreva no diff.
+- String hardcoded de UI → mova para i18n no mesmo PR.
+- Função sem type hint → adicione no diff.
+
+Não abrir PR separado "só pra limpar". O contribuidor que editou o
+arquivo é o responsável por deixá-lo dentro das diretrizes.
 
 ---
 
@@ -685,7 +784,7 @@ Novo módulo `vectora/tools/git.py`:
 
 Tools gh CLI (em `vectora/tools/gh.py`):
 | Tool | render_hint |
-|------|-------------|
+| ---------------------------------------------- | -------------------------- |
 | `gh_pr_create(title, body, base, draft=False)` | `code_block` |
 | `gh_pr_list(state="open")` | `table` |
 | `gh_pr_view(pr_number)` | `code_block` |
@@ -2582,6 +2681,212 @@ escreve no store". Cada `FilesTab`, `DiffTab`, `PlanTab` deixa de chamar
 
 ---
 
+## BLOCO T.12 — Distribuição comercial e empacotamento (Nuitka + Electron)
+
+> **Objetivo.** Transitar de "distribuição via pacotes públicos" para
+> "distribuição via binários proprietários". O usuário final recebe um
+> instalador _one-click_ (.msi / .dmg / .AppImage); o código Python do
+> Vectora Core sai compilado a C via Nuitka; o frontend Next.js sai
+> bundleado dentro do binário. PyPI/NPM saem do pipeline e dão lugar a
+> _Private Releases_ com token de cliente.
+
+### T.12.1 — Launcher como único ponto de entrada (Nuitka)
+
+- Substitui `vectora/main.py` por `vectora/launcher.py`, compilado via
+  Nuitka como o **único binário** entregue ao cliente.
+- Responsabilidades do Launcher:
+  - Ler `vectora.toml` (path: `~/.vectora/vectora.toml`, override
+    `VECTORA_CONFIG=`) e decidir o modo de operação (`chat`, `mcp`,
+    `headless`, `desktop`).
+  - Validar `VECTORA_TOKEN` (T.12.7) **antes** de subir qualquer
+    serviço.
+  - Gerenciar processos filhos: backend FastAPI, embedding worker,
+    eventual Electron shell. Logs/healthcheck cruzados.
+  - Encaminhar sinais (`SIGTERM`/`SIGINT`) para shutdown gracioso
+    (reusa o `_lifespan` atual + PTY cleanup).
+
+### T.12.2 — Bundle do frontend dentro do binário
+
+- O build de produção do Next.js (`chat/out/` via `next build` +
+  `next export` ou _standalone output_) entra no binário Nuitka como
+  _data file_ (`--include-data-dir=chat/out=chat_static`).
+- O servidor FastAPI (`vectora/api/server.py`, modo `chat`) já tem o
+  parâmetro `serve_static=True` — segue servindo `/` direto do
+  filesystem embutido. Sem `npm install` na máquina do cliente.
+- Para modo desktop (Electron, T.12.5), o shell carrega via
+  `loadURL("http://127.0.0.1:<porta>")` apontando para o backend
+  embutido.
+
+### T.12.3 — Desacoplamento do ecossistema público
+
+- `runner.yml` perde `publish-pypi` e `publish-npm`.
+- Em vez disso, _GitHub Releases privados_ (ou bucket S3/R2 atrás de
+  presigned URL) com:
+  - Instaladores nativos assinados (T.12.6).
+  - Manifesto `releases.json` que o auto-update do app consulta com
+    `Authorization: Bearer <VECTORA_TOKEN>`.
+- Branding nos `pyproject.toml`/`package.json`: `private: true` para
+  evitar publish acidental.
+
+### T.12.4 — Vectora Core compilado (Nuitka)
+
+- `nuitka --standalone --onefile --follow-imports --enable-plugin=…`
+  para empacotar todo o grafo de agents, services, tools e suas deps
+  (`pydantic`, `langgraph`, `langchain*`, `aiosqlite`, `lancedb`,
+  `cohere`, `tavily`, `argon2-cffi`, `pyjwt`, `pynacl`, `pykeepass`,
+  `pywinpty`/`ptyprocess`).
+- Plugins Nuitka exigidos: `numpy`, `multiprocessing`, `tk-inter`
+  (negativo — excluir), `anti-bloat`.
+- Saídas: `vectora-core-<os>-<arch>` binário único.
+- **Proteção do grafo de agentes**: prompts (`_identity.py`,
+  `orchestrator.py`) viram strings dentro do `.exe` — não vazam em
+  texto puro como num wheel Python.
+- Cuidado: deps com extensões C (`lancedb`, `cohere`) podem exigir
+  `--include-data-dir` extra. Validar em CI matrix Win/macOS/Linux.
+
+### T.12.5 — Wrapper Electron (modo desktop)
+
+- `desktop/` (novo): app Electron mínimo (`main.ts`, `preload.ts`,
+  `renderer/`). Não roda lógica de negócio — é apenas a **casca**
+  que:
+  - Spawn do binário Nuitka como _sidecar_ (porta efêmera).
+  - `BrowserWindow` carrega `http://127.0.0.1:<porta>`.
+  - Trata ciclo de vida: backend caiu → janela mostra estado;
+    janela fechada → backend é morto via `tree-kill`.
+  - IPC tipado (`contextBridge`) para features OS-nativas que o
+    web não tem (notificações nativas, badge no dock, deep-link
+    `vectora://`).
+- Auto-update via `electron-updater` apontando para o manifesto
+  privado (T.12.3).
+
+### T.12.6 — Instaladores nativos
+
+- `electron-builder` gera:
+  - **Windows**: `.msi` + `.exe` (NSIS), assinado com certificado EV
+    (Trusted Signing da Azure ou SignTool com cert próprio).
+  - **macOS**: `.dmg` notarizado (Apple Developer ID).
+  - **Linux**: `.AppImage` + `.deb` + `.rpm`.
+- Cada instalador empacota: shell Electron + binário Nuitka como
+  sidecar + recursos (ícones, MANIFEST).
+- Pipeline CI separada por OS (matrix `runs-on: [windows, macos,
+ubuntu]`).
+
+### T.12.7 — Licenciamento via VECTORA_TOKEN
+
+- O Launcher (T.12.1) faz `POST <license_server>/v1/validate` com
+  `{token, machine_id, version}` antes de qualquer subprocess.
+- Cache de validação em `~/.vectora/license.cache` (assinado com
+  chave pública embutida no binário) — permite _offline grace
+  period_ de N dias.
+- Falha de validação → janela explicativa + link para portal +
+  retry. Sem token, **nada** sobe.
+- Token sai do portal de clientes (escopo Z — REST API).
+
+### Arquivos críticos (T.12)
+
+| Sub    | Arquivos                                                                                                                                 |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| T.12.1 | `vectora/launcher.py` (novo, substitui `main.py` no entry-point), `pyproject.toml` (`[project.scripts] vectora = vectora.launcher:main`) |
+| T.12.2 | `vectora/api/server.py` (`serve_static` já existe; ajustar path para `_MEIPASS`/Nuitka data dir), `build/nuitka.toml` (novo)             |
+| T.12.3 | `.github/workflows/runner.yml` (remover publish-pypi/publish-npm; adicionar release-binary)                                              |
+| T.12.4 | `build/nuitka.toml`, `Dockerfile.build` (cross-compile via container)                                                                    |
+| T.12.5 | `desktop/main.ts`, `desktop/preload.ts`, `desktop/package.json` (novos)                                                                  |
+| T.12.6 | `desktop/electron-builder.yml`, secrets de signing no GHA                                                                                |
+| T.12.7 | `vectora/services/license.py` (novo); `vectora/launcher.py` (gate de boot)                                                               |
+
+### Verificação (T.12)
+
+- `make release` → produz `vectora-desktop-{win,mac,linux}.<ext>` em
+  `dist/`. Cada um é assinado e instalável em VM limpa sem
+  toolchain Python/Node.
+- Inicializar com `VECTORA_TOKEN` inválido → Launcher recusa com
+  mensagem explicativa, exit 1.
+- Inicializar com token válido → janela Electron abre apontada para
+  backend embutido; UX idêntica ao modo dev.
+- Auto-update: subir release `vN+1` no manifesto privado → cliente
+  com `vN` baixa silenciosamente, reinicia para aplicar.
+
+---
+
+## BLOCO T.13 — Toolchain frontend via OXC (linter / formatter / parser / resolver / transformer)
+
+> **Objetivo.** Substituir a cadeia atual de tooling do `chat/`
+> (prettier, qualquer eslint futuro, parsers ad-hoc, babel/swc para
+> transformações) pela suite **OXC** (Rust). Ganho mensurável:
+> linter ~50×–100× mais rápido que ESLint; formatter convergindo
+> com Prettier; minifier competitivo para build de produção.
+
+### T.13.1 — `oxlint` no lugar de ESLint
+
+- `pnpm add -D oxlint` no `chat/`.
+- `chat/.oxlintrc.json` com presets `react`, `typescript`,
+  `nextjs`, `unicorn` — recomendado começar com defaults e ajustar
+  por erro real.
+- Substitui qualquer hook ESLint planejado. Pre-commit ganha hook
+  `oxlint chat/` em `language: system` (cross-platform, binário
+  próprio).
+- Integra com VSCode via extensão oficial.
+
+### T.13.2 — `oxc-formatter` (opt-in inicial)
+
+- Em alpha. Adicionar como hook **secundário** (não substitui
+  Prettier ainda) atrás de feature flag `VECTORA_USE_OXC_FORMATTER=1`.
+- Quando o formatter atingir paridade com Prettier para nosso
+  preset (Markdown + TS + CSS), promover a default e remover o
+  hook Prettier.
+
+### T.13.3 — `oxc-parser` como API para tooling interno
+
+- `oxc-parser` (Node bindings) substitui qualquer parser TS
+  ad-hoc que venhamos a precisar (ex.: extração de docstrings de
+  tools, gerador de `tools/schema`, codemods).
+- API estável; usa o mesmo AST do oxlint → consistência.
+
+### T.13.4 — `oxc-resolver` no build
+
+- Resolver de módulos compatível com Node + bundlers — Next 16 já
+  usa internamente em Turbopack. Não há mudança no app code; ganha
+  resolver mais previsível em scripts custom (ex.: testes vitest).
+
+### T.13.5 — `oxc-transformer` no lugar de babel/swc
+
+- Substitui qualquer dependência residual de babel em scripts
+  (`build/` ou `scripts/`).
+- Suporte a JSX, TSX, decorators, target ES2022.
+
+### T.13.6 — `oxc-minify` (somente CI)
+
+- O **minify** entra apenas no pipeline `runner.yml` durante o
+  build de produção empacotado por Nuitka (T.12.2): o `chat/out/`
+  exportado pelo `next build` passa por `oxc-minify` antes de
+  virar data dir do binário.
+- Em dev local: sem minify (mantém debuggability + tempos de build
+  curtos).
+
+### Arquivos críticos (T.13)
+
+| Sub    | Arquivos                                                                                                             |
+| ------ | -------------------------------------------------------------------------------------------------------------------- |
+| T.13.1 | `chat/.oxlintrc.json` (novo); `chat/package.json` (+oxlint); `.pre-commit-config.yaml` (hook `oxlint`)               |
+| T.13.2 | `.pre-commit-config.yaml` (hook secundário `oxc-format` opt-in)                                                      |
+| T.13.3 | `chat/scripts/*` (consumidores futuros)                                                                              |
+| T.13.4 | `chat/vitest.config.ts` se necessário                                                                                |
+| T.13.5 | `chat/package.json` (-babel-\* / -swc residuais)                                                                     |
+| T.13.6 | `.github/workflows/runner.yml` (step `oxc-minify chat/out/` antes do `nuitka` packaging); **não** entra em dev/local |
+
+### Verificação (T.13)
+
+- `pnpm exec oxlint chat/` cobre o repo em < 2 s e reporta os
+  warnings que oxlint encontra (esperar primeira passada com
+  ajustes).
+- Pre-commit roda `oxlint` em arquivos modificados.
+- `runner.yml`: step de produção mostra `oxc-minify` reduzindo
+  `chat/out/_next/static/*.js` em ~30–40% antes do Nuitka.
+- Dev local (`pnpm dev`): sem minify, build incremental
+  inalterado.
+
+---
+
 ## Modos de operação: Lite vs Completo
 
 > **Princípio.** Lite = zero infra externa (SQLite + LanceDB + cache em
@@ -2724,7 +3029,7 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
 
 - Substitui o nó `hitl_check`. Tabela de mapping `permission_mode` → config:
   | Modo (R2) | `interrupt_on` |
-  |-----------|----------------|
+  | ----------------- | ---------------------------------------------------------------------- |
   | `ask` | `{"terminal": True, "file_write": True, ...}` (REQUIRE_APPROVAL atual) |
   | `accept_edits` | `{"terminal": True}` (file_write auto) |
   | `plan` | `{*: "reject"}` — recusa toda tool destrutiva (envia ToolMessage) |
@@ -3703,6 +4008,11 @@ messages=[...], stream=True)` e recebe streaming compatível.
 ---
 
 ## Princípios de implementação
+
+> Esta seção cobre escolhas **arquiteturais** que orientam decisões de
+> design ao longo dos blocos. Para regras de **engenharia de código**
+> (comentários, i18n, TDD, type hints, refactor ao editar) que valem
+> em todo PR, ver a seção **Diretrizes** logo após o TOC.
 
 1. **Schema-first sempre.** Novo recurso no agente Python = novo `metadata=`
    na tool / novo evento no proto. Frontend nunca tem switch hardcoded por nome.

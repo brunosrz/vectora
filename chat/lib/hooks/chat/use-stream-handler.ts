@@ -207,6 +207,10 @@ export function useStreamHandler({
         // Flush final — tokens do último frame ainda pendentes
         flushNow();
       } catch (err: unknown) {
+        // Flush defensivo: tokens acumulados no rAF pendente seriam
+        // descartados pelos branches abaixo (que sobrescrevem ou ignoram
+        // `content`). Garantir a entrega ANTES de qualquer mutação.
+        flushNow();
         if ((err as { name?: string }).name === "AbortError") {
           // Interrompido pelo usuário — não é um erro; encerra o thinking timer
           setMessages((prev) =>
@@ -339,6 +343,8 @@ export function useStreamHandler({
 
         flushNow();
       } catch (err: unknown) {
+        // Defensivo: flush antes de qualquer mutação no branch de erro.
+        flushNow();
         if ((err as { name?: string }).name !== "AbortError") {
           const msg = err instanceof Error ? err.message : String(err);
           setMessages((prev) =>

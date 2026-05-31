@@ -8,44 +8,35 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
 
-// Origens permitidas para HMR no dev quando o dev server é acessado por
-// outro host além de localhost (celular na mesma rede, Tailscale, IP da
-// LAN, etc.). Sem isso o Next 16 bloqueia o /_next/webpack-hmr.
+// `allowedDevOrigins` afeta APENAS o `next dev` (HMR e outros recursos
+// internos em `/_next/*`). Não tem efeito em produção e não bloqueia
+// auth, /api/*, navegação normal nem WebSocket do app. Segurança real
+// continua sendo email+senha+cookie httpOnly+SameSite=Lax (Bloco C).
 //
-// Lê uma lista separada por vírgula em `NEXT_DEV_ALLOWED_ORIGINS` e mescla
-// com um conjunto fixo cobrindo todas as ranges privadas RFC1918 + CGNAT
-// (Tailscale usa 100.x). Wildcards do Next são por hostname — `192.168.*`
-// cobre toda a sub-rede sem precisar listar IP a IP.
+// Para que o Vectora possa ser servido de qualquer host em dev (LAN,
+// VPS, Tailscale, túneis tipo ngrok, IP novo da rede), abrimos para
+// todos os origins via globstar `**` — Next 16 usa picomatch e `**`
+// casa qualquer hostname/IP, com qualquer número de segmentos.
+//
+// Se algum operador quiser restringir explicitamente em dev (zona de
+// trabalho compartilhada, etc.), `NEXT_DEV_ALLOWED_ORIGINS` substitui
+// a lista padrão por uma CSV custom.
 const _envOrigins = (process.env.NEXT_DEV_ALLOWED_ORIGINS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-const _allowedDevOrigins = [
-  ...new Set([
-    // Ranges privadas RFC1918 + CGNAT (Tailscale usa 100.64.0.0/10)
-    "10.*",
-    "192.168.*",
-    "172.16.*",
-    "172.17.*",
-    "172.18.*",
-    "172.19.*",
-    "172.20.*",
-    "172.21.*",
-    "172.22.*",
-    "172.23.*",
-    "172.24.*",
-    "172.25.*",
-    "172.26.*",
-    "172.27.*",
-    "172.28.*",
-    "172.29.*",
-    "172.30.*",
-    "172.31.*",
-    "100.*",
-    ..._envOrigins,
-  ]),
-];
+const _allowedDevOrigins = _envOrigins.length > 0 ? _envOrigins : ["**"];
+
+if (process.env.NODE_ENV !== "production") {
+  console.info(
+    "[vectora] allowedDevOrigins =",
+    _allowedDevOrigins.join(", "),
+    _envOrigins.length > 0
+      ? "(custom via NEXT_DEV_ALLOWED_ORIGINS)"
+      : "(catch-all — qualquer host)",
+  );
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

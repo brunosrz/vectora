@@ -15,13 +15,32 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
 import { useT } from "@/lib/i18n";
+import { VECTORA_API_URL } from "@/lib/constants/api";
 import { PermissionModeMenu } from "./permission-mode-menu";
+
+/**
+ * Hostname abreviado extraído da URL do backend, com porta quando não-padrão.
+ * Cai para "server" como rótulo neutro quando a URL é vazia ou inválida.
+ */
+function serverHostLabel(): string {
+  try {
+    const u = new URL(VECTORA_API_URL || "http://localhost");
+    const isDefaultPort =
+      !u.port ||
+      (u.protocol === "http:" && u.port === "80") ||
+      (u.protocol === "https:" && u.port === "443");
+    return isDefaultPort ? u.hostname : `${u.hostname}:${u.port}`;
+  } catch {
+    return "server";
+  }
+}
 
 function LocalChip() {
   const t = useT();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  // "Local" = sem sessão autenticada (CLI/root local); senão mostra a conta.
-  const label = isAuthenticated ? "Server" : t("commandbar.local");
+  // CLI/root local exibe "Local". Sessão autenticada exibe o hostname real
+  // do backend — informativo (distingue localhost vs LAN vs Tailscale).
+  const label = isAuthenticated ? serverHostLabel() : t("commandbar.local");
   return (
     <span
       className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground select-none"

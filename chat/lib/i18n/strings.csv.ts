@@ -34,6 +34,7 @@ sidebar.documentation,Documentation,Documentación,Documentação
 sidebar.documentation_caption,GitHub · Vectora,GitHub · Vectora,GitHub · Vectora
 sidebar.feedback,Feedback,Comentarios,Feedback
 sidebar.report_issue,Report an issue,Reportar problema,Reportar problema
+sidebar.open,Open sessions,Abrir sesiones,Abrir sessões
 # =============================================================================
 # Relative time (sidebar)
 # =============================================================================
