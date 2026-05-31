@@ -28,6 +28,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   PYTHON_VERSION: "3.14"
+  NODE_VERSION: "24"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -158,7 +159,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: ${{ env.NODE_VERSION }}
 
       # Build Chat using Makefile
       - name: Install buf CLI
@@ -529,8 +530,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.2.2
       - name: Install dependencies
         working-directory: ./chat
         run: pnpm install --frozen-lockfile
