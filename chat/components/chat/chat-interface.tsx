@@ -19,6 +19,7 @@ import type { AgentConfig } from "@/components/layout/agent-settings";
 import { VECTORA_API_URL } from "@/lib/constants/api";
 import { getHistory, getThread } from "@/lib/api/vectora-client";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { estimateTokens } from "@/lib/utils/tokens";
 import { useThreadsStore } from "@/lib/stores/threads-store";
@@ -159,6 +160,19 @@ export function ChatInterface({
   } = useChatState(threadId);
   const [inputError, setInputError] = useState<string | null>(null);
   const inputLengthRef = useRef(uiState.input.length);
+
+  // T10.4 — Consume drafts pré-populados por outras áreas (ex.: empty
+  // state do PlanTab que faz "Pedir um plano ao Vectora"). O draft é
+  // escrito no chat-input-store; aqui consumimos uma única vez ao mount
+  // e a cada mudança no campo `draft`. Limpa o store após consumir.
+  const pendingDraft = useChatInputStore((s) => s.draft);
+  const consumeDraft = useChatInputStore((s) => s.consumeDraft);
+  useEffect(() => {
+    if (pendingDraft) {
+      setInput(pendingDraft);
+      consumeDraft();
+    }
+  }, [pendingDraft, setInput, consumeDraft]);
 
   // File upload state
   const {

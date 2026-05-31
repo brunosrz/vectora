@@ -1,12 +1,16 @@
 "use client";
 
 /**
- * FilesTab (T6 + T11.2) — file tree do workspace ativo.
+ * FilesTab (T6 + T11.2 + T10.2 pin)
  *
  * Estado vive no workbench-store (slice `files`):
  *   - árvore expandida e entradas já carregadas → sobrevivem a remount
  *   - arquivo aberto + conteúdo → mesmo
  *   - filtro de busca → idem
+ *
+ * T10.2 — Pin de arquivo (persistido por threadId via `pinnedFiles`):
+ *   - Seção "Fixados" no topo quando há pins
+ *   - Botão pin/unpin aparece em hover no item file
  *
  * SWR via `useWorkbenchSWR`: render imediato do cache + revalidação
  * silenciosa quando stale. A verdade vive no backend.
@@ -17,6 +21,8 @@ import {
   File,
   FolderClosed,
   Loader2,
+  Pin,
+  PinOff,
   Search,
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
@@ -57,7 +63,54 @@ async function fetchFile(
   return res.json();
 }
 
+/** Linha de arquivo na árvore — com botão pin/unpin em hover. */
+function FileItem({
+  threadId,
+  entry,
+  depth,
+  onOpenFile,
+}: {
+  threadId: string;
+  entry: FileEntry;
+  depth: number;
+  onOpenFile: (path: string) => void;
+}) {
+  const pinned = useWorkbenchStore((s) => s.isPinned(threadId, entry.path));
+  const togglePinned = useWorkbenchStore((s) => s.togglePinned);
+  const t = useT();
+  return (
+    <div
+      className="group flex items-center px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm"
+      style={{ paddingLeft: 8 + (depth + 1) * 12 }}
+    >
+      <span className="w-3" />
+      <File className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+      <button
+        onClick={() => onOpenFile(entry.path)}
+        className="flex-1 text-left truncate text-foreground/80 hover:text-foreground ml-1"
+      >
+        {entry.name}
+      </button>
+      <button
+        onClick={() => togglePinned(threadId, entry.path)}
+        className={`shrink-0 p-0.5 rounded ${
+          pinned
+            ? "text-primary"
+            : "text-muted-foreground/0 group-hover:text-muted-foreground hover:text-foreground"
+        }`}
+        aria-label={
+          pinned ? t("workbench.files.unpin") : t("workbench.files.pin")
+        }
+        title={pinned ? t("workbench.files.unpin") : t("workbench.files.pin")}
+      >
+        {pinned ? <Pin className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+      </button>
+    </div>
+  );
+}
+
 interface DirNodeProps {
+  threadId: string;
   workspaceId: string;
   path: string;
   name: string;
@@ -67,6 +120,7 @@ interface DirNodeProps {
 }
 
 function DirNode({
+  threadId,
   workspaceId,
   path,
   name,
@@ -136,6 +190,7 @@ function DirNode({
               entry.kind === "dir" ? (
                 <DirNode
                   key={entry.path}
+                  threadId={threadId}
                   workspaceId={workspaceId}
                   path={entry.path}
                   name={entry.name}
@@ -144,16 +199,13 @@ function DirNode({
                   onOpenFile={onOpenFile}
                 />
               ) : (
-                <button
+                <FileItem
                   key={entry.path}
-                  onClick={() => onOpenFile(entry.path)}
-                  className="w-full flex items-center gap-1 px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm text-left"
-                  style={{ paddingLeft: 8 + (depth + 1) * 12 }}
-                >
-                  <span className="w-3" />
-                  <File className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{entry.name}</span>
-                </button>
+                  threadId={threadId}
+                  entry={entry}
+                  depth={depth}
+                  onOpenFile={onOpenFile}
+                />
               ),
             )}
         </div>
@@ -162,11 +214,65 @@ function DirNode({
   );
 }
 
+/** Seção "Fixados" no topo — mostra os pins do thread. */
+function PinnedSection({
+  threadId,
+  onOpenFile,
+}: {
+  threadId: string;
+  onOpenFile: (path: string) => void;
+}) {
+  const t = useT();
+  const pinned = useWorkbenchStore(
+    (s) => s.pinnedFiles[threadId] ?? EMPTY_PINNED,
+  );
+  const togglePinned = useWorkbenchStore((s) => s.togglePinned);
+
+  if (pinned.length === 0) return null;
+
+  return (
+    <div className="border-b border-border/40 pb-1 mb-1">
+      <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {t("workbench.files.pinned")}
+      </div>
+      {pinned.map((path) => {
+        const name = path.split(/[/\\]/).pop() ?? path;
+        return (
+          <div
+            key={path}
+            className="group flex items-center gap-1 px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm"
+          >
+            <Pin className="w-3 h-3 shrink-0 text-primary" />
+            <button
+              onClick={() => onOpenFile(path)}
+              className="flex-1 text-left truncate text-foreground/80 hover:text-foreground"
+              title={path}
+            >
+              {name}
+            </button>
+            <button
+              onClick={() => togglePinned(threadId, path)}
+              className="shrink-0 p-0.5 rounded text-muted-foreground/0 group-hover:text-muted-foreground hover:text-foreground"
+              aria-label={t("workbench.files.unpin")}
+              title={t("workbench.files.unpin")}
+            >
+              <PinOff className="w-3 h-3" />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Lista vazia estável (evita re-render por nova referência). */
+const EMPTY_PINNED: string[] = [];
+
 interface FilesTabProps {
   threadId: string;
 }
 
-export function FilesTab(_props: FilesTabProps) {
+export function FilesTab({ threadId }: FilesTabProps) {
   const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
@@ -229,7 +335,9 @@ export function FilesTab(_props: FilesTabProps) {
 
       {/* Tree */}
       <div className="flex-1 overflow-y-auto py-1">
+        <PinnedSection threadId={threadId} onOpenFile={handleOpenFile} />
         <DirNode
+          threadId={threadId}
           workspaceId={wsId}
           path=""
           name={workspace.name}

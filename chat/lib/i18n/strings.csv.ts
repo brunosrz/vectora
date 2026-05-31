@@ -392,6 +392,12 @@ workbench.diff.not_git,This folder is not a git repository.,Esta carpeta no es u
 workbench.diff.clean,No pending changes.,Sin cambios pendientes.,Sem mudanças pendentes.
 workbench.diff.summary,"{n} modified files","{n} archivos modificados","{n} arquivos modificados"
 workbench.plan.empty,No plans yet — ask Vectora to draft one.,Sin planes — pídele uno a Vectora.,Sem planos — peça um ao Vectora.
+workbench.plan.ask_cta,Ask Vectora for a plan,Pedir un plan a Vectora,Pedir um plano ao Vectora
+workbench.plan.ask_prompt,"Crie um plano de implementação para…","Crea un plan de implementación para…","Crie um plano de implementação para…"
+workbench.files.pin,Pin to top,Fijar arriba,Fixar no topo
+workbench.files.unpin,Unpin,Desfijar,Desafixar
+workbench.files.pinned,Pinned,Fijados,Fixados
+workbench.diff.clean_hint,"Run ""git log"" to inspect recent commits.","Ejecuta ""git log"" para ver commits recientes.","Rode ""git log"" para inspecionar commits recentes."
 `;
 
 export default CSV;

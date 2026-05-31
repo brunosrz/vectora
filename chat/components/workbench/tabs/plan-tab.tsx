@@ -9,11 +9,13 @@
  * SWR via `useWorkbenchSWR`.
  */
 
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Sparkles } from "lucide-react";
 import { useCallback } from "react";
 
+import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
+import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import {
   WORKBENCH_STALE_MS,
   useWorkbenchStore,
@@ -103,11 +105,24 @@ export function PlanTab({ threadId }: PlanTabProps) {
 
   if (items.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
+      <div className="h-full flex flex-col items-center justify-center gap-3 p-4 text-center">
         <FileText className="w-6 h-6 text-muted-foreground/40" />
         <p className="text-xs text-muted-foreground">
           {t("workbench.plan.empty")}
         </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs gap-1.5"
+          onClick={() =>
+            useChatInputStore
+              .getState()
+              .pushDraft(t("workbench.plan.ask_prompt"))
+          }
+        >
+          <Sparkles className="w-3 h-3" />
+          {t("workbench.plan.ask_cta")}
+        </Button>
       </div>
     );
   }

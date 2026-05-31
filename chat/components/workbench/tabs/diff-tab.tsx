@@ -198,6 +198,9 @@ export function DiffTab(_props: DiffTabProps) {
         <p className="text-xs text-muted-foreground">
           {t("workbench.diff.clean")}
         </p>
+        <p className="text-[10px] text-muted-foreground/60">
+          {t("workbench.diff.clean_hint")}
+        </p>
       </div>
     );
   }
