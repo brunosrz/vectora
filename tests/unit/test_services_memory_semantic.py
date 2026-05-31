@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from vectora.services.memory import MemoryStore, _cosine_similarity
+from src.services.memory import MemoryStore, _cosine_similarity
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -143,7 +143,7 @@ class TestSearchMemoryTool:
     @pytest.mark.asyncio
     async def test_semantic_search_with_cohere(self):
         """Quando Cohere disponível e semantic enabled, usa cosine similarity."""
-        from vectora.tools.memory import search_memory
+        from src.tools.memory import search_memory
 
         config = {"configurable": {"thread_id": "t1"}}
 
@@ -185,7 +185,7 @@ class TestSearchMemoryTool:
     @pytest.mark.asyncio
     async def test_fallback_when_semantic_disabled(self):
         """Quando semantic desabilitado, retorna todas sem ranqueamento."""
-        from vectora.tools.memory import search_memory
+        from src.tools.memory import search_memory
 
         config = {"configurable": {"thread_id": "t2"}}
         all_mems = [
@@ -215,7 +215,7 @@ class TestSearchMemoryTool:
     @pytest.mark.asyncio
     async def test_fallback_when_no_api_key(self):
         """Sem API key Cohere, degrada para retornar todas as memórias."""
-        from vectora.tools.memory import search_memory
+        from src.tools.memory import search_memory
 
         config = {"configurable": {"thread_id": "t3"}}
 
@@ -241,7 +241,7 @@ class TestSearchMemoryTool:
     @pytest.mark.asyncio
     async def test_error_returns_failed(self):
         """Exceção em qualquer ponto retorna status failed."""
-        from vectora.tools.memory import search_memory
+        from src.tools.memory import search_memory
 
         config = {"configurable": {"thread_id": "t4"}}
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vectora.services.runtime_settings import RuntimeSettings
+from src.services.runtime_settings import RuntimeSettings
 
 # ---------------------------------------------------------------------------
 # Fixtures

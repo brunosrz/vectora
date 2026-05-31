@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from vectora.nodes.rag_subgraph import (
+from src.nodes.rag_subgraph import (
     _bm25_search,
     _deduplicate_docs,
     _generate_query_variants,
@@ -15,7 +15,7 @@ from vectora.nodes.rag_subgraph import (
     _tokenize,
     rag_expand_query,
 )
-from vectora.state import Document, State
+from src.state import Document, State
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -151,7 +151,7 @@ class TestCallVectorSearchAllHybrid:
         """Com hybrid enabled, _call_vector_search_all aplica BM25+RRF."""
         from unittest.mock import patch
 
-        from vectora.nodes.rag_subgraph import _call_vector_search_all
+        from src.nodes.rag_subgraph import _call_vector_search_all
 
         docs = [
             _doc("jwt authentication bearer", "jwt"),
@@ -186,7 +186,7 @@ class TestCallVectorSearchAllHybrid:
         """Com hybrid disabled, retorna apenas os primeiros N sem BM25."""
         from unittest.mock import patch
 
-        from vectora.nodes.rag_subgraph import _call_vector_search_all
+        from src.nodes.rag_subgraph import _call_vector_search_all
 
         docs = [_doc(f"doc{i}", f"s{i}") for i in range(5)]
 
@@ -342,7 +342,7 @@ class TestRagRetrieveHyDE:
 
         from langchain_core.runnables import RunnableConfig
 
-        from vectora.nodes.rag_subgraph import rag_retrieve
+        from src.nodes.rag_subgraph import rag_retrieve
 
         config: RunnableConfig = {"configurable": {}}
 
@@ -375,7 +375,7 @@ class TestRagRetrieveHyDE:
 
         from langchain_core.runnables import RunnableConfig
 
-        from vectora.nodes.rag_subgraph import rag_retrieve
+        from src.nodes.rag_subgraph import rag_retrieve
 
         config: RunnableConfig = {"configurable": {}}
 
@@ -405,7 +405,7 @@ class TestRagRetrieveHyDE:
 
         from langchain_core.runnables import RunnableConfig
 
-        from vectora.nodes.rag_subgraph import rag_retrieve
+        from src.nodes.rag_subgraph import rag_retrieve
 
         config: RunnableConfig = {"configurable": {}}
 

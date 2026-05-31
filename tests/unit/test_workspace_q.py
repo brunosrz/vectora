@@ -17,7 +17,7 @@ from types import SimpleNamespace
 import git
 import pytest
 
-from vectora.services.workspace import WorkspaceRegistry
+from src.services.workspace import WorkspaceRegistry
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -108,21 +108,21 @@ class TestSessionWorkspace:
 
 class TestGitInit:
     def test_init_empty_dir(self, tmp_path):
-        from vectora.tools.git import git_init_repo
+        from src.tools.git import git_init_repo
 
         result = git_init_repo(str(tmp_path))
         assert result["status"] == "ok"
         assert (tmp_path / ".git").exists()
 
     def test_init_is_idempotent(self, tmp_path):
-        from vectora.tools.git import git_init_repo
+        from src.tools.git import git_init_repo
 
         git_init_repo(str(tmp_path))
         again = git_init_repo(str(tmp_path))
         assert again["status"] == "already"
 
     def test_detect_reflects_init(self, tmp_path):
-        from vectora.tools.git import detect_git_info, git_init_repo
+        from src.tools.git import detect_git_info, git_init_repo
 
         assert detect_git_info(str(tmp_path)).get("is_git_repo") is False
         git_init_repo(str(tmp_path))
@@ -155,7 +155,7 @@ def repo_with_commit(tmp_path, monkeypatch):
 
 class TestWorktree:
     def test_add_creates_worktree(self, repo_with_commit):
-        from vectora.tools.git import _git_worktree_impl
+        from src.tools.git import _git_worktree_impl
 
         result = _git_worktree_impl(
             repo_with_commit, "ws1", action="add", name="feat-x", branch="feat-x"
@@ -164,7 +164,7 @@ class TestWorktree:
         assert result["name"] == "feat-x"
 
     def test_list_includes_added_worktree(self, repo_with_commit):
-        from vectora.tools.git import _git_worktree_impl
+        from src.tools.git import _git_worktree_impl
 
         _git_worktree_impl(
             repo_with_commit, "ws1", action="add", name="feat-y", branch="feat-y"
@@ -175,13 +175,13 @@ class TestWorktree:
         assert "feat-y" in paths
 
     def test_add_without_name_errors(self, repo_with_commit):
-        from vectora.tools.git import _git_worktree_impl
+        from src.tools.git import _git_worktree_impl
 
         result = _git_worktree_impl(repo_with_commit, "ws1", action="add")
         assert result["status"] == "error"
 
     def test_unknown_action_errors(self, repo_with_commit):
-        from vectora.tools.git import _git_worktree_impl
+        from src.tools.git import _git_worktree_impl
 
         result = _git_worktree_impl(repo_with_commit, "ws1", action="bogus")
         assert result["status"] == "error"
@@ -195,7 +195,7 @@ class TestWorktree:
 class TestWorkspaceHandlers:
     @pytest.mark.asyncio
     async def test_create_then_list(self, reg, tmp_path):
-        from vectora.api.handlers.workspaces import (
+        from src.api.handlers.workspaces import (
             CreateWorkspaceRequest,
             create_workspace,
             list_workspaces,
@@ -214,7 +214,7 @@ class TestWorkspaceHandlers:
 
     @pytest.mark.asyncio
     async def test_create_nonexistent_path(self, reg, tmp_path):
-        from vectora.api.handlers.workspaces import (
+        from src.api.handlers.workspaces import (
             CreateWorkspaceRequest,
             create_workspace,
         )
@@ -225,7 +225,7 @@ class TestWorkspaceHandlers:
 
     @pytest.mark.asyncio
     async def test_trust_handler(self, reg, tmp_path):
-        from vectora.api.handlers.workspaces import (
+        from src.api.handlers.workspaces import (
             TrustRequest,
             trust_workspace,
         )
@@ -238,7 +238,7 @@ class TestWorkspaceHandlers:
 
     @pytest.mark.asyncio
     async def test_set_active_unknown(self, reg):
-        from vectora.api.handlers.workspaces import (
+        from src.api.handlers.workspaces import (
             SetActiveRequest,
             set_active_workspace,
         )
@@ -250,7 +250,7 @@ class TestWorkspaceHandlers:
 
     @pytest.mark.asyncio
     async def test_browse_lists_subdirs(self, tmp_path):
-        from vectora.api.handlers.workspaces import browse_dir
+        from src.api.handlers.workspaces import browse_dir
 
         (tmp_path / "alpha").mkdir()
         (tmp_path / "beta").mkdir()

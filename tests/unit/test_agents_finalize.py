@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 
-from vectora.agents.coder import coder_finalize
-from vectora.agents.search import search_finalize
+from src.agents.coder import coder_finalize
+from src.agents.search import search_finalize
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -194,7 +194,7 @@ async def test_search_finalize_no_web_search():
 
 def test_graph_has_coder_finalize_node():
     """O grafo compilado deve conter o nó coder_finalize."""
-    from vectora.graph import build_graph
+    from src.graph import build_graph
 
     g = build_graph()
     assert "coder_finalize" in g.nodes
@@ -202,7 +202,7 @@ def test_graph_has_coder_finalize_node():
 
 def test_graph_has_search_finalize_node():
     """O grafo compilado deve conter o nó search_finalize."""
-    from vectora.graph import build_graph
+    from src.graph import build_graph
 
     g = build_graph()
     assert "search_finalize" in g.nodes
@@ -210,7 +210,7 @@ def test_graph_has_search_finalize_node():
 
 def test_graph_coder_routes_to_coder_finalize():
     """coder deve ter coder_finalize como destino (sem tool_calls)."""
-    from vectora.graph import build_graph
+    from src.graph import build_graph
 
     g = build_graph()
     assert "coder_finalize" in g.nodes
@@ -219,7 +219,7 @@ def test_graph_coder_routes_to_coder_finalize():
 
 def test_graph_search_routes_to_search_finalize():
     """search deve ter search_finalize como destino (sem tool_calls)."""
-    from vectora.graph import build_graph
+    from src.graph import build_graph
 
     g = build_graph()
     assert "search_finalize" in g.nodes

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vectora.types import CoderResult, SearchResult
+from src.types import CoderResult, SearchResult
 
 # ---------------------------------------------------------------------------
 # CoderResult

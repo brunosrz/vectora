@@ -1,0 +1,478 @@
+"""Handler do serviço ChatService — streaming via SSE.
+
+Endpoints:
+    POST /vectora.chat.v1.ChatService/StreamChat
+    POST /vectora.chat.v1.ChatService/ResumeChat
+    GET  /vectora.chat.v1.ChatService/GetTools
+
+Formato de resposta:
+    Content-Type: text/event-stream
+    Linhas: ``data: {"type": "<evento>", ...}\\n\\n``
+    Último evento: ``data: {"type": "done", "thread_id": "...", "run_id": ""}\\n\\n``
+"""
+
+from __future__ import annotations
+
+import asyncio
+import base64
+import contextlib
+import json
+import logging
+import uuid
+from pathlib import Path
+from typing import Any
+
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
+
+from src.api.adapters import adapt_stream
+from src.api.schemas import (
+    Attachment,
+    AttachmentKind,
+    ChatConfig,
+    ErrorEvent,
+    GetToolsResponse,
+    ResumeChatRequest,
+    StreamChatRequest,
+    ToolSchema,
+    encode_event,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+# ---------------------------------------------------------------------------
+# F1 — Helpers de attachments multimodais
+# ---------------------------------------------------------------------------
+
+#: Mapa extensão → linguagem para injeção em blocos de código
+_EXT_TO_LANG: dict[str, str] = {
+    "py": "python",
+    "js": "javascript",
+    "jsx": "javascript",
+    "ts": "typescript",
+    "tsx": "typescript",
+    "json": "json",
+    "md": "markdown",
+    "sh": "bash",
+    "bash": "bash",
+    "zsh": "bash",
+    "html": "html",
+    "css": "css",
+    "scss": "css",
+    "sql": "sql",
+    "yaml": "yaml",
+    "yml": "yaml",
+    "toml": "toml",
+    "rs": "rust",
+    "go": "go",
+    "java": "java",
+    "c": "c",
+    "cpp": "cpp",
+    "h": "c",
+    "rb": "ruby",
+    "php": "php",
+    "swift": "swift",
+    "kt": "kotlin",
+    "scala": "scala",
+    "r": "r",
+    "tf": "hcl",
+    "xml": "xml",
+}
+
+
+def _mime_to_lang(mime_type: str, filename: str) -> str:
+    """Detecta a linguagem de programação pela extensão do arquivo.
+
+    Retorna string vazia se não reconhecido (ex: PDF, binários).
+    """
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    return _EXT_TO_LANG.get(ext, "")
+
+
+def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
+    """Constrói HumanMessage com suporte a conteúdo multimodal.
+
+    - Sem attachments → ``HumanMessage(content=str)`` simples
+    - Imagem → content list com ``type=image_url`` (formato OpenAI)
+    - Código/PDF/texto → injetado como bloco de código ou texto no content list
+
+    O formato de ``content`` como lista é compatível com a maioria dos provedores
+    multimodais (OpenAI, Anthropic, Google Gemini via LangChain).
+    """
+    from langchain_core.messages import HumanMessage
+
+    if not attachments:
+        return HumanMessage(content=content)
+
+    parts: list[dict[str, Any]] = [{"type": "text", "text": content}]
+
+    for att in attachments:
+        if att.kind == AttachmentKind.IMAGE:
+            parts.append(
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{att.mime_type};base64,{att.base64_data}"
+                    },
+                }
+            )
+        else:
+            # Código, PDF ou texto — decodifica e injeta como texto
+            try:
+                decoded = base64.b64decode(att.base64_data).decode(
+                    "utf-8", errors="replace"
+                )
+            except Exception:
+                decoded = "[conteúdo não pôde ser decodificado]"
+
+            lang = _mime_to_lang(att.mime_type, att.name)
+            if lang:
+                block = f"\n[Arquivo: {att.name}]\n```{lang}\n{decoded}\n```"
+            else:
+                block = f"\n[Arquivo: {att.name}]\n{decoded}"
+
+            parts.append({"type": "text", "text": block})
+
+    return HumanMessage(content=parts)  # ty: ignore[no-matching-overload]
+
+
+# ---------------------------------------------------------------------------
+# Lazy graph loader
+# ---------------------------------------------------------------------------
+
+_graph: Any = None
+_checkpointer_ctx: Any = None  # mantém o AsyncSqliteSaver vivo durante todo o processo
+_graph_lock = asyncio.Lock()
+
+
+async def _get_graph() -> Any:
+    """Obtém o grafo LangGraph compilado (singleton).
+
+    O ``AsyncSqliteSaver`` é um async context manager — abrimos uma vez na primeira
+    chamada e mantemos a referência no módulo. ``aclose_graph()`` fecha tudo no
+    shutdown do servidor.
+    """
+    global _graph, _checkpointer_ctx
+    if _graph is not None:
+        return _graph
+    async with _graph_lock:
+        if _graph is not None:  # double-check após o lock
+            return _graph
+        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
+        from src.graph import build_graph
+
+        db_path = str(Path.home() / ".vectora" / "checkpoints.db")
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
+        checkpointer = await _checkpointer_ctx.__aenter__()
+        _graph = build_graph(checkpointer)
+        logger.info("api/chat: grafo LangGraph inicializado (db=%s)", db_path)
+    return _graph
+
+
+async def aclose_graph() -> None:
+    """Fecha o grafo + checkpointer SQLite. Idempotente.
+
+    Deve ser chamado no shutdown do FastAPI (lifespan). Encapsula o estado
+    privado do módulo (``_graph``, ``_checkpointer_ctx``) — o resto da app
+    nunca toca nesses globals diretamente.
+    """
+    global _graph, _checkpointer_ctx
+    async with _graph_lock:
+        if _checkpointer_ctx is None:
+            return
+        ctx = _checkpointer_ctx
+        _checkpointer_ctx = None
+        _graph = None
+        try:
+            await ctx.__aexit__(None, None, None)
+            logger.info("api/chat: checkpointer SQLite fechado")
+        except Exception as exc:
+            logger.warning("api/chat: erro ao fechar checkpointer: %s", exc)
+
+
+async def awarm_graph() -> None:
+    """Inicializa o grafo eagerly no startup (opt-in).
+
+    Evita que a primeira request pague o custo de compilação (~3-5s).
+    Falhas aqui não derrubam o servidor — apenas logam aviso.
+    """
+    try:
+        await _get_graph()
+    except Exception as exc:
+        logger.warning("api/chat: warmup do grafo falhou (continuando): %s", exc)
+
+
+# ---------------------------------------------------------------------------
+# StreamChat
+# ---------------------------------------------------------------------------
+
+
+def _user_id_from_request(http_request: Request) -> str:
+    """Extrai o user_id do request autenticado para o namespace de memória.
+
+    O AuthMiddleware injeta ``request.state.user`` quando o token é válido.
+    Sem usuário (modo CLI/root local), usa ``"local"`` — espelhando o
+    fallback de ``handlers/memory.py::_get_user_id``, garantindo que as
+    memórias gravadas pelo agente apareçam na aba Memória.
+    """
+    user = getattr(http_request.state, "user", None)
+    if user is not None and getattr(user, "id", None):
+        return str(user.id)
+    return "local"
+
+
+def _resolve_workspace_id(requested: str, thread_id: str, user_id: str) -> str:
+    """Resolve o workspace da sessão.
+
+    Se o cliente não escolheu uma pasta, cria/usa o workspace padrão da sessão
+    em ``~/Documents/vectora/<thread_id>``. Degrada para string vazia se a
+    criação falhar — nesse caso as tools usam o fallback de diretório atual.
+    """
+    if requested:
+        return requested
+    try:
+        from src.services.workspace import workspace_registry
+
+        ws = workspace_registry.get_or_create_session_workspace(thread_id, user_id)
+        workspace_registry.set_active(ws.id, user_id)
+        return ws.id
+    except Exception:
+        logger.warning(
+            "api/chat: falha ao criar workspace de sessão para %s", thread_id
+        )
+        return ""
+
+
+def _user_name_from_request(http_request: Request) -> str:
+    """Extrai o nome do usuário autenticado, ou vazio em modo CLI/anônimo."""
+    user = getattr(http_request.state, "user", None)
+    if user is None:
+        return ""
+    return str(getattr(user, "name", "") or "").strip()
+
+
+def _build_configurable(
+    config: ChatConfig,
+    thread_id: str,
+    user_id: str,
+    user_name: str = "",
+) -> dict[str, Any]:
+    """Monta o dict ``configurable`` do RunnableConfig a partir do ChatConfig.
+
+    Campos opcionais (workspace, prompt custom, modo de permissão, esforço de
+    raciocínio, idioma, nome do usuário) só entram quando preenchidos — nós e o
+    ``hitl_check`` aplicam seus defaults quando ausentes.
+
+    O ``user_name`` e ``language`` são consumidos pelo orchestrator para
+    personalizar o system prompt do agente (tratar pelo nome, responder no
+    idioma preferido).
+    """
+    configurable: dict[str, Any] = {
+        "thread_id": thread_id,
+        "user_id": user_id,
+    }
+    if config.workspace_id:
+        configurable["workspace_id"] = config.workspace_id
+    if config.custom_system_prompt:
+        configurable["custom_system_prompt"] = config.custom_system_prompt
+    if config.permission_mode:
+        configurable["permission_mode"] = config.permission_mode
+    if config.reasoning_effort:
+        configurable["reasoning_effort"] = config.reasoning_effort
+    # Idioma: lido cru do locale do SO (Python `os`/`locale`), repassado
+    # sem normalização. O dict de mapeamento foi removido — modelos
+    # modernos interpretam BCP-47/POSIX nativamente.
+    from src.agents._identity import detect_system_language
+
+    sys_lang = detect_system_language()
+    if sys_lang:
+        configurable["language"] = sys_lang
+    if user_name:
+        configurable["user_name"] = user_name
+    return configurable
+
+
+@router.post("/vectora.chat.v1.ChatService/StreamChat")
+async def stream_chat(
+    request: StreamChatRequest, http_request: Request
+) -> StreamingResponse:
+    """Inicia ou continua uma conversa — retorna SSE stream.
+
+    Se `thread_id` estiver vazio, cria uma nova thread e emite o ThreadEvent
+    como primeiro pacote do stream. O cliente deve armazenar o thread_id
+    recebido para continuar a conversa.
+    """
+    thread_id = request.thread_id or str(uuid.uuid4())
+
+    # user_id alimenta o namespace de memória (user:<id>) — precisa bater com o
+    # namespace lido por GET /memory (handlers/memory.py). Sem isso, save_memory
+    # caía em session_<thread_id> e a aba Memória ficava vazia.
+    user_id = _user_id_from_request(http_request)
+
+    # Resolve o workspace da sessão (cria o padrão em Documents/vectora/<id>
+    # quando o cliente não escolheu uma pasta) e fixa no config da request.
+    workspace_id = _resolve_workspace_id(
+        request.config.workspace_id, thread_id, user_id
+    )
+    request.config.workspace_id = workspace_id
+
+    # Registra thread em vectora_sessions para que ListThreads a inclua
+    # mesmo após reinicialização do servidor (o checkpointer LangGraph persiste
+    # separadamente e não é consultado pelo endpoint de listagem). Persiste o
+    # workspace para que trocar de chat restaure a pasta correta.
+    try:
+        from src.api.handlers.threads import _upsert_session
+
+        await _upsert_session(thread_id, workspace_id=workspace_id or None)
+    except Exception as exc:
+        logger.warning(
+            "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
+        )
+
+    try:
+        graph = await _get_graph()
+    except Exception as exc:
+        logger.exception("api/chat: erro ao inicializar grafo")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    user_name = _user_name_from_request(http_request)
+    configurable = _build_configurable(
+        request.config, thread_id, user_id, user_name=user_name
+    )
+
+    from src.services.usage import usage_tracker
+
+    usage_tracker.record(user_id)
+
+    config: dict[str, Any] = {
+        "configurable": configurable,
+        "recursion_limit": request.config.recursion_limit or 50,
+    }
+
+    human_msg = _build_human_message(request.content, request.attachments)
+
+    events = graph.astream_events(
+        {"messages": [human_msg]},
+        config=config,
+        version="v2",
+    )
+
+    return StreamingResponse(
+        adapt_stream(events, thread_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # Nginx: desabilita buffering de SSE
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# ResumeChat (HITL)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/vectora.chat.v1.ChatService/ResumeChat")
+async def resume_chat(
+    request: ResumeChatRequest, http_request: Request
+) -> StreamingResponse:
+    """Retoma uma execução pausada por HITL.
+
+    `decision` pode ser:
+    - ``"approve"`` — executa a tool com os args originais
+    - ``"reject"`` — cancela; o agente recebe feedback de rejeição
+    - ``"edit:<args_json>"`` — executa com args modificados
+    """
+    from langgraph.types import Command
+
+    try:
+        graph = await _get_graph()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    config: dict[str, Any] = {
+        "configurable": {
+            "thread_id": request.thread_id,
+            "user_id": _user_id_from_request(http_request),
+        },
+        "recursion_limit": 50,
+    }
+
+    # Monta o Command de resume
+    if request.decision == "approve":
+        resume_value = {"action": "approve"}
+    elif request.decision == "reject":
+        resume_value = {"action": "reject"}
+    elif request.decision.startswith("edit:"):
+        try:
+            edited_args = json.loads(request.decision[5:])
+            resume_value = {"action": "edit", "args": edited_args}
+        except json.JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid edit args: {exc}"
+            ) from exc
+    else:
+        raise HTTPException(
+            status_code=400, detail=f"Unknown decision: {request.decision!r}"
+        )
+
+    events = graph.astream_events(
+        Command(resume=resume_value),
+        config=config,
+        version="v2",
+    )
+
+    return StreamingResponse(
+        adapt_stream(events, request.thread_id),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# GetTools
+# ---------------------------------------------------------------------------
+
+
+@router.get("/vectora.chat.v1.ChatService/GetTools")
+async def get_tools(http_request: Request) -> GetToolsResponse:
+    """Retorna o schema das ferramentas disponíveis para o usuário autenticado.
+
+    Reflete a política de tools (deny por usuário) + as tools dos servidores MCP
+    do usuário — o mesmo toolset que o agente recebe (S4/S7).
+    """
+    try:
+        from src.services.tool_resolver import resolve_tools
+
+        resolved = await resolve_tools(_user_id_from_request(http_request))
+    except Exception as exc:
+        logger.warning("api/chat: não foi possível resolver tools: %s", exc)
+        return GetToolsResponse(tools=[])
+
+    tools: list[ToolSchema] = []
+    for t in resolved:
+        meta = getattr(t, "extras", None) or getattr(t, "metadata", None) or {}
+        render_hint = meta.get("render_hint", "json")
+
+        args_schema = "{}"
+        if hasattr(t, "args_schema") and t.args_schema:
+            with contextlib.suppress(Exception):
+                args_schema = json.dumps(t.args_schema.model_json_schema())
+
+        tools.append(
+            ToolSchema(
+                name=t.name,
+                description=t.description or "",
+                render_hint=render_hint,
+                category=meta.get("category", "general"),
+                destructive=bool(meta.get("destructive", False)),
+                icon=meta.get("icon", "tool"),
+                args_schema_json=args_schema,
+            )
+        )
+
+    return GetToolsResponse(tools=tools)

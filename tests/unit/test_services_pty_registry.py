@@ -6,7 +6,7 @@ backend de PTY (que requer pywinpty/ptyprocess + shell real).
 
 from __future__ import annotations
 
-from vectora.services.pty_registry import PtyRegistry
+from src.services.pty_registry import PtyRegistry
 
 
 class _FakeSession:

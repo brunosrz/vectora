@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vectora-agent"
-version = "0.1.0dev6"
+version = "0.1.0"
 description = "Vectora - Advanced AI Assistant with RAG and MCP capabilities"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -72,20 +72,17 @@ dependencies = [
 ]
 
 [project.scripts]
-vectora = "vectora.main:run"
+vectora = "src.main:run"
 
 [tool.hatch.build.targets.wheel]
-packages = ["vectora"]
+packages = ["src"]
 exclude = ["chat"]
 
 [tool.hatch.build.targets.sdist]
 exclude = ["chat"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"vectora/config/defaults.env" = "defaults.env"
-# chat_static/ é gerado por `make build-chat` e não commitado.
-# Se existir no momento do build, é incluído no wheel para distribuição unificada.
-# "vectora/chat_static" = "vectora/chat_static"
+"src/config/defaults.env" = "defaults.env"
 
 [tool.ruff]
 line-length = 88
@@ -93,7 +90,7 @@ target-version = "py313"
 fix = true
 show-fixes = true
 indent-width = 4
-exclude = [".venv", "data", "logs", "vectora/api/gen"]
+exclude = [".venv", "data", "logs", "src/api/gen"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -125,13 +122,13 @@ ignore = [
 "tests/integration/**/*.py" = ["S603", "PLW1510"]
 "check_coverage.py" = ["S603", "PLW1510", "PLW2901", "B007"]
 "run_coverage.py" = ["S603", "PLW1510", "RUF005"]
-"vectora/tools/*.py" = ["PLR0911", "S602"]
-"vectora/agents/*.py" = ["PLR0911"]
-"vectora/nodes/engine.py" = ["E501"]
-"vectora/nodes/base.py" = ["PLR0911"]
-"vectora/nodes/hitl.py" = ["PLR0911"]
-"vectora/ui/setup_wizard.py" = ["S603", "RUF006"]
-"vectora/services/checkpoint.py" = ["N802"]
+"src/tools/*.py" = ["PLR0911", "S602"]
+"src/agents/*.py" = ["PLR0911"]
+"src/nodes/engine.py" = ["E501"]
+"src/nodes/base.py" = ["PLR0911"]
+"src/nodes/hitl.py" = ["PLR0911"]
+"src/ui/setup_wizard.py" = ["S603", "RUF006"]
+"src/services/checkpoint.py" = ["N802"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -142,7 +139,7 @@ line-ending = "lf"
 # Excluímos código auto-gerado (protoc/grpcio) — a tipagem desses arquivos é
 # responsabilidade do gerador, não nossa.
 [tool.ty.src]
-exclude = ["vectora/api/gen"]
+exclude = ["src/api/gen"]
 
 [tool.bandit]
 exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py"]

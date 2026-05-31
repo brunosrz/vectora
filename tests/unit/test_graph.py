@@ -8,10 +8,10 @@ import pytest
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END
 
-from vectora.graph import _orchestrator_route, build_graph
+from src.graph import _orchestrator_route, build_graph
 
 if TYPE_CHECKING:
-    from vectora.state import State
+    from src.state import State
 
 
 def test_build_graph_compiles():

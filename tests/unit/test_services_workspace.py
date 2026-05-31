@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from vectora.services.workspace import Workspace, WorkspaceRegistry
+from src.services.workspace import Workspace, WorkspaceRegistry
 
 # ---------------------------------------------------------------------------
 # Helpers

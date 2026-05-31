@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 
-from vectora.nodes.hitl import ACCEPT_EDITS_AUTO, REQUIRE_APPROVAL, hitl_check
+from src.nodes.hitl import ACCEPT_EDITS_AUTO, REQUIRE_APPROVAL, hitl_check
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -353,7 +353,7 @@ async def test_plan_mode_ignores_safe_tools():
 
 def test_graph_has_hitl_check_node():
     """O grafo compilado deve conter o nó hitl_check."""
-    from vectora.graph import build_graph
+    from src.graph import build_graph
 
     g = build_graph()
     assert "hitl_check" in g.nodes
@@ -361,7 +361,7 @@ def test_graph_has_hitl_check_node():
 
 def test_graph_coder_routes_to_hitl_check():
     """A aresta condicional de coder deve ter hitl_check como destino, não coder_tools."""
-    from vectora.graph import build_graph
+    from src.graph import build_graph
 
     g = build_graph()
     # Verifica que o nó hitl_check existe e coder_tools também

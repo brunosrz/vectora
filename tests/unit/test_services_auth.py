@@ -30,7 +30,7 @@ def isolate_db(tmp_path, monkeypatch):
     db_file = str(tmp_path / "test_auth.db")
 
     # Resetar estado global do módulo auth antes de cada teste
-    import vectora.services.auth as auth_mod
+    import src.services.auth as auth_mod
 
     monkeypatch.setattr(auth_mod, "_db_conn", None)
     monkeypatch.setattr(
@@ -74,26 +74,26 @@ def isolate_db(tmp_path, monkeypatch):
 
 class TestPasswordHashing:
     def test_hash_is_not_plaintext(self):
-        from vectora.services.auth import hash_password
+        from src.services.auth import hash_password
 
         h = hash_password("senhasegura123")
         assert h != "senhasegura123"
         assert len(h) > 20
 
     def test_verify_correct_password(self):
-        from vectora.services.auth import hash_password, verify_password
+        from src.services.auth import hash_password, verify_password
 
         h = hash_password("minhasenha456!")
         assert verify_password("minhasenha456!", h) is True
 
     def test_verify_wrong_password(self):
-        from vectora.services.auth import hash_password, verify_password
+        from src.services.auth import hash_password, verify_password
 
         h = hash_password("correta123456")
         assert verify_password("errada123456", h) is False
 
     def test_two_hashes_of_same_password_differ(self):
-        from vectora.services.auth import hash_password
+        from src.services.auth import hash_password
 
         h1 = hash_password("mesmasenha123")
         h2 = hash_password("mesmasenha123")
@@ -107,7 +107,7 @@ class TestPasswordHashing:
 
 class TestJWT:
     def test_create_and_decode_access_token(self):
-        from vectora.services.auth import User, create_access_token, decode_access_token
+        from src.services.auth import User, create_access_token, decode_access_token
 
         user = User(
             id="u-1",
@@ -125,7 +125,7 @@ class TestJWT:
     def test_tampered_token_raises(self):
         from jose import JWTError
 
-        from vectora.services.auth import User, create_access_token, decode_access_token
+        from src.services.auth import User, create_access_token, decode_access_token
 
         user = User(
             id="u-1",
@@ -157,7 +157,7 @@ class TestJWT:
             payload, "test-secret-key-for-unit-tests", algorithm="HS256"
         )
 
-        from vectora.services.auth import decode_access_token
+        from src.services.auth import decode_access_token
 
         with pytest.raises(JWTError):
             decode_access_token(expired_token)
@@ -171,13 +171,13 @@ class TestJWT:
 class TestHasUsers:
     @pytest.mark.asyncio
     async def test_empty_db_has_no_users(self):
-        from vectora.services.auth import has_users
+        from src.services.auth import has_users
 
         assert await has_users() is False
 
     @pytest.mark.asyncio
     async def test_after_signup_has_users(self):
-        from vectora.services.auth import has_users, signup
+        from src.services.auth import has_users, signup
 
         await signup("first@example.com", "senhasegura1234")
         assert await has_users() is True
@@ -191,7 +191,7 @@ class TestHasUsers:
 class TestSignup:
     @pytest.mark.asyncio
     async def test_first_user_is_root(self):
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         user, access_token, refresh_token = await signup(
             "root@example.com", "senharootok1234"
@@ -203,7 +203,7 @@ class TestSignup:
 
     @pytest.mark.asyncio
     async def test_second_user_is_member(self):
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         await signup("root@example.com", "senharootok1234")
         user, _, _ = await signup("member@example.com", "senhameter1234")
@@ -211,7 +211,7 @@ class TestSignup:
 
     @pytest.mark.asyncio
     async def test_duplicate_email_raises(self):
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         await signup("dup@example.com", "senha123456789")
         with pytest.raises(ValueError, match="E-mail já cadastrado"):
@@ -219,14 +219,14 @@ class TestSignup:
 
     @pytest.mark.asyncio
     async def test_short_password_raises(self):
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         with pytest.raises(ValueError, match="mínimo 12"):
             await signup("short@example.com", "curta")
 
     @pytest.mark.asyncio
     async def test_email_stored_lowercase(self):
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         user, _, _ = await signup("Upper@Example.COM", "senhasegura1234")
         assert user.email == "upper@example.com"
@@ -240,7 +240,7 @@ class TestSignup:
 class TestSignin:
     @pytest.mark.asyncio
     async def test_valid_credentials(self):
-        from vectora.services.auth import signin, signup
+        from src.services.auth import signin, signup
 
         await signup("user@example.com", "senhasegura1234")
         user, access_token, refresh_token = await signin(
@@ -252,7 +252,7 @@ class TestSignin:
 
     @pytest.mark.asyncio
     async def test_wrong_password_raises(self):
-        from vectora.services.auth import signin, signup
+        from src.services.auth import signin, signup
 
         await signup("user2@example.com", "senhasegura1234")
         with pytest.raises(ValueError, match="Credenciais inválidas"):
@@ -260,14 +260,14 @@ class TestSignin:
 
     @pytest.mark.asyncio
     async def test_unknown_email_raises(self):
-        from vectora.services.auth import signin
+        from src.services.auth import signin
 
         with pytest.raises(ValueError, match="Credenciais inválidas"):
             await signin("ghost@example.com", "senhasegura1234")
 
     @pytest.mark.asyncio
     async def test_case_insensitive_email(self):
-        from vectora.services.auth import signin, signup
+        from src.services.auth import signin, signup
 
         await signup("case@example.com", "senhasegura1234")
         user, _, _ = await signin("CASE@EXAMPLE.COM", "senhasegura1234")
@@ -275,7 +275,7 @@ class TestSignin:
 
     @pytest.mark.asyncio
     async def test_signin_updates_last_login_at(self):
-        from vectora.services.auth import signin, signup
+        from src.services.auth import signin, signup
 
         user_created, _, _ = await signup("login@example.com", "senhasegura1234")
         assert user_created.last_login_at is None
@@ -291,7 +291,7 @@ class TestSignin:
 class TestRefreshTokens:
     @pytest.mark.asyncio
     async def test_refresh_issues_new_pair(self):
-        from vectora.services.auth import decode_access_token, refresh_tokens, signup
+        from src.services.auth import decode_access_token, refresh_tokens, signup
 
         _, _old_access, old_refresh = await signup(
             "refresh@example.com", "senhasegura1234"
@@ -307,7 +307,7 @@ class TestRefreshTokens:
 
     @pytest.mark.asyncio
     async def test_old_refresh_token_revoked_after_rotation(self):
-        from vectora.services.auth import refresh_tokens, signup
+        from src.services.auth import refresh_tokens, signup
 
         _, _, refresh = await signup("rot@example.com", "senhasegura1234")
         await refresh_tokens(refresh)
@@ -317,7 +317,7 @@ class TestRefreshTokens:
 
     @pytest.mark.asyncio
     async def test_invalid_refresh_token_raises(self):
-        from vectora.services.auth import refresh_tokens
+        from src.services.auth import refresh_tokens
 
         with pytest.raises(ValueError, match="inválido"):
             await refresh_tokens("token-invalido-qualquer")
@@ -327,7 +327,7 @@ class TestRefreshTokens:
         import hashlib
         from datetime import UTC, datetime, timedelta
 
-        from vectora.services.auth import _get_db, refresh_tokens, signup
+        from src.services.auth import _get_db, refresh_tokens, signup
 
         _, _, refresh = await signup("exp@example.com", "senhasegura1234")
         token_hash = hashlib.sha256(refresh.encode()).hexdigest()
@@ -353,7 +353,7 @@ class TestRefreshTokens:
 class TestSignout:
     @pytest.mark.asyncio
     async def test_signout_revokes_refresh_token(self):
-        from vectora.services.auth import refresh_tokens, signout, signup
+        from src.services.auth import refresh_tokens, signout, signup
 
         _, _, refresh = await signup("out@example.com", "senhasegura1234")
         await signout(refresh)
@@ -363,7 +363,7 @@ class TestSignout:
 
     @pytest.mark.asyncio
     async def test_signout_with_invalid_token_does_not_raise(self):
-        from vectora.services.auth import signout
+        from src.services.auth import signout
 
         # Signout com token inexistente não deve levantar exceção
         await signout("token-invalido-nao-deve-explodir")
@@ -377,7 +377,7 @@ class TestSignout:
 class TestGetUserById:
     @pytest.mark.asyncio
     async def test_returns_user(self):
-        from vectora.services.auth import get_user_by_id, signup
+        from src.services.auth import get_user_by_id, signup
 
         created, _, _ = await signup("find@example.com", "senhasegura1234")
         found = await get_user_by_id(created.id)
@@ -386,7 +386,7 @@ class TestGetUserById:
 
     @pytest.mark.asyncio
     async def test_returns_none_for_unknown_id(self):
-        from vectora.services.auth import get_user_by_id
+        from src.services.auth import get_user_by_id
 
         result = await get_user_by_id("id-que-nao-existe")
         assert result is None
@@ -400,7 +400,7 @@ class TestGetUserById:
 class TestChangePassword:
     @pytest.mark.asyncio
     async def test_changes_password_successfully(self):
-        from vectora.services.auth import change_password, signin, signup
+        from src.services.auth import change_password, signin, signup
 
         user, _, _ = await signup("chpwd@example.com", "senhaantiga1234")
         await change_password(user.id, "senhaantiga1234", "senhanova5678!")
@@ -411,7 +411,7 @@ class TestChangePassword:
 
     @pytest.mark.asyncio
     async def test_wrong_old_password_raises(self):
-        from vectora.services.auth import change_password, signup
+        from src.services.auth import change_password, signup
 
         user, _, _ = await signup("chpwd2@example.com", "senhaantiga1234")
         with pytest.raises(ValueError, match="Senha atual incorreta"):
@@ -419,7 +419,7 @@ class TestChangePassword:
 
     @pytest.mark.asyncio
     async def test_short_new_password_raises(self):
-        from vectora.services.auth import change_password, signup
+        from src.services.auth import change_password, signup
 
         user, _, _ = await signup("chpwd3@example.com", "senhaantiga1234")
         with pytest.raises(ValueError, match="mínimo 12"):
@@ -427,7 +427,7 @@ class TestChangePassword:
 
     @pytest.mark.asyncio
     async def test_change_password_revokes_existing_refresh_tokens(self):
-        from vectora.services.auth import change_password, refresh_tokens, signup
+        from src.services.auth import change_password, refresh_tokens, signup
 
         user, _, refresh = await signup("chpwd4@example.com", "senhaantiga1234")
         await change_password(user.id, "senhaantiga1234", "senhanova5678!")
@@ -444,7 +444,7 @@ class TestChangePassword:
 class TestEnvOverrides:
     @pytest.mark.asyncio
     async def test_set_and_get_override(self):
-        from vectora.services.auth import get_env_overrides, set_env_override, signup
+        from src.services.auth import get_env_overrides, set_env_override, signup
 
         user, _, _ = await signup("env@example.com", "senhasegura1234")
         await set_env_override(user.id, "GITHUB_TOKEN", "ghp_test123")
@@ -454,7 +454,7 @@ class TestEnvOverrides:
 
     @pytest.mark.asyncio
     async def test_delete_override(self):
-        from vectora.services.auth import (
+        from src.services.auth import (
             delete_env_override,
             get_env_overrides,
             set_env_override,
@@ -470,7 +470,7 @@ class TestEnvOverrides:
 
     @pytest.mark.asyncio
     async def test_override_does_not_affect_other_users(self):
-        from vectora.services.auth import get_env_overrides, set_env_override, signup
+        from src.services.auth import get_env_overrides, set_env_override, signup
 
         user1, _, _ = await signup("u1@example.com", "senhasegura1234")
         user2, _, _ = await signup("u2@example.com", "senhasegura5678")
@@ -481,7 +481,7 @@ class TestEnvOverrides:
 
     @pytest.mark.asyncio
     async def test_empty_overrides_for_new_user(self):
-        from vectora.services.auth import get_env_overrides, signup
+        from src.services.auth import get_env_overrides, signup
 
         user, _, _ = await signup("empty@example.com", "senhasegura1234")
         overrides = await get_env_overrides(user.id)
@@ -496,7 +496,7 @@ class TestEnvOverrides:
 class TestInvites:
     @pytest.mark.asyncio
     async def test_create_and_validate_invite(self):
-        from vectora.services.auth import create_invite, signup, validate_invite
+        from src.services.auth import create_invite, signup, validate_invite
 
         root, _, _ = await signup("root@example.com", "senharootok1234")
         token, expires_at = await create_invite(root.id, role="member")
@@ -509,7 +509,7 @@ class TestInvites:
 
     @pytest.mark.asyncio
     async def test_signup_with_invite_uses_invite_role(self):
-        from vectora.services.auth import create_invite, signup, validate_invite
+        from src.services.auth import create_invite, signup, validate_invite
 
         root, _, _ = await signup("root@example.com", "senharootok1234")
         token, _ = await create_invite(root.id, role="admin")
@@ -523,7 +523,7 @@ class TestInvites:
 
     @pytest.mark.asyncio
     async def test_consume_invalidates_invite(self):
-        from vectora.services.auth import (
+        from src.services.auth import (
             consume_invite,
             create_invite,
             signup,
@@ -539,7 +539,7 @@ class TestInvites:
 
     @pytest.mark.asyncio
     async def test_unknown_token_is_invalid(self):
-        from vectora.services.auth import validate_invite
+        from src.services.auth import validate_invite
 
         assert await validate_invite("token-inexistente") is None
 
@@ -547,7 +547,7 @@ class TestInvites:
     async def test_expired_invite_is_invalid(self):
         from datetime import UTC, datetime, timedelta
 
-        from vectora.services.auth import (
+        from src.services.auth import (
             _get_db,
             _hash_token,
             create_invite,
@@ -570,7 +570,7 @@ class TestInvites:
 
     @pytest.mark.asyncio
     async def test_list_and_revoke_invite(self):
-        from vectora.services.auth import (
+        from src.services.auth import (
             create_invite,
             list_invites,
             revoke_invite,
@@ -589,7 +589,7 @@ class TestInvites:
 
     @pytest.mark.asyncio
     async def test_first_user_ignores_invite_role(self):
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         # Sem usuários ainda: a role do convite é ignorada, o 1º vira root
         user, _, _ = await signup("first@example.com", "senhasegura1234", role="viewer")

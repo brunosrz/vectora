@@ -10,11 +10,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from vectora.nodes.web_curation import (
+from src.nodes.web_curation import (
     curate_and_enqueue,
     curate_web_results,
 )
-from vectora.types import WebResultVerdict
+from src.types import WebResultVerdict
 
 
 def _results() -> list[dict]:

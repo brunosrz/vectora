@@ -21,14 +21,14 @@ import pytest
 
 class TestTokenEvent:
     def test_defaults(self):
-        from vectora.api.schemas import TokenEvent
+        from src.api.schemas import TokenEvent
 
         e = TokenEvent(content="hello")
         assert e.content == "hello"
         assert e.node == ""
 
     def test_with_node(self):
-        from vectora.api.schemas import TokenEvent
+        from src.api.schemas import TokenEvent
 
         e = TokenEvent(content="world", node="invoke_llm")
         assert e.node == "invoke_llm"
@@ -36,7 +36,7 @@ class TestTokenEvent:
 
 class TestToolCallEvent:
     def test_defaults(self):
-        from vectora.api.schemas import ToolCallEvent
+        from src.api.schemas import ToolCallEvent
 
         e = ToolCallEvent(
             tool_name="web_search",
@@ -49,7 +49,7 @@ class TestToolCallEvent:
         assert e.icon == "tool"
 
     def test_destructive_flag(self):
-        from vectora.api.schemas import ToolCallEvent
+        from src.api.schemas import ToolCallEvent
 
         e = ToolCallEvent(
             tool_name="file_delete",
@@ -64,13 +64,13 @@ class TestToolCallEvent:
 
 class TestToolResultEvent:
     def test_success(self):
-        from vectora.api.schemas import ToolResultEvent
+        from src.api.schemas import ToolResultEvent
 
         e = ToolResultEvent(tool_call_id="tc-1", content_json='"ok"')
         assert e.is_error is False
 
     def test_error(self):
-        from vectora.api.schemas import ToolResultEvent
+        from src.api.schemas import ToolResultEvent
 
         e = ToolResultEvent(tool_call_id="tc-1", content_json='"err"', is_error=True)
         assert e.is_error is True
@@ -78,13 +78,13 @@ class TestToolResultEvent:
 
 class TestNodeEvent:
     def test_started(self):
-        from vectora.api.schemas import NodeEvent
+        from src.api.schemas import NodeEvent
 
         e = NodeEvent(node="orchestrator", status="started")
         assert e.duration_ms == 0
 
     def test_finished_with_duration(self):
-        from vectora.api.schemas import NodeEvent
+        from src.api.schemas import NodeEvent
 
         e = NodeEvent(node="search_agent", status="finished", duration_ms=1234)
         assert e.duration_ms == 1234
@@ -92,7 +92,7 @@ class TestNodeEvent:
 
 class TestDoneEvent:
     def test_basic(self):
-        from vectora.api.schemas import DoneEvent
+        from src.api.schemas import DoneEvent
 
         e = DoneEvent(thread_id="t-1")
         assert e.thread_id == "t-1"
@@ -101,13 +101,13 @@ class TestDoneEvent:
 
 class TestErrorEvent:
     def test_default_code(self):
-        from vectora.api.schemas import ErrorEvent
+        from src.api.schemas import ErrorEvent
 
         e = ErrorEvent(message="algo falhou")
         assert e.code == "INTERNAL"
 
     def test_custom_code(self):
-        from vectora.api.schemas import ErrorEvent
+        from src.api.schemas import ErrorEvent
 
         e = ErrorEvent(message="timeout", code="TIMEOUT")
         assert e.code == "TIMEOUT"
@@ -115,7 +115,7 @@ class TestErrorEvent:
 
 class TestHITLEvent:
     def test_fields(self):
-        from vectora.api.schemas import HITLEvent
+        from src.api.schemas import HITLEvent
 
         e = HITLEvent(
             tool_name="file_write",
@@ -128,7 +128,7 @@ class TestHITLEvent:
 
 class TestUIMetricsEvent:
     def test_defaults(self):
-        from vectora.api.schemas import UIMetricsEvent
+        from src.api.schemas import UIMetricsEvent
 
         e = UIMetricsEvent()
         assert e.last_node == ""
@@ -143,19 +143,19 @@ class TestUIMetricsEvent:
 
 class TestEncodeEvent:
     def test_format_starts_with_data_prefix(self):
-        from vectora.api.schemas import TokenEvent, encode_event
+        from src.api.schemas import TokenEvent, encode_event
 
         line = encode_event(TokenEvent(content="hi"))
         assert line.startswith("data: ")
 
     def test_format_ends_with_double_newline(self):
-        from vectora.api.schemas import DoneEvent, encode_event
+        from src.api.schemas import DoneEvent, encode_event
 
         line = encode_event(DoneEvent(thread_id="t-1"))
         assert line.endswith("\n\n")
 
     def test_type_discriminator_token(self):
-        from vectora.api.schemas import TokenEvent, encode_event
+        from src.api.schemas import TokenEvent, encode_event
 
         line = encode_event(TokenEvent(content="x"))
         data = json.loads(line.removeprefix("data: ").strip())
@@ -163,7 +163,7 @@ class TestEncodeEvent:
         assert data["content"] == "x"
 
     def test_type_discriminator_tool_call(self):
-        from vectora.api.schemas import ToolCallEvent, encode_event
+        from src.api.schemas import ToolCallEvent, encode_event
 
         e = ToolCallEvent(tool_name="search", tool_call_id="1", args_json="{}")
         data = json.loads(encode_event(e).removeprefix("data: ").strip())
@@ -171,7 +171,7 @@ class TestEncodeEvent:
         assert data["tool_name"] == "search"
 
     def test_type_discriminator_done(self):
-        from vectora.api.schemas import DoneEvent, encode_event
+        from src.api.schemas import DoneEvent, encode_event
 
         data = json.loads(
             encode_event(DoneEvent(thread_id="t-99")).removeprefix("data: ").strip()
@@ -180,7 +180,7 @@ class TestEncodeEvent:
         assert data["thread_id"] == "t-99"
 
     def test_type_discriminator_error(self):
-        from vectora.api.schemas import ErrorEvent, encode_event
+        from src.api.schemas import ErrorEvent, encode_event
 
         data = json.loads(
             encode_event(ErrorEvent(message="boom")).removeprefix("data: ").strip()
@@ -189,7 +189,7 @@ class TestEncodeEvent:
         assert data["message"] == "boom"
 
     def test_type_discriminator_node(self):
-        from vectora.api.schemas import NodeEvent, encode_event
+        from src.api.schemas import NodeEvent, encode_event
 
         data = json.loads(
             encode_event(NodeEvent(node="rag_agent", status="started"))
@@ -200,7 +200,7 @@ class TestEncodeEvent:
         assert data["node"] == "rag_agent"
 
     def test_all_event_types_are_serializable(self):
-        from vectora.api.schemas import (
+        from src.api.schemas import (
             DoneEvent,
             ErrorEvent,
             HITLEvent,
@@ -237,21 +237,21 @@ class TestEncodeEvent:
 
 class TestChatModels:
     def test_stream_chat_request_defaults(self):
-        from vectora.api.schemas import StreamChatRequest
+        from src.api.schemas import StreamChatRequest
 
         r = StreamChatRequest(content="oi")
         assert r.thread_id == ""
         assert r.config.recursion_limit == 50
 
     def test_chat_config_defaults(self):
-        from vectora.api.schemas import ChatConfig
+        from src.api.schemas import ChatConfig
 
         c = ChatConfig()
         assert c.model == ""
         assert c.llm_provider == ""
 
     def test_thread_model(self):
-        from vectora.api.schemas import Thread
+        from src.api.schemas import Thread
 
         t = Thread(id="t-1", created_at="2024-01-01", updated_at="2024-01-02")
         assert t.title == ""
@@ -259,7 +259,7 @@ class TestChatModels:
 
 class TestToolSchema:
     def test_defaults(self):
-        from vectora.api.schemas import ToolSchema
+        from src.api.schemas import ToolSchema
 
         ts = ToolSchema(name="my_tool", description="does stuff")
         assert ts.render_hint == "json"
@@ -271,14 +271,14 @@ class TestToolSchema:
 
 class TestAuthSchemas:
     def test_signup_request(self):
-        from vectora.api.schemas import SignupRequest
+        from src.api.schemas import SignupRequest
 
         r = SignupRequest(email="a@b.com", password="pass")  # noqa: S106
         assert r.email == "a@b.com"
 
     def test_user_response_from_user(self):
-        from vectora.api.schemas import UserResponse
-        from vectora.services.auth import User
+        from src.api.schemas import UserResponse
+        from src.services.auth import User
 
         user = User(
             id="u-1",
@@ -292,7 +292,7 @@ class TestAuthSchemas:
         assert ur.last_login_at is None
 
     def test_token_response_fields(self):
-        from vectora.api.schemas import TokenResponse, UserResponse
+        from src.api.schemas import TokenResponse, UserResponse
 
         tr = TokenResponse(
             access_token="acc",  # noqa: S106
@@ -303,13 +303,13 @@ class TestAuthSchemas:
         assert tr.access_token == "acc"  # noqa: S105
 
     def test_has_users_response(self):
-        from vectora.api.schemas import HasUsersResponse
+        from src.api.schemas import HasUsersResponse
 
         assert HasUsersResponse(exists=True).exists is True
         assert HasUsersResponse(exists=False).exists is False
 
     def test_audit_entry(self):
-        from vectora.api.schemas import AuditEntry
+        from src.api.schemas import AuditEntry
 
         e = AuditEntry(id="a-1", action="signin", timestamp="2024-01-01")
         assert e.success is True

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from vectora.services.plugins import (
+from src.services.plugins import (
     McpServer,
     add_server,
     build_connection,

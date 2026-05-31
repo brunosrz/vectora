@@ -80,7 +80,7 @@ async def test_fresh_greeting(lifecycle_graph, lifecycle_config):
 @REQUIRES_GOOGLE
 async def test_orchestrator_routes_to_coder(lifecycle_graph, lifecycle_config):
     """Step 2: Pedido de listagem de arquivos → orchestrator roteia para coder."""
-    from vectora.services.tracer import tracer
+    from src.services.tracer import tracer
 
     response = await invoke_graph(
         lifecycle_graph,
@@ -133,7 +133,7 @@ async def test_embed_known_doc():
     # Verificação rápida: o doc está no LanceDB?
     import lancedb
 
-    from vectora.config.settings import settings
+    from src.config.settings import settings
 
     db = await lancedb.connect_async(str(settings.lancedb_dir))
     tables = await db.table_names()
@@ -154,7 +154,7 @@ async def test_embed_known_doc():
 @REQUIRES_BOTH
 async def test_rag_finds_embedded_doc(lifecycle_graph, lifecycle_config):
     """Step 4: Pergunta sobre KNOWN_KEYWORD → RAG subgraph encontra o doc indexado."""
-    from vectora.tools.rag import vector_search
+    from src.tools.rag import vector_search
 
     # Primeiro verificamos via tool direta (mais confiável)
     result_json = await vector_search.ainvoke(
@@ -199,9 +199,9 @@ async def test_rag_finds_embedded_doc(lifecycle_graph, lifecycle_config):
 @REQUIRES_GOOGLE
 async def test_checkpointer_persists():
     """Step 5: Fecha o graph e reabre — histórico da session 1212 deve persistir."""
-    from vectora.context import Context
-    from vectora.graph import build_graph
-    from vectora.services.checkpoint import Checkpointer
+    from src.context import Context
+    from src.graph import build_graph
+    from src.services.checkpoint import Checkpointer
 
     context = Context(user_type="test", thread_id=TEST_THREAD_ID)
     config = RunnableConfig(
@@ -250,8 +250,8 @@ async def test_lancedb_doc_survives_restart():
     """Step 6: Abre novo cliente LanceDB e verifica que KNOWN_TEXT ainda existe."""
     import lancedb
 
-    from vectora.config.settings import settings
-    from vectora.tools.rag import vector_search
+    from src.config.settings import settings
+    from src.tools.rag import vector_search
 
     # Novo cliente LanceDB (simula restart)
     db = await lancedb.connect_async(str(settings.lancedb_dir))
@@ -288,7 +288,7 @@ async def test_lancedb_doc_survives_restart():
 @pytest.mark.order(7)
 async def test_traces_recorded():
     """Step 7: Verifica que o tracer registrou spans para a session 1212."""
-    from vectora.services.tracer import tracer
+    from src.services.tracer import tracer
 
     spans = await tracer.get_session(TEST_SESSION_ID)
 

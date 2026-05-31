@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from vectora.nodes.engine import _extract_tavily_results, process_retrieval
-from vectora.state import Document, State
+from src.nodes.engine import _extract_tavily_results, process_retrieval
+from src.state import Document, State
 
 
 class TestExtractTavilyResults:

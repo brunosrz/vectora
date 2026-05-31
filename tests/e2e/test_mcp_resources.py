@@ -27,7 +27,7 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(30)]
 @pytest.fixture(scope="module")
 def mcp_server():
     """Importa e retorna o módulo do servidor MCP."""
-    from vectora.mcp import server
+    from src.mcp import server
 
     return server
 

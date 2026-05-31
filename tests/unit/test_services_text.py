@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from vectora.services.text import text_service
+from src.services.text import text_service
 
 
 class TestTextService:

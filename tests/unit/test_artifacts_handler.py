@@ -48,21 +48,21 @@ def _write_artifact(home: Path, session_id: str, slug: str, content: str) -> Pat
 class TestListArtifacts:
     @pytest.mark.asyncio
     async def test_empty_for_unknown_session(self, fake_home):
-        from vectora.api.handlers.artifacts import list_artifacts
+        from src.api.handlers.artifacts import list_artifacts
 
         resp = await list_artifacts(session_id="never-existed")
         assert resp.artifacts == []
 
     @pytest.mark.asyncio
     async def test_empty_for_blank_session_id(self, fake_home):
-        from vectora.api.handlers.artifacts import list_artifacts
+        from src.api.handlers.artifacts import list_artifacts
 
         resp = await list_artifacts(session_id="")
         assert resp.artifacts == []
 
     @pytest.mark.asyncio
     async def test_lists_existing_artifacts(self, fake_home):
-        from vectora.api.handlers.artifacts import list_artifacts
+        from src.api.handlers.artifacts import list_artifacts
 
         _write_artifact(fake_home, "sess1", "plano-x", "# Plano X\n\ncorpo")
         _write_artifact(fake_home, "sess1", "spec-y", "# Spec Y\n\ndetalhe")
@@ -75,7 +75,7 @@ class TestListArtifacts:
     @pytest.mark.asyncio
     async def test_orders_by_mtime_desc(self, fake_home):
         """Mais recentes primeiro — o usuário vê o último plano no topo."""
-        from vectora.api.handlers.artifacts import list_artifacts
+        from src.api.handlers.artifacts import list_artifacts
 
         a = _write_artifact(fake_home, "ord", "antigo", "velho")
         # Garante mtimes diferentes (tolerância de 1s em sistemas com mtime granular)
@@ -91,7 +91,7 @@ class TestListArtifacts:
     @pytest.mark.asyncio
     async def test_content_preview_truncated_to_200(self, fake_home):
         """O preview no list é limitado — não devolve markdown gigante."""
-        from vectora.api.handlers.artifacts import list_artifacts
+        from src.api.handlers.artifacts import list_artifacts
 
         big = "X" * 1000
         _write_artifact(fake_home, "prev", "huge", big)
@@ -102,7 +102,7 @@ class TestListArtifacts:
     @pytest.mark.asyncio
     async def test_session_id_traversal_is_stripped(self, fake_home):
         """`..` e barras no session_id são removidos — não foge da pasta."""
-        from vectora.api.handlers.artifacts import list_artifacts
+        from src.api.handlers.artifacts import list_artifacts
 
         # Cria artifact numa sessão legítima.
         _write_artifact(fake_home, "legit", "plano", "ok")
@@ -127,7 +127,7 @@ class TestListArtifacts:
 class TestGetArtifact:
     @pytest.mark.asyncio
     async def test_returns_content(self, fake_home):
-        from vectora.api.handlers.artifacts import get_artifact
+        from src.api.handlers.artifacts import get_artifact
 
         _write_artifact(fake_home, "g1", "meu-plano", "# Conteúdo\n\nlinha")
         resp = await get_artifact("meu-plano", session_id="g1")
@@ -138,7 +138,7 @@ class TestGetArtifact:
 
     @pytest.mark.asyncio
     async def test_returns_empty_for_missing(self, fake_home):
-        from vectora.api.handlers.artifacts import get_artifact
+        from src.api.handlers.artifacts import get_artifact
 
         resp = await get_artifact("nao-existe", session_id="g1")
         assert resp.content == ""
@@ -146,7 +146,7 @@ class TestGetArtifact:
     @pytest.mark.asyncio
     async def test_slug_traversal_is_stripped(self, fake_home):
         """Slug com `..` e barras não consegue ler arquivos fora da pasta."""
-        from vectora.api.handlers.artifacts import get_artifact
+        from src.api.handlers.artifacts import get_artifact
 
         # Cria um arquivo "real" na pasta da sessão e outro fora.
         _write_artifact(fake_home, "safe", "ok", "interno")
@@ -161,7 +161,7 @@ class TestGetArtifact:
 
     @pytest.mark.asyncio
     async def test_session_id_traversal_is_stripped_in_get(self, fake_home):
-        from vectora.api.handlers.artifacts import get_artifact
+        from src.api.handlers.artifacts import get_artifact
 
         # Cria o "secreto" fora da pasta esperada.
         bad = fake_home / ".vectora" / "artifacts" / "boom" / "secreto.md"

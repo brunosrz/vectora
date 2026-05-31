@@ -71,7 +71,7 @@ class TestGitToolMetadata:
     """Verifica que cada tool tem os metadados corretos declarados."""
 
     def test_git_status_metadata(self) -> None:
-        from vectora.tools.git import git_status
+        from src.tools.git import git_status
 
         extras = git_status.metadata or {}
         assert extras.get("render_hint") == "code_block"
@@ -79,46 +79,46 @@ class TestGitToolMetadata:
         assert extras.get("destructive") is False
 
     def test_git_log_metadata(self) -> None:
-        from vectora.tools.git import git_log
+        from src.tools.git import git_log
 
         extras = git_log.metadata or {}
         assert extras.get("render_hint") == "table"
         assert extras.get("destructive") is False
 
     def test_git_diff_metadata(self) -> None:
-        from vectora.tools.git import git_diff
+        from src.tools.git import git_diff
 
         extras = git_diff.metadata or {}
         assert extras.get("render_hint") == "diff"
         assert extras.get("destructive") is False
 
     def test_git_branch_metadata(self) -> None:
-        from vectora.tools.git import git_branch
+        from src.tools.git import git_branch
 
         extras = git_branch.metadata or {}
         assert extras.get("render_hint") == "table"
         assert extras.get("category") == "git"
 
     def test_git_commit_is_destructive(self) -> None:
-        from vectora.tools.git import git_commit
+        from src.tools.git import git_commit
 
         extras = git_commit.metadata or {}
         assert extras.get("destructive") is True
 
     def test_git_push_is_destructive(self) -> None:
-        from vectora.tools.git import git_push
+        from src.tools.git import git_push
 
         extras = git_push.metadata or {}
         assert extras.get("destructive") is True
 
     def test_git_checkout_is_destructive(self) -> None:
-        from vectora.tools.git import git_checkout
+        from src.tools.git import git_checkout
 
         extras = git_checkout.metadata or {}
         assert extras.get("destructive") is True
 
     def test_git_stash_metadata(self) -> None:
-        from vectora.tools.git import git_stash
+        from src.tools.git import git_stash
 
         extras = git_stash.metadata or {}
         assert extras.get("category") == "git"
@@ -131,7 +131,7 @@ class TestGitToolMetadata:
 
 class TestGitStatusImpl:
     def test_clean_repo_returns_clean_true(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_status_impl
+        from src.tools.git import _git_status_impl
 
         result = _git_status_impl(repo_with_commit)
         assert result["status"] == "ok"
@@ -140,7 +140,7 @@ class TestGitStatusImpl:
         assert result["modified"] == []
 
     def test_dirty_repo_untracked_and_modified(self, dirty_repo: git.Repo) -> None:
-        from vectora.tools.git import _git_status_impl
+        from src.tools.git import _git_status_impl
 
         result = _git_status_impl(dirty_repo)
         assert result["status"] == "ok"
@@ -149,14 +149,14 @@ class TestGitStatusImpl:
         assert "README.md" in result["modified"]
 
     def test_returns_branch_name(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_status_impl
+        from src.tools.git import _git_status_impl
 
         result = _git_status_impl(repo_with_commit)
         assert isinstance(result["branch"], str)
         assert len(result["branch"]) > 0
 
     def test_staged_file_appears_in_staged(self, dirty_repo: git.Repo) -> None:
-        from vectora.tools.git import _git_status_impl
+        from src.tools.git import _git_status_impl
 
         # Stageia a modificação do README
         dirty_repo.index.add(["README.md"])
@@ -171,14 +171,14 @@ class TestGitStatusImpl:
 
 class TestGitLogImpl:
     def test_no_commits_returns_empty(self, empty_repo: git.Repo) -> None:
-        from vectora.tools.git import _git_log_impl
+        from src.tools.git import _git_log_impl
 
         result = _git_log_impl(empty_repo, n=10)
         assert result["status"] == "ok"
         assert result["commits"] == []
 
     def test_returns_commit_list(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_log_impl
+        from src.tools.git import _git_log_impl
 
         result = _git_log_impl(repo_with_commit, n=10)
         assert result["status"] == "ok"
@@ -189,7 +189,7 @@ class TestGitLogImpl:
         assert commit["message"] == "Initial commit"
 
     def test_respects_n_limit(self, tmp_path: Path) -> None:
-        from vectora.tools.git import _git_log_impl
+        from src.tools.git import _git_log_impl
 
         repo = git.Repo.init(tmp_path)
         repo.config_writer().set_value("user", "name", "T").release()
@@ -211,14 +211,14 @@ class TestGitLogImpl:
 
 class TestGitDiffImpl:
     def test_no_changes_empty_diff(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_diff_impl
+        from src.tools.git import _git_diff_impl
 
         result = _git_diff_impl(repo_with_commit)
         assert result["status"] == "ok"
         assert result["diff"] == ""
 
     def test_modified_file_shows_diff(self, dirty_repo: git.Repo) -> None:
-        from vectora.tools.git import _git_diff_impl
+        from src.tools.git import _git_diff_impl
 
         result = _git_diff_impl(dirty_repo)
         assert result["status"] == "ok"
@@ -232,7 +232,7 @@ class TestGitDiffImpl:
 
 class TestGitBranchImpl:
     def test_list_branches(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_branch_impl
+        from src.tools.git import _git_branch_impl
 
         result = _git_branch_impl(repo_with_commit, action="list")
         assert result["status"] == "ok"
@@ -241,7 +241,7 @@ class TestGitBranchImpl:
         assert isinstance(result["current"], str)
 
     def test_create_branch(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_branch_impl
+        from src.tools.git import _git_branch_impl
 
         result = _git_branch_impl(
             repo_with_commit, action="create", name="feature-test"
@@ -251,7 +251,7 @@ class TestGitBranchImpl:
         assert "feature-test" in branch_names
 
     def test_delete_branch(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_branch_impl
+        from src.tools.git import _git_branch_impl
 
         # Cria e depois deleta
         repo_with_commit.create_head("to-delete")
@@ -263,7 +263,7 @@ class TestGitBranchImpl:
     def test_create_without_name_returns_error(
         self, repo_with_commit: git.Repo
     ) -> None:
-        from vectora.tools.git import _git_branch_impl
+        from src.tools.git import _git_branch_impl
 
         result = _git_branch_impl(repo_with_commit, action="create", name=None)
         assert result["status"] == "error"
@@ -276,7 +276,7 @@ class TestGitBranchImpl:
 
 class TestGitCommitImpl:
     def test_commit_staged_file(self, dirty_repo: git.Repo) -> None:
-        from vectora.tools.git import _git_commit_impl
+        from src.tools.git import _git_commit_impl
 
         # Stageia o arquivo modificado
         dirty_repo.index.add(["README.md"])
@@ -286,7 +286,7 @@ class TestGitCommitImpl:
         assert result["message"] == "fix: update README"
 
     def test_nothing_staged_returns_error(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_commit_impl
+        from src.tools.git import _git_commit_impl
 
         result = _git_commit_impl(repo_with_commit, message="empty commit")
         assert result["status"] == "error"
@@ -296,7 +296,7 @@ class TestGitCommitImpl:
         )
 
     def test_commit_all_flag(self, dirty_repo: git.Repo) -> None:
-        from vectora.tools.git import _git_commit_impl
+        from src.tools.git import _git_commit_impl
 
         # Sem stagear — usa all=True para commitar arquivos rastreados modificados
         result = _git_commit_impl(dirty_repo, message="chore: update all", all=True)
@@ -310,7 +310,7 @@ class TestGitCommitImpl:
 
 class TestGitStashImpl:
     def test_push_stash_with_changes(self, dirty_repo: git.Repo) -> None:
-        from vectora.tools.git import _git_stash_impl
+        from src.tools.git import _git_stash_impl
 
         result = _git_stash_impl(dirty_repo, action="push")
         assert result["status"] == "ok"
@@ -319,7 +319,7 @@ class TestGitStashImpl:
     def test_push_stash_clean_repo_returns_info(
         self, repo_with_commit: git.Repo
     ) -> None:
-        from vectora.tools.git import _git_stash_impl
+        from src.tools.git import _git_stash_impl
 
         # Nada para stashear
         result = _git_stash_impl(repo_with_commit, action="push")
@@ -327,7 +327,7 @@ class TestGitStashImpl:
         assert result["status"] in ("ok", "info")
 
     def test_list_stash(self, repo_with_commit: git.Repo) -> None:
-        from vectora.tools.git import _git_stash_impl
+        from src.tools.git import _git_stash_impl
 
         result = _git_stash_impl(repo_with_commit, action="list")
         assert result["status"] == "ok"
@@ -341,21 +341,21 @@ class TestGitStashImpl:
 
 class TestGhToolsMetadata:
     def test_gh_pr_list_metadata(self) -> None:
-        from vectora.tools.gh import gh_pr_list
+        from src.tools.gh import gh_pr_list
 
         extras = gh_pr_list.metadata or {}
         assert extras.get("render_hint") == "table"
         assert extras.get("category") == "git"
 
     def test_gh_pr_create_is_destructive(self) -> None:
-        from vectora.tools.gh import gh_pr_create
+        from src.tools.gh import gh_pr_create
 
         extras = gh_pr_create.metadata or {}
         # PR create não é destrutivo por padrão (não apaga código)
         assert extras.get("category") == "git"
 
     def test_gh_issue_list_metadata(self) -> None:
-        from vectora.tools.gh import gh_issue_list
+        from src.tools.gh import gh_issue_list
 
         extras = gh_issue_list.metadata or {}
         assert extras.get("render_hint") == "table"
@@ -366,7 +366,7 @@ class TestGhToolsMetadata:
         import os
         from unittest.mock import patch
 
-        from vectora.tools.gh import _gh_run
+        from src.tools.gh import _gh_run
 
         with patch.dict(os.environ, {"PATH": ""}):
             result = _gh_run(["pr", "list"], cwd=str(tmp_path))

@@ -6,7 +6,7 @@ import dataclasses
 
 import pytest
 
-from vectora.context import Context
+from src.context import Context
 
 
 def test_context_required_fields():

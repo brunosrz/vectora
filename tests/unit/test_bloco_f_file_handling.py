@@ -13,7 +13,7 @@ import base64
 import pytest
 from langchain_core.messages import HumanMessage
 
-from vectora.api.schemas import Attachment, AttachmentKind, StreamChatRequest
+from src.api.schemas import Attachment, AttachmentKind, StreamChatRequest
 
 # ===========================================================================
 # Helpers
@@ -126,21 +126,21 @@ class TestStreamChatRequestAttachments:
 
 class TestBuildHumanMessage:
     def test_no_attachments_returns_plain_string(self) -> None:
-        from vectora.api.handlers.chat import _build_human_message
+        from src.api.handlers.chat import _build_human_message
 
         msg = _build_human_message("olá", [])
         assert isinstance(msg, HumanMessage)
         assert msg.content == "olá"
 
     def test_empty_list_returns_plain_string(self) -> None:
-        from vectora.api.handlers.chat import _build_human_message
+        from src.api.handlers.chat import _build_human_message
 
         msg = _build_human_message("teste", [])
         assert isinstance(msg.content, str)
         assert msg.content == "teste"
 
     def test_image_attachment_produces_multimodal(self) -> None:
-        from vectora.api.handlers.chat import _build_human_message
+        from src.api.handlers.chat import _build_human_message
 
         raw = _b64_bytes(b"fake_image_bytes")
         att = Attachment(
@@ -160,7 +160,7 @@ class TestBuildHumanMessage:
         assert raw in msg.content[1]["image_url"]["url"]
 
     def test_code_attachment_injects_code_block(self) -> None:
-        from vectora.api.handlers.chat import _build_human_message
+        from src.api.handlers.chat import _build_human_message
 
         code = "def hello():\n    print('hi')"
         att = Attachment(
@@ -178,7 +178,7 @@ class TestBuildHumanMessage:
         assert code in all_text
 
     def test_pdf_attachment_injects_decoded_text(self) -> None:
-        from vectora.api.handlers.chat import _build_human_message
+        from src.api.handlers.chat import _build_human_message
 
         content = "Este é o conteúdo do PDF"
         att = Attachment(
@@ -195,7 +195,7 @@ class TestBuildHumanMessage:
         assert content in all_text
 
     def test_text_attachment_decoded_utf8(self) -> None:
-        from vectora.api.handlers.chat import _build_human_message
+        from src.api.handlers.chat import _build_human_message
 
         content = "Olá, Mundo! 🌍"
         att = Attachment(
@@ -210,7 +210,7 @@ class TestBuildHumanMessage:
         assert content in all_text
 
     def test_mixed_attachments_correct_parts_count(self) -> None:
-        from vectora.api.handlers.chat import _build_human_message
+        from src.api.handlers.chat import _build_human_message
 
         img_att = Attachment(
             kind=AttachmentKind.IMAGE,
@@ -232,7 +232,7 @@ class TestBuildHumanMessage:
         assert types == ["text", "image_url", "text"]
 
     def test_multiple_images(self) -> None:
-        from vectora.api.handlers.chat import _build_human_message
+        from src.api.handlers.chat import _build_human_message
 
         att1 = Attachment(
             kind=AttachmentKind.IMAGE,
@@ -261,36 +261,36 @@ class TestBuildHumanMessage:
 
 class TestMimeToLang:
     def test_python_by_extension(self) -> None:
-        from vectora.api.handlers.chat import _mime_to_lang
+        from src.api.handlers.chat import _mime_to_lang
 
         assert _mime_to_lang("text/x-python", "script.py") == "python"
 
     def test_typescript_by_extension(self) -> None:
-        from vectora.api.handlers.chat import _mime_to_lang
+        from src.api.handlers.chat import _mime_to_lang
 
         assert _mime_to_lang("text/typescript", "app.ts") == "typescript"
 
     def test_tsx_by_extension(self) -> None:
-        from vectora.api.handlers.chat import _mime_to_lang
+        from src.api.handlers.chat import _mime_to_lang
 
         assert _mime_to_lang("text/typescript", "component.tsx") == "typescript"
 
     def test_json_by_extension(self) -> None:
-        from vectora.api.handlers.chat import _mime_to_lang
+        from src.api.handlers.chat import _mime_to_lang
 
         assert _mime_to_lang("application/json", "config.json") == "json"
 
     def test_pdf_returns_empty_string(self) -> None:
-        from vectora.api.handlers.chat import _mime_to_lang
+        from src.api.handlers.chat import _mime_to_lang
 
         assert _mime_to_lang("application/pdf", "doc.pdf") == ""
 
     def test_unknown_extension_returns_empty(self) -> None:
-        from vectora.api.handlers.chat import _mime_to_lang
+        from src.api.handlers.chat import _mime_to_lang
 
         assert _mime_to_lang("application/octet-stream", "file.xyz") == ""
 
     def test_shell_script(self) -> None:
-        from vectora.api.handlers.chat import _mime_to_lang
+        from src.api.handlers.chat import _mime_to_lang
 
         assert _mime_to_lang("text/x-sh", "run.sh") == "bash"

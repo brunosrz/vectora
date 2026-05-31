@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from vectora.types import Workspace
+from src.types import Workspace
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -23,7 +23,7 @@ def trusted_ws(tmp_path, monkeypatch):
     registram um workspace confiável em tmp_path e passam seu id no config para
     que leituras/escritas ocorram dentro da pasta de teste.
     """
-    from vectora.services import workspace as ws_mod
+    from src.services import workspace as ws_mod
 
     ws = Workspace(
         id="testws",
@@ -52,7 +52,7 @@ def trusted_ws(tmp_path, monkeypatch):
 
 class TestFileRead:
     def test_reads_existing_file(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_read
+        from src.tools.fs import file_read
 
         f = tmp_path / "hello.txt"
         f.write_text("conteudo do arquivo", encoding="utf-8")
@@ -60,7 +60,7 @@ class TestFileRead:
         assert result == "conteudo do arquivo"
 
     def test_file_not_found(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_read
+        from src.tools.fs import file_read
 
         result = file_read.invoke(
             {"file_path": str(tmp_path / "nao_existe.txt")}, config=trusted_ws
@@ -68,7 +68,7 @@ class TestFileRead:
         assert "not found" in result.lower() or "error" in result.lower()
 
     def test_blocked_path(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_read
+        from src.tools.fs import file_read
 
         outside = tmp_path.parent / "fora_do_workspace.txt"
         result = file_read.invoke({"file_path": str(outside)}, config=trusted_ws)
@@ -82,7 +82,7 @@ class TestFileRead:
 
 class TestFileWrite:
     def test_creates_new_file(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_write
+        from src.tools.fs import file_write
 
         dest = tmp_path / "novo.txt"
         result = file_write.invoke(
@@ -92,7 +92,7 @@ class TestFileWrite:
         assert dest.read_text(encoding="utf-8") == "ola mundo"
 
     def test_overwrites_existing_file(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_write
+        from src.tools.fs import file_write
 
         dest = tmp_path / "existente.txt"
         dest.write_text("velho", encoding="utf-8")
@@ -102,14 +102,14 @@ class TestFileWrite:
         assert dest.read_text(encoding="utf-8") == "novo"
 
     def test_creates_parent_dirs(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_write
+        from src.tools.fs import file_write
 
         dest = tmp_path / "sub" / "dir" / "arquivo.txt"
         file_write.invoke({"file_path": str(dest), "content": "x"}, config=trusted_ws)
         assert dest.exists()
 
     def test_blocked_path(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_write
+        from src.tools.fs import file_write
 
         outside = tmp_path.parent / "evil.txt"
         result = file_write.invoke(
@@ -118,8 +118,8 @@ class TestFileWrite:
         assert "fora do workspace" in result.lower() or "error" in result.lower()
 
     def test_requires_trust(self, tmp_path, monkeypatch):
-        from vectora.services import workspace as ws_mod
-        from vectora.tools.fs import file_write
+        from src.services import workspace as ws_mod
+        from src.tools.fs import file_write
 
         untrusted = Workspace(
             id="untrusted",
@@ -151,7 +151,7 @@ class TestFileWrite:
 
 class TestFileEdit:
     def test_replaces_text(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_edit
+        from src.tools.fs import file_edit
 
         f = tmp_path / "code.py"
         f.write_text("foo = 1\nbar = 2\n", encoding="utf-8")
@@ -163,7 +163,7 @@ class TestFileEdit:
         assert "foo = 99" in f.read_text(encoding="utf-8")
 
     def test_replace_all(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_edit
+        from src.tools.fs import file_edit
 
         f = tmp_path / "rep.txt"
         f.write_text("a a a", encoding="utf-8")
@@ -179,7 +179,7 @@ class TestFileEdit:
         assert f.read_text(encoding="utf-8") == "b b b"
 
     def test_creates_file_when_old_text_empty(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_edit
+        from src.tools.fs import file_edit
 
         dest = tmp_path / "new.txt"
         result = file_edit.invoke(
@@ -190,7 +190,7 @@ class TestFileEdit:
         assert dest.read_text(encoding="utf-8") == "criado"
 
     def test_text_not_found(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import file_edit
+        from src.tools.fs import file_edit
 
         f = tmp_path / "f.txt"
         f.write_text("abc", encoding="utf-8")
@@ -208,7 +208,7 @@ class TestFileEdit:
 
 class TestGrep:
     def test_finds_pattern_in_file(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import grep
+        from src.tools.fs import grep
 
         f = tmp_path / "src.py"
         f.write_text("def foo():\n    pass\n", encoding="utf-8")
@@ -218,7 +218,7 @@ class TestGrep:
         assert "def foo" in result
 
     def test_no_match_returns_message(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import grep
+        from src.tools.fs import grep
 
         f = tmp_path / "empty.py"
         f.write_text("nothing here", encoding="utf-8")
@@ -228,7 +228,7 @@ class TestGrep:
         assert "no matches" in result.lower()
 
     def test_invalid_pattern(self, trusted_ws):
-        from vectora.tools.fs import grep
+        from src.tools.fs import grep
 
         with patch("vectora.tools.fs.is_safe_regex_pattern", return_value=False):
             result = grep.invoke(
@@ -244,7 +244,7 @@ class TestGrep:
 
 class TestListDir:
     def test_lists_files(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import list_dir
+        from src.tools.fs import list_dir
 
         (tmp_path / "a.txt").write_text("x")
         (tmp_path / "b.txt").write_text("y")
@@ -253,7 +253,7 @@ class TestListDir:
         assert "b.txt" in result
 
     def test_recursive(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import list_dir
+        from src.tools.fs import list_dir
 
         sub = tmp_path / "sub"
         sub.mkdir()
@@ -264,7 +264,7 @@ class TestListDir:
         assert "deep.txt" in result
 
     def test_nonexistent_dir(self, tmp_path, trusted_ws):
-        from vectora.tools.fs import list_dir
+        from src.tools.fs import list_dir
 
         result = list_dir.invoke({"path": str(tmp_path / "nope")}, config=trusted_ws)
         assert "not found" in result.lower() or "error" in result.lower()
@@ -277,7 +277,7 @@ class TestListDir:
 
 class TestCreateArtifact:
     def test_creates_file_and_returns_json(self, tmp_path, monkeypatch):
-        from vectora.tools.fs import create_artifact
+        from src.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         result = create_artifact.invoke(
@@ -298,7 +298,7 @@ class TestCreateArtifact:
         assert "Auth" in content
 
     def test_saved_under_session_dir(self, tmp_path, monkeypatch):
-        from vectora.tools.fs import create_artifact
+        from src.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         result = create_artifact.invoke(
@@ -316,7 +316,7 @@ class TestCreateArtifact:
         assert artifact_path.suffix == ".md"
 
     def test_no_overwrite_collision(self, tmp_path, monkeypatch):
-        from vectora.tools.fs import create_artifact
+        from src.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         kwargs = {
@@ -332,7 +332,7 @@ class TestCreateArtifact:
         assert Path(r2["path"]).exists()
 
     def test_invalid_type_returns_error(self, tmp_path, monkeypatch):
-        from vectora.tools.fs import create_artifact
+        from src.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         result = create_artifact.invoke(
@@ -347,7 +347,7 @@ class TestCreateArtifact:
         assert "error" in data
 
     def test_empty_title_returns_error(self, tmp_path, monkeypatch):
-        from vectora.tools.fs import create_artifact
+        from src.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         result = create_artifact.invoke(
@@ -362,7 +362,7 @@ class TestCreateArtifact:
         assert "error" in data
 
     def test_empty_content_returns_error(self, tmp_path, monkeypatch):
-        from vectora.tools.fs import create_artifact
+        from src.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         result = create_artifact.invoke(
@@ -377,7 +377,7 @@ class TestCreateArtifact:
         assert "error" in data
 
     def test_all_valid_types_accepted(self, tmp_path, monkeypatch):
-        from vectora.tools.fs import _VALID_ARTIFACT_TYPES, create_artifact
+        from src.tools.fs import _VALID_ARTIFACT_TYPES, create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         for artifact_type in _VALID_ARTIFACT_TYPES:
@@ -393,7 +393,7 @@ class TestCreateArtifact:
             assert "error" not in data, f"tipo '{artifact_type}' falhou: {data}"
 
     def test_default_session_id(self, tmp_path, monkeypatch):
-        from vectora.tools.fs import create_artifact
+        from src.tools.fs import create_artifact
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         result = create_artifact.invoke(
@@ -416,30 +416,30 @@ class TestCreateArtifact:
 
 class TestArtifactSlug:
     def test_basic_slug(self):
-        from vectora.tools.fs import _artifact_slug
+        from src.tools.fs import _artifact_slug
 
         slug = _artifact_slug("Plano de Implementacao")
         assert slug == "plano-de-implementacao"
 
     def test_max_length(self):
-        from vectora.tools.fs import _artifact_slug
+        from src.tools.fs import _artifact_slug
 
         long_title = "a" * 100
         assert len(_artifact_slug(long_title)) <= 50
 
     def test_empty_falls_back(self):
-        from vectora.tools.fs import _artifact_slug
+        from src.tools.fs import _artifact_slug
 
         assert _artifact_slug("") == "artifact"
         assert _artifact_slug("   !@#  ") == "artifact"
 
     def test_spaces_become_hyphens(self):
-        from vectora.tools.fs import _artifact_slug
+        from src.tools.fs import _artifact_slug
 
         assert _artifact_slug("hello world") == "hello-world"
 
     def test_no_consecutive_hyphens(self):
-        from vectora.tools.fs import _artifact_slug
+        from src.tools.fs import _artifact_slug
 
         slug = _artifact_slug("a  b   c")
         assert "--" not in slug

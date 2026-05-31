@@ -11,10 +11,10 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END
 from langgraph.types import Command
 
-from vectora.agents.orchestrator import _is_post_rag, orchestrator
+from src.agents.orchestrator import _is_post_rag, orchestrator
 
 if TYPE_CHECKING:
-    from vectora.state import State
+    from src.state import State
 
 _CONFIG: RunnableConfig = {"configurable": {}}
 

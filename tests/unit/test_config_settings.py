@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from vectora.config.settings import Settings
+from src.config.settings import Settings
 
 # ---------------------------------------------------------------------------
 # Smoke tests (existentes)

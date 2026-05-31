@@ -27,13 +27,13 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END
 
-from vectora.agents.orchestrator import (
+from src.agents.orchestrator import (
     _synthesize_after_coder,
     _synthesize_after_parallel,
     _synthesize_after_search,
     orchestrator,
 )
-from vectora.types import CoderResult, OrchestratorDecision, SearchResult
+from src.types import CoderResult, OrchestratorDecision, SearchResult
 
 # ---------------------------------------------------------------------------
 # Helpers

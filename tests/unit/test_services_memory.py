@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vectora.services.memory import MemoryStore
+from src.services.memory import MemoryStore
 
 
 @pytest.fixture
@@ -89,7 +89,7 @@ class TestMemoryStore:
     def test_raises_if_no_dsn_configured(self):
         from unittest.mock import patch
 
-        from vectora.services.memory import MemoryStore
+        from src.services.memory import MemoryStore
 
         with patch("vectora.services.memory.settings") as ms:
             ms.db_dsn = None
@@ -97,7 +97,7 @@ class TestMemoryStore:
                 MemoryStore()
 
     def test_strips_file_prefix(self, tmp_path):
-        from vectora.services.memory import MemoryStore
+        from src.services.memory import MemoryStore
 
         db = tmp_path / "mem.db"
         store = MemoryStore(f"file:///{db}")

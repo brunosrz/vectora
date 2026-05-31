@@ -258,7 +258,7 @@ class TestGeminiCallsVectora:
         """Após chamada MCP do Gemini, o Vectora deve ter gravado traces."""
         import asyncio
 
-        from vectora.services.tracer import tracer
+        from src.services.tracer import tracer
 
         # Trigger uma chamada ao Vectora via Gemini
         prompt = (

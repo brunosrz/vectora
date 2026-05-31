@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from vectora.nodes.rag_subgraph import (
+from src.nodes.rag_subgraph import (
     _best_score,
     _call_vector_search,
     _call_vector_search_all,
@@ -22,7 +22,7 @@ from vectora.nodes.rag_subgraph import (
     rag_retrieve,
     rag_websearch,
 )
-from vectora.state import Document, State
+from src.state import Document, State
 
 _SCORE_HIGH = 0.7
 _SCORE_LOW = 0.4
@@ -139,7 +139,7 @@ class TestRagRetrieve:
 class TestCallVectorSearchAll:
     @pytest.mark.asyncio
     async def test_merges_all_collections_and_tags_web(self):
-        from vectora.config.settings import settings
+        from src.config.settings import settings
 
         curated = [_doc(0.9, "curated")]
         web = [Document(page_content="web", metadata={}, relevance_score=0.6)]
@@ -167,7 +167,7 @@ class TestCallVectorSearchAll:
 
     @pytest.mark.asyncio
     async def test_one_collection_failing_does_not_break(self):
-        from vectora.config.settings import settings
+        from src.config.settings import settings
 
         async def fake(query, collection, limit):
             if collection == settings.rag_collection_default:
@@ -343,12 +343,12 @@ class TestResultScore:
     """A6.4 — normalização de score (relevance_score do reranker vs _distance)."""
 
     def test_relevance_score_used_directly(self):
-        from vectora.nodes.rag_subgraph import _result_score
+        from src.nodes.rag_subgraph import _result_score
 
         assert _result_score({"relevance_score": 0.83}) == pytest.approx(0.83)
 
     def test_distance_converted_to_similarity_monotonic(self):
-        from vectora.nodes.rag_subgraph import _result_score
+        from src.nodes.rag_subgraph import _result_score
 
         # _distance 0 (match perfeito) → similaridade 1.0
         assert _result_score({"score": 0.0}) == pytest.approx(1.0)
@@ -360,7 +360,7 @@ class TestResultScore:
         assert near > far
 
     def test_relevance_score_takes_precedence(self):
-        from vectora.nodes.rag_subgraph import _result_score
+        from src.nodes.rag_subgraph import _result_score
 
         # com ambos presentes, o relevance_score do reranker vence
         assert _result_score({"relevance_score": 0.9, "score": 0.1}) == pytest.approx(
@@ -368,12 +368,12 @@ class TestResultScore:
         )
 
     def test_no_score_returns_none(self):
-        from vectora.nodes.rag_subgraph import _result_score
+        from src.nodes.rag_subgraph import _result_score
 
         assert _result_score({}) is None
 
     def test_invalid_score_returns_none(self):
-        from vectora.nodes.rag_subgraph import _result_score
+        from src.nodes.rag_subgraph import _result_score
 
         assert _result_score({"score": "nan-string"}) is None
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 from langchain_core.tools import tool
 
-from vectora.nodes.debug import DiagnosticToolNode
+from src.nodes.debug import DiagnosticToolNode
 
 
 @tool
@@ -56,7 +56,7 @@ async def test_disabled_tool_absent_from_node(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_local_user_gets_all_builtins(monkeypatch):
-    from vectora.services import tool_resolver
+    from src.services import tool_resolver
 
     # Sem user_id → resolve_tools usa o caminho local (ALL_TOOLS).
     monkeypatch.setattr(tool_resolver, "ALL_TOOLS", [echo_tool, other_tool])

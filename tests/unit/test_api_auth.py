@@ -40,7 +40,7 @@ def app_and_db(tmp_path_factory):
 
     import aiosqlite
 
-    import vectora.services.auth as auth_mod
+    import src.services.auth as auth_mod
 
     # Reset estado global
     auth_mod._db_conn = None
@@ -60,7 +60,7 @@ def app_and_db(tmp_path_factory):
 
     auth_mod._get_db = _patched_get_db  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
-    from vectora.api.server import create_app
+    from src.api.server import create_app
 
     app = create_app(serve_static=False)
     yield app, auth_mod
@@ -344,7 +344,7 @@ class TestUsageEndpoint:
 
 class TestToolsPolicy:
     def test_get_and_put_policy(self, client, root_tokens, tmp_path, monkeypatch):
-        from vectora.services import tool_policy
+        from src.services import tool_policy
 
         monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tp")
         access, _, _ = root_tokens
@@ -368,7 +368,7 @@ class TestToolsPolicy:
     def test_put_unknown_tool_rejected(
         self, client, root_tokens, tmp_path, monkeypatch
     ):
-        from vectora.services import tool_policy
+        from src.services import tool_policy
 
         monkeypatch.setattr(tool_policy, "_policy_dir", lambda: tmp_path / "tp")
         access, _, _ = root_tokens

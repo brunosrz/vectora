@@ -35,13 +35,13 @@ class TestGetClientIp:
         return req
 
     def test_returns_forwarded_for_when_present(self):
-        from vectora.api.middleware.rate_limit import _get_client_ip
+        from src.api.middleware.rate_limit import _get_client_ip
 
         req = self._make_request(headers={"X-Forwarded-For": "10.0.0.1, 192.168.0.1"})
         assert _get_client_ip(req) == "10.0.0.1"
 
     def test_returns_client_host_when_no_forwarded(self):
-        from vectora.api.middleware.rate_limit import _get_client_ip
+        from src.api.middleware.rate_limit import _get_client_ip
 
         req = self._make_request(headers={}, client_host="192.168.1.5")
         assert _get_client_ip(req) == "192.168.1.5"
@@ -49,7 +49,7 @@ class TestGetClientIp:
     def test_returns_unknown_when_no_client(self):
         from unittest.mock import MagicMock
 
-        from vectora.api.middleware.rate_limit import _get_client_ip
+        from src.api.middleware.rate_limit import _get_client_ip
 
         req = MagicMock()
         req.headers = {}
@@ -66,7 +66,7 @@ class TestAttachLimiter:
     def test_attach_does_not_raise(self):
         from fastapi import FastAPI
 
-        from vectora.api.middleware.rate_limit import attach_limiter
+        from src.api.middleware.rate_limit import attach_limiter
 
         app = FastAPI()
         attach_limiter(app)  # Não deve levantar exceção
@@ -74,7 +74,7 @@ class TestAttachLimiter:
     def test_limiter_attached_to_app_state(self):
         from fastapi import FastAPI
 
-        from vectora.api.middleware.rate_limit import attach_limiter
+        from src.api.middleware.rate_limit import attach_limiter
 
         app = FastAPI()
         attach_limiter(app)
@@ -92,7 +92,7 @@ class TestGetLimiter:
     def test_returns_none_when_no_limiter(self):
         from unittest.mock import MagicMock
 
-        from vectora.api.middleware.rate_limit import get_limiter
+        from src.api.middleware.rate_limit import get_limiter
 
         req = MagicMock()
         req.app.state = MagicMock(spec=[])  # sem atributo limiter
@@ -102,7 +102,7 @@ class TestGetLimiter:
     def test_returns_limiter_when_present(self):
         from unittest.mock import MagicMock
 
-        from vectora.api.middleware.rate_limit import get_limiter
+        from src.api.middleware.rate_limit import get_limiter
 
         req = MagicMock()
         fake_limiter = object()

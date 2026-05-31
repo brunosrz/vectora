@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import HumanMessage
 
-from vectora.nodes.retrieval import _rerank, retrieval_node
-from vectora.state import Document, State
+from src.nodes.retrieval import _rerank, retrieval_node
+from src.state import Document, State
 
 
 def _state(query="test query") -> State:
@@ -94,7 +94,7 @@ class TestRerank:
         mock_reranker = MagicMock()
         mock_reranker.compress_documents.return_value = reranked_lc
 
-        from vectora.config.settings import settings as real_settings
+        from src.config.settings import settings as real_settings
 
         original_key = real_settings.cohere_api_key
         try:
@@ -114,7 +114,7 @@ class TestRerank:
         mock_reranker = MagicMock()
         mock_reranker.compress_documents.side_effect = Exception("Cohere API error")
 
-        from vectora.config.settings import settings as real_settings
+        from src.config.settings import settings as real_settings
 
         original_key = real_settings.cohere_api_key
         try:

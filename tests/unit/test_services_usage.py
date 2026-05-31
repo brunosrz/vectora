@@ -7,7 +7,7 @@ medidor de uso do plano (GET /auth/usage).
 
 from __future__ import annotations
 
-from vectora.services.usage import UsageTracker
+from src.services.usage import UsageTracker
 
 # ---------------------------------------------------------------------------
 # Contagem básica

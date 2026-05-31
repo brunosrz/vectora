@@ -20,7 +20,7 @@ import pytest
 
 class TestIsPublicRoute:
     def test_auth_prefix_is_public(self):
-        from vectora.api.middleware.auth import _is_public_route
+        from src.api.middleware.auth import _is_public_route
 
         assert _is_public_route("/auth/signin") is True
         assert _is_public_route("/auth/signup") is True
@@ -28,36 +28,36 @@ class TestIsPublicRoute:
         assert _is_public_route("/auth/refresh") is True
 
     def test_health_is_public(self):
-        from vectora.api.middleware.auth import _is_public_route
+        from src.api.middleware.auth import _is_public_route
 
         assert _is_public_route("/health") is True
 
     def test_docs_is_public(self):
-        from vectora.api.middleware.auth import _is_public_route
+        from src.api.middleware.auth import _is_public_route
 
         assert _is_public_route("/docs") is True
         assert _is_public_route("/openapi.json") is True
 
     def test_static_files_are_public(self):
-        from vectora.api.middleware.auth import _is_public_route
+        from src.api.middleware.auth import _is_public_route
 
         assert _is_public_route("/static/app.js") is True
         assert _is_public_route("/favicon.ico") is True
         assert _is_public_route("/assets/logo.png") is True
 
     def test_chat_endpoints_are_private(self):
-        from vectora.api.middleware.auth import _is_public_route
+        from src.api.middleware.auth import _is_public_route
 
         assert _is_public_route("/vectora.chat.v1.ChatService/StreamChat") is False
         assert _is_public_route("/vectora.chat.v1.ThreadService/ListThreads") is False
 
     def test_metrics_is_private(self):
-        from vectora.api.middleware.auth import _is_public_route
+        from src.api.middleware.auth import _is_public_route
 
         assert _is_public_route("/metrics") is False
 
     def test_root_path_is_private(self):
-        from vectora.api.middleware.auth import _is_public_route
+        from src.api.middleware.auth import _is_public_route
 
         assert _is_public_route("/") is False
 
@@ -69,31 +69,31 @@ class TestIsPublicRoute:
 
 class TestAuthEnabled:
     def test_true_by_default(self, monkeypatch):
-        from vectora.api.middleware import auth as m
+        from src.api.middleware import auth as m
 
         monkeypatch.delenv("VECTORA_AUTH_REQUIRED", raising=False)
         assert m._auth_enabled() is True
 
     def test_false_when_set_false(self, monkeypatch):
-        from vectora.api.middleware import auth as m
+        from src.api.middleware import auth as m
 
         monkeypatch.setenv("VECTORA_AUTH_REQUIRED", "false")
         assert m._auth_enabled() is False
 
     def test_false_when_set_0(self, monkeypatch):
-        from vectora.api.middleware import auth as m
+        from src.api.middleware import auth as m
 
         monkeypatch.setenv("VECTORA_AUTH_REQUIRED", "0")
         assert m._auth_enabled() is False
 
     def test_true_when_set_true(self, monkeypatch):
-        from vectora.api.middleware import auth as m
+        from src.api.middleware import auth as m
 
         monkeypatch.setenv("VECTORA_AUTH_REQUIRED", "true")
         assert m._auth_enabled() is True
 
     def test_case_insensitive(self, monkeypatch):
-        from vectora.api.middleware import auth as m
+        from src.api.middleware import auth as m
 
         monkeypatch.setenv("VECTORA_AUTH_REQUIRED", "FALSE")
         assert m._auth_enabled() is False
@@ -111,7 +111,7 @@ def auth_client(tmp_path, monkeypatch):
 
     import aiosqlite
 
-    import vectora.services.auth as auth_mod
+    import src.services.auth as auth_mod
 
     auth_mod._db_conn = None
     auth_mod._get_secret = lambda: "middleware-test-secret-abcdef"  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
@@ -132,7 +132,7 @@ def auth_client(tmp_path, monkeypatch):
 
     from fastapi.testclient import TestClient
 
-    from vectora.api.server import create_app
+    from src.api.server import create_app
 
     app = create_app(serve_static=False)
     client = TestClient(app, raise_server_exceptions=False)

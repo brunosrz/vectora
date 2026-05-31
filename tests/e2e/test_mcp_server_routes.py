@@ -47,7 +47,7 @@ EXPECTED_TOOL_NAMES = {
 @pytest.fixture(scope="module")
 def server():
     """Importa e retorna o módulo do servidor MCP."""
-    from vectora.mcp import server as _server
+    from src.mcp import server as _server
 
     return _server
 

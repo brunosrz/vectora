@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from vectora.types import Workspace
+from src.types import Workspace
 
 # ---------------------------------------------------------------------------
 # Fixture — workspace confiável apontando para tmp_path
@@ -29,7 +29,7 @@ def trusted_ws(tmp_path, monkeypatch):
     Devolve uma tupla ``(workspace_id, tmp_path)`` para os testes montarem
     arquivos dentro de tmp_path e chamarem os endpoints com o id certo.
     """
-    from vectora.services import workspace as ws_mod
+    from src.services import workspace as ws_mod
 
     ws = Workspace(
         id="vws",
@@ -54,7 +54,7 @@ def trusted_ws(tmp_path, monkeypatch):
 class TestWorkspaceTree:
     @pytest.mark.asyncio
     async def test_lists_root_when_path_empty(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_tree
+        from src.api.handlers.workspaces import workspace_tree
 
         wsid, root = trusted_ws
         (root / "a.txt").write_text("a", encoding="utf-8")
@@ -67,7 +67,7 @@ class TestWorkspaceTree:
 
     @pytest.mark.asyncio
     async def test_lists_subdir(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_tree
+        from src.api.handlers.workspaces import workspace_tree
 
         wsid, root = trusted_ws
         (root / "sub").mkdir()
@@ -80,7 +80,7 @@ class TestWorkspaceTree:
     @pytest.mark.asyncio
     async def test_filters_noisy_dirs(self, trusted_ws):
         """`.git`, `node_modules`, `.venv`, `__pycache__` não aparecem."""
-        from vectora.api.handlers.workspaces import workspace_tree
+        from src.api.handlers.workspaces import workspace_tree
 
         wsid, root = trusted_ws
         for noisy in (".git", "node_modules", ".venv", "__pycache__", ".next"):
@@ -95,7 +95,7 @@ class TestWorkspaceTree:
 
     @pytest.mark.asyncio
     async def test_marks_dirs_and_files(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_tree
+        from src.api.handlers.workspaces import workspace_tree
 
         wsid, root = trusted_ws
         (root / "data").mkdir()
@@ -109,7 +109,7 @@ class TestWorkspaceTree:
     @pytest.mark.asyncio
     async def test_returns_empty_for_traversal_attempt(self, trusted_ws):
         """`..` resolve fora do workspace → guard rail bloqueia."""
-        from vectora.api.handlers.workspaces import workspace_tree
+        from src.api.handlers.workspaces import workspace_tree
 
         wsid, _ = trusted_ws
         resp = await workspace_tree(workspace_id=wsid, path="..")
@@ -117,7 +117,7 @@ class TestWorkspaceTree:
 
     @pytest.mark.asyncio
     async def test_returns_empty_for_unknown_workspace(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_tree
+        from src.api.handlers.workspaces import workspace_tree
 
         resp = await workspace_tree(workspace_id="nope", path="")
         assert resp.entries == []
@@ -131,7 +131,7 @@ class TestWorkspaceTree:
 class TestWorkspaceFile:
     @pytest.mark.asyncio
     async def test_reads_text_file(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_file
+        from src.api.handlers.workspaces import workspace_file
 
         wsid, root = trusted_ws
         (root / "hello.txt").write_text("olá mundo\n", encoding="utf-8")
@@ -144,7 +144,7 @@ class TestWorkspaceFile:
     @pytest.mark.asyncio
     async def test_detects_binary_file(self, trusted_ws):
         """Byte nulo nos primeiros 8 kB → kind=binary, sem conteúdo."""
-        from vectora.api.handlers.workspaces import workspace_file
+        from src.api.handlers.workspaces import workspace_file
 
         wsid, root = trusted_ws
         (root / "data.bin").write_bytes(b"\x00\x01\x02\xff" * 100)
@@ -157,7 +157,7 @@ class TestWorkspaceFile:
     @pytest.mark.asyncio
     async def test_truncates_large_text(self, trusted_ws):
         """Arquivos acima de 256 kB são truncados (campo `truncated=True`)."""
-        from vectora.api.handlers.workspaces import workspace_file
+        from src.api.handlers.workspaces import workspace_file
 
         wsid, root = trusted_ws
         # 300 kB de "a"
@@ -171,7 +171,7 @@ class TestWorkspaceFile:
 
     @pytest.mark.asyncio
     async def test_returns_empty_for_missing_file(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_file
+        from src.api.handlers.workspaces import workspace_file
 
         wsid, _ = trusted_ws
         resp = await workspace_file(workspace_id=wsid, path="nao-existe.txt")
@@ -181,7 +181,7 @@ class TestWorkspaceFile:
     @pytest.mark.asyncio
     async def test_blocks_traversal(self, trusted_ws):
         """Path `..` ou absoluto fora do workspace é bloqueado."""
-        from vectora.api.handlers.workspaces import workspace_file
+        from src.api.handlers.workspaces import workspace_file
 
         wsid, root = trusted_ws
         # Cria arquivo IRMÃO ao workspace (acima dele)
@@ -202,7 +202,7 @@ class TestWorkspaceFile:
 class TestWorkspaceGitDiff:
     @pytest.mark.asyncio
     async def test_returns_empty_for_non_git_workspace(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_git_diff
+        from src.api.handlers.workspaces import workspace_git_diff
 
         wsid, _ = trusted_ws
         resp = await workspace_git_diff(workspace_id=wsid)
@@ -213,7 +213,7 @@ class TestWorkspaceGitDiff:
 
     @pytest.mark.asyncio
     async def test_returns_empty_for_unknown_workspace(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_git_diff
+        from src.api.handlers.workspaces import workspace_git_diff
 
         resp = await workspace_git_diff(workspace_id="nope")
         assert resp.is_git_repo is False
@@ -223,7 +223,7 @@ class TestWorkspaceGitDiff:
 class TestWorkspaceGitDiffFile:
     @pytest.mark.asyncio
     async def test_returns_empty_hunks_for_non_git_workspace(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_git_diff_file
+        from src.api.handlers.workspaces import workspace_git_diff_file
 
         wsid, _ = trusted_ws
         resp = await workspace_git_diff_file(workspace_id=wsid, path="x.md")
@@ -231,7 +231,7 @@ class TestWorkspaceGitDiffFile:
 
     @pytest.mark.asyncio
     async def test_returns_empty_for_unknown_workspace(self, trusted_ws):
-        from vectora.api.handlers.workspaces import workspace_git_diff_file
+        from src.api.handlers.workspaces import workspace_git_diff_file
 
         resp = await workspace_git_diff_file(workspace_id="nope", path="x.md")
         assert resp.hunks == []
@@ -244,7 +244,7 @@ class TestWorkspaceGitDiffFile:
 
 class TestParseUnifiedDiff:
     def test_splits_hunks_by_at_at_header(self):
-        from vectora.api.handlers.workspaces import _parse_unified_diff
+        from src.api.handlers.workspaces import _parse_unified_diff
 
         diff = (
             "@@ -1,3 +1,3 @@\n"
@@ -264,13 +264,13 @@ class TestParseUnifiedDiff:
         assert hunks[1].header == "@@ -10,2 +10,2 @@"
 
     def test_returns_empty_for_empty_diff(self):
-        from vectora.api.handlers.workspaces import _parse_unified_diff
+        from src.api.handlers.workspaces import _parse_unified_diff
 
         assert _parse_unified_diff("") == []
 
     def test_ignores_lines_before_first_hunk(self):
         """Headers `diff --git` / `index` antes do primeiro `@@` são descartados."""
-        from vectora.api.handlers.workspaces import _parse_unified_diff
+        from src.api.handlers.workspaces import _parse_unified_diff
 
         diff = (
             "diff --git a/x b/x\n"

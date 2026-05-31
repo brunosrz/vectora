@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from vectora.agents.search import SYSTEM_PROMPT, search
+from src.agents.search import SYSTEM_PROMPT, search
 
 if TYPE_CHECKING:
-    from vectora.state import State
+    from src.state import State
 
 
 def test_system_prompt_exists():

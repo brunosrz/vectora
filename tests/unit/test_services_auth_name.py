@@ -24,7 +24,7 @@ import pytest
 def isolate_db(tmp_path, monkeypatch):
     db_file = str(tmp_path / "test_auth_name.db")
 
-    import vectora.services.auth as auth_mod
+    import src.services.auth as auth_mod
 
     monkeypatch.setattr(auth_mod, "_db_conn", None)
     monkeypatch.setattr(
@@ -61,14 +61,14 @@ class TestSignupWithName:
     @pytest.mark.asyncio
     async def test_name_defaults_to_empty(self):
         """Backward-compat: chamadas antigas sem name continuam funcionando."""
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         user, _, _ = await signup("noname@example.com", "senhasegura1234")
         assert user.name == ""
 
     @pytest.mark.asyncio
     async def test_accepts_simple_name(self):
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         user, _, _ = await signup(
             "bruno@example.com", "senhasegura1234", name="Bruno Soares"
@@ -77,7 +77,7 @@ class TestSignupWithName:
 
     @pytest.mark.asyncio
     async def test_strips_whitespace(self):
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         user, _, _ = await signup(
             "trim@example.com", "senhasegura1234", name="  Bruno  "
@@ -87,7 +87,7 @@ class TestSignupWithName:
     @pytest.mark.asyncio
     async def test_collapses_internal_whitespace(self):
         """Espaços/tabs internos múltiplos viram um espaço só."""
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         user, _, _ = await signup(
             "spaces@example.com",
@@ -99,7 +99,7 @@ class TestSignupWithName:
     @pytest.mark.asyncio
     async def test_caps_at_100_chars(self):
         """Nome muito longo é truncado em 100 caracteres."""
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         huge = "A" * 500
         user, _, _ = await signup("huge@example.com", "senhasegura1234", name=huge)
@@ -109,7 +109,7 @@ class TestSignupWithName:
     @pytest.mark.asyncio
     async def test_accepts_utf8_accents_and_special_chars(self):
         """Acentos, ç, apóstrofo, espaços, kanji — tudo entra cru."""
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         cases = [
             ("a@x.com", "João D'Ávila"),
@@ -125,7 +125,7 @@ class TestSignupWithName:
     @pytest.mark.asyncio
     async def test_name_persists_across_signin(self):
         """Após signup, signin devolve o mesmo name persistido."""
-        from vectora.services.auth import signin, signup
+        from src.services.auth import signin, signup
 
         await signup("persist@example.com", "senhasegura1234", name="Bruno Soares")
         user, _, _ = await signin("persist@example.com", "senhasegura1234")
@@ -140,7 +140,7 @@ class TestSignupWithName:
 class TestUpdateProfile:
     @pytest.mark.asyncio
     async def test_updates_name(self):
-        from vectora.services.auth import signup, update_profile
+        from src.services.auth import signup, update_profile
 
         user, _, _ = await signup("upd@example.com", "senhasegura1234", name="Velho")
         updated = await update_profile(user.id, name="Novo Nome")
@@ -150,7 +150,7 @@ class TestUpdateProfile:
 
     @pytest.mark.asyncio
     async def test_sanitizes_on_update(self):
-        from vectora.services.auth import signup, update_profile
+        from src.services.auth import signup, update_profile
 
         user, _, _ = await signup("upd2@example.com", "senhasegura1234")
         updated = await update_profile(user.id, name="   Bruno  Soares   ")
@@ -159,7 +159,7 @@ class TestUpdateProfile:
     @pytest.mark.asyncio
     async def test_can_clear_name(self):
         """Atualizar com string vazia → name fica vazio (não rejeita)."""
-        from vectora.services.auth import signup, update_profile
+        from src.services.auth import signup, update_profile
 
         user, _, _ = await signup(
             "clear@example.com", "senhasegura1234", name="Tinha Nome"
@@ -169,7 +169,7 @@ class TestUpdateProfile:
 
     @pytest.mark.asyncio
     async def test_caps_at_100_chars_on_update(self):
-        from vectora.services.auth import signup, update_profile
+        from src.services.auth import signup, update_profile
 
         user, _, _ = await signup("cap@example.com", "senhasegura1234")
         updated = await update_profile(user.id, name="B" * 500)
@@ -177,7 +177,7 @@ class TestUpdateProfile:
 
     @pytest.mark.asyncio
     async def test_raises_for_unknown_user(self):
-        from vectora.services.auth import update_profile
+        from src.services.auth import update_profile
 
         with pytest.raises(ValueError):
             await update_profile("nope-uuid", name="Ninguém")
@@ -185,7 +185,7 @@ class TestUpdateProfile:
     @pytest.mark.asyncio
     async def test_persists_across_get_user_by_id(self):
         """Após update, get_user_by_id devolve o name novo (não cache stale)."""
-        from vectora.services.auth import get_user_by_id, signup, update_profile
+        from src.services.auth import get_user_by_id, signup, update_profile
 
         user, _, _ = await signup("fetch@example.com", "senhasegura1234", name="Antigo")
         await update_profile(user.id, name="Atual")
@@ -203,7 +203,7 @@ class TestSchemaMigration:
     @pytest.mark.asyncio
     async def test_alter_table_is_idempotent(self):
         """Rodar _ensure_schema duas vezes não quebra (ALTER ADD COLUMN x2)."""
-        import vectora.services.auth as auth_mod
+        import src.services.auth as auth_mod
 
         db = await auth_mod._get_db()
         # Primeira chamada já rodou via fixture; rodar de novo deve passar.
@@ -211,7 +211,7 @@ class TestSchemaMigration:
         await auth_mod._ensure_schema(db)
 
         # E ainda assim signup funciona com name.
-        from vectora.services.auth import signup
+        from src.services.auth import signup
 
         user, _, _ = await signup("mig@example.com", "senhasegura1234", name="OK")
         assert user.name == "OK"

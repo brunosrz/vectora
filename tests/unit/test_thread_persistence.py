@@ -146,12 +146,12 @@ class TestUpsertSession:
     @pytest.mark.asyncio
     async def test_upsert_session_exists(self):
         """_upsert_session deve ser importável de vectora.api.handlers.threads."""
-        from vectora.api.handlers.threads import _upsert_session
+        from src.api.handlers.threads import _upsert_session
 
     @pytest.mark.asyncio
     async def test_upsert_creates_row(self):
         """_upsert_session escreve INSERT ... ON CONFLICT no banco."""
-        from vectora.api.handlers.threads import _upsert_session
+        from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
         with patch(
@@ -167,7 +167,7 @@ class TestUpsertSession:
     @pytest.mark.asyncio
     async def test_upsert_stores_thread_id(self):
         """O thread_id passado aparece como parâmetro SQL e é armazenado."""
-        from vectora.api.handlers.threads import _upsert_session
+        from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
         with patch(
@@ -182,7 +182,7 @@ class TestUpsertSession:
     @pytest.mark.asyncio
     async def test_upsert_with_title_stores_in_extra(self):
         """Quando title é fornecido, deve aparecer no JSON do campo extra."""
-        from vectora.api.handlers.threads import _upsert_session
+        from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
         with patch(
@@ -196,7 +196,7 @@ class TestUpsertSession:
     @pytest.mark.asyncio
     async def test_upsert_idempotent(self):
         """Chamar duas vezes com o mesmo thread_id não lança exceção."""
-        from vectora.api.handlers.threads import _upsert_session
+        from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
         with patch(
@@ -208,7 +208,7 @@ class TestUpsertSession:
     @pytest.mark.asyncio
     async def test_upsert_calls_commit(self):
         """_upsert_session deve chamar commit() após executar."""
-        from vectora.api.handlers.threads import _upsert_session
+        from src.api.handlers.threads import _upsert_session
 
         db = MagicMock()
         db.execute = MagicMock(return_value=_CursorProxy(FakeCursor(FakeDB())))
@@ -245,7 +245,7 @@ class TestStreamChatRegistersThread:
         mock_graph = MagicMock()
         mock_graph.astream_events = MagicMock(return_value=_empty_events())
 
-        from vectora.api.schemas import StreamChatRequest
+        from src.api.schemas import StreamChatRequest
 
         with (
             patch(
@@ -259,7 +259,7 @@ class TestStreamChatRegistersThread:
         ):
             import importlib
 
-            import vectora.api.handlers.chat as chat_mod
+            import src.api.handlers.chat as chat_mod
 
             importlib.reload(chat_mod)
 
@@ -285,7 +285,7 @@ class TestStreamChatRegistersThread:
         mock_graph = MagicMock()
         mock_graph.astream_events = MagicMock(return_value=_empty_events())
 
-        from vectora.api.schemas import StreamChatRequest
+        from src.api.schemas import StreamChatRequest
 
         with (
             patch(
@@ -299,7 +299,7 @@ class TestStreamChatRegistersThread:
         ):
             import importlib
 
-            import vectora.api.handlers.chat as chat_mod
+            import src.api.handlers.chat as chat_mod
 
             importlib.reload(chat_mod)
 
@@ -318,7 +318,7 @@ class TestStreamChatRegistersThread:
 
 def _make_app_with_db(tmp_db: FakeDB) -> tuple:
     """Cria app FastAPI com o FakeDB injetado em threads._get_db."""
-    import vectora.api.handlers.threads as t_mod
+    import src.api.handlers.threads as t_mod
 
     original_get_db = t_mod._get_db
     original_db_conn = t_mod._db_conn
@@ -329,7 +329,7 @@ def _make_app_with_db(tmp_db: FakeDB) -> tuple:
 
     t_mod._get_db = patched_get_db  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
-    from vectora.api.server import create_app
+    from src.api.server import create_app
 
     app = create_app(serve_static=False)
     return app, original_get_db, original_db_conn, t_mod
@@ -461,7 +461,7 @@ class TestListThreadsIncludesUpserted:
         """Thread registrada via _upsert_session aparece em ListThreads."""
         from fastapi.testclient import TestClient
 
-        from vectora.api.handlers.threads import _upsert_session
+        from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
         app, orig_get_db, orig_conn, t_mod = _make_app_with_db(db)
@@ -492,7 +492,7 @@ class TestListThreadsIncludesUpserted:
         """Thread com title upsertada aparece com o title correto em ListThreads."""
         from fastapi.testclient import TestClient
 
-        from vectora.api.handlers.threads import _upsert_session
+        from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
         app, orig_get_db, orig_conn, t_mod = _make_app_with_db(db)

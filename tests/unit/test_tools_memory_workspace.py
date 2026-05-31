@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from vectora.tools.memory import _user_id_from_config
+from src.tools.memory import _user_id_from_config
 
 # ---------------------------------------------------------------------------
 # _user_id_from_config

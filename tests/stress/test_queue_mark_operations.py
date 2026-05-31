@@ -19,7 +19,7 @@ import time
 
 import pytest
 
-from vectora.services.queue import EmbeddingQueue, EmbeddingStatus
+from src.services.queue import EmbeddingQueue, EmbeddingStatus
 
 
 @pytest.mark.stress

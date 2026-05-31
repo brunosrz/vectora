@@ -54,10 +54,10 @@ async def _collect(gen: Any) -> list[dict]:
 
 class TestHITLEventSchema:
     def test_hitl_event_importable(self) -> None:
-        from vectora.api.schemas import HITLEvent
+        from src.api.schemas import HITLEvent
 
     def test_hitl_event_has_tool_name(self) -> None:
-        from vectora.api.schemas import HITLEvent
+        from src.api.schemas import HITLEvent
 
         e = HITLEvent(
             tool_name="terminal", args_json='{"cmd":"ls"}', interrupt_id="abc"
@@ -65,7 +65,7 @@ class TestHITLEventSchema:
         assert e.tool_name == "terminal"
 
     def test_hitl_event_has_args_json(self) -> None:
-        from vectora.api.schemas import HITLEvent
+        from src.api.schemas import HITLEvent
 
         e = HITLEvent(
             tool_name="terminal", args_json='{"cmd":"ls"}', interrupt_id="abc"
@@ -73,13 +73,13 @@ class TestHITLEventSchema:
         assert e.args_json == '{"cmd":"ls"}'
 
     def test_hitl_event_has_interrupt_id(self) -> None:
-        from vectora.api.schemas import HITLEvent
+        from src.api.schemas import HITLEvent
 
         e = HITLEvent(tool_name="terminal", args_json="{}", interrupt_id="xyz")
         assert e.interrupt_id == "xyz"
 
     def test_hitl_event_encode_has_type_hitl(self) -> None:
-        from vectora.api.schemas import HITLEvent, encode_event
+        from src.api.schemas import HITLEvent, encode_event
 
         line = encode_event(
             HITLEvent(tool_name="terminal", args_json="{}", interrupt_id="id1")
@@ -89,7 +89,7 @@ class TestHITLEventSchema:
         assert data["tool_name"] == "terminal"
 
     def test_hitl_event_in_stream_payload_union(self) -> None:
-        from vectora.api.schemas import HITLEvent, StreamChatEventPayload
+        from src.api.schemas import HITLEvent, StreamChatEventPayload
 
         e: StreamChatEventPayload = HITLEvent(
             tool_name="t", args_json="{}", interrupt_id="i"
@@ -105,7 +105,7 @@ class TestHITLEventSchema:
 class TestAdaptStreamHITL:
     @pytest.mark.asyncio
     async def test_emits_hitl_event_when_interrupt_detected(self) -> None:
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             _make_interrupt_event(
@@ -122,7 +122,7 @@ class TestAdaptStreamHITL:
 
     @pytest.mark.asyncio
     async def test_hitl_event_has_correct_tool_name(self) -> None:
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             _make_interrupt_event(
@@ -146,7 +146,7 @@ class TestAdaptStreamHITL:
 
     @pytest.mark.asyncio
     async def test_hitl_event_args_json_parseable(self) -> None:
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             _make_interrupt_event(
@@ -165,7 +165,7 @@ class TestAdaptStreamHITL:
 
     @pytest.mark.asyncio
     async def test_hitl_event_interrupt_id_matches_tool_call_id(self) -> None:
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             _make_interrupt_event(
@@ -183,7 +183,7 @@ class TestAdaptStreamHITL:
 
     @pytest.mark.asyncio
     async def test_done_event_emitted_after_hitl(self) -> None:
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             _make_interrupt_event([{"id": "tc1", "name": "terminal", "args": {}}])
@@ -201,7 +201,7 @@ class TestAdaptStreamHITL:
 
     @pytest.mark.asyncio
     async def test_no_hitl_event_without_interrupt(self) -> None:
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         chunk = MagicMock()
         chunk.content = "olá"
@@ -224,7 +224,7 @@ class TestAdaptStreamHITL:
 
     @pytest.mark.asyncio
     async def test_thread_event_is_always_first(self) -> None:
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             _make_interrupt_event([{"id": "tc1", "name": "terminal", "args": {}}])
@@ -241,7 +241,7 @@ class TestAdaptStreamHITL:
     @pytest.mark.asyncio
     async def test_multiple_sensitive_tools_in_one_interrupt(self) -> None:
         """Quando há múltiplas tools sensíveis, emite HITLEvent para a primeira."""
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             _make_interrupt_event(
@@ -278,7 +278,7 @@ class TestHITLCheckEditAction:
         """action='edit' deve aprovar a execução (hitl_cancelled=False)."""
         from langchain_core.messages import AIMessage
 
-        from vectora.nodes.hitl import hitl_check
+        from src.nodes.hitl import hitl_check
 
         tool_call = {
             "id": "tc1",
@@ -300,7 +300,7 @@ class TestHITLCheckEditAction:
         """Os args da tool editada devem ser atualizados na mensagem retornada."""
         from langchain_core.messages import AIMessage
 
-        from vectora.nodes.hitl import hitl_check
+        from src.nodes.hitl import hitl_check
 
         tool_call = {
             "id": "tc1",
@@ -327,7 +327,7 @@ class TestHITLCheckEditAction:
         """Ação desconhecida deve resultar em cancelamento."""
         from langchain_core.messages import AIMessage
 
-        from vectora.nodes.hitl import hitl_check
+        from src.nodes.hitl import hitl_check
 
         tool_call = {"id": "tc1", "name": "terminal", "args": {}, "type": "tool_call"}
         msg = AIMessage(content="", tool_calls=[tool_call], id="msg1")

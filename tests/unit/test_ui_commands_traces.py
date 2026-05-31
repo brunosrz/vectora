@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from vectora.ui.commands.traces import handle_traces_command
+from src.ui.commands.traces import handle_traces_command
 
 # ---------------------------------------------------------------------------
 # Helpers

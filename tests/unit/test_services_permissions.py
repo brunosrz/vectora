@@ -37,14 +37,14 @@ def make_user(role: str, uid: str = "u-1"):
 
 class TestRoleLevel:
     def test_hierarchy_order(self):
-        from vectora.services.permissions import role_level
+        from src.services.permissions import role_level
 
         assert role_level("viewer") < role_level("member")
         assert role_level("member") < role_level("admin")
         assert role_level("admin") < role_level("root")
 
     def test_unknown_role_returns_negative(self):
-        from vectora.services.permissions import role_level
+        from src.services.permissions import role_level
 
         assert role_level("unknown") < 0
 
@@ -73,13 +73,13 @@ class TestHasMinRole:
         ],
     )
     def test_role_comparisons(self, user_role, min_role, expected):
-        from vectora.services.permissions import has_min_role
+        from src.services.permissions import has_min_role
 
         user = make_user(user_role)
         assert has_min_role(user, min_role) == expected
 
     def test_none_user_returns_false(self):
-        from vectora.services.permissions import has_min_role
+        from src.services.permissions import has_min_role
 
         assert has_min_role(None, "viewer") is False
 
@@ -91,13 +91,13 @@ class TestHasMinRole:
 
 class TestRequireMinRole:
     def test_sufficient_role_does_not_raise(self):
-        from vectora.services.permissions import require_min_role
+        from src.services.permissions import require_min_role
 
         user = make_user("admin")
         require_min_role(user, "member")  # não deve levantar
 
     def test_insufficient_role_raises_403(self):
-        from vectora.services.permissions import require_min_role
+        from src.services.permissions import require_min_role
 
         user = make_user("member")
         with pytest.raises(HTTPException) as exc_info:
@@ -105,7 +105,7 @@ class TestRequireMinRole:
         assert exc_info.value.status_code == 403
 
     def test_none_user_raises_403(self):
-        from vectora.services.permissions import require_min_role
+        from src.services.permissions import require_min_role
 
         with pytest.raises(HTTPException) as exc_info:
             require_min_role(None, "viewer")
@@ -119,37 +119,37 @@ class TestRequireMinRole:
 
 class TestCanAccessThread:
     def test_root_accesses_any_thread(self):
-        from vectora.services.permissions import can_access_thread
+        from src.services.permissions import can_access_thread
 
         root = make_user("root", "root-id")
         assert can_access_thread(root, "other-user-id") is True
 
     def test_admin_accesses_any_thread(self):
-        from vectora.services.permissions import can_access_thread
+        from src.services.permissions import can_access_thread
 
         admin = make_user("admin", "admin-id")
         assert can_access_thread(admin, "other-user-id") is True
 
     def test_member_accesses_own_thread(self):
-        from vectora.services.permissions import can_access_thread
+        from src.services.permissions import can_access_thread
 
         member = make_user("member", "member-id")
         assert can_access_thread(member, "member-id") is True
 
     def test_member_cannot_access_other_thread(self):
-        from vectora.services.permissions import can_access_thread
+        from src.services.permissions import can_access_thread
 
         member = make_user("member", "member-id")
         assert can_access_thread(member, "other-id") is False
 
     def test_member_accesses_unowned_thread(self):
-        from vectora.services.permissions import can_access_thread
+        from src.services.permissions import can_access_thread
 
         member = make_user("member", "member-id")
         assert can_access_thread(member, None) is True
 
     def test_none_user_returns_false(self):
-        from vectora.services.permissions import can_access_thread
+        from src.services.permissions import can_access_thread
 
         assert can_access_thread(None, "any-id") is False
 
@@ -161,19 +161,19 @@ class TestCanAccessThread:
 
 class TestCanDeleteThread:
     def test_admin_deletes_any(self):
-        from vectora.services.permissions import can_delete_thread
+        from src.services.permissions import can_delete_thread
 
         admin = make_user("admin", "a")
         assert can_delete_thread(admin, "other") is True
 
     def test_member_deletes_own(self):
-        from vectora.services.permissions import can_delete_thread
+        from src.services.permissions import can_delete_thread
 
         member = make_user("member", "m")
         assert can_delete_thread(member, "m") is True
 
     def test_member_cannot_delete_other(self):
-        from vectora.services.permissions import can_delete_thread
+        from src.services.permissions import can_delete_thread
 
         member = make_user("member", "m")
         assert can_delete_thread(member, "other") is False
@@ -186,38 +186,38 @@ class TestCanDeleteThread:
 
 class TestCanRunTerminal:
     def test_root_runs_anywhere(self):
-        from vectora.services.permissions import can_run_terminal
+        from src.services.permissions import can_run_terminal
 
         root = make_user("root", "r")
         assert can_run_terminal(root, "any-workspace") is True
 
     def test_admin_runs_anywhere(self):
-        from vectora.services.permissions import can_run_terminal
+        from src.services.permissions import can_run_terminal
 
         admin = make_user("admin", "a")
         assert can_run_terminal(admin, "other-workspace") is True
 
     def test_member_runs_own_workspace(self):
-        from vectora.services.permissions import can_run_terminal
+        from src.services.permissions import can_run_terminal
 
         member = make_user("member", "m")
         assert can_run_terminal(member, "m") is True
 
     def test_member_cannot_run_other_workspace(self):
-        from vectora.services.permissions import can_run_terminal
+        from src.services.permissions import can_run_terminal
 
         member = make_user("member", "m")
         assert can_run_terminal(member, "other") is False
 
     def test_viewer_never_runs_terminal(self):
-        from vectora.services.permissions import can_run_terminal
+        from src.services.permissions import can_run_terminal
 
         viewer = make_user("viewer", "v")
         assert can_run_terminal(viewer, "v") is False
         assert can_run_terminal(viewer, "other") is False
 
     def test_none_user_returns_false(self):
-        from vectora.services.permissions import can_run_terminal
+        from src.services.permissions import can_run_terminal
 
         assert can_run_terminal(None, "ws") is False
 
@@ -238,7 +238,7 @@ class TestAuditAndUserManagement:
         ],
     )
     def test_can_read_audit(self, role, expected):
-        from vectora.services.permissions import can_read_audit
+        from src.services.permissions import can_read_audit
 
         user = make_user(role)
         assert can_read_audit(user) == expected
@@ -253,7 +253,7 @@ class TestAuditAndUserManagement:
         ],
     )
     def test_can_manage_users(self, role, expected):
-        from vectora.services.permissions import can_manage_users
+        from src.services.permissions import can_manage_users
 
         user = make_user(role)
         assert can_manage_users(user) == expected

@@ -28,7 +28,7 @@ def headless_app():
     dependam de um banco de dados de usuários real.
     """
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
-    from vectora.api.server import create_app
+    from src.api.server import create_app
 
     return create_app()
 
@@ -134,7 +134,7 @@ class TestGetTools:
 class TestChatModeWithoutStaticDir:
     def test_chat_mode_with_frontend_proxy(self):
         """create_app(serve_static=True) registra o proxy do frontend sem explodir."""
-        from vectora.api.server import create_app
+        from src.api.server import create_app
 
         app = create_app(serve_static=True)
         c = TestClient(app, raise_server_exceptions=False)

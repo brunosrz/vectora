@@ -12,7 +12,7 @@ import json
 
 import pytest
 
-from vectora.api.schemas import (
+from src.api.schemas import (
     ChatConfig,
     CreateThreadRequest,
     DeleteThreadRequest,

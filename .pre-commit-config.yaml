@@ -132,7 +132,7 @@ repos:
     hooks:
       - id: ty
         name: Type Check — Python (ty)
-        entry: uv run ty check vectora tests
+        entry: uv run ty check src tests
         language: system
         types: [python]
         pass_filenames: false

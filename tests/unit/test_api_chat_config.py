@@ -6,8 +6,8 @@ deve se traduzir corretamente para o dict ``configurable`` consumido pelo grafo.
 
 from __future__ import annotations
 
-from vectora.api.handlers.chat import _build_configurable, _resolve_workspace_id
-from vectora.api.schemas import ChatConfig
+from src.api.handlers.chat import _build_configurable, _resolve_workspace_id
+from src.api.schemas import ChatConfig
 
 # ---------------------------------------------------------------------------
 # Campos sempre presentes

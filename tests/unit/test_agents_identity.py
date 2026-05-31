@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vectora.agents._identity import (
+from src.agents._identity import (
     VECTORA_IDENTITY,
     build_user_context_block,
     detect_system_language,
@@ -104,7 +104,7 @@ class TestDetectSystemLanguage:
         clean_locale_env.setenv("LC_ALL", "C")
         # Sem fallback do SO, deve devolver vazio. Mocka getdefaultlocale para
         # garantir resposta vazia mesmo num ambiente que tenha locale do SO.
-        import vectora.agents._identity as identity_mod
+        import src.agents._identity as identity_mod
 
         clean_locale_env.setattr(
             identity_mod, "__name__", identity_mod.__name__

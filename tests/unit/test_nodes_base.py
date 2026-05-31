@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
-from vectora.nodes.base import build_messages, invoke_llm, sanitize_for_gemini
-from vectora.state import Document, State
+from src.nodes.base import build_messages, invoke_llm, sanitize_for_gemini
+from src.state import Document, State
 
 # ---------------------------------------------------------------------------
 # sanitize_for_gemini

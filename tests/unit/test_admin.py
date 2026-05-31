@@ -15,35 +15,35 @@ class TestAdminHandlerExists:
     """vectora/api/handlers/admin.py deve existir com os endpoints esperados."""
 
     def test_module_exists(self):
-        import vectora.api.handlers.admin as mod
+        import src.api.handlers.admin as mod
 
         assert mod is not None
 
     def test_router_exists(self):
-        from vectora.api.handlers.admin import router
+        from src.api.handlers.admin import router
 
         assert router is not None
 
     def test_list_users_route_registered(self):
-        from vectora.api.handlers.admin import router
+        from src.api.handlers.admin import router
 
         paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("users" in p for p in paths)
 
     def test_system_info_route_registered(self):
-        from vectora.api.handlers.admin import router
+        from src.api.handlers.admin import router
 
         paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("system" in p for p in paths)
 
     def test_config_route_registered(self):
-        from vectora.api.handlers.admin import router
+        from src.api.handlers.admin import router
 
         paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("config" in p for p in paths)
 
     def test_tools_override_route_registered(self):
-        from vectora.api.handlers.admin import router
+        from src.api.handlers.admin import router
 
         paths = [r.path for r in router.routes]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
         assert any("tools" in p for p in paths)
@@ -53,7 +53,7 @@ class TestAdminRequiresAdminRole:
     """Endpoints admin devem checar permissão de role."""
 
     def test_require_admin_decorator_exists(self):
-        from vectora.api.handlers.admin import require_admin
+        from src.api.handlers.admin import require_admin
 
         assert callable(require_admin)
 
@@ -61,7 +61,7 @@ class TestAdminRequiresAdminRole:
         """member não tem acesso a endpoints admin."""
         from unittest.mock import MagicMock
 
-        from vectora.api.handlers.admin import require_admin
+        from src.api.handlers.admin import require_admin
 
         mock_user = MagicMock()
         mock_user.role = "member"
@@ -74,7 +74,7 @@ class TestAdminRequiresAdminRole:
     def test_require_admin_passes_for_root(self):
         from unittest.mock import MagicMock
 
-        from vectora.api.handlers.admin import require_admin
+        from src.api.handlers.admin import require_admin
 
         mock_user = MagicMock()
         mock_user.role = "root"
@@ -86,7 +86,7 @@ class TestAdminRequiresAdminRole:
     def test_require_admin_passes_for_admin(self):
         from unittest.mock import MagicMock
 
-        from vectora.api.handlers.admin import require_admin
+        from src.api.handlers.admin import require_admin
 
         mock_user = MagicMock()
         mock_user.role = "admin"
@@ -99,7 +99,7 @@ class TestAdminSystemInfo:
     """Estrutura do sistema info."""
 
     def test_system_info_fields_exist(self):
-        from vectora.api.handlers.admin import _build_system_info
+        from src.api.handlers.admin import _build_system_info
 
         info = _build_system_info()
         assert "version" in info

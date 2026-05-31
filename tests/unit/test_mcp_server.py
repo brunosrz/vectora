@@ -19,7 +19,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Importar módulo uma única vez — tem side effects de nível módulo (logging, FastMCP)
-import vectora.mcp.server as srv
+import src.mcp.server as srv
 
 # ---------------------------------------------------------------------------
 # _with_timeout

@@ -26,40 +26,40 @@ class TestThinkingEventSchema:
     """ThinkingEvent deve existir em schemas.py com os campos corretos."""
 
     def test_thinking_event_importable(self):
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.schemas import ThinkingEvent
 
     def test_thinking_event_has_reason(self):
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.schemas import ThinkingEvent
 
         e = ThinkingEvent(reason="usuário perguntou sobre código")
         assert e.reason == "usuário perguntou sobre código"
 
     def test_thinking_event_has_action(self):
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.schemas import ThinkingEvent
 
         e = ThinkingEvent(reason="delegando", action="delegate")
         assert e.action == "delegate"
 
     def test_thinking_event_action_defaults_to_respond(self):
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.schemas import ThinkingEvent
 
         e = ThinkingEvent(reason="r")
         assert e.action == "respond"
 
     def test_thinking_event_has_delegate_to(self):
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.schemas import ThinkingEvent
 
         e = ThinkingEvent(reason="r", delegate_to="search_agent")
         assert e.delegate_to == "search_agent"
 
     def test_thinking_event_delegate_to_defaults_none(self):
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.schemas import ThinkingEvent
 
         e = ThinkingEvent(reason="r")
         assert e.delegate_to is None
 
     def test_thinking_event_encode_has_correct_type(self):
-        from vectora.api.schemas import ThinkingEvent, encode_event
+        from src.api.schemas import ThinkingEvent, encode_event
 
         line = encode_event(ThinkingEvent(reason="r"))
         data = json.loads(line.removeprefix("data: ").strip())
@@ -68,7 +68,7 @@ class TestThinkingEventSchema:
 
     def test_thinking_event_in_stream_payload_union(self):
         """ThinkingEvent deve fazer parte de StreamChatEventPayload."""
-        from vectora.api.schemas import StreamChatEventPayload, ThinkingEvent
+        from src.api.schemas import StreamChatEventPayload, ThinkingEvent
 
         e: StreamChatEventPayload = ThinkingEvent(reason="ok")
         assert e is not None
@@ -78,7 +78,7 @@ class TestExtractOrchestratorThinking:
     """_extract_orchestrator_thinking extrai reason/action/delegate_to do on_chain_end."""
 
     def test_extract_thinking_from_dict_output_with_reason(self):
-        from vectora.api.adapters import _extract_orchestrator_thinking
+        from src.api.adapters import _extract_orchestrator_thinking
 
         event = {
             "event": "on_chain_end",
@@ -103,7 +103,7 @@ class TestExtractOrchestratorThinking:
 
     def test_extract_thinking_from_command_update(self):
         """Deve extrair thinking de Command.update (caso real do orchestrator)."""
-        from vectora.api.adapters import _extract_orchestrator_thinking
+        from src.api.adapters import _extract_orchestrator_thinking
 
         class FakeCommand:
             update = {
@@ -128,7 +128,7 @@ class TestExtractOrchestratorThinking:
         assert result["action"] == "respond"
 
     def test_extract_thinking_returns_none_when_no_thinking_key(self):
-        from vectora.api.adapters import _extract_orchestrator_thinking
+        from src.api.adapters import _extract_orchestrator_thinking
 
         event = {
             "event": "on_chain_end",
@@ -139,7 +139,7 @@ class TestExtractOrchestratorThinking:
         assert result is None
 
     def test_extract_thinking_returns_none_for_non_orchestrator(self):
-        from vectora.api.adapters import _extract_orchestrator_thinking
+        from src.api.adapters import _extract_orchestrator_thinking
 
         event = {
             "event": "on_chain_end",
@@ -150,7 +150,7 @@ class TestExtractOrchestratorThinking:
         assert result is None
 
     def test_extract_thinking_handles_missing_data(self):
-        from vectora.api.adapters import _extract_orchestrator_thinking
+        from src.api.adapters import _extract_orchestrator_thinking
 
         event = {"event": "on_chain_end", "name": "orchestrator", "data": {}}
         result = _extract_orchestrator_thinking(event)
@@ -162,8 +162,8 @@ class TestAdaptStreamThinkingEvent:
 
     @pytest.mark.asyncio
     async def test_thinking_event_emitted_in_stream(self):
-        from vectora.api.adapters import adapt_stream
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.adapters import adapt_stream
+        from src.api.schemas import ThinkingEvent
 
         thinking_data = {
             "reason": "usuário precisa de busca",
@@ -211,7 +211,7 @@ class TestAdaptStreamThinkingEvent:
     async def test_no_thinking_event_when_orchestrator_responds_directly(self):
         from langchain_core.messages import AIMessage
 
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             {
@@ -256,27 +256,27 @@ class TestNodeLabels:
     """node_labels.py mapeia nome interno de nó para label legível."""
 
     def test_node_labels_module_importable(self):
-        from vectora.api import node_labels
+        from src.api import node_labels
 
     def test_get_node_label_returns_string(self):
-        from vectora.api.node_labels import get_node_label
+        from src.api.node_labels import get_node_label
 
         label = get_node_label("orchestrator")
         assert isinstance(label, str)
         assert len(label) > 0
 
     def test_get_node_label_orchestrator(self):
-        from vectora.api.node_labels import get_node_label
+        from src.api.node_labels import get_node_label
 
         assert get_node_label("orchestrator") == "Analisando..."
 
     def test_get_node_label_search_agent(self):
-        from vectora.api.node_labels import get_node_label
+        from src.api.node_labels import get_node_label
 
         assert get_node_label("search_agent") == "Pesquisando na web…"
 
     def test_get_node_label_rag_agent(self):
-        from vectora.api.node_labels import get_node_label
+        from src.api.node_labels import get_node_label
 
         label = get_node_label("rag_agent")
         assert (
@@ -286,7 +286,7 @@ class TestNodeLabels:
         )
 
     def test_get_node_label_coder_agent(self):
-        from vectora.api.node_labels import get_node_label
+        from src.api.node_labels import get_node_label
 
         label = get_node_label("coder_agent")
         assert (
@@ -296,21 +296,21 @@ class TestNodeLabels:
         )
 
     def test_get_node_label_invoke_llm(self):
-        from vectora.api.node_labels import get_node_label
+        from src.api.node_labels import get_node_label
 
         label = get_node_label("invoke_llm")
         assert isinstance(label, str)
         assert len(label) > 0
 
     def test_get_node_label_unknown_returns_generic(self):
-        from vectora.api.node_labels import get_node_label
+        from src.api.node_labels import get_node_label
 
         label = get_node_label("nó_desconhecido_xyz")
         assert isinstance(label, str)
         assert len(label) > 0
 
     def test_node_labels_dict_exported(self):
-        from vectora.api.node_labels import NODE_LABELS
+        from src.api.node_labels import NODE_LABELS
 
         assert isinstance(NODE_LABELS, dict)
         assert "orchestrator" in NODE_LABELS
@@ -318,7 +318,7 @@ class TestNodeLabels:
 
     def test_node_label_routing_decision(self):
         """Label especial quando orchestrator decide delegar para search_agent."""
-        from vectora.api.node_labels import get_routing_label
+        from src.api.node_labels import get_routing_label
 
         label = get_routing_label("search_agent")
         assert (
@@ -328,14 +328,14 @@ class TestNodeLabels:
         )
 
     def test_get_routing_label_rag(self):
-        from vectora.api.node_labels import get_routing_label
+        from src.api.node_labels import get_routing_label
 
         label = get_routing_label("rag_agent")
         assert isinstance(label, str)
         assert len(label) > 0
 
     def test_get_routing_label_unknown(self):
-        from vectora.api.node_labels import get_routing_label
+        from src.api.node_labels import get_routing_label
 
         label = get_routing_label("agente_desconhecido")
         assert isinstance(label, str)
@@ -343,7 +343,7 @@ class TestNodeLabels:
 
     def test_node_event_with_label_in_sse(self):
         """NodeEvent com started deve emitir label semântico no campo node_label."""
-        from vectora.api.schemas import NodeEvent, encode_event
+        from src.api.schemas import NodeEvent, encode_event
 
         e = NodeEvent(node="search_agent", status="started")
         data = json.loads(encode_event(e).removeprefix("data: ").strip())
@@ -363,7 +363,7 @@ class TestNodeEventDuration:
 
     @pytest.mark.asyncio
     async def test_node_finished_has_duration_ms(self):
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             {
@@ -402,7 +402,7 @@ class TestNodeEventDuration:
 
     @pytest.mark.asyncio
     async def test_node_started_has_zero_duration_ms(self):
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             {
@@ -432,14 +432,14 @@ class TestNodeEventDuration:
         assert started[0]["duration_ms"] == 0
 
     def test_node_event_duration_schema(self):
-        from vectora.api.schemas import NodeEvent
+        from src.api.schemas import NodeEvent
 
         e = NodeEvent(node="n", status="finished", duration_ms=1337)
         assert e.duration_ms == 1337
 
     @pytest.mark.asyncio
     async def test_multiple_nodes_have_independent_durations(self):
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             {"event": "on_chain_start", "name": "node_a", "data": {}, "metadata": {}},
@@ -478,7 +478,7 @@ class TestDevModeFields:
     """Com dev=True, o ThinkingEvent expõe campos extras de debug."""
 
     def test_thinking_event_has_task_query_field(self):
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.schemas import ThinkingEvent
 
         e = ThinkingEvent(
             reason="r",
@@ -489,13 +489,13 @@ class TestDevModeFields:
         assert e.task_query == "escreva um script python"
 
     def test_thinking_event_task_query_defaults_none(self):
-        from vectora.api.schemas import ThinkingEvent
+        from src.api.schemas import ThinkingEvent
 
         e = ThinkingEvent(reason="r")
         assert e.task_query is None
 
     def test_thinking_event_full_fields_in_encoded_event(self):
-        from vectora.api.schemas import ThinkingEvent, encode_event
+        from src.api.schemas import ThinkingEvent, encode_event
 
         e = ThinkingEvent(
             reason="precisa de código",
@@ -510,7 +510,7 @@ class TestDevModeFields:
         assert data["task_query"] == "crie função hello world"
 
     def test_extract_thinking_includes_task_query(self):
-        from vectora.api.adapters import _extract_orchestrator_thinking
+        from src.api.adapters import _extract_orchestrator_thinking
 
         event = {
             "event": "on_chain_end",
@@ -532,7 +532,7 @@ class TestDevModeFields:
 
     @pytest.mark.asyncio
     async def test_thinking_event_in_stream_has_task_query(self):
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         events = [
             {
@@ -577,8 +577,8 @@ class TestAdaptersRegression:
     """Testes de não-regressão: comportamentos do adapters antes do Bloco D."""
 
     def test_token_event_from_chat_model_stream(self):
-        from vectora.api.adapters import langgraph_event_to_payload
-        from vectora.api.schemas import TokenEvent
+        from src.api.adapters import langgraph_event_to_payload
+        from src.api.schemas import TokenEvent
 
         class FakeChunk:
             content = "hello"
@@ -595,7 +595,7 @@ class TestAdaptersRegression:
         assert result.content == "hello"
 
     def test_orchestrator_tokens_filtered(self):
-        from vectora.api.adapters import langgraph_event_to_payload
+        from src.api.adapters import langgraph_event_to_payload
 
         class FakeChunk:
             content = '{"action": "respond"}'
@@ -611,8 +611,8 @@ class TestAdaptersRegression:
         assert result is None
 
     def test_tool_call_event_emitted(self):
-        from vectora.api.adapters import langgraph_event_to_payload
-        from vectora.api.schemas import ToolCallEvent
+        from src.api.adapters import langgraph_event_to_payload
+        from src.api.schemas import ToolCallEvent
 
         event = {
             "event": "on_tool_start",
@@ -627,8 +627,8 @@ class TestAdaptersRegression:
         assert "python asyncio" in result.args_json
 
     def test_tool_result_event_emitted(self):
-        from vectora.api.adapters import langgraph_event_to_payload
-        from vectora.api.schemas import ToolResultEvent
+        from src.api.adapters import langgraph_event_to_payload
+        from src.api.schemas import ToolResultEvent
 
         event = {
             "event": "on_tool_end",
@@ -642,8 +642,8 @@ class TestAdaptersRegression:
         assert result.content_json == "resultado da busca"
 
     def test_node_started_event(self):
-        from vectora.api.adapters import langgraph_event_to_payload
-        from vectora.api.schemas import NodeEvent
+        from src.api.adapters import langgraph_event_to_payload
+        from src.api.schemas import NodeEvent
 
         event = {
             "event": "on_chain_start",
@@ -657,8 +657,8 @@ class TestAdaptersRegression:
         assert result.node == "search_agent"
 
     def test_node_finished_event(self):
-        from vectora.api.adapters import langgraph_event_to_payload
-        from vectora.api.schemas import NodeEvent
+        from src.api.adapters import langgraph_event_to_payload
+        from src.api.schemas import NodeEvent
 
         event = {
             "event": "on_chain_end",
@@ -671,7 +671,7 @@ class TestAdaptersRegression:
         assert result.status == "finished"
 
     def test_langgraph_root_events_ignored(self):
-        from vectora.api.adapters import langgraph_event_to_payload
+        from src.api.adapters import langgraph_event_to_payload
 
         for name in ("", "LangGraph"):
             event = {
@@ -685,7 +685,7 @@ class TestAdaptersRegression:
 
     @pytest.mark.asyncio
     async def test_stream_always_starts_with_thread_event(self):
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         async def _empty():
             return
@@ -702,7 +702,7 @@ class TestAdaptersRegression:
 
     @pytest.mark.asyncio
     async def test_stream_always_ends_with_done_event(self):
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         async def _empty():
             return
@@ -719,7 +719,7 @@ class TestAdaptersRegression:
 
     @pytest.mark.asyncio
     async def test_stream_emits_error_event_on_exception(self):
-        from vectora.api.adapters import adapt_stream
+        from src.api.adapters import adapt_stream
 
         async def _failing():
             raise RuntimeError("erro simulado")

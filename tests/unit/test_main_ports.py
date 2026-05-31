@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import socket
 
-from vectora.main import _find_free_port
+from src.main import _find_free_port
 
 
 def _is_bindable(port: int) -> bool:

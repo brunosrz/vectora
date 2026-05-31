@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from vectora.services import tool_policy
+from src.services import tool_policy
 
 
 @pytest.fixture(autouse=True)

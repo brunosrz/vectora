@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vectora.nodes.tools import ALL_TOOLS, FS_TOOLS, MEMORY_TOOLS, SEARCH_TOOLS
+from src.nodes.tools import ALL_TOOLS, FS_TOOLS, MEMORY_TOOLS, SEARCH_TOOLS
 
 
 def test_fs_tools_not_empty():

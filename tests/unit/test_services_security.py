@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vectora.services.security import is_safe_file_path, is_safe_regex_pattern
+from src.services.security import is_safe_file_path, is_safe_regex_pattern
 
 
 class TestIsSafeFilePath:
