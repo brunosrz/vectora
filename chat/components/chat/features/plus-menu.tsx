@@ -10,10 +10,19 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { FolderPlus, Paperclip, Plug, Plus, Share2, Slash } from "lucide-react";
+import {
+  Database,
+  FolderPlus,
+  Paperclip,
+  Plug,
+  Plus,
+  Share2,
+  Slash,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
+import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
 import { WorkspaceTrustDialog } from "@/components/layout/workspace-trust-dialog";
 
@@ -31,6 +40,7 @@ export function PlusMenu({
 }: PlusMenuProps) {
   const t = useT();
   const openSettings = useSettingsDialogStore((s) => s.openAt);
+  const pushDraft = useChatInputStore((s) => s.pushDraft);
   const [open, setOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -81,6 +91,21 @@ export function PlusMenu({
           >
             <FolderPlus className="w-4 h-4 shrink-0 text-muted-foreground" />
             {t("plus.add_folder")}
+          </button>
+
+          {/* Indexa uma pasta no RAG. Por enquanto popula o input com um
+              template; o orchestrator delega para a tool `ingest_docs`
+              (vectora/tools/rag.py). Quando o endpoint dedicado existir,
+              substituir por chamada direta. */}
+          <button
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+            onClick={() => {
+              setOpen(false);
+              pushDraft(t("plus.ingest_prompt"));
+            }}
+          >
+            <Database className="w-4 h-4 shrink-0 text-muted-foreground" />
+            {t("plus.ingest_folder")}
           </button>
 
           {onSlashCommands && (

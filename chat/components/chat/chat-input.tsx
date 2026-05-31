@@ -5,6 +5,8 @@
  * Includes file upload, drag & drop, and paste support.
  */
 
+import { useEffect } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -16,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { FilePreviewGrid } from "./features/file-preview-grid";
 import { VoiceInputButton } from "./features/voice-input-button";
-import { CommandBar } from "./features/command-bar";
+import { PermissionModeMenu } from "./features/permission-mode-menu";
 import { PlusMenu } from "./features/plus-menu";
 import { UsagePopover } from "./features/usage-popover";
 import { SlashCommandMenu } from "./features/slash-command-menu";
@@ -123,6 +125,17 @@ export function ChatInput({
       onAgentConfigChange({ ...agentConfig, model });
     }
   };
+
+  // Auto-grow do textarea: ajusta a altura ao conteúdo até o teto de 240px;
+  // depois disso o próprio textarea passa a scrollar internamente. Resolve
+  // a queixa "ele não expande pra cima e com scroll visível".
+  useEffect(() => {
+    const el = textareaRef?.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const next = Math.min(240, el.scrollHeight);
+    el.style.height = `${next}px`;
+  }, [input, textareaRef]);
   return (
     <div className="relative">
       {/* Enhanced visibility layer */}
@@ -175,9 +188,6 @@ export function ChatInput({
               ))}
             </div>
           )}
-
-          {/* Barra de contexto (R1) */}
-          <CommandBar />
 
           <div className="relative group">
             {/* Autocomplete de slash commands (Bloco H) */}
@@ -248,7 +258,7 @@ export function ChatInput({
                           ? t("input.loading_placeholder")
                           : t("input.placeholder")
                     }
-                    className="relative z-10 min-h-[36px] max-h-[240px] resize-none bg-transparent border-0 w-full px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200 break-words custom-scrollbar"
+                    className="relative z-10 min-h-[36px] max-h-[240px] resize-none overflow-y-auto bg-transparent border-0 w-full px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 transition-[height] duration-150 break-words custom-scrollbar"
                     disabled={!userId}
                     rows={1}
                   />
@@ -297,45 +307,36 @@ export function ChatInput({
             </div>
           )}
 
-          {/* Rodapé do input: seletor de modelo + atalho + medidor */}
-          <div className="flex items-center justify-between gap-2 mt-1 px-2 flex-wrap">
-            {/* Seletor de modelo permanente — F.2.2 */}
-            {agentConfig && onAgentConfigChange ? (
-              <Select
-                value={agentConfig.model}
-                onValueChange={handleModelChange}
-              >
-                <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:text-primary px-2 gap-1 w-auto">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {allowedModels.map((model) => (
-                    <SelectItem key={model} value={model}>
-                      {getModelDisplayName(model as ModelOption)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <span />
-            )}
+          {/* Rodapé do input no estilo Claude Code: modelo à esquerda,
+              modo de permissão e medidor de uso à direita. Sem barra de
+              contexto acima do input (poluição visual desnecessária). */}
+          <div className="flex items-center justify-between gap-2 mt-1 px-1 flex-wrap">
+            <div className="flex items-center gap-1 min-w-0">
+              {agentConfig && onAgentConfigChange && (
+                <Select
+                  value={agentConfig.model}
+                  onValueChange={handleModelChange}
+                >
+                  <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:text-foreground px-2 gap-1 w-auto shadow-none focus:ring-0 focus-visible:ring-0 text-muted-foreground [&_svg]:opacity-70">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allowedModels.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        {getModelDisplayName(model as ModelOption)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
 
-            <p className="hidden sm:block text-[11px] text-muted-foreground/60">
-              <kbd className="px-1 py-0.5 bg-muted/50 rounded text-[10px] font-medium text-foreground/70">
-                Enter
-              </kbd>{" "}
-              {t("input.send_hint")}
-              <span className="mx-1">•</span>
-              <kbd className="px-1 py-0.5 bg-muted/50 rounded text-[10px] font-medium text-foreground/70">
-                Shift+Enter
-              </kbd>{" "}
-              {t("input.new_line_hint")}
-            </p>
-
-            {/* Medidor de uso estilo Claude Code (K.2.2) — janela de contexto + 5h + semanal */}
-            {modelId && (
-              <UsagePopover tokensUsed={tokensUsed ?? 0} modelId={modelId} />
-            )}
+            <div className="flex items-center gap-1 flex-wrap justify-end">
+              <PermissionModeMenu />
+              {modelId && (
+                <UsagePopover tokensUsed={tokensUsed ?? 0} modelId={modelId} />
+              )}
+            </div>
           </div>
         </div>
       </div>

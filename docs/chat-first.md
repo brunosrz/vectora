@@ -1,4 +1,4 @@
-# Vectora — Chat-First DLC Plan
+# Vectora — Chat-First
 
 > Plano focado no chat web (`chat/`). Tudo que o Vectora Agent desenvolver
 > daqui pra frente é pensado **através da lente do chat**: como o usuário vê,
@@ -784,7 +784,7 @@ Novo módulo `vectora/tools/git.py`:
 
 Tools gh CLI (em `vectora/tools/gh.py`):
 | Tool | render_hint |
-| ---------------------------------------------- | -------------------------- |
+|------|-------------|
 | `gh_pr_create(title, body, base, draft=False)` | `code_block` |
 | `gh_pr_list(state="open")` | `table` |
 | `gh_pr_view(pr_number)` | `code_block` |
@@ -2771,16 +2771,39 @@ escreve no store". Cada `FilesTab`, `DiffTab`, `PlanTab` deixa de chamar
 - Pipeline CI separada por OS (matrix `runs-on: [windows, macos,
 ubuntu]`).
 
-### T.12.7 — Licenciamento via VECTORA_TOKEN
+### T.12.7 — Licenciamento via VECTORA_TOKEN (integração Vectora Company)
 
-- O Launcher (T.12.1) faz `POST <license_server>/v1/validate` com
-  `{token, machine_id, version}` antes de qualquer subprocess.
-- Cache de validação em `~/.vectora/license.cache` (assinado com
-  chave pública embutida no binário) — permite _offline grace
-  period_ de N dias.
-- Falha de validação → janela explicativa + link para portal +
-  retry. Sem token, **nada** sobe.
-- Token sai do portal de clientes (escopo Z — REST API).
+- O Launcher (T.12.1) chama a edge function **Supabase**
+  `validate-license` (`docs/company.md` Bloco B3) com
+  `{token, vectora_version}` antes de qualquer subprocess.
+- Cache local em `~/.vectora/license_cache.json` (TTL 6h normal,
+  48h graceful offline) — alinhado com `docs/company.md` C1.
+- **Tier-gating no boot** (Bloco C company): resposta traz
+  `{tier: "plus"|"pro", status, days_remaining}`. O Launcher
+  exporta `VECTORA_TIER=` para o backend; a camada storage
+  (Bloco V) e o cache distribuído (Bloco W) consultam e
+  **recusam** backends Pro (PostgreSQL/Qdrant/Redis) quando
+  `tier=plus`, levantando `LicenseError` com link para
+  `https://vectora.company/pricing`.
+- Falha de validação → janela Electron explicativa + link
+  para `vectora.company/dashboard` + retry. Sem token, nada sobe.
+- Token sai do dashboard (`docs/company.md` F3), gerado por
+  `on-signup` / `rotate-token` edge functions (B2/B5).
+- **Auditoria centralizada**: cada validação grava em
+  `license_checks` (B1) no Supabase — sem logging local de
+  validação, alinhado com "self-hosted no dado, centralizado
+  na licença".
+- **Trial banner no chat web** (E2 company): endpoint novo
+  `GET /license/status` lê o cache do Launcher; chat exibe
+  banner amarelo ≤7d, vermelho bloqueante quando expirado.
+- **Stripe Customer Portal**: Settings → "Gerenciar assinatura"
+  chama `create-portal` edge function (B6) e abre via
+  `shell.openExternal()` do Electron.
+- **Canais de distribuição** (resolve conflito com company I1):
+  PyPI é descontinuado como canal primário; permanece **apenas**
+  como mirror somente-leitura do CLI Plus (sem o frontend nem
+  Electron) por compatibilidade com early adopters. Canal
+  oficial = instaladores nativos T.12.6.
 
 ### Arquivos críticos (T.12)
 
@@ -3029,7 +3052,7 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
 
 - Substitui o nó `hitl_check`. Tabela de mapping `permission_mode` → config:
   | Modo (R2) | `interrupt_on` |
-  | ----------------- | ---------------------------------------------------------------------- |
+  |-----------|----------------|
   | `ask` | `{"terminal": True, "file_write": True, ...}` (REQUIRE_APPROVAL atual) |
   | `accept_edits` | `{"terminal": True}` (file_write auto) |
   | `plan` | `{*: "reject"}` — recusa toda tool destrutiva (envia ToolMessage) |
@@ -4085,3 +4108,466 @@ messages=[...], stream=True)` e recebe streaming compatível.
   próxima resposta usa o novo
 - **M**: thread com 200+ mensagens → scroll smooth, nenhum lag; usuário
   scrolla pra cima → auto-scroll para
+
+---
+
+## BLOCO F.2 — Input unificado (substitui o welcome-screen)
+
+> **Contexto.** Hoje a UI tem **dois componentes de input** vivendo em
+> paralelo: `chat/components/chat/features/welcome-screen.tsx` (300 l)
+> para o estado vazio e `chat/components/chat/chat-input.tsx` (288 l)
+> para a conversa em andamento. A duplicação tem causa histórica (o
+> welcome veio do fork chat-langchain), mas hoje é só dívida: o
+> welcome só tem botão `+` simples para anexar arquivo, **sem PlusMenu
+> (R3 — Conectores/Plugins/Pasta), sem CommandBar (R1), sem
+> permission-mode (R2), sem context-meter (R5).** O chat-input, que é
+> renderizado depois da 1ª mensagem, tem tudo isso. O usuário tem dois
+> "Vectoras" diferentes na mesma sessão — antes e depois da 1ª mensagem.
+>
+> **Decisão (confirmada).** Remover o welcome-screen por completo.
+> `ChatInterface` renderiza **sempre** `chat-input.tsx`. Quando
+> `messages.length === 0`, exibe acima do input um **header
+> condicional** (logo Vectora + "O que posso fazer por você?") — mas o
+> input continua sendo o mesmo componente. Plus-menu, command-bar,
+> seletor de modelo, context-meter e permission-mode passam a estar
+> disponíveis **desde o primeiro carregamento**, sem regressão visual
+> depois da 1ª mensagem.
+>
+> **Regra cardinal.** Um componente, um caminho de código. Nenhum
+> ramo "se tem mensagem usa X, senão usa Y" para o input.
+
+### F.2.1 — Header condicional do estado vazio
+
+- **Novo** `chat/components/chat/features/empty-state-header.tsx`
+  (pequeno, ~40 linhas): logo + título "O que posso fazer por você?",
+  estilizado igual ao welcome atual (`-mt-10 sm:-mt-20`, JetBrains
+  Mono, gradient).
+- Renderizado por `chat/components/chat/chat-interface.tsx` **acima**
+  da lista de mensagens, condicional a `messages.length === 0`.
+  Não envolve o input. Quando a 1ª mensagem entra, o header some por
+  unmount (não fade-out; já fica abaixo do scroll natural).
+
+### F.2.2 — `chat-input.tsx` como único input
+
+- `ChatInterface` renderiza `<ChatInput ... />` sempre. Remove
+  qualquer condicional `messages.length === 0 ? <WelcomeScreen /> :
+<ChatInput />` que exista hoje.
+- **Model selector**: o chat-input já tem o seletor embutido (via
+  `agent-settings.tsx` no header da conversa) — confirmar que ele
+  fica **visível no rodapé** mesmo no estado vazio (paridade com
+  o que o welcome mostrava embaixo do input). Se necessário,
+  adicionar a chip do modelo dentro do `command-bar.tsx` (à direita
+  do permission-mode), respeitando R4.
+- **Plus-menu (R3)**: aparece desde o primeiro carregamento.
+  Conectores, Adicionar pasta, Plugins, Slash commands — tudo
+  acessível antes da 1ª mensagem.
+- **Permission-mode (R2)**, **command-bar (R1)**, **context-meter
+  (R5)** — todos renderizados desde o início.
+
+### F.2.3 — Drag & drop visual no estado vazio
+
+- O welcome tinha um "drop zone" visual mais pronunciado. Migrar
+  esse overlay para o próprio `chat-input.tsx` via prop opcional
+  `dropHintExpanded?: boolean` (true quando `messages.length === 0`)
+  — quando true, o estilo do drop zone fica mais explícito (border
+  pontilhada + texto "Solte arquivos aqui"); quando false, é o
+  comportamento atual sutil.
+
+### F.2.4 — Chip "Server" no command-bar — renomear
+
+- `chat/components/chat/features/command-bar.tsx` exibe um chip
+  com ícone `Monitor` + texto `"Server"` quando autenticado e
+  `"Local"` quando CLI local. **"Server" não comunica nada** ao
+  usuário final — ele já está usando o servidor; ver "Server"
+  escrito ali é ruído.
+- **Substituir** por algo informativo: nome do host do servidor
+  abreviado (`localhost:8080` ou `vectora.machine.lan`),
+  mantendo o ícone `Monitor` para indicar "servidor remoto".
+  No CLI local, mantém "Local" (faz sentido — distingue do servidor).
+- i18n: chave `commandbar.server_host` substitui `commandbar.server`.
+
+### F.2.5 — Otimismo da thread na sidebar
+
+> **Bug.** Ao enviar a 1ª mensagem, a thread só aparece na sidebar
+> **depois** que a IA responde. O `app/session/[threadId]/page.tsx`
+> já chama `addOptimisticThread()` antes do streaming
+> (`chat/lib/stores/new-thread-registry.ts`), mas a sidebar
+> (`chat/components/layout/sidebar.tsx`) não está subscrita ao
+> slice otimista — ela só revalida quando o `updateThreadMetadata()`
+> dispara no final do streaming.
+
+- `chat/lib/stores/threads-store.ts`: confirmar que `optimisticThreads`
+  é um slice exposto e que a sidebar lê de
+  `[...optimisticThreads, ...threads]` (ordenado por `updated_at` desc).
+- Sidebar (`sidebar.tsx`): subscrever ao slice unificado, com fallback
+  para "Nova conversa" no título quando o `title` ainda não foi gerado
+  pelo backend (i18n `sidebar.new_conversation_title`).
+- Quando o backend devolver `thread_id` + `title`, o otimista é
+  substituído pelo persistido (mesma key) — sem flash.
+
+### F.2.6 — Streaming visível em tempo real (regressão M2)
+
+> **Bug.** Mensagens chegam só no final, não token-a-token.
+
+- `chat/lib/hooks/chat/use-stream-handler.ts`: o rAF batching já
+  existe (`scheduleTokenFlush`/`flushNow`), mas `flushScheduled` pode
+  ficar `true` permanentemente se um `catch` ou `abort` intermediário
+  ocorre sem limpar a flag. Garantir reset em **todos** os exits
+  (`try`/`catch`/`finally`/`abort`) + invariante: `flushNow()` é
+  chamado no `finally` de `processStream`.
+- Adicionar telemetria local opt-in (console.debug) controlada por
+  `?dev=1` (D4) para detectar quando um chunk SSE chega mas o flush
+  não dispara — sem poluir prod.
+
+### F.2.7 — Padding inferior das mensagens da IA
+
+- `chat/components/chat/message-item.tsx`: bubble da AI tem
+  `pb-` excessivo (footer Copy/Regenerate ocupa mais altura do que
+  precisa). Reduzir para `pb-3` no bubble + `mt-2` no footer; o
+  footer fica visualmente "colado" no bubble em vez de criar bloco
+  flutuante separado.
+- Verificar `min-h-` no container de mensagem — se existir, remover
+  (o conteúdo é que define a altura, não um mínimo fixo).
+
+### Arquivos críticos (F.2)
+
+| Sub   | Arquivos                                                                                                                                                                                                     |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| F.2.1 | `chat/components/chat/features/empty-state-header.tsx` (novo), `chat/components/chat/chat-interface.tsx` (monta header condicional)                                                                          |
+| F.2.2 | `chat/components/chat/chat-interface.tsx` (remove condicional welcome/chat-input), `chat/components/chat/features/welcome-screen.tsx` (deletar), `chat/components/chat/chat-input.tsx` (drop hint expandido) |
+| F.2.3 | `chat/components/chat/chat-input.tsx` (`dropHintExpanded` prop)                                                                                                                                              |
+| F.2.4 | `chat/components/chat/features/command-bar.tsx` (renomear "Server" → hostname), `chat/lib/i18n/strings.csv.ts` (chave `commandbar.server_host`)                                                              |
+| F.2.5 | `chat/lib/stores/threads-store.ts` (expor slice unificado), `chat/components/layout/sidebar.tsx` (subscrever ao slice unificado)                                                                             |
+| F.2.6 | `chat/lib/hooks/chat/use-stream-handler.ts` (reset robusto de `flushScheduled`)                                                                                                                              |
+| F.2.7 | `chat/components/chat/message-item.tsx` (reduz `pb-` do bubble AI)                                                                                                                                           |
+
+### Verificação (F.2)
+
+- Abrir `/` sem mensagens → header "O que posso fazer por você?" +
+  logo aparecem **acima** do mesmo `ChatInput` que aparece depois.
+- Plus-menu, command-bar, model selector e context-meter visíveis
+  antes da 1ª mensagem.
+- Enviar 1ª mensagem → thread aparece **imediatamente** na sidebar
+  com título "Nova conversa", depois atualiza com o título gerado.
+- Tokens da resposta aparecem **token-a-token**, não em bloco no
+  final.
+- Bubble da AI sem buraco vertical entre conteúdo e botões
+  Copy/Regenerate.
+- Chip do command-bar mostra `localhost:8080` (ou hostname real),
+  não a palavra "Server".
+- `chat/components/chat/features/welcome-screen.tsx` deletado;
+  `pnpm tsc --noEmit` sem referências órfãs.
+
+---
+
+## BLOCO J.2 — Mobile real + LAN/Tailscale + PWA
+
+> **Contexto.** O Bloco J original previa mobile responsivo + PWA,
+> mas a implementação real está incompleta. Em uso (acessando o
+> Vectora rodando no PC via Tailscale do celular):
+>
+> 1. Next.js bloqueia `cross-origin request` apesar de
+>    `chat/next.config.mjs` já listar `100.*` em
+>    `allowedDevOrigins`. A causa é Next.js dev exigir restart
+>    quando a lista muda — mas o usuário relata bloqueio mesmo
+>    com config presente desde o boot. Investigar a ordem de
+>    leitura e se Turbopack respeita o array.
+> 2. O botão "olho" (mostrar senha) na tela de signin **não
+>    responde** no mobile via Tailscale — o fix `onPointerDown +
+preventDefault` (tarefa #52) cobre touch puro, mas pode estar
+>    falhando em HTTP cross-origin (no Tailscale o site é HTTP,
+>    não HTTPS — autofill do navegador pode capturar o tap antes).
+> 3. Login não completa no mobile — provável `Set-Cookie` com
+>    `SameSite=Lax` + cross-origin (Tailscale IP ≠ origin do
+>    backend) → cookie é dropado.
+> 4. PWA: `chat/public/` não tem `manifest.json` nem
+>    `service-worker.js`. Não há instalação como app, sem ícone
+>    no springboard.
+
+### J.2.1 — `allowedDevOrigins` confirmado + documentação
+
+- `chat/next.config.mjs` já tem `100.*` + RFC1918 + override por
+  env (`NEXT_DEV_ALLOWED_ORIGINS`). Confirmar que o array é gerado
+  no **boot do módulo** (não lazy) — Turbopack pode estar cacheando
+  uma versão antiga.
+- Adicionar `console.info("[vectora] allowedDevOrigins =", origins)`
+  no `next.config.mjs` para debug: o usuário pode confirmar visualmente
+  que `100.85.240.102` está coberto pelo glob `100.*`.
+- **Hipótese alternativa**: Next 16 pode estar interpretando `100.*`
+  como literal em vez de glob. Confirmar na docs e, se necessário,
+  expandir para regex ou lista de prefixos explícita.
+
+### J.2.2 — Login no mobile via Tailscale (cookies cross-origin)
+
+- **Causa raiz**: o frontend roda em `http://100.85.240.102:3000`
+  (Tailscale do celular acessa o PC). O backend FastAPI roda em
+  `http://localhost:8080` mas é proxado pelo Hono em
+  `chat/server/routes/auth.ts` → o login passa pelo Next.js
+  (`/api/auth/signin`). O `Set-Cookie` é emitido pelo Hono.
+- Verificar em `chat/server/routes/auth.ts` (login handler):
+  - `SameSite`: deve ser `Lax` (default seguro). Em HTTP +
+    cross-origin via Tailscale, Lax funciona porque o navegador
+    trata como first-party (URL bar = mesmo origin).
+  - `Secure`: **não** pode estar `true` em HTTP — vai dropar
+    o cookie. Confirmar que está condicional ao `process.env.NODE_ENV
+=== "production"` E ao protocolo HTTPS.
+  - `Domain`: **não setar** — deixar o navegador inferir (cobre
+    qualquer IP/host).
+- Adicionar log no handler: imprimir o cabeçalho `Set-Cookie`
+  final no boot do login para debug remoto.
+
+### J.2.3 — Olho da senha (regressão #52 no mobile via Tailscale)
+
+- `chat/app/auth/signin/page.tsx` (e `signup/page.tsx`): já tem
+  `onPointerDown` + `preventDefault`. **Adicionar redundância**:
+  `onTouchStart` + `preventDefault` para dispositivos antigos cujo
+  PointerEvent é polyfillado e dispara `click` antes do `pointerdown`.
+- O botão deve ter `type="button"` (impede submit do form ao tocar)
+  — confirmar; se não tiver, adicionar.
+- Tap target ≥ 44×44px (Bloco J J3): aumentar `p-` para garantir
+  zona de toque generosa.
+
+### J.2.4 — PWA real: manifest + service worker
+
+- **Novo** `chat/public/manifest.json`:
+  ```json
+  {
+    "name": "Vectora",
+    "short_name": "Vectora",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0e1a",
+    "theme_color": "#0a0e1a",
+    "icons": [
+      { "src": "/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
+      {
+        "src": "/favicon-600x600.png",
+        "sizes": "600x600",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ]
+  }
+  ```
+- **Novo** `chat/public/service-worker.js`: cache do shell
+  (`/`, `/_next/static/*`, ícones, manifest) + estratégia
+  network-first com fallback ao cache para HTML; cache-first para
+  assets versionados. Sem cache de respostas SSE.
+- Registro: `chat/app/layout.tsx` adiciona link para o manifest e um
+  `<script>` inline que registra o SW em `window.load` (com guard
+  `if ("serviceWorker" in navigator && process.env.NODE_ENV === "production")`
+  para não interferir em dev).
+- **Theme color e meta viewport** já estão no layout — confirmar.
+
+### J.2.5 — Sidebar como `Sheet` no mobile (J1)
+
+- `chat/components/layout/sidebar.tsx` (ou parent): em `<768px`,
+  o sidebar vira `Sheet` (shadcn) ativado por botão hamburger no
+  header. Em `>=768px`, comportamento atual (PanelLeft inline).
+- Hook `useMediaQuery("(max-width: 767px)")` para decidir; estado
+  do sheet em `chat/lib/stores/ui-store.ts` (novo se não existir,
+  ou em `settings-store`).
+
+### J.2.6 — Workbench como sheet no mobile (T cont.)
+
+- Já planejado em T (cont.) "Mobile (<768px) → workbench abre como
+  sheet overlay". Confirmar implementação: `WorkbenchPanel` usa
+  `Sheet` quando `<768px`; o split horizontal só aparece em
+  desktop.
+
+### Arquivos críticos (J.2)
+
+| Sub   | Arquivos                                                                                                               |
+| ----- | ---------------------------------------------------------------------------------------------------------------------- |
+| J.2.1 | `chat/next.config.mjs` (log de debug; confirmar globs Next 16)                                                         |
+| J.2.2 | `chat/server/routes/auth.ts` (cookies sem `Secure` em HTTP, sem `Domain`)                                              |
+| J.2.3 | `chat/app/auth/signin/page.tsx`, `chat/app/auth/signup/page.tsx` (touch fallback no botão olho)                        |
+| J.2.4 | `chat/public/manifest.json` (novo), `chat/public/service-worker.js` (novo), `chat/app/layout.tsx` (registro)           |
+| J.2.5 | `chat/components/layout/sidebar.tsx` (Sheet em mobile), `chat/lib/stores/ui-store.ts` (slice ou reusar settings-store) |
+| J.2.6 | `chat/components/workbench/workbench-panel.tsx` (Sheet em mobile)                                                      |
+
+### Verificação (J.2)
+
+- Acessar `http://<tailscale-ip>:3000` do celular → app carrega
+  **sem** "Blocked cross-origin request" no terminal.
+- Tocar no olho da senha no celular → senha alterna visibilidade
+  imediatamente (no Safari iOS e Chrome Android).
+- Login no celular → cookie de sessão é setado; refresh mantém
+  logado.
+- Abrir menu do navegador → "Adicionar à tela inicial" → ícone
+  Vectora aparece; abrir o ícone → app abre em modo standalone
+  (sem barra do navegador).
+- Em modo avião: o shell (`/`) carrega do service worker; chat
+  obviamente não funciona, mas a UI mostra estado offline.
+- Sidebar em `<768px` é drawer; em `≥768px` é inline.
+
+---
+
+## BLOCO K.2 — Live Metrics estilo Claude Code
+
+> **Contexto.** A implementação atual do "Live Metrics" (Bloco K) é
+> só um texto cru no rodapé do input: "174.2k / 1.0M (17%) · 0/60
+> requisições". A referência visual confirmada pelo usuário (print
+> 5 do Bloco R) é o painel do Claude Code:
+>
+> ```
+> Janela de contexto      174.2k / 1.0M (17%)  →
+> ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+>
+> Uso do plano                                  →
+>   Limite de 5 horas                       0%
+>   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+>   Semanal · todos os modelos    87% · reinicia 20h
+>   ████████████████████████████████████░░░░░
+> ```
+>
+> Componentes essenciais: barras horizontais com cores semafóricas
+> (verde <60 %, amarelo 60–85 %, vermelho >85 %), número absoluto +
+> porcentagem, e seções colapsáveis. Tudo dentro de um popover
+> ativado pelo chip do command-bar.
+
+### K.2.1 — Endpoint `/auth/usage` enriquecido
+
+- `vectora/api/handlers/auth.py` — endpoint `GET /auth/usage` já
+  existe (R5). Estender para retornar **3 janelas** + janela de
+  contexto:
+  ```json
+  {
+    "context": {
+      "used_tokens": 174200,
+      "window_tokens": 1000000,
+      "model": "gemini-2.5-flash"
+    },
+    "five_hour": {
+      "requests_used": 0,
+      "requests_limit": 60,
+      "resets_in_seconds": 17400
+    },
+    "weekly": {
+      "requests_used": 870,
+      "requests_limit": 1000,
+      "resets_in_seconds": 72000,
+      "scope": "all_models"
+    }
+  }
+  ```
+- A "janela de contexto" vem do `MODELS[id].context_window` (campo
+  novo em `chat/lib/config/deployment-config.ts`, R4); soma de
+  tokens da thread atual (já tracked em `metrics-store`).
+- As janelas de 5h e semanal vêm do `services/rate_limit.py`
+  (slowapi/in-memory hoje; Redis no Bloco W). Adicionar contadores
+  semanal por usuário.
+
+### K.2.2 — Componente `usage-popover.tsx`
+
+- **Novo** `chat/components/chat/features/usage-popover.tsx`:
+  Popover (shadcn) que se abre quando o usuário clica no chip de
+  uso no command-bar. Estrutura:
+  - Seção **Janela de contexto** (sempre expandida): label + valor
+    `174.2k / 1.0M (17%)` à direita + barra horizontal abaixo;
+    seta `→` opcional para abrir detalhe (qual mensagem está
+    consumindo mais).
+  - Seção **Uso do plano** (collapsible, default aberto):
+    - **Limite de 5 horas**: label + `0%` + barra
+    - **Semanal · todos os modelos**: label + `87% · reinicia 20h` +
+      barra amarela
+- Cores semafóricas: helper `getUsageColor(pct)` em
+  `chat/lib/utils/usage.ts` (novo) — `<60` verde (`bg-emerald-500`),
+  `60–85` amarelo (`bg-amber-500`), `>85` vermelho (`bg-red-500`).
+- Formatador `formatTokens(n)` — 1234 → "1.2k", 174200 → "174.2k",
+  1000000 → "1.0M". Reusar `formatRelativeTime()` para o "reinicia
+  em Xh".
+
+### K.2.3 — Chip de uso no command-bar (substitui texto atual)
+
+- `chat/components/chat/features/command-bar.tsx`: substituir o
+  `ContextMeter` text-only por um **chip clicável** com:
+  `📊 174.2k / 1.0M · 87%w`
+- Click → abre `usage-popover.tsx`.
+- O `context-meter.tsx` atual fica deprecated; o popover é o ponto
+  de entrada único. **Deletar** `context-meter.tsx` se nada mais o
+  usa.
+
+### K.2.4 — Metrics store enriquecido
+
+- `chat/lib/stores/metrics-store.ts` (novo se não existir): mantém
+  `{ contextTokensUsed: number, fiveHour: PlanWindow, weekly:
+PlanWindow, lastFetchedAt: number }`.
+- `useUsage()` hook em `chat/lib/hooks/use-usage.ts` (novo): SWR
+  com `/api/auth/usage`, revalida a cada 30s + on focus + após
+  cada resposta do agente (subscribe ao stream-handler).
+
+### K.2.5 — Per-message badges (Bloco K K2) sem mudança visual
+
+- Manter o que já está implementado em `message-item.tsx`
+  (`⏱ 2.3s · 🪙 1.4k in / 320 out · 🛠 3 tools · 📚 2 RAG hits`).
+  Sem mudança aqui — só confirmar que os badges ainda renderizam
+  após o redesign do bubble (F.2.7).
+
+### Arquivos críticos (K.2)
+
+| Sub   | Arquivos                                                                                                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| K.2.1 | `vectora/api/handlers/auth.py` (`/auth/usage` enriquecido), `vectora/services/rate_limit.py` (contador semanal), `chat/lib/config/deployment-config.ts` (`context_window` por modelo) |
+| K.2.2 | `chat/components/chat/features/usage-popover.tsx` (novo), `chat/lib/utils/usage.ts` (novo, format + cores)                                                                            |
+| K.2.3 | `chat/components/chat/features/command-bar.tsx` (chip clicável), `chat/components/chat/features/context-meter.tsx` (deletar)                                                          |
+| K.2.4 | `chat/lib/stores/metrics-store.ts` (novo se ausente), `chat/lib/hooks/use-usage.ts` (novo)                                                                                            |
+
+### Verificação (K.2)
+
+- Click no chip de uso no command-bar → popover abre com 3 barras.
+- Janela de contexto cresce visualmente conforme tokens se
+  acumulam na thread; cor muda para amarelo passando de 60% e
+  vermelho passando de 85%.
+- Uso semanal mostra "reinicia em 20h" e barra amarela ~87% se a
+  conta estiver perto do limite.
+- Fechar e reabrir o popover → estado preservado; revalidação a
+  cada 30s sem flicker.
+
+---
+
+## BLOCO T.X — Regressões correntes (PanelGroup + Workbench)
+
+> **Bug crítico ativo:** `app/session/[threadId]/page.tsx:421`
+> lança `bt(...) is undefined: Symbol.iterator` em runtime. Causa:
+> o `PanelGroup` tem o `PanelResizeHandle` com classes condicionais
+> (`w-0 overflow-hidden` vs `w-1`) e a `Panel` de workbench tem
+> conteúdo condicional (`{showWorkbench && <WorkbenchPanel />}`).
+> `react-resizable-panels` v4 exige **árvore de filhos
+> estruturalmente estável** — qualquer alteração condicional
+> (mesmo de className) durante o reconcile pode invalidar o
+> iterator interno.
+
+### T.X.1 — Árvore estável de panels
+
+- `chat/app/session/[threadId]/page.tsx`: o `PanelGroup` renderiza
+  sempre **3 filhos exatos** (`Panel` + `PanelResizeHandle` +
+  `Panel`) sem condicional. A visibilidade do painel direito
+  vira via `collapsible + collapsedSize={0}` e a do handle via
+  `disabled={!showWorkbench}` (prop nativa do `PanelResizeHandle`)
+  - classes Tailwind estáticas.
+- O conteúdo do `WorkbenchPanel` segue condicional **dentro** do
+  `<Panel>`: `{showWorkbench ? <WorkbenchPanel /> : null}` — isso
+  é permitido pois o `<Panel>` em si está sempre na árvore.
+- IDs estáveis em todos: `vectora-session-split`,
+  `vectora-chat-pane`, `vectora-split-handle`,
+  `vectora-workbench-pane` (já existem).
+- `onResize` ignora `size === 0` para não loopar.
+
+### T.X.2 — Verificação
+
+- Toggle do workbench (botão `PanelRight` no header) abre/fecha
+  sem lançar `Symbol.iterator` undefined.
+- Reload da página com workbench aberto/fechado mantém estado.
+- Resize do handle persiste em `workbench-store.splitSize` (T11).
+
+---
+
+## Resumo das mudanças (F.2 / J.2 / K.2 / T.X)
+
+| Bloco | Entrega                                                                                                 |
+| ----- | ------------------------------------------------------------------------------------------------------- |
+| F.2   | Welcome-screen deletado; chat-input único; thread otimista na sidebar; streaming visível; padding fix   |
+| J.2   | LAN/Tailscale liberado; login + olho da senha no mobile; PWA real (manifest + SW); sidebar como Sheet   |
+| K.2   | Endpoint `/auth/usage` enriquecido; `usage-popover` no estilo Claude Code; chip clicável no command-bar |
+| T.X   | PanelGroup com árvore estável de filhos — corrige erro `Symbol.iterator` em runtime                     |

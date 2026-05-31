@@ -138,9 +138,11 @@ export function WorkbenchPanel({ threadId }: WorkbenchPanelProps) {
 
   return (
     <div className="h-full flex flex-col bg-background border-l border-border/60">
-      {/* Barra de abas */}
-      <div className="flex items-center gap-0.5 px-1.5 py-1 border-b border-border/60 bg-muted/20">
-        <div className="flex items-center gap-0.5 flex-1 overflow-x-auto">
+      {/* Barra de abas — wrap em grid quando o painel é estreito demais
+          para a linha única. Botão fechar fica sempre no canto superior
+          direito alinhado às abas. */}
+      <div className="flex items-start gap-0.5 px-1.5 py-1 border-b border-border/60 bg-muted/20">
+        <div className="flex flex-wrap items-center gap-0.5 flex-1 min-w-0">
           {WORKBENCH_TABS.map((tab) => (
             <TabButton
               key={tab}
@@ -156,7 +158,7 @@ export function WorkbenchPanel({ threadId }: WorkbenchPanelProps) {
         </div>
         <button
           onClick={() => setPanelOpen(threadId, false)}
-          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
           title={t("workbench.close")}
           aria-label={t("workbench.close")}
         >

@@ -318,6 +318,8 @@ meter.resets_in,resets in,reinicia en,reseta em
 # =============================================================================
 plus.add_files,Add files or photos,Añadir archivos o fotos,Adicionar arquivos ou fotos
 plus.add_folder,Add folder,Añadir carpeta,Adicionar pasta
+plus.ingest_folder,Index folder in RAG,Indexar carpeta en RAG,Indexar pasta no RAG
+plus.ingest_prompt,"Index the current folder in RAG: ","Indexa la carpeta actual en RAG: ","Indexe a pasta atual no RAG: "
 plus.slash_commands,Slash commands,Comandos de barra,Comandos de barra
 plus.connectors,Connectors,Conectores,Conectores
 plus.plugins,Add plugins…,Añadir plugins…,Adicionar plugins…
