@@ -418,8 +418,16 @@ function SessionContent() {
           isLoading={threadsLoading}
         />
         <div className="flex-1 overflow-hidden relative">
-          <PanelGroup orientation="horizontal" className="h-full">
-            <Panel defaultSize={showWorkbench ? 60 : 100} minSize={30}>
+          <PanelGroup
+            id="vectora-session-split"
+            orientation="horizontal"
+            className="h-full"
+          >
+            <Panel
+              id="vectora-chat-pane"
+              defaultSize={showWorkbench ? 60 : 100}
+              minSize={30}
+            >
               <div className="h-full flex flex-col">
                 <Header
                   showToolCalls={showToolCalls}
@@ -449,8 +457,12 @@ function SessionContent() {
             </Panel>
             {showWorkbench && (
               <>
-                <PanelResizeHandle className="w-1 bg-border/40 hover:bg-border transition-colors" />
+                <PanelResizeHandle
+                  id="vectora-split-handle"
+                  className="w-1 bg-border/40 hover:bg-border transition-colors"
+                />
                 <Panel
+                  id="vectora-workbench-pane"
                   defaultSize={workbenchSplitSize}
                   minSize={20}
                   onResize={(size) => setSplitSize(Number(size))}

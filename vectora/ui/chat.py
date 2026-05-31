@@ -136,10 +136,9 @@ async def _export_audit(
 ) -> None:
     """Display and save final message audit with rich formatting."""
     try:
-        # Clear terminal
-        import os
-
-        os.system("cls" if os.name == "nt" else "clear")  # noqa: S605 ASYNC221  # nosec B605
+        # Clear terminal — escape sequence ANSI cobre Linux/macOS; no Windows
+        # cmd legado depende de VT enabled (default em Windows 10+).
+        print("\033[2J\033[H", end="", flush=True)
 
         try:
             console.print("\n")

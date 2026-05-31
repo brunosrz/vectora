@@ -124,16 +124,42 @@ repos:
         types: [python]
 
   # ==========================================
-  # Type Checking (Pyright)
+  # Type Checking — Python (Astral `ty`, full repo)
   # ==========================================
+  # Substitui o antigo Pyright limitado a 2 pastas. `ty` é um type checker
+  # em Rust ~10x mais rápido que pyright/mypy e cobre tudo de uma vez.
   - repo: local
     hooks:
-      - id: pyright
-        name: Pyright Type Check
-        entry: uv run pyright vectora/types vectora/agents
+      - id: ty
+        name: Type Check — Python (ty)
+        entry: uv run ty check vectora tests
         language: system
         types: [python]
         pass_filenames: false
+
+  # ==========================================
+  # Type Checking — TypeScript (tsgo, port Go oficial da Microsoft)
+  # ==========================================
+  # Equivalente do `ty` para TS: ~10x mais rápido que tsc clássico.
+  # Roda só quando arquivos .ts/.tsx do chat/ mudam.
+  - repo: local
+    hooks:
+      - id: tsgo
+        name: Type Check — TypeScript (tsgo)
+        entry: bash -c 'cd chat && pnpm exec tsgo --noEmit'
+        language: system
+        files: ^chat/.*\.(ts|tsx)$
+        pass_filenames: false
+
+  # ==========================================
+  # GitHub Actions Workflow Lint (actionlint)
+  # ==========================================
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+        name: Lint GitHub Actions workflows
+        files: ^\.github/workflows/.*\.ya?ml$
 
 ci:
   autofix_commit_msg: "chore: auto fixes from pre-commit hooks"
