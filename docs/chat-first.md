@@ -23,34 +23,34 @@ proto, e o chat dispatcha visualmente sem código por tool nova.
 
 ## Sumário (TOC)
 
-| Bloco | Tema                                                                                                                                       | Status                                          |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| **A** | Chat Foundations                                                                                                                           | ✅ Concluído                                    |
-| **B** | Polish, Bugfixes & Infra                                                                                                                   | ✅ Concluído                                    |
-| **C** | Authentication & RBAC                                                                                                                      | ✅ Concluído                                    |
-| **D** | Reasoning Reveal & Thinking UX                                                                                                             | ✅ Concluído                                    |
-| **E** | HITL em Chat                                                                                                                               | ✅ Concluído                                    |
-| **F** | File Handling Completo                                                                                                                     | ✅ Concluído                                    |
-| **G** | Workspaces + Git Integration                                                                                                               | ✅ Concluído                                    |
-| **H** | Slash Commands                                                                                                                             | ✅ Concluído                                    |
-| **I** | Conversation Features (search, export, share)                                                                                              | ✅ Concluído                                    |
-| **J** | Mobile & PWA                                                                                                                               | ✅ Concluído                                    |
-| **K** | Live Metrics Dashboard                                                                                                                     | ✅ Concluído                                    |
-| **L** | Settings Architecture                                                                                                                      | ✅ Concluído                                    |
-| **M** | Performance, UX Polish & i18n/L10n                                                                                                         | ✅ Concluído                                    |
-| **N** | Per-User Memory                                                                                                                            | ✅ Concluído                                    |
-| **O** | Workspace Integrations (OAuth + API keys)                                                                                                  | ✅ Concluído                                    |
-| **P** | Root Admin Panel (RBAC/ABAC global)                                                                                                        | ✅ Concluído                                    |
-| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites                                                       | ✅ Concluído                                    |
-| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish                                                  | ✅ Concluído                                    |
-| **S** | Connectors & Plugins Manager (cont. de O)                                                                                                  | ✅ Concluído                                    |
-| **T** | Embedded Terminal — PTY persistente cross-platform + painel split com xterm.js                                                             | ✅ T1–T8 / ⏳ T9–T11 (Workbench + persistência) |
-| **U** | Deep Agents — refactor para `create_deep_agent` + **CLI rich → textual (U7)**                                                              | ⏳ Planejado                                    |
-| **V** | PostgreSQL + Qdrant + **langchain-postgres/qdrant/genai/openai/anthropic + cohere completo (Chat/Embeddings/Rerank/ReActParser) (V10-11)** | ⏳ Planejado                                    |
-| **W** | Redis cache distribuído + **langchain-redis (RedisCache/SemanticCache/History) (W9)**                                                      | ⏳ Planejado                                    |
-| **X** | Deep Agents 1 — skills, AGENTS.md, prompt cache, compressão + **6 web tools full (X6: search/fetch/crawl/map/research/get_research)**      | ⏳ Planejado                                    |
-| **Y** | Deep Agents 2 — **sandbox + git worktree (Y1)**, interpreters, async, **ACP (Y4)**, remote backends, **dcode TUI opcional (Y6)**           | ⏳ Planejado                                    |
-| **Z** | REST API v1 — OAuth2 client credentials + OpenAI-compat + **endpoint ACP público (Z8)**                                                    | ⏳ Planejado                                    |
+| Bloco | Tema                                                                                                                                                                                                                                      | Status                                          |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **A** | Chat Foundations                                                                                                                                                                                                                          | ✅ Concluído                                    |
+| **B** | Polish, Bugfixes & Infra                                                                                                                                                                                                                  | ✅ Concluído                                    |
+| **C** | Authentication & RBAC                                                                                                                                                                                                                     | ✅ Concluído                                    |
+| **D** | Reasoning Reveal & Thinking UX                                                                                                                                                                                                            | ✅ Concluído                                    |
+| **E** | HITL em Chat                                                                                                                                                                                                                              | ✅ Concluído                                    |
+| **F** | File Handling Completo                                                                                                                                                                                                                    | ✅ Concluído                                    |
+| **G** | Workspaces + Git Integration                                                                                                                                                                                                              | ✅ Concluído                                    |
+| **H** | Slash Commands                                                                                                                                                                                                                            | ✅ Concluído                                    |
+| **I** | Conversation Features (search, export, share)                                                                                                                                                                                             | ✅ Concluído                                    |
+| **J** | Mobile & PWA                                                                                                                                                                                                                              | ✅ Concluído                                    |
+| **K** | Live Metrics Dashboard                                                                                                                                                                                                                    | ✅ Concluído                                    |
+| **L** | Settings Architecture                                                                                                                                                                                                                     | ✅ Concluído                                    |
+| **M** | Performance, UX Polish & i18n/L10n                                                                                                                                                                                                        | ✅ Concluído                                    |
+| **N** | Per-User Memory                                                                                                                                                                                                                           | ✅ Concluído                                    |
+| **O** | Workspace Integrations (OAuth + API keys)                                                                                                                                                                                                 | ✅ Concluído                                    |
+| **P** | Root Admin Panel (RBAC/ABAC global)                                                                                                                                                                                                       | ✅ Concluído                                    |
+| **Q** | Workspace P2 + Auth Onboarding — Trust Folder, Scope Guard Rails, Worktree & Invites                                                                                                                                                      | ✅ Concluído                                    |
+| **R** | UX Polish — Command Bar, Permission Modes, Effort/Meter + i18n/Tema/Idioma & Input Polish                                                                                                                                                 | ✅ Concluído                                    |
+| **S** | Connectors & Plugins Manager (cont. de O)                                                                                                                                                                                                 | ✅ Concluído                                    |
+| **T** | Embedded Terminal — PTY persistente cross-platform + painel split com xterm.js                                                                                                                                                            | ✅ T1–T8 / ⏳ T9–T11 (Workbench + persistência) |
+| **U** | Deep Agents — refactor para `create_deep_agent` + **CLI rich → textual (U7)**                                                                                                                                                             | ⏳ Planejado                                    |
+| **V** | **Storage Infra**: hardening lite (SQLite pool + LanceDB cache/FTS) + schema versioning + `langgraph.{checkpoint,store}` + `langchain-{qdrant,postgres,community}` + BaaS (Supabase/Neon/Qdrant Cloud) + admin UI + CLI `vectora storage` | ⏳ Planejado                                    |
+| **W** | Redis cache distribuído + **langchain-redis (RedisCache/SemanticCache/History) (W9)**                                                                                                                                                     | ⏳ Planejado                                    |
+| **X** | Deep Agents 1 — skills, AGENTS.md, prompt cache, compressão + **6 web tools full (X6: search/fetch/crawl/map/research/get_research)**                                                                                                     | ⏳ Planejado                                    |
+| **Y** | Deep Agents 2 — **sandbox + git worktree (Y1)**, interpreters, async, **ACP (Y4)**, remote backends, **dcode TUI opcional (Y6)**                                                                                                          | ⏳ Planejado                                    |
+| **Z** | REST API v1 — OAuth2 client credentials + OpenAI-compat + **endpoint ACP público (Z8)**                                                                                                                                                   | ⏳ Planejado                                    |
 
 ---
 
@@ -2844,39 +2844,175 @@ textual    = ">=0.83"      # NOVO — TUI do vectora chat (U7)
 
 ---
 
-## BLOCO V — PostgreSQL + Qdrant (modo "completo" opt-in)
+## BLOCO V — Storage Infrastructure (lite hardening + Postgres/Qdrant opt-in)
 
-> **Contexto.** Modo lite (SQLite + LanceDB) continua o default — instala-se o
-> Vectora e ele roda sem infra. Modo completo adiciona Postgres (auth, threads,
-> memórias, secrets, audit, OAuth clients, embedding queue, LangGraph
-> checkpointer) e Qdrant (vetores) — necessário para multi-server, alta
-> concorrência e clusters corporativos.
+> **Contexto revisado.** A primeira versão deste bloco tratava V como
+> "adicionar Postgres e Qdrant". A revisão amplia o escopo: **antes** de
+> adicionar backends novos, **fortalecemos** o que já existe (SQLite +
+> LanceDB) e construímos uma **camada de storage de verdade** — abstração
+> única que cobre lite (default) e completo (opt-in), com schema
+> versioning, pool de conexões, health checks e migrations explícitas.
+> Depois, plugamos Postgres e Qdrant (incluindo **BaaS** — Supabase /
+> Neon / Qdrant Cloud) por trás dos mesmos Protocols. Por fim, expomos
+> o controle ao usuário pela UI (admin) e CLI (`vectora storage`).
 >
-> A investigação do backend mapeou **todos os call sites** de `aiosqlite` e
-> `lancedb.connect_async`. Os Blocos V/W introduzem uma **camada de abstração**
-> (`vectora/services/storage/`) que isola backend selecionado das chamadas dos
-> handlers/services.
+> Achados da exploração (estado atual):
+>
+> - **SQLite**: 1 banco `~/.vectora/data/vectora.db` compartilhado
+>   (LangGraph checkpoint + `users`, `refresh_tokens`, `audit`, `invites`,
+>   `vectora_sessions`, `memories`) + `embedding_queue.db` (worker) +
+>   `traces.db` (observabilidade) + `internal.db` (secrets fallback).
+>   `journal_mode=WAL` aplicado consistente; `busy_timeout` só em
+>   `services/queue.py`; `foreign_keys=ON` **nunca** aplicado; migrations
+>   são `ALTER TABLE` envoltos em `contextlib.suppress(Exception)` —
+>   funcionam, mas sem versionamento auditável.
+> - **LanceDB**: usado **direto** via `lancedb.connect_async` em
+>   `tools/rag.py` (sem cache de conexão — `.connect_async()` por chamada);
+>   3 collections fixas (`articles`, `web_cache`, `search`); hybrid BM25
+>   próprio (`nodes/rag_subgraph.py` C1) + multi-query (C2) + Cohere
+>   rerank. **Não** usa `langchain_community.vectorstores.LanceDB`.
+> - **Checkpointer**: já usa `AsyncSqliteSaver` oficial — mantém.
+> - **BaseStore**: `services/memory.py` é implementação custom com
+>   `cosine` em Python puro — **não usa** `langgraph.store` (perde
+>   `InMemoryStore`/`PostgresStore`/`SqliteStore` oficiais com semantic
+>   search nativo).
+> - **Settings**: paths hardcoded; CLI `vectora config` só edita
+>   `active_provider`/`active_model`/`verbosity`; admin UI só
+>   `default_model`/`allow_public_signup`/`max_recursion`. Não há nada
+>   de storage exposto ao usuário.
+>
+> A revisão entrega o Bloco V em **14 sub-blocos** organizados em 4
+> fases lógicas:
+>
+> 1. **Fundação** (V1–V3): hardening lite + schema versioning + camada
+>    storage/ com Protocols.
+> 2. **Plug nas abstrações oficiais** (V4–V8): checkpointer/store/vector
+>    store reusando código da LangGraph e da LangChain ao máximo.
+> 3. **Backends completos** (V9–V10): Postgres + Qdrant + BaaS recipes.
+> 4. **UX** (V11–V14): UI admin, CLI, migration tool, compose, tests.
 
-### V1 — Camada `storage/` (Protocols)
+### V1 — Hardening do modo lite (SQLite + LanceDB) — primeiro
 
-- **Novo** `vectora/services/storage/__init__.py` com factories
-  `get_checkpointer()`, `get_auth_db()`, `get_memory_db()`, `get_session_db()`,
-  `get_vector_store(name)`, `get_queue_db()` — selecionam impl conforme
-  `[storage]` da config.
-- **Protocols** (`storage/protocols.py`): `AuthDB`, `MemoryDB`, `SessionDB`,
-  `VectorStore`, `QueueDB` — métodos curtos que cobrem os casos atuais.
-- **Impl lite** (`storage/sqlite/*`, `storage/lancedb/*`): wraps das
-  conexões atuais; comportamento idêntico.
+> **Princípio.** Antes de adicionar opções, o caminho default precisa
+> estar production-grade. Single-machine bem feito atende 95 % dos
+> usuários auto-hospedados.
 
-### V2 — Checkpointer Postgres
+- **SQLite**: pool com `aiosqlite` (`AsyncConnectionPool` próprio fino) —
+  hoje toda chamada paga abertura/PRAGMA. Pool default `min=1 max=8`
+  por banco; busy_timeout `30 000 ms` global; `synchronous=NORMAL`;
+  `temp_store=MEMORY`; `mmap_size=268435456`; **`foreign_keys=ON`**
+  (consistência de auth/invites/refresh_tokens). Wrapper único em
+  `storage/sqlite/pool.py` substituindo o `_db_conn = None` espalhado.
+- **LanceDB**: cache de conexão por path (`storage/lancedb/connection.py`)
+  - `open_table()` cached por collection; cria índice IVF
+    (`vector_column.create_index(num_partitions=…)`) on-demand quando a
+    tabela passa de N linhas; `optimize()` periódico (compaction) via
+    job leve no worker de background; **hybrid via FTS index nativo do
+    LanceDB** (`table.create_fts_index("text")`) como alternativa ao BM25
+    custom do C1 — mantém o custom como fallback, mas FTS é
+    significativamente mais rápido em tabelas grandes.
+- **Concorrência**: integra `busy_timeout` + retries com backoff para
+  os 3 bancos (`vectora.db`, `embedding_queue.db`, `traces.db`).
+- Documentação operacional em `docs/storage-lite.md`: VACUUM,
+  WAL checkpoint manual, backup hot/cold.
 
-- Dep: `langgraph-checkpoint-postgres>=2.0` (AsyncPostgresSaver).
-- `storage/postgres/checkpoint.py`: factory que cria pool e devolve
-  `AsyncPostgresSaver`. Substitui `services/checkpoint.py` no modo completo
-  (no lite, continua `AsyncSqliteSaver`).
-- Schema versionado (langgraph cuida das migrations).
+### V2 — Schema versioning (substitui `ALTER … suppress(Exception)`)
 
-### V3 — Auth/Sessions/Memories/Secrets/Audit/Invites em Postgres
+> Hoje `auth.py` adiciona coluna `name` com `suppress(Exception)` — se
+> o ALTER falhar silenciosamente, ninguém vê. Migrations precisam ser
+> idempotentes **e** auditáveis.
+
+- **Novo** `storage/migrations/` com migrations numeradas:
+  `0001_create_users.sql`, `0002_add_user_name.sql`, etc. Cada arquivo
+  tem `-- up` e `-- down`. Para LanceDB (sem DDL clássico), migrations
+  são scripts Python idempotentes (add column via `merge_insert`,
+  rebuild index, etc.).
+- **Runner** `storage/migrations/runner.py`: tabela
+  `schema_migrations(version, applied_at, checksum)` em cada banco;
+  no startup do server roda migrations pendentes; checksum garante
+  que arquivo não foi alterado depois de aplicado.
+- **CLI** `vectora storage migrate` (status / upgrade / downgrade
+  por versão alvo). Inicialmente o caminho lite roda automático no
+  startup; no completo, operador pode preferir rodar manual antes
+  do deploy.
+
+### V3 — Camada `storage/` (Protocols + factories)
+
+Generaliza o que existia em V1 da revisão anterior, agora cobrindo
+**tudo** que vai trocar de backend:
+
+- **`storage/protocols.py`**: `Checkpointer`, `Store` (memory),
+  `VectorStore`, `AuthDB`, `SessionDB`, `QueueDB`, `SecretsDB`,
+  `TracesDB` — Protocols Python tipados. `health()` é parte de cada
+  Protocol (health check unificado).
+- **`storage/factory.py`**: lê `[storage]` da config e devolve a
+  instância certa. `get_checkpointer()`, `get_store()`,
+  `get_vector_store(name)`, etc. Singleton por backend; reusa o pool
+  de V1.
+- Impls iniciais (`storage/sqlite/*`, `storage/lancedb/*`) são wraps
+  finos sobre o que já existe — comportamento **idêntico** ao
+  pré-V para garantir reversibilidade.
+
+### V4 — Checkpointer via `langgraph.checkpoint.{sqlite,postgres}`
+
+- **Lite** (já é): `AsyncSqliteSaver` (`langgraph-checkpoint-sqlite`)
+  apontando para `~/.vectora/data/vectora.db` via pool de V1.
+- **Completo**: `AsyncPostgresSaver`
+  (`langgraph-checkpoint-postgres`) com `asyncpg` pool. `Schema`
+  configurável (default `public`); o pacote oficial cuida das suas
+  migrations (`setup()` no boot).
+- **Factory**: `get_checkpointer()` devolve um ou outro conforme
+  config. `services/checkpoint.py` vira fino wrapper.
+
+### V5 — BaseStore via `langgraph.store.{base,postgres}` (refatorar memory)
+
+> **Mudança importante**: substitui a implementação custom de
+> `services/memory.py` (cosine em Python puro, embeddings JSON-encoded
+> numa coluna) pelo `BaseStore` oficial do LangGraph, que já tem
+> namespace, TTL, semantic search e suporta múltiplos backends.
+
+- **Lite**: `SqliteStore` (`langgraph-checkpoint-sqlite`) com
+  `index={"embed": CohereEmbeddings(...), "dims": 1024}` —
+  semantic search nativo, persistente.
+- **Completo**: `PostgresStore` (`langgraph-store-postgres`)
+  com `index` apontando para `CohereEmbeddings` e schema separado
+  do checkpointer.
+- **API consumida pelos handlers** (`api/handlers/memory.py` etc.)
+  passa a falar `store.aget()/aput()/asearch()` em vez do CRUD
+  custom; o user namespace `user:<id>` continua sendo a chave.
+- Migração: script em `vectora storage migrate memory-to-langgraph`
+  que copia da tabela `memories` antiga para o novo store, preservando
+  TTL e metadata.
+
+### V6 — VectorStore via `langchain-community` (LanceDB) e `langchain-qdrant`
+
+Substitui o uso direto de `lancedb.connect_async` por integrations
+oficiais — recebe hybrid search, retry e tipagem grátis.
+
+- **Lite (LanceDB)**: `langchain_community.vectorstores.LanceDB`
+  apontando para o cache de conexão de V1. Mesma interface
+  (`asimilarity_search`, `aadd_texts`, `aadd_documents`) — substitui
+  o `vector_search()` artesanal de `tools/rag.py` e o write path em
+  `services/background.py`.
+- **Completo (Qdrant)**: `langchain_qdrant.QdrantVectorStore`
+  configurado com **`RetrievalMode.HYBRID`** (denso via
+  `CohereEmbeddings` + esparso via `FastEmbedSparse(model_name=
+"Qdrant/bm25")` — `SparseEmbeddings`/`SparseVector` nativos da
+  integration). Cobre `QdrantException`/`QdrantVectorStoreError`
+  com mapping para exceções domínio do Vectora. Connection via
+  `qdrant_client.AsyncQdrantClient(url, api_key)` — URL aceita
+  Qdrant local **e** Qdrant Cloud (BaaS) sem branching.
+- **Alternativa completa (pgvector)**: `langchain_postgres.PGVector`
+  para quem prefere consolidar tudo em Postgres — selecionável via
+  `[storage] vector_backend = "pgvector"`.
+- **Hybrid lite**: mantém o BM25 custom de `rag_subgraph` C1 como
+  fallback, mas prioriza o FTS index do LanceDB (V1) quando
+  disponível. Multi-query (C2) e CohereRerank seguem intactos.
+- **Collections**: nomenclatura preserved (`articles`, `web_cache`,
+  `search`); workspace_id continua em metadata para filtro
+  pós-retrieval (Q4).
+
+### V7 — Auth / Sessions / Secrets / Audit / Invites / Queue em Postgres
 
 - Dep: `asyncpg>=0.29` (+ `sqlalchemy[asyncio]>=2.0` opcional para queries
   estruturadas — fica como decisão de implementação).
@@ -2888,70 +3024,131 @@ textual    = ">=0.83"      # NOVO — TUI do vectora chat (U7)
 - **Compatibilidade**: o serviço fala com a abstração; quem trocou foi a
   config — o handler não muda.
 
-### V4 — Memory com pgvector (opcional)
-
-- A memória semântica (`services/memory.py`, C4) hoje usa LanceDB para o
-  embedding. No modo completo: usa pgvector quando o operador instala a
-  extensão; senão delega a busca semântica ao Qdrant. Decisão do operador.
-
-### V5 — Embedding queue em Postgres
+### V8 — Embedding queue em Postgres (paralelismo seguro entre workers)
 
 - `services/queue.py` + `services/background.py` migram para tabela
-  `vectora_embedding_queue` com `SELECT ... FOR UPDATE SKIP LOCKED` (Postgres)
-  para concorrência segura entre workers — substitui o lock por arquivo do
-  SQLite.
+  `vectora_embedding_queue` com `SELECT ... FOR UPDATE SKIP LOCKED` —
+  permite múltiplos workers consumindo a mesma fila sem corrida. No lite
+  continua SQLite + lock por arquivo.
 
-### V6 — Qdrant Vector Store
+### V9 — BaaS recipes (Supabase, Neon, Qdrant Cloud)
 
-- Dep: `qdrant-client>=1.10` (AsyncQdrantClient).
-- `storage/qdrant/vector_store.py`: impl do `VectorStore` Protocol que cobre
-  `upsert`, `search`, `delete`, `list_collections`. Mapeia para coleções
-  Qdrant nomeadas como hoje (`articles`, `web_cache`, `search`, custom).
-- Embedding model continua `embed-multilingual-v3.0` (Cohere) — vetores 1024
-  dim alimentam Qdrant.
+> Os usuários que escolherem "completo" raramente vão querer hospedar
+> Postgres/Qdrant próprio — vão querer BaaS. Cada provedor tem **pegadinhas
+> específicas** (transaction pooler do Supabase exige `prepare_threshold=0`,
+> Neon precisa `?sslmode=require`, Qdrant Cloud impõe payload size limits).
+> Reunimos os templates prontos numa única fonte.
 
-### V7 — Migração de dados
+- **`storage/recipes/`** (novo): um arquivo por provedor — `supabase.py`,
+  `neon.py`, `qdrant_cloud.py` — com:
+  - DSN templates parametrizados (host, project_ref, password, region).
+  - Flags específicas (`statement_cache_size=0` para pgbouncer
+    transaction mode; `sslmode=require`; `application_name=vectora`).
+  - Validação de versão / extensão (`CREATE EXTENSION IF NOT EXISTS
+vector` para pgvector em hosted Postgres).
+  - Smoke test: `recipe.healthcheck()` valida conectividade + permissões
+    - extensões necessárias.
+- **Wizard CLI** (V12) usa as recipes para gerar a config certa
+  conforme escolha do operador ("Supabase" / "Neon" / "Self-hosted" /
+  "Qdrant Cloud" / "Qdrant local").
+- **UI admin** (V11) lista as recipes como presets clicáveis.
+- Cobre também conexão por **service account** (sem senha no client)
+  quando a BaaS suporta (Supabase IAM, Neon roles).
 
-- **Novo** subcomando: `uv run vectora migrate <to_postgres|to_qdrant>`.
-- `to_postgres`: lê SQLite local, exporta → cria schema → bulk insert
-  via COPY. Idempotente (skip se tabela já tem linhas).
-- `to_qdrant`: lê LanceDB, cria coleções no Qdrant com schema correto,
-  bulk upsert. Mantém os payload fields.
+### V10 — UI: aba "Storage" no admin (Settings → Administração → Storage)
 
-### V8 — `docker-compose.yml` de referência
+> Hoje o admin só configura `default_model`/`allow_public_signup`/
+> `max_recursion`. Storage é invisível. A aba nova dá controle total
+> sem ter que editar TOML à mão.
 
-- **Novo** `deploy/compose.complete.yml`: serviços `postgres:16`,
-  `qdrant/qdrant:latest`, `redis:7` (Bloco W), `vectora` (build do projeto).
-  Volumes nomeados para persistência. Healthchecks.
+- **`chat/components/layout/settings-dialog/admin/storage-panel.tsx`**
+  (novo): subaba dentro de Administração com 4 seções:
+  - **Checkpointer**: select (SQLite / Postgres) + DSN field + "Testar
+    conexão" + status (badge verde/amarelo/vermelho).
+  - **Store (memory)**: idem (SqliteStore / PostgresStore /
+    InMemoryStore).
+  - **Vector store**: select (LanceDB / Qdrant / pgvector) + URL/DSN +
+    api_key (masked) + status.
+  - **Embedding queue**: idem.
+- **Wizard "Connect to BaaS"** (botão no topo de cada seção): abre
+  modal com 4-step wizard reusando as recipes V9 — escolhe provedor,
+  insere credentials, testa, salva.
+- **Backend**: `GET /admin/storage` (status atual + health), `POST
+/admin/storage/test` (testa DSN sem salvar), `PATCH /admin/storage`
+  (aplica + agenda reload).
+- **Reload**: trocar backend exige restart do servidor — UI mostra
+  banner explicando + botão "Aplicar e reiniciar" (executa
+  `os._exit(0)` controlado para systemd/Docker repor; em dev,
+  só mostra "reinicie manualmente").
+- **i18n**: chaves `storage.*` (en/es/pt).
 
-### V9 — Tests
+### V11 — CLI: subcomando `vectora storage`
 
-- Fixtures parametrizadas (`@pytest.fixture(params=["lite","complete"])`) nos
-  testes de auth/memory/sessions. CI Lite (default) roda todos; CI Complete
-  (job opcional com docker services) re-roda os mesmos.
-- Smoke test: `vectora migrate` em sentido lite→complete preserva os
-  registros.
+> Espelho CLI da V11. Operadores que rodam headless precisam
+> configurar storage sem subir o frontend.
 
-### V10 — Integrações LangChain de 1ª parte (Postgres / Qdrant nativas)
+- `vectora storage info` — mostra backends ativos + health (lite/complete,
+  paths, DSN mascarado, último migration aplicado, contagem de rows).
+- `vectora storage test [--backend <name>]` — roda healthcheck de
+  cada componente (DB ping, vector store query, queue read).
+- `vectora storage wizard` — TUI interativa (textual de U7) com mesmos
+  passos da UI: escolhe modo, BaaS recipe, valida, escreve config.
+- `vectora storage migrate <to-postgres|to-qdrant|to-pgvector>` —
+  V12 reuso.
+- `vectora storage backup` / `restore` — dump físico simplificado
+  (sqlite `.backup`, `pg_dump`, snapshot Qdrant).
 
-> **Princípio.** Em vez de reimplementar checkpointer, vector store e
-> chat history sobre `asyncpg`/`qdrant-client` cru, usamos as integrações
-> oficiais do LangChain. Menos código nosso, melhor cobertura de borda
-> (transações, schema migrations, async session pool).
+### V12 — Migration tool (`vectora storage migrate`)
 
-- **`langchain-postgres`** (`>=0.0.13`): usa `PGVector`/`PGEngine` para
-  o `VectorStore` do modo completo (alternativa ao Qdrant — escolha por
-  config). `PostgresChatMessageHistory` para histórico de threads quando
-  o operador prefere Postgres ao SQLite. `PostgresSaver`/
-  `AsyncPostgresSaver` (do `langgraph-checkpoint-postgres`) continua
-  sendo o checkpointer canônico do V2.
-- **`langchain-qdrant`** (`>=0.2`): substitui o wrapper manual de V6 por
-  `QdrantVectorStore.from_existing_collection()`. Hybrid search (BM25 +
-  dense via `FastEmbedSparse`) sai de graça.
-- Quem decide: `[storage] vector_backend = "qdrant" | "pgvector" | "lancedb"`.
-  Default `lancedb` (lite) → `qdrant` no compose default (V8).
+> Substitui o `vectora migrate` antigo (era V7 da revisão anterior) e
+> integra com o subcomando `vectora storage`.
 
-### V11 — Provedores LLM via SDKs oficiais (consistência + Cohere completo)
+- **`vectora storage migrate to-postgres`**: lê SQLite local
+  (`vectora.db`, `embedding_queue.db`, `traces.db`) → cria schema no
+  Postgres (V2 migrations runner) → bulk insert via `COPY` em
+  transações. Idempotente (skip se tabela alvo tem linhas; `--force`
+  para sobrescrever).
+- **`vectora storage migrate to-qdrant`**: lê LanceDB, cria collections
+  no Qdrant com schema correto, bulk upsert (`AsyncQdrantClient.upsert`
+  em batches de 256). Mantém payload fields.
+- **`vectora storage migrate to-pgvector`**: alternativa que move
+  vectors para `langchain-postgres.PGVector`.
+- **`vectora storage migrate memory-to-langgraph`** (V5 helper):
+  migra tabela `memories` custom para o `BaseStore` oficial.
+- Logs progressivos via `tqdm`/`textual.ProgressBar`; `--dry-run`
+  estima volume sem mover.
+
+### V13 — `docker-compose` de referência (completo)
+
+- **`deploy/compose.complete.yml`**: serviços `postgres:16` (com
+  `pgvector` pré-instalado), `qdrant/qdrant:latest`, `redis:7`
+  (Bloco W), `vectora` (build do projeto). Volumes nomeados;
+  healthchecks; rede dedicada. Templates `.env` com placeholders.
+- **`deploy/compose.lite.yml`**: opcional — só o `vectora` rodando
+  contra storage embutido (lite). Útil para deploys VPS minimalistas.
+- **README** em `deploy/README.md` cobrindo as 3 variantes (lite,
+  complete self-hosted, complete BaaS).
+
+### V14 — Tests (parametrizados lite/complete)
+
+- Fixtures `@pytest.fixture(params=["lite","complete"])` em auth,
+  memory, sessions, queue, traces, vector store. CI Lite (default)
+  roda todos os params=lite; CI Complete (job opcional com docker
+  services Postgres+Qdrant+Redis) roda também params=complete.
+- Tests específicos do storage:
+  - `test_storage_pool.py` — pool SQLite concorrente, busy_timeout,
+    foreign_keys.
+  - `test_storage_lancedb.py` — cache de conexão, FTS index,
+    compaction.
+  - `test_storage_migrations.py` — runner aplica/reverte; checksum
+    detecta alteração; ordem garantida.
+  - `test_storage_recipes.py` — DSN templates renderizam corretamente
+    para cada BaaS; healthcheck mockado.
+  - `test_admin_storage.py` — endpoints `GET/PATCH/POST /admin/storage`.
+- Smoke test: `vectora storage migrate to-postgres` em sentido
+  lite→complete preserva contagem de rows + sample integrity check.
+
+### V15 — Provedores LLM via SDKs oficiais (consistência + Cohere completo)
 
 Hoje `services/utils.load_llm()` mistura `init_chat_model` da LangChain
 com paths legados, e `tools/memory.py` usa `cohere.AsyncClient` direto
@@ -2989,28 +3186,62 @@ mais recentes:
 
 ### Arquivos críticos (Bloco V)
 
-| Sub | Arquivos                                                                                                                                                                                                    |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| V1  | `vectora/services/storage/{__init__,protocols}.py` (novos), `storage/sqlite/*`, `storage/lancedb/*`                                                                                                         |
-| V2  | `storage/postgres/checkpoint.py` (novo), `vectora/services/checkpoint.py` (vira fino wrapper que delega ao factory)                                                                                         |
-| V3  | `storage/postgres/{auth,memory,session,secrets,audit,invites}.py` (novos); `services/{auth,memory,session,secrets/internal}.py` (refactor p/ consumir Protocols)                                            |
-| V4  | `storage/postgres/memory_pgvector.py` (opcional)                                                                                                                                                            |
-| V5  | `storage/postgres/queue.py` (novo); `services/{queue,background}.py` (refactor)                                                                                                                             |
-| V6  | `storage/qdrant/vector_store.py` (novo); `tools/rag.py`, `nodes/rag_subgraph.py`, `mcp/server.py`, `services/background.py` (refactor p/ consumir Protocol)                                                 |
-| V7  | `vectora/main.py` (subcomando `migrate`), `vectora/services/migrate.py` (novo)                                                                                                                              |
-| V8  | `deploy/compose.complete.yml`, `deploy/postgres/init.sql`                                                                                                                                                   |
-| V9  | `tests/unit/test_storage_protocols.py` (novo), parametrização dos testes existentes                                                                                                                         |
-| V10 | `storage/postgres/vector_pgvector.py` (novo, usa `langchain-postgres`), `storage/qdrant/vector_store.py` (refactor para `QdrantVectorStore`), `pyproject.toml` (+`langchain-postgres`, +`langchain-qdrant`) |
-| V11 | `vectora/services/utils.py` (`load_llm` consolidado), `pyproject.toml` (+`langchain-google-genai`, +`langchain-openai`, +`langchain-anthropic`, +`langchain-cohere`)                                        |
+| Sub | Arquivos                                                                                                                                                                                                                                                                                                                                                                                   |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| V1  | `storage/sqlite/pool.py` (novo, pool aiosqlite + PRAGMAs globais), `storage/lancedb/{connection,index,optimize}.py` (novos), `docs/storage-lite.md`                                                                                                                                                                                                                                        |
+| V2  | `storage/migrations/{0001_*,0002_*,…}.sql` (novos), `storage/migrations/runner.py` (novo), `vectora/main.py` (`vectora storage migrate`)                                                                                                                                                                                                                                                   |
+| V3  | `storage/{protocols,factory}.py` (novos); `storage/{sqlite,lancedb}/*` (wraps finos sobre o atual)                                                                                                                                                                                                                                                                                         |
+| V4  | `storage/{sqlite,postgres}/checkpoint.py` (delegam para `langgraph.checkpoint.{sqlite,postgres}`); `services/checkpoint.py` (wrapper de factory)                                                                                                                                                                                                                                           |
+| V5  | `storage/{sqlite,postgres}/store.py` (delegam para `langgraph.store.{sqlite,postgres}`); `services/memory.py` (refactor: API `BaseStore`); `api/handlers/memory.py` (idem); migration script `memory-to-langgraph`                                                                                                                                                                         |
+| V6  | `storage/lancedb/vector_store.py` (wrap `langchain_community.vectorstores.LanceDB`); `storage/qdrant/vector_store.py` (wrap `QdrantVectorStore` + `FastEmbedSparse` hybrid); `storage/postgres/vector_pgvector.py` (`langchain_postgres.PGVector`); refactor de `tools/rag.py`, `nodes/rag_subgraph.py`, `services/background.py`, `mcp/server.py` para consumir o Protocol                |
+| V7  | `storage/postgres/{auth,session,secrets,audit,invites}.py` (novos); `services/{auth,session,secrets/internal}.py` (refactor p/ Protocol)                                                                                                                                                                                                                                                   |
+| V8  | `storage/postgres/queue.py` (`SELECT … FOR UPDATE SKIP LOCKED`); `services/{queue,background}.py` (refactor)                                                                                                                                                                                                                                                                               |
+| V9  | `storage/recipes/{supabase,neon,qdrant_cloud}.py` (novos); `tests/unit/test_storage_recipes.py`                                                                                                                                                                                                                                                                                            |
+| V10 | `chat/components/layout/settings-dialog/admin/storage-panel.tsx` (novo); `vectora/api/handlers/admin.py` (+`GET/PATCH/POST /admin/storage`); i18n `storage.*`                                                                                                                                                                                                                              |
+| V11 | `vectora/main.py` (subcomando `storage` com info/test/wizard/migrate/backup); reuso do TUI textual (U7) no `storage wizard`                                                                                                                                                                                                                                                                |
+| V12 | `vectora/services/migrate.py` (novo, helpers de bulk insert)                                                                                                                                                                                                                                                                                                                               |
+| V13 | `deploy/compose.{lite,complete}.yml`, `deploy/postgres/init.sql`, `deploy/README.md`                                                                                                                                                                                                                                                                                                       |
+| V14 | `tests/unit/test_storage_{pool,lancedb,migrations,recipes}.py`; parametrização de `test_services_{auth,memory,session,queue}.py`                                                                                                                                                                                                                                                           |
+| V15 | `vectora/services/utils.py` (`load_llm` consolidado); `vectora/tools/memory.py` (remover `cohere.AsyncClient` direto); `pyproject.toml` (+`langchain-google-genai`, +`langchain-openai`, +`langchain-anthropic`, +`langchain-cohere`, +`langchain-community`, +`langchain-postgres`, +`langchain-qdrant`, +`langgraph-checkpoint-{sqlite,postgres}`, +`langgraph-store-{sqlite,postgres}`) |
 
 ### Verificação (Bloco V)
 
-- `VECTORA_MODE=lite` → comportamento atual idêntico (todos os testes verdes).
-- `VECTORA_MODE=complete` → docker compose up; signup, signin, chat com
-  RAG, save_memory, ingest_docs, vector_search funcionam exatamente como no
-  lite, mas backed por Postgres+Qdrant.
-- `vectora migrate to-postgres` em uma instância usada copia auth/sessions
-  para Postgres sem perda.
+**Lite hardening (V1–V3):**
+
+- `vectora server chat` em pasta vazia: storage cria 3 bancos com WAL +
+  foreign_keys ON + busy_timeout 30 s; LanceDB índices criados sob
+  demanda; FTS index montado quando hybrid é acionado.
+- `vectora storage migrate status` lista todas as migrations
+  aplicadas com checksum; alterar arquivo já aplicado → migrate detecta
+  drift e recusa.
+
+**Backends completos (V4–V8):**
+
+- Trocar `[storage] mode = "complete"` no admin UI → banner "Restart
+  necessário" → restart → todas as operações que funcionavam no lite
+  funcionam idêntico (signup, signin, chat, RAG, save_memory,
+  ingest_docs, vector_search) só que backed por Postgres + Qdrant.
+- Hybrid Qdrant: pergunta de RAG retorna scores combinados dense +
+  sparse; remoção do bias do BM25 custom é mensurável (precision@5).
+
+**BaaS (V9):**
+
+- Wizard CLI: `vectora storage wizard` → escolho Supabase → cola
+  service_role + project_ref → healthcheck verde → config salva com
+  `statement_cache_size=0`.
+- Idem Neon (`sslmode=require`) e Qdrant Cloud (`api_key`).
+
+**UI/CLI (V10/V11):**
+
+- Admin abre Settings → Storage → vê 4 cards (checkpointer / store /
+  vector / queue) com status + DSN mascarado; clica "Testar" → resposta
+  em <2 s. Wizard BaaS funciona idêntico ao CLI.
+- `vectora storage info` (headless): JSON com health + paths + counts.
+
+**Migration (V12):**
+
+- `vectora storage migrate to-postgres --dry-run` reporta volume sem
+  mover. Sem `--dry-run` move e zero rows perdem; `--force` sobrescreve.
 
 ---
 
