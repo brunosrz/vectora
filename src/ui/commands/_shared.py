@@ -70,6 +70,75 @@ def get_available_models(provider: str | None = None) -> dict[str, list[str]]:
 
 
 # ---------------------------------------------------------------------------
+# Context windows por modelo (tokens)
+# ---------------------------------------------------------------------------
+# Fontes públicas:
+#   Gemini: https://ai.google.dev/gemini-api/docs/models
+#   Claude: https://platform.claude.com/docs/en/about-claude/models/overview
+#   OpenAI: https://developers.openai.com/api/docs/models/all
+#   Cohere: https://docs.cohere.com/docs/{command-a-plus,command-r7b}
+#
+# Quando um modelo novo for adicionado em AVAILABLE_MODELS, registrar a
+# janela aqui também. Há fallback por família via get_context_window().
+
+MODEL_CONTEXT_WINDOWS: dict[str, int] = {
+    # Gemini — toda família roda em 1M
+    "gemini-3.5-flash": 1_000_000,
+    "gemini-3.1-pro-preview": 1_000_000,
+    "gemini-3-flash-preview": 1_000_000,
+    "gemini-3.1-flash-lite": 1_000_000,
+    "gemini-2.5-flash": 1_000_000,
+    "gemini-2.5-pro": 1_000_000,
+    # OpenAI — GPT-4.1 inflou para 1M; GPT-5.x e raciocínio ficaram em 200k+
+    "gpt-5.5": 400_000,
+    "gpt-5.5-pro": 400_000,
+    "gpt-5.4": 400_000,
+    "gpt-5.4-pro": 400_000,
+    "gpt-5.4-mini": 400_000,
+    "gpt-5.4-nano": 400_000,
+    "gpt-5": 400_000,
+    "gpt-5-mini": 400_000,
+    "gpt-5-nano": 400_000,
+    "gpt-4.1": 1_000_000,
+    "o3": 200_000,
+    "o4-mini": 200_000,
+    # Anthropic Claude 4 — todos 200k
+    "claude-opus-4-7": 200_000,
+    "claude-sonnet-4-6": 200_000,
+    "claude-haiku-4-5": 200_000,
+    # Cohere — Command A está em 256k; Command R em 128k
+    "command-a-03-2025": 256_000,
+    "command-r-plus-08-2024": 128_000,
+    "command-r-08-2024": 128_000,
+    "command-r7b-12-2024": 128_000,
+}
+
+
+def get_context_window(model: str) -> int:
+    """Janela de contexto (em tokens) do modelo.
+
+    Olha primeiro a tabela explícita; caso o modelo não esteja listado,
+    cai num fallback por família a partir do prefixo do id. Útil para
+    modelos novos que ainda não entraram em ``MODEL_CONTEXT_WINDOWS``.
+    """
+    if model in MODEL_CONTEXT_WINDOWS:
+        return MODEL_CONTEXT_WINDOWS[model]
+    if model.startswith("gemini-"):
+        return 1_000_000
+    if model.startswith("gpt-4.1"):
+        return 1_000_000
+    if model.startswith(("gpt-", "o3", "o4-")):
+        return 200_000
+    if model.startswith("claude-"):
+        return 200_000
+    if model.startswith("command-a"):
+        return 256_000
+    if model.startswith("command-"):
+        return 128_000
+    return 128_000
+
+
+# ---------------------------------------------------------------------------
 # Provider metadata maps
 # ---------------------------------------------------------------------------
 

@@ -249,6 +249,9 @@ workspace.browse_empty,No subfolders here,No hay subcarpetas aquí,Nenhuma subpa
 workspace.git_init_label,Initialize git repository if needed,Inicializar repositorio git si es necesario,Inicializar repositório git se necessário
 workspace.git_not_repo,This folder is not a git repository.,Esta carpeta no es un repositorio git.,Esta pasta não é um repositório git.
 workspace.trust_confirm,I trust this folder,Confío en esta carpeta,Confio nesta pasta
+workspace.ingest_title,Index folder in RAG,Indexar carpeta en RAG,Indexar pasta no RAG
+workspace.ingest_desc,Pick the folder you want the agent to ingest into the knowledge base.,Elige la carpeta que el agente debe indexar en la base de conocimiento.,Escolha a pasta que o agente deve indexar na base de conhecimento.
+workspace.ingest_confirm,Index this folder,Indexar esta carpeta,Indexar esta pasta
 workspace.cancel,Cancel,Cancelar,Cancelar
 workspace.select_here,Use this folder,Usar esta carpeta,Usar esta pasta
 # =============================================================================
@@ -319,7 +322,7 @@ meter.resets_in,resets in,reinicia en,reseta em
 plus.add_files,Add files or photos,Añadir archivos o fotos,Adicionar arquivos ou fotos
 plus.add_folder,Add folder,Añadir carpeta,Adicionar pasta
 plus.ingest_folder,Index folder in RAG,Indexar carpeta en RAG,Indexar pasta no RAG
-plus.ingest_prompt,"Index the current folder in RAG: ","Indexa la carpeta actual en RAG: ","Indexe a pasta atual no RAG: "
+plus.ingest_prompt,"Index this folder in RAG: {path}","Indexa esta carpeta en RAG: {path}","Indexe esta pasta no RAG: {path}"
 plus.slash_commands,Slash commands,Comandos de barra,Comandos de barra
 plus.connectors,Connectors,Conectores,Conectores
 plus.plugins,Add plugins…,Añadir plugins…,Adicionar plugins…

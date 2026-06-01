@@ -36,15 +36,17 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
   const setActive = useTerminalsStore((s) => s.setActive);
   const workspace = useWorkspacesStore((s) => s.getActive());
 
-  // Abre um terminal automaticamente quando o painel monta sem nenhum aberto
+  // Abre 1 terminal automaticamente quando o painel monta sem nenhum.
+  // Lê o store inline (não a captura reativa) — Strict Mode roda effects
+  // 2× em dev e a captura levaria a abrir 2 shells.
   useEffect(() => {
-    if (terminals.length === 0 && workspace?.trusted) {
-      const inst: TerminalInstance = {
+    const current = useTerminalsStore.getState().list(threadId);
+    if (current.length === 0 && workspace?.trusted) {
+      open(threadId, {
         id: newId(),
         title: t("terminal.tab_default"),
         workspaceId: workspace.id,
-      };
-      open(threadId, inst);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

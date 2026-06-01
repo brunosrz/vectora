@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { markAsNew } from "@/lib/stores/new-thread-registry";
+import { safeRandomUUID } from "@/lib/utils/uuid";
 
 /**
  * Página raiz — cria um novo thread e redireciona para /session/<uuid>.
@@ -13,7 +14,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("q");
-    const newThreadId = crypto.randomUUID();
+    const newThreadId = safeRandomUUID();
     markAsNew(newThreadId);
     const target = q
       ? `/session/${newThreadId}?q=${encodeURIComponent(q)}`

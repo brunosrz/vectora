@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronDown, Menu, Settings } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { AgentSettings, type AgentConfig } from "./agent-settings";
 import { GitStatusBadge } from "./git-status-badge";
@@ -13,21 +13,16 @@ import { useT } from "@/lib/i18n";
 interface HeaderProps {
   showToolCalls?: boolean;
   onToggleToolCalls?: () => void;
-  onNewChat?: () => void;
   agentConfig?: AgentConfig;
   onAgentConfigChange?: (config: AgentConfig) => void;
   onShowShortcuts?: () => void;
   forceShowTooltip?: number;
   showSettingsDialog?: boolean;
   onSettingsDialogChange?: (open: boolean) => void;
-  /** J.2.5 — hamburger no header em mobile reabre o sidebar (overlay). */
   onOpenSidebar?: () => void;
 }
 
 export function Header({
-  showToolCalls = false,
-  onToggleToolCalls,
-  onNewChat,
   agentConfig,
   onAgentConfigChange,
   onShowShortcuts,
@@ -84,26 +79,6 @@ export function Header({
               onOpenChange={onSettingsDialogChange}
             />
           )}
-          <button
-            onClick={onNewChat}
-            className="group inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 hover:border-primary/40 rounded-full text-sm font-medium text-foreground/80 hover:text-foreground transition-all duration-200 hover:scale-105 hover:shadow-lg whitespace-nowrap shrink-0"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-primary group-hover:rotate-12 transition-transform duration-200"
-            >
-              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-            </svg>
-            <span className="hidden sm:inline">{t("header.new_chat")}</span>
-          </button>
         </div>
       </div>
     </header>

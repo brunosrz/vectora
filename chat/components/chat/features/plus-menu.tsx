@@ -43,6 +43,7 @@ export function PlusMenu({
   const pushDraft = useChatInputStore((s) => s.pushDraft);
   const [open, setOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
+  const [ingestOpen, setIngestOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,15 +94,14 @@ export function PlusMenu({
             {t("plus.add_folder")}
           </button>
 
-          {/* Indexa uma pasta no RAG. Por enquanto popula o input com um
-              template; o orchestrator delega para a tool `ingest_docs`
-              (vectora/tools/rag.py). Quando o endpoint dedicado existir,
-              substituir por chamada direta. */}
+          {/* Abre o directory browser real (mesmo do trust). Ao confirmar,
+              encaminha o path para o input como prompt — o agente delega
+              para a tool ingest_docs. */}
           <button
             className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
             onClick={() => {
               setOpen(false);
-              pushDraft(t("plus.ingest_prompt"));
+              setIngestOpen(true);
             }}
           >
             <Database className="w-4 h-4 shrink-0 text-muted-foreground" />
@@ -148,6 +148,14 @@ export function PlusMenu({
       )}
 
       <WorkspaceTrustDialog open={trustOpen} onOpenChange={setTrustOpen} />
+      <WorkspaceTrustDialog
+        open={ingestOpen}
+        onOpenChange={setIngestOpen}
+        mode="ingest"
+        onConfirmPath={(path) => {
+          pushDraft(t("plus.ingest_prompt", { path }));
+        }}
+      />
     </div>
   );
 }

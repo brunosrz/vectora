@@ -32,11 +32,19 @@ import { useT } from "@/lib/i18n";
 interface WorkspaceTrustDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** `trust`: adiciona pasta como workspace confiável (default).
+   *  `ingest`: usa o directory browser apenas para escolher a pasta e
+   *  encaminha o caminho para o chat indexar via tool ingest_docs. */
+  mode?: "trust" | "ingest";
+  /** Callback opcional disparado no confirmar — recebe o path absoluto. */
+  onConfirmPath?: (path: string) => void;
 }
 
 export function WorkspaceTrustDialog({
   open,
   onOpenChange,
+  mode = "trust",
+  onConfirmPath,
 }: WorkspaceTrustDialogProps) {
   const t = useT();
   const browse = useWorkspacesStore((s) => s.browse);
@@ -67,6 +75,11 @@ export function WorkspaceTrustDialog({
 
   const handleConfirm = async () => {
     if (!listing) return;
+    if (mode === "ingest") {
+      onConfirmPath?.(listing.path);
+      onOpenChange(false);
+      return;
+    }
     setSubmitting(true);
     const ws = await create(listing.path, { trust: true, git_init: gitInit });
     setSubmitting(false);
@@ -77,8 +90,16 @@ export function WorkspaceTrustDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("workspace.trust_title")}</DialogTitle>
-          <DialogDescription>{t("workspace.trust_desc")}</DialogDescription>
+          <DialogTitle>
+            {mode === "ingest"
+              ? t("workspace.ingest_title")
+              : t("workspace.trust_title")}
+          </DialogTitle>
+          <DialogDescription>
+            {mode === "ingest"
+              ? t("workspace.ingest_desc")
+              : t("workspace.trust_desc")}
+          </DialogDescription>
         </DialogHeader>
 
         {/* Caminho atual */}
@@ -121,17 +142,18 @@ export function WorkspaceTrustDialog({
           </div>
         </ScrollArea>
 
-        {/* git init opt-in */}
-        <label className="flex items-center gap-2 text-sm text-foreground/80 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={gitInit}
-            onChange={(e) => setGitInit(e.target.checked)}
-            className="rounded border-border"
-          />
-          <GitBranch className="w-4 h-4 shrink-0 text-muted-foreground" />
-          {t("workspace.git_init_label")}
-        </label>
+        {mode === "trust" && (
+          <label className="flex items-center gap-2 text-sm text-foreground/80 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={gitInit}
+              onChange={(e) => setGitInit(e.target.checked)}
+              className="rounded border-border"
+            />
+            <GitBranch className="w-4 h-4 shrink-0 text-muted-foreground" />
+            {t("workspace.git_init_label")}
+          </label>
+        )}
 
         <DialogFooter>
           <Button
@@ -142,7 +164,9 @@ export function WorkspaceTrustDialog({
             {t("workspace.cancel")}
           </Button>
           <Button onClick={handleConfirm} disabled={!listing || submitting}>
-            {t("workspace.trust_confirm")}
+            {mode === "ingest"
+              ? t("workspace.ingest_confirm")
+              : t("workspace.trust_confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { safeRandomUUID } from "@/lib/utils/uuid";
 
 // ============================================================================
 // Constants
@@ -40,8 +41,9 @@ export function useUserId(): string | null {
     let id = localStorage.getItem(USER_ID_KEY);
 
     if (!id) {
-      // Generate new ID using crypto.randomUUID()
-      id = `user-${crypto.randomUUID()}`;
+      // safeRandomUUID: funciona em HTTP + IP da LAN/Tailscale (contexto
+      // inseguro) onde `crypto.randomUUID` lança no Firefox/Zen.
+      id = `user-${safeRandomUUID()}`;
       localStorage.setItem(USER_ID_KEY, id);
       console.info("Generated new browser user ID:", id);
     } else {

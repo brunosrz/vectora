@@ -51,6 +51,7 @@ interface SidebarProps {
   currentThreadId: string;
   onSelectThread: (threadId: string) => void;
   onDeleteThread: (threadId: string) => void;
+  onNewChat?: () => void;
   isLoading?: boolean;
 }
 
@@ -118,6 +119,7 @@ export const Sidebar = memo(function Sidebar({
   currentThreadId,
   onSelectThread,
   onDeleteThread,
+  onNewChat,
   isLoading = false,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -254,6 +256,31 @@ export const Sidebar = memo(function Sidebar({
             </span>
           </div>
         </div>
+
+        {onNewChat && (
+          <div className="px-3 pt-2">
+            <button
+              onClick={onNewChat}
+              className="group w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-primary"
+              >
+                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+              </svg>
+              {t("header.new_chat")}
+            </button>
+          </div>
+        )}
 
         {/* Search Bar */}
         <div className="px-3 py-2 bg-gradient-to-r from-sidebar-accent/5 via-transparent to-transparent">

@@ -28,6 +28,7 @@ import { HorizontalSplit } from "@/components/layout/horizontal-split";
 import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
+import { safeRandomUUID } from "@/lib/utils/uuid";
 
 function SessionContent() {
   const params = useParams();
@@ -104,7 +105,7 @@ function SessionContent() {
   const { clientProfile } = useClientProfile();
 
   const handleNewChat = () => {
-    const newThreadId = crypto.randomUUID();
+    const newThreadId = safeRandomUUID();
     markAsNew(newThreadId);
     setNewThreads((prev) => new Set(prev).add(newThreadId));
     if (userId) {
@@ -132,7 +133,7 @@ function SessionContent() {
     deleteThread(threadIdToDelete, () => {
       invalidateThreadCache(threadIdToDelete);
       if (threadIdToDelete === threadId) {
-        const newThreadId = crypto.randomUUID();
+        const newThreadId = safeRandomUUID();
         markAsNew(newThreadId);
         router.replace(`/session/${newThreadId}`);
       }
@@ -141,7 +142,7 @@ function SessionContent() {
 
   const handleThreadNotFound = () => {
     console.log("Thread not accessible - creating new thread");
-    const newThreadId = crypto.randomUUID();
+    const newThreadId = safeRandomUUID();
     markAsNew(newThreadId);
     setNewThreads((prev) => new Set(prev).add(newThreadId));
     if (userId) {
@@ -427,6 +428,7 @@ function SessionContent() {
           currentThreadId={threadId}
           onSelectThread={handleSelectThread}
           onDeleteThread={handleDeleteThread}
+          onNewChat={handleNewChat}
           isLoading={threadsLoading}
         />
         <div className="flex-1 overflow-hidden relative">
@@ -439,7 +441,6 @@ function SessionContent() {
                 <Header
                   showToolCalls={showToolCalls}
                   onToggleToolCalls={() => setShowToolCalls(!showToolCalls)}
-                  onNewChat={handleNewChat}
                   agentConfig={agentConfig}
                   onAgentConfigChange={setAgentConfig}
                   onShowShortcuts={() => setShowShortcutsDialog(true)}

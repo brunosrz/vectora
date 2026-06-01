@@ -323,14 +323,48 @@ export function getModelProvider(
 }
 
 /**
- * Tamanho da janela de contexto (em tokens) do modelo, para o medidor de
- * contexto (R5). Derivado por família quando não há valor explícito: Gemini
- * trabalha em escala de milhão; os demais frontier models giram em torno de 200k.
+ * Janela de contexto em tokens por modelo. Espelha
+ * `src/ui/commands/_shared.py::MODEL_CONTEXT_WINDOWS`. Atualizar nos dois
+ * lugares ao registrar um modelo novo.
  */
+const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
+  "google-genai:gemini-3.5-flash": 1_000_000,
+  "google-genai:gemini-3.1-pro-preview": 1_000_000,
+  "google-genai:gemini-3-flash-preview": 1_000_000,
+  "google-genai:gemini-3.1-flash-lite": 1_000_000,
+  "google-genai:gemini-2.5-flash": 1_000_000,
+  "google-genai:gemini-2.5-pro": 1_000_000,
+  "openai:gpt-5.5": 400_000,
+  "openai:gpt-5.5-pro": 400_000,
+  "openai:gpt-5.4": 400_000,
+  "openai:gpt-5.4-pro": 400_000,
+  "openai:gpt-5.4-mini": 400_000,
+  "openai:gpt-5.4-nano": 400_000,
+  "openai:gpt-5": 400_000,
+  "openai:gpt-5-mini": 400_000,
+  "openai:gpt-5-nano": 400_000,
+  "openai:gpt-4.1": 1_000_000,
+  "openai:o3": 200_000,
+  "openai:o4-mini": 200_000,
+  "anthropic:claude-opus-4-7": 200_000,
+  "anthropic:claude-sonnet-4-6": 200_000,
+  "anthropic:claude-haiku-4-5": 200_000,
+  "cohere:command-a-03-2025": 256_000,
+  "cohere:command-r-plus-08-2024": 128_000,
+  "cohere:command-r-08-2024": 128_000,
+  "cohere:command-r7b-12-2024": 128_000,
+};
+
 export function getContextWindow(modelId: ModelOption): number {
+  const explicit = MODEL_CONTEXT_WINDOWS[modelId];
+  if (explicit !== undefined) return explicit;
   if (modelId.startsWith("google-genai:")) return 1_000_000;
+  if (modelId.startsWith("openai:gpt-4.1")) return 1_000_000;
+  if (modelId.startsWith("openai:")) return 200_000;
+  if (modelId.startsWith("anthropic:")) return 200_000;
+  if (modelId.startsWith("cohere:command-a")) return 256_000;
   if (modelId.startsWith("cohere:")) return 128_000;
-  return 200_000;
+  return 128_000;
 }
 
 // =============================================================================

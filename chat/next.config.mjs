@@ -13,20 +13,36 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 // auth, /api/*, navegação normal nem WebSocket do app. Segurança real
 // continua sendo email+senha+cookie httpOnly+SameSite=Lax (Bloco C).
 //
-// Para que o Vectora possa ser servido de qualquer host em dev (LAN,
-// VPS, Tailscale, túneis tipo ngrok, IP novo da rede), abrimos para
-// todos os origins via globstar `**` — Next 16 usa picomatch e `**`
-// casa qualquer hostname/IP, com qualquer número de segmentos.
+// Importante: o Next 16 NÃO suporta globstar (`**`) para
+// `allowedDevOrigins`. Cada `*` casa exatamente UM segmento entre pontos.
+// Para um IPv4 inteiro (`100.85.240.102`) precisamos de `100.*.*.*`.
+// Para hostnames LAN tipo `meupc.local` basta `*.local`.
 //
-// Se algum operador quiser restringir explicitamente em dev (zona de
-// trabalho compartilhada, etc.), `NEXT_DEV_ALLOWED_ORIGINS` substitui
-// a lista padrão por uma CSV custom.
+// `NEXT_DEV_ALLOWED_ORIGINS` (CSV) substitui a lista padrão.
 const _envOrigins = (process.env.NEXT_DEV_ALLOWED_ORIGINS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-const _allowedDevOrigins = _envOrigins.length > 0 ? _envOrigins : ["**"];
+const _defaultAllowedDevOrigins = [
+  // localhost (não bloqueia, mas explícito por garantia)
+  "localhost",
+  "127.0.0.1",
+  // IPv4 catch-all — 4 octetos cobrem qualquer endereço público/privado
+  "*.*.*.*",
+  // mDNS / Bonjour (impressoras, dispositivos LAN com nome .local)
+  "*.local",
+  // Tailscale Magic DNS (<machine>.<tailnet>.ts.net)
+  "*.ts.net",
+  "*.*.ts.net",
+  // Túneis comuns
+  "*.ngrok.io",
+  "*.ngrok-free.app",
+  "*.trycloudflare.com",
+];
+
+const _allowedDevOrigins =
+  _envOrigins.length > 0 ? _envOrigins : _defaultAllowedDevOrigins;
 
 if (process.env.NODE_ENV !== "production") {
   console.info(
@@ -34,7 +50,7 @@ if (process.env.NODE_ENV !== "production") {
     _allowedDevOrigins.join(", "),
     _envOrigins.length > 0
       ? "(custom via NEXT_DEV_ALLOWED_ORIGINS)"
-      : "(catch-all — qualquer host)",
+      : "(default: qualquer IPv4 + LAN + Tailscale + tuneis)",
   );
 }
 
