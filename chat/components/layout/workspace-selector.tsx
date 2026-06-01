@@ -12,9 +12,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronDown,
+  Cloud,
   FolderGit2,
   FolderOpen,
   Plus,
+  Server,
   ShieldCheck,
 } from "lucide-react";
 
@@ -69,6 +71,22 @@ export function WorkspaceSelector() {
           <span className="truncate font-medium">
             {active?.name ?? t("workspace.add_folder")}
           </span>
+          {active?.transport === "ssh" && (
+            <span
+              className="shrink-0"
+              title={`${t("workspace.transport.ssh")}: ${active.remote_host ?? ""}`}
+            >
+              <Server className="w-3.5 h-3.5 text-sky-500" />
+            </span>
+          )}
+          {active?.transport === "codespace" && (
+            <span
+              className="shrink-0"
+              title={`${t("workspace.transport.codespace")}: ${active.codespace_name ?? ""}`}
+            >
+              <Cloud className="w-3.5 h-3.5 text-violet-500" />
+            </span>
+          )}
           <ChevronDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
         </button>
 
@@ -96,6 +114,10 @@ export function WorkspaceSelector() {
                 >
                   {w.id === active?.id ? (
                     <Check className="w-4 h-4 shrink-0 text-primary" />
+                  ) : w.transport === "ssh" ? (
+                    <Server className="w-4 h-4 shrink-0 text-sky-500" />
+                  ) : w.transport === "codespace" ? (
+                    <Cloud className="w-4 h-4 shrink-0 text-violet-500" />
                   ) : w.is_git_repo ? (
                     <FolderGit2 className="w-4 h-4 shrink-0 text-muted-foreground" />
                   ) : (

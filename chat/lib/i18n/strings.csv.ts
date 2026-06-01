@@ -257,6 +257,8 @@ workspace.ingest_title,Index folder in RAG,Indexar carpeta en RAG,Indexar pasta 
 workspace.ingest_desc,Pick the folder you want the agent to ingest into the knowledge base.,Elige la carpeta que el agente debe indexar en la base de conocimiento.,Escolha a pasta que o agente deve indexar na base de conhecimento.
 workspace.ingest_confirm,Index this folder,Indexar esta carpeta,Indexar esta pasta
 workspace.tab_local,Local,Local,Local
+workspace.transport.ssh,SSH,SSH,SSH
+workspace.transport.codespace,Codespace,Codespace,Codespace
 workspace.ssh_host,Host,Host,Host
 workspace.ssh_path,Remote path,Ruta remota,Caminho remoto
 workspace.ssh_key,SSH key,Clave SSH,Chave SSH
