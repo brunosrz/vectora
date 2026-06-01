@@ -111,6 +111,16 @@ class ListSafeRootsResponse(BaseModel):
     roots: list[SafeRootInfo]
 
 
+class TestSshRequest(BaseModel):
+    host: str
+    key_id: str | None = None
+
+
+class TestSshResponse(BaseModel):
+    ok: bool
+    message: str = ""
+
+
 class WorktreeInfo(BaseModel):
     path: str
     branch: str | None = None
@@ -374,6 +384,32 @@ async def list_safe_roots() -> ListSafeRootsResponse:
             for r in registry.all_roots()
         ],
     )
+
+
+@router.post("/TestSsh", response_model=TestSshResponse)
+async def test_ssh(body: TestSshRequest, request: Request) -> TestSshResponse:
+    """Tenta abrir uma conexão SSH com a chave do vault do usuário.
+
+    Retorna ``{ok: false, message}`` em qualquer erro; nunca expõe
+    detalhes internos pra evitar info disclosure.
+    """
+    user_id = _user_id(request)
+    from src.services.transport.ssh import SshTransport
+
+    transport = SshTransport(
+        remote_host=body.host,
+        ssh_key_id=body.key_id,
+        user_id=user_id,
+    )
+    try:
+        result = await transport.run(["echo", "ok"], cwd=".", timeout=10.0)
+        if result.exit_code == 0:
+            return TestSshResponse(ok=True, message="OK")
+        return TestSshResponse(ok=False, message=(result.stderr or "exit != 0").strip())
+    except Exception as exc:
+        return TestSshResponse(ok=False, message=str(exc))
+    finally:
+        await transport.close()
 
 
 @router.get("/ListWorktrees", response_model=ListWorktreesResponse)

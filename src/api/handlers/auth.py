@@ -280,6 +280,63 @@ async def get_usage(request: Request) -> dict:
     return usage_tracker.usage(user.id)
 
 
+# ---------------------------------------------------------------------------
+# G.2.4 — Chaves SSH por usuário (workspaces remotos)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/ssh-keys")
+async def list_user_ssh_keys(request: Request) -> dict:
+    """Lista os ``key_id``s armazenados para o usuário autenticado."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Não autenticado.")
+    from src.services.secrets.ssh_keys import list_ssh_keys
+
+    return {"keys": list_ssh_keys(user.id)}
+
+
+@router.post("/ssh-keys")
+async def upload_user_ssh_key(request: Request) -> dict:
+    """Faz upload de uma chave privada SSH (multipart/form-data).
+
+    O ID retornado é determinístico (sha256[:12] do conteúdo); subir
+    a mesma chave duas vezes é idempotente.
+    """
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Não autenticado.")
+    from starlette.datastructures import UploadFile
+
+    form = await request.form()
+    file = form.get("key")
+    if not isinstance(file, UploadFile):
+        raise HTTPException(
+            status_code=400, detail="Arquivo 'key' obrigatório (multipart)."
+        )
+    content = await file.read()
+    if not content or len(content) < 64:
+        raise HTTPException(status_code=400, detail="Chave inválida ou vazia.")
+    from src.services.secrets.ssh_keys import add_ssh_key
+
+    key_id = add_ssh_key(user.id, content)
+    return {"key_id": key_id}
+
+
+@router.delete("/ssh-keys/{key_id}")
+async def delete_user_ssh_key(request: Request, key_id: str) -> dict:
+    """Remove uma chave do storage do usuário."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Não autenticado.")
+    from src.services.secrets.ssh_keys import remove_ssh_key
+
+    ok = remove_ssh_key(user.id, key_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Chave não encontrada.")
+    return {"status": "deleted"}
+
+
 @router.get("/ws-token")
 async def get_ws_token(request: Request) -> dict:
     """Devolve o access token (do cookie) para uso em WebSockets cross-origin.

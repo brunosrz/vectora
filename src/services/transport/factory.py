@@ -40,8 +40,13 @@ def get_transport(workspace: Any) -> TransportBackend:
     if transport == "local":
         backend = LocalTransport()
     elif transport == "ssh":
-        # G.2.4 — implementado em src/services/transport/ssh.py
-        raise NotImplementedError("SSH transport ainda não implementado (G.2.4).")
+        from src.services.transport.ssh import SshTransport
+
+        backend = SshTransport(
+            remote_host=str(getattr(workspace, "remote_host", "") or ""),
+            ssh_key_id=getattr(workspace, "ssh_key_id", None),
+            user_id=getattr(workspace, "trusted_by", None),
+        )
     elif transport == "codespace":
         # G.2.5 — implementado em src/services/transport/codespace.py
         raise NotImplementedError("Codespace transport ainda não implementado (G.2.5).")
