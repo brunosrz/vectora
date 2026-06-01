@@ -230,6 +230,65 @@ class WorkspaceRegistry:
             self.trust(ws.id, user_id)
         return self._workspaces[ws.id]
 
+    def create_remote(
+        self,
+        *,
+        name: str,
+        transport: str,
+        remote_host: str | None = None,
+        remote_path: str | None = None,
+        ssh_key_id: str | None = None,
+        codespace_name: str | None = None,
+        user_id: str | None = None,
+    ) -> Workspace:
+        """Registra um workspace remoto (SSH ou Codespace).
+
+        ``cwd`` aponta para um placeholder local em
+        ``~/.vectora/remote-workspaces/<id>/`` apenas para satisfazer
+        consumidores que esperam um path (ex.: ``manifest_dir``). As
+        tools que precisam do filesystem real usam ``get_transport()``
+        e leem do host remoto via ``remote_path``.
+        """
+        self._load()
+        if transport not in {"ssh", "codespace"}:
+            raise ValueError(f"transport remoto inválido: {transport!r}")
+        # ID derivado do par (transport, identificador único) — host pra
+        # SSH, codespace_name pra Codespace. Idempotente: o mesmo par
+        # sempre devolve o mesmo workspace.
+        key = (
+            f"ssh:{remote_host}:{remote_path or ''}"
+            if transport == "ssh"
+            else f"codespace:{codespace_name}"
+        )
+        wid = hashlib.sha256(key.encode()).hexdigest()[:8]
+        if wid in self._workspaces:
+            ws = self._workspaces[wid]
+            if user_id is not None:
+                self.trust(wid, user_id)
+            return ws
+
+        placeholder = Path.home() / ".vectora" / "remote-workspaces" / wid
+        placeholder.mkdir(parents=True, exist_ok=True)
+
+        ws = Workspace(
+            id=wid,
+            name=name or (remote_host or codespace_name or "remote"),
+            cwd=str(placeholder),
+            created_at=datetime.now(UTC).isoformat(),
+            transport=transport,  # ty: ignore[invalid-argument-type]
+            remote_host=remote_host,
+            remote_path=remote_path,
+            ssh_key_id=ssh_key_id,
+            codespace_name=codespace_name,
+        )
+        if user_id is not None:
+            ws.trusted = True
+            ws.trusted_at = ws.created_at
+            ws.trusted_by = user_id
+        self._workspaces[wid] = ws
+        self._save()
+        return ws
+
     def get_or_create_session_workspace(
         self, thread_id: str, user_id: str | None = None
     ) -> Workspace:

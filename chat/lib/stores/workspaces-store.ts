@@ -51,6 +51,14 @@ export interface SafeRootSummary {
   builtin: boolean;
 }
 
+/** Codespace retornado por `gh codespace list` (G.2.5). */
+export interface CodespaceSummary {
+  name: string;
+  repository: string;
+  state: string;
+  git_status?: Record<string, unknown> | null;
+}
+
 interface WorkspacesState {
   workspaces: WorkspaceInfo[];
   active_id: string | null;
@@ -79,6 +87,28 @@ interface WorkspacesState {
   browse: (path?: string) => Promise<BrowseResult | null>;
   /** Carrega safe-roots visíveis para o usuário atual (F.3.5). */
   loadSafeRoots: () => Promise<void>;
+
+  // G.2.6 — workspaces remotos
+  listSshKeys: () => Promise<string[]>;
+  uploadSshKey: (file: File) => Promise<string | null>;
+  deleteSshKey: (keyId: string) => Promise<boolean>;
+  testSsh: (
+    host: string,
+    keyId?: string | null,
+  ) => Promise<{ ok: boolean; message: string }>;
+  listCodespaces: () => Promise<{
+    codespaces: CodespaceSummary[];
+    available: boolean;
+    message: string;
+  }>;
+  createRemote: (body: {
+    transport: "ssh" | "codespace";
+    name?: string;
+    remote_host?: string;
+    remote_path?: string;
+    ssh_key_id?: string | null;
+    codespace_name?: string;
+  }) => Promise<WorkspaceInfo | null>;
 }
 
 async function fetchJson(url: string, init?: RequestInit): Promise<any | null> {
@@ -195,5 +225,88 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
     if (data?.roots && Array.isArray(data.roots)) {
       set({ safeRoots: data.roots as SafeRootSummary[] });
     }
+  },
+
+  listSshKeys: async () => {
+    const data = await fetchJson("/api/auth/ssh-keys");
+    return Array.isArray(data?.keys) ? (data.keys as string[]) : [];
+  },
+
+  uploadSshKey: async (file) => {
+    const form = new FormData();
+    form.append("key", file);
+    try {
+      const res = await fetch("/api/auth/ssh-keys", {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return typeof data?.key_id === "string" ? data.key_id : null;
+    } catch {
+      return null;
+    }
+  },
+
+  deleteSshKey: async (keyId) => {
+    try {
+      const res = await fetch(
+        `/api/auth/ssh-keys/${encodeURIComponent(keyId)}`,
+        {
+          method: "DELETE",
+        },
+      );
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+
+  testSsh: async (host, keyId) => {
+    try {
+      const res = await fetch("/api/workspaces/test-ssh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ host, key_id: keyId ?? null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      return {
+        ok: Boolean(data?.ok),
+        message: String(data?.message ?? (res.ok ? "" : `Erro ${res.status}`)),
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        message: e instanceof Error ? e.message : "Falha de rede.",
+      };
+    }
+  },
+
+  listCodespaces: async () => {
+    const data = await fetchJson("/api/workspaces/codespaces");
+    return {
+      codespaces: Array.isArray(data?.codespaces)
+        ? (data.codespaces as CodespaceSummary[])
+        : [],
+      available: data?.available !== false,
+      message: typeof data?.message === "string" ? data.message : "",
+    };
+  },
+
+  createRemote: async (body) => {
+    const data = await fetchJson("/api/workspaces/create-remote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (data?.status === "ok" && data.workspace) {
+      const ws = data.workspace as WorkspaceInfo;
+      set((s) => ({
+        workspaces: [...s.workspaces.filter((w) => w.id !== ws.id), ws],
+        active_id: ws.id,
+      }));
+      return ws;
+    }
+    return null;
   },
 }));

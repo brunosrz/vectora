@@ -256,6 +256,18 @@ workspace.trust_confirm,I trust this folder,Confío en esta carpeta,Confio nesta
 workspace.ingest_title,Index folder in RAG,Indexar carpeta en RAG,Indexar pasta no RAG
 workspace.ingest_desc,Pick the folder you want the agent to ingest into the knowledge base.,Elige la carpeta que el agente debe indexar en la base de conocimiento.,Escolha a pasta que o agente deve indexar na base de conhecimento.
 workspace.ingest_confirm,Index this folder,Indexar esta carpeta,Indexar esta pasta
+workspace.tab_local,Local,Local,Local
+workspace.ssh_host,Host,Host,Host
+workspace.ssh_path,Remote path,Ruta remota,Caminho remoto
+workspace.ssh_key,SSH key,Clave SSH,Chave SSH
+workspace.ssh_key_placeholder,Choose a key…,Elige una clave…,Escolha uma chave…
+workspace.ssh_key_none,No key (agent),Sin clave (agente),Sem chave (agente)
+workspace.ssh_test,Test connection,Probar conexión,Testar conexão
+workspace.ssh_ok,Connected,Conectado,Conectado
+workspace.ssh_confirm,Add SSH workspace,Agregar workspace SSH,Adicionar workspace SSH
+workspace.codespaces_loading,Loading codespaces…,Cargando codespaces…,Carregando codespaces…
+workspace.codespaces_unavailable,GitHub CLI not authenticated.,GitHub CLI no autenticado.,GitHub CLI não autenticado.
+workspace.codespaces_empty,No codespaces found.,No se encontraron codespaces.,Nenhum codespace encontrado.
 workspace.cancel,Cancel,Cancelar,Cancelar
 workspace.select_here,Use this folder,Usar esta carpeta,Usar esta pasta
 # =============================================================================

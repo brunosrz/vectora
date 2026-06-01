@@ -71,6 +71,15 @@ class CreateWorkspaceRequest(BaseModel):
     git_init: bool = False
 
 
+class CreateRemoteWorkspaceRequest(BaseModel):
+    transport: str  # "ssh" | "codespace"
+    name: str = ""
+    remote_host: str | None = None
+    remote_path: str | None = None
+    ssh_key_id: str | None = None
+    codespace_name: str | None = None
+
+
 class TrustRequest(BaseModel):
     workspace_id: str
 
@@ -257,6 +266,30 @@ async def create_workspace(
     ws = workspace_registry.create(
         str(path), trust=body.trust, git_init=body.git_init, user_id=uid
     )
+    workspace_registry.set_active(ws.id, uid)
+    return StatusResponse(status="ok", workspace=_to_info(ws))
+
+
+@router.post("/CreateRemoteWorkspace", response_model=StatusResponse)
+async def create_remote_workspace(
+    request: Request, body: CreateRemoteWorkspaceRequest
+) -> StatusResponse:
+    """Cria um workspace remoto (SSH ou Codespace). G.2.6."""
+    from src.services.workspace import workspace_registry
+
+    uid = _user_id(request)
+    try:
+        ws = workspace_registry.create_remote(
+            name=body.name or (body.remote_host or body.codespace_name or "remote"),
+            transport=body.transport,
+            remote_host=body.remote_host,
+            remote_path=body.remote_path,
+            ssh_key_id=body.ssh_key_id,
+            codespace_name=body.codespace_name,
+            user_id=uid,
+        )
+    except ValueError as exc:
+        return StatusResponse(status="error", message=str(exc))
     workspace_registry.set_active(ws.id, uid)
     return StatusResponse(status="ok", workspace=_to_info(ws))
 

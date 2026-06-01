@@ -142,6 +142,46 @@ auth.get("/usage", async (c) => {
   return c.json(await res.json(), res.status as 200);
 });
 
+// G.2.4 — chaves SSH por usuário (workspaces remotos)
+auth.get("/ssh-keys", async (c) => {
+  const res = await proxyAuth(
+    "/auth/ssh-keys",
+    "GET",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+auth.post("/ssh-keys", async (c) => {
+  // Multipart precisa repassar o body cru — o proxyAuth genérico
+  // assume JSON. Usamos fetch direto preservando headers e body.
+  const VECTORA_API_URL =
+    process.env.VECTORA_API_URL ?? "http://localhost:8080";
+  const cookies = c.req.header("Cookie") ?? "";
+  const contentType = c.req.header("Content-Type") ?? "";
+  const arrayBuf = await c.req.arrayBuffer();
+  const res = await fetch(`${VECTORA_API_URL}/auth/ssh-keys`, {
+    method: "POST",
+    headers: {
+      ...(cookies ? { Cookie: cookies } : {}),
+      ...(contentType ? { "Content-Type": contentType } : {}),
+    },
+    body: arrayBuf,
+  });
+  return c.json(await res.json(), res.status as 200);
+});
+
+auth.delete("/ssh-keys/:id", async (c) => {
+  const res = await proxyAuth(
+    `/auth/ssh-keys/${c.req.param("id")}`,
+    "DELETE",
+    null,
+    c.req.header("Cookie") ?? "",
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
 auth.post("/change-password", async (c) => {
   const body = await c.req.json();
   const res = await proxyAuth(

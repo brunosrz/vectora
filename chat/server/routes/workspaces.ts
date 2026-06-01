@@ -83,6 +83,15 @@ workspaces.get("/browse", (c) => {
 
 workspaces.get("/safe-roots", (c) => proxyGet(c, "ListSafeRoots"));
 
+// G.2.6 — workspaces remotos
+workspaces.get("/codespaces", (c) => proxyGet(c, "Codespaces"));
+workspaces.post("/test-ssh", async (c) =>
+  proxyPost(c, "TestSsh", await c.req.json()),
+);
+workspaces.post("/create-remote", async (c) =>
+  proxyPost(c, "CreateRemoteWorkspace", await c.req.json()),
+);
+
 workspaces.get("/worktrees", (c) => {
   const id = c.req.query("workspace_id") ?? "";
   return proxyGet(
