@@ -250,13 +250,18 @@ class TestWorkspaceHandlers:
 
     @pytest.mark.asyncio
     async def test_browse_lists_subdirs(self, tmp_path):
+        from types import SimpleNamespace
+
         from src.api.handlers.workspaces import browse_dir
 
         (tmp_path / "alpha").mkdir()
         (tmp_path / "beta").mkdir()
         (tmp_path / "file.txt").write_text("x", encoding="utf-8")
 
-        result = await browse_dir(path=str(tmp_path))
+        # `request.state.user = None` → modo CLI privilegiado, sem cap
+        # de safe-root (necessário pra que o tmp_path arbitrário passe).
+        fake_request = SimpleNamespace(state=SimpleNamespace(user=None))
+        result = await browse_dir(fake_request, path=str(tmp_path))  # ty: ignore[invalid-argument-type]
         names = {e.name for e in result.entries}
         assert "alpha" in names
         assert "beta" in names

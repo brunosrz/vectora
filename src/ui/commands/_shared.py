@@ -114,6 +114,17 @@ MODEL_CONTEXT_WINDOWS: dict[str, int] = {
 }
 
 
+#: Fallback por família — ordem importa (prefixo mais específico antes).
+_FAMILY_CONTEXT_FALLBACKS: tuple[tuple[tuple[str, ...], int], ...] = (
+    (("gemini-",), 1_000_000),
+    (("gpt-4.1",), 1_000_000),
+    (("gpt-", "o3", "o4-"), 200_000),
+    (("claude-",), 200_000),
+    (("command-a",), 256_000),
+    (("command-",), 128_000),
+)
+
+
 def get_context_window(model: str) -> int:
     """Janela de contexto (em tokens) do modelo.
 
@@ -121,20 +132,12 @@ def get_context_window(model: str) -> int:
     cai num fallback por família a partir do prefixo do id. Útil para
     modelos novos que ainda não entraram em ``MODEL_CONTEXT_WINDOWS``.
     """
-    if model in MODEL_CONTEXT_WINDOWS:
-        return MODEL_CONTEXT_WINDOWS[model]
-    if model.startswith("gemini-"):
-        return 1_000_000
-    if model.startswith("gpt-4.1"):
-        return 1_000_000
-    if model.startswith(("gpt-", "o3", "o4-")):
-        return 200_000
-    if model.startswith("claude-"):
-        return 200_000
-    if model.startswith("command-a"):
-        return 256_000
-    if model.startswith("command-"):
-        return 128_000
+    explicit = MODEL_CONTEXT_WINDOWS.get(model)
+    if explicit is not None:
+        return explicit
+    for prefixes, window in _FAMILY_CONTEXT_FALLBACKS:
+        if model.startswith(prefixes):
+            return window
     return 128_000
 
 

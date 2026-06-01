@@ -89,6 +89,20 @@ class BrowseResponse(BaseModel):
     path: str
     parent: str | None = None
     entries: list[DirEntry]
+    # ID do SafeRoot que cobre o path atual, quando aplicável. Frontend
+    # exibe a label do safe-root como contexto ("dentro de Documents").
+    safe_root_id: str | None = None
+
+
+class SafeRootInfo(BaseModel):
+    id: str
+    path: str
+    label: str
+    builtin: bool
+
+
+class ListSafeRootsResponse(BaseModel):
+    roots: list[SafeRootInfo]
 
 
 class WorktreeInfo(BaseModel):
@@ -118,6 +132,19 @@ def _user_id(request: Request) -> str:
     if user is not None and getattr(user, "id", None):
         return str(user.id)
     return "local"
+
+
+def _is_privileged(request: Request) -> bool:
+    """True para root/admin (CLI local também é privilegiado).
+
+    Usuários privilegiados podem navegar fora dos safe-roots
+    (necessário para o admin escolher pastas a confiar).
+    """
+    user = getattr(request.state, "user", None)
+    if user is None:
+        return True  # CLI sem auth = root local
+    role = str(getattr(user, "role", "")).lower()
+    return role in {"root", "admin"}
 
 
 def _to_info(ws: Any) -> WorkspaceInfo:
@@ -238,13 +265,26 @@ async def git_init_workspace(request: Request, body: GitInitRequest) -> StatusRe
 
 @router.get("/BrowseDir", response_model=BrowseResponse)
 async def browse_dir(
+    request: Request,
     path: Annotated[str, Query()] = "",
 ) -> BrowseResponse:
-    """Lista subdiretórios de um caminho, para o directory browser da UI.
+    """Lista subdiretórios de um caminho, respeitando safe-roots.
 
-    Sem ``path`` → home do usuário. Mostra apenas diretórios (não arquivos),
-    ocultando entradas que começam com ponto.
+    Usuários comuns (member/viewer): só navegam dentro das raízes
+    configuradas pelo admin (``SafeRootRegistry``). Sem path, abre na
+    raiz mais próxima do HOME (geralmente ``~/Documents/vectora``).
+    Tentar sair gera 403; o botão "subir um nível" some na borda.
+
+    Privilegiados (root/admin/CLI local): navegação livre — necessário
+    para o admin escolher novas pastas a marcar como confiáveis.
     """
+    from fastapi import HTTPException
+
+    from src.services.safe_roots import get_safe_root_registry
+
+    registry = get_safe_root_registry()
+    privileged = _is_privileged(request)
+
     base = Path(path).expanduser() if path else Path.home()
     try:
         base = base.resolve()
@@ -253,6 +293,30 @@ async def browse_dir(
 
     if not base.exists() or not base.is_dir():
         base = Path.home()
+
+    # Cap por safe-root para usuários comuns.
+    safe_root_id: str | None = None
+    if not privileged:
+        containing = registry.is_under_safe_root(str(base))
+        if containing is None:
+            # Se o caller pediu explicitamente um path fora, recusa.
+            if path:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Caminho fora das pastas seguras configuradas.",
+                )
+            # Sem path: cai no safe-root mais próximo do HOME.
+            fallback = registry.closest_safe_root_for(str(Path.home()))
+            if fallback is None:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Nenhuma pasta segura configurada. "
+                    "Peça ao admin para adicionar uma.",
+                )
+            base = Path(fallback.path)
+            safe_root_id = fallback.id
+        else:
+            safe_root_id = containing.id
 
     entries: list[DirEntry] = []
     try:
@@ -269,8 +333,37 @@ async def browse_dir(
     except PermissionError:
         pass
 
-    parent = str(base.parent) if base.parent != base else None
-    return BrowseResponse(path=str(base), parent=parent, entries=entries)
+    # `parent` só preenche se ainda está sob algum safe-root (user comum)
+    # ou se há um pai real (privileged).
+    parent: str | None
+    if base.parent == base:
+        parent = None
+    elif privileged:
+        parent = str(base.parent)
+    else:
+        parent_under = registry.is_under_safe_root(str(base.parent))
+        parent = str(base.parent) if parent_under is not None else None
+
+    return BrowseResponse(
+        path=str(base),
+        parent=parent,
+        entries=entries,
+        safe_root_id=safe_root_id,
+    )
+
+
+@router.get("/ListSafeRoots", response_model=ListSafeRootsResponse)
+async def list_safe_roots() -> ListSafeRootsResponse:
+    """Lista as raízes confiáveis configuradas (visível a qualquer user)."""
+    from src.services.safe_roots import get_safe_root_registry
+
+    registry = get_safe_root_registry()
+    return ListSafeRootsResponse(
+        roots=[
+            SafeRootInfo(id=r.id, path=r.path, label=r.label, builtin=r.builtin)
+            for r in registry.all_roots()
+        ],
+    )
 
 
 @router.get("/ListWorktrees", response_model=ListWorktreesResponse)

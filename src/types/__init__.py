@@ -12,6 +12,7 @@ from src.types.agents import (
 )
 from src.types.curation import CurationDecision, WebResultVerdict
 from src.types.documents import ArtifactMetadata, Document
+from src.types.safe_root import SafeRoot
 from src.types.session import SessionMetadata
 from src.types.workspace import Workspace
 
@@ -24,6 +25,7 @@ __all__ = [
     "MemoryEntry",
     "OrchestratorDecision",
     "ParallelResult",
+    "SafeRoot",
     "SearchResult",
     "SessionMetadata",
     "SubTask",
