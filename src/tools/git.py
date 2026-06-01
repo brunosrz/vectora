@@ -56,6 +56,21 @@ def _open_repo(workspace_id: str | None, config: RunnableConfig | None) -> Any:
         return None, json.dumps(
             {"status": "error", "message": "Workspace não encontrado."}
         )
+    # G.2.3 — git tools ainda só rodam contra repos locais. Workspaces
+    # SSH/Codespace precisam usar `terminal` (ou tools `remote_git_*`
+    # dedicadas, fora do escopo desta fase).
+    transport = str(getattr(ws, "transport", "local"))
+    if transport != "local":
+        return None, json.dumps(
+            {
+                "status": "remote_unsupported",
+                "message": (
+                    f"git tools ainda não suportam workspaces "
+                    f"transport={transport!r}. Use a tool `terminal` "
+                    "com comandos `git ...`."
+                ),
+            }
+        )
     try:
         repo = git.Repo(ws.cwd, search_parent_directories=True)
         return repo, None

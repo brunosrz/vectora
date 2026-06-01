@@ -81,6 +81,26 @@ def _require_trust(config: RunnableConfig | None) -> str:
     return ""
 
 
+def _require_local(config: RunnableConfig | None) -> str:
+    """Rejeita workspaces remotos para tools de filesystem síncronas.
+
+    Tools sync (`file_read`, `file_write`, `file_edit`, `grep`, `list`)
+    fazem I/O direto via ``Path()`` e não passam pelo ``TransportBackend``
+    async. Quando o workspace é SSH ou Codespace, retornamos uma mensagem
+    clara — a próxima fase do G.2 vai expor essas operações via tools
+    async dedicadas (``remote_read``, ``remote_write``).
+    """
+    _, ws = _workspace_root(config)
+    transport = str(getattr(ws, "transport", "local"))
+    if transport != "local":
+        return (
+            f"Error: Esta tool ainda só funciona em workspaces locais. "
+            f"Workspace '{ws.name}' usa transport={transport!r}. "
+            "Use a tool `terminal` para executar comandos remoto."
+        )
+    return ""
+
+
 @tool(
     extras={
         "render_hint": "code_block",
@@ -101,6 +121,8 @@ def file_read(
     Returns:
         Conteúdo do arquivo como string
     """
+    if remote_err := _require_local(config):
+        return remote_err
     resolved, err = _confine(file_path, config)
     if resolved is None:
         logger.warning("file_read blocked by scope check", extra={"path": file_path})
@@ -145,6 +167,8 @@ def file_edit(
     Returns:
         Confirmação da edição
     """
+    if remote_err := _require_local(config):
+        return remote_err
     trust_err = _require_trust(config)
     if trust_err:
         return trust_err
@@ -212,6 +236,8 @@ def file_write(
     Returns:
         Confirmação com caminho e tamanho em bytes
     """
+    if remote_err := _require_local(config):
+        return remote_err
     trust_err = _require_trust(config)
     if trust_err:
         return trust_err
@@ -258,6 +284,8 @@ def grep(
     Returns:
         Linhas que correspondem ao padrão (arquivo:linha: conteúdo)
     """
+    if remote_err := _require_local(config):
+        return remote_err
     if not is_safe_regex_pattern(pattern):
         return "Error: Invalid or unsafe regex pattern"
 
@@ -319,6 +347,8 @@ def list_dir(
     Returns:
         Lista de arquivos e pastas com prefixo [DIR] ou [FILE]
     """
+    if remote_err := _require_local(config):
+        return remote_err
     resolved, err = _confine(path, config)
     if resolved is None:
         return err
@@ -402,7 +432,32 @@ async def terminal(
             "and fork bombs are not permitted."
         )
 
-    root, _ = _workspace_root(config)
+    root, _ws = _workspace_root(config)
+
+    # G.2.3 — Workspace remoto (SSH ou Codespace): delega via transport.
+    # O streaming linha-a-linha não é suportado nesse caminho ainda; o
+    # output volta inteiro depois que o comando termina.
+    transport = str(getattr(_ws, "transport", "local"))
+    if transport != "local":
+        from src.services.transport import get_transport
+
+        backend = get_transport(_ws)
+        cwd_remote = getattr(_ws, "remote_path", None) or str(root)
+        result = await backend.run(
+            ["sh", "-c", command],
+            cwd=cwd_remote,
+            timeout=30.0,
+        )
+        output = (result.stdout + result.stderr).strip()
+        logger.info(
+            "terminal_command_remote",
+            extra={
+                "command": command[:50],
+                "exit_code": result.exit_code,
+                "transport": transport,
+            },
+        )
+        return output or f"Command executed with exit code {result.exit_code}"
 
     proc: asyncio.subprocess.Process | None = None
     try:

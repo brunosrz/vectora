@@ -97,6 +97,26 @@ async def terminal_ws(ws: WebSocket) -> None:
         await ws.close(code=1008)
         return
 
+    # G.2.3 — PTY remoto (SSH/Codespace) ainda não implementado nesta
+    # camada (exige `asyncssh.connect().create_process(term_type=...)`
+    # e bombeio bytes em tempo real). Rejeitamos com mensagem clara.
+    transport = str(getattr(workspace, "transport", "local"))
+    if transport != "local":
+        await ws.send_text(
+            json.dumps(
+                {
+                    "type": "error",
+                    "message": (
+                        f"Terminal interativo ainda não disponível em "
+                        f"workspace transport={transport!r}. Use a tool "
+                        "`terminal` no chat (comandos one-shot)."
+                    ),
+                }
+            )
+        )
+        await ws.close(code=1011)
+        return
+
     session = pty_registry.get(terminal_id)
     if session is None or not session.is_alive():
         try:
