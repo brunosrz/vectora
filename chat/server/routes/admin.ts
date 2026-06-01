@@ -151,4 +151,46 @@ admin.patch("/config", async (c) => {
   return c.json(await res.json(), res.status as 200);
 });
 
+// F.3.3 — Pastas Seguras (SafeRoot)
+admin.get("/safe-roots", async (c) => {
+  const res = await fetch(`${VECTORA_API_URL}/admin/safe-roots`, {
+    headers: baseHeaders(c.req.header("Cookie")),
+  });
+  return c.json(await res.json(), res.status as 200);
+});
+
+admin.post("/safe-roots", async (c) => {
+  const body = await c.req.json();
+  const res = await fetch(`${VECTORA_API_URL}/admin/safe-roots`, {
+    method: "POST",
+    headers: baseHeaders(c.req.header("Cookie")),
+    body: JSON.stringify(body),
+  });
+  return c.json(await res.json(), res.status as 200);
+});
+
+admin.patch("/safe-roots/:id", async (c) => {
+  const body = await c.req.json();
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/safe-roots/${c.req.param("id")}`,
+    {
+      method: "PATCH",
+      headers: baseHeaders(c.req.header("Cookie")),
+      body: JSON.stringify(body),
+    },
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
+admin.delete("/safe-roots/:id", async (c) => {
+  const res = await fetch(
+    `${VECTORA_API_URL}/admin/safe-roots/${c.req.param("id")}`,
+    {
+      method: "DELETE",
+      headers: baseHeaders(c.req.header("Cookie")),
+    },
+  );
+  return c.json(await res.json(), res.status as 200);
+});
+
 export default admin;

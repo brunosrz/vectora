@@ -112,6 +112,15 @@ class PatchConfigBody(BaseModel):
     max_recursion: int | None = None
 
 
+class CreateSafeRootBody(BaseModel):
+    path: str
+    label: str = ""
+
+
+class UpdateSafeRootBody(BaseModel):
+    label: str
+
+
 # ---------------------------------------------------------------------------
 # P2 — Endpoints de administração
 # ---------------------------------------------------------------------------
@@ -467,3 +476,93 @@ async def patch_server_config(request: Request, body: PatchConfigBody) -> dict:
     except Exception as exc:
         logger.exception("patch_server_config failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# F.3.3 — Pastas Seguras (SafeRoot)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/safe-roots")
+async def list_safe_roots_admin(request: Request) -> dict:
+    """Lista as raízes confiáveis configuradas (admin)."""
+    user = _get_user(request)
+    require_admin(user)
+    from src.services.safe_roots import get_safe_root_registry
+
+    registry = get_safe_root_registry()
+    return {
+        "roots": [r.model_dump() for r in registry.all_roots()],
+    }
+
+
+@router.post("/safe-roots")
+async def create_safe_root(request: Request, body: CreateSafeRootBody) -> dict:
+    """Adiciona uma nova raiz confiável. Idempotente por path."""
+    user = _get_user(request)
+    require_admin(user)
+    from pathlib import Path as _Path
+
+    from src.services.safe_roots import get_safe_root_registry
+
+    target = _Path(body.path).expanduser()
+    try:
+        target = target.resolve()
+    except OSError as exc:
+        raise HTTPException(status_code=400, detail=f"Path inválido: {exc}") from exc
+    if not target.exists() or not target.is_dir():
+        raise HTTPException(
+            status_code=400,
+            detail=f"Caminho não existe ou não é diretório: {target}",
+        )
+
+    registry = get_safe_root_registry()
+    root = registry.add(str(target), body.label, str(user.id))
+    logger.info(
+        "admin: safe-root adicionado por user_id=%s path=%s label=%s",
+        user.id,
+        root.path,
+        root.label,
+    )
+    return {"status": "created", "root": root.model_dump()}
+
+
+@router.patch("/safe-roots/{root_id}")
+async def update_safe_root(
+    request: Request,
+    root_id: str,
+    body: UpdateSafeRootBody,
+) -> dict:
+    """Renomeia uma raiz confiável (label). Builtin aceita rename."""
+    user = _get_user(request)
+    require_admin(user)
+    from src.services.safe_roots import get_safe_root_registry
+
+    registry = get_safe_root_registry()
+    updated = registry.update_label(root_id, body.label)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Raiz não encontrada")
+    return {"status": "updated", "root": updated.model_dump()}
+
+
+@router.delete("/safe-roots/{root_id}")
+async def delete_safe_root(request: Request, root_id: str) -> dict:
+    """Remove uma raiz confiável. Recusa se for builtin."""
+    user = _get_user(request)
+    require_admin(user)
+    from src.services.safe_roots import get_safe_root_registry
+
+    registry = get_safe_root_registry()
+    root = registry.get(root_id)
+    if root is None:
+        raise HTTPException(status_code=404, detail="Raiz não encontrada")
+    if root.builtin:
+        raise HTTPException(
+            status_code=400,
+            detail="Raiz builtin não pode ser removida.",
+        )
+    ok = registry.remove(root_id)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Falha ao remover")
+    logger.info("admin: safe-root removido por user_id=%s path=%s", user.id, root.path)
+    return {"status": "deleted"}

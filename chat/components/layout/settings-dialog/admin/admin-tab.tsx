@@ -14,7 +14,9 @@ import {
   Check,
   Copy,
   Cpu,
+  FolderLock,
   Loader2,
+  Pencil,
   Settings2,
   Shield,
   Trash2,
@@ -767,10 +769,214 @@ function ConfigPanel() {
 }
 
 // ---------------------------------------------------------------------------
+// F.3.3 — Pastas Seguras (SafeRoot)
+// ---------------------------------------------------------------------------
+
+interface SafeRootRow {
+  id: string;
+  path: string;
+  label: string;
+  builtin: boolean;
+  created_at: string;
+  created_by: string;
+}
+
+function SafeRootsPanel() {
+  const [roots, setRoots] = useState<SafeRootRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [newPath, setNewPath] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const reload = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/safe-roots");
+      if (res.ok) {
+        const data = await res.json();
+        setRoots(data.roots ?? []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void reload();
+  }, []);
+
+  const handleAdd = async () => {
+    if (!newPath.trim()) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/safe-roots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: newPath.trim(),
+          label: newLabel.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.detail ?? `Falha (${res.status})`);
+      } else {
+        setNewPath("");
+        setNewLabel("");
+        await reload();
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleSaveLabel = async (id: string) => {
+    if (!editLabel.trim()) {
+      setEditingId(null);
+      return;
+    }
+    await fetch(`/api/admin/safe-roots/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: editLabel.trim() }),
+    });
+    setEditingId(null);
+    await reload();
+  };
+
+  const handleRemove = async (id: string) => {
+    const ok = window.confirm(
+      "Remover esta pasta segura? Workspaces existentes não são afetados.",
+    );
+    if (!ok) return;
+    await fetch(`/api/admin/safe-roots/${id}`, { method: "DELETE" });
+    await reload();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="text-xs text-muted-foreground">
+        Usuários comuns só podem criar workspaces dentro destas pastas. A
+        entrada builtin (Documents/vectora) não pode ser removida.
+      </div>
+
+      {/* Adicionar nova */}
+      <div className="rounded-md border border-border/60 p-3 space-y-2">
+        <div className="text-xs font-medium text-foreground">
+          Adicionar pasta segura
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            value={newPath}
+            onChange={(e) => setNewPath(e.target.value)}
+            placeholder="/caminho/absoluto/da/pasta"
+            className="font-mono text-xs"
+          />
+          <Input
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="Rótulo (opcional)"
+            className="text-xs sm:w-48"
+          />
+          <Button
+            size="sm"
+            onClick={handleAdd}
+            disabled={creating || !newPath.trim()}
+          >
+            {creating ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              "Adicionar"
+            )}
+          </Button>
+        </div>
+        {error && <div className="text-xs text-destructive">{error}</div>}
+      </div>
+
+      {/* Lista */}
+      {loading ? (
+        <div className="text-xs text-muted-foreground flex items-center gap-2">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Carregando…
+        </div>
+      ) : roots.length === 0 ? (
+        <div className="text-xs text-muted-foreground">
+          Nenhuma pasta configurada.
+        </div>
+      ) : (
+        <div className="rounded-md border border-border/60 divide-y divide-border/60">
+          {roots.map((r) => (
+            <div
+              key={r.id}
+              className="flex items-center gap-2 px-3 py-2 text-xs"
+            >
+              <FolderLock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <div className="flex-1 min-w-0">
+                {editingId === r.id ? (
+                  <Input
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                    onBlur={() => handleSaveLabel(r.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void handleSaveLabel(r.id);
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                    autoFocus
+                    className="h-6 text-xs"
+                  />
+                ) : (
+                  <div className="font-medium text-foreground flex items-center gap-1.5">
+                    {r.label}
+                    {r.builtin && (
+                      <Badge variant="secondary" className="text-[10px] py-0">
+                        builtin
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                <div className="font-mono text-[10px] text-muted-foreground truncate">
+                  {r.path}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setEditingId(r.id);
+                  setEditLabel(r.label);
+                }}
+                title="Renomear"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleRemove(r.id)}
+                disabled={r.builtin}
+                title={
+                  r.builtin ? "Pasta builtin não pode ser removida" : "Remover"
+                }
+                className="text-destructive hover:text-destructive disabled:opacity-30"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Componente principal
 // ---------------------------------------------------------------------------
 
-type AdminSubTab = "users" | "tools" | "system" | "config";
+type AdminSubTab = "users" | "tools" | "system" | "config" | "safe-roots";
 
 const SUB_TABS: { id: AdminSubTab; label: string; icon: React.ReactNode }[] = [
   { id: "users", label: "Usuários", icon: <Users className="w-3.5 h-3.5" /> },
@@ -778,6 +984,11 @@ const SUB_TABS: { id: AdminSubTab; label: string; icon: React.ReactNode }[] = [
     id: "tools",
     label: "Ferramentas",
     icon: <Wrench className="w-3.5 h-3.5" />,
+  },
+  {
+    id: "safe-roots",
+    label: "Pastas Seguras",
+    icon: <FolderLock className="w-3.5 h-3.5" />,
   },
   {
     id: "system",
@@ -822,6 +1033,7 @@ export function AdminTab() {
       <div className="min-h-[200px]">
         {active === "users" && <UsersPanel />}
         {active === "tools" && <ToolsPanel />}
+        {active === "safe-roots" && <SafeRootsPanel />}
         {active === "system" && <SystemPanel />}
         {active === "config" && <ConfigPanel />}
       </div>
