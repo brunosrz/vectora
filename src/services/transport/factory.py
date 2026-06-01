@@ -48,8 +48,12 @@ def get_transport(workspace: Any) -> TransportBackend:
             user_id=getattr(workspace, "trusted_by", None),
         )
     elif transport == "codespace":
-        # G.2.5 — implementado em src/services/transport/codespace.py
-        raise NotImplementedError("Codespace transport ainda não implementado (G.2.5).")
+        from src.services.transport.codespace import CodespaceTransport
+
+        backend = CodespaceTransport(
+            codespace_name=str(getattr(workspace, "codespace_name", "") or ""),
+            remote_path=getattr(workspace, "remote_path", None),
+        )
     else:
         logger.warning(
             "Workspace %s tem transport desconhecido '%s'; usando local.",

@@ -121,6 +121,19 @@ class TestSshResponse(BaseModel):
     message: str = ""
 
 
+class CodespaceInfo(BaseModel):
+    name: str
+    repository: str = ""
+    state: str = ""
+    git_status: dict | None = None
+
+
+class ListCodespacesResponse(BaseModel):
+    codespaces: list[CodespaceInfo]
+    available: bool = True
+    message: str = ""
+
+
 class WorktreeInfo(BaseModel):
     path: str
     branch: str | None = None
@@ -383,6 +396,42 @@ async def list_safe_roots() -> ListSafeRootsResponse:
             SafeRootInfo(id=r.id, path=r.path, label=r.label, builtin=r.builtin)
             for r in registry.all_roots()
         ],
+    )
+
+
+@router.get("/Codespaces", response_model=ListCodespacesResponse)
+async def list_codespaces_endpoint() -> ListCodespacesResponse:
+    """Lista codespaces do user via ``gh codespace list``.
+
+    Requer ``gh`` CLI autenticado no host do Vectora. Quando o ``gh``
+    está ausente ou não-autenticado, devolve lista vazia + flag
+    ``available=False`` (UI orienta o user).
+    """
+    from src.services.transport.codespace import list_codespaces
+
+    try:
+        raw = await list_codespaces()
+    except FileNotFoundError:
+        return ListCodespacesResponse(
+            codespaces=[], available=False, message="gh CLI não encontrado."
+        )
+    return ListCodespacesResponse(
+        codespaces=[
+            CodespaceInfo(
+                name=str(item.get("name", "")),
+                repository=str(
+                    (item.get("repository") or {}).get("nameWithOwner")
+                    if isinstance(item.get("repository"), dict)
+                    else item.get("repository") or ""
+                ),
+                state=str(item.get("state", "")),
+                git_status=item.get("gitStatus")
+                if isinstance(item.get("gitStatus"), dict)
+                else None,
+            )
+            for item in raw
+        ],
+        available=True,
     )
 
 
