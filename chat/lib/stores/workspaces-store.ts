@@ -36,11 +36,20 @@ export interface BrowseResult {
   safe_root_id?: string | null;
 }
 
+/** Resumo de uma safe-root para o painel de acesso rápido (F.3.5). */
+export interface SafeRootSummary {
+  id: string;
+  path: string;
+  label: string;
+  builtin: boolean;
+}
+
 interface WorkspacesState {
   workspaces: WorkspaceInfo[];
   active_id: string | null;
   fetchedAt: number | null;
   loading: boolean;
+  safeRoots: SafeRootSummary[];
 
   // ── Reads ─────────────────────────────────────────────────────────────────
   getActive: () => WorkspaceInfo | null;
@@ -61,6 +70,8 @@ interface WorkspacesState {
   trust: (id: string) => Promise<WorkspaceInfo | null>;
   gitInit: (id: string) => Promise<WorkspaceInfo | null>;
   browse: (path?: string) => Promise<BrowseResult | null>;
+  /** Carrega safe-roots visíveis para o usuário atual (F.3.5). */
+  loadSafeRoots: () => Promise<void>;
 }
 
 async function fetchJson(url: string, init?: RequestInit): Promise<any | null> {
@@ -78,6 +89,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
   active_id: null,
   fetchedAt: null,
   loading: false,
+  safeRoots: [],
 
   getActive: () => {
     const { workspaces, active_id } = get();
@@ -169,5 +181,12 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
     const data = await fetchJson(`/api/workspaces/browse${q}`);
     if (data?.path !== undefined) return data as BrowseResult;
     return null;
+  },
+
+  loadSafeRoots: async () => {
+    const data = await fetchJson("/api/workspaces/safe-roots");
+    if (data?.roots && Array.isArray(data.roots)) {
+      set({ safeRoots: data.roots as SafeRootSummary[] });
+    }
   },
 }));

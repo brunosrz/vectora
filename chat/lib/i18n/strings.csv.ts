@@ -35,6 +35,8 @@ sidebar.documentation_caption,GitHub · Vectora,GitHub · Vectora,GitHub · Vect
 sidebar.feedback,Feedback,Comentarios,Feedback
 sidebar.report_issue,Report an issue,Reportar problema,Reportar problema
 sidebar.open,Open sessions,Abrir sesiones,Abrir sessões
+sidebar.folders,Folders,Carpetas,Pastas
+sidebar.folders_empty,No folders yet. Ask the admin to add one.,Aún no hay carpetas. Pide al admin que agregue una.,Nenhuma pasta ainda. Peça ao admin para adicionar uma.
 # =============================================================================
 # Relative time (sidebar)
 # =============================================================================

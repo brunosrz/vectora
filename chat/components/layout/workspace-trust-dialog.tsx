@@ -39,6 +39,8 @@ interface WorkspaceTrustDialogProps {
   mode?: "trust" | "ingest";
   /** Callback opcional disparado no confirmar — recebe o path absoluto. */
   onConfirmPath?: (path: string) => void;
+  /** Pré-navega para esse caminho ao abrir (F.3.5 — quick access). */
+  initialPath?: string;
 }
 
 export function WorkspaceTrustDialog({
@@ -46,6 +48,7 @@ export function WorkspaceTrustDialog({
   onOpenChange,
   mode = "trust",
   onConfirmPath,
+  initialPath,
 }: WorkspaceTrustDialogProps) {
   const t = useT();
   const create = useWorkspacesStore((s) => s.create);
@@ -94,11 +97,11 @@ export function WorkspaceTrustDialog({
       setListing(null);
       setGitInit(true);
       setError(null);
-      setPathInput("");
+      setPathInput(initialPath ?? "");
       lastLoadedPathRef.current = null;
-      void load();
+      void load(initialPath || undefined);
     }
-  }, [open, load]);
+  }, [open, load, initialPath]);
 
   const handleGo = () => {
     const target = pathInput.trim();

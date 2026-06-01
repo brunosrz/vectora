@@ -81,6 +81,8 @@ workspaces.get("/browse", (c) => {
   return proxyGet(c, "BrowseDir", `?path=${encodeURIComponent(path)}`);
 });
 
+workspaces.get("/safe-roots", (c) => proxyGet(c, "ListSafeRoots"));
+
 workspaces.get("/worktrees", (c) => {
   const id = c.req.query("workspace_id") ?? "";
   return proxyGet(

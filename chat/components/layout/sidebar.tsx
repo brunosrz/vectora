@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Thread } from "@/lib/hooks/threads";
 import { useT } from "@/lib/i18n";
+import { SidebarFolders } from "./sidebar-folders";
 
 type TFunc = (key: string, params?: Record<string, string | number>) => string;
 
@@ -281,6 +282,9 @@ export const Sidebar = memo(function Sidebar({
             </button>
           </div>
         )}
+
+        {/* F.3.5 — Acesso rápido: workspaces + safe-roots */}
+        <SidebarFolders />
 
         {/* Search Bar */}
         <div className="px-3 py-2 bg-gradient-to-r from-sidebar-accent/5 via-transparent to-transparent">
