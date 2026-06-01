@@ -8,13 +8,10 @@ export const THREAD_FETCH_LIMIT = 100;
 
 export const DEFAULT_TITLE_MAX_LENGTH = 60;
 
-export const MAX_INPUT_CHARS = 50_000;
-
-export const INPUT_TOO_LONG_MESSAGE =
-  "input is too long, try sending separate messages.";
-
-export const FILE_TOO_LARGE_MESSAGE =
-  "could not upload file, maximum input length exceeded";
+/** Texto colado acima deste tamanho vira anexo de texto (`pasted.txt`)
+ *  ao invés de inflar o textarea. Inspirado no padrão do ChatGPT/Claude:
+ *  o conteúdo fica acessível ao agente como artefato, sem poluir a UI. */
+export const LARGE_PASTE_THRESHOLD = 4_000;
 
 export const IMAGE_UNSUPPORTED_MODEL_MESSAGE =
   "Selected model does not support image uploads";

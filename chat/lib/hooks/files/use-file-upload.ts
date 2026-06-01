@@ -11,11 +11,7 @@
 import { useState, useCallback } from "react";
 import type { ImageAttachment } from "../../types";
 import { createImageAttachment, validateImageFile } from "../../utils/chat";
-import {
-  FILE_TOO_LARGE_MESSAGE,
-  IMAGE_UNSUPPORTED_MODEL_MESSAGE,
-  MAX_INPUT_CHARS,
-} from "../../constants/features";
+import { IMAGE_UNSUPPORTED_MODEL_MESSAGE } from "../../constants/features";
 
 // ============================================================================
 // Types
@@ -35,10 +31,11 @@ export interface UseFileUploadReturn {
   removeFile: (fileId: string) => void;
   clearFiles: () => void;
   setUploadError: (error: string | null) => void;
+  /** Processa um conjunto arbitrário de Files (drag/drop, paste, virtual). */
+  processFiles: (files: File[]) => Promise<void>;
 }
 
 interface UseFileUploadOptions {
-  getInputLength?: () => number;
   disableImageUploads?: boolean;
 }
 
@@ -74,7 +71,6 @@ export function useFileUpload(
   const [attachedFiles, setAttachedFiles] = useState<ImageAttachment[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const getInputLength = options.getInputLength ?? (() => 0);
   const disableImageUploads = options.disableImageUploads ?? false;
 
   /**
@@ -84,13 +80,7 @@ export function useFileUpload(
   const processFiles = useCallback(
     async (files: File[]) => {
       setUploadError(null);
-      let acceptedTextLength = attachedFiles.reduce((total, file) => {
-        if (file.mimeType?.startsWith("image/")) return total;
-        return total + (file.textLength ?? 0);
-      }, 0);
-
       for (const file of files) {
-        // Validate file
         const validation = validateImageFile(file);
         if (!validation.valid) {
           setUploadError(validation.error || "Invalid file");
@@ -99,43 +89,25 @@ export function useFileUpload(
 
         try {
           const isImage = isImageFile(file);
-          let textLength: number | undefined;
-
           if (isImage && disableImageUploads) {
             setUploadError(IMAGE_UNSUPPORTED_MODEL_MESSAGE);
             continue;
           }
-
+          let textLength: number | undefined;
           if (!isImage) {
             const text = await file.text();
             textLength = text.length;
-
-            if (textLength > MAX_INPUT_CHARS) {
-              setUploadError(FILE_TOO_LARGE_MESSAGE);
-              continue;
-            }
-
-            if (
-              getInputLength() + acceptedTextLength + textLength >
-              MAX_INPUT_CHARS
-            ) {
-              setUploadError(FILE_TOO_LARGE_MESSAGE);
-              continue;
-            }
           }
-
-          // Convert to attachment
           const imageAttachment = await createImageAttachment(file);
           imageAttachment.textLength = textLength;
           setAttachedFiles((prev) => [...prev, imageAttachment]);
-          acceptedTextLength += textLength ?? 0;
         } catch (error) {
           console.error("Error processing file:", error);
           setUploadError("Failed to process file");
         }
       }
     },
-    [attachedFiles, disableImageUploads, getInputLength],
+    [disableImageUploads],
   );
 
   /**
@@ -273,5 +245,6 @@ export function useFileUpload(
     removeFile,
     clearFiles,
     setUploadError,
+    processFiles,
   };
 }

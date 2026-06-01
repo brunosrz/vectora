@@ -21,10 +21,6 @@ import { ThinkingTimer } from "./animations/thinking-timer";
 import { AnimatedThinking } from "./animations/animated-thinking";
 import { HITLPanel } from "./features/hitl-panel";
 import type { Message } from "@/lib/types";
-import {
-  INPUT_TOO_LONG_MESSAGE,
-  MAX_INPUT_CHARS,
-} from "@/lib/constants/features";
 import { stripMarkdownEnvelope } from "@/lib/utils/string";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
 import Image from "next/image";
@@ -357,39 +353,24 @@ export const MessageItem = memo(
     onRetry,
   }: MessageItemProps) {
     const [isEditing, setIsEditing] = useState(false);
-    const [editContent, setEditContent] = useState(
-      message.content.slice(0, MAX_INPUT_CHARS),
-    );
-    const [editError, setEditError] = useState<string | null>(null);
+    const [editContent, setEditContent] = useState(message.content);
+    const [editError] = useState<string | null>(null);
     const prevContentRef = useRef(message.content);
 
     // Sync editContent when message.content changes (e.g., during streaming)
     useEffect(() => {
       if (!isEditing && message.content !== prevContentRef.current) {
-        setEditContent(message.content.slice(0, MAX_INPUT_CHARS));
+        setEditContent(message.content);
         prevContentRef.current = message.content;
       }
     }, [message.content, isEditing]);
 
     const setLimitedEditContent = useCallback((value: string) => {
-      if (value.length > MAX_INPUT_CHARS) {
-        setEditError(INPUT_TOO_LONG_MESSAGE);
-        setEditContent(value.slice(0, MAX_INPUT_CHARS));
-        return;
-      }
-
-      setEditError(null);
       setEditContent(value);
     }, []);
 
     const handleStartEdit = useCallback(() => {
-      const cappedContent = message.content.slice(0, MAX_INPUT_CHARS);
-      setEditContent(cappedContent);
-      setEditError(
-        message.content.length > MAX_INPUT_CHARS
-          ? INPUT_TOO_LONG_MESSAGE
-          : null,
-      );
+      setEditContent(message.content);
       setIsEditing(true);
     }, [message.content]);
 
@@ -397,52 +378,13 @@ export const MessageItem = memo(
       if (editContent.trim() && onEditAndRerun) {
         onEditAndRerun(message.id, editContent.trim());
         setIsEditing(false);
-        setEditError(null);
       }
     }, [editContent, onEditAndRerun, message.id]);
 
     const handleCancelEdit = useCallback(() => {
-      setEditContent(message.content.slice(0, MAX_INPUT_CHARS));
-      setEditError(null);
+      setEditContent(message.content);
       setIsEditing(false);
     }, [message.content]);
-
-    const handleEditBeforeInput = useCallback(
-      (e: React.FormEvent<HTMLTextAreaElement>) => {
-        const nativeEvent = e.nativeEvent as InputEvent;
-        const insertedText = nativeEvent.data;
-        if (!insertedText) return;
-
-        const target = e.currentTarget;
-        const selectionLength = target.selectionEnd - target.selectionStart;
-        const nextLength =
-          target.value.length - selectionLength + insertedText.length;
-
-        if (nextLength > MAX_INPUT_CHARS) {
-          e.preventDefault();
-          setEditError(INPUT_TOO_LONG_MESSAGE);
-        }
-      },
-      [],
-    );
-
-    const handleEditPaste = useCallback(
-      (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-        const pastedText = e.clipboardData?.getData("text") ?? "";
-        if (!pastedText) return;
-
-        const target = e.currentTarget;
-        const selectionLength = target.selectionEnd - target.selectionStart;
-        const nextLength =
-          target.value.length - selectionLength + pastedText.length;
-
-        if (nextLength > MAX_INPUT_CHARS) {
-          e.preventDefault();
-          setEditError(INPUT_TOO_LONG_MESSAGE);
-        }
-      },
-      [],
-    );
 
     // Track code block index to generate stable IDs during streaming
     const codeBlockIndexRef = useRef(0);
@@ -670,9 +612,6 @@ export const MessageItem = memo(
                     <Textarea
                       value={editContent}
                       onChange={(e) => setLimitedEditContent(e.target.value)}
-                      onBeforeInput={handleEditBeforeInput}
-                      onPaste={handleEditPaste}
-                      maxLength={MAX_INPUT_CHARS}
                       className="min-h-[80px] text-sm"
                       autoFocus
                       onKeyDown={(e) => {

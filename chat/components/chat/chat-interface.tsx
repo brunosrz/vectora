@@ -47,10 +47,7 @@ const VOICE_LANG: Record<Lang, string> = {
 // Stubs de compatibilidade — LangSmith removido
 const readRun = async (_runId: string) => null;
 const shareRun = async (_runId: string): Promise<string> => "";
-import {
-  INPUT_TOO_LONG_MESSAGE,
-  MAX_INPUT_CHARS,
-} from "@/lib/constants/features";
+import { LARGE_PASTE_THRESHOLD } from "@/lib/constants/features";
 
 // Enhanced scrollbar styles with smooth transitions
 const scrollbarStyles = `
@@ -187,16 +184,8 @@ export function ChatInterface({
     removeFile,
     clearFiles,
     setUploadError,
-  } = useFileUpload({
-    getInputLength: () => inputLengthRef.current,
-    disableImageUploads: false,
-  });
-  const attachedTextLength = attachedFiles.reduce((total, file) => {
-    if (file.mimeType?.startsWith("image/")) return total;
-    return total + (file.textLength ?? 0);
-  }, 0);
-  const attachedTextLengthRef = useRef(attachedTextLength);
-  attachedTextLengthRef.current = attachedTextLength;
+    processFiles,
+  } = useFileUpload({ disableImageUploads: false });
 
   // Message queue for sending while AI is responding
   const messageQueueRef = useRef<QueuedMessage[]>([]);
@@ -208,25 +197,18 @@ export function ChatInterface({
   // Track the "base" input text (before voice input started + finalized transcripts)
   const baseInputRef = useRef(uiState.input);
 
+  // Sem limite de tamanho de input — paste grande vira anexo via
+  // handleInputPaste (F.4.1). Mantemos o nome `setLimitedInput` por
+  // compatibilidade com os call sites; ele apenas limpa erro e propaga.
   const setLimitedInput = useCallback(
     (value: string) => {
-      const maxInputLength = Math.max(
-        0,
-        MAX_INPUT_CHARS - attachedTextLengthRef.current,
-      );
-      if (value.length > maxInputLength) {
-        setInputError(INPUT_TOO_LONG_MESSAGE);
-        setInput(value.slice(0, maxInputLength));
-        return;
-      }
-
       setInputError(null);
       setInput(value);
     },
     [setInput],
   );
 
-  // Voice input - append transcribed text to current input
+  // Voice input — append transcribed text to current input
   const {
     isListening: isVoiceListening,
     isSupported: isVoiceSupported,
@@ -236,41 +218,27 @@ export function ChatInterface({
   } = useVoiceInput({
     lang: VOICE_LANG[voiceLang] ?? "en-US",
     onTranscript: (text) => {
-      // When final transcript comes in, add it to the base and update input
       const newBase = baseInputRef.current
         ? `${baseInputRef.current} ${text}`
         : text;
-      const maxInputLength = Math.max(0, MAX_INPUT_CHARS - attachedTextLength);
-      const cappedBase = newBase.slice(0, maxInputLength);
-      baseInputRef.current = cappedBase;
-      if (newBase.length > maxInputLength) {
-        setInputError(INPUT_TOO_LONG_MESSAGE);
-      }
-      setInput(cappedBase);
+      baseInputRef.current = newBase;
+      setInput(newBase);
     },
   });
 
-  // Update base input ref when user types manually (not from voice)
   useEffect(() => {
-    // Only update base if we're not listening or interim hasn't changed
-    // This prevents overwriting during voice input
     if (!isVoiceListening && !interimTranscript) {
       baseInputRef.current = uiState.input;
     }
   }, [uiState.input, isVoiceListening, interimTranscript]);
 
-  // Combine base input with interim transcript for display
   const displayInput =
     isVoiceListening && interimTranscript
       ? baseInputRef.current
         ? `${baseInputRef.current} ${interimTranscript}`
         : interimTranscript
       : uiState.input;
-  const maxDisplayInputLength = Math.max(
-    0,
-    MAX_INPUT_CHARS - attachedTextLength,
-  );
-  const cappedDisplayInput = displayInput.slice(0, maxDisplayInputLength);
+  const cappedDisplayInput = displayInput;
   inputLengthRef.current = cappedDisplayInput.length;
 
   // Custom toggle that captures current input as base when starting
@@ -668,15 +636,11 @@ export function ChatInterface({
     }
 
     uiDispatch({ type: "SET_AUTO_SENT", payload: true });
-    const cappedMessage = trimmedMessage.slice(0, MAX_INPUT_CHARS);
-    if (trimmedMessage.length > MAX_INPUT_CHARS) {
-      setInputError(INPUT_TOO_LONG_MESSAGE);
-    }
 
     if (autoSend) {
-      const userMessage = createUserMessage(cappedMessage);
+      const userMessage = createUserMessage(trimmedMessage);
       setMessages((prev) => [...prev, userMessage]);
-      processMessage(cappedMessage, [], userMessage)
+      processMessage(trimmedMessage, [], userMessage)
         .then(() => onInitialMessageSent?.())
         .catch((error) => {
           console.error("Failed to auto-send initial message:", error);
@@ -1012,44 +976,26 @@ export function ChatInterface({
     }
   }, []);
 
-  const handleInputBeforeInput = useCallback(
-    (e: React.FormEvent<HTMLTextAreaElement>) => {
-      const nativeEvent = e.nativeEvent as InputEvent;
-      const insertedText = nativeEvent.data;
-      if (!insertedText) return;
-
-      const target = e.currentTarget;
-      const selectionLength = target.selectionEnd - target.selectionStart;
-      const nextLength =
-        target.value.length - selectionLength + insertedText.length;
-
-      if (nextLength + attachedTextLength > MAX_INPUT_CHARS) {
-        e.preventDefault();
-        setInputError(INPUT_TOO_LONG_MESSAGE);
-      }
-    },
-    [attachedTextLength],
-  );
-
+  // F.4.1 — paste grande vira anexo. Mantém UX do ChatGPT/Claude:
+  // texto curto cola normal; texto longo (> LARGE_PASTE_THRESHOLD)
+  // entra como `pasted-<N>.txt` na grid de anexos. Imagens continuam
+  // sendo capturadas pelo handlePaste do useFileUpload.
   const handleInputPaste = useCallback(
     async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const pastedText = e.clipboardData?.getData("text") ?? "";
-      if (pastedText) {
-        const target = e.currentTarget;
-        const selectionLength = target.selectionEnd - target.selectionStart;
-        const nextLength =
-          target.value.length - selectionLength + pastedText.length;
-
-        if (nextLength + attachedTextLength > MAX_INPUT_CHARS) {
-          e.preventDefault();
-          setInputError(INPUT_TOO_LONG_MESSAGE);
-          return;
-        }
+      if (pastedText.length > LARGE_PASTE_THRESHOLD) {
+        e.preventDefault();
+        const blob = new Blob([pastedText], { type: "text/plain" });
+        const fileName = `pasted-${Date.now()}.txt`;
+        const file = new File([blob], fileName, { type: "text/plain" });
+        await processFiles([file]);
+        return;
       }
-
+      // Texto curto: deixa o browser inserir; o handlePaste do
+      // useFileUpload ainda intercepta imagens do clipboard.
       await handlePaste(e);
     },
-    [attachedTextLength, handlePaste],
+    [handlePaste, processFiles],
   );
 
   // ============================================================================
@@ -1095,7 +1041,6 @@ export function ChatInterface({
         <ChatInput
           input={cappedDisplayInput}
           onInputChange={setLimitedInput}
-          onBeforeInput={handleInputBeforeInput}
           onSend={handleSend}
           onKeyDown={handleKeyDown}
           isLoading={uiState.isLoading}

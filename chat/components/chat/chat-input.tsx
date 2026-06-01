@@ -30,13 +30,11 @@ import {
   type ModelOption,
 } from "@/lib/config/deployment-config";
 import type { ImageAttachment } from "@/lib/types";
-import { MAX_INPUT_CHARS } from "@/lib/constants/features";
 import { useT } from "@/lib/i18n";
 
 interface ChatInputProps {
   input: string;
   onInputChange: (value: string) => void;
-  onBeforeInput: (e: React.FormEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   isLoading: boolean;
@@ -87,7 +85,6 @@ interface ChatInputProps {
 export function ChatInput({
   input,
   onInputChange,
-  onBeforeInput,
   onSend,
   onKeyDown,
   isLoading,
@@ -247,10 +244,8 @@ export function ChatInput({
                     ref={textareaRef}
                     value={input}
                     onChange={(e) => onInputChange(e.target.value)}
-                    onBeforeInput={onBeforeInput}
                     onKeyDown={onKeyDown}
                     onPaste={onPaste}
-                    maxLength={MAX_INPUT_CHARS}
                     placeholder={
                       !userId
                         ? t("input.initializing")
