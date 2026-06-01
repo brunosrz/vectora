@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -42,6 +42,30 @@ class Workspace(BaseModel):
     )
     trusted_by: str | None = Field(
         default=None, description="ID do usuário que confiou na pasta."
+    )
+
+    # G.2.1 — Transporte do workspace. Workspaces remotos compartilham o
+    # mesmo modelo; ``cwd`` é o caminho remoto (ou ponto de montagem
+    # local quando o transport encapsula um túnel, ex.: Codespaces).
+    transport: Literal["local", "ssh", "codespace"] = Field(
+        default="local",
+        description="Onde o filesystem do workspace vive: local, SSH ou GitHub Codespace.",
+    )
+    remote_host: str | None = Field(
+        default=None,
+        description="Para transport=ssh: 'user@host[:port]'. None caso contrário.",
+    )
+    remote_path: str | None = Field(
+        default=None,
+        description="Caminho absoluto no host remoto (transport=ssh|codespace).",
+    )
+    ssh_key_id: str | None = Field(
+        default=None,
+        description="ID da entry do vault KeePassXC que guarda a chave SSH.",
+    )
+    codespace_name: str | None = Field(
+        default=None,
+        description="Nome do GitHub Codespace (transport=codespace).",
     )
 
     def manifest_dir(self) -> Path:

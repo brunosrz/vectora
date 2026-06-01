@@ -8,6 +8,8 @@
 
 import { create } from "zustand";
 
+export type WorkspaceTransport = "local" | "ssh" | "codespace";
+
 export interface WorkspaceInfo {
   id: string;
   name: string;
@@ -19,6 +21,11 @@ export interface WorkspaceInfo {
   git_remote: string | null;
   git_current_branch: string | null;
   git_default_branch: string | null;
+  /** G.2.1 — espelha src/types/workspace.py */
+  transport?: WorkspaceTransport;
+  remote_host?: string | null;
+  remote_path?: string | null;
+  codespace_name?: string | null;
 }
 
 export interface DirEntry {

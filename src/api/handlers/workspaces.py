@@ -44,6 +44,12 @@ class WorkspaceInfo(BaseModel):
     git_remote: str | None = None
     git_current_branch: str | None = None
     git_default_branch: str | None = None
+    # G.2.1 — campos de transport. `local` é o default; SSH e Codespace
+    # populam os campos abaixo conforme criados.
+    transport: str = "local"
+    remote_host: str | None = None
+    remote_path: str | None = None
+    codespace_name: str | None = None
 
 
 class ListWorkspacesResponse(BaseModel):
@@ -158,6 +164,10 @@ def _to_info(ws: Any) -> WorkspaceInfo:
         git_remote=getattr(ws, "git_remote", None),
         git_current_branch=getattr(ws, "git_current_branch", None),
         git_default_branch=getattr(ws, "git_default_branch", None),
+        transport=getattr(ws, "transport", "local"),
+        remote_host=getattr(ws, "remote_host", None),
+        remote_path=getattr(ws, "remote_path", None),
+        codespace_name=getattr(ws, "codespace_name", None),
     )
 
 
