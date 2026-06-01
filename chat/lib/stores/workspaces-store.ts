@@ -31,6 +31,9 @@ export interface BrowseResult {
   path: string;
   parent: string | null;
   entries: DirEntry[];
+  /** ID da safe-root que cobre o path atual; null quando privilegiado
+   *  navegando livre. Espelha o backend (F.3.2). */
+  safe_root_id?: string | null;
 }
 
 interface WorkspacesState {

@@ -245,6 +245,8 @@ workspace.trust_title,Trust this folder?,¿Confiar en esta carpeta?,Confiar nest
 workspace.trust_desc,"Vectora can only read, write and run commands inside trusted folders. Outside this folder nothing is accessible.","Vectora solo puede leer, escribir y ejecutar comandos dentro de carpetas confiables. Fuera de esta carpeta nada es accesible.","O Vectora só pode ler, escrever e rodar comandos dentro de pastas confiáveis. Fora dela nada é acessível."
 workspace.browse_title,Choose a folder,Elige una carpeta,Escolha uma pasta
 workspace.browse_up,Up one level,Subir un nivel,Subir um nível
+workspace.path_placeholder,Type a path and press Enter…,Escribe una ruta y pulsa Enter…,Digite um caminho e pressione Enter…
+workspace.go,Go,Ir,Ir
 workspace.browse_empty,No subfolders here,No hay subcarpetas aquí,Nenhuma subpasta aqui
 workspace.git_init_label,Initialize git repository if needed,Inicializar repositorio git si es necesario,Inicializar repositório git se necessário
 workspace.git_not_repo,This folder is not a git repository.,Esta carpeta no es un repositorio git.,Esta pasta não é um repositório git.

@@ -10,8 +10,8 @@
  * Ao confiar, registra a pasta como workspace ativo via store.create().
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { ChevronLeft, Folder, FolderOpen, GitBranch } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, CornerDownLeft, Folder, GitBranch } from "lucide-react";
 
 import {
   Dialog,
@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useWorkspacesStore,
@@ -47,31 +48,63 @@ export function WorkspaceTrustDialog({
   onConfirmPath,
 }: WorkspaceTrustDialogProps) {
   const t = useT();
-  const browse = useWorkspacesStore((s) => s.browse);
   const create = useWorkspacesStore((s) => s.create);
 
   const [listing, setListing] = useState<BrowseResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [gitInit, setGitInit] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [pathInput, setPathInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  // Evita resetar o input enquanto o usuário digita um path novo —
+  // só sincroniza quando a navegação (clique/Enter) muda o listing.path.
+  const lastLoadedPathRef = useRef<string | null>(null);
 
-  const load = useCallback(
-    async (path?: string) => {
-      setLoading(true);
-      const result = await browse(path);
-      if (result) setListing(result);
+  /** Fetch direto: precisamos distinguir 403 (fora de safe-root) de
+   *  outros erros para mostrar mensagem inline. O `browse` do store
+   *  achata erros em `null` e perde essa informação. */
+  const load = useCallback(async (path?: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const q = path ? `?path=${encodeURIComponent(path)}` : "";
+      const res = await fetch(`/api/workspaces/browse${q}`);
+      if (res.status === 403) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.detail ?? "Caminho fora das pastas seguras.");
+        return;
+      }
+      if (!res.ok) {
+        setError(`Erro ao listar (${res.status}).`);
+        return;
+      }
+      const data = (await res.json()) as BrowseResult;
+      setListing(data);
+      lastLoadedPathRef.current = data.path;
+      setPathInput(data.path);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha de rede.");
+    } finally {
       setLoading(false);
-    },
-    [browse],
-  );
+    }
+  }, []);
 
   useEffect(() => {
     if (open) {
       setListing(null);
       setGitInit(true);
+      setError(null);
+      setPathInput("");
+      lastLoadedPathRef.current = null;
       void load();
     }
   }, [open, load]);
+
+  const handleGo = () => {
+    const target = pathInput.trim();
+    if (!target || target === lastLoadedPathRef.current) return;
+    void load(target);
+  };
 
   const handleConfirm = async () => {
     if (!listing) return;
@@ -102,11 +135,41 @@ export function WorkspaceTrustDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Caminho atual */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground font-mono truncate">
-          <FolderOpen className="w-4 h-4 shrink-0 text-primary" />
-          <span className="truncate">{listing?.path ?? "…"}</span>
+        {/* Path editável — Enter ou botão "Ir" navega para o destino.
+            Backend recusa (403) se o usuário comum sair das pastas seguras. */}
+        <div className="flex items-center gap-1.5">
+          <Input
+            value={pathInput}
+            onChange={(e) => setPathInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleGo();
+              }
+            }}
+            placeholder={t("workspace.path_placeholder")}
+            spellCheck={false}
+            className="h-8 text-xs font-mono"
+            disabled={loading}
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 px-2"
+            onClick={handleGo}
+            disabled={loading || !pathInput.trim()}
+            title={t("workspace.go")}
+          >
+            <CornerDownLeft className="w-3.5 h-3.5" />
+          </Button>
         </div>
+
+        {error && (
+          <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
+            {error}
+          </div>
+        )}
 
         {/* Directory browser */}
         <ScrollArea className="h-64 rounded-md border border-border">
