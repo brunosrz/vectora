@@ -35,14 +35,6 @@
 | **R** | Vectora Company: Suporte & Comunidade — WhatsApp, email, GitHub Issues, status page, beta                                     | ⏳ Planejado |
 | **S** | Vectora Company: Marketing & Lançamento — PyPI 1.0 + Docker oficial + kit influencers + canais + cronograma                   | ⏳ Planejado |
 
-**Ordem sugerida de implementação:**
-`D → E → F → G → H → I → J → K → L → M → N → O → P → Q → R → S`
-
-Blocos D–J podem rodar em **paralelo parcial** (E↔F são independentes;
-H/I dependem de E; J depende de F). Blocos K–N podem rodar em paralelo
-parcial após D estar pronto. O–S são sequenciais (legal precede site
-precede docs precede suporte precede marketing).
-
 ---
 
 ## Diretrizes (vinculantes para todo PR)
@@ -66,9 +58,9 @@ reescrever no diff.
 ### 2. Strings de UI sempre via i18n — nada hardcoded
 
 Qualquer string visível no chat passa por `useT()` e existe em
-`chat/lib/i18n/strings.csv.ts` nas 3 línguas (`en`, `es`, `pt-BR`).
+`chat/lib/i18n/strings.csv.ts` nas 3 línguas (`en`, `es`, `pt`).
 Adicionar string nova = adicionar 3 colunas no CSV. Mesma regra
-vale para `src/ui/` (rich/textual).
+vale para `src/ui/` (textual).
 
 ### 3. TDD + type hints obrigatórios
 
@@ -111,9 +103,7 @@ backend. Nunca persistir state crítico só em localStorage.
 
 ## BLOCO A — UX & Chat Foundation [CONCLUÍDO]
 
-> Resumo condensado dos blocos antigos **A, B, D, E, F (+F.2/F.3/F.4),
-> M (+M6–M10), J (+J.2), K (+K.2), L, R (+R6–R10)**. Tudo que toca a
-> experiência visual e a fundação do chat web.
+> Tudo que toca a experiência visual e a fundação do chat web.
 
 ### A1 — Chat Foundations & Schema-Driven Rendering
 
