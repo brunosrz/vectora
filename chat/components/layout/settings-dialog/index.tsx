@@ -34,6 +34,7 @@ import { IntegracoesTab } from "./tabs/integracoes-tab";
 import { MemoriaTab } from "./tabs/memoria-tab";
 import { PluginsTab } from "./tabs/plugins-tab";
 import { PreferenciasTab } from "./tabs/preferencias-tab";
+import { SkillsTab } from "./tabs/skills-tab";
 
 export function SettingsDialog() {
   const user = useAuthStore((s) => s.user);
@@ -76,6 +77,9 @@ export function SettingsDialog() {
             <TabsTrigger value="plugins" className="rounded-md text-xs">
               Plugins
             </TabsTrigger>
+            <TabsTrigger value="skills" className="rounded-md text-xs">
+              Skills
+            </TabsTrigger>
             <TabsTrigger value="envs" className="rounded-md text-xs">
               Envs
             </TabsTrigger>
@@ -101,6 +105,9 @@ export function SettingsDialog() {
             </TabsContent>
             <TabsContent value="plugins" className="mt-0">
               <PluginsTab />
+            </TabsContent>
+            <TabsContent value="skills" className="mt-0">
+              <SkillsTab />
             </TabsContent>
             <TabsContent value="envs" className="mt-0">
               <EnvsTab />

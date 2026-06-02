@@ -259,6 +259,18 @@ workspace.ingest_confirm,Index this folder,Indexar esta carpeta,Indexar esta pas
 workspace.tab_local,Local,Local,Local
 workspace.transport.ssh,SSH,SSH,SSH
 workspace.transport.codespace,Codespace,Codespace,Codespace
+skills.title,Skills,Skills,Skills
+skills.description,Reusable capabilities loaded by the agent (SKILL.md format).,Capacidades reutilizables cargadas por el agente (formato SKILL.md).,Capacidades reutilizáveis carregadas pelo agente (formato SKILL.md).
+skills.install_label,Install from git URL or local path,Instalar desde URL git o ruta local,Instalar de URL git ou caminho local
+skills.install_placeholder,https://github.com/user/skill or /path/to/skill,https://github.com/user/skill o /ruta/a/skill,https://github.com/user/skill ou /caminho/da/skill
+skills.loading,Loading skills…,Cargando skills…,Carregando skills…
+skills.empty,No skills installed.,Sin skills instaladas.,Nenhuma skill instalada.
+skills.verify,Verify,Verificar,Verificar
+skills.verify_ok,SKILL.md valid,SKILL.md válido,SKILL.md válido
+skills.confirm_remove,Remove this skill?,¿Quitar esta skill?,Remover esta skill?
+skills.error_load,Failed to load skills.,Error al cargar skills.,Falha ao carregar skills.
+skills.error_install,Failed to install skill.,Error al instalar skill.,Falha ao instalar skill.
+skills.error_verify,Failed to verify.,Error al verificar.,Falha ao verificar.
 workspace.ssh_host,Host,Host,Host
 workspace.ssh_path,Remote path,Ruta remota,Caminho remoto
 workspace.ssh_key,SSH key,Clave SSH,Chave SSH

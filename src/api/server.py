@@ -37,6 +37,7 @@ from src.api.handlers.chat import router as chat_router
 from src.api.handlers.memory import router as memory_router
 from src.api.handlers.oauth import router as oauth_router
 from src.api.handlers.plugins import router as plugins_router
+from src.api.handlers.skills import router as skills_router
 from src.api.handlers.terminal import router as terminal_router
 from src.api.handlers.threads import router as thread_router
 from src.api.handlers.tools import router as tools_router
@@ -213,6 +214,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(workspace_view_router)
     app.include_router(artifacts_router)
     app.include_router(plugins_router)
+    app.include_router(skills_router)
     app.include_router(tools_router)
     app.include_router(terminal_router)
 

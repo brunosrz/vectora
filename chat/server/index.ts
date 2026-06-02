@@ -15,6 +15,7 @@ import healthRoutes from "./routes/health";
 import integrationsRoutes from "./routes/integrations";
 import memoryRoutes from "./routes/memory";
 import pluginsRoutes from "./routes/plugins";
+import skillsRoutes from "./routes/skills";
 import threadRoutes from "./routes/threads";
 import toolsRoutes from "./routes/tools";
 import workspacesRoutes from "./routes/workspaces";
@@ -30,6 +31,7 @@ app.route("/integrations", integrationsRoutes);
 app.route("/admin", adminRoutes);
 app.route("/workspaces", workspacesRoutes);
 app.route("/plugins", pluginsRoutes);
+app.route("/skills", skillsRoutes);
 app.route("/tools", toolsRoutes);
 app.route("/artifacts", artifactsRoutes);
 

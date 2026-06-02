@@ -14,6 +14,7 @@ export type SettingsTab =
   | "memoria"
   | "integracoes"
   | "plugins"
+  | "skills"
   | "envs"
   | "admin";
 
