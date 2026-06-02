@@ -1,4 +1,4 @@
-"""Testes unitários para vectora/services/auth.py (Bloco C — C1/C2).
+"""Testes unitários para src/services/auth.py (Bloco C — C1/C2).
 
 Cobre:
 - hash_password / verify_password

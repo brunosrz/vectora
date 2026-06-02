@@ -25,11 +25,15 @@ files:
   - package.json
   - "!node_modules/**/{CHANGELOG.md,README.md,*.d.ts,test,tests}"
 
-# Binário Nuitka empacotado como sidecar (T.12.4 → dist/vectora-core/).
+# Binário Nuitka como sidecar + icone do tray + manifesto de update.
 extraResources:
   - from: ../dist-nuitka
     to: vectora-core
     filter: ["**/*"]
+  - from: ../chat/public/favicon-32x32.png
+    to: tray-icon.png
+  - from: ../chat/public/vectora.ico
+    to: vectora.ico
 
 # Janela de update aponta para o canal privado.
 publish:
@@ -50,18 +54,10 @@ win:
   # CSC_LINK / CSC_KEY_PASSWORD vem do env do CI.
   certificateSubjectName: "Vectora Company"
 
-nsis:
-  oneClick: false
-  perMachine: false
-  allowToChangeInstallationDirectory: true
-  installerIcon: ../chat/public/vectora.ico
-  uninstallerIcon: ../chat/public/vectora.ico
-  shortcutName: Vectora
-
 mac:
   target:
     - target: dmg
-      arch: [x64, arm64]
+      arch: [x64, arm64, universal]
   icon: ../chat/public/vectora.ico
   category: public.app-category.developer-tools
   hardenedRuntime: true
@@ -69,6 +65,22 @@ mac:
   entitlements: build-resources/entitlements.mac.plist
   entitlementsInherit: build-resources/entitlements.mac.plist
   notarize: true
+
+dmg:
+  title: ${productName} ${version}
+  background: build-resources/dmg-background.png
+  iconSize: 96
+  contents:
+    - x: 130
+      y: 220
+      type: file
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+  window:
+    width: 540
+    height: 380
 
 linux:
   target:
@@ -80,8 +92,42 @@ linux:
       arch: [x64]
   icon: ../chat/public/favicon-600x600.png
   category: Development
+  desktop:
+    StartupWMClass: vectora
+    Categories: Development;IDE;
   synopsis: Vectora — AI-first development assistant
   description: Self-hosted AI assistant with RAG, terminals, code editing and workflows.
+  vendor: Vectora Company
+  maintainer: Bruno Soares <bruno@vectora.company>
+
+deb:
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
+    - libdrm2
+    - libgbm1
+  priority: optional
+  afterInstall: build-resources/linux-after-install.sh
+  afterRemove: build-resources/linux-after-remove.sh
+
+appImage:
+  license: ../LICENSE
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: ../chat/public/vectora.ico
+  uninstallerIcon: ../chat/public/vectora.ico
+  shortcutName: Vectora
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  menuCategory: Vectora
 
 # Auto-update channel name (alpha / beta / latest).
 generateUpdatesFilesForAllChannels: true

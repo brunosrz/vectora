@@ -1,4 +1,4 @@
-"""Tests for vectora/agents/coder.py"""
+"""Tests for src/agents/coder.py"""
 
 from __future__ import annotations
 
@@ -31,7 +31,6 @@ def test_system_prompt_describes_tools():
 
 
 def test_system_prompt_git_policy():
-    # deve documentar que git é livre
     assert "git" in SYSTEM_PROMPT
     assert (
         "confirmação" in SYSTEM_PROMPT
@@ -48,7 +47,7 @@ async def test_coder_calls_invoke_llm():
     }
     mock_response = {"messages": [AIMessage(content="Criado!")]}
 
-    with patch("vectora.agents.coder.invoke_llm", new_callable=AsyncMock) as mock_llm:
+    with patch("src.agents.coder.invoke_llm", new_callable=AsyncMock) as mock_llm:
         mock_llm.return_value = mock_response
         result = await coder(state)
 
@@ -60,7 +59,7 @@ async def test_coder_calls_invoke_llm():
 async def test_coder_passes_system_prompt():
     state: State = {"messages": [HumanMessage(content="test")], "session_metadata": {}}
 
-    with patch("vectora.agents.coder.invoke_llm", new_callable=AsyncMock) as mock_llm:
+    with patch("src.agents.coder.invoke_llm", new_callable=AsyncMock) as mock_llm:
         mock_llm.return_value = {"messages": [AIMessage(content="ok")]}
         await coder(state)
 

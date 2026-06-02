@@ -1,4 +1,4 @@
-"""Testes unitários para vectora/services/permissions.py (Bloco C — C5).
+"""Testes unitários para src/services/permissions.py (Bloco C — C5).
 
 Cobre:
 - role_level: hierarquia correta

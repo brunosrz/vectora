@@ -1,4 +1,4 @@
-"""Tests for vectora/graph.py"""
+"""Tests for src/graph.py"""
 
 from __future__ import annotations
 

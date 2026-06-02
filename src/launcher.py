@@ -1,19 +1,22 @@
-"""Launcher Vectora — entry-point único do binário comercial (T.12.1).
+"""Launcher Vectora — entry-point único do binário comercial.
 
-Quando o Vectora é distribuído como binário compilado por Nuitka (T.12.4),
-``launcher.main`` é o entry-point — o shell Electron (T.12.5) faz spawn
-deste binário e o usuário roda ``vectora`` diretamente.
+O Launcher tem dois modos de operação:
 
-Responsabilidades:
+1. **Binário completo** (Nuitka onefile distribuído via instaladores
+   nativos Win/macOS/Linux): valida ``VECTORA_TOKEN`` contra a edge
+   function Supabase ``validate-license``, exporta ``VECTORA_TIER`` no
+   ambiente e delega para ``src.main:run``.
 
-1. Validar ``VECTORA_TOKEN`` (Bloco T.12.7) antes de subir qualquer
-   subprocesso. Sem licença válida, sai com mensagem explicativa.
-2. Exportar ``VECTORA_TIER`` no ambiente para que a camada storage
-   (V) e o cache distribuído (W) saibam quais backends podem subir.
-3. Encadear no ``src.main:main`` — o CLI antigo continua sendo a
-   máquina-de-estados que decide entre chat/mcp/headless/desktop.
+2. **CLI mirror PyPI** (``vectora-cli`` no PyPI, livre): pula gate de
+   licença, expõe **apenas** os subcomandos CLI do agente (``chat``
+   textual, ``rag``, ``setup``, ``traces``, ``sessions``, ``config``).
+   Subcomandos que exigem servidor web ou Electron (``server chat``,
+   ``server headless``) retornam erro explicativo pedindo o instalador
+   nativo. Ativado por ``VECTORA_CLI_ONLY=1`` ou via subcomando
+   ``vectora --cli-only`` (detecção pelo nome do pacote).
 
-**Modo dev**: ``VECTORA_LICENSE_BYPASS=1`` pula o gate (uso interno).
+**Modo dev**: ``VECTORA_LICENSE_BYPASS=1`` pula o gate independente do
+modo (uso interno).
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ import logging
 import os
 import sys
 
-logger = logging.getLogger("vectora.launcher")
+logger = logging.getLogger("src.launcher")
 
 
 def _print_error(message: str) -> None:
@@ -31,8 +34,41 @@ def _print_error(message: str) -> None:
     sys.stderr.flush()
 
 
+_SERVER_SUBCOMMANDS = {"server", "headless"}
+
+
+def _is_cli_only_mode() -> bool:
+    """Detecta se estamos rodando como ``vectora-cli`` (PyPI mirror)."""
+    return os.getenv("VECTORA_CLI_ONLY", "").strip() == "1"
+
+
+def _reject_server_in_cli_only() -> int:
+    """No modo CLI mirror, recusa subcomandos que requerem o desktop."""
+    args = sys.argv[1:]
+    if not args:
+        return 0
+    if args[0] in _SERVER_SUBCOMMANDS:
+        _print_error(
+            "Este pacote (vectora-cli) só expõe o CLI textual.\n"
+            "Para chat web, MCP server e desktop, baixe o instalador\n"
+            "nativo em https://vectora.company/download."
+        )
+        return 5
+    return 0
+
+
 def main() -> int:
     """Entry-point do binário Vectora compilado."""
+    if _is_cli_only_mode():
+        rc = _reject_server_in_cli_only()
+        if rc != 0:
+            return rc
+        logger.info("launcher: cli-only mode (PyPI mirror), license bypass")
+        from src.main import run as cli_run
+
+        cli_run()
+        return 0
+
     # Lazy import para que o gate de licença execute antes de carregar
     # FastAPI, LangGraph, vector stores etc. — boot mais rápido em erro.
     from src.services.license import LicenseError, validate_license_sync
@@ -70,6 +106,13 @@ def main() -> int:
             f"\n[Vectora] Trial expira em {info.days_remaining} dia(s). "
             "Renove em https://vectora.company/pricing.\n\n"
         )
+
+    # Sobe o Next.js standalone como sidecar antes do FastAPI iniciar o
+    # proxy reverso. Se não houver bundle (dev mode), retorna None e o
+    # backend continua apontando para VECTORA_FRONTEND_URL padrão.
+    from src.services.next_sidecar import start_next_sidecar
+
+    start_next_sidecar()
 
     from src.main import run as cli_run
 

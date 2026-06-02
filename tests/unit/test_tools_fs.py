@@ -1,4 +1,4 @@
-"""Tests for vectora/tools/fs.py"""
+"""Tests for src/tools/fs.py"""
 
 from __future__ import annotations
 
@@ -230,7 +230,7 @@ class TestGrep:
     def test_invalid_pattern(self, trusted_ws):
         from src.tools.fs import grep
 
-        with patch("vectora.tools.fs.is_safe_regex_pattern", return_value=False):
+        with patch("src.tools.fs.is_safe_regex_pattern", return_value=False):
             result = grep.invoke(
                 {"pattern": "[invalid", "path": "."}, config=trusted_ws
             )
@@ -311,7 +311,7 @@ class TestCreateArtifact:
         )
         data = json.loads(result)
         artifact_path = Path(data["path"])
-        # deve estar em .vectora/artifacts/000001/
+        # deve estar em .src/artifacts/000001/
         assert "000001" in str(artifact_path)
         assert artifact_path.suffix == ".md"
 

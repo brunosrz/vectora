@@ -1,4 +1,4 @@
-"""Tests — descoberta dinâmica de portas em vectora/main.py.
+"""Tests — descoberta dinâmica de portas em src/main.py.
 
 Garante que o servidor chat standalone não use portas fortemente tipadas:
 - _find_free_port() sem preferência retorna uma porta livre utilizável.

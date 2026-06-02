@@ -51,9 +51,9 @@ def _find_free_port(preferred: int | None = None) -> int:
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 # Add project root to path for imports (needed when running as a script directly)
-# Note: must use parent.parent (project root), NOT parent (vectora/ package dir),
+# Note: must use parent.parent (project root), NOT parent (src/ package dir),
 # because inserting the package dir shadows third-party packages with the same name
-# (e.g., vectora/mcp/ would shadow the installed `mcp` package).
+# (e.g., src/mcp/ would shadow the installed `mcp` package).
 _project_root = Path(__file__).parent.parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))

@@ -10,7 +10,7 @@
 import { VECTORA_API_URL } from "@/lib/constants/api";
 
 // ============================================================================
-// Types — espelham os schemas do vectora/api/schemas.py
+// Types — espelham os schemas do src/api/schemas.py
 // ============================================================================
 
 export interface ChatConfig {

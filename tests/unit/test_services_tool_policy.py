@@ -1,4 +1,4 @@
-"""Tests para vectora/services/tool_policy.py — política de tools por usuário (S5).
+"""Tests para src/services/tool_policy.py — política de tools por usuário (S5).
 
 Allow-all por padrão; admin/self podem desabilitar tools por usuário. Persistido
 por arquivo, isolado entre usuários. Diretório base redirecionado para tmp_path.

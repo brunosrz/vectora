@@ -290,7 +290,7 @@ class TestHITLCheckEditAction:
         state: dict = {"messages": [msg]}
 
         decision = {"action": "edit", "args": {"cmd": "echo hello"}}
-        with patch("vectora.nodes.hitl.interrupt", return_value=decision):
+        with patch("src.nodes.hitl.interrupt", return_value=decision):
             result = await hitl_check(state)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
         assert result.get("hitl_cancelled") is False
@@ -312,7 +312,7 @@ class TestHITLCheckEditAction:
         state: dict = {"messages": [msg]}
 
         decision = {"action": "edit", "args": {"cmd": "echo safe"}}
-        with patch("vectora.nodes.hitl.interrupt", return_value=decision):
+        with patch("src.nodes.hitl.interrupt", return_value=decision):
             result = await hitl_check(state)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
         # Deve retornar mensagem atualizada com novos args
@@ -333,9 +333,7 @@ class TestHITLCheckEditAction:
         msg = AIMessage(content="", tool_calls=[tool_call], id="msg1")
         state: dict = {"messages": [msg]}
 
-        with patch(
-            "vectora.nodes.hitl.interrupt", return_value={"action": "unknown_xyz"}
-        ):
+        with patch("src.nodes.hitl.interrupt", return_value={"action": "unknown_xyz"}):
             result = await hitl_check(state)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
         assert result.get("hitl_cancelled") is True

@@ -1,4 +1,4 @@
-"""Schemas Pydantic da API de chat — espelho do proto vectora/chat/v1/chat.proto.
+"""Schemas Pydantic da API de chat — espelho do proto src/chat/v1/chat.proto.
 
 Usados como request/response models do FastAPI e como tipos internos dos
 handlers. Em produção com buf + grpcio, estes modelos poderiam ser gerados

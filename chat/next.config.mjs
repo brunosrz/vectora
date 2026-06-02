@@ -56,6 +56,14 @@ if (process.env.NODE_ENV !== "production") {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Build de produção empacotável: gera `chat/.next/standalone/` com um
+  // servidor Node mínimo (apenas as deps usadas em runtime, ~20MB) e
+  // `chat/.next/static/` com os assets versionados. O launcher do
+  // Vectora roda este standalone como sidecar Node.js, enquanto o
+  // FastAPI faz proxy reverso para `localhost:<porta-next>`.
+  // Static export (`output: "export"`) não funciona aqui — temos rotas
+  // dinâmicas (/session/[threadId]) e o catch-all Hono em /api/[[...route]].
+  output: "standalone",
   turbopack: {
     root: rootDir,
   },

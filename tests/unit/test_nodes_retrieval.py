@@ -1,4 +1,4 @@
-"""Tests for vectora/nodes/retrieval.py"""
+"""Tests for src/nodes/retrieval.py"""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ class TestRetrievalNode:
     @pytest.mark.asyncio
     async def test_no_results_returns_empty(self):
         with patch(
-            "vectora.nodes.rag_subgraph._call_vector_search_all",
+            "src.nodes.rag_subgraph._call_vector_search_all",
             new_callable=AsyncMock,
         ) as mock_vs:
             mock_vs.return_value = []
@@ -43,11 +43,11 @@ class TestRetrievalNode:
             Document(page_content="doc2", metadata={}, relevance_score=0.7),
         ]
         with patch(
-            "vectora.nodes.rag_subgraph._call_vector_search_all",
+            "src.nodes.rag_subgraph._call_vector_search_all",
             new_callable=AsyncMock,
         ) as mock_vs:
             with patch(
-                "vectora.nodes.retrieval._rerank", new_callable=AsyncMock
+                "src.nodes.retrieval._rerank", new_callable=AsyncMock
             ) as mock_rerank:
                 mock_vs.return_value = docs
                 mock_rerank.return_value = docs
@@ -68,7 +68,7 @@ class TestRerank:
     @pytest.mark.asyncio
     async def test_no_api_key_returns_docs_unchanged(self):
         docs = self._docs(2)
-        with patch("vectora.config.settings.settings") as mock_settings:
+        with patch("src.config.settings.settings") as mock_settings:
             mock_settings.get_cohere_api_key.return_value = None
             result = await _rerank(docs, "query")
         assert result is docs

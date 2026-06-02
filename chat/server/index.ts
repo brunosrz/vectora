@@ -13,14 +13,33 @@ import authRoutes from "./routes/auth";
 import chatRoutes from "./routes/chat";
 import healthRoutes from "./routes/health";
 import integrationsRoutes from "./routes/integrations";
+import licenseRoutes from "./routes/license";
 import memoryRoutes from "./routes/memory";
 import pluginsRoutes from "./routes/plugins";
 import skillsRoutes from "./routes/skills";
 import threadRoutes from "./routes/threads";
 import toolsRoutes from "./routes/tools";
+import updatesRoutes from "./routes/updates";
 import workspacesRoutes from "./routes/workspaces";
 
 const app = new Hono().basePath("/api");
+
+// Erros de rede (ECONNREFUSED) em qualquer rota retornam 503 JSON
+// em vez de um 500 HTML que quebra clientes que esperam JSON.
+app.onError((err, c) => {
+  const isNetworkError =
+    err instanceof TypeError &&
+    (err.message.includes("fetch failed") ||
+      err.message.includes("ECONNREFUSED"));
+  if (isNetworkError) {
+    return c.json(
+      { error: "backend_unavailable", detail: "Vectora backend offline" },
+      503,
+    );
+  }
+  console.error("[vectora] unhandled route error:", err);
+  return c.json({ error: "internal_error" }, 500);
+});
 
 app.route("/auth", authRoutes);
 app.route("/chat", chatRoutes);
@@ -32,6 +51,8 @@ app.route("/admin", adminRoutes);
 app.route("/workspaces", workspacesRoutes);
 app.route("/plugins", pluginsRoutes);
 app.route("/skills", skillsRoutes);
+app.route("/license", licenseRoutes);
+app.route("/updates", updatesRoutes);
 app.route("/tools", toolsRoutes);
 app.route("/artifacts", artifactsRoutes);
 

@@ -1,4 +1,4 @@
-"""Tests for vectora/services/memory.py"""
+"""Tests for src/services/memory.py"""
 
 from __future__ import annotations
 
@@ -91,7 +91,7 @@ class TestMemoryStore:
 
         from src.services.memory import MemoryStore
 
-        with patch("vectora.services.memory.settings") as ms:
+        with patch("src.services.memory.settings") as ms:
             ms.db_dsn = None
             with pytest.raises(ValueError, match="db_dsn"):
                 MemoryStore()

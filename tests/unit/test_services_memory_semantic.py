@@ -153,8 +153,8 @@ class TestSearchMemoryTool:
         ]
 
         with (
-            patch("vectora.config.settings.settings") as ms,
-            patch("vectora.services.memory.get_memory_store") as mock_gs,
+            patch("src.config.settings.settings") as ms,
+            patch("src.services.memory.get_memory_store") as mock_gs,
         ):
             ms.memory_semantic_enabled = True
             ms.get_cohere_api_key.return_value = "fake-key"
@@ -194,8 +194,8 @@ class TestSearchMemoryTool:
         ]
 
         with (
-            patch("vectora.config.settings.settings") as ms,
-            patch("vectora.services.memory.get_memory_store") as mock_gs,
+            patch("src.config.settings.settings") as ms,
+            patch("src.services.memory.get_memory_store") as mock_gs,
         ):
             ms.memory_semantic_enabled = False
 
@@ -220,8 +220,8 @@ class TestSearchMemoryTool:
         config = {"configurable": {"thread_id": "t3"}}
 
         with (
-            patch("vectora.config.settings.settings") as ms,
-            patch("vectora.services.memory.get_memory_store") as mock_gs,
+            patch("src.config.settings.settings") as ms,
+            patch("src.services.memory.get_memory_store") as mock_gs,
         ):
             ms.memory_semantic_enabled = True
             ms.get_cohere_api_key.return_value = None  # sem key
@@ -246,7 +246,7 @@ class TestSearchMemoryTool:
         config = {"configurable": {"thread_id": "t4"}}
 
         with patch(
-            "vectora.services.memory.get_memory_store",
+            "src.services.memory.get_memory_store",
             side_effect=Exception("db error"),
         ):
             raw = await search_memory.ainvoke(

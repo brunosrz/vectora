@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from mcp import ClientSession, StdioServerParameters
 
-logger = logging.getLogger("vectora.mcp.client")
+logger = logging.getLogger("src.mcp.client")
 
 
 class MCPToolCallResult(BaseModel):

@@ -1,4 +1,4 @@
-"""Tests for vectora/agents/orchestrator.py"""
+"""Tests for src/agents/orchestrator.py"""
 
 from __future__ import annotations
 
@@ -217,9 +217,7 @@ class TestOrchestratorPostRAG:
         fake_llm.ainvoke = AsyncMock(
             return_value=AIMessage(content="Resposta sintetizada do contexto.")
         )
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
+        with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             cmd = await orchestrator(state, config=_CONFIG)
 
         assert cmd.goto == END
@@ -247,9 +245,7 @@ class TestOrchestratorPostRAG:
         }
         fake_llm = AsyncMock()
         fake_llm.ainvoke = AsyncMock(side_effect=Exception("LLM indisponível"))
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
+        with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             cmd = await orchestrator(state, config=_CONFIG)
 
         assert cmd.goto == END

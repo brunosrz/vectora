@@ -32,7 +32,7 @@ async def test_resolves_user_toolset(monkeypatch):
         assert uid == "u1"
         return [echo_tool]
 
-    monkeypatch.setattr("vectora.services.tool_resolver.resolve_tools", _resolve)
+    monkeypatch.setattr("src.services.tool_resolver.resolve_tools", _resolve)
 
     dnode = DiagnosticToolNode(tools=[echo_tool, other_tool])
     node = await dnode._user_node({"configurable": {"user_id": "u1"}})
@@ -47,7 +47,7 @@ async def test_disabled_tool_absent_from_node(monkeypatch):
     async def _resolve(_uid):
         return []
 
-    monkeypatch.setattr("vectora.services.tool_resolver.resolve_tools", _resolve)
+    monkeypatch.setattr("src.services.tool_resolver.resolve_tools", _resolve)
 
     dnode = DiagnosticToolNode(tools=[echo_tool])
     node = await dnode._user_node({"configurable": {"user_id": "u1"}})
@@ -72,7 +72,7 @@ async def test_resolution_failure_falls_back_to_self(monkeypatch):
     async def _boom(_uid):
         raise RuntimeError("down")
 
-    monkeypatch.setattr("vectora.services.tool_resolver.resolve_tools", _boom)
+    monkeypatch.setattr("src.services.tool_resolver.resolve_tools", _boom)
 
     dnode = DiagnosticToolNode(tools=[echo_tool])
     node = await dnode._user_node({"configurable": {"user_id": "u1"}})

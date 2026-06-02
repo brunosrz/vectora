@@ -1,7 +1,7 @@
 """RAG Agent — Referências de arquitetura e curador de workspace.
 
 O "agente RAG" do Vectora é implementado como um **subgrafo LangGraph**
-de múltiplos nós em `vectora/nodes/rag_subgraph.py`, não como uma função
+de múltiplos nós em `src/nodes/rag_subgraph.py`, não como uma função
 de agente única (como `coder` e `search`). Isso reflete a diferença
 arquitetural: o RAG é um pipeline de recuperação/decisão/reranking/injeção,
 não uma sessão LLM em loop.

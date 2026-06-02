@@ -343,7 +343,7 @@ class TestVectoraMcpServerDirectly:
             / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
         )
         if venv_python.exists():
-            return [str(venv_python), "-m", "vectora.mcp.server"]
+            return [str(venv_python), "-m", "src.mcp.server"]
         return ["uv", "run", "--project", str(project_dir), "vectora-mcp"]
 
     def _send_rpc(

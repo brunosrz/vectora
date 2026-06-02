@@ -455,7 +455,7 @@ class Settings(BaseSettings):
         logs_dir = cast("Path", self.logs_dir)
 
         # Database files
-        self.db_file = data_dir / "vectora.db"
+        self.db_file = data_dir / "src.db"
         self.embedding_queue_file = data_dir / "embedding_queue.db"
 
         # Connection strings
@@ -474,7 +474,7 @@ class Settings(BaseSettings):
 
         # Configuration files
         self.env_file = self.vectora_home / ".env"
-        self.log_file = logs_dir / "vectora.jsonl"
+        self.log_file = logs_dir / "src.jsonl"
         self.mcp_config_file = self.vectora_home / "mcp.config.json"
         self.chat_config_file = self.vectora_home / "chat_config.json"
 

@@ -164,15 +164,15 @@ class TestCallVectorSearchAllHybrid:
 
         with (
             patch(
-                "vectora.nodes.rag_subgraph._list_collections",
+                "src.nodes.rag_subgraph._list_collections",
                 new_callable=AsyncMock,
                 return_value=["articles"],
             ),
             patch(
-                "vectora.nodes.rag_subgraph._call_vector_search",
+                "src.nodes.rag_subgraph._call_vector_search",
                 side_effect=fake_search,
             ),
-            patch("vectora.nodes.rag_subgraph.settings") as ms,
+            patch("src.nodes.rag_subgraph.settings") as ms,
         ):
             ms.rag_hybrid_enabled = True
             ms.rag_hybrid_fetch_limit = 20
@@ -195,15 +195,15 @@ class TestCallVectorSearchAllHybrid:
 
         with (
             patch(
-                "vectora.nodes.rag_subgraph._list_collections",
+                "src.nodes.rag_subgraph._list_collections",
                 new_callable=AsyncMock,
                 return_value=["articles"],
             ),
             patch(
-                "vectora.nodes.rag_subgraph._call_vector_search",
+                "src.nodes.rag_subgraph._call_vector_search",
                 side_effect=fake_search,
             ),
-            patch("vectora.nodes.rag_subgraph.settings") as ms,
+            patch("src.nodes.rag_subgraph.settings") as ms,
         ):
             ms.rag_hybrid_enabled = False
             ms.rag_hybrid_fetch_limit = 20
@@ -245,7 +245,7 @@ class TestGenerateQueryVariants:
         mock_response = AsyncMock()
         mock_response.content = "variante 1\nvariante 2"
         with patch(
-            "vectora.services.utils.load_llm",
+            "src.services.utils.load_llm",
             return_value=AsyncMock(ainvoke=AsyncMock(return_value=mock_response)),
         ):
             variants = await _generate_query_variants("query original", n=3)
@@ -255,7 +255,7 @@ class TestGenerateQueryVariants:
     async def test_returns_original_on_failure(self):
         """Em caso de falha do LLM, retorna só a query original."""
         with patch(
-            "vectora.services.utils.load_llm",
+            "src.services.utils.load_llm",
             side_effect=Exception("LLM error"),
         ):
             variants = await _generate_query_variants("query test")
@@ -267,7 +267,7 @@ class TestGenerateQueryVariants:
         mock_response = AsyncMock()
         mock_response.content = "\n".join([f"variante {i}" for i in range(10)])
         with patch(
-            "vectora.services.utils.load_llm",
+            "src.services.utils.load_llm",
             return_value=AsyncMock(ainvoke=AsyncMock(return_value=mock_response)),
         ):
             variants = await _generate_query_variants("query", n=3)
@@ -282,14 +282,14 @@ class TestGenerateQueryVariants:
 class TestRagExpandQuery:
     @pytest.mark.asyncio
     async def test_disabled_returns_empty(self):
-        with patch("vectora.nodes.rag_subgraph.settings") as ms:
+        with patch("src.nodes.rag_subgraph.settings") as ms:
             ms.rag_multi_query_enabled = False
             result = await rag_expand_query(_state())
         assert result == {}
 
     @pytest.mark.asyncio
     async def test_no_query_returns_empty(self):
-        with patch("vectora.nodes.rag_subgraph.settings") as ms:
+        with patch("src.nodes.rag_subgraph.settings") as ms:
             ms.rag_multi_query_enabled = True
             result = await rag_expand_query(_state(messages=[]))
         assert result == {}
@@ -298,9 +298,9 @@ class TestRagExpandQuery:
     async def test_single_variant_returns_empty(self):
         """Se só gerou a original, não há ganho → retorna {}."""
         with (
-            patch("vectora.nodes.rag_subgraph.settings") as ms,
+            patch("src.nodes.rag_subgraph.settings") as ms,
             patch(
-                "vectora.nodes.rag_subgraph._generate_query_variants",
+                "src.nodes.rag_subgraph._generate_query_variants",
                 new_callable=AsyncMock,
                 return_value=["query original"],  # só 1 variant
             ),
@@ -315,9 +315,9 @@ class TestRagExpandQuery:
         """Com N variantes, seta rag_query_variants no state."""
         variants = ["query original", "reformulação 1", "reformulação 2"]
         with (
-            patch("vectora.nodes.rag_subgraph.settings") as ms,
+            patch("src.nodes.rag_subgraph.settings") as ms,
             patch(
-                "vectora.nodes.rag_subgraph._generate_query_variants",
+                "src.nodes.rag_subgraph._generate_query_variants",
                 new_callable=AsyncMock,
                 return_value=variants,
             ),
@@ -348,16 +348,16 @@ class TestRagRetrieveHyDE:
 
         with (
             patch(
-                "vectora.nodes.rag_subgraph._call_vector_search_all",
+                "src.nodes.rag_subgraph._call_vector_search_all",
                 new_callable=AsyncMock,
                 return_value=low_score_docs,
             ),
             patch(
-                "vectora.nodes.rag_subgraph._hyde_search",
+                "src.nodes.rag_subgraph._hyde_search",
                 new_callable=AsyncMock,
                 return_value=hyde_docs,
             ) as mock_hyde,
-            patch("vectora.nodes.rag_subgraph.settings") as ms,
+            patch("src.nodes.rag_subgraph.settings") as ms,
         ):
             ms.rag_hyde_enabled = True
             ms.rag_hyde_threshold = 0.5
@@ -381,15 +381,15 @@ class TestRagRetrieveHyDE:
 
         with (
             patch(
-                "vectora.nodes.rag_subgraph._call_vector_search_all",
+                "src.nodes.rag_subgraph._call_vector_search_all",
                 new_callable=AsyncMock,
                 return_value=high_score_docs,
             ),
             patch(
-                "vectora.nodes.rag_subgraph._hyde_search",
+                "src.nodes.rag_subgraph._hyde_search",
                 new_callable=AsyncMock,
             ) as mock_hyde,
-            patch("vectora.nodes.rag_subgraph.settings") as ms,
+            patch("src.nodes.rag_subgraph.settings") as ms,
         ):
             ms.rag_hyde_enabled = True
             ms.rag_hyde_threshold = 0.5
@@ -411,15 +411,15 @@ class TestRagRetrieveHyDE:
 
         with (
             patch(
-                "vectora.nodes.rag_subgraph._call_vector_search_all",
+                "src.nodes.rag_subgraph._call_vector_search_all",
                 new_callable=AsyncMock,
                 return_value=low_score_docs,
             ),
             patch(
-                "vectora.nodes.rag_subgraph._hyde_search",
+                "src.nodes.rag_subgraph._hyde_search",
                 new_callable=AsyncMock,
             ) as mock_hyde,
-            patch("vectora.nodes.rag_subgraph.settings") as ms,
+            patch("src.nodes.rag_subgraph.settings") as ms,
         ):
             ms.rag_hyde_enabled = False
             ms.rag_hyde_threshold = 0.5

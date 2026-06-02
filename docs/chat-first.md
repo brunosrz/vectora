@@ -5,7 +5,7 @@
 > interage, dispara e consome o agente via UI Next.js.
 >
 > Quando o usuário fala em "Vectora Agent", refere-se ao backend Python
-> (`vectora/`). Quando fala em "Vectora Chat", refere-se à UI Next.js (`chat/`).
+> (`src/`). Quando fala em "Vectora Chat", refere-se à UI Next.js (`chat/`).
 > Ambos compõem o produto Vectora.
 
 ## Contexto
@@ -112,8 +112,8 @@ buscar threads"` direto no JSX/handler.
 - Adicionar string nova = adicionar 3 colunas (`en,es,pt-BR`) no CSV.
   PRs que adicionam string nova sem cobertura nas 3 línguas são
   rejeitados.
-- Mesma regra vale para `vectora/ui/` (rich/textual) — strings do CLI
-  passam por `vectora/services/i18n.py` (ou equivalente) e ficam em
+- Mesma regra vale para `src/ui/` (rich/textual) — strings do CLI
+  passam por `src/services/i18n.py` (ou equivalente) e ficam em
   catálogo dedicado.
 
 ### 3. TDD + type hints são obrigatórios
@@ -161,14 +161,14 @@ Toda a base do chat: backend API (FastAPI + SSE), frontend stack
 | Sub-bloco                            | Entregue                                                                                                                                                                                                                                                  |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A1 — Limpeza do fork                 | `chat/src/` deletado, `chat/lib/api/langgraph-client.ts` removido, deps LangSmith/LangGraph SDK out, package renomeado para `vectora-chat`                                                                                                                |
-| A2 — `vectora/api/` (FastAPI+SSE)    | Módulo completo: `server.py`, `handlers/chat.py` + `handlers/threads.py`, `adapters.py` (LangGraph events → SSE), `schemas.py`. Endpoints `StreamChat`, `ResumeChat`, `GetTools`, `Create/Get/List/Delete/Get Thread`/`GetHistory`, `/health`, `/metrics` |
-| A3 — Tool metadata schema            | `metadata={"render_hint","category","destructive","icon"}` em todas as 17 tools (`vectora/tools/*.py`); endpoint `GET /tools/schema` expõe                                                                                                                |
+| A2 — `src/api/` (FastAPI+SSE)        | Módulo completo: `server.py`, `handlers/chat.py` + `handlers/threads.py`, `adapters.py` (LangGraph events → SSE), `schemas.py`. Endpoints `StreamChat`, `ResumeChat`, `GetTools`, `Create/Get/List/Delete/Get Thread`/`GetHistory`, `/health`, `/metrics` |
+| A3 — Tool metadata schema            | `metadata={"render_hint","category","destructive","icon"}` em todas as 17 tools (`src/tools/*.py`); endpoint `GET /tools/schema` expõe                                                                                                                    |
 | A4 — Hono backend integrado          | `chat/server/index.ts` + `chat/server/routes/{chat,threads,health}.ts` + `chat/app/api/[[...route]]/route.ts` montando no Next.js                                                                                                                         |
 | A5 — Tipos TypeScript schema-driven  | `chat/lib/types/render.ts` (`RenderHint`, `ToolCategory`), `events.ts`, `messages.ts`, `tools.ts` — espelham proto                                                                                                                                        |
 | A6 — Renderização schema-driven      | `chat/components/chat/tool-call-renderer.tsx` despacha por `render_hint`: `JsonViewer`, `DiffViewer`, `CodeBlockViewer`, `TerminalBlock`, `SearchResultsViewer`, `TableViewer`, `QueueBadge`, `QueueProgress`, `ArtifactCard`                             |
 | A7 — SSE Heartbeat                   | MCP server emite `: heartbeat` a cada 25s; FastAPI/SSE usa `X-Accel-Buffering: no`                                                                                                                                                                        |
 | A8 — Observabilidade base            | `VectoraTracer` SQLite + `GET /metrics` retornando últimos 50 spans                                                                                                                                                                                       |
-| A9 — Subcomando CLI `vectora server` | `mcp` / `chat` / `headless` em `vectora/main.py`, com `chat_static/` bundle pronto pra `make build-chat`                                                                                                                                                  |
+| A9 — Subcomando CLI `vectora server` | `mcp` / `chat` / `headless` em `src/main.py`, com `chat_static/` bundle pronto pra `make build-chat`                                                                                                                                                      |
 | A10 — `tools/schema` autodescoberta  | Frontend pode buscar lista completa de tools com `render_hint` + `args_schema` JSON                                                                                                                                                                       |
 
 ---
@@ -182,7 +182,7 @@ de bugs reais, fricção de UX e oportunidades de melhoria descobertas em uso.
 
 - `chat/lib/config/deployment-config.ts` substituiu modelos do fork LangChain
   pelos **25 modelos reais** alinhados ao `AVAILABLE_MODELS` Python
-  (`vectora/config/settings.py`): 6 Google (Gemini 3.x + 2.5), 12 OpenAI
+  (`src/config/settings.py`): 6 Google (Gemini 3.x + 2.5), 12 OpenAI
   (GPT-5.5/5.4/5/4.1 + o3/o4-mini), 3 Anthropic (Claude 4.7/4.6/4.5), 4 Cohere
 - Default: `gemini-2.5-flash`
 
@@ -233,11 +233,11 @@ de bugs reais, fricção de UX e oportunidades de melhoria descobertas em uso.
 - `chat/lib/utils/string/markdown-envelope.ts`: `stripMarkdownEnvelope()`
   streaming-safe (suporta envelope parcial durante token streaming)
 - Aplicado em `message-item.tsx` antes do `ReactMarkdown`
-- Regra documentada no `_ORCHESTRATOR_PROMPT` (`vectora/agents/orchestrator.py`)
+- Regra documentada no `_ORCHESTRATOR_PROMPT` (`src/agents/orchestrator.py`)
 
 ### B8 — Filtro de tokens de structured-output
 
-- `vectora/api/adapters.py`: `_STRUCTURED_OUTPUT_NODES = {"orchestrator"}`
+- `src/api/adapters.py`: `_STRUCTURED_OUTPUT_NODES = {"orchestrator"}`
 - Helper `_extract_orchestrator_response()` lê o `AIMessage(content=response)`
   do `Command.update` no `on_chain_end` e emite como `TokenEvent` único
 
@@ -255,26 +255,26 @@ de bugs reais, fricção de UX e oportunidades de melhoria descobertas em uso.
 
 ### B11 — Server lifecycle robusto
 
-- `vectora/api/server.py`: `@asynccontextmanager _lifespan` com:
+- `src/api/server.py`: `@asynccontextmanager _lifespan` com:
   - Startup opcional via `VECTORA_WARMUP_GRAPH=1`
   - Shutdown paralelo via `asyncio.gather`: `_stop_background_worker()` +
     `aclose_graph()` rodam simultâneos
   - Timeout total configurável (`VECTORA_SHUTDOWN_TIMEOUT_S`, default 10s)
-- `vectora/api/handlers/chat.py`: funções públicas `aclose_graph()` +
+- `src/api/handlers/chat.py`: funções públicas `aclose_graph()` +
   `awarm_graph()` encapsulam o estado privado (`_graph`, `_checkpointer_ctx`)
-- `vectora/main.py`: `os._exit(0)` após `uvicorn.run()` — bypass de threads
+- `src/main.py`: `os._exit(0)` após `uvicorn.run()` — bypass de threads
   não-daemon de libs externas (langsmith, httpx, Cohere rate limiter)
 
 ### B12 — Logs auditáveis sem ruído
 
-- `vectora/services/log_setup.py`: `_BackgroundConsoleFilter` expandido
+- `src/services/log_setup.py`: `_BackgroundConsoleFilter` expandido
 - Silenciados completamente: `langsmith`, `langsmith.client`, `uvicorn.access`, `fastapi`
-- `vectora/main.py`: uvicorn `log_level="warning"` + `access_log=False`;
+- `src/main.py`: uvicorn `log_level="warning"` + `access_log=False`;
   override via `VECTORA_UVICORN_LOG_LEVEL`
 
 ### B13 — GetHistory reusa singleton do grafo
 
-- `vectora/api/handlers/threads.py`: `get_history()` agora chama
+- `src/api/handlers/threads.py`: `get_history()` agora chama
   `_get_graph()` em vez de rebuildar via `async with AsyncSqliteSaver` a
   cada request — eliminou o spam de "Building LangGraph"
 
@@ -323,7 +323,7 @@ secrets, audit trail — tudo escopado por identidade. Auth não é só
 
 ### C1 — Identity model (backend)
 
-**Arquivo novo** `vectora/services/auth.py`:
+**Arquivo novo** `src/services/auth.py`:
 
 - Pydantic models: `User`, `Session`, `Role`, `Credentials`
 - Hash de password: `argon2-cffi` (Argon2id, defaults seguros)
@@ -355,14 +355,14 @@ Novo serviço no proto: `AuthService`:
 - `Me() → User` (auth required, retorna dados do usuário atual)
 - `ChangePassword(old, new)` (auth required)
 
-REST equivalents montados em `vectora/api/handlers/auth.py`:
+REST equivalents montados em `src/api/handlers/auth.py`:
 
 - `POST /auth/signup`, `/auth/signin`, `/auth/refresh`, `/auth/signout`
 - `GET /auth/me`, `POST /auth/change-password`
 
 ### C4 — Middleware FastAPI
 
-- `vectora/api/middleware/auth.py` (novo): `get_current_user` dependency
+- `src/api/middleware/auth.py` (novo): `get_current_user` dependency
 - Aplicado em **todos** os handlers exceto: `/health`, `/auth/*`, `/docs`,
   static files
 - Extrai `Authorization: Bearer <token>` ou cookie httpOnly `vectora_access`
@@ -380,7 +380,7 @@ REST equivalents montados em `vectora/api/handlers/auth.py`:
 
 Implementação:
 
-- `vectora/services/permissions.py` (novo): `check_permission(user, action, resource) → bool`
+- `src/services/permissions.py` (novo): `check_permission(user, action, resource) → bool`
 - Decorator `@require_role("admin")` para handlers
 - Thread ownership via coluna `threads.user_id`; permissões consultam
   `user_id == request.user.id OR user.role in {admin, root}`
@@ -522,7 +522,7 @@ dir = "~/.vectora/secrets"   # path base — override pra montar em volume difer
 kdf_iterations = 60          # Argon2id rounds (default seguro)
 ```
 
-**Módulo** `vectora/services/secrets/`:
+**Módulo** `src/services/secrets/`:
 
 - `base.py`: Protocol `SecretsProvider` — `get(user, key)`, `set(user, key, value)`, `list(user)`, `delete(user, key)`, `unlock(user, password)`, `lock(user)`
 - `keepass.py`: implementação via `pykeepass.PyKeePass`; cria `<user_id>.kdbx`
@@ -600,19 +600,19 @@ pykeepass = ">=4.1"           # KeePassXC .kdbx embarcado, pure-Python
 
 ### Arquivos críticos (Bloco C)
 
-| Sub     | Arquivos chat                                                                                                  | Arquivos vectora (Python)                                                                                              |
-| ------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| C1-C2   | —                                                                                                              | `vectora/services/auth.py` (novo), tabelas em `vectora/services/session.py`                                            |
-| C3      | —                                                                                                              | `vectora/api/protos/.../auth.proto` (novo), `vectora/api/handlers/auth.py` (novo), `vectora/api/schemas.py` (+ models) |
-| C4      | —                                                                                                              | `vectora/api/middleware/auth.py` (novo), `vectora/api/server.py` (registrar middleware)                                |
-| C5      | —                                                                                                              | `vectora/services/permissions.py` (novo), `vectora/state.py` (+ user_id em threads)                                    |
-| C6-C7   | —                                                                                                              | `vectora/main.py` (subcomando `auth`), `vectora/cli/auth.py` (novo)                                                    |
-| C8      | `chat/app/auth/signin/page.tsx`, `chat/app/auth/signup/page.tsx`, `chat/middleware.ts` (refresh) — todos novos | `/auth/has-users` endpoint                                                                                             |
-| C9      | `chat/components/layout/user-menu.tsx`, `chat/lib/stores/auth-store.ts` — novos                                | —                                                                                                                      |
-| C10-C11 | `chat/components/layout/settings-dialog/envs-tab.tsx` (novo)                                                   | `vectora/services/secrets/{base,internal,keepass}.py` (novos), dep `pykeepass>=4.1`                                    |
-| C12     | `chat/components/layout/settings-dialog/audit-tab.tsx` (novo, admin)                                           | `vectora/api/handlers/audit.py` (novo), tabela `audit`                                                                 |
-| C13     | —                                                                                                              | `vectora/api/middleware/rate_limit.py` (novo)                                                                          |
-| C14     | first-run banner no `/auth/signup`                                                                             | `vectora/main.py` (banner log)                                                                                         |
+| Sub     | Arquivos chat                                                                                                  | Arquivos vectora (Python)                                                                                  |
+| ------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| C1-C2   | —                                                                                                              | `src/services/auth.py` (novo), tabelas em `src/services/session.py`                                        |
+| C3      | —                                                                                                              | `src/api/protos/.../auth.proto` (novo), `src/api/handlers/auth.py` (novo), `src/api/schemas.py` (+ models) |
+| C4      | —                                                                                                              | `src/api/middleware/auth.py` (novo), `src/api/server.py` (registrar middleware)                            |
+| C5      | —                                                                                                              | `src/services/permissions.py` (novo), `src/state.py` (+ user_id em threads)                                |
+| C6-C7   | —                                                                                                              | `src/main.py` (subcomando `auth`), `src/cli/auth.py` (novo)                                                |
+| C8      | `chat/app/auth/signin/page.tsx`, `chat/app/auth/signup/page.tsx`, `chat/middleware.ts` (refresh) — todos novos | `/auth/has-users` endpoint                                                                                 |
+| C9      | `chat/components/layout/user-menu.tsx`, `chat/lib/stores/auth-store.ts` — novos                                | —                                                                                                          |
+| C10-C11 | `chat/components/layout/settings-dialog/envs-tab.tsx` (novo)                                                   | `src/services/secrets/{base,internal,keepass}.py` (novos), dep `pykeepass>=4.1`                            |
+| C12     | `chat/components/layout/settings-dialog/audit-tab.tsx` (novo, admin)                                           | `src/api/handlers/audit.py` (novo), tabela `audit`                                                         |
+| C13     | —                                                                                                              | `src/api/middleware/rate_limit.py` (novo)                                                                  |
+| C14     | first-run banner no `/auth/signup`                                                                             | `src/main.py` (banner log)                                                                                 |
 
 ### Verificação
 
@@ -639,7 +639,7 @@ o "thinking visible" parte da experiência esperada.
 
 ### D1 — Reason field como bloco "Thinking" colapsável
 
-- Backend: `vectora/api/adapters.py` emite novo `ThinkingEvent` contendo
+- Backend: `src/api/adapters.py` emite novo `ThinkingEvent` contendo
   `reason` extraído do `OrchestratorDecision` no `on_chain_end` do orchestrator
 - Frontend: novo render hint `thinking` ou campo dedicado em `Message`:
   `thinking?: string`
@@ -671,7 +671,7 @@ em `chat/lib/constants/node-labels.ts`.
   - Tool args completos sem truncamento
 - Default: off (UX limpa para usuário final)
 
-**Arquivos críticos:** `vectora/api/adapters.py`, `vectora/api/schemas.py` (+ProtoEvent), `chat/lib/types/events.ts`, `chat/lib/types/messages.ts`, `chat/components/chat/message-item.tsx` (Thinking block + NodeBadges), `chat/lib/constants/node-labels.ts` (novo)
+**Arquivos críticos:** `src/api/adapters.py`, `src/api/schemas.py` (+ProtoEvent), `chat/lib/types/events.ts`, `chat/lib/types/messages.ts`, `chat/components/chat/message-item.tsx` (Thinking block + NodeBadges), `chat/lib/constants/node-labels.ts` (novo)
 
 ---
 
@@ -685,7 +685,7 @@ decisão do usuário.
 
 - `interrupt_before=["coder_tools"]` no `build_graph()`
 - `HITLEvent` no proto: `tool_name`, `args_json`, `interrupt_id`, `diff_preview` (opcional)
-- `vectora/api/adapters.py` detecta interrupt e emite `HITLEvent` no stream
+- `src/api/adapters.py` detecta interrupt e emite `HITLEvent` no stream
 
 ### E2 — Painel de aprovação no chat
 
@@ -706,9 +706,9 @@ decisão do usuário.
 
 - Setting na UI: "Confirmar antes de…" → checkboxes por tool category
   (filesystem, terminal, rag-destructive, paid-generation)
-- Persistido por user (C10) em `~/.vectora/config.toml`, lido pelo `vectora/graph.py`
+- Persistido por user (C10) em `~/.vectora/config.toml`, lido pelo `src/graph.py`
 
-**Arquivos críticos:** `vectora/api/protos/.../chat.proto` (HITLEvent), `vectora/graph.py` (interrupt_before), `vectora/api/adapters.py`, `chat/components/chat/features/hitl-panel.tsx` (novo), `chat/lib/hooks/chat/use-stream-handler.ts` (resume on event)
+**Arquivos críticos:** `src/api/protos/.../chat.proto` (HITLEvent), `src/graph.py` (interrupt_before), `src/api/adapters.py`, `chat/components/chat/features/hitl-panel.tsx` (novo), `chat/lib/hooks/chat/use-stream-handler.ts` (resume on event)
 
 ---
 
@@ -720,7 +720,7 @@ o pipeline downstream não está completo.
 ### F1 — Multimodal LLM call com attachments
 
 - Atualizar `StreamChatRequest` no proto: `attachments: list[Attachment]`
-- `vectora/api/handlers/chat.py` converte para `HumanMessage(content=[{"type": "image_url", ...}])`
+- `src/api/handlers/chat.py` converte para `HumanMessage(content=[{"type": "image_url", ...}])`
 - Suporte a image, PDF, código (texto inline truncado a N kB)
 
 ### F2 — PDF preview no input
@@ -737,7 +737,7 @@ o pipeline downstream não está completo.
 
 - Detecta extensão, injeta em `CodeBlockViewer` (já existe)
 
-**Arquivos críticos:** `vectora/api/protos/.../chat.proto`, `vectora/api/handlers/chat.py`, `chat/components/chat/features/file-preview-grid.tsx` (extend), `chat/lib/utils/files/pdf-preview.ts` (novo)
+**Arquivos críticos:** `src/api/protos/.../chat.proto`, `src/api/handlers/chat.py`, `chat/components/chat/features/file-preview-grid.tsx` (extend), `chat/lib/utils/files/pdf-preview.ts` (novo)
 
 ---
 
@@ -767,7 +767,7 @@ próprio `GH_TOKEN` (C10).
 
 ### G3 — Git tools no Vectora Agent
 
-Novo módulo `vectora/tools/git.py`:
+Novo módulo `src/tools/git.py`:
 
 | Tool                                    | render_hint  | destructive           | HITL                    |
 | --------------------------------------- | ------------ | --------------------- | ----------------------- |
@@ -782,7 +782,7 @@ Novo módulo `vectora/tools/git.py`:
 | `git_pull(remote, branch)`              | `code_block` | true (pode mergear)   | sim                     |
 | `git_stash(action, name?)`              | `code_block` | parcial               | em pop/drop             |
 
-Tools gh CLI (em `vectora/tools/gh.py`):
+Tools gh CLI (em `src/tools/gh.py`):
 | Tool | render_hint |
 | ---------------------------------------------- | -------------------------- |
 | `gh_pr_create(title, body, base, draft=False)` | `code_block` |
@@ -887,17 +887,17 @@ gitpython = ">=3.1"
 
 ### Arquivos críticos (Bloco G)
 
-| Sub | Arquivos chat                                                                                  | Arquivos vectora (Python)                                                                         |
-| --- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| G1  | `chat/components/layout/workspace-selector.tsx`, `chat/lib/stores/workspaces-store.ts` (novos) | `vectora/api/protos/.../workspace.proto` (novo serviço)                                           |
-| G2  | `chat/components/layout/workspace-create-modal.tsx` (novo, 3 tabs)                             | `vectora/api/handlers/workspaces.py` (novo, `Create/Clone`)                                       |
-| G3  | —                                                                                              | `vectora/tools/git.py` (novo), `vectora/tools/gh.py` (novo), `vectora/nodes/tools.py` (registrar) |
-| G4  | —                                                                                              | `vectora/agents/orchestrator.py` (prompt expansion)                                               |
-| G5  | `chat/components/layout/git-status-badge.tsx` (novo)                                           | `/workspaces/{id}/git/status` endpoint                                                            |
-| G6  | aviso na UI de Envs (C10)                                                                      | merge logic em `vectora/services/auth.py`                                                         |
-| G7  | extends `WorkspaceInfo` consumer                                                               | `vectora/services/workspace.py` (auto-detect git)                                                 |
-| G8  | secondary worktree selector                                                                    | `git_worktree` tool + storage em `~/.vectora/worktrees/`                                          |
-| G9  | `chat/components/chat/features/pr-review-view.tsx` (novo render especial)                      | `vectora/agents/pr_reviewer.py` (novo, opcional separar do coder)                                 |
+| Sub | Arquivos chat                                                                                  | Arquivos vectora (Python)                                                             |
+| --- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| G1  | `chat/components/layout/workspace-selector.tsx`, `chat/lib/stores/workspaces-store.ts` (novos) | `src/api/protos/.../workspace.proto` (novo serviço)                                   |
+| G2  | `chat/components/layout/workspace-create-modal.tsx` (novo, 3 tabs)                             | `src/api/handlers/workspaces.py` (novo, `Create/Clone`)                               |
+| G3  | —                                                                                              | `src/tools/git.py` (novo), `src/tools/gh.py` (novo), `src/nodes/tools.py` (registrar) |
+| G4  | —                                                                                              | `src/agents/orchestrator.py` (prompt expansion)                                       |
+| G5  | `chat/components/layout/git-status-badge.tsx` (novo)                                           | `/workspaces/{id}/git/status` endpoint                                                |
+| G6  | aviso na UI de Envs (C10)                                                                      | merge logic em `src/services/auth.py`                                                 |
+| G7  | extends `WorkspaceInfo` consumer                                                               | `src/services/workspace.py` (auto-detect git)                                         |
+| G8  | secondary worktree selector                                                                    | `git_worktree` tool + storage em `~/.vectora/worktrees/`                              |
+| G9  | `chat/components/chat/features/pr-review-view.tsx` (novo render especial)                      | `src/agents/pr_reviewer.py` (novo, opcional separar do coder)                         |
 
 ### Verificação
 
@@ -946,7 +946,7 @@ Slash commands tornam ações de power-user descobríveis e rápidas.
 - `↑`/`↓` no input com `/` digitado navega histórico
 - Persiste em `localStorage` (por user_id quando autenticado)
 
-**Arquivos críticos:** `chat/components/chat/features/slash-commands.tsx` (novo), `chat/lib/constants/slash-commands.ts` (registry), `chat/components/chat/chat-input.tsx` (hook into onChange), `vectora/api/handlers/share.py` (novo endpoint)
+**Arquivos críticos:** `chat/components/chat/features/slash-commands.tsx` (novo), `chat/lib/constants/slash-commands.ts` (registry), `chat/components/chat/chat-input.tsx` (hook into onChange), `src/api/handlers/share.py` (novo endpoint)
 
 ---
 
@@ -984,7 +984,7 @@ Slash commands tornam ações de power-user descobríveis e rápidas.
 - Cria nova thread copiando histórico até aquela mensagem
 - Útil para "e se eu tivesse perguntado X em vez de Y"
 
-**Arquivos críticos:** `chat/components/chat/features/thread-search.tsx` (novo), `chat/lib/utils/export/` (novo módulo), `chat/app/share/[token]/page.tsx` (novo), `vectora/api/handlers/share.py` (novo)
+**Arquivos críticos:** `chat/components/chat/features/thread-search.tsx` (novo), `chat/lib/utils/export/` (novo módulo), `chat/app/share/[token]/page.tsx` (novo), `src/api/handlers/share.py` (novo)
 
 ---
 
@@ -1332,15 +1332,15 @@ O usuário também precisa poder auditar e editar o que o agente sabe sobre ele.
 
 ### N1 — Backend: memória isolada por usuário
 
-- `vectora/tools/memory.py`: todas as operações de memória usam
+- `src/tools/memory.py`: todas as operações de memória usam
   `namespace = f"user:{user_id}"` quando rodando com usuário autenticado
   (fallback para namespace global quando CLI local sem auth)
-- `vectora/api/handlers/memory.py` (novo): endpoints REST
+- `src/api/handlers/memory.py` (novo): endpoints REST
   - `GET /memory` → lista memórias do user atual (paginado)
   - `DELETE /memory/{memory_id}` → deleta memória específica
   - `PUT /memory/{memory_id}` → edita conteúdo de uma memória
   - `DELETE /memory` → limpa todas as memórias do user
-- `vectora/api/server.py`: registrar router
+- `src/api/server.py`: registrar router
 - Middleware de auth já injeta `request.state.user` → handlers usam `user.id`
 
 ### N2 — Frontend: aba Memória no Settings Dialog
@@ -1363,8 +1363,8 @@ O usuário também precisa poder auditar e editar o que o agente sabe sobre ele.
 
 **Arquivos críticos:**
 
-- `vectora/tools/memory.py` — adicionar `user_id` no namespace
-- `vectora/api/handlers/memory.py` — novo router
+- `src/tools/memory.py` — adicionar `user_id` no namespace
+- `src/api/handlers/memory.py` — novo router
 - `chat/server/routes/memory.ts` — novo proxy Hono
 - `chat/components/layout/settings-dialog/tabs/memoria-tab.tsx` — novo
 - `chat/components/chat/message-item.tsx` — badge de memórias (N3)
@@ -1415,7 +1415,7 @@ Mais simples que GitHub App — não requer instalação no repositório.
 5. Token armazenado no KeePass vault do user como `GITHUB_TOKEN`
 6. Tools `git_push`, `gh_pr_create` etc. (G3) usam `user.env_overrides["GITHUB_TOKEN"]`
 
-**Backend** (`vectora/api/handlers/oauth.py` novo):
+**Backend** (`src/api/handlers/oauth.py` novo):
 
 - `GET /auth/github` → redirect para GitHub OAuth
 - `GET /auth/github/callback` → troca code por token, salva no vault, redirect chat
@@ -1453,11 +1453,11 @@ API Token (simples, como O1) ou OAuth App.
 
 **Arquivos críticos:**
 
-- `vectora/api/handlers/oauth.py` — novo (GitHub OAuth flow)
-- `vectora/services/secrets/keepass.py` — já existe, usar para armazenar tokens
+- `src/api/handlers/oauth.py` — novo (GitHub OAuth flow)
+- `src/services/secrets/keepass.py` — já existe, usar para armazenar tokens
 - `chat/components/layout/settings-dialog/tabs/integracoes-tab.tsx` — cards com status
 - `chat/server/routes/oauth.ts` — proxy Hono para OAuth endpoints
-- `vectora/tools/git.py`, `vectora/tools/gh.py` — já planejados em G3
+- `src/tools/git.py`, `src/tools/gh.py` — já planejados em G3
 
 **Verificação O1:**
 
@@ -1495,7 +1495,7 @@ Sub-abas dentro de Administração:
 - Checklist de agents disponíveis: quais estão habilitados globalmente
 - Por agent: quais tools estão habilitadas
 - ABAC: override por usuário ("User X não pode usar terminal")
-- Persistido em `~/.vectora/config.toml` → lido pelo `vectora/graph.py` ao buildar graph
+- Persistido em `~/.vectora/config.toml` → lido pelo `src/graph.py` ao buildar graph
 
 **Workspaces:**
 
@@ -1524,8 +1524,8 @@ Sub-abas dentro de Administração:
 - `chat/components/layout/settings-dialog/admin/admin-tab.tsx` — novo
 - `chat/components/layout/settings-dialog/admin/users-panel.tsx` — novo
 - `chat/components/layout/settings-dialog/admin/tools-panel.tsx` — novo
-- `vectora/api/handlers/admin.py` — novo router (todos os endpoints exigem root/admin)
-- `vectora/services/permissions.py` — ampliar com `can_override_tools(user, target_user_id)`
+- `src/api/handlers/admin.py` — novo router (todos os endpoints exigem root/admin)
+- `src/services/permissions.py` — ampliar com `can_override_tools(user, target_user_id)`
 
 ---
 
@@ -1534,17 +1534,17 @@ Sub-abas dentro de Administração:
 > **Contexto.** A seleção de workspace **não funciona hoje**. O frontend tem
 > `workspaces-store.ts` e a rota Hono `chat/server/routes/workspaces.ts`, mas
 > elas dão proxy para `/vectora.workspace.v1.WorkspaceService/*` — endpoints
-> que **não existem no backend** (`vectora/api/handlers/` não tem
+> que **não existem no backend** (`src/api/handlers/` não tem
 > `workspaces.py`). Não há componente de seleção (`workspace-selector.tsx`
 > ausente). E o conceito de "workspace" na prática é apenas o `cwd` do processo
 > onde o `vectora` foi iniciado.
 >
-> Pior: os **guard rails de escopo são fracos**. `vectora/tools/fs.py` usa
+> Pior: os **guard rails de escopo são fracos**. `src/tools/fs.py` usa
 > `is_safe_file_path(path, allowed_dirs=["."])` — onde `.` é o cwd do
 > _processo_, não a pasta escolhida — e a tool `terminal` roda
 > `asyncio.create_subprocess_shell(command)` **sem `cwd=`**, herdando o
 > diretório do servidor sem nenhuma confinação. Não há `git_init` nem
-> `git_worktree` em `vectora/tools/git.py` (G8 nunca foi implementado de fato).
+> `git_worktree` em `src/tools/git.py` (G8 nunca foi implementado de fato).
 >
 > **Objetivo do Bloco Q:** transformar workspace num conceito de primeira classe
 > com o modelo _trust folder_ (como editores/IDEs modernos): o usuário escolhe
@@ -1565,7 +1565,7 @@ Sub-abas dentro de Administração:
 
 ### Q1 — `WorkspaceService` backend (o handler que falta)
 
-Novo `vectora/api/handlers/workspaces.py` + registro em `vectora/api/server.py`
+Novo `src/api/handlers/workspaces.py` + registro em `src/api/server.py`
 (`app.include_router(workspace_router)`), espelhando os paths que o frontend já
 chama (Connect-style POST/GET sob `/vectora.workspace.v1.WorkspaceService/`):
 
@@ -1579,13 +1579,13 @@ chama (Connect-style POST/GET sob `/vectora.workspace.v1.WorkspaceService/`):
 | `POST …/GitInitWorkspace`   | roda `git init` na pasta `{workspace_id}`                                    |
 | `GET  …/BrowseDir`          | **directory browser** (Q6): lista subpastas de `{path}`                      |
 
-Reusa o `workspace_registry` singleton (`vectora/services/workspace.py`) e
-`detect_git_info()` (`vectora/tools/git.py:593`). Auth: `Depends(get_current_user)`
+Reusa o `workspace_registry` singleton (`src/services/workspace.py`) e
+`detect_git_info()` (`src/tools/git.py:593`). Auth: `Depends(get_current_user)`
 no modo server; root local no CLI (C6).
 
 ### Q2 — Estado de "trust" no modelo Workspace
 
-Estende `vectora/types/workspace.py` (`Workspace` Pydantic) com:
+Estende `src/types/workspace.py` (`Workspace` Pydantic) com:
 
 - `trusted: bool = False` — pasta confirmada como confiável pelo usuário
 - `trusted_at: str | None` — timestamp ISO da confirmação
@@ -1598,7 +1598,7 @@ read-only (somente `file_read`, `grep`, `list`).
 
 ### Q3 — `git init` automático para pastas sem repositório
 
-- Nova helper `git_init_repo(cwd) -> dict` em `vectora/tools/git.py` (usa
+- Nova helper `git_init_repo(cwd) -> dict` em `src/tools/git.py` (usa
   `git.Repo.init(cwd)`), e tool `git_init` exposta ao agente
   (render_hint `code_block`, destructive `false`).
 - No fluxo de criação de workspace (Q1 `CreateWorkspace` com `git_init=True`):
@@ -1611,12 +1611,12 @@ read-only (somente `file_read`, `grep`, `list`).
 
 O coração da segurança. Hoje `allowed_dirs=["."]` e terminal sem `cwd`. Mudar para:
 
-- **Novo helper central** em `vectora/services/security.py`:
+- **Novo helper central** em `src/services/security.py`:
   `resolve_within_workspace(path, workspace_root) -> Path | None` — resolve o
   path absoluto e garante `resolved.is_relative_to(workspace_root)`; retorna
   `None` se escapar (bloqueia `..`, symlinks para fora, paths absolutos
   externos). Substitui o atual `allowed_dirs=["."]`.
-- **`vectora/tools/fs.py`**: `file_read`, `file_write`, `file_edit`, `grep`,
+- **`src/tools/fs.py`**: `file_read`, `file_write`, `file_edit`, `grep`,
   `list`, `terminal` passam a resolver o workspace ativo via config
   (`configurable.workspace_id` → `workspace.cwd`, mesmo padrão de
   `_resolve_workspace` em `git.py:35`) e validar contra `workspace_root`.
@@ -1630,7 +1630,7 @@ O coração da segurança. Hoje `allowed_dirs=["."]` e terminal sem `cwd`. Mudar
 ### Q5 — Git Worktree (G8 real)
 
 - Helpers + tool `git_worktree(action, name?, branch?)` em
-  `vectora/tools/git.py` (`add`/`list`/`remove`); worktrees em
+  `src/tools/git.py` (`add`/`list`/`remove`); worktrees em
   `~/.vectora/worktrees/<workspace_id>/<name>` (via `git worktree add`).
 - `thread.metadata.worktree` associa thread ↔ worktree; quando setado, as
   tools de Q4 confinam ao path da worktree em vez do root principal.
@@ -1676,7 +1676,7 @@ que já existe e retorna `HasUsersResponse(exists)`).
 Implementa o "Convidar usuário" do P1 (nunca construído). Token opaco expirável,
 no padrão dos `refresh_tokens` (hash SHA-256 no DB, nunca em claro).
 
-**Backend — `vectora/services/auth.py`:**
+**Backend — `src/services/auth.py`:**
 
 - Nova tabela `invites(token_hash PK, email, role, created_by, expires_at,
 used_at, created_at)` em `_ensure_schema()`.
@@ -1690,7 +1690,7 @@ used_at, created_at)` em `_ensure_schema()`.
 - `signup(email, password, *, role=None)`: aceitar `role` opcional (quando vindo
   de convite), mantendo a regra "1º usuário = root".
 
-**Backend — `vectora/api/handlers/auth.py` + `vectora/api/schemas.py`:**
+**Backend — `src/api/handlers/auth.py` + `src/api/schemas.py`:**
 
 - `SignupRequest` ganha `invite_token: str = ""`.
 - `signup_endpoint`: lógica em camadas —
@@ -1700,7 +1700,7 @@ used_at, created_at)` em `_ensure_schema()`.
 - `GET /auth/invite/{token}` (público): valida e retorna `{valid, email?, role}`
   para a página de signup pré-preencher/verificar.
 
-**Backend — `vectora/api/handlers/admin.py`:**
+**Backend — `src/api/handlers/admin.py`:**
 
 - `POST /admin/invites` (`require_admin`) → body `{role, email?, ttl_hours}` →
   retorna `{token, url, expires_at}` (URL = `<frontend>/auth/signup?invite=<token>`).
@@ -1727,11 +1727,11 @@ used_at, created_at)` em `_ensure_schema()`.
 
 | Sub | Arquivos chat                                                                                                                        | Arquivos vectora (Python)                                                                                                                                                                              |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Q1  | `chat/server/routes/workspaces.ts` (estende)                                                                                         | `vectora/api/handlers/workspaces.py` (novo), `vectora/api/server.py` (registrar)                                                                                                                       |
-| Q2  | `chat/lib/stores/workspaces-store.ts` (+`trusted`)                                                                                   | `vectora/types/workspace.py`, `vectora/services/workspace.py` (`trust()`)                                                                                                                              |
-| Q3  | —                                                                                                                                    | `vectora/tools/git.py` (`git_init_repo` + tool)                                                                                                                                                        |
-| Q4  | —                                                                                                                                    | `vectora/services/security.py` (`resolve_within_workspace`), `vectora/tools/fs.py` (todas as tools + `terminal` com `cwd=`)                                                                            |
-| Q5  | secondary worktree selector no header                                                                                                | `vectora/tools/git.py` (`git_worktree`), `vectora/state.py` (`thread.metadata.worktree`)                                                                                                               |
+| Q1  | `chat/server/routes/workspaces.ts` (estende)                                                                                         | `src/api/handlers/workspaces.py` (novo), `src/api/server.py` (registrar)                                                                                                                               |
+| Q2  | `chat/lib/stores/workspaces-store.ts` (+`trusted`)                                                                                   | `src/types/workspace.py`, `src/services/workspace.py` (`trust()`)                                                                                                                                      |
+| Q3  | —                                                                                                                                    | `src/tools/git.py` (`git_init_repo` + tool)                                                                                                                                                            |
+| Q4  | —                                                                                                                                    | `src/services/security.py` (`resolve_within_workspace`), `src/tools/fs.py` (todas as tools + `terminal` com `cwd=`)                                                                                    |
+| Q5  | secondary worktree selector no header                                                                                                | `src/tools/git.py` (`git_worktree`), `src/state.py` (`thread.metadata.worktree`)                                                                                                                       |
 | Q6  | `workspace-selector.tsx`, `workspace-trust-dialog.tsx` (novos)                                                                       | `…/BrowseDir` endpoint                                                                                                                                                                                 |
 | Q7  | `auth-provider.tsx`, `auth/signin/page.tsx`, `auth/signup/page.tsx`, `i18n/strings.csv.ts`                                           | — (reusa `/auth/has-users`)                                                                                                                                                                            |
 | Q8  | `auth/signup/page.tsx` (modo convite), `admin/users-panel.tsx`, `server/routes/auth.ts` (+`/invite`), rota admin (+`/admin/invites`) | `services/auth.py` (tabela `invites` + funções), `api/handlers/auth.py` (+`invite_token`, `GET /auth/invite/{token}`), `api/handlers/admin.py` (+`/admin/invites`), `api/schemas.py` (+`invite_token`) |
@@ -1817,7 +1817,7 @@ mapeando para o HITL existente (Bloco E) + guard rails (Q4):
 
 - Persistido por user no `settings-store.ts` (campo `permissionMode`).
 - Backend: enviado em `agentConfig` → `configurable.permission_mode`; consumido
-  por `vectora/graph.py` (mapeia para `interrupt_before` dinâmico) e
+  por `src/graph.py` (mapeia para `interrupt_before` dinâmico) e
   pelo adapter HITL (Bloco E).
 - Atalho de teclado ⇧Ctrl M (registrar em `keyboard-shortcuts-dialog.tsx`).
 
@@ -1919,7 +1919,7 @@ Correção visual independente do redesign maior de R1/R4 (que depois absorve is
 ### R9 — Aba Envs funcional (backend já existe)
 
 `envs-tab.tsx` hoje é só placeholder. Backend completo já existe:
-`vectora/api/handlers/auth.py` (`GET/POST/DELETE /auth/envs`, valores mascarados)
+`src/api/handlers/auth.py` (`GET/POST/DELETE /auth/envs`, valores mascarados)
 e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELETE).
 
 - **`chat/components/layout/settings-dialog/tabs/envs-tab.tsx`**: construir UI —
@@ -1943,18 +1943,18 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 
 ### Arquivos críticos (Bloco R)
 
-| Sub | Arquivos chat                                                                                                            | Arquivos vectora (Python)                                                                  |
-| --- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| R1  | `command-bar.tsx` (novo), `git-status-badge.tsx` (eleva p/ switcher)                                                     | —                                                                                          |
-| R2  | `permission-mode-menu.tsx` (novo), `settings-store.ts` (+`permissionMode`)                                               | `vectora/graph.py` (interrupt_before dinâmico), `vectora/api/adapters.py`                  |
-| R3  | `plus-menu.tsx` (novo), `chat-input.tsx` (integra)                                                                       | —                                                                                          |
-| R4  | `agent-settings.tsx` (esforço/fast mode), `deployment-config.ts` (+`context_window`)                                     | `vectora/api/handlers/chat.py` (`reasoning_effort` no configurable)                        |
-| R5  | `context-meter.tsx` (novo), `metrics-store.ts`                                                                           | `vectora/api/handlers/auth.py` (`GET /auth/usage`), `vectora/api/middleware/rate_limit.py` |
-| R6  | `sidebar.tsx`, `header.tsx`, `welcome-screen.tsx`, `chat-input.tsx`, `agent-settings.tsx`, `i18n/strings.csv.ts`         | —                                                                                          |
-| R7  | `agent-settings.tsx` (tema+idioma), `preferencias-tab.tsx` (+idioma), `settings-store.ts` (`requireHitl` default `true`) | —                                                                                          |
-| R8  | `welcome-screen.tsx`, `chat-input.tsx` (remover `bg-card`)                                                               | —                                                                                          |
-| R9  | `settings-dialog/tabs/envs-tab.tsx` (UI add/list/delete)                                                                 | — (backend `/auth/envs` + proxy Hono já existem)                                           |
-| R10 | `settings-dialog/admin/admin-tab.tsx` (`ConfigPanel` → model `<Select>`), `deployment-config.ts` (reuso)                 | —                                                                                          |
+| Sub | Arquivos chat                                                                                                            | Arquivos vectora (Python)                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| R1  | `command-bar.tsx` (novo), `git-status-badge.tsx` (eleva p/ switcher)                                                     | —                                                                                  |
+| R2  | `permission-mode-menu.tsx` (novo), `settings-store.ts` (+`permissionMode`)                                               | `src/graph.py` (interrupt_before dinâmico), `src/api/adapters.py`                  |
+| R3  | `plus-menu.tsx` (novo), `chat-input.tsx` (integra)                                                                       | —                                                                                  |
+| R4  | `agent-settings.tsx` (esforço/fast mode), `deployment-config.ts` (+`context_window`)                                     | `src/api/handlers/chat.py` (`reasoning_effort` no configurable)                    |
+| R5  | `context-meter.tsx` (novo), `metrics-store.ts`                                                                           | `src/api/handlers/auth.py` (`GET /auth/usage`), `src/api/middleware/rate_limit.py` |
+| R6  | `sidebar.tsx`, `header.tsx`, `welcome-screen.tsx`, `chat-input.tsx`, `agent-settings.tsx`, `i18n/strings.csv.ts`         | —                                                                                  |
+| R7  | `agent-settings.tsx` (tema+idioma), `preferencias-tab.tsx` (+idioma), `settings-store.ts` (`requireHitl` default `true`) | —                                                                                  |
+| R8  | `welcome-screen.tsx`, `chat-input.tsx` (remover `bg-card`)                                                               | —                                                                                  |
+| R9  | `settings-dialog/tabs/envs-tab.tsx` (UI add/list/delete)                                                                 | — (backend `/auth/envs` + proxy Hono já existem)                                   |
+| R10 | `settings-dialog/admin/admin-tab.tsx` (`ConfigPanel` → model `<Select>`), `deployment-config.ts` (reuso)                 | —                                                                                  |
 
 ### Verificação (Bloco R)
 
@@ -1987,7 +1987,7 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 
 > **Contexto.** Continuação direta do Bloco O (integrações). As entradas
 > **"Conectores"** e **"Adicionar plugins…"** do menu `+` (print 3) precisam de
-> destino. Vectora já fala MCP (`vectora/tools/mcp.py`,
+> destino. Vectora já fala MCP (`src/tools/mcp.py`,
 > `langchain-mcp-adapters`) e tem OAuth/API-keys (Bloco O). O Bloco S dá a UI
 > para gerenciar **conectores** (integrações O1/O2 já planejadas) e **plugins
 > MCP** (servidores MCP externos plugáveis) a partir do chat.
@@ -2004,9 +2004,9 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 - **Novo** `chat/components/layout/settings-dialog/tabs/plugins-tab.tsx`:
   lista de MCP servers configurados (nome, transporte stdio/sse/http, status),
   add/edit/remove. Form: comando/URL + env vars (do vault do user, Bloco C11).
-- **Backend** `vectora/api/handlers/plugins.py` (novo): CRUD de configs MCP
+- **Backend** `src/api/handlers/plugins.py` (novo): CRUD de configs MCP
   por user, persistido em `~/.vectora/mcp_servers.json` (ou por-user). Reusa
-  `MultiServerMCPClient` (`vectora/tools/mcp.py`) para health-check.
+  `MultiServerMCPClient` (`src/tools/mcp.py`) para health-check.
 - As tools dos MCP servers conectados entram no grafo via o registro de tools
   existente; aparecem no `GET /tools/schema` (A10) e renderizam schema-driven.
 
@@ -2016,11 +2016,11 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 
 ### Arquivos críticos (Bloco S)
 
-| Sub | Arquivos chat                                                                         | Arquivos vectora (Python)                                                |
-| --- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| S1  | `plus-menu.tsx` (deep-link), `integracoes-tab.tsx` (reusa)                            | — (Bloco O)                                                              |
-| S2  | `settings-dialog/tabs/plugins-tab.tsx` (novo), `chat/server/routes/plugins.ts` (novo) | `vectora/api/handlers/plugins.py` (novo), `vectora/tools/mcp.py` (reusa) |
-| S3  | `command-bar.tsx` (indicador)                                                         | —                                                                        |
+| Sub | Arquivos chat                                                                         | Arquivos vectora (Python)                                        |
+| --- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| S1  | `plus-menu.tsx` (deep-link), `integracoes-tab.tsx` (reusa)                            | — (Bloco O)                                                      |
+| S2  | `settings-dialog/tabs/plugins-tab.tsx` (novo), `chat/server/routes/plugins.ts` (novo) | `src/api/handlers/plugins.py` (novo), `src/tools/mcp.py` (reusa) |
+| S3  | `command-bar.tsx` (indicador)                                                         | —                                                                |
 
 ### Verificação (Bloco S)
 
@@ -2050,14 +2050,14 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 
 #### S4 — Resolução de toolset por usuário (fundação)
 
-- **Novo** `vectora/services/tool_resolver.py`:
+- **Novo** `src/services/tool_resolver.py`:
   `async resolve_tools(user_id) -> list[BaseTool]` =
   `[t for t in ALL_TOOLS if tool_policy.is_allowed(user_id, t.name)]`
   `+ await plugins.get_user_mcp_tools(user_id)`. Cache em
   `dict[(user_id, version) -> list[BaseTool]]`; `version` vem de um contador
   por user bumpado quando a política ou os plugins MCP mudam (invalida o cache
   sem reiniciar). Helper `tools_version(user_id) -> int`.
-- **Estende** `vectora/services/plugins.py`:
+- **Estende** `src/services/plugins.py`:
   `async get_user_mcp_tools(user_id) -> list[BaseTool]` — monta um
   `MultiServerMCPClient` com os servers do registry do user (reusa
   `build_connection`), chama `get_tools()`, cacheia por `(user_id, version)`;
@@ -2066,13 +2066,13 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 
 #### S5 — Política de tools por usuário (ABAC: admin + self)
 
-- **Novo** `vectora/services/tool_policy.py`: persistência
+- **Novo** `src/services/tool_policy.py`: persistência
   `~/.vectora/tools/<user_id>.json` → `{"disabled": [names]}` (default
   allow-all). `is_allowed(user_id, name)`, `get_disabled(user_id)`,
   `set_disabled(user_id, names)` (bump de versão no resolver).
-- **Backend admin** (`vectora/api/handlers/admin.py`): `GET/POST
+- **Backend admin** (`src/api/handlers/admin.py`): `GET/POST
 /admin/users/{id}/tools` (require_admin) — o "override de tools por user" do
-  P2. **Self-service** (`vectora/api/handlers/plugins.py` ou novo
+  P2. **Self-service** (`src/api/handlers/plugins.py` ou novo
   `tools.py`): `GET/PUT /tools/policy` para o user atual.
 - **Frontend**: painel admin em `admin-tab.tsx` (toggles por tool, lista de
   `GET /tools/schema`) e uma seção self-service no Settings. i18n `toolpolicy.*`.
@@ -2086,7 +2086,7 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
   `dict[(user_id, version) -> bound LLM]` via `async _get_coder_llm(user_id)`
   que faz `load_llm().bind_tools(await resolve_tools(user_id))`. Fallback para
   `ALL_TOOLS` quando `user_id` ausente (CLI/local).
-- **`vectora/nodes/debug.py` `DiagnosticToolNode`**: subclasse dinâmica que, no
+- **`src/nodes/debug.py` `DiagnosticToolNode`**: subclasse dinâmica que, no
   `ainvoke`, resolve as tools do user (de `config.configurable.user_id` via
   `resolve_tools`) e despacha — incluindo tools MCP (async) e respeitando o
   deny. Substitui os `DiagnosticToolNode(tools=ALL_TOOLS)` estáticos em
@@ -2106,12 +2106,12 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 
 #### Arquivos críticos (S4–S7)
 
-| Sub | Arquivos chat                                                           | Arquivos vectora (Python)                                                                                                                                              |
-| --- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| S4  | —                                                                       | `vectora/services/tool_resolver.py` (novo), `vectora/services/plugins.py` (+`get_user_mcp_tools`, bump de versão)                                                      |
-| S5  | `admin/admin-tab.tsx` (painel de tools por user), Settings (seção self) | `vectora/services/tool_policy.py` (novo), `vectora/api/handlers/admin.py` (+`/admin/users/{id}/tools`), self `GET/PUT /tools/policy`                                   |
-| S6  | —                                                                       | `vectora/agents/{orchestrator,coder,search}.py` (config + cache por user), `vectora/nodes/debug.py` (ToolNode dinâmico), `vectora/graph.py` (usar o ToolNode dinâmico) |
-| S7  | —                                                                       | endpoint `GET /tools/schema` (filtra por user)                                                                                                                         |
+| Sub | Arquivos chat                                                           | Arquivos vectora (Python)                                                                                                                                  |
+| --- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S4  | —                                                                       | `src/services/tool_resolver.py` (novo), `src/services/plugins.py` (+`get_user_mcp_tools`, bump de versão)                                                  |
+| S5  | `admin/admin-tab.tsx` (painel de tools por user), Settings (seção self) | `src/services/tool_policy.py` (novo), `src/api/handlers/admin.py` (+`/admin/users/{id}/tools`), self `GET/PUT /tools/policy`                               |
+| S6  | —                                                                       | `src/agents/{orchestrator,coder,search}.py` (config + cache por user), `src/nodes/debug.py` (ToolNode dinâmico), `src/graph.py` (usar o ToolNode dinâmico) |
+| S7  | —                                                                       | endpoint `GET /tools/schema` (filtra por user)                                                                                                             |
 
 #### Testes (TDD)
 
@@ -2141,7 +2141,7 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 > **plugins MCP** e **conectores** por usuário; falta gerenciar **skills**
 > por usuário com o mesmo princípio de isolamento (S2/S4/S6).
 
-- **S8.1 — Registry de skills por usuário** (`vectora/services/skills.py`,
+- **S8.1 — Registry de skills por usuário** (`src/services/skills.py`,
   novo): modelo `Skill(name, description, source_url, path, installed_at)`;
   persistência em `~/.vectora/skills/<user_id>/index.json` + extração de cada
   skill em `~/.vectora/skills/<user_id>/<name>/`. Validação: existe `SKILL.md`
@@ -2150,7 +2150,7 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 - **S8.2 — Instalação**: aceita git URL (clone shallow) ou tarball/zip (upload).
   Whitelist de fontes opcional (`~/.vectora/skills_allowlist.toml`). Skills só
   rodam quando o usuário registra explicitamente — não há descoberta automática.
-- **S8.3 — Backend endpoints** (`vectora/api/handlers/skills.py`, novo, auth):
+- **S8.3 — Backend endpoints** (`src/api/handlers/skills.py`, novo, auth):
   `GET /skills` (lista do user), `POST /skills` (body: `{source, name?}` —
   instala), `DELETE /skills/{name}`, `POST /skills/{name}/verify` (re-valida).
 - **S8.4 — Integração com o agente** (Bloco U): `services/skills.py` expõe
@@ -2169,7 +2169,7 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 
 ## BLOCO T — Embedded Terminal (PTY persistente + painel split)
 
-> **Contexto.** Hoje a tool `terminal` (`vectora/tools/fs.py`) roda cada comando
+> **Contexto.** Hoje a tool `terminal` (`src/tools/fs.py`) roda cada comando
 > como um `asyncio.create_subprocess_shell` **efêmero**: sem TTY, sem stdin, o
 > processo morre ao retornar (timeout 30s), confinado ao `cwd` do workspace
 > (Bloco Q) e filtrado por `is_safe_shell_command` + HITL. Isso serve para
@@ -2205,7 +2205,7 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 4. **`xterm.js` client-only.** `@xterm/xterm` toca `window`/DOM → `dynamic(import,
 { ssr:false })` no Next 16 / React 19.
 
-5. **Cleanup obrigatório.** `vectora/main.py` chama `os._exit(0)` após o uvicorn —
+5. **Cleanup obrigatório.** `src/main.py` chama `os._exit(0)` após o uvicorn —
    mata PTYs abruptamente. O `_lifespan` (`server.py`) precisa **encerrar os PTYs
    vivos antes** do hard-exit.
 
@@ -2221,23 +2221,23 @@ e proxy Hono `chat/server/routes/auth.ts` (`/envs` GET/POST + `/envs/:key` DELET
 
 ### T1 — PTY manager backend (cross-platform)
 
-- **Novo** `vectora/services/pty_session.py`: classe `PtySession` que abre um
+- **Novo** `src/services/pty_session.py`: classe `PtySession` que abre um
   shell (`pwsh`/`cmd` no Windows; `$SHELL`/`bash` no Unix) num PTY, com API
   `write(data)`, `resize(cols, rows)`, `read()` (async, via thread/executor →
   fila asyncio) e `close()`. Wrapper condicional `pywinpty` vs `ptyprocess`.
-- **Novo** `vectora/services/pty_registry.py`: `dict[terminal_id → PtySession]`,
+- **Novo** `src/services/pty_registry.py`: `dict[terminal_id → PtySession]`,
   com `create(thread_id, workspace_id, shell?)`, `get`, `close`, `close_all`.
   `terminal_id` permite múltiplos terminais por sessão (split).
 - Cleanup em `server.py::_lifespan` → `pty_registry.close_all()` antes do shutdown.
 
 ### T2 — WebSocket endpoint
 
-- **Novo** `vectora/api/handlers/terminal.py`:
+- **Novo** `src/api/handlers/terminal.py`:
   `@router.websocket("/vectora.terminal.v1/ws")` (query: `thread_id`,
   `workspace_id`, `terminal_id?`, `token`). Fluxo: valida auth + `trusted` →
   cria/recupera `PtySession` (cwd do workspace) → bombeia bytes PTY→WS e WS→PTY;
   mensagens de controle JSON para `resize`. Registra em `server.py`.
-- **Novo** `vectora/api/handlers/terminal.py` REST auxiliar (opcional):
+- **Novo** `src/api/handlers/terminal.py` REST auxiliar (opcional):
   `POST …/spawn` e `GET …/list` para metadados dos terminais da sessão.
 - O **agente** injeta comandos no mesmo PTY: a tool `terminal` ganha modo
   "enviar para o PTY da sessão" quando há terminal aberto (senão mantém o modo
@@ -2287,12 +2287,12 @@ ptyprocess = { version = ">=0.7", markers = "sys_platform != 'win32'" }
 
 ### Arquivos críticos (Bloco T)
 
-| Sub | Arquivos chat                                                                                                                                                                          | Arquivos vectora (Python)                                                                                                                                                                                                    |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T1  | —                                                                                                                                                                                      | `vectora/services/pty_session.py` (novo), `vectora/services/pty_registry.py` (novo), `vectora/api/server.py` (cleanup no `_lifespan`)                                                                                        |
-| T2  | —                                                                                                                                                                                      | `vectora/api/handlers/terminal.py` (novo, WS + REST), `vectora/api/server.py` (registrar), `vectora/api/middleware/auth.py` (autorizar upgrade WS), `vectora/tools/fs.py` (`terminal` injeta no PTY da sessão quando aberto) |
-| T3  | `chat/components/terminal/terminal-panel.tsx`, `chat/components/terminal/xterm-view.tsx`, `chat/lib/stores/terminals-store.ts` (novos), `chat/app/session/[threadId]/page.tsx` (split) | —                                                                                                                                                                                                                            |
-| T4  | `chat/lib/i18n/strings.csv.ts` (+`terminal.*`)                                                                                                                                         | —                                                                                                                                                                                                                            |
+| Sub | Arquivos chat                                                                                                                                                                          | Arquivos vectora (Python)                                                                                                                                                                                    |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| T1  | —                                                                                                                                                                                      | `src/services/pty_session.py` (novo), `src/services/pty_registry.py` (novo), `src/api/server.py` (cleanup no `_lifespan`)                                                                                    |
+| T2  | —                                                                                                                                                                                      | `src/api/handlers/terminal.py` (novo, WS + REST), `src/api/server.py` (registrar), `src/api/middleware/auth.py` (autorizar upgrade WS), `src/tools/fs.py` (`terminal` injeta no PTY da sessão quando aberto) |
+| T3  | `chat/components/terminal/terminal-panel.tsx`, `chat/components/terminal/xterm-view.tsx`, `chat/lib/stores/terminals-store.ts` (novos), `chat/app/session/[threadId]/page.tsx` (split) | —                                                                                                                                                                                                            |
+| T4  | `chat/lib/i18n/strings.csv.ts` (+`terminal.*`)                                                                                                                                         | —                                                                                                                                                                                                            |
 
 ### Verificação (Bloco T)
 
@@ -2328,7 +2328,7 @@ ptyprocess = { version = ">=0.7", markers = "sys_platform != 'win32'" }
 >    por `threadId`).
 > 3. **Arquivos e Diff são read-only no MVP** — escrita continua pelo
 >    chat/agente (`file_write`, `file_edit` via HITL do R2).
-> 4. **Plano = artifacts** (`vectora/types/documents.py::ArtifactMetadata`,
+> 4. **Plano = artifacts** (`src/types/documents.py::ArtifactMetadata`,
 >    já persistidos em `~/.vectora/artifacts/<session_id>/<slug>.md`).
 >    Reuso direto — sem novo conceito.
 > 5. **Workspace cardinal**: as três novas abas operam **sempre no workspace
@@ -2353,12 +2353,12 @@ ptyprocess = { version = ">=0.7", markers = "sys_platform != 'win32'" }
 
 ### T6 — Aba **Arquivos** (file tree do workspace ativo)
 
-- **Backend** `vectora/api/handlers/workspaces.py` — novo endpoint
+- **Backend** `src/api/handlers/workspaces.py` — novo endpoint
   `GET /workspaces/{id}/tree?path=&depth=1` reusando os guard rails de
-  `vectora/services/security.py::resolve_within_workspace` (Q4). Retorna
+  `src/services/security.py::resolve_within_workspace` (Q4). Retorna
   entradas `{name, path, kind: "dir"|"file", size?, is_git_ignored?}`.
   Sem listar `.git/`, `node_modules/`, `.venv/` por default — reusa
-  `vectora/services/ignore_validator.py`.
+  `src/services/ignore_validator.py`.
 - **Visualização de arquivo**: `GET /workspaces/{id}/file?path=` (texto
   truncado a N kB, binários retornam `kind: "binary"` para mostrar
   metadata só).
@@ -2371,9 +2371,9 @@ ptyprocess = { version = ">=0.7", markers = "sys_platform != 'win32'" }
 
 ### T7 — Aba **Diff** (diff do workspace, modelo Claude Code)
 
-- **Backend** `vectora/api/handlers/workspaces.py` —
+- **Backend** `src/api/handlers/workspaces.py` —
   `GET /workspaces/{id}/git/diff?ref=` (default `HEAD` se for repo git).
-  Reusa `vectora/tools/git.py` (`git diff`); retorna lista de
+  Reusa `src/tools/git.py` (`git diff`); retorna lista de
   `{path, status: "M"|"A"|"D"|"R", additions, deletions, hunks: [...]}`.
 - **Frontend** `chat/components/workbench/tabs/diff-tab.tsx`:
   cabeçalho com contagem (`+N -M` igual à print 4 — `+132.291 -3.409`),
@@ -2384,10 +2384,10 @@ ptyprocess = { version = ">=0.7", markers = "sys_platform != 'win32'" }
 
 ### T8 — Aba **Plano** (artifacts do `session_id`)
 
-- **Backend** `vectora/api/handlers/artifacts.py` (novo, auth):
+- **Backend** `src/api/handlers/artifacts.py` (novo, auth):
   `GET /artifacts/?session_id=` lê `~/.vectora/artifacts/<session_id>/*.md`,
   retorna `ArtifactMetadata[]` (reuso direto do modelo Pydantic
-  `vectora/types/documents.py:26`). `GET /artifacts/{slug}?session_id=`
+  `src/types/documents.py:26`). `GET /artifacts/{slug}?session_id=`
   devolve o markdown bruto.
 - **Frontend** `chat/components/workbench/tabs/plan-tab.tsx`: lista de
   cards (título, tipo, timestamp), click renderiza markdown completo num
@@ -2430,15 +2430,15 @@ ptyprocess = { version = ">=0.7", markers = "sys_platform != 'win32'" }
 
 ### Arquivos críticos (Bloco T cont.)
 
-| Sub | Arquivos chat                                                                                                                                                                                                                                                                         | Arquivos vectora (Python)                                                                    |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| T5  | `chat/lib/stores/workbench-store.ts` (rename + extend de `terminals-store.ts`), `chat/components/workbench/workbench-panel.tsx` (novo), `chat/components/layout/header.tsx` (botão PanelRight), `chat/app/session/[threadId]/page.tsx` (remove botão flutuante, monta WorkbenchPanel) | —                                                                                            |
-| T6  | `chat/components/workbench/tabs/files-tab.tsx` (novo), `chat/server/routes/workspaces.ts` (proxy `/tree`, `/file`)                                                                                                                                                                    | `vectora/api/handlers/workspaces.py` (+ `/tree`, `/file`), reusa `services/security.py` (Q4) |
-| T7  | `chat/components/workbench/tabs/diff-tab.tsx` (novo), `chat/server/routes/workspaces.ts` (proxy `/git/diff`)                                                                                                                                                                          | `vectora/api/handlers/workspaces.py` (+ `/git/diff`), reusa `tools/git.py`                   |
-| T8  | `chat/components/workbench/tabs/plan-tab.tsx` (novo), `chat/server/routes/artifacts.ts` (novo)                                                                                                                                                                                        | `vectora/api/handlers/artifacts.py` (novo), reusa `types/documents.py::ArtifactMetadata`     |
-| T9  | `chat/components/chat/features/plus-menu.tsx` (já existe — só ajustar deep-links)                                                                                                                                                                                                     | —                                                                                            |
-| T10 | `chat/components/workbench/*.tsx` (chips, pin, atalhos), `chat/lib/i18n/strings.csv.ts` (+`workbench.*`)                                                                                                                                                                              | —                                                                                            |
-| T11 | `chat/lib/stores/workbench-store.ts` (extend + persist), `chat/components/workbench/tabs/{files,diff,plan}-tab.tsx` (consomem o store), `chat/lib/hooks/chat/use-stream-handler.ts` (invalidate em ToolCallEvent)                                                                     | —                                                                                            |
+| Sub | Arquivos chat                                                                                                                                                                                                                                                                         | Arquivos vectora (Python)                                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| T5  | `chat/lib/stores/workbench-store.ts` (rename + extend de `terminals-store.ts`), `chat/components/workbench/workbench-panel.tsx` (novo), `chat/components/layout/header.tsx` (botão PanelRight), `chat/app/session/[threadId]/page.tsx` (remove botão flutuante, monta WorkbenchPanel) | —                                                                                        |
+| T6  | `chat/components/workbench/tabs/files-tab.tsx` (novo), `chat/server/routes/workspaces.ts` (proxy `/tree`, `/file`)                                                                                                                                                                    | `src/api/handlers/workspaces.py` (+ `/tree`, `/file`), reusa `services/security.py` (Q4) |
+| T7  | `chat/components/workbench/tabs/diff-tab.tsx` (novo), `chat/server/routes/workspaces.ts` (proxy `/git/diff`)                                                                                                                                                                          | `src/api/handlers/workspaces.py` (+ `/git/diff`), reusa `tools/git.py`                   |
+| T8  | `chat/components/workbench/tabs/plan-tab.tsx` (novo), `chat/server/routes/artifacts.ts` (novo)                                                                                                                                                                                        | `src/api/handlers/artifacts.py` (novo), reusa `types/documents.py::ArtifactMetadata`     |
+| T9  | `chat/components/chat/features/plus-menu.tsx` (já existe — só ajustar deep-links)                                                                                                                                                                                                     | —                                                                                        |
+| T10 | `chat/components/workbench/*.tsx` (chips, pin, atalhos), `chat/lib/i18n/strings.csv.ts` (+`workbench.*`)                                                                                                                                                                              | —                                                                                        |
+| T11 | `chat/lib/stores/workbench-store.ts` (extend + persist), `chat/components/workbench/tabs/{files,diff,plan}-tab.tsx` (consomem o store), `chat/lib/hooks/chat/use-stream-handler.ts` (invalidate em ToolCallEvent)                                                                     | —                                                                                        |
 
 ### T11 — Persistência e cache do Workbench (Zustand persist + SWR)
 
@@ -2692,7 +2692,7 @@ escreve no store". Cada `FilesTab`, `DiffTab`, `PlanTab` deixa de chamar
 
 ### T.12.1 — Launcher como único ponto de entrada (Nuitka)
 
-- Substitui `vectora/main.py` por `vectora/launcher.py`, compilado via
+- Substitui `src/main.py` por `src/launcher.py`, compilado via
   Nuitka como o **único binário** entregue ao cliente.
 - Responsabilidades do Launcher:
   - Ler `vectora.toml` (path: `~/.vectora/vectora.toml`, override
@@ -2710,7 +2710,7 @@ escreve no store". Cada `FilesTab`, `DiffTab`, `PlanTab` deixa de chamar
 - O build de produção do Next.js (`chat/out/` via `next build` +
   `next export` ou _standalone output_) entra no binário Nuitka como
   _data file_ (`--include-data-dir=chat/out=chat_static`).
-- O servidor FastAPI (`vectora/api/server.py`, modo `chat`) já tem o
+- O servidor FastAPI (`src/api/server.py`, modo `chat`) já tem o
   parâmetro `serve_static=True` — segue servindo `/` direto do
   filesystem embutido. Sem `npm install` na máquina do cliente.
 - Para modo desktop (Electron, T.12.5), o shell carrega via
@@ -2807,15 +2807,15 @@ ubuntu]`).
 
 ### Arquivos críticos (T.12)
 
-| Sub    | Arquivos                                                                                                                                 |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| T.12.1 | `vectora/launcher.py` (novo, substitui `main.py` no entry-point), `pyproject.toml` (`[project.scripts] vectora = vectora.launcher:main`) |
-| T.12.2 | `vectora/api/server.py` (`serve_static` já existe; ajustar path para `_MEIPASS`/Nuitka data dir), `build/nuitka.toml` (novo)             |
-| T.12.3 | `.github/workflows/runner.yml` (remover publish-pypi/publish-npm; adicionar release-binary)                                              |
-| T.12.4 | `build/nuitka.toml`, `Dockerfile.build` (cross-compile via container)                                                                    |
-| T.12.5 | `desktop/main.ts`, `desktop/preload.ts`, `desktop/package.json` (novos)                                                                  |
-| T.12.6 | `desktop/electron-builder.yml`, secrets de signing no GHA                                                                                |
-| T.12.7 | `vectora/services/license.py` (novo); `vectora/launcher.py` (gate de boot)                                                               |
+| Sub    | Arquivos                                                                                                                             |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| T.12.1 | `src/launcher.py` (novo, substitui `main.py` no entry-point), `pyproject.toml` (`[project.scripts] vectora = vectora.launcher:main`) |
+| T.12.2 | `src/api/server.py` (`serve_static` já existe; ajustar path para `_MEIPASS`/Nuitka data dir), `build/nuitka.toml` (novo)             |
+| T.12.3 | `.github/workflows/runner.yml` (remover publish-pypi/publish-npm; adicionar release-binary)                                          |
+| T.12.4 | `build/nuitka.toml`, `Dockerfile.build` (cross-compile via container)                                                                |
+| T.12.5 | `desktop/main.ts`, `desktop/preload.ts`, `desktop/package.json` (novos)                                                              |
+| T.12.6 | `desktop/electron-builder.yml`, secrets de signing no GHA                                                                            |
+| T.12.7 | `src/services/license.py` (novo); `src/launcher.py` (gate de boot)                                                                   |
 
 ### Verificação (T.12)
 
@@ -2940,7 +2940,7 @@ ubuntu]`).
 
 - **Override por env**: `VECTORA_MODE`, `VECTORA_DATABASE_URL`,
   `VECTORA_QDRANT_URL`, `VECTORA_REDIS_URL`.
-- **Camada de abstração** (`vectora/services/storage/`, nova): `Protocol`s para
+- **Camada de abstração** (`src/services/storage/`, nova): `Protocol`s para
   `Checkpointer`, `AuthDB`, `MemoryDB`, `SessionDB`, `VectorStore`, `KVCache`.
   Cada um tem impl Lite e Completo. Factories em `storage/__init__.py`
   selecionam por config. **Esta camada é introduzida nos Blocos V e W**;
@@ -2957,7 +2957,7 @@ ubuntu]`).
 ## BLOCO U — Deep Agents (refactor do harness)
 
 > **Contexto.** Hoje o Vectora tem um harness **custom** sobre LangGraph:
-> `vectora/graph.py` compõe orchestrator (router via `structured_output`
+> `src/graph.py` compõe orchestrator (router via `structured_output`
 > `OrchestratorDecision`) + 2 subagents (coder, search) + nó `hitl_check` +
 > pipeline RAG achatado + `parallel_dispatch` (C5). Cada agent cacheia o LLM
 > bindado por user (S6) via `services/llm_tools.py`. Os tool nodes
@@ -2977,7 +2977,7 @@ ubuntu]`).
 ### Decisões fixadas pela investigação
 
 - **Nada quebra no front:** os eventos SSE (`ThinkingEvent`, `TokenEvent`,
-  `ToolCallEvent`, `HITLEvent`, `NodeEvent`, etc., em `vectora/api/schemas.py`)
+  `ToolCallEvent`, `HITLEvent`, `NodeEvent`, etc., em `src/api/schemas.py`)
   permanecem; o `adapters.py` (LangGraph events → SSE) é adaptado para
   reconhecer os nomes de nó do DeepAgent (mapeamento em `api/node_labels.py`).
 - **Reuso obrigatório**: `services/tool_resolver.py` (S4),
@@ -2985,14 +2985,14 @@ ubuntu]`).
   `services/plugins.py::get_user_mcp_tools` (S2), `services/secrets/*`,
   `services/usage.py`, `services/tracer.py`, `services/checkpoint.py`,
   `services/memory.py`, `services/workspace.py`, `services/security.py`.
-- **`OrchestratorDecision` schema** (`vectora/types/agents.py`): pode ser
+- **`OrchestratorDecision` schema** (`src/types/agents.py`): pode ser
   preservado como structured-output do main agent OU descontinuado em favor da
   delegação nativa do DeepAgent (`task` tool). Optamos por **descontinuar**
   no Bloco U — o DeepAgent já implementa `respond`/`delegate`/`parallel` no
   formato nativo dele; `ThinkingEvent` é alimentado pelos campos equivalentes
   do harness. Schemas `CoderResult`/`SearchResult` continuam para o
   pós-processamento dos `*_finalize` (que viram middleware do DeepAgent).
-- **HITL** (`vectora/nodes/hitl.py`): substituído pelo `interrupt_on` nativo
+- **HITL** (`src/nodes/hitl.py`): substituído pelo `interrupt_on` nativo
   do DeepAgent, parametrizado por `permission_mode` (R2). Os 5 modos do R2
   mapeiam para combinações de `interrupt_on`/`auto_approve` por nome de tool.
 - **RAG** (`nodes/rag_subgraph.py`): mantido como **subagent** do DeepAgent
@@ -3004,7 +3004,7 @@ ubuntu]`).
 
 ### U1 — `agent_factory` por usuário (núcleo)
 
-- **Novo** `vectora/services/agent_factory.py`:
+- **Novo** `src/services/agent_factory.py`:
   `async def get_user_agent(user_id) -> DeepAgent` com cache por
   `(user_id, llm_version, plugins_version, policy_version)` (mesma chave do
   S6). Internamente:
@@ -3038,10 +3038,10 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
 
 ### U3 — Adapters SSE & node labels
 
-- `vectora/api/adapters.py` mapeia eventos LangGraph do DeepAgent para SSE.
+- `src/api/adapters.py` mapeia eventos LangGraph do DeepAgent para SSE.
   O DeepAgent emite eventos com nomes diferentes (`main_agent`,
   `subagent:coder`, `subagent:search`, etc.) — adicionar entradas em
-  `vectora/api/node_labels.py` para preservar `node_label` legível no
+  `src/api/node_labels.py` para preservar `node_label` legível no
   `NodeEvent`. **B14 (Zustand stale-while-revalidate) não muda.**
 - `ThinkingEvent` (D1) — extrai do raciocínio do main agent (DeepAgent
   expõe via callback/middleware); preserva os campos `reason`, `action`,
@@ -3062,12 +3062,12 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
 
 ### U5 — Sumiço de código (delete after migration)
 
-- `vectora/graph.py` (substituído por `agent_factory.get_user_agent()`);
-- `vectora/agents/{orchestrator,coder,search}.py` — caches LLM e nodes
+- `src/graph.py` (substituído por `agent_factory.get_user_agent()`);
+- `src/agents/{orchestrator,coder,search}.py` — caches LLM e nodes
   vão embora; system prompts viram constantes consumidas pelo factory;
-- `vectora/nodes/hitl.py` — `hitl_check` removido (a constante
+- `src/nodes/hitl.py` — `hitl_check` removido (a constante
   `REQUIRE_APPROVAL` migra para `agent_factory` como mapping do `interrupt_on`);
-- `vectora/nodes/debug.py::DiagnosticToolNode` — o DeepAgent já tem
+- `src/nodes/debug.py::DiagnosticToolNode` — o DeepAgent já tem
   observabilidade; preservamos o tracing via middleware (logging + tracer).
 
 ### U6 — Testes (regressão obrigatória)
@@ -3085,8 +3085,8 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
 ### U7 — Migração do CLI interativo (`vectora chat`) de `rich` → `textual`
 
 > **Contexto.** O `vectora chat` (CLI interativo no terminal) hoje é uma
-> orquestração de **~3 000 linhas** entre `vectora/ui/chat.py` (1 126 l),
-> `vectora/ui/main.py` (658 l) e `vectora/ui/setup_wizard.py` (410 l)
+> orquestração de **~3 000 linhas** entre `src/ui/chat.py` (1 126 l),
+> `src/ui/main.py` (658 l) e `src/ui/setup_wizard.py` (410 l)
 > usando `rich` (Console/Panel/Live/Markdown/Layout) + `prompt_toolkit`
 > para o input. O DeepAgent traz nativamente um TUI baseado em `textual`
 > (`dcode`); aproveitando o redesign do harness em U1–U6, migramos o
@@ -3103,20 +3103,20 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
    com a mesma UX que o usuário já tem hoje, mas em `textual`.
 3. **Render schema-driven.** Os mesmos `render_hint`s do chat web
    (`diff`, `code_block`, `table`, `terminal_block`, `artifact_card`)
-   ganham widgets `textual` correspondentes em `vectora/ui/textual/widgets/`.
+   ganham widgets `textual` correspondentes em `src/ui/textual/widgets/`.
 
 #### Trabalho
 
-- **`vectora/ui/textual/app.py`** (novo): `VectoraChatApp(App)` com layout
+- **`src/ui/textual/app.py`** (novo): `VectoraChatApp(App)` com layout
   split (mensagens à esquerda, painel lateral à direita igual ao
   Workbench do web — Terminal · Files · Diff · Plan), screens para
   configurações/RAG/workspaces, key bindings espelhando os atalhos web
   (⌃` terminal, ⌃⇧F arquivos, etc.).
-- **`vectora/ui/textual/streaming.py`**: handler de `astream_events`
+- **`src/ui/textual/streaming.py`**: handler de `astream_events`
   v2 que escreve nos widgets via `call_from_thread` (mesmo padrão do
   `dcode`); compartilha o adapter SSE→evento já existente
-  (`vectora/api/adapters.py`) — não duplica lógica.
-- **`vectora/ui/textual/widgets/`**: um widget por `render_hint`
+  (`src/api/adapters.py`) — não duplica lógica.
+- **`src/ui/textual/widgets/`**: um widget por `render_hint`
   (DiffWidget, CodeBlockWidget, TableWidget, TerminalBlockWidget,
   ArtifactCardWidget, ThinkingWidget) — reuso direto dos tipos em
   `chat/lib/types/render.ts` (espelhamento).
@@ -3125,12 +3125,12 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
   H ganham `Suggester` nativo do textual.
 - **HITL**: modal `ModalScreen` para aprovar/editar/rejeitar tool calls
   (mesmo schema do `HITLEvent`).
-- **Comandos in-chat** (`vectora/ui/commands/{debug,help,model,rag,
+- **Comandos in-chat** (`src/ui/commands/{debug,help,model,rag,
 session,traces,workspaces}.py`) são portados para "actions" do app
   textual; output flui pelos widgets em vez de `Console.print`.
-- **Setup wizard** (`vectora/ui/setup_wizard.py`) vira `Screen` do app
+- **Setup wizard** (`src/ui/setup_wizard.py`) vira `Screen` do app
   ao detectar `~/.vectora/config.toml` ausente.
-- **`vectora/main.py`**: subcomando `chat` instancia `VectoraChatApp`
+- **`src/main.py`**: subcomando `chat` instancia `VectoraChatApp`
   em vez do loop atual. `--legacy` mantém o caminho `rich` por 1
   versão (rollback rápido se algum usuário quebrar).
 
@@ -3138,7 +3138,7 @@ session,traces,workspaces}.py`) são portados para "actions" do app
 
 - Reescrever os comandos one-shot (`traces`, `sessions`, `config`).
 - Substituir `prompt_toolkit` em scripts auxiliares fora de
-  `vectora/ui/` (CLI de auth continua simples).
+  `src/ui/` (CLI de auth continua simples).
 
 ### Dependências
 
@@ -3149,15 +3149,15 @@ textual    = ">=0.83"      # NOVO — TUI do vectora chat (U7)
 
 ### Arquivos críticos (Bloco U)
 
-| Sub | Arquivos vectora (Python)                                                                                                                                                                                                                                                                          |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| U1  | `vectora/services/agent_factory.py` (novo), `vectora/api/handlers/chat.py` (chama o factory em vez de `_get_graph`)                                                                                                                                                                                |
-| U2  | `vectora/agents/coder.py`, `agents/search.py`, `agents/_identity.py` (prompts viram constantes), `nodes/rag_subgraph.py` (vira subagent)                                                                                                                                                           |
-| U3  | `vectora/api/adapters.py`, `vectora/api/node_labels.py`                                                                                                                                                                                                                                            |
-| U4  | `vectora/services/agent_factory.py` (mapping permission_mode → interrupt_on), remoção de `nodes/hitl.py`                                                                                                                                                                                           |
-| U5  | deletar `vectora/graph.py`, `vectora/nodes/hitl.py`, partes de `agents/{orchestrator,coder,search}.py`                                                                                                                                                                                             |
-| U6  | `tests/unit/test_agent_factory.py` (novo); migrar `test_nodes_hitl.py`; manter `test_api_chat_config.py`                                                                                                                                                                                           |
-| U7  | `vectora/ui/textual/app.py` (novo), `vectora/ui/textual/streaming.py` (novo), `vectora/ui/textual/widgets/*.py` (novos), `vectora/ui/commands/*.py` (portar para actions), `vectora/ui/setup_wizard.py` (vira Screen), `vectora/main.py` (subcomando `chat` instancia App; `--legacy` mantém rich) |
+| Sub | Arquivos vectora (Python)                                                                                                                                                                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U1  | `src/services/agent_factory.py` (novo), `src/api/handlers/chat.py` (chama o factory em vez de `_get_graph`)                                                                                                                                                                |
+| U2  | `src/agents/coder.py`, `agents/search.py`, `agents/_identity.py` (prompts viram constantes), `nodes/rag_subgraph.py` (vira subagent)                                                                                                                                       |
+| U3  | `src/api/adapters.py`, `src/api/node_labels.py`                                                                                                                                                                                                                            |
+| U4  | `src/services/agent_factory.py` (mapping permission_mode → interrupt_on), remoção de `nodes/hitl.py`                                                                                                                                                                       |
+| U5  | deletar `src/graph.py`, `src/nodes/hitl.py`, partes de `agents/{orchestrator,coder,search}.py`                                                                                                                                                                             |
+| U6  | `tests/unit/test_agent_factory.py` (novo); migrar `test_nodes_hitl.py`; manter `test_api_chat_config.py`                                                                                                                                                                   |
+| U7  | `src/ui/textual/app.py` (novo), `src/ui/textual/streaming.py` (novo), `src/ui/textual/widgets/*.py` (novos), `src/ui/commands/*.py` (portar para actions), `src/ui/setup_wizard.py` (vira Screen), `src/main.py` (subcomando `chat` instancia App; `--legacy` mantém rich) |
 
 ### Verificação E2E
 
@@ -3514,23 +3514,23 @@ mais recentes:
 
 ### Arquivos críticos (Bloco V)
 
-| Sub | Arquivos                                                                                                                                                                                                                                                                                                                                                                                   |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| V1  | `storage/sqlite/pool.py` (novo, pool aiosqlite + PRAGMAs globais), `storage/lancedb/{connection,index,optimize}.py` (novos), `docs/storage-lite.md`                                                                                                                                                                                                                                        |
-| V2  | `storage/migrations/{0001_*,0002_*,…}.sql` (novos), `storage/migrations/runner.py` (novo), `vectora/main.py` (`vectora storage migrate`)                                                                                                                                                                                                                                                   |
-| V3  | `storage/{protocols,factory}.py` (novos); `storage/{sqlite,lancedb}/*` (wraps finos sobre o atual)                                                                                                                                                                                                                                                                                         |
-| V4  | `storage/{sqlite,postgres}/checkpoint.py` (delegam para `langgraph.checkpoint.{sqlite,postgres}`); `services/checkpoint.py` (wrapper de factory)                                                                                                                                                                                                                                           |
-| V5  | `storage/{sqlite,postgres}/store.py` (delegam para `langgraph.store.{sqlite,postgres}`); `services/memory.py` (refactor: API `BaseStore`); `api/handlers/memory.py` (idem); migration script `memory-to-langgraph`                                                                                                                                                                         |
-| V6  | `storage/lancedb/vector_store.py` (wrap `langchain_community.vectorstores.LanceDB`); `storage/qdrant/vector_store.py` (wrap `QdrantVectorStore` + `FastEmbedSparse` hybrid); `storage/postgres/vector_pgvector.py` (`langchain_postgres.PGVector`); refactor de `tools/rag.py`, `nodes/rag_subgraph.py`, `services/background.py`, `mcp/server.py` para consumir o Protocol                |
-| V7  | `storage/postgres/{auth,session,secrets,audit,invites}.py` (novos); `services/{auth,session,secrets/internal}.py` (refactor p/ Protocol)                                                                                                                                                                                                                                                   |
-| V8  | `storage/postgres/queue.py` (`SELECT … FOR UPDATE SKIP LOCKED`); `services/{queue,background}.py` (refactor)                                                                                                                                                                                                                                                                               |
-| V9  | `storage/recipes/{supabase,neon,qdrant_cloud}.py` (novos); `tests/unit/test_storage_recipes.py`                                                                                                                                                                                                                                                                                            |
-| V10 | `chat/components/layout/settings-dialog/admin/storage-panel.tsx` (novo); `vectora/api/handlers/admin.py` (+`GET/PATCH/POST /admin/storage`); i18n `storage.*`                                                                                                                                                                                                                              |
-| V11 | `vectora/main.py` (subcomando `storage` com info/test/wizard/migrate/backup); reuso do TUI textual (U7) no `storage wizard`                                                                                                                                                                                                                                                                |
-| V12 | `vectora/services/migrate.py` (novo, helpers de bulk insert)                                                                                                                                                                                                                                                                                                                               |
-| V13 | `deploy/compose.{lite,complete}.yml`, `deploy/postgres/init.sql`, `deploy/README.md`                                                                                                                                                                                                                                                                                                       |
-| V14 | `tests/unit/test_storage_{pool,lancedb,migrations,recipes}.py`; parametrização de `test_services_{auth,memory,session,queue}.py`                                                                                                                                                                                                                                                           |
-| V15 | `vectora/services/utils.py` (`load_llm` consolidado); `vectora/tools/memory.py` (remover `cohere.AsyncClient` direto); `pyproject.toml` (+`langchain-google-genai`, +`langchain-openai`, +`langchain-anthropic`, +`langchain-cohere`, +`langchain-community`, +`langchain-postgres`, +`langchain-qdrant`, +`langgraph-checkpoint-{sqlite,postgres}`, +`langgraph-store-{sqlite,postgres}`) |
+| Sub | Arquivos                                                                                                                                                                                                                                                                                                                                                                           |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V1  | `storage/sqlite/pool.py` (novo, pool aiosqlite + PRAGMAs globais), `storage/lancedb/{connection,index,optimize}.py` (novos), `docs/storage-lite.md`                                                                                                                                                                                                                                |
+| V2  | `storage/migrations/{0001_*,0002_*,…}.sql` (novos), `storage/migrations/runner.py` (novo), `src/main.py` (`vectora storage migrate`)                                                                                                                                                                                                                                               |
+| V3  | `storage/{protocols,factory}.py` (novos); `storage/{sqlite,lancedb}/*` (wraps finos sobre o atual)                                                                                                                                                                                                                                                                                 |
+| V4  | `storage/{sqlite,postgres}/checkpoint.py` (delegam para `langgraph.checkpoint.{sqlite,postgres}`); `services/checkpoint.py` (wrapper de factory)                                                                                                                                                                                                                                   |
+| V5  | `storage/{sqlite,postgres}/store.py` (delegam para `langgraph.store.{sqlite,postgres}`); `services/memory.py` (refactor: API `BaseStore`); `api/handlers/memory.py` (idem); migration script `memory-to-langgraph`                                                                                                                                                                 |
+| V6  | `storage/lancedb/vector_store.py` (wrap `langchain_community.vectorstores.LanceDB`); `storage/qdrant/vector_store.py` (wrap `QdrantVectorStore` + `FastEmbedSparse` hybrid); `storage/postgres/vector_pgvector.py` (`langchain_postgres.PGVector`); refactor de `tools/rag.py`, `nodes/rag_subgraph.py`, `services/background.py`, `mcp/server.py` para consumir o Protocol        |
+| V7  | `storage/postgres/{auth,session,secrets,audit,invites}.py` (novos); `services/{auth,session,secrets/internal}.py` (refactor p/ Protocol)                                                                                                                                                                                                                                           |
+| V8  | `storage/postgres/queue.py` (`SELECT … FOR UPDATE SKIP LOCKED`); `services/{queue,background}.py` (refactor)                                                                                                                                                                                                                                                                       |
+| V9  | `storage/recipes/{supabase,neon,qdrant_cloud}.py` (novos); `tests/unit/test_storage_recipes.py`                                                                                                                                                                                                                                                                                    |
+| V10 | `chat/components/layout/settings-dialog/admin/storage-panel.tsx` (novo); `src/api/handlers/admin.py` (+`GET/PATCH/POST /admin/storage`); i18n `storage.*`                                                                                                                                                                                                                          |
+| V11 | `src/main.py` (subcomando `storage` com info/test/wizard/migrate/backup); reuso do TUI textual (U7) no `storage wizard`                                                                                                                                                                                                                                                            |
+| V12 | `src/services/migrate.py` (novo, helpers de bulk insert)                                                                                                                                                                                                                                                                                                                           |
+| V13 | `deploy/compose.{lite,complete}.yml`, `deploy/postgres/init.sql`, `deploy/README.md`                                                                                                                                                                                                                                                                                               |
+| V14 | `tests/unit/test_storage_{pool,lancedb,migrations,recipes}.py`; parametrização de `test_services_{auth,memory,session,queue}.py`                                                                                                                                                                                                                                                   |
+| V15 | `src/services/utils.py` (`load_llm` consolidado); `src/tools/memory.py` (remover `cohere.AsyncClient` direto); `pyproject.toml` (+`langchain-google-genai`, +`langchain-openai`, +`langchain-anthropic`, +`langchain-cohere`, +`langchain-community`, +`langchain-postgres`, +`langchain-qdrant`, +`langgraph-checkpoint-{sqlite,postgres}`, +`langgraph-store-{sqlite,postgres}`) |
 
 ### Verificação (Bloco V)
 
@@ -3585,7 +3585,7 @@ mais recentes:
 
 ### W1 — Cache abstrato
 
-- **Novo** `vectora/services/cache.py`: Protocol `KVCache` (`get`, `set`,
+- **Novo** `src/services/cache.py`: Protocol `KVCache` (`get`, `set`,
   `incr`, `delete`, `hset`/`hget`, `zadd`/`zrangebyscore`/`zremrangebyscore`).
 - Impl `memory` (dict atual, default) e `redis` (`redis-py>=5.0` asyncio).
 
@@ -3656,7 +3656,7 @@ true`); compartilha o `Embeddings` do Cohere (V11) para gerar o
 
 | Sub | Arquivos                                                                                                                                               |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| W1  | `vectora/services/cache.py` (novo, Protocol + impls memory/redis)                                                                                      |
+| W1  | `src/services/cache.py` (novo, Protocol + impls memory/redis)                                                                                          |
 | W2  | `services/llm_tools.py` (refactor: caching local + invalidação Redis)                                                                                  |
 | W3  | `services/plugins.py` (versions em Redis)                                                                                                              |
 | W4  | `services/usage.py` (sorted set Redis)                                                                                                                 |
@@ -3694,13 +3694,13 @@ true`); compartilha o `Embeddings` do Cohere (V11) para gerar o
   em tokens.
 - **X4 — Compressão de contexto**: middleware default do DeepAgent
   (summarization). Ligar com janela configurável.
-- **X5 — Profiles** (`vectora/services/profiles.py`, novo): perfil por
+- **X5 — Profiles** (`src/services/profiles.py`, novo): perfil por
   provider/modelo (defaults para Anthropic, OpenAI, Google) consumido pelo
   `agent_factory`.
 
 ### X6 — Web tools completas via `langchain-tavily` (`tavily_*` → `web_*`)
 
-> **Diagnóstico.** Hoje `vectora/tools/web.py` expõe só 2 tools
+> **Diagnóstico.** Hoje `src/tools/web.py` expõe só 2 tools
 > (`web_search`, `fetch_url`) sobre `TavilySearch`+`TavilyExtract`. A
 > integração `langchain-tavily` traz **6 classes** que o agente não
 > consegue usar inteiras: além de search/extract, **crawl** (varredura
@@ -3741,14 +3741,14 @@ true`); compartilha o `Embeddings` do Cohere (V11) para gerar o
 
 ### Arquivos críticos (X)
 
-| Sub | Arquivos                                                                                                                                                                                     |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| X1  | `services/skills.py` (S8) + `services/agent_factory.py`                                                                                                                                      |
-| X2  | `services/memory.py` (gera AGENTS.md a partir das memórias do user)                                                                                                                          |
-| X3  | `services/agent_factory.py` (config Anthropic cache)                                                                                                                                         |
-| X4  | `services/agent_factory.py` (compressão como middleware)                                                                                                                                     |
-| X5  | `services/profiles.py` (novo)                                                                                                                                                                |
-| X6  | `vectora/tools/web.py` (+`web_crawl`, +`web_map`; rename `fetch_url`→`web_fetch`), `vectora/agents/search.py` (registra as 4 tools no toolset), `pyproject.toml` (já tem `langchain-tavily`) |
+| Sub | Arquivos                                                                                                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| X1  | `services/skills.py` (S8) + `services/agent_factory.py`                                                                                                                              |
+| X2  | `services/memory.py` (gera AGENTS.md a partir das memórias do user)                                                                                                                  |
+| X3  | `services/agent_factory.py` (config Anthropic cache)                                                                                                                                 |
+| X4  | `services/agent_factory.py` (compressão como middleware)                                                                                                                             |
+| X5  | `services/profiles.py` (novo)                                                                                                                                                        |
+| X6  | `src/tools/web.py` (+`web_crawl`, +`web_map`; rename `fetch_url`→`web_fetch`), `src/agents/search.py` (registra as 4 tools no toolset), `pyproject.toml` (já tem `langchain-tavily`) |
 
 ### Verificação
 
@@ -3859,7 +3859,7 @@ resolve_within_workspace` (Q4) — os guards apontam para o path da
 | Y3  | `services/agent_factory.py` (subagents async, substituir parallel_dispatch)                                                                                                                                                |
 | Y4  | `services/acp/server.py` + `services/acp/adapter.py` (novos); `api/handlers/acp.py` (mount em `/acp/v1`); `pyproject.toml` (+`deepagents-acp`)                                                                             |
 | Y5  | `storage/protocols.py` (+`RemoteFileSystem`); `storage/backends/{s3,gcs,azure}.py` (novos)                                                                                                                                 |
-| Y6  | `vectora/main.py` (subcomando `chat --dcode`); `pyproject.toml` (+`deepagents-code`)                                                                                                                                       |
+| Y6  | `src/main.py` (subcomando `chat --dcode`); `pyproject.toml` (+`deepagents-code`)                                                                                                                                           |
 
 ---
 
@@ -3883,11 +3883,11 @@ resolve_within_workspace` (Q4) — os guards apontam para o path da
 
 ### Z1 — OAuth2 client credentials
 
-- **Novo** `vectora/services/oauth_clients.py`: modelo `OAuthClient`
+- **Novo** `src/services/oauth_clients.py`: modelo `OAuthClient`
   (`client_id`, `client_secret_hash`, `name`, `owner_user_id`, `scopes`,
   `created_at`, `revoked_at`). Persistido pela camada storage (V) — tabela
   `vectora_oauth_clients` ou JSON no lite.
-- **Endpoints** (`vectora/api/handlers/oauth_clients.py`, novo):
+- **Endpoints** (`src/api/handlers/oauth_clients.py`, novo):
   - `POST /v1/oauth/clients` (auth cookie/JWT — só o dono cria) → retorna
     `{client_id, client_secret}` **uma única vez**.
   - `GET /v1/oauth/clients` — lista os clients do user atual.
@@ -3903,7 +3903,7 @@ scope}`. Claim `sub = owner_user_id`, `client_id`, `scopes`.
 
 ### Z2 — Middleware de auth REST
 
-- **Novo** `vectora/api/middleware/oauth_bearer.py`: valida `Authorization:
+- **Novo** `src/api/middleware/oauth_bearer.py`: valida `Authorization:
 Bearer <jwt>` para qualquer rota `/v1/*`. Resolve `user_id` do JWT do Z1
   e injeta em `request.state.user` (mesmo `User` do Bloco C — todo o stack
   downstream — tool_policy, plugins, workspaces, secrets — funciona sem
@@ -3946,9 +3946,9 @@ path?, url?, collection="articles", metadata}`);
 
 ### Z4 — Compatibilidade OpenAI
 
-- **Novo** `vectora/api/handlers/openai_compat.py`:
+- **Novo** `src/api/handlers/openai_compat.py`:
   - `GET /v1/models` — devolve `{data:[{id, object:"model", ...}], object:"list"}`
-    a partir de `vectora/config/settings.py::AVAILABLE_MODELS`.
+    a partir de `src/config/settings.py::AVAILABLE_MODELS`.
   - `POST /v1/chat/completions` — aceita o shape OpenAI:
     `{model, messages:[{role,content}], stream, temperature?, max_tokens?,
 response_format?}`. Tradutor (`_translate_openai_to_streamchat()`)
@@ -4011,7 +4011,7 @@ usage, model, ...}` no shape `chat.completion`.
 | Z2  | —                                                                                                      | `api/middleware/oauth_bearer.py` (novo), `api/server.py` (registrar middleware), `api/middleware/auth.py` (`/v1/` é público p/ esse middleware — cobertura é do oauth_bearer) |
 | Z3  | —                                                                                                      | `api/handlers/v1/{chat,threads,rag,workspaces,memory,tools,plugins,skills}.py` (delgam aos services internos já existentes)                                                   |
 | Z4  | —                                                                                                      | `api/handlers/openai_compat.py` (novo, `/v1/chat/completions`, `/v1/models`, `/v1/embeddings`)                                                                                |
-| Z5  | —                                                                                                      | `vectora/api/server.py` (rotas docs /v1), `docs/rest-api.md`                                                                                                                  |
+| Z5  | —                                                                                                      | `src/api/server.py` (rotas docs /v1), `docs/rest-api.md`                                                                                                                      |
 | Z6  | `chat/components/layout/settings-dialog/tabs/api-tab.tsx`, `chat/server/routes/oauth_clients.ts`, i18n | —                                                                                                                                                                             |
 | Z7  | —                                                                                                      | `tests/unit/test_api_v1_*.py` (novos)                                                                                                                                         |
 | Z8  | —                                                                                                      | `api/handlers/v1/acp.py` (mount Y4 server sob `/v1/acp`); `services/acp/server.py` (reuso de Y4)                                                                              |
@@ -4428,7 +4428,7 @@ preventDefault` (tarefa #52) cobre touch puro, mas pode estar
 
 ### K.2.1 — Endpoint `/auth/usage` enriquecido
 
-- `vectora/api/handlers/auth.py` — endpoint `GET /auth/usage` já
+- `src/api/handlers/auth.py` — endpoint `GET /auth/usage` já
   existe (R5). Estender para retornar **3 janelas** + janela de
   contexto:
   ```json
@@ -4506,12 +4506,12 @@ PlanWindow, lastFetchedAt: number }`.
 
 ### Arquivos críticos (K.2)
 
-| Sub   | Arquivos                                                                                                                                                                              |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| K.2.1 | `vectora/api/handlers/auth.py` (`/auth/usage` enriquecido), `vectora/services/rate_limit.py` (contador semanal), `chat/lib/config/deployment-config.ts` (`context_window` por modelo) |
-| K.2.2 | `chat/components/chat/features/usage-popover.tsx` (novo), `chat/lib/utils/usage.ts` (novo, format + cores)                                                                            |
-| K.2.3 | `chat/components/chat/features/command-bar.tsx` (chip clicável), `chat/components/chat/features/context-meter.tsx` (deletar)                                                          |
-| K.2.4 | `chat/lib/stores/metrics-store.ts` (novo se ausente), `chat/lib/hooks/use-usage.ts` (novo)                                                                                            |
+| Sub   | Arquivos                                                                                                                                                                      |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| K.2.1 | `src/api/handlers/auth.py` (`/auth/usage` enriquecido), `src/services/rate_limit.py` (contador semanal), `chat/lib/config/deployment-config.ts` (`context_window` por modelo) |
+| K.2.2 | `chat/components/chat/features/usage-popover.tsx` (novo), `chat/lib/utils/usage.ts` (novo, format + cores)                                                                    |
+| K.2.3 | `chat/components/chat/features/command-bar.tsx` (chip clicável), `chat/components/chat/features/context-meter.tsx` (deletar)                                                  |
+| K.2.4 | `chat/lib/stores/metrics-store.ts` (novo se ausente), `chat/lib/hooks/use-usage.ts` (novo)                                                                                    |
 
 ### Verificação (K.2)
 

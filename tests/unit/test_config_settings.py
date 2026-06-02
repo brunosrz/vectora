@@ -1,4 +1,4 @@
-"""Tests for vectora/config/settings.py"""
+"""Tests for src/config/settings.py"""
 
 from __future__ import annotations
 

@@ -30,7 +30,7 @@ def reg(monkeypatch):
     r = WorkspaceRegistry()
     r._loaded = True
     monkeypatch.setattr(r, "_save", lambda: None)
-    monkeypatch.setattr("vectora.services.workspace.workspace_registry", r)
+    monkeypatch.setattr("src.services.workspace.workspace_registry", r)
     return r
 
 
@@ -76,7 +76,7 @@ class TestTrust:
 class TestSessionWorkspace:
     def test_creates_folder_under_documents(self, reg, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "vectora.services.workspace._session_workspaces_root",
+            "src.services.workspace._session_workspaces_root",
             lambda: tmp_path / "docs",
         )
         ws = reg.get_or_create_session_workspace("thread123", "u")
@@ -85,7 +85,7 @@ class TestSessionWorkspace:
 
     def test_session_workspace_is_trusted(self, reg, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "vectora.services.workspace._session_workspaces_root",
+            "src.services.workspace._session_workspaces_root",
             lambda: tmp_path / "docs",
         )
         ws = reg.get_or_create_session_workspace("thread123", "u")
@@ -93,7 +93,7 @@ class TestSessionWorkspace:
 
     def test_session_workspace_is_idempotent(self, reg, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "vectora.services.workspace._session_workspaces_root",
+            "src.services.workspace._session_workspaces_root",
             lambda: tmp_path / "docs",
         )
         a = reg.get_or_create_session_workspace("thread123")
@@ -147,7 +147,7 @@ def repo_with_commit(tmp_path, monkeypatch):
     repo.index.commit("init")
 
     monkeypatch.setattr(
-        "vectora.tools.git._worktrees_root",
+        "src.tools.git._worktrees_root",
         lambda wid: tmp_path / "_wt" / wid,
     )
     return repo

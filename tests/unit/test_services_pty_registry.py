@@ -1,4 +1,4 @@
-"""Tests para vectora/services/pty_registry.py — registry de PTYs ativas (T1).
+"""Tests para src/services/pty_registry.py — registry de PTYs ativas (T1).
 
 Testa o comportamento do registry com sessões fake, evitando dependência do
 backend de PTY (que requer pywinpty/ptyprocess + shell real).

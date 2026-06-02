@@ -1,4 +1,4 @@
-"""Tests for vectora/services/tracer.py
+"""Tests for src/services/tracer.py
 
 Cobre VectoraTracer sem APIs externas:
 - span() context manager: sucesso, erro, set()

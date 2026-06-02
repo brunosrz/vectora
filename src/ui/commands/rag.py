@@ -87,7 +87,7 @@ async def handle_rag_add(raw_args: str, console: Any) -> None:
             "[red]Uso:[/red] /rag add <path> [--collection <nome>] [--pattern <glob>]\n"
             "[dim]Exemplos:[/dim]\n"
             "  /rag add .\n"
-            "  /rag add vectora/agents\n"
+            "  /rag add src/agents\n"
             "  /rag add docs/ --collection wiki --pattern '**/*.md'"
         )
         return

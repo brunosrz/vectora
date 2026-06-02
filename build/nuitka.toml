@@ -1,14 +1,23 @@
-# Nuitka build config — Bloco T.12.4
+# Referência das flags Nuitka usadas pelo Makefile (build-nuitka) e CI
+# (runner.yml / release-native job).
 #
-# Compila `src/launcher.py` em um binário onefile que embute todo o backend
-# Python (FastAPI, LangGraph, LangChain, vector stores, etc.) e o build de
-# produção do frontend Next.js (`chat/out/`) como data dir.
+# ATENÇÃO: Nuitka 4.x NÃO lê este arquivo diretamente. Ele existe como
+# documentação centralizada das opções. O comando real está em:
+#   Makefile → target build-nuitka
+#   .github/workflows/runner.yml → step "Build Nuitka onefile"
 #
-# Uso (em CI ou local):
+# Comando equivalente:
 #
-#     uv run nuitka --config-file=build/nuitka.toml src/launcher.py
+#   uv run nuitka \
+#     --mode=onefile \
+#     --include-data-dir=chat/out=chat_static \
+#     --enable-plugin=multiprocessing \
+#     --enable-plugin=anti-bloat \
+#     --output-filename=vectora \
+#     --output-dir=dist-nuitka \
+#     src/launcher.py
 #
-# Em CI (matrix Win/macOS/Linux), o GitHub Actions `runner.yml` chama isto
+# Em CI (matrix Win/macOS/Linux), o runner.yml executa isto
 # após `pnpm --dir chat build && pnpm --dir chat exec next export` para
 # garantir que `chat/out/` existe.
 
@@ -41,16 +50,13 @@ disable_plugins = [
     "tk-inter",
 ]
 
-# Empacota o frontend exportado pelo Next.js como data dir. O FastAPI já tem
-# `serve_static=True` (`src/api/server.py`) — só precisa apontar o path.
+# Empacota o servidor Next.js standalone como data dir. O next_sidecar.py
+# localiza chat_standalone/server.js e o spawna em runtime como Node.js sidecar.
+# Antes de rodar nuitka, garantir: pnpm --dir chat build &&
+#   cp -r chat/.next/static chat/.next/standalone/.next/static &&
+#   cp -r chat/public chat/.next/standalone/public
 include_data_dirs = [
-    "chat/out=chat_static",
-]
-
-# Recursos extras (icones, templates de skill, manifest).
-include_data_files = [
-    "chat/public/favicon.ico=chat_static/favicon.ico",
-    "chat/public/manifest.json=chat_static/manifest.json",
+    "chat/.next/standalone=chat_standalone",
 ]
 
 # Deps com extensões C que precisam ser empacotadas explicitamente. Ajustar

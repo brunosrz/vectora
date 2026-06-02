@@ -189,7 +189,7 @@ class TestMcpFileTools:
         monkeypatch.chdir(project_root)
 
         result = await list_dir_tool(".")
-        # Deve listar arquivos do projeto (pyproject.toml, vectora/, etc.)
+        # Deve listar arquivos do projeto (pyproject.toml, src/, etc.)
         assert len(result) > 0
         assert "Error: Access denied" not in result or "pyproject" in result.lower()
 
@@ -204,7 +204,7 @@ class TestMcpFileTools:
 
         result = await grep_tool(
             pattern="VectoraTracer",
-            path="vectora/services/tracer.py",
+            path="src/services/tracer.py",
         )
         assert "VectoraTracer" in result or len(result) > 0
 
@@ -305,8 +305,8 @@ class TestMcpProtocol:
             / "python"
         )
         if venv_python.exists():
-            return [str(venv_python), "-m", "vectora.mcp.server"]
-        return ["python", "-m", "vectora.mcp.server"]
+            return [str(venv_python), "-m", "src.mcp.server"]
+        return ["python", "-m", "src.mcp.server"]
 
     def _send_jsonrpc(self, proc, method: str, params: dict, req_id: int = 1) -> dict:
         """Envia request JSON-RPC e lê resposta."""

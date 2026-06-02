@@ -146,7 +146,7 @@ class _CohereRateLimitInterceptor(logging.Handler):
             self.worker.rate_limit_count += 1
             self.worker.last_rate_limit_at = datetime.now()
             # Ainda registra no arquivo JSON para auditabilidade
-            file_logger = logging.getLogger("vectora.services.background")
+            file_logger = logging.getLogger("src.services.background")
             file_logger.debug(
                 "cohere_rate_limit_intercepted: retry=%d",
                 self.worker.rate_limit_count,

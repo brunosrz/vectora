@@ -354,7 +354,7 @@ async def ingest_docs(
     (mesmo formato do .gitignore, ex: "tests/fixtures/**", "*.generated.py").
 
     Args:
-        directory_path: Caminho da pasta (ex: ".", "vectora/agents", "docs/")
+        directory_path: Caminho da pasta (ex: ".", "src/agents", "docs/")
         collection: Coleção LanceDB de destino (default: "articles")
         glob_pattern: Filtro de arquivos:
             - "**/*.py"  → arquivos Python (default — projetos Python)

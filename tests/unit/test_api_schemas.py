@@ -1,4 +1,4 @@
-"""Testes unitários para vectora/api/schemas.py.
+"""Testes unitários para src/api/schemas.py.
 
 Valida:
 - Criação dos modelos Pydantic de request/response

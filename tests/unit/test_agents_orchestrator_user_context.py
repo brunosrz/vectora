@@ -1,7 +1,7 @@
 """Tests da injeção do bloco ``user_context`` no orchestrator.
 
 Cobre os 4 sites que constroem o payload final ao usuário em
-``vectora/agents/orchestrator.py``:
+``src/agents/orchestrator.py``:
 
 1. ``orchestrator()`` — caminho de resposta direta (``_ORCHESTRATOR_PROMPT``).
 2. ``_synthesize_after_coder`` — síntese após o Coder Agent.
@@ -87,7 +87,7 @@ class TestOrchestratorMainPath:
         fake_llm.ainvoke = AsyncMock(return_value=fake_decision)
 
         with patch(
-            "vectora.agents.orchestrator._get_orchestrator_llm",
+            "src.agents.orchestrator._get_orchestrator_llm",
             return_value=fake_llm,
         ):
             cmd = await orchestrator(state, config=_cfg_with_user_ctx())
@@ -115,7 +115,7 @@ class TestOrchestratorMainPath:
         fake_llm.ainvoke = AsyncMock(return_value=fake_decision)
 
         with patch(
-            "vectora.agents.orchestrator._get_orchestrator_llm",
+            "src.agents.orchestrator._get_orchestrator_llm",
             return_value=fake_llm,
         ):
             await orchestrator(state, config=_cfg_empty())
@@ -137,7 +137,7 @@ class TestOrchestratorMainPath:
         fake_llm.ainvoke = AsyncMock(return_value=fake_decision)
 
         with patch(
-            "vectora.agents.orchestrator._get_orchestrator_llm",
+            "src.agents.orchestrator._get_orchestrator_llm",
             return_value=fake_llm,
         ):
             await orchestrator(state, config=_cfg_with_user_ctx())
@@ -182,9 +182,7 @@ class TestSynthesizeAfterCoder:
         fake_llm = AsyncMock()
         fake_llm.ainvoke = AsyncMock(return_value=AIMessage(content="Pronto."))
 
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
+        with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             cmd = await _synthesize_after_coder(
                 state,
                 session_id=None,
@@ -209,9 +207,7 @@ class TestSynthesizeAfterCoder:
         fake_llm = AsyncMock()
         fake_llm.ainvoke = AsyncMock(return_value=AIMessage(content="Pronto."))
 
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
+        with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             await _synthesize_after_coder(
                 state, session_id=None, state_update_extra={}, config=None
             )
@@ -238,9 +234,7 @@ class TestSynthesizeAfterSearch:
         fake_llm = AsyncMock()
         fake_llm.ainvoke = AsyncMock(return_value=AIMessage(content="Resumo"))
 
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
+        with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             cmd = await _synthesize_after_search(
                 state,
                 session_id=None,
@@ -265,9 +259,7 @@ class TestSynthesizeAfterSearch:
         fake_llm = AsyncMock()
         fake_llm.ainvoke = AsyncMock(return_value=AIMessage(content="Resumo"))
 
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
+        with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             await _synthesize_after_search(
                 state, session_id=None, state_update_extra={}, config=None
             )
@@ -305,9 +297,7 @@ class TestSynthesizeAfterParallel:
         fake_llm = AsyncMock()
         fake_llm.ainvoke = AsyncMock(return_value=AIMessage(content="Integrei"))
 
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
+        with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             cmd = await _synthesize_after_parallel(
                 state,
                 session_id=None,
@@ -335,9 +325,7 @@ class TestSynthesizeAfterParallel:
         fake_llm = AsyncMock()
         fake_llm.ainvoke = AsyncMock(return_value=AIMessage(content="Integrei"))
 
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
+        with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             await _synthesize_after_parallel(
                 state, session_id=None, state_update_extra={}, config=None
             )

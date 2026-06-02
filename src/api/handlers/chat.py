@@ -313,7 +313,7 @@ async def stream_chat(
     # caía em session_<thread_id> e a aba Memória ficava vazia.
     user_id = _user_id_from_request(http_request)
 
-    # Resolve o workspace da sessão (cria o padrão em Documents/vectora/<id>
+    # Resolve o workspace da sessão (cria o padrão em Documents/src/<id>
     # quando o cliente não escolheu uma pasta) e fixa no config da request.
     workspace_id = _resolve_workspace_id(
         request.config.workspace_id, thread_id, user_id

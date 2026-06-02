@@ -80,12 +80,12 @@ class _BackgroundConsoleFilter(logging.Filter):
 
     _CONSOLE_NOISY: frozenset[str] = frozenset(
         {
-            "vectora.services.background",
-            "vectora.services.queue",
-            "vectora.graph",
-            "vectora.agents.orchestrator",
-            "vectora.tools",
-            "vectora.api.handlers.chat",
+            "src.services.background",
+            "src.services.queue",
+            "src.graph",
+            "src.agents.orchestrator",
+            "src.tools",
+            "src.api.handlers.chat",
         }
     )
 
@@ -127,7 +127,7 @@ def setup_logging(
         if env_log_file:
             log_file = env_log_file
         else:
-            log_file = str(Path.home() / ".vectora" / "logs" / "vectora.jsonl")
+            log_file = str(Path.home() / ".vectora" / "logs" / "src.jsonl")
 
     root_logger = logging.getLogger()
     root_logger.setLevel(getattr(logging, log_level))

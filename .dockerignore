@@ -269,7 +269,7 @@ typings/
 
 # Project-specific
 data/
-.vectora/
+.src/
 docs/
 tests/
 CHANGELOG.md

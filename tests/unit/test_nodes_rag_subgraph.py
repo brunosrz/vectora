@@ -1,4 +1,4 @@
-"""Tests for vectora/nodes/rag_subgraph.py"""
+"""Tests for src/nodes/rag_subgraph.py"""
 
 from __future__ import annotations
 
@@ -100,7 +100,7 @@ class TestRagRetrieve:
         docs = [_doc(0.9, "c1"), _doc(0.7, "c2")]
         config: RunnableConfig = {"configurable": {}}
         with patch(
-            "vectora.nodes.rag_subgraph._call_vector_search_all",
+            "src.nodes.rag_subgraph._call_vector_search_all",
             new_callable=AsyncMock,
         ) as m:
             m.return_value = docs
@@ -124,10 +124,10 @@ class TestRagRetrieve:
         config: RunnableConfig = {"configurable": {}}
         with (
             patch(
-                "vectora.nodes.rag_subgraph._call_vector_search_all",
+                "src.nodes.rag_subgraph._call_vector_search_all",
                 new_callable=AsyncMock,
             ) as m,
-            patch("vectora.nodes.rag_subgraph.settings") as ms,
+            patch("src.nodes.rag_subgraph.settings") as ms,
         ):
             m.return_value = []
             ms.rag_hyde_enabled = False  # isola teste do HyDE
@@ -149,10 +149,10 @@ class TestCallVectorSearchAll:
 
         with (
             patch(
-                "vectora.nodes.rag_subgraph._list_collections",
+                "src.nodes.rag_subgraph._list_collections",
                 new_callable=AsyncMock,
             ) as mlist,
-            patch("vectora.nodes.rag_subgraph._call_vector_search", side_effect=fake),
+            patch("src.nodes.rag_subgraph._call_vector_search", side_effect=fake),
         ):
             mlist.return_value = [
                 settings.rag_collection_default,
@@ -176,10 +176,10 @@ class TestCallVectorSearchAll:
 
         with (
             patch(
-                "vectora.nodes.rag_subgraph._list_collections",
+                "src.nodes.rag_subgraph._list_collections",
                 new_callable=AsyncMock,
             ) as mlist,
-            patch("vectora.nodes.rag_subgraph._call_vector_search", side_effect=fake),
+            patch("src.nodes.rag_subgraph._call_vector_search", side_effect=fake),
         ):
             mlist.return_value = [
                 settings.rag_collection_default,
@@ -197,10 +197,10 @@ class TestCallVectorSearchAll:
 
         with (
             patch(
-                "vectora.nodes.rag_subgraph._list_collections",
+                "src.nodes.rag_subgraph._list_collections",
                 new_callable=AsyncMock,
             ) as mlist,
-            patch("vectora.nodes.rag_subgraph._call_vector_search", side_effect=fake),
+            patch("src.nodes.rag_subgraph._call_vector_search", side_effect=fake),
         ):
             mlist.return_value = ["docs", "code", "notes"]
             docs = await _call_vector_search_all("q")
@@ -215,7 +215,7 @@ class TestCallVectorSearchAll:
     @pytest.mark.asyncio
     async def test_no_collections_returns_empty(self):
         with patch(
-            "vectora.nodes.rag_subgraph._list_collections",
+            "src.nodes.rag_subgraph._list_collections",
             new_callable=AsyncMock,
         ) as mlist:
             mlist.return_value = []
@@ -235,10 +235,10 @@ class TestRagWebsearch:
             )
         ]
         with patch(
-            "vectora.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
+            "src.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
         ) as m:
             with patch(
-                "vectora.nodes.web_curation.curate_and_enqueue",
+                "src.nodes.web_curation.curate_and_enqueue",
                 new_callable=AsyncMock,
             ) as mc:
                 m.return_value = web
@@ -251,7 +251,7 @@ class TestRagWebsearch:
     @pytest.mark.asyncio
     async def test_no_web_results(self):
         with patch(
-            "vectora.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
+            "src.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
         ) as m:
             m.return_value = []
             result = await rag_websearch(_state(rag_query="test", rag_docs=[]))
@@ -264,10 +264,10 @@ class TestRagWebsearch:
         web = [{"content": "web doc", "url": "https://a.com", "title": "A"}]
         web_docs = [Document(page_content="web doc", metadata={}, relevance_score=None)]
         with patch(
-            "vectora.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
+            "src.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
         ) as m:
             with patch(
-                "vectora.nodes.web_curation.curate_and_enqueue",
+                "src.nodes.web_curation.curate_and_enqueue",
                 new_callable=AsyncMock,
             ) as mc:
                 m.return_value = web
@@ -282,10 +282,10 @@ class TestRagWebsearch:
         web = [{"content": "lixo", "url": "https://spam.com", "title": "Spam"}]
         web_docs = [Document(page_content="lixo", metadata={}, relevance_score=None)]
         with patch(
-            "vectora.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
+            "src.nodes.rag_subgraph._call_web_search", new_callable=AsyncMock
         ) as m:
             with patch(
-                "vectora.nodes.web_curation.curate_and_enqueue",
+                "src.nodes.web_curation.curate_and_enqueue",
                 new_callable=AsyncMock,
             ) as mc:
                 m.return_value = web
@@ -385,9 +385,9 @@ class TestCallVectorSearch:
         from unittest.mock import AsyncMock, patch
 
         mock_vs = AsyncMock(return_value=json.dumps({"status": "error"}))
-        with patch("vectora.nodes.rag_subgraph.vector_search", create=True):
+        with patch("src.nodes.rag_subgraph.vector_search", create=True):
             with patch(
-                "vectora.tools.rag.vector_search",
+                "src.tools.rag.vector_search",
                 new_callable=lambda: type("T", (), {"ainvoke": staticmethod(mock_vs)}),
             ):
                 result = await _call_vector_search("test")
@@ -402,7 +402,7 @@ class TestCallVectorSearch:
             {"results": [{"content": "hello", "metadata": {}, "score": 0.9}]}
         )
         mock_ainvoke = AsyncMock(return_value=payload)
-        with patch("vectora.tools.rag.vector_search") as mock_vs:
+        with patch("src.tools.rag.vector_search") as mock_vs:
             mock_vs.ainvoke = mock_ainvoke
             result = await _call_vector_search("hello world")
         assert len(result) == 1
@@ -412,7 +412,7 @@ class TestCallVectorSearch:
     async def test_returns_empty_on_exception(self):
         from unittest.mock import AsyncMock, patch
 
-        with patch("vectora.tools.rag.vector_search") as mock_vs:
+        with patch("src.tools.rag.vector_search") as mock_vs:
             mock_vs.ainvoke = AsyncMock(side_effect=Exception("boom"))
             result = await _call_vector_search("test")
         assert result == []
@@ -425,7 +425,7 @@ class TestCallWebSearch:
         from unittest.mock import patch
 
         data = [{"content": "web result", "url": "https://x.com"}]
-        with patch("vectora.tools.web.web_search") as mock_ws:
+        with patch("src.tools.web.web_search") as mock_ws:
             mock_ws.invoke = lambda **_: json.dumps(data)
             result = await _call_web_search("query")
         assert isinstance(result, list)
@@ -434,7 +434,7 @@ class TestCallWebSearch:
     async def test_returns_empty_on_exception(self):
         from unittest.mock import patch
 
-        with patch("vectora.tools.web.web_search") as mock_ws:
+        with patch("src.tools.web.web_search") as mock_ws:
             mock_ws.invoke = lambda **_: (_ for _ in ()).throw(Exception("fail"))
             result = await _call_web_search("query")
         assert result == []
@@ -451,7 +451,7 @@ class TestRagRerank:
         from unittest.mock import patch
 
         docs = [_doc(0.7, "content")]
-        with patch("vectora.nodes.rag_subgraph.settings") as ms:
+        with patch("src.nodes.rag_subgraph.settings") as ms:
             ms.get_cohere_api_key.return_value = None
             result = await rag_rerank(_state(rag_docs=docs, rag_query="test"))
         assert result == {}
@@ -463,7 +463,7 @@ class TestRagRerank:
         docs = [_doc(0.7, "content")]
         mock_reranker = MagicMock()
         mock_reranker.compress_documents.side_effect = Exception("Cohere error")
-        with patch("vectora.nodes.rag_subgraph.settings") as ms:
+        with patch("src.nodes.rag_subgraph.settings") as ms:
             ms.get_cohere_api_key.return_value = "test-key"
             ms.reranker_model = "rerank-english-v2.0"
             with patch("langchain_cohere.CohereRerank", return_value=mock_reranker):

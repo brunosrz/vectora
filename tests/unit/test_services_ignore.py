@@ -1,4 +1,4 @@
-"""Testes para vectora/services/ignore.py — foco nas funções novas.
+"""Testes para src/services/ignore.py — foco nas funções novas.
 
 Cobre:
 - load_vectoraignore_spec: carrega .vectoraignore com pathspec gitwildmatch

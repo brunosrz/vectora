@@ -22,7 +22,7 @@ Sem pip, sem npm, sem dependências externas.
 | T.12.1 — Launcher único       | ✅          | `src/launcher.py` (faz gate de licença e delega para `src/main`)                                                                                     |
 | T.12.2 — Bundle do frontend   | ✅ config   | `build/nuitka.toml` (`include_data_dirs = ["chat/out=chat_static"]`); o FastAPI já tem `serve_static=True`                                           |
 | T.12.3 — Desacopla PyPI/NPM   | ⏳ pendente | Mudança em `.github/workflows/runner.yml` — remover `publish-pypi`/`publish-npm`, adicionar `release-binary` apontando para GitHub Releases privadas |
-| T.12.4 — Nuitka core          | ✅ config   | `build/nuitka.toml` (onefile + plugins + data dirs). Build: `uv run nuitka --config-file=build/nuitka.toml src/launcher.py`                          |
+| T.12.4 — Nuitka core          | ✅ config   | `build/nuitka.toml` (referência documental das flags). Build: `make build-nuitka` ou veja o comando completo em `Makefile`                           |
 | T.12.5 — Wrapper Electron     | ✅ skeleton | `desktop/src/main.ts` — spawn do Nuitka, BrowserWindow, tree-kill no quit, autoUpdater                                                               |
 | T.12.6 — Instaladores nativos | ✅ config   | `desktop/electron-builder.yml` (Win NSIS/MSI + macOS DMG notarized + Linux AppImage/deb/rpm). Secrets de signing vêm do CI                           |
 | T.12.7 — Licenciamento        | ✅          | `src/services/license.py` (validação remota + cache 6h/48h offline), `src/launcher.py` (gate), `src/api/handlers/license.py` (`GET /license/status`) |
@@ -36,7 +36,7 @@ Sem pip, sem npm, sem dependências externas.
    3. `pnpm --dir chat exec next export` → `chat/out/`
    4. **T.13.6**: `pnpm --dir chat exec oxc-minify chat/out/` (~30–40% redução)
    5. `uv sync --frozen`
-   6. `uv run nuitka --config-file=build/nuitka.toml src/launcher.py` → `dist-nuitka/`
+   6. `make build-nuitka` → `dist-nuitka/` (flags em `Makefile`)
    7. `pnpm --dir desktop install && pnpm --dir desktop dist:<os>` → `desktop/dist-electron/`
 3. Assinatura:
    - **Win**: cert EV (Azure Trusted Signing) via `CSC_LINK`/`CSC_KEY_PASSWORD`.

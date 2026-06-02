@@ -304,7 +304,7 @@ dist
 # ~/.vectora/ is the roaming folder for user state (databases, logs, keys)
 # It should NEVER be committed to the repository
 data/
-.vectora/
+.src/
 
 # AI assistant configuration directories
 # These may contain API keys, conversation history, or local session data
@@ -332,6 +332,9 @@ build/
 
 # Next.js generated files (in chat/)
 chat/next-env.d.ts
-/vectora/chat_static
+/src/chat_static
 AbilitySystem_repo/
 /.codex
+
+# SCons cache
+.sconsign.dblite

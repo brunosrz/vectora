@@ -1,4 +1,4 @@
-"""Tests for vectora/mcp/server.py
+"""Tests for src/mcp/server.py
 
 Cobre as funções testáveis sem exigir conexão MCP real:
 - _with_timeout: timeout, sucesso, erro
@@ -156,7 +156,7 @@ class TestGetThreadContext:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(return_value=None)
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_context("999")
 
         data = json.loads(result)
@@ -179,7 +179,7 @@ class TestGetThreadContext:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(return_value=state_values)
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_context("1")
 
         data = json.loads(result)
@@ -193,7 +193,7 @@ class TestGetThreadContext:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(side_effect=RuntimeError("db error"))
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_context("1")
 
         data = json.loads(result)
@@ -213,7 +213,7 @@ class TestGetThreadHistory:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(return_value=None)
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_history("999")
 
         data = json.loads(result)
@@ -235,7 +235,7 @@ class TestGetThreadHistory:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(return_value=state_values)
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_history("1")
 
         data = json.loads(result)
@@ -249,7 +249,7 @@ class TestGetThreadHistory:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(side_effect=Exception("boom"))
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_history("1")
 
         data = json.loads(result)

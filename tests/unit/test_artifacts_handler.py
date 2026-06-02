@@ -1,4 +1,4 @@
-"""Tests para vectora/api/handlers/artifacts.py (Bloco T cont., T8).
+"""Tests para src/api/handlers/artifacts.py (Bloco T cont., T8).
 
 Cobre:
 - list_artifacts vazia para session_id sem pasta.

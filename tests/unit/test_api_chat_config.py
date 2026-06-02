@@ -1,4 +1,4 @@
-"""Tests para a montagem do RunnableConfig em vectora/api/handlers/chat.py.
+"""Tests para a montagem do RunnableConfig em src/api/handlers/chat.py.
 
 Cobre R2 (permission_mode) e R4 (reasoning_effort): o ChatConfig do request
 deve se traduzir corretamente para o dict ``configurable`` consumido pelo grafo.
@@ -108,9 +108,7 @@ def test_resolve_creates_session_workspace_when_empty(monkeypatch):
             calls["active"] = (ws_id, user_id)
             return True
 
-    monkeypatch.setattr(
-        "vectora.services.workspace.workspace_registry", _FakeRegistry()
-    )
+    monkeypatch.setattr("src.services.workspace.workspace_registry", _FakeRegistry())
     result = _resolve_workspace_id("", "thread1", "u")
     assert result == "sess-ws"
     assert calls["thread_id"] == "thread1"

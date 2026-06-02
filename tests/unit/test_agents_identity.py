@@ -1,4 +1,4 @@
-"""Tests for vectora/agents/_identity.py"""
+"""Tests for src/agents/_identity.py"""
 
 from __future__ import annotations
 

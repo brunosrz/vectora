@@ -273,7 +273,7 @@ Mesmo no Cloud, o usuário pode fazer upload de documentos próprios:
 O Vectora detecta o contexto da conversa e sugere buckets relevantes:
 
 ```python
-# vectora/agents/orchestrator.py — lógica de sugestão
+# src/agents/orchestrator.py — lógica de sugestão
 
 # Detecta stack a partir de arquivos no workspace ativo:
 # package.json → sugere typescript-frontend, typescript-backend

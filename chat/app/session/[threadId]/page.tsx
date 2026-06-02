@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { LicenseBanner } from "@/components/layout/license-banner";
+import { UpdateBanner } from "@/components/layout/update-banner";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog";
 import { useThreads, type ClientProfile } from "@/lib/hooks/threads";
@@ -38,6 +40,7 @@ function SessionContent() {
   // Inicia collapsed para evitar overlay cobrindo a tela no primeiro paint
   // em mobile. Effect abaixo expande automaticamente em viewports ≥768px.
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [licenseBlocking, setLicenseBlocking] = useState(false);
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
@@ -453,10 +456,13 @@ function SessionContent() {
                       : undefined
                   }
                 />
+                <LicenseBanner onBlockingChange={setLicenseBlocking} />
+                <UpdateBanner />
                 <ChatInterface
                   key={threadId}
                   showToolCalls={showToolCalls}
                   threadId={threadId}
+                  inputLocked={licenseBlocking}
                   onThreadUpdate={handleThreadUpdate}
                   onThreadNotFound={handleThreadNotFound}
                   agentConfig={agentConfig}

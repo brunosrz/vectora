@@ -1,4 +1,4 @@
-"""Tests para vectora/agents/results.py — schemas CoderResult e SearchResult."""
+"""Tests para src/agents/results.py — schemas CoderResult e SearchResult."""
 
 from __future__ import annotations
 

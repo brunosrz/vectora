@@ -1,4 +1,4 @@
-"""Testes unitários para vectora/api/middleware/auth.py (Bloco C — C4).
+"""Testes unitários para src/api/middleware/auth.py (Bloco C — C4).
 
 Cobre:
 - _is_public_route: rotas públicas corretas e rotas privadas
@@ -56,10 +56,13 @@ class TestIsPublicRoute:
 
         assert _is_public_route("/metrics") is False
 
-    def test_root_path_is_private(self):
+    def test_root_path_is_public_frontend(self):
+        # Paths fora dos prefixos de API são proxy para o Next.js e
+        # portanto públicos do ponto de vista do middleware Python —
+        # o frontend cuida da sua própria autenticação via cookie.
         from src.api.middleware.auth import _is_public_route
 
-        assert _is_public_route("/") is False
+        assert _is_public_route("/") is True
 
 
 # ---------------------------------------------------------------------------

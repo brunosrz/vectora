@@ -1,4 +1,4 @@
-"""Testes unitários para vectora/api/server.py e handlers.
+"""Testes unitários para src/api/server.py e handlers.
 
 Valida:
 - Criação da FastAPI app em modo headless

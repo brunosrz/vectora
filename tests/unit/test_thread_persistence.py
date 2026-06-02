@@ -154,9 +154,7 @@ class TestUpsertSession:
         from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
-        with patch(
-            "vectora.api.handlers.threads._get_db", new=AsyncMock(return_value=db)
-        ):
+        with patch("src.api.handlers.threads._get_db", new=AsyncMock(return_value=db)):
             await _upsert_session("thread-abc")
 
         assert len(db.sql_calls) >= 1
@@ -170,9 +168,7 @@ class TestUpsertSession:
         from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
-        with patch(
-            "vectora.api.handlers.threads._get_db", new=AsyncMock(return_value=db)
-        ):
+        with patch("src.api.handlers.threads._get_db", new=AsyncMock(return_value=db)):
             await _upsert_session("thread-xyz")
 
         all_params = [p for _, p in db.sql_calls]
@@ -185,9 +181,7 @@ class TestUpsertSession:
         from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
-        with patch(
-            "vectora.api.handlers.threads._get_db", new=AsyncMock(return_value=db)
-        ):
+        with patch("src.api.handlers.threads._get_db", new=AsyncMock(return_value=db)):
             await _upsert_session("thread-titled", title="Minha Conversa")
 
         all_params_str = str(db.sql_calls)
@@ -199,9 +193,7 @@ class TestUpsertSession:
         from src.api.handlers.threads import _upsert_session
 
         db = FakeDB()
-        with patch(
-            "vectora.api.handlers.threads._get_db", new=AsyncMock(return_value=db)
-        ):
+        with patch("src.api.handlers.threads._get_db", new=AsyncMock(return_value=db)):
             await _upsert_session("thread-dup")
             await _upsert_session("thread-dup")  # segunda chamada não deve falhar
 
@@ -214,9 +206,7 @@ class TestUpsertSession:
         db.execute = MagicMock(return_value=_CursorProxy(FakeCursor(FakeDB())))
         db.commit = AsyncMock()
 
-        with patch(
-            "vectora.api.handlers.threads._get_db", new=AsyncMock(return_value=db)
-        ):
+        with patch("src.api.handlers.threads._get_db", new=AsyncMock(return_value=db)):
             await _upsert_session("thread-commit-test")
 
         db.commit.assert_called_once()
@@ -249,11 +239,11 @@ class TestStreamChatRegistersThread:
 
         with (
             patch(
-                "vectora.api.handlers.chat._get_graph",
+                "src.api.handlers.chat._get_graph",
                 new=AsyncMock(return_value=mock_graph),
             ),
             patch(
-                "vectora.api.handlers.threads._upsert_session",
+                "src.api.handlers.threads._upsert_session",
                 side_effect=mock_upsert,
             ),
         ):
@@ -289,11 +279,11 @@ class TestStreamChatRegistersThread:
 
         with (
             patch(
-                "vectora.api.handlers.chat._get_graph",
+                "src.api.handlers.chat._get_graph",
                 new=AsyncMock(return_value=mock_graph),
             ),
             patch(
-                "vectora.api.handlers.threads._upsert_session",
+                "src.api.handlers.threads._upsert_session",
                 side_effect=mock_upsert,
             ),
         ):
@@ -468,7 +458,7 @@ class TestListThreadsIncludesUpserted:
         try:
             # Upsert direto no FakeDB (simula o que stream_chat fará)
             with patch(
-                "vectora.api.handlers.threads._get_db",
+                "src.api.handlers.threads._get_db",
                 new=AsyncMock(return_value=db),
             ):
                 await _upsert_session("streamed-thread-001")
@@ -498,7 +488,7 @@ class TestListThreadsIncludesUpserted:
         app, orig_get_db, orig_conn, t_mod = _make_app_with_db(db)
         try:
             with patch(
-                "vectora.api.handlers.threads._get_db",
+                "src.api.handlers.threads._get_db",
                 new=AsyncMock(return_value=db),
             ):
                 await _upsert_session(

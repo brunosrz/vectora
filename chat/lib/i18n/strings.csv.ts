@@ -259,6 +259,18 @@ workspace.ingest_confirm,Index this folder,Indexar esta carpeta,Indexar esta pas
 workspace.tab_local,Local,Local,Local
 workspace.transport.ssh,SSH,SSH,SSH
 workspace.transport.codespace,Codespace,Codespace,Codespace
+license.dismiss,Dismiss,Cerrar,Fechar
+license.banner.unconfigured,VECTORA_TOKEN not configured. Add yours in Settings → Envs to unlock chat.,VECTORA_TOKEN no configurado. Agrégalo en Configuración → Envs para usar el chat.,VECTORA_TOKEN não configurado. Adicione o seu em Configurações → Envs.
+license.banner.configure,Configure,Configurar,Configurar
+license.banner.expired,License expired. Renew to keep using Vectora.,Licencia vencida. Renueva para seguir usando Vectora.,Licença expirada. Renove para continuar usando o Vectora.
+license.banner.renew,Renew,Renovar,Renovar
+license.banner.past_due,Payment is past due. Update your billing to avoid interruption.,El pago está pendiente. Actualiza tu facturación para evitar interrupciones.,Pagamento em atraso. Regularize para evitar interrupção.
+license.banner.manage,Manage,Administrar,Gerenciar
+license.banner.trial_ending,Trial expires in {n} day(s). Subscribe to keep access.,La prueba vence en {n} día(s). Suscríbete para mantener el acceso.,Trial expira em {n} dia(s). Assine para manter o acesso.
+license.banner.subscribe,Subscribe,Suscribirse,Assinar
+update.banner.ready,New version downloaded — restart to apply.,Nueva versión descargada — reinicia para aplicar.,Nova versão baixada — reinicie para aplicar.
+update.banner.ready_with_version,Vectora {v} ready — restart to apply.,Vectora {v} listo — reinicia para aplicar.,Vectora {v} pronto — reinicie para aplicar.
+update.banner.restart,Restart now,Reiniciar ahora,Reiniciar agora
 skills.title,Skills,Skills,Skills
 skills.description,Reusable capabilities loaded by the agent (SKILL.md format).,Capacidades reutilizables cargadas por el agente (formato SKILL.md).,Capacidades reutilizáveis carregadas pelo agente (formato SKILL.md).
 skills.install_label,Install from git URL or local path,Instalar desde URL git o ruta local,Instalar de URL git ou caminho local

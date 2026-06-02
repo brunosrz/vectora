@@ -31,7 +31,7 @@ logging.basicConfig(
     ],
 )
 
-logger = logging.getLogger("vectora.mcp.server")
+logger = logging.getLogger("src.mcp.server")
 
 try:
     from mcp.server.fastmcp import FastMCP
@@ -130,7 +130,7 @@ mcp = FastMCP(
         "1. Entender a pergunta do usuário\n"
         "2. SE é tarefa COMPLEXA (múltiplas etapas, análise profunda) → delegate_task_to_vectora\n"
         "3. SE é tarefa SIMPLES (ferramenta única) → chamar ferramenta específica\n"
-        "4. Sempre verificar resources primeiro: /vectora/thread/{id}/history\n\n"
+        "4. Sempre verificar resources primeiro: /src/thread/{id}/history\n\n"
         "⚡ WHEN TO USE EACH MODE:\n"
         "- delegate_task_to_vectora: RAG + análise + síntese, decisões complexas\n"
         "- Ferramentas individuais: quando sabe exatamente qual tool chamar"

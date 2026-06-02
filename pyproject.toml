@@ -70,6 +70,7 @@ dependencies = [
     "ptyprocess>=0.7 ; sys_platform != 'win32'",
     "asyncssh>=2.18",
     "nuitka[all]>=4.1.2",
+    "scons>=4.10.1",
 ]
 
 [project.scripts]

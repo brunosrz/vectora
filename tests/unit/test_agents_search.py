@@ -1,4 +1,4 @@
-"""Tests for vectora/agents/search.py"""
+"""Tests for src/agents/search.py"""
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ async def test_search_calls_invoke_llm():
     }
     mock_response = {"messages": [AIMessage(content="Resultado")]}
 
-    with patch("vectora.agents.search.invoke_llm", new_callable=AsyncMock) as mock_llm:
+    with patch("src.agents.search.invoke_llm", new_callable=AsyncMock) as mock_llm:
         mock_llm.return_value = mock_response
         result = await search(state)
 
@@ -110,7 +110,7 @@ async def test_search_calls_invoke_llm():
 async def test_search_passes_system_prompt():
     state: State = {"messages": [HumanMessage(content="test")], "session_metadata": {}}
 
-    with patch("vectora.agents.search.invoke_llm", new_callable=AsyncMock) as mock_llm:
+    with patch("src.agents.search.invoke_llm", new_callable=AsyncMock) as mock_llm:
         mock_llm.return_value = {"messages": [AIMessage(content="ok")]}
         await search(state)
 

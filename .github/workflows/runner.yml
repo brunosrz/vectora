@@ -90,8 +90,9 @@ jobs:
         run: uv sync --frozen --all-extras
       - name: Install buf CLI
         uses: bufbuild/buf-setup-action@v1
-      - name: Generate proto stubs (make gen-proto)
-        run: make gen-proto
+      - name: Generate proto stubs
+        run: buf generate
+        working-directory: src/api/protos
       - name: Run Ruff check
         run: uv run ruff check vectora tests
 
@@ -161,11 +162,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # Build Chat using Makefile
       - name: Install buf CLI
         uses: bufbuild/buf-setup-action@v1
-      - name: Generate proto stubs (make gen-proto)
-        run: make gen-proto
+      - name: Generate proto stubs
+        run: buf generate
+        working-directory: src/api/protos
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -547,3 +548,119 @@ jobs:
         run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ── 10. Release Native Binaries (Nuitka + Electron) ────────────────────
+  release-native:
+    name: Release native binary (${{ matrix.os }} / ${{ matrix.arch }})
+    needs: docker-build
+    if: startsWith(github.ref, 'refs/tags/v') && needs.docker-build.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x64
+            target: linux
+          - os: macos-latest
+            arch: arm64
+            target: mac
+          - os: macos-13
+            arch: x64
+            target: mac
+          - os: windows-latest
+            arch: x64
+            target: win
+    runs-on: ${{ matrix.os }}
+    environment: Production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.2.2
+
+      - name: Install frontend deps
+        run: pnpm --dir chat install --frozen-lockfile
+
+      - name: Build Next.js frontend (standalone)
+        run: pnpm --dir chat build
+
+      - name: Copy static assets into standalone bundle
+        shell: bash
+        run: |
+          cp -r chat/.next/static   chat/.next/standalone/.next/static
+          cp -r chat/public         chat/.next/standalone/public
+
+      - name: Sync Python deps
+        run: uv sync --frozen
+
+      - name: Build Nuitka onefile
+        run: |
+          uv run python -m nuitka \
+            --mode=onefile \
+            --include-data-dir=chat/.next/standalone=chat_standalone \
+            --enable-plugin=multiprocessing \
+            --enable-plugin=anti-bloat \
+            --output-filename=vectora \
+            --output-dir=dist-nuitka \
+            src/launcher.py
+        shell: bash
+
+      - name: Smoke test (license bypass)
+        env:
+          VECTORA_LICENSE_BYPASS: "1"
+        run: |
+          ./dist-nuitka/vectora --version || dist-nuitka/vectora.exe --version
+        shell: bash
+
+      - name: Install desktop deps
+        run: pnpm --dir desktop install --frozen-lockfile
+
+      - name: Build desktop TS
+        run: pnpm --dir desktop build
+
+      - name: Build native installer
+        env:
+          # Win signing (Azure Trusted Signing)
+          CSC_LINK: ${{ secrets.WIN_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+          # macOS notarize
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Publish target (GitHub Releases privado em vectora-releases)
+          GH_TOKEN: ${{ secrets.VECTORA_RELEASES_TOKEN }}
+        run: pnpm --dir desktop dist:${{ matrix.target }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vectora-${{ matrix.target }}-${{ matrix.arch }}
+          path: |
+            desktop/dist-electron/*.exe
+            desktop/dist-electron/*.msi
+            desktop/dist-electron/*.dmg
+            desktop/dist-electron/*.AppImage
+            desktop/dist-electron/*.deb
+            desktop/dist-electron/*.rpm
+            desktop/dist-electron/latest*.yml
+            desktop/dist-electron/*.blockmap
+          if-no-files-found: warn
+          retention-days: 30

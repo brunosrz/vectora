@@ -65,7 +65,7 @@ _COMMANDS_TEXT = """
 [bold]/rag add <path>[/bold]
   Indexa uma pasta inteira no LanceDB (embedding em batch)
   Coleções canônicas: [bold]code[/bold], [bold]docs[/bold], [bold]web[/bold], [bold]notes[/bold] (auto-detectado pelo padrão)
-  Usage: [dim]/rag add vectora/agents[/dim]
+  Usage: [dim]/rag add src/agents[/dim]
          [dim]/rag add . --collection code[/dim]
          [dim]/rag add docs/ --pattern "**/*.md" --collection docs[/dim]
 

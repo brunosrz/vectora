@@ -1,4 +1,4 @@
-"""Tests para o view_router de vectora/api/handlers/workspaces.py.
+"""Tests para o view_router de src/api/handlers/workspaces.py.
 
 Cobre os endpoints adicionados em T6/T7 (Workbench):
 - GET /workspaces/{id}/tree            — lista dirs/files filtrando ruído.

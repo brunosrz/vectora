@@ -1,7 +1,7 @@
 """Handler de artifacts — lista planos/specs/guias gravados pelo agente.
 
-Reusa ``ArtifactMetadata`` (``vectora/types/documents.py``) e o layout em
-disco produzido por ``create_artifact`` (``vectora/tools/fs.py``):
+Reusa ``ArtifactMetadata`` (``src/types/documents.py``) e o layout em
+disco produzido por ``create_artifact`` (``src/tools/fs.py``):
 
     ~/.vectora/artifacts/<session_id>/<slug>.md
 """

@@ -58,7 +58,7 @@ class TestParallelDispatch:
             return_value=AIMessage(content="resposta do agente")
         )
 
-        with patch("vectora.services.utils.load_llm", return_value=mock_llm):
+        with patch("src.services.utils.load_llm", return_value=mock_llm):
             result = await parallel_dispatch(state, config=config)
 
         assert len(result["parallel_results"]) == 2
@@ -78,7 +78,7 @@ class TestParallelDispatch:
             return_value=AIMessage(content="resultado da busca")
         )
 
-        with patch("vectora.services.utils.load_llm", return_value=mock_llm):
+        with patch("src.services.utils.load_llm", return_value=mock_llm):
             result = await parallel_dispatch(state, config=config)
 
         r = result["parallel_results"][0]
@@ -112,7 +112,7 @@ class TestParallelDispatch:
         mock_llm = AsyncMock()
         mock_llm.ainvoke = fake_invoke
 
-        with patch("vectora.services.utils.load_llm", return_value=mock_llm):
+        with patch("src.services.utils.load_llm", return_value=mock_llm):
             result = await parallel_dispatch(state, config=config)
 
         results = result["parallel_results"]
@@ -143,7 +143,7 @@ class TestParallelDispatch:
         mock_llm = AsyncMock()
         mock_llm.ainvoke = capture_invoke
 
-        with patch("vectora.services.utils.load_llm", return_value=mock_llm):
+        with patch("src.services.utils.load_llm", return_value=mock_llm):
             await parallel_dispatch(state, config=config)
 
         # Verifica que cada task usou o system prompt do seu agente
@@ -171,7 +171,7 @@ class TestParallelDispatch:
         mock_llm = AsyncMock()
         mock_llm.ainvoke = capture_invoke
 
-        with patch("vectora.services.utils.load_llm", return_value=mock_llm):
+        with patch("src.services.utils.load_llm", return_value=mock_llm):
             await parallel_dispatch(state, config=config)
 
         assert captured[0] == _PARALLEL_AGENT_PROMPTS["search"]

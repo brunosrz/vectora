@@ -1,4 +1,4 @@
-"""Tests for vectora/nodes/engine.py"""
+"""Tests for src/nodes/engine.py"""
 
 from __future__ import annotations
 
@@ -115,7 +115,7 @@ class TestProcessRetrieval:
             )
         ]
         with patch(
-            "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+            "src.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
         ) as mock_curate:
             mock_curate.return_value = (docs, ["q-abc"])
             result = await process_retrieval(state, self._runtime())
@@ -138,7 +138,7 @@ class TestProcessRetrieval:
         }
         docs = [Document(page_content="lixo", metadata={}, relevance_score=None)]
         with patch(
-            "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+            "src.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
         ) as mock_curate:
             # Curadoria devolve docs para contexto imediato, mas 0 persistidos.
             mock_curate.return_value = (docs, [])
@@ -159,7 +159,7 @@ class TestProcessRetrieval:
         }
         docs = [Document(page_content="new doc", metadata={}, relevance_score=None)]
         with patch(
-            "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+            "src.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
         ) as mock_curate:
             mock_curate.return_value = (docs, ["new-qid"])
             result = await process_retrieval(state, self._runtime())

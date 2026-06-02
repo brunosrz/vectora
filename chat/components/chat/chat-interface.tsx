@@ -95,6 +95,10 @@ interface ChatInterfaceProps {
   autoSend?: boolean;
   /** Called after auto-send completes (use to clear URL params, etc.) */
   onInitialMessageSent?: () => void;
+  /** When true, the input is locked (license expired/revoked). */
+  inputLocked?: boolean;
+  /** Localized reason shown when the input is locked. */
+  inputLockedReason?: string;
 }
 
 interface QueuedMessage {
@@ -115,6 +119,7 @@ export function ChatInterface({
   isNewThread = false,
   autoSend = false,
   onInitialMessageSent,
+  inputLocked = false,
 }: ChatInterfaceProps) {
   // ============================================================================
   // State Management
@@ -131,7 +136,7 @@ export function ChatInterface({
 
   // Workspace acompanha a sessão: ao abrir/trocar de chat, ativa o workspace
   // gravado naquela thread. Threads novas (sem workspace ainda) são ignoradas —
-  // o backend cria o padrão em Documents/vectora/<id> na primeira mensagem.
+  // o backend cria o padrão em Documents/src/<id> na primeira mensagem.
   useEffect(() => {
     if (!threadId) return;
     let cancelled = false;
@@ -719,6 +724,9 @@ export function ChatInterface({
   );
 
   const handleSend = useCallback(async () => {
+    if (inputLocked) {
+      return;
+    }
     if (!uiState.input.trim() && attachedFiles.length === 0) {
       return;
     }
@@ -804,6 +812,7 @@ export function ChatInterface({
     processQueue,
     dispatchSlash,
     setMessages,
+    inputLocked,
   ]);
 
   const handleStop = useCallback(async () => {

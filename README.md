@@ -1,21 +1,21 @@
 # <img src="assets/vectora.svg" width="32" height="32"> Vectora
 
-**Vectora** is an open-source AI assistant (Apache 2.0) built for developers — self-hosted, and designed to run as a powerful sub-agent inside any MCP-compatible orchestrator (Claude Code, Claude Desktop, Paperclip, VS Code extensions).
+**Vectora** is a self-hosted AI assistant built for development teams — runs entirely on your server, integrates as a sub-agent in any MCP-compatible orchestrator (Claude Code, Claude Desktop, VS Code extensions), and ships with a full multi-user web chat.
 
-At its core, Vectora solves the **knowledge gap problem**: LLMs don't know your codebase, your docs, or the latest versions of your stack. Vectora bridges that gap with RAG (Retrieval-Augmented Generation) — ingest your docs once, and every AI interaction becomes contextually aware.
+At its core, Vectora solves the **knowledge gap problem**: LLMs don't know your codebase, your docs, or the latest versions of your stack. Vectora bridges that gap with hybrid RAG (BM25 + dense vectors + Cohere reranker) — ingest your docs once, and every AI interaction becomes contextually aware.
 
 ---
 
 ## Why Vectora?
 
-- **Orchestrator + Specialized Agents**: The Orchestrator is the primary LLM agent — it answers directly for simple queries and crafts explicit task instructions for specialists (search, coder). No wasted routing hops.
-- **RAG-native subgraph**: Every document query goes through a full retrieve → score → rerank → inject pipeline. Results flow back to the Orchestrator for synthesis.
-- **16 tools across 5 categories**: Web search, vector search, file system, artifacts, memory — always available across all agents.
-- **Cascading embeddings**: Web search results land in an isolated `web_cache` collection and pass a curation gate (Cohere reranker + LLM judge) before being embedded — your curated knowledge base is never contaminated by unreviewed web results.
-- **Sub-agent architecture**: Runs as an MCP server. Claude Code delegates complex tasks to Vectora; Vectora reasons, routes, and responds.
-- **Persistent memory**: Cross-session memory in SQLite. Vectora remembers your preferences, project context, and decisions.
-- **Zero infra**: SQLite + LanceDB. No Docker required for local use.
-- **Multi-LLM**: Google Gemini (free tier), Cohere (free tier), OpenAI, Anthropic, or Ollama (fully local).
+- **Orchestrator + Specialized Agents** — The Orchestrator is the primary LLM agent. It answers directly for simple queries and delegates with explicit task instructions to specialists (search, coder, RAG). No wasted routing hops.
+- **Hybrid RAG pipeline** — Every retrieval runs BM25 + dense vector search + Cohere reranker. Results flow back to the Orchestrator for synthesis.
+- **20+ tools across 6 categories** — Web search, vector search, filesystem, terminal (PTY), artifacts, memory — always available.
+- **Cascading embeddings** — Web search results pass a curation gate (Cohere reranker + LLM judge) before being embedded. Your curated knowledge base is never contaminated.
+- **Multi-user web chat** — Built-in Next.js interface with authentication, RBAC, workspaces, embedded terminal, diff viewer, and plan panel.
+- **Persistent cross-session memory** — SQLite-backed memory with user isolation.
+- **Zero infrastructure for lite mode** — SQLite + LanceDB. No Docker or Postgres required for local or small-team use.
+- **Multi-LLM** — Google Gemini (free tier), Cohere, OpenAI, Anthropic, or Ollama (fully local).
 
 ---
 
@@ -23,73 +23,14 @@ At its core, Vectora solves the **knowledge gap problem**: LLMs don't know your 
 
 ### Orchestrator + Workers
 
-Every message enters through a single entry point and is routed by the **Orchestrator** to the right specialized agent:
-
-```mermaid
----
-config:
-  flowchart:
-    curve: linear
----
-graph TD;
-	__start__([<p>__start__</p>]):::first
-	orchestrator(orchestrator)
-	search(search)
-	search_tools(search_tools)
-	search_finalize(search_finalize)
-	coder(coder)
-	hitl_check(hitl_check)
-	coder_tools(coder_tools)
-	coder_finalize(coder_finalize)
-	process_retrieval(process_retrieval)
-	parallel_dispatch(parallel_dispatch)
-	rag_expand_query(rag_expand_query)
-	rag_retrieve(rag_retrieve)
-	rag_decide_node(rag_decide_node)
-	rag_rerank(rag_rerank)
-	rag_inject(rag_inject)
-	__end__([<p>__end__</p>]):::last
-	__start__ --> orchestrator;
-	coder -.-> coder_finalize;
-	coder -.-> hitl_check;
-	coder_finalize --> orchestrator;
-	coder_tools --> coder;
-	hitl_check -.-> coder;
-	hitl_check -.-> coder_tools;
-	orchestrator -.-> __end__;
-	orchestrator -.-> coder;
-	orchestrator -.-> parallel_dispatch;
-	orchestrator -.-> rag_expand_query;
-	orchestrator -.-> search;
-	parallel_dispatch --> orchestrator;
-	process_retrieval --> search;
-	rag_decide_node -.-> rag_inject;
-	rag_decide_node -.-> rag_rerank;
-	rag_decide_node -.-> search;
-	rag_expand_query --> rag_retrieve;
-	rag_inject --> orchestrator;
-	rag_rerank --> rag_inject;
-	rag_retrieve --> rag_decide_node;
-	search -.-> search_finalize;
-	search -.-> search_tools;
-	search_finalize -.-> orchestrator;
-	search_finalize -.-> rag_inject;
-	search_tools --> process_retrieval;
-	classDef default fill:#f2f0ff,color:#1a1a1a,line-height:1.2
-	classDef first fill:#7c3aed,color:#ffffff,stroke:#7c3aed
-	classDef last fill:#7c3aed,color:#ffffff,stroke:#7c3aed
-```
-
-| Agent            | Responsibility                                                                       | Tools                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| **orchestrator** | Primary LLM agent — responds directly OR delegates with an explicit task description | `create_artifact`, `save_memory`, `get_memory`, `delete_memory`                |
-| **search**       | Web research, real-time info, builds knowledge base via cascading embeddings         | `web_search`, `fetch_url`, `vector_search`                                     |
-| **coder**        | File operations, terminal commands, code generation                                  | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal`         |
-| **rag**          | Retrieval pipeline — retrieve → score → rerank/websearch → inject → orchestrator     | `vector_search`, `embedding`, `ingest_docs`, `manage_retriever` (via subgraph) |
+| Agent            | Responsibility                                              | Tools                                                                  |
+| ---------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **orchestrator** | Primary LLM agent — responds directly OR delegates          | `create_artifact`, `save_memory`, `get_memory`, `delete_memory`        |
+| **search**       | Web research, real-time info, cascading embeddings          | `web_search`, `web_fetch`, `web_crawl`, `web_map`, `vector_search`     |
+| **coder**        | File operations, terminal commands, code generation         | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` |
+| **rag**          | Retrieve → score → rerank/websearch → inject → orchestrator | `vector_search`, `embedding`, `ingest_docs`, `manage_retriever`        |
 
 ### RAG Subgraph
-
-When the orchestrator routes to `rag`, a dedicated subgraph runs the full retrieval pipeline before synthesis:
 
 | Score   | Path                                                                  |
 | ------- | --------------------------------------------------------------------- |
@@ -97,250 +38,226 @@ When the orchestrator routes to `rag`, a dedicated subgraph runs the full retrie
 | 0.4–0.7 | `rag_rerank` → `rag_inject`                                           |
 | < 0.4   | `search` (with `rag_pending=True`) → `search_finalize` → `rag_inject` |
 
-When score is low, `rag_decide_node` sets `rag_pending=True` and delegates to the real `search` node — the same agent used for direct search queries, with full access to all tools (`web_search`, `vector_search`, `manage_retriever`, `fetch_url`). After `search_finalize`, the result is routed back to `rag_inject` instead of the orchestrator.
-
-Results are injected as a `SystemMessage` into context. The Orchestrator then synthesizes the final answer inline, without a separate agent hop.
-
-### Artifact Tool
-
-Agents explicitly call `create_artifact` to persist structured documents (plans, specs, guides, architecture decisions) to `~/.vectora/artifacts/{session_id}/` as Markdown files. The tool returns structured metadata (path, title, type, session_id, timestamp) that the Orchestrator can reference in future turns.
-
-### Web Content Anti-contamination
-
-After any `web_search` or `fetch_url` call, `process_retrieval` routes results through a curation gate before embedding:
-
-1. **Cohere reranker** scores each candidate against the current query — items below `web_persist_min_score` are discarded.
-2. **LLM judge** evaluates survivors against the project context and current task, returning a `keep/discard` verdict per document.
-
-Approved content is embedded into a dedicated `web_cache` collection, isolated from `articles` (user-curated content). The `/rag` panel shows the breakdown per collection, and `manage_retriever` lets you audit or remove cached web content at any time.
-
 ---
 
 ## Prerequisites
 
-### Cohere — Required
-
-Vectora uses [Cohere](https://cohere.com/) for embeddings (`embed-multilingual-v3.0`) and reranking (`rerank-multilingual-v3.0`). It offers a **generous free tier** with first-class LangChain integration.
-
-Get your key: https://dashboard.cohere.com/api-keys
-
-### Tavily — Required
-
-Vectora uses [Tavily](https://tavily.com/) for real-time web search and URL content extraction. It offers a **generous free tier** optimized for AI agents.
-
-Get your key: https://app.tavily.com/
-
-### LLM Provider — Choose One
-
-| Provider                         | Free Tier | Get Key                                                       |
-| -------------------------------- | --------- | ------------------------------------------------------------- |
-| **Google Gemini** ✅ Recommended | Yes       | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| Cohere                           | Yes       | [dashboard.cohere.com](https://dashboard.cohere.com/api-keys) |
-| Ollama (local)                   | No cost   | [ollama.ai](https://ollama.ai)                                |
-| OpenAI                           | Paid      | [platform.openai.com](https://platform.openai.com/api-keys)   |
-| Anthropic                        | Paid      | [console.anthropic.com](https://console.anthropic.com/)       |
+| Requirement        | Notes                                                                       |
+| ------------------ | --------------------------------------------------------------------------- |
+| **Python 3.13+**   | Managed by [uv](https://docs.astral.sh/uv/)                                 |
+| **Node.js 22+**    | For the web chat (`pnpm` required)                                          |
+| **Cohere API key** | Embeddings + reranking — [free tier](https://dashboard.cohere.com/api-keys) |
+| **Tavily API key** | Web search — [free tier](https://app.tavily.com/)                           |
+| **LLM provider**   | Google Gemini (free tier), OpenAI, Anthropic, Cohere, or Ollama             |
 
 ---
 
-## Installation
-
-### Option 1: UV — Local install (recommended)
-
-Install Vectora globally with [uv](https://github.com/astral-sh/uv):
+## Quickstart (from source)
 
 ```bash
-uv tool install vectora-agent
+git clone https://github.com/brunosrz/vectora.git
+cd vectora
+
+# Install Python dependencies
+uv sync
+
+# Copy and fill in your API keys
+cp .env.example .env
+# Edit .env: GOOGLE_API_KEY, COHERE_API_KEY, TAVILY_API_KEY
+
+# Install web chat dependencies
+pnpm --dir chat install
+
+# Start backend (port 8080) + web chat (port 3000) simultaneously
+scons dev
 ```
 
-On first run, the setup wizard will ask for your API keys and write them to `~/.vectora/.env`.
+Open `http://localhost:3000`. The first user to sign up becomes the root administrator.
+
+### CLI only (no web chat)
 
 ```bash
-vectora        # starts chat (wizard runs automatically if no keys found)
+# Interactive textual chat
+uv run vectora chat
+
+# MCP server (stdio — for Claude Code / Claude Desktop)
+uv run vectora server mcp --transport stdio
+
+# API only — no Next.js bundle, no frontend proxy
+uv run vectora server headless --port 8080
 ```
 
-To connect Vectora as an MCP sub-agent for Claude Code or Claude Desktop, add to your `.mcp.json`:
+---
+
+## MCP Integration
+
+Add to `.mcp.json` in your project or `~/.claude/mcp.json` globally:
 
 ```json
 {
   "mcpServers": {
     "Vectora": {
-      "command": "vectora",
-      "args": ["mcp-server"]
+      "command": "uv",
+      "args": ["run", "vectora", "server", "mcp", "--transport", "stdio"]
     }
   }
 }
 ```
 
-### Option 2: Docker — VPS / remote MCP server
+Remote MCP server over SSE:
 
-Use this when you want Vectora running on a server and accessible from multiple machines or orchestrators via SSE.
+```json
+{
+  "mcpServers": {
+    "Vectora": {
+      "url": "https://vectora.yourdomain.com/mcp/sse"
+    }
+  }
+}
+```
 
-**Local (no domain):**
+---
+
+## Build targets (SCons)
+
+The build system uses [SCons](https://scons.org/), bundled as a dev
+dependency. Use it directly from PowerShell, cmd, bash or zsh — no
+shell-specific syntax required.
+
+### Final product (from zero to installer)
+
+```
+scons release          Full build + native installer for the current OS
+scons release-win      Windows installer (.msi + .exe NSIS)
+scons release-mac      macOS installer (.dmg universal x64+arm64)
+scons release-linux    Linux installers (.AppImage + .deb + .rpm)
+```
+
+The pipeline runs in sequence:
+
+```
+build-chat (1-2 min)  -->  build-nuitka (10-30 min)  -->  build-desktop  -->  package
+chat/out/                  dist-nuitka/vectora.exe      desktop/dist/        desktop/dist-electron/
+```
+
+### Individual steps
+
+```
+scons build-chat       Next.js build + static export -> chat/out/
+scons build-nuitka     Nuitka onefile binary -> dist-nuitka/  (10-30 min first run)
+scons build-desktop    Electron TypeScript -> desktop/dist/
+scons package          electron-builder -> desktop/dist-electron/  (uses existing dist-nuitka/)
+scons install-desktop  pnpm install in desktop/
+```
+
+### Development
+
+```
+scons dev              Backend (8080) + Next.js dev (3000), Ctrl+C stops both
+scons dev-backend      Backend only
+scons dev-chat         Next.js dev only
+```
+
+### Quality
+
+```
+scons test             pytest tests/unit/
+scons lint             ruff + ty + tsc + oxlint
+scons clean            Remove dist-nuitka/ chat/out/ desktop/dist*
+scons help             Full list with descriptions
+```
+
+**Note:** On Windows, just open PowerShell or cmd at the project root and
+run `scons release-win`. No Git bash, no shell tricks needed.
+
+---
+
+## Docker
 
 ```bash
 cp .env.example .env
 # Edit .env with your API keys
 
 docker compose up -d
-# SSE endpoint: http://localhost:8000/sse
+# Web chat: http://localhost:8080
 ```
 
-**VPS with Traefik (HTTPS + domain):**
+VPS with HTTPS (Traefik):
 
 ```bash
 cp .env.example .env
-# Edit .env with your API keys, VECTORA_DOMAIN and ACME_EMAIL
+# Set VECTORA_DOMAIN and ACME_EMAIL
 
-# Create the shared Traefik network if it doesn't exist yet
 docker network create traefik-public
-
 docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
-# SSE endpoint: https://vectora.yourdomain.com/sse
+# Web chat: https://vectora.yourdomain.com
 ```
-
-To connect from Claude Code or any MCP-compatible orchestrator:
-
-```json
-{
-  "mcpServers": {
-    "Vectora": {
-      "url": "https://vectora.yourdomain.com/sse"
-    }
-  }
-}
-```
-
-#### 🚀 Recommended VPS Hosting: Hostinger
-
-For a reliable, affordable VPS to run Vectora with Docker and Traefik, we recommend **[Hostinger](https://www.hostinger.com/br)**.
-
-Hostinger offers:
-
-- **Affordable KVM VPS** starting from very low prices
-- **99.9% uptime guarantee** — perfect for production Vectora deployments
-- **Easy Docker & SSL setup** — Traefik HTTPS works out of the box
-- **Global data centers** — choose the region closest to your users
-- **Brazilian payment options** — BRL support
-
-**[Get a Hostinger VPS with referral discount](https://www.hostinger.com/br/cart?product=vps%3Avps_kvm_1&period=12&referral_type=cart_link&REFERRALCODE=Q4CBRUNOSVBZ&referral_id=019e6f06-68f7-7322-9a93-d1c08bbe649f)**
-
-This referral link gives you a discount on your first purchase while supporting Vectora development.
-
-### Option 3: From Source
-
-```bash
-git clone https://github.com/brunosrz/vectora.git
-cd vectora
-
-uv sync
-
-cp .env.example .env
-# Edit .env with your API keys
-
-uv run vectora
-```
-
----
-
-## 🎨 Vectora Chat (Optional)
-
-In addition to the CLI, you can use **Vectora Chat**, a modern web interface for a more visual experience.
-
-- **Installation**: Must be installed on the same host as the Vectora agent.
-  ```bash
-  pnpm install -g vectora-chat
-  ```
-- **Usage**: Simply run the following command to start both the web UI and the agent:
-  ```bash
-  vectora-chat
-  ```
 
 ---
 
 ## CLI Reference
 
-### Agent (Core)
-
-The main entry point for the Vectora CLI is the `vectora` command.
-
-```bash
+```
 vectora [command] [options]
+
+Commands:
+  (default) / chat     Interactive textual chat (resumes last session)
+  server chat          FastAPI + web chat (serves bundled Next.js or proxies to dev server)
+  server mcp           MCP server (stdio or SSE transport)
+  server headless      FastAPI only — no web UI, no frontend proxy (for API integrations)
+  setup                Interactive first-time configuration wizard
+  license              Show or manage license status
+  auth                 Login / logout / whoami
+  traces               View internal observability traces
+  sessions             List all saved sessions
+  config               Show or edit settings
+
+Global options:
+  --model <name>       Switch LLM provider/model (e.g. gemini-2.5-flash)
+  --new                Force a new conversation session
+  --session <id>       Resume a specific session
+  --verbosity <0-5>    Console output detail level
+  --port <n>           Port for server commands (default: 8080)
 ```
-
-| Command      | Description                                                       |
-| :----------- | :---------------------------------------------------------------- |
-| `(default)`  | Starts the interactive chat interface (resumes the last session). |
-| `mcp-server` | Starts the MCP server (stdio JSON-RPC) for IDE integration.       |
-| `traces`     | Displays internal execution traces from `~/.vectora/traces.db`.   |
-| `sessions`   | Lists all saved chat sessions.                                    |
-| `config`     | Displays or updates configuration in `~/.vectora/settings.json`.  |
-
-**Global Options:**
-
-- `--model <name>`: Switch the LLM provider/model (e.g., `gemini-3.5-flash`, `command-a-03-2025`).
-- `--new`: Forces a fresh conversation session.
-- `--session <id>`: Resumes a specific session.
-- `--verbosity <0-5>`: Adjusts console output detail level.
-- `--quit`: Automatically quits after 10 seconds.
-
-### Chat (Web UI)
-
-The `vectora-chat` command unifies the frontend and the agent backend.
-
-```bash
-vectora-chat
-```
-
-| Command  | Description                                                   |
-| :------- | :------------------------------------------------------------ |
-| `/help`  | Shows command menu inside the chat.                           |
-| `/new`   | Clears current thread and starts a new session.               |
-| `/clear` | Resets the current thread ID.                                 |
-| `/model` | Opens the configuration screen to update connection settings. |
-| `/rag`   | Shows knowledge base and workspace info.                      |
-
----
-
-## Tools Reference
-
-16 tools across 5 categories, always available to all agents:
-
-| Category      | Tools                                                                  | Primary Agent         |
-| ------------- | ---------------------------------------------------------------------- | --------------------- |
-| **Web**       | `web_search`, `fetch_url`                                              | search                |
-| **RAG**       | `vector_search`, `embedding`, `ingest_docs`, `manage_retriever`        | search / RAG subgraph |
-| **Files**     | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal` | coder                 |
-| **Artifacts** | `create_artifact`                                                      | orchestrator          |
-| **Memory**    | `save_memory`, `get_memory`, `delete_memory`                           | orchestrator / coder  |
 
 ---
 
 ## Data & Persistence
 
-All data is stored locally in `~/.vectora/`:
+All data is stored in `~/.vectora/`:
 
 ```
 ~/.vectora/
-├── .env                    # API keys (secrets — never commit)
-├── settings.json           # Runtime preferences (provider, model, verbosity)
+├── config.toml             # Runtime configuration (providers, storage backend)
+├── auth.key                # JWT signing key (auto-generated, perm 600)
 ├── data/
-│   ├── vectora.db          # Sessions, memories, LangGraph checkpoints (SQLite)
+│   ├── vectora.db          # Users, sessions, memories, checkpoints (SQLite WAL)
 │   ├── embedding_queue.db  # Async embedding queue (SQLite)
-│   ├── traces.db           # Internal observability spans (SQLite)
-│   └── lancedb/            # Vector store for RAG (LanceDB)
-├── artifacts/              # Auto-detected plans, specs, guides
-│   └── {session_id}/
-│       └── *.md
-├── keys/                   # Reserved for future key management
-└── logs/
-    ├── vectora.jsonl       # Structured JSON logs
-    └── session_*.md        # Exported session audit trails
+│   ├── traces.db           # Observability spans (SQLite)
+│   └── lancedb/            # Vector store (LanceDB)
+├── artifacts/              # Plans, specs, guides (create_artifact output)
+│   └── {session_id}/*.md
+├── secrets/
+│   ├── system.kdbx         # System secrets vault (KeePassXC format)
+│   └── users/{id}.kdbx     # Per-user vault (API keys, SSH keys)
+├── skills/{user_id}/       # Installed skills (SKILL.md format)
+├── safe_roots.json         # Admin-configured trusted paths
+├── workspaces.json         # Registered workspaces
+└── license_cache.json      # Cached license validation (TTL 6h / 48h offline)
 ```
 
-**Separation of concerns:**
+---
 
-- `~/.vectora/.env` — secrets (API keys). Never versioned.
-- `~/.vectora/settings.json` — non-secret runtime preferences (active provider, model, verbosity, last session per directory). Managed by `vectora config`.
+## Tools Reference
+
+| Category      | Tools                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Web**       | `web_search`, `web_fetch`, `web_crawl`, `web_map`, `web_research`, `web_get_research`                       |
+| **RAG**       | `vector_search`, `embedding`, `ingest_docs`, `manage_retriever`                                             |
+| **Files**     | `file_read`, `file_edit`, `file_write`, `grep`, `list_dir`, `terminal`                                      |
+| **Artifacts** | `create_artifact`                                                                                           |
+| **Memory**    | `save_memory`, `get_memory`, `delete_memory`                                                                |
+| **Git**       | `git_status`, `git_log`, `git_diff`, `git_branch`, `git_checkout`, `git_commit`, `git_push`, `gh_pr_create` |
 
 ---
 
@@ -348,21 +265,21 @@ All data is stored locally in `~/.vectora/`:
 
 | Layer            | Technology                                                                                             |
 | ---------------- | ------------------------------------------------------------------------------------------------------ |
-| Language         | Python 3.14+ managed by [uv](https://github.com/astral-sh/uv)                                          |
-| Agent Framework  | [LangChain](https://langchain.com/) + [LangGraph](https://langchain-ai.github.io/langgraph/)           |
-| Agent Pattern    | Orchestrator + Specialized Workers (search / coder) + RAG Subgraph                                     |
-| Vector Store     | [LanceDB](https://lancedb.github.io/lancedb/) — file-based, zero-config                                |
-| Embeddings       | [Cohere](https://cohere.com/) — `embed-multilingual-v3.0` + `rerank-multilingual-v3.0`                 |
-| Persistence      | SQLite via `aiosqlite` + LangGraph Checkpointer                                                        |
-| Context Protocol | [MCP](https://modelcontextprotocol.io/) via [FastMCP](https://github.com/jlowin/fastmcp)               |
-| Terminal UI      | [Rich](https://rich.readthedocs.io/) + [prompt-toolkit](https://python-prompt-toolkit.readthedocs.io/) |
-| Observability    | [LangSmith](https://smith.langchain.com/) (optional)                                                   |
+| Language         | Python 3.13+ / [uv](https://docs.astral.sh/uv/)                                                        |
+| Agent framework  | [LangChain](https://langchain.com/) + [LangGraph](https://langchain-ai.github.io/langgraph/)           |
+| Vector store     | [LanceDB](https://lancedb.github.io/lancedb/) (lite) / Qdrant (pro)                                    |
+| Embeddings       | Cohere `embed-multilingual-v3.0` + `rerank-multilingual-v3.0`                                          |
+| Persistence      | SQLite + `aiosqlite` (WAL) + LangGraph Checkpointer                                                    |
+| Web chat         | Next.js 16 + Hono + Zustand + shadcn/ui + Tailwind                                                     |
+| Terminal         | PTY via `pywinpty` (Win) / `ptyprocess` (Unix) + xterm.js                                              |
+| Context protocol | [MCP](https://modelcontextprotocol.io/) via [FastMCP](https://github.com/jlowin/fastmcp)               |
+| CLI UI           | [Rich](https://rich.readthedocs.io/) + [prompt-toolkit](https://python-prompt-toolkit.readthedocs.io/) |
 
 ---
 
 ## Configuration
 
-API keys go in `~/.vectora/.env` (created by the setup wizard) or a project-local `.env`:
+API keys go in `~/.vectora/config.toml` (created by `vectora setup`) or a local `.env`:
 
 ```env
 # LLM Provider (auto-detected from available keys if not set)
@@ -375,18 +292,15 @@ COHERE_API_KEY=your_key_here
 # Required: Web search + URL extraction
 TAVILY_API_KEY=your_key_here
 
-# Optional: Tracing
+# Optional: tracing
 LANGSMITH_TRACING=false
 LANGSMITH_API_KEY=your_key_here
-LANGSMITH_PROJECT=vectora
 ```
-
-Runtime preferences (model, verbosity, session history) are managed in `~/.vectora/settings.json` via `vectora config` or the `/model` and `/debug` chat commands — no need to touch `.env` for these.
 
 ---
 
 ## License
 
-Apache 2.0. See [LICENSE](./LICENSE).
+Proprietary. See [LICENSE](./LICENSE).
 
 <!-- mcp-name: io.github.brunosrz/vectora -->

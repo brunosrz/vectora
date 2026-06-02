@@ -1,4 +1,4 @@
-"""Tests for vectora/services/queue.py"""
+"""Tests for src/services/queue.py"""
 
 from __future__ import annotations
 

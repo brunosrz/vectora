@@ -11,13 +11,18 @@ const VECTORA_API_URL = process.env.VECTORA_API_URL ?? "http://localhost:8080";
 
 const auth = new Hono();
 
-/** Proxy genérico que repassa headers de cookie em ambas as direções. */
+/** Proxy genérico que repassa headers de cookie em ambas as direções.
+ *
+ * Erros de rede (ECONNREFUSED, backend offline) são capturados e
+ * transformados em um Response 503 com JSON válido, evitando que o
+ * erro não-tratado cause um 500 HTML no Next.js.
+ */
 async function proxyAuth(
   path: string,
   method: "GET" | "POST" | "DELETE" | "PATCH",
   body: unknown | null,
   incomingCookies: string,
-) {
+): Promise<Response> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -25,13 +30,21 @@ async function proxyAuth(
     headers["Cookie"] = incomingCookies;
   }
 
-  const res = await fetch(`${VECTORA_API_URL}${path}`, {
-    method,
-    headers,
-    body: body !== null ? JSON.stringify(body) : undefined,
-  });
-
-  return res;
+  try {
+    return await fetch(`${VECTORA_API_URL}${path}`, {
+      method,
+      headers,
+      body: body !== null ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    return new Response(
+      JSON.stringify({
+        error: "backend_unavailable",
+        detail: "Vectora backend offline",
+      }),
+      { status: 503, headers: { "Content-Type": "application/json" } },
+    );
+  }
 }
 
 /** Copia os Set-Cookie do upstream para a resposta Hono. */

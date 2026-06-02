@@ -98,7 +98,7 @@ class TestUserIdFromConfig:
 
 
 class TestMemoryHandlerExists:
-    """vectora/api/handlers/memory.py deve existir com os endpoints esperados."""
+    """src/api/handlers/memory.py deve existir com os endpoints esperados."""
 
     def test_memory_handler_module_exists(self):
         import src.api.handlers.memory as mem_mod

@@ -1,4 +1,4 @@
-"""Testes unitários para vectora/api/middleware/rate_limit.py (Bloco C — C13).
+"""Testes unitários para src/api/middleware/rate_limit.py (Bloco C — C13).
 
 Cobre:
 - attach_limiter: configura slowapi sem explodir

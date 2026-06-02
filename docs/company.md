@@ -431,7 +431,7 @@ supabase/
 > O tier determina quais backends estão disponíveis (Plus: SQLite/LanceDB;
 > Pro: PostgreSQL/Qdrant/Redis).
 
-### C1 — `vectora/services/license.py` (novo)
+### C1 — `src/services/license.py` (novo)
 
 ```python
 import hashlib, time, json, httpx
@@ -487,7 +487,7 @@ def require_pro(info: LicenseInfo, feature: str):
         )
 ```
 
-### C2 — Gate no startup (`vectora/main.py`)
+### C2 — Gate no startup (`src/main.py`)
 
 Aplicado antes de: `chat`, `server chat`, `server mcp`, `server headless`.
 Isento de: `setup`, `auth`, `license`, `--version`, `--help`.
@@ -535,7 +535,7 @@ Features bloqueadas no plano Plus (requerem Pro):
 - Redis cache layer (`VECTORA_CACHE=redis`)
 - Multi-worker simultâneo no server (>1 worker uvicorn)
 
-Verificação em `vectora/config/settings.py` ao inicializar backends:
+Verificação em `src/config/settings.py` ao inicializar backends:
 
 ```python
 if settings.checkpointer == "postgres":
@@ -660,7 +660,7 @@ Configuração existente detectada:
 ### D3 — Implementação
 
 ```python
-# vectora/cli/setup.py (refactor completo)
+# src/cli/setup.py (refactor completo)
 
 import webbrowser
 import typer
@@ -805,7 +805,7 @@ Exibido no header do chat conforme status da licença:
 Lê cache de `validate_token()` e retorna status atual para o frontend:
 
 ```python
-# vectora/api/handlers/license.py (novo)
+# src/api/handlers/license.py (novo)
 
 @router.get("/license/status")
 async def get_license_status():
@@ -1200,7 +1200,7 @@ O Vectora já está no PyPI. Para o lançamento:
 
 ### I2 — Docker Hub / GitHub Container Registry
 
-Imagem oficial `vectora/vectora:latest` e `vectora/vectora:1.0.0`:
+Imagem oficial `src/vectora:latest` e `src/vectora:1.0.0`:
 
 ```dockerfile
 FROM python:3.13-slim

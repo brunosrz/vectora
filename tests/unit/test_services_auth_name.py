@@ -1,4 +1,4 @@
-"""Tests para o campo ``name`` em vectora/services/auth.py.
+"""Tests para o campo ``name`` em src/services/auth.py.
 
 Cobre o que foi adicionado depois do Bloco C inicial:
 - ``signup(..., name=...)`` aceita UTF-8 livre, sanitiza e limita.

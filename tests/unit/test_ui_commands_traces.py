@@ -1,4 +1,4 @@
-"""Testes para vectora/ui/commands/traces.py (Bloco D3).
+"""Testes para src/ui/commands/traces.py (Bloco D3).
 
 Cobre:
 - /traces sem args: mostra tabela com spans recentes
@@ -54,7 +54,7 @@ class TestHandleTracesCommand:
         spans = [_make_span(), _make_span(node="invoke_llm", duration_ms=250.0)]
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_recent = AsyncMock(return_value=spans)
             await handle_traces_command("", console, context=None)
 
@@ -67,7 +67,7 @@ class TestHandleTracesCommand:
         spans = [_make_span(session_id=42)]
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_session = AsyncMock(return_value=spans)
             await handle_traces_command("--session 42", console, context=None)
 
@@ -78,7 +78,7 @@ class TestHandleTracesCommand:
         """--session abc (não-inteiro) exibe erro e retorna sem travar."""
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer"):
+        with patch("src.ui.commands.traces.tracer"):
             await handle_traces_command("--session abc", console, context=None)
 
         args, _ = console.print.call_args
@@ -94,7 +94,7 @@ class TestHandleTracesCommand:
         ]
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_recent = AsyncMock(return_value=spans)
             await handle_traces_command("--node orchestrator", console, context=None)
 
@@ -106,7 +106,7 @@ class TestHandleTracesCommand:
         """--clear chama tracer.clear_all() e exibe contagem."""
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.clear_all = AsyncMock(return_value=15)
             await handle_traces_command("--clear", console, context=None)
 
@@ -119,7 +119,7 @@ class TestHandleTracesCommand:
         """Sem spans, exibe painel informativo sem travar."""
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_recent = AsyncMock(return_value=[])
             await handle_traces_command("", console, context=None)
 
@@ -130,7 +130,7 @@ class TestHandleTracesCommand:
         """Sem spans com --session, o painel menciona a sessão."""
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_session = AsyncMock(return_value=[])
             await handle_traces_command("--session 7", console, context=None)
 
@@ -150,7 +150,7 @@ class TestHandleTracesCommand:
         spans = [_make_span(metadata="not_valid_json{{{{")]
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_recent = AsyncMock(return_value=spans)
             # Não deve levantar exceção
             await handle_traces_command("", console, context=None)
@@ -163,7 +163,7 @@ class TestHandleTracesCommand:
         spans = [_make_span(duration_ms=None)]
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_recent = AsyncMock(return_value=spans)
             await handle_traces_command("", console, context=None)
 
@@ -175,7 +175,7 @@ class TestHandleTracesCommand:
         spans = [_make_span(status="error")]
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_recent = AsyncMock(return_value=spans)
             await handle_traces_command("", console, context=None)
 
@@ -191,7 +191,7 @@ class TestHandleTracesCommand:
         ]
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_recent = AsyncMock(return_value=spans)
             await handle_traces_command("", console, context=None)
 
@@ -203,7 +203,7 @@ class TestHandleTracesCommand:
         spans = [_make_span(session_id=3)]
         console = _make_console()
 
-        with patch("vectora.ui.commands.traces.tracer") as mock_tracer:
+        with patch("src.ui.commands.traces.tracer") as mock_tracer:
             mock_tracer.get_session = AsyncMock(return_value=spans)
             await handle_traces_command("-s 3", console, context=None)
 

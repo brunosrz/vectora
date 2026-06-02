@@ -65,7 +65,7 @@ chat/
 ├── server/                        # backend Hono (TypeScript)
 │   ├── index.ts                   # Hono app factory
 │   └── routes/
-│       ├── chat.ts                # proxy ConnectRPC → vectora/api
+│       ├── chat.ts                # proxy ConnectRPC → src/api
 │       ├── threads.ts             # CRUD de threads
 │       └── health.ts              # /health + /metrics
 ├── lib/

@@ -3,16 +3,16 @@ syntax = "proto3";
 // API de chat do Vectora — source of truth da interface de streaming.
 //
 // Geração de stubs: `make gen-proto` (requer buf CLI)
-// Stubs Python: vectora/api/gen/  (build-time, não commitado)
+// Stubs Python: src/api/gen/  (build-time, não commitado)
 // Stubs TS:     chat/frontend/lib/gen/ (build-time, não commitado)
 //
 // Em desenvolvimento o frontend consome a API via fetch nativo +
-// vectora/api/schemas.py (equivalente Pydantic). Quando grpcio e buf
+// src/api/schemas.py (equivalente Pydantic). Quando grpcio e buf
 // estiverem disponíveis, `make gen-proto` gera os stubs compilados.
 
 package vectora.chat.v1;
 
-option go_package = "vectora/chat/v1";
+option go_package = "src/chat/v1";
 
 // ── Serviços ──────────────────────────────────────────────────────────────
 

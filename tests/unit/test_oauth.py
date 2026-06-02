@@ -12,7 +12,7 @@ import pytest
 
 
 class TestOAuthHandlerExists:
-    """vectora/api/handlers/oauth.py deve existir com os endpoints esperados."""
+    """src/api/handlers/oauth.py deve existir com os endpoints esperados."""
 
     def test_module_exists(self):
         import src.api.handlers.oauth as mod

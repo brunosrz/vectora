@@ -1,4 +1,4 @@
-"""Tests for vectora/services/text.py"""
+"""Tests for src/services/text.py"""
 
 from __future__ import annotations
 

@@ -372,7 +372,7 @@ export const Sidebar = memo(function Sidebar({
           </a>
 
           <a
-            href="https://github.com/brunosrz/vectora/issues"
+            href="https://github.com/brunosrz/src/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground transition-all duration-300 ease-out hover:bg-sidebar-accent/10 group"

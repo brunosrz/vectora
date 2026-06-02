@@ -1,4 +1,4 @@
-"""Tests para vectora/services/usage.py — rastreador de uso por usuário (R5).
+"""Tests para src/services/usage.py — rastreador de uso por usuário (R5).
 
 Janela deslizante em memória: conta requests por user_id dentro de uma janela
 de tempo, expondo quanto foi consumido e quando a janela reseta. Alimenta o
