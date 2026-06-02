@@ -784,7 +784,7 @@ Novo módulo `vectora/tools/git.py`:
 
 Tools gh CLI (em `vectora/tools/gh.py`):
 | Tool | render_hint |
-|------|-------------|
+| ---------------------------------------------- | -------------------------- |
 | `gh_pr_create(title, body, base, draft=False)` | `code_block` |
 | `gh_pr_list(state="open")` | `table` |
 | `gh_pr_view(pr_number)` | `code_block` |
@@ -3052,7 +3052,7 @@ description, prompt, tools, model?}`. Os prompts são exatamente os atuais
 
 - Substitui o nó `hitl_check`. Tabela de mapping `permission_mode` → config:
   | Modo (R2) | `interrupt_on` |
-  |-----------|----------------|
+  | ----------------- | ---------------------------------------------------------------------- |
   | `ask` | `{"terminal": True, "file_write": True, ...}` (REQUIRE_APPROVAL atual) |
   | `accept_edits` | `{"terminal": True}` (file_write auto) |
   | `plan` | `{*: "reject"}` — recusa toda tool destrutiva (envia ToolMessage) |
@@ -4571,3 +4571,342 @@ PlanWindow, lastFetchedAt: number }`.
 | J.2   | LAN/Tailscale liberado; login + olho da senha no mobile; PWA real (manifest + SW); sidebar como Sheet   |
 | K.2   | Endpoint `/auth/usage` enriquecido; `usage-popover` no estilo Claude Code; chip clicável no command-bar |
 | T.X   | PanelGroup com árvore estável de filhos — corrige erro `Symbol.iterator` em runtime                     |
+
+---
+
+## BLOCO F.3 — File handling completo: safe-roots + path input + quick access
+
+> **Contexto.** A v1 do trust folder (Q6) tem dois buracos sérios:
+>
+> 1. **Sem cap de path.** O `BrowseDir`
+>    (`src/api/handlers/workspaces.py:239-273`) começa em `Path.home()` e
+>    deixa o usuário subir até `C:\` ou `/` via `listing.parent`. Não há
+>    validação de raiz proibida. Em deploy multi-usuário (especialmente
+>    self-hosted compartilhado) qualquer user pode navegar para fora do
+>    território dele.
+> 2. **Path é label, não input.** O componente
+>    `chat/components/layout/workspace-trust-dialog.tsx:85` mostra
+>    `<span>{listing.path}</span>` — readonly. Quem sabe o caminho exato
+>    de cabeça precisa clicar pasta-por-pasta.
+>
+> Falta também um **painel de acesso rápido** que junta workspaces ativos
+>
+> - "ambientes seguros configurados" — hoje o usuário só vê o seletor de
+>   workspace ativo no header.
+>
+> **Modelo cardinal.** Admin configura **Safe Roots** (pastas onde
+> usuários podem criar workspaces). Por padrão a instância já vem com
+> `~/Documents/vectora` como safe-root. Admin pode acrescentar (Desktop,
+> outra partição, repos clonados, etc.). Usuário comum **não navega
+> acima** do safe-root onde está. O painel de acesso rápido lista as
+> safe-roots como "pastas conhecidas" + os workspaces ativos do user.
+
+### F.3.1 — Modelo `SafeRoot` + persistência (backend)
+
+- **Novo** `src/types/safe_root.py`:
+  ```python
+  class SafeRoot(BaseModel):
+      id: str          # sha256(path)[:8]
+      path: str        # absoluto
+      label: str       # nome amigável ("Documents", "Desktop", "Workspaces")
+      created_at: str
+      created_by: str  # user_id do admin
+      builtin: bool = False  # True para Documents/vectora (não removível)
+  ```
+- **Novo** `src/services/safe_roots.py` — `SafeRootRegistry` singleton:
+  - Persiste em `~/.vectora/safe_roots.json` (mesmo padrão do
+    `WorkspaceRegistry`).
+  - No `_load()` inicial, garante que `~/Documents/vectora` (resolvido
+    do `DEFAULT_WORKSPACE_DIR`) está como builtin.
+  - API: `list()`, `add(path, label, user_id)`, `remove(id)`,
+    `is_under_safe_root(path) -> SafeRoot | None`,
+    `validate_browse_target(path, fallback=True) -> Path`.
+  - `validate_browse_target` retorna o path se está sob algum safe-root;
+    senão retorna o safe-root mais próximo (ou raise se `fallback=False`).
+
+### F.3.2 — `BrowseDir` respeita safe-roots
+
+- `src/api/handlers/workspaces.py` (`browse_dir` linha 239):
+  - Antes de aceitar `path` da request, chama
+    `safe_roots.validate_browse_target(path)`.
+  - Computa `parent`: só preenche se `parent ainda está sob algum
+safe-root`. Senão devolve `parent=None` — botão "Subir um nível"
+    some.
+  - Default inicial passa a ser o **safe-root mais próximo do HOME**
+    (geralmente `~/Documents/vectora`), não `Path.home()` cru.
+  - Endpoint novo `GET /workspaces/safe-roots` (público para users
+    autenticados) — devolve a lista para o frontend renderizar
+    pontos de partida.
+
+### F.3.3 — Admin: aba "Pastas Seguras"
+
+- `chat/components/layout/settings-dialog/admin/admin-tab.tsx`:
+  adicionar 5ª sub-aba **Pastas Seguras** ao lado de Usuários /
+  Ferramentas / Sistema / Configuração.
+- **Novo** `SafeRootsPanel`:
+  - Tabela `Label · Path · Criada em · Ações`.
+  - Botão "Adicionar pasta" abre o próprio `WorkspaceTrustDialog` em
+    modo `safe-root` (3º modo além de `trust` e `ingest`) — escolhe a
+    pasta via browser **sem cap** (admin é root, pode navegar livre).
+  - Editar `label` inline. `builtin` não pode ser removida (botão
+    desabilitado com tooltip).
+- **Endpoints backend** (`src/api/handlers/admin.py`):
+  - `GET /admin/safe-roots` (require_admin) → lista
+  - `POST /admin/safe-roots` (body: `{path, label}`) → cria
+  - `PATCH /admin/safe-roots/{id}` (body: `{label}`) → renomeia
+  - `DELETE /admin/safe-roots/{id}` → remove (recusa se builtin)
+- **Proxy Hono**: `chat/server/routes/admin.ts` (+`/safe-roots/*`)
+
+### F.3.4 — Input de path editável no trust dialog
+
+- `chat/components/layout/workspace-trust-dialog.tsx`:
+  - O `<span>{listing.path}</span>` (linha 85) vira `<Input>` editável
+    com:
+    - `defaultValue={listing.path}` controlado por state local
+    - `onKeyDown={Enter → load(value)}` — navega
+    - Botão "Ir" ao lado
+  - Quando admin abre o dialog em modo `safe-root`, o input fica livre.
+  - Quando user comum (modo `trust` ou `ingest`), ao tentar navegar
+    para path **fora dos safe-roots**, o backend retorna 403 e o
+    frontend mostra inline: "Caminho fora das pastas seguras
+    configuradas. Peça ao admin para adicioná-lo".
+
+### F.3.5 — Painel "Acesso Rápido" na sidebar
+
+- `chat/components/layout/sidebar.tsx`: acima da lista de SESSÕES,
+  novo grupo colapsável **PASTAS** com:
+  - Workspaces ativos do user (com indicador `●` no workspace atual).
+  - Safe-roots disponíveis (com ícone de pasta).
+- Click em workspace → switch via `workspaces-store.setActive()`.
+- Click em safe-root → abre `WorkspaceTrustDialog` em modo `trust`
+  pré-navegado para aquele path.
+- `chat/lib/i18n/strings.csv.ts`: chaves `sidebar.folders.*`,
+  `quickaccess.*`.
+
+### F.3.6 — `Documents/vectora` como safe-root automático
+
+- `services/safe_roots.py::_load()` (F.3.1): se a lista persistida
+  estiver vazia OU não contém a entry builtin, adiciona
+  `{path: <DEFAULT_WORKSPACE_DIR>, label: "Workspaces Vectora",
+builtin: True}`.
+- A entry builtin **nunca** é removível via API; pode ter o `label`
+  editado.
+
+### Arquivos críticos (F.3)
+
+| Sub   | Arquivos backend                                                                             | Arquivos frontend                                                                                                          |
+| ----- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| F.3.1 | `src/types/safe_root.py` (novo), `src/services/safe_roots.py` (novo)                         | —                                                                                                                          |
+| F.3.2 | `src/api/handlers/workspaces.py` (+validação no `browse_dir`, +`GET /workspaces/safe-roots`) | `chat/lib/stores/workspaces-store.ts` (+slice de safe-roots, action `listSafeRoots`)                                       |
+| F.3.3 | `src/api/handlers/admin.py` (+5 endpoints), `src/api/schemas.py` (+SafeRoot models)          | `chat/components/layout/settings-dialog/admin/admin-tab.tsx` (+`SafeRootsPanel`), `chat/server/routes/admin.ts` (+proxies) |
+| F.3.4 | mensagem 403 em `browse_dir` quando path fora de safe-root                                   | `workspace-trust-dialog.tsx` (Input editável + Enter), erro inline                                                         |
+| F.3.5 | —                                                                                            | `chat/components/layout/sidebar.tsx` (grupo "Pastas"), i18n `sidebar.folders.*`                                            |
+| F.3.6 | `services/safe_roots.py` (`_load` auto-popula builtin)                                       | —                                                                                                                          |
+
+### Verificação (F.3)
+
+- Admin abre Settings → Administração → Pastas Seguras → vê
+  `~/Documents/vectora` como builtin (não removível).
+- Admin clica "Adicionar pasta", navega para `~/Desktop`, salva.
+  Aparece na tabela.
+- User comum (não-admin) abre o trust dialog → começa em
+  `~/Documents/vectora` (safe-root mais próximo do HOME); tenta
+  digitar `C:\` no input → backend recusa com 403 e UI mostra
+  "Caminho fora das pastas seguras".
+- User comum tenta o botão "Subir um nível" estando em
+  `~/Documents/vectora` → botão some (parent fora do safe-root).
+- Sidebar mostra grupo "PASTAS" com `Documents/vectora` (builtin) +
+  `Desktop` (do admin) + workspaces ativos.
+
+---
+
+## BLOCO G.2 — Workspaces remotos: SSH + GitHub Codespaces
+
+> **Contexto.** O `Workspace` Pydantic (`src/types/workspace.py`) tem
+> só path local (`cwd`). Todas as tools (`fs.py`, `git.py`,
+> `terminal`) resolvem `Path()` no filesystem local. Não há nem hook
+> nem stub pra execução remota.
+>
+> **Pedido do usuário:** trabalhar em servidores via SSH (VPS,
+> homelab) e em **GitHub Codespaces**. Os dois casos exigem:
+>
+> 1. Abstrair o filesystem do workspace via um Protocol — tools não
+>    sabem se estão local, SSH ou Codespace.
+> 2. Abstrair o terminal (PTY) — o WS do Bloco T conecta a
+>    `PtySession` local; remoto exige tunneling.
+> 3. UI nova no trust dialog para escolher transporte (Local / SSH /
+>    Codespace) + campos correspondentes (host, user, key path / id
+>    do codespace).
+> 4. Indicador visual no command-bar: ícone de `Cloud` quando o
+>    workspace ativo é remoto.
+
+### G.2.1 — Modelo `Workspace` ganha campos de transporte
+
+- `src/types/workspace.py::Workspace`:
+  ```python
+  transport: Literal["local", "ssh", "codespace"] = "local"
+  remote_host: str | None = None      # ssh: user@host[:port]
+  remote_path: str | None = None      # caminho remoto
+  ssh_key_id: str | None = None       # ref para vault keepass (C11)
+  codespace_name: str | None = None   # ex: "brunosrz-vectora-abc123"
+  ```
+- `cwd` continua sendo o path local (quando local) ou o **path do
+  mount/checkout** quando remoto (Codespace clona em
+  `~/.vectora/codespaces/<name>` por baixo).
+- Migration: workspaces existentes ganham `transport="local"`
+  automaticamente no `_migrate` do WorkspaceRegistry.
+
+### G.2.2 — `TransportBackend` Protocol
+
+- **Novo** `src/services/transport/__init__.py`:
+  ```python
+  class TransportBackend(Protocol):
+      async def list_dir(self, path: str) -> list[DirEntry]: ...
+      async def read_file(self, path: str, max_bytes: int) -> bytes: ...
+      async def write_file(self, path: str, data: bytes) -> None: ...
+      async def run(self, cmd: list[str], cwd: str, timeout: float) -> tuple[int, str, str]: ...
+      async def open_pty(self, shell: str, cwd: str) -> PtySession: ...
+      async def close(self) -> None: ...
+  ```
+- **Impls**:
+  - `local.py` (default) — usa `Path`, `asyncio.create_subprocess_exec`,
+    `pty_session.PtySession` que já existe.
+  - `ssh.py` — `asyncssh` (asyncio-native; melhor que paramiko para
+    nosso stack). Abre 1 connection por workspace, mantém pool.
+    `open_pty` usa `conn.create_process(term_type="xterm-256color")`.
+  - `codespace.py` — wraps `gh codespace ssh -c <name>` (o `gh` CLI
+    já cuida do túnel via Codespaces API). Pode reusar `ssh.py`
+    apontando para o socket que `gh codespace ssh` levanta.
+
+### G.2.3 — Factory por workspace
+
+- `src/services/transport/factory.py::get_transport(workspace) -> TransportBackend`:
+  cache por `workspace.id`; cria a impl correta no primeiro uso.
+- Tools `fs.py`, `git.py`, `terminal` mudam de:
+  ```python
+  path = resolve_within_workspace(...)
+  with open(path) as f: ...
+  ```
+  para:
+  ```python
+  t = get_transport(workspace)
+  data = await t.read_file(path, max_bytes)
+  ```
+- Mantém compatibilidade: `LocalTransport` é o default e exatamente
+  igual ao comportamento atual.
+
+### G.2.4 — Credenciais SSH no vault KeePassXC
+
+- Reusa `services/secrets/keepass.py` (Bloco C11).
+- Cada user pode gravar chaves SSH como entries:
+  - Title: `ssh:<workspace_id>` ou `ssh:default`
+  - URL: `ssh://user@host:port`
+  - Password: passphrase da chave (se houver)
+  - Attachment: o `id_rsa` / `id_ed25519` em binário
+- `ssh_key_id` no Workspace aponta para a entry. Ao abrir o
+  workspace, `SshTransport` lê a key do vault → `asyncssh.connect(
+known_hosts=None, client_keys=[key_bytes], passphrase=...)`.
+
+### G.2.5 — Codespaces via `gh` CLI
+
+- `services/transport/codespace.py`:
+  - `list_codespaces()` → `gh codespace list --json
+name,repository,state,gitStatus` (precisa do `GH_TOKEN` do user, já
+    do C10/O2)
+  - `start(name)` → `gh codespace start --codespace <name>` se
+    `state != Available`
+  - Conexão: `gh codespace ssh -c <name>` em modo
+    `--server-port=<rand>` levanta um daemon SSH local. O
+    `CodespaceTransport` herda de `SshTransport` apontando para
+    `localhost:<port>`.
+  - Cleanup: ao fechar o workspace, mata o processo `gh codespace
+ssh`.
+
+### G.2.6 — Trust dialog ganha aba "Remote"
+
+- `chat/components/layout/workspace-trust-dialog.tsx`: header com 3
+  pílulas — **Local** · **SSH** · **Codespace**. Default: Local.
+- **SSH tab**:
+  - Inputs: `Host` (`user@host:port`), `Path remoto`, select de chave
+    SSH (lê do vault do user — endpoint novo
+    `GET /auth/ssh-keys`) ou "Importar chave nova" (file picker).
+  - Botão "Testar conexão" — chama `POST /workspaces/test-ssh` que
+    abre/fecha a conexão e retorna ok/erro.
+  - Submit → cria workspace com `transport="ssh"`.
+- **Codespace tab**:
+  - Carrega lista de codespaces do user via `GET
+/workspaces/codespaces` (que chama `gh codespace list` por trás)
+    no abrir do tab.
+  - Lista com `name`, `repository`, `state` (running/stopped/etc),
+    `git_status`.
+  - Click → cria workspace com `transport="codespace"`,
+    `codespace_name=...`. Se stopped, mostra warning "será iniciado
+    quando entrar".
+
+### G.2.7 — Visual: badge no command-bar/header
+
+- `chat/components/chat/features/command-bar.tsx` já tem
+  `WorkspaceSelector` no header. Estender para mostrar ícone após o
+  nome:
+  - `transport="local"` → sem badge
+  - `transport="ssh"` → ícone `Server` (lucide) + tooltip "SSH:
+    <host>"
+  - `transport="codespace"` → ícone `Cloud` + tooltip "Codespace:
+    <name>"
+- `chat/lib/i18n/strings.csv.ts`: chaves `workspace.transport.*`.
+
+### G.2.8 — Endpoints novos
+
+- `GET /workspaces/codespaces` — lista do user (chama gh CLI)
+- `POST /workspaces/test-ssh` — body `{host, key_id}` → bool ok
+- `GET /auth/ssh-keys` — lista entries `ssh:*` do vault do user
+  (apenas labels/URLs, sem chave em si)
+- `POST /auth/ssh-keys` — adiciona key (multipart: key file +
+  metadata)
+- `DELETE /auth/ssh-keys/{id}` — remove
+
+### Dependências novas
+
+```toml
+asyncssh = ">=2.18"   # SSH async-native, melhor que paramiko
+# `gh` CLI continua como requisito de sistema (já era pra G original)
+```
+
+### Arquivos críticos (G.2)
+
+| Sub   | Arquivos backend                                                                                                              | Arquivos frontend                                                                                           |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| G.2.1 | `src/types/workspace.py` (+5 campos), `src/services/workspace.py` (migration `_migrate` set `transport="local"`)              | `chat/lib/stores/workspaces-store.ts` (estende `WorkspaceInfo`)                                             |
+| G.2.2 | `src/services/transport/{__init__,local,ssh,codespace,factory}.py` (todos novos)                                              | —                                                                                                           |
+| G.2.3 | `src/tools/fs.py`, `src/tools/git.py`, `src/services/pty_session.py` (refactor para usar `get_transport(workspace)`)          | —                                                                                                           |
+| G.2.4 | `src/services/secrets/keepass.py` (helpers `add_ssh_key`, `get_ssh_key`); `src/api/handlers/auth.py` (+`/auth/ssh-keys` CRUD) | —                                                                                                           |
+| G.2.5 | `src/services/transport/codespace.py`; `src/api/handlers/workspaces.py` (+`/codespaces`)                                      | —                                                                                                           |
+| G.2.6 | `src/api/handlers/workspaces.py` (+`test-ssh`)                                                                                | `chat/components/layout/workspace-trust-dialog.tsx` (3 pílulas + tabs Local/SSH/Codespace + Testar conexão) |
+| G.2.7 | —                                                                                                                             | `chat/components/layout/workspace-selector.tsx` (badge), i18n `workspace.transport.*`                       |
+| G.2.8 | endpoints listados em G.2.2/4/5                                                                                               | proxies Hono em `chat/server/routes/{workspaces,auth}.ts`                                                   |
+
+### Verificação (G.2)
+
+- Workspace local: tudo continua funcionando exatamente como antes
+  (sem regressões — `LocalTransport` é wrapper transparente).
+- Adicionar SSH workspace: dialog → SSH tab → host `bruno@vps.lan`,
+  path `/home/bruno/projects/vectora`, key do vault → testar → ok.
+  Workspace criado; comando `ls` no PTY do workbench mostra a pasta
+  remota; `git status` na pasta remota funciona; badge `Server` no
+  header.
+- Adicionar Codespace: dialog → Codespace tab → lista carrega via
+  `gh codespace list`; selecionar um → workspace criado com
+  `transport="codespace"`. `gh codespace start` é disparado se
+  stopped. PTY abre na sandbox do codespace; arquivos da aba
+  Arquivos do workbench são do codespace.
+- Trocar entre workspaces local/SSH/codespace: o badge no header
+  atualiza, o terminal reconecta no transport correto.
+
+---
+
+## Resumo das mudanças (F.3 + G.2)
+
+| Bloco | Entrega                                                                                                                                           |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F.3   | Safe-roots configuráveis pelo admin; BrowseDir respeita cap; input de path editável; painel "Pastas" na sidebar; `Documents/vectora` builtin      |
+| G.2   | Workspace ganha `transport` (local/ssh/codespace); `TransportBackend` Protocol; SSH via asyncssh; Codespaces via `gh` CLI; UI de trust com 3 tabs |

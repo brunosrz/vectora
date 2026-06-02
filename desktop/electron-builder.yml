@@ -1,0 +1,87 @@
+# electron-builder config — Bloco T.12.6
+#
+# Gera instaladores nativos assinados (Win .msi/.exe, macOS .dmg notarized,
+# Linux .AppImage/.deb/.rpm). Cada instalador empacota a shell Electron
+# + o binário Nuitka como extraResource (T.12.4).
+#
+# Pre-req:
+# - Win: CSC_LINK + CSC_KEY_PASSWORD (cert EV Azure Trusted Signing).
+# - macOS: APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD + APPLE_TEAM_ID.
+# - Linux: nada (não assinamos AppImage).
+#
+# Publish: GitHub Releases privadas (T.12.3). Token via env GH_TOKEN.
+
+appId: company.vectora.desktop
+productName: Vectora
+copyright: Copyright © 2026 Vectora Company
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+
+directories:
+  output: dist-electron
+  buildResources: build-resources
+
+files:
+  - dist/**/*
+  - package.json
+  - "!node_modules/**/{CHANGELOG.md,README.md,*.d.ts,test,tests}"
+
+# Binário Nuitka empacotado como sidecar (T.12.4 → dist/vectora-core/).
+extraResources:
+  - from: ../dist-nuitka
+    to: vectora-core
+    filter: ["**/*"]
+
+# Janela de update aponta para o canal privado.
+publish:
+  - provider: github
+    owner: brunosrz
+    repo: vectora-releases
+    private: true
+    releaseType: release
+
+win:
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+    - target: msi
+      arch: [x64]
+  icon: ../chat/public/vectora.ico
+  signingHashAlgorithms: [sha256]
+  # CSC_LINK / CSC_KEY_PASSWORD vem do env do CI.
+  certificateSubjectName: "Vectora Company"
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: ../chat/public/vectora.ico
+  uninstallerIcon: ../chat/public/vectora.ico
+  shortcutName: Vectora
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  icon: ../chat/public/vectora.ico
+  category: public.app-category.developer-tools
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build-resources/entitlements.mac.plist
+  entitlementsInherit: build-resources/entitlements.mac.plist
+  notarize: true
+
+linux:
+  target:
+    - target: AppImage
+      arch: [x64, arm64]
+    - target: deb
+      arch: [x64, arm64]
+    - target: rpm
+      arch: [x64]
+  icon: ../chat/public/favicon-600x600.png
+  category: Development
+  synopsis: Vectora — AI-first development assistant
+  description: Self-hosted AI assistant with RAG, terminals, code editing and workflows.
+
+# Auto-update channel name (alpha / beta / latest).
+generateUpdatesFilesForAllChannels: true

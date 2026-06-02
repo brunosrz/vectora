@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 _PUBLIC_PREFIXES: tuple[str, ...] = (
     "/auth/",
     "/health",
+    "/license/",
     "/docs",
     "/openapi.json",
     "/redoc",
@@ -42,6 +43,7 @@ _API_PREFIXES: tuple[str, ...] = (
     "/vectora.",
     "/oauth",
     "/health",
+    "/license",
     "/metrics",
     "/docs",
     "/openapi.json",

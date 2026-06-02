@@ -1,0 +1,95 @@
+# Nuitka build config — Bloco T.12.4
+#
+# Compila `src/launcher.py` em um binário onefile que embute todo o backend
+# Python (FastAPI, LangGraph, LangChain, vector stores, etc.) e o build de
+# produção do frontend Next.js (`chat/out/`) como data dir.
+#
+# Uso (em CI ou local):
+#
+#     uv run nuitka --config-file=build/nuitka.toml src/launcher.py
+#
+# Em CI (matrix Win/macOS/Linux), o GitHub Actions `runner.yml` chama isto
+# após `pnpm --dir chat build && pnpm --dir chat exec next export` para
+# garantir que `chat/out/` existe.
+
+[main]
+# Entry point — o Launcher (T.12.1) faz o gate de licença e delega para
+# `src.main` que toca o CLI tradicional (chat/mcp/headless/desktop).
+script = "src/launcher.py"
+output_filename = "vectora"
+
+# Onefile: binário único auto-extraível. Standalone seria mais rápido para
+# subir mas distribuímos via instalador (T.12.6), então onefile vence.
+standalone = true
+onefile = true
+
+# Otimizações
+follow_imports = true
+remove_output = true
+assume_yes_for_downloads = true
+
+# Plugins Nuitka necessários para o stack do Vectora.
+plugins = [
+    "numpy",
+    "multiprocessing",
+    "anti-bloat",
+]
+
+# Plugins excluídos — modulos que aparecem por dep transitiva mas nunca
+# rodam em prod.
+disable_plugins = [
+    "tk-inter",
+]
+
+# Empacota o frontend exportado pelo Next.js como data dir. O FastAPI já tem
+# `serve_static=True` (`src/api/server.py`) — só precisa apontar o path.
+include_data_dirs = [
+    "chat/out=chat_static",
+]
+
+# Recursos extras (icones, templates de skill, manifest).
+include_data_files = [
+    "chat/public/favicon.ico=chat_static/favicon.ico",
+    "chat/public/manifest.json=chat_static/manifest.json",
+]
+
+# Deps com extensões C que precisam ser empacotadas explicitamente. Ajustar
+# por SO conforme o build CI for validando.
+include_package_data = [
+    "lancedb",
+    "pyarrow",
+    "tantivy",
+    "pykeepass",
+    "asyncssh",
+]
+
+# Os imports lazy do langchain/langgraph dao falso negativo no scanner do
+# Nuitka — forcamos a inclusao para evitar ImportError em runtime.
+include_module = [
+    "langchain_cohere",
+    "langchain_openai",
+    "langchain_anthropic",
+    "langchain_google_genai",
+    "langchain_tavily",
+    "langchain_mcp_adapters",
+    "langgraph.checkpoint.sqlite.aio",
+]
+
+# Reducao de tamanho — strip de simbolos C em release.
+strip = true
+lto = "yes"
+
+# Plataforma — Nuitka detecta sozinho, mas reportamos para o build matrix.
+[platform.win32]
+windows_disable_console = false
+windows_company_name = "Vectora Company"
+windows_product_name = "Vectora"
+windows_file_description = "Vectora — AI-first development assistant"
+windows_icon_from_ico = "chat/public/vectora.ico"
+
+[platform.darwin]
+macos_create_app_bundle = false
+macos_signed_app_name = "com.vectora.cli"
+
+[platform.linux]
+linux_icon = "chat/public/favicon-600x600.png"
