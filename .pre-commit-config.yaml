@@ -138,6 +138,19 @@ repos:
         pass_filenames: false
 
   # ==========================================
+  # JS/TS Lint — oxlint (Rust, OXC toolchain)
+  # ==========================================
+  # ~50–100x mais rapido que ESLint; config em chat/.oxlintrc.json.
+  - repo: local
+    hooks:
+      - id: oxlint
+        name: JS/TS Lint (oxlint)
+        entry: pnpm --dir chat exec oxlint
+        language: system
+        files: ^chat/.*\.(ts|tsx|js|jsx|mjs|cjs)$
+        pass_filenames: false
+
+  # ==========================================
   # Type Checking — TypeScript (tsc)
   # ==========================================
   # `pnpm --dir chat exec tsc` é cross-platform (Windows/Linux/macOS) e
