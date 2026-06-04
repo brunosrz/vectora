@@ -48,6 +48,7 @@ LicenseStatus = Literal["active", "trial", "expired", "revoked", "unknown"]
 
 DEFAULT_LICENSE_URL = "https://vectora.company/functions/v1/validate-license"
 CACHE_PATH = Path.home() / ".vectora" / "license_cache.json"
+CONFIG_PATH = Path.home() / ".vectora" / "config.toml"
 
 CACHE_TTL_ONLINE = timedelta(hours=6)
 CACHE_TTL_OFFLINE = timedelta(hours=48)
@@ -234,6 +235,55 @@ async def validate_license_async() -> LicenseStatusInfo:
 def validate_license_sync() -> LicenseStatusInfo:
     """Versão síncrona — usada pelo Launcher antes do uvicorn subir."""
     return asyncio.run(validate_license_async())
+
+
+def write_token_to_config(token: str) -> None:
+    """Persiste ``VECTORA_TOKEN`` em ``~/.vectora/config.toml`` (seção
+    ``[license]``).
+
+    O arquivo é lido em todo boot pelo launcher antes da validação remota;
+    isto é, o operador pode trocar o token via UI sem precisar exportar
+    a env var manualmente. Outras seções do TOML são preservadas.
+
+    Token vazio remove a chave (sem deletar a seção inteira).
+    """
+    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    raw = ""
+    if CONFIG_PATH.is_file():
+        raw = CONFIG_PATH.read_text(encoding="utf-8")
+
+    lines = raw.splitlines()
+    in_license = False
+    found_token = False
+    new_lines: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_license = stripped == "[license]"
+            new_lines.append(line)
+            continue
+        if in_license and stripped.startswith("token"):
+            found_token = True
+            if token:
+                new_lines.append(f'token = "{token}"')
+            # Token vazio → linha removida.
+            continue
+        new_lines.append(line)
+
+    if not found_token:
+        if not any(line.strip() == "[license]" for line in new_lines):
+            if new_lines and new_lines[-1] != "":
+                new_lines.append("")
+            new_lines.append("[license]")
+        if token:
+            new_lines.append(f'token = "{token}"')
+
+    CONFIG_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+    # Permissão restritiva (apenas o owner lê) em Unix; no-op em Windows.
+    with contextlib.suppress(OSError):
+        CONFIG_PATH.chmod(0o600)
 
 
 def read_cached_status() -> LicenseStatusInfo | None:

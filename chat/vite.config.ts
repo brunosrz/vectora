@@ -105,6 +105,7 @@ export default defineConfig({
       "/vectora.terminal.v1": wsProxy,
       "/admin": apiProxy,
       "/workspaces": apiProxy,
+      "/threads": apiProxy,
       "/plugins": apiProxy,
       "/skills": apiProxy,
       "/license": apiProxy,

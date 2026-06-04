@@ -5,10 +5,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import type { RouterContext } from "../router";
-
-// `redirect({...} as Parameters<typeof redirect>[0])`: a tipagem estrita
-// do TanStack exige `from` para inferir o destino. Como o guard roda na
-// rota raiz e não tem `from` ainda, fazemos cast direto.
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/"];
 
@@ -20,22 +17,36 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATH_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
+function redirectToSignin(currentPath: string): never {
+  // `as unknown as Parameters<...>`: a tipagem estrita do RedirectOptions
+  // exige `from` para inferir tipos de `search`. O guard roda na raiz e
+  // não tem `from` ainda.
+  throw redirect({
+    to: "/auth/signin",
+    search: { from: currentPath },
+  } as unknown as Parameters<typeof redirect>[0]);
+}
+
 /**
- * Auth guard global. Substitui o middleware `chat/proxy.ts` do Next.js.
+ * Guard chamado pelo `beforeLoad` da rota raiz.
  *
- * Estratégia:
+ * Fluxo:
  *  1. Rotas públicas (`/auth/*`, `/share/*`) passam direto.
- *  2. Faz `GET /auth/me` para validar a sessão (cookies httpOnly).
- *  3. Se 401, tenta `POST /auth/refresh` silencioso.
- *  4. Falhando, redireciona para `/auth/signin?from=...`.
- *  5. Em primeiro acesso (sem usuários), redireciona para `/auth/signup`.
+ *  2. `GET /auth/has-users`: vazio → redirect `/auth/signup` (setup root).
+ *  3. `GET /auth/me`: 200 → libera + atualiza store.
+ *  4. 401 → `POST /auth/refresh` silencioso; sucesso libera, falha
+ *     limpa o store e vai para `/auth/signin?from=<currentPath>`.
+ *
+ * Cookies `vectora_access`/`vectora_refresh` httpOnly viajam em todas as
+ * chamadas via `credentials: "include"`. O auth-store NUNCA é a fonte
+ * de verdade — sempre validamos contra o backend.
  */
 async function ensureAuthenticated(currentPath: string): Promise<void> {
-  if (!AUTH_REQUIRED || isPublicPath(currentPath)) {
-    return;
-  }
+  if (!AUTH_REQUIRED || isPublicPath(currentPath)) return;
 
-  // Verifica se já existe pelo menos um user — se não, vai pra setup root.
+  const store = useAuthStore.getState();
+
+  // Setup wizard: backend sem usuários → manda para signup.
   try {
     const hasUsersRes = await fetch("/auth/has-users", {
       credentials: "include",
@@ -43,46 +54,68 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
     if (hasUsersRes.ok) {
       const data = (await hasUsersRes.json()) as { exists?: boolean };
       if (data.exists === false) {
+        store.clearUser();
         throw redirect({ to: "/auth/signup" });
       }
     }
   } catch (err) {
-    // Se for um redirect lançado pelo TanStack, propaga.
     if (err && typeof err === "object" && "to" in err) throw err;
-    // ECONNREFUSED ou backend offline — manda para signin com mensagem.
+    // Backend offline — não interrompe. O fetch abaixo vai falhar igual.
   }
 
   let meRes: Response;
   try {
     meRes = await fetch("/auth/me", { credentials: "include" });
   } catch {
-    throw redirect({
-      to: "/auth/signin",
-      search: { from: currentPath },
-    } as unknown as Parameters<typeof redirect>[0]);
+    // ECONNREFUSED ou rede offline: limpa store local para evitar
+    // renderização com dados stale e manda para a tela de login.
+    store.clearUser();
+    redirectToSignin(currentPath);
   }
 
-  if (meRes.ok) return;
+  if (meRes.ok) {
+    // Sincroniza o store com a resposta canônica do backend.
+    // Se o JSON falhar (ex.: proxy retornou index.html quando backend está
+    // offline), trata como não autenticado — NÃO retorna silenciosamente.
+    try {
+      const user = await meRes.json();
+      if (user?.id) {
+        useAuthStore.getState().setUser(user);
+        return;
+      }
+    } catch {
+      /* corpo inválido — cai no clear+redirect abaixo */
+    }
+    store.clearUser();
+    redirectToSignin(currentPath);
+  }
 
   if (meRes.status === 401) {
-    // Tenta refresh silencioso.
     try {
-      const refreshRes = await fetch("/auth/refresh", {
+      const refresh = await fetch("/auth/refresh", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: "{}",
       });
-      if (refreshRes.ok) return;
+      if (refresh.ok) {
+        const retry = await fetch("/auth/me", { credentials: "include" });
+        if (retry.ok) {
+          try {
+            useAuthStore.getState().setUser(await retry.json());
+          } catch {
+            /* idem */
+          }
+          return;
+        }
+      }
     } catch {
-      // ignora — vai cair no redirect.
+      /* cai no clear+redirect abaixo */
     }
   }
 
-  throw redirect({
-    to: "/auth/signin",
-    search: { from: currentPath },
-  } as unknown as Parameters<typeof redirect>[0]);
+  store.clearUser();
+  redirectToSignin(currentPath);
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
@@ -94,7 +127,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootComponent() {
   const location = useLocation();
-  // Marca o lang no documento para acessibilidade.
   if (typeof document !== "undefined") {
     document.documentElement.lang = "pt-BR";
   }

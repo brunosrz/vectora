@@ -17,6 +17,7 @@ import {
   CornerDownLeft,
   Folder,
   GitBranch,
+  HardDrive,
   Loader2,
   Monitor,
   Server,
@@ -42,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DRIVES_PSEUDO_PATH,
   useWorkspacesStore,
   type BrowseResult,
   type CodespaceSummary,
@@ -114,7 +116,9 @@ export function WorkspaceTrustDialog({
     setError(null);
     try {
       const q = path ? `?path=${encodeURIComponent(path)}` : "";
-      const res = await fetch(`/workspaces/browse${q}`);
+      const res = await fetch(`/workspaces/browse${q}`, {
+        credentials: "include",
+      });
       if (res.status === 403) {
         const data = await res.json().catch(() => ({}));
         setError(data.detail ?? "Caminho fora das pastas seguras.");
@@ -122,6 +126,15 @@ export function WorkspaceTrustDialog({
       }
       if (!res.ok) {
         setError(`Erro ao listar (${res.status}).`);
+        return;
+      }
+      // Se o proxy retornou index.html (backend offline), o content-type é
+      // text/html e o JSON.parse falharia — detectar antes de tentar.
+      const ct = res.headers.get("content-type") ?? "";
+      if (!ct.includes("application/json")) {
+        setError(
+          "Servidor indisponível. Inicie o backend e reabra este diálogo.",
+        );
         return;
       }
       const data = (await res.json()) as BrowseResult;
@@ -341,23 +354,48 @@ export function WorkspaceTrustDialog({
                   </button>
                 )}
 
+                {/* Atalho explícito para a tela de discos, oculto quando já
+                    está nela. Útil quando o usuário pulou direto para uma
+                    pasta via texto e quer ver outras unidades. */}
+                {listing && !listing.at_drives_root && (
+                  <button
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors text-muted-foreground"
+                    onClick={() => load(DRIVES_PSEUDO_PATH)}
+                    disabled={loading}
+                  >
+                    <HardDrive className="w-4 h-4 shrink-0" />
+                    {t("workspace.browse_drives")}
+                  </button>
+                )}
+
                 {listing && listing.entries.length === 0 && (
                   <p className="px-3 py-4 text-sm text-muted-foreground text-center">
                     {t("workspace.browse_empty")}
                   </p>
                 )}
 
-                {listing?.entries.map((entry) => (
-                  <button
-                    key={entry.path}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors"
-                    onClick={() => load(entry.path)}
-                    disabled={loading}
-                  >
-                    <Folder className="w-4 h-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{entry.name}</span>
-                  </button>
-                ))}
+                {listing?.entries.map((entry) => {
+                  const isDrive = entry.kind === "drive";
+                  const Icon = isDrive ? HardDrive : Folder;
+                  return (
+                    <button
+                      key={entry.path}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors"
+                      onClick={() => load(entry.path)}
+                      disabled={loading}
+                    >
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${isDrive ? "text-sky-500" : "text-muted-foreground"}`}
+                      />
+                      <span className="truncate font-medium">{entry.name}</span>
+                      {entry.label && (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {entry.label}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </ScrollArea>
 

@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
+
 import { useT } from "@/lib/i18n";
 
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +89,8 @@ interface ServerConfig {
   max_recursion: number;
   allow_public_signup: boolean;
   db_dsn: string;
+  vectora_token_masked: string;
+  vectora_token_configured: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -127,7 +131,7 @@ const api = {
   system: () => fetch("/admin/system").then((r) => r.json()),
   config: {
     get: () => fetch("/admin/config").then((r) => r.json()),
-    patch: (body: Partial<ServerConfig>) =>
+    patch: (body: Partial<ServerConfig> & { vectora_token?: string }) =>
       fetch("/admin/config", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -669,6 +673,10 @@ function ConfigPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Input controlado para VECTORA_TOKEN: o backend nunca devolve o token
+  // em claro, então mantemos um buffer local. Vazio = não-alterar.
+  const [tokenInput, setTokenInput] = useState("");
+  const [showToken, setShowToken] = useState(false);
 
   useEffect(() => {
     api.config
@@ -685,7 +693,14 @@ function ConfigPanel() {
         allow_public_signup: config.allow_public_signup,
         default_model: config.default_model,
         max_recursion: config.max_recursion,
+        ...(tokenInput.trim() ? { vectora_token: tokenInput.trim() } : {}),
       });
+      // Re-fetch para refletir o masked atualizado.
+      if (tokenInput.trim()) {
+        const fresh = await api.config.get();
+        setConfig(fresh);
+        setTokenInput("");
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
@@ -703,6 +718,62 @@ function ConfigPanel() {
 
   return (
     <div className="space-y-4">
+      <div className="space-y-1.5 pb-3 border-b">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium">VECTORA_TOKEN</p>
+          {config.vectora_token_configured ? (
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+              configurado
+            </span>
+          ) : (
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30">
+              ausente
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Token de licença do produto. Obtenha em{" "}
+          <a
+            href="https://vectora.company/dashboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            vectora.company/dashboard
+          </a>
+          .
+        </p>
+        {config.vectora_token_configured && (
+          <p className="text-xs text-muted-foreground font-mono">
+            atual: {config.vectora_token_masked}
+          </p>
+        )}
+        <div className="flex gap-1.5">
+          <Input
+            type={showToken ? "text" : "password"}
+            value={tokenInput}
+            onChange={(e) => setTokenInput(e.target.value)}
+            placeholder={
+              config.vectora_token_configured
+                ? "Digite para substituir…"
+                : "vct_…"
+            }
+            className="h-8 text-xs font-mono flex-1"
+            autoComplete="off"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 px-2"
+            onClick={() => setShowToken((v) => !v)}
+            aria-label={showToken ? "Ocultar token" : "Mostrar token"}
+          >
+            {showToken ? "Ocultar" : "Mostrar"}
+          </Button>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium">Signup público</p>
@@ -1003,6 +1074,19 @@ const SUB_TABS: { id: AdminSubTab; label: string; icon: React.ReactNode }[] = [
 
 export function AdminTab() {
   const [active, setActive] = useState<AdminSubTab>("users");
+
+  // Deep-link: outros lugares (license-banner, etc.) usam
+  // `openAt("admin", "config")`. Quando o store recebe `adminSubTab`,
+  // sincronizamos com o `active` local e limpamos o slot para que
+  // re-aberturas do dialog não voltem para a mesma sub-aba.
+  const adminSubTab = useSettingsDialogStore((s) => s.adminSubTab);
+  const setAdminSubTab = useSettingsDialogStore((s) => s.setAdminSubTab);
+  useEffect(() => {
+    if (adminSubTab) {
+      setActive(adminSubTab);
+      setAdminSubTab(undefined as never);
+    }
+  }, [adminSubTab, setAdminSubTab]);
 
   return (
     <div className="space-y-4">

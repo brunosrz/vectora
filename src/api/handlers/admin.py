@@ -15,6 +15,7 @@ Endpoints (todos exigem role admin ou root):
 from __future__ import annotations
 
 import logging
+import os
 import platform
 import sys
 from typing import Any
@@ -110,6 +111,11 @@ class PatchConfigBody(BaseModel):
     allow_public_signup: bool | None = None
     default_model: str | None = None
     max_recursion: int | None = None
+    # `vectora_token`: token de licença do produto. Persiste em
+    # `~/.vectora/config.toml`; aplica imediatamente no `os.environ`,
+    # mas o `LicenseStatusInfo` cacheado só renova no próximo
+    # `validate_license_*` (TTL 6h ou após restart).
+    vectora_token: str | None = None
 
 
 class CreateSafeRootBody(BaseModel):
@@ -436,11 +442,21 @@ async def get_server_config(request: Request) -> dict:
     try:
         from src.config.settings import settings
 
+        raw_token = os.environ.get("VECTORA_TOKEN", "").strip()
+        # Mostra prefixo + sufixo para o operador conferir sem expor o segredo.
+        masked = (
+            f"{raw_token[:7]}•••{raw_token[-4:]}"
+            if len(raw_token) > 14
+            else ("•" * 8 if raw_token else "")
+        )
+
         return {
             "default_model": getattr(settings, "default_model", ""),
             "max_recursion": getattr(settings, "max_recursion", 50),
             "allow_public_signup": getattr(settings, "allow_public_signup", False),
             "db_dsn": getattr(settings, "db_dsn", ""),
+            "vectora_token_masked": masked,
+            "vectora_token_configured": bool(raw_token),
         }
     except Exception as exc:
         logger.exception("get_server_config failed")
@@ -470,6 +486,17 @@ async def patch_server_config(request: Request, body: PatchConfigBody) -> dict:
         if body.max_recursion is not None:
             settings.max_recursion = body.max_recursion  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
             updated["max_recursion"] = body.max_recursion
+
+        if body.vectora_token is not None:
+            token = body.vectora_token.strip()
+            os.environ["VECTORA_TOKEN"] = token
+            # Persiste em ~/.vectora/config.toml na seção [license] para
+            # que o próximo boot do binário aplique sem o operador
+            # precisar exportar a env var manualmente.
+            from src.services.license import write_token_to_config
+
+            write_token_to_config(token)
+            updated["vectora_token_configured"] = bool(token)
 
         logger.info("admin: config patched by root user_id=%s: %s", user.id, updated)
         return {"status": "updated", "updated": updated}

@@ -32,6 +32,10 @@ export interface DirEntry {
   name: string;
   path: string;
   is_dir: boolean;
+  /** `"dir"` (default) ou `"drive"` para volumes do sistema (C:, /, /Volumes/...). */
+  kind?: "dir" | "drive";
+  /** Label do volume quando `kind === "drive"` (vazio quando ausente). */
+  label?: string;
 }
 
 export interface BrowseResult {
@@ -41,7 +45,12 @@ export interface BrowseResult {
   /** ID da safe-root que cobre o path atual; null quando privilegiado
    *  navegando livre. Espelha o backend (F.3.2). */
   safe_root_id?: string | null;
+  /** `true` quando `entries` lista volumes em vez de subdiretórios. */
+  at_drives_root?: boolean;
 }
+
+/** Pseudo-path que dispara o modo "lista de discos" no backend. */
+export const DRIVES_PSEUDO_PATH = "__drives__";
 
 /** Resumo de uma safe-root para o painel de acesso rápido (F.3.5). */
 export interface SafeRootSummary {

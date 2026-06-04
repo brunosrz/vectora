@@ -45,16 +45,45 @@ export const useAuthStore = create<AuthState>()(
       clearUser: () => set({ user: null, isAuthenticated: false }),
 
       hydrate: async () => {
+        // `credentials: "include"` envia os cookies httpOnly `vectora_access`
+        // e `vectora_refresh` para o backend; sem isso o middleware nunca
+        // resolve o usuário e o sessionStorage falsifica `isAuthenticated`.
         try {
-          const res = await fetch("/auth/me");
+          const res = await fetch("/auth/me", { credentials: "include" });
           if (res.ok) {
             const user: AuthUser = await res.json();
             set({ user, isAuthenticated: true });
-          } else {
-            set({ user: null, isAuthenticated: false });
+            return;
           }
-        } catch {
+          if (res.status === 401) {
+            // Tenta refresh silencioso antes de invalidar a sessão local.
+            try {
+              const refresh = await fetch("/auth/refresh", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: "{}",
+              });
+              if (refresh.ok) {
+                const me = await fetch("/auth/me", {
+                  credentials: "include",
+                });
+                if (me.ok) {
+                  set({
+                    user: (await me.json()) as AuthUser,
+                    isAuthenticated: true,
+                  });
+                  return;
+                }
+              }
+            } catch {
+              /* cai no clear abaixo */
+            }
+          }
           set({ user: null, isAuthenticated: false });
+        } catch {
+          // Backend offline — não muda nada (cache anterior continua válido
+          // até o backend responder).
         }
       },
     }),

@@ -8,9 +8,9 @@
  *   via prop `onBlockingChange`).
  * - **oculto** — licença ativa e fora da janela de aviso.
  *
- * Click em "Configurar" abre Settings → Envs; "Renovar"/"Assinar" abre
- * o Customer Portal via ``POST /license/portal`` em nova aba (web)
- * ou ``window.vectora.openExternal`` (desktop Electron).
+ * Click em "Configurar" abre Settings → Administração → Configurações;
+ * "Renovar"/"Assinar" abre o Customer Portal via ``POST /license/portal``
+ * em nova aba (web) ou ``window.vectora.openExternal`` (desktop Electron).
  */
 
 import { useEffect, useState } from "react";
@@ -88,7 +88,7 @@ export function LicenseBanner({
           type="button"
           onClick={
             spec.cta.action === "configure"
-              ? () => openSettings("envs")
+              ? () => openSettings("admin", "config")
               : handlePortal
           }
           disabled={portalLoading}

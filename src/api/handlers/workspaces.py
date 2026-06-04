@@ -17,6 +17,7 @@ em modo CLI/root local, usa ``"local"``.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 from pathlib import Path
@@ -98,6 +99,11 @@ class DirEntry(BaseModel):
     name: str
     path: str
     is_dir: bool
+    # `kind`: "dir" (default), "drive" (raiz de volume Windows ou mount
+    # Linux/macOS). Frontend renderiza ícones diferentes por tipo e o
+    # `drive` exibe label/capacity quando disponível.
+    kind: str = "dir"
+    label: str = ""
 
 
 class BrowseResponse(BaseModel):
@@ -107,6 +113,9 @@ class BrowseResponse(BaseModel):
     # ID do SafeRoot que cobre o path atual, quando aplicável. Frontend
     # exibe a label do safe-root como contexto ("dentro de Documents").
     safe_root_id: str | None = None
+    # `true` quando `entries` lista volumes do sistema em vez de
+    # subdiretórios. Path nesse caso é o pseudo-path `"__drives__"`.
+    at_drives_root: bool = False
 
 
 class SafeRootInfo(BaseModel):
@@ -329,6 +338,87 @@ async def git_init_workspace(request: Request, body: GitInitRequest) -> StatusRe
     return StatusResponse(status="ok", workspace=_to_info(ws))
 
 
+_DRIVES_PSEUDO_PATH = "__drives__"
+
+
+def _list_drives() -> list[DirEntry]:
+    """Lista volumes do sistema para navegação pelo trust dialog.
+
+    - **Windows**: enumera letras `A:` a `Z:` que estejam montadas via
+      ``GetLogicalDrives`` (bitmask). Label vem do ``GetVolumeInformationW``
+      quando disponível.
+    - **Linux**: `/`, mais entradas de ``/mnt`` e ``/media``.
+    - **macOS**: `/`, mais entradas de ``/Volumes`` (sem `Macintosh HD`
+      duplicado quando aponta para `/`).
+    """
+    import sys as _sys
+
+    out: list[DirEntry] = []
+
+    if _sys.platform == "win32":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+            mask = kernel32.GetLogicalDrives()
+            volume_buf = ctypes.create_unicode_buffer(261)
+            fs_buf = ctypes.create_unicode_buffer(261)
+
+            for i in range(26):
+                if not (mask & (1 << i)):
+                    continue
+                letter = chr(ord("A") + i)
+                root = f"{letter}:\\"
+                label = ""
+                with contextlib.suppress(OSError, OverflowError):
+                    if kernel32.GetVolumeInformationW(
+                        root,
+                        volume_buf,
+                        261,
+                        None,
+                        ctypes.byref(wintypes.DWORD()),
+                        ctypes.byref(wintypes.DWORD()),
+                        fs_buf,
+                        261,
+                    ):
+                        label = volume_buf.value
+                out.append(
+                    DirEntry(
+                        name=f"{letter}:",
+                        path=root,
+                        is_dir=True,
+                        kind="drive",
+                        label=label,
+                    )
+                )
+        except Exception:
+            logger.warning("workspaces: falha ao enumerar drives Windows")
+        return out
+
+    # Unix: raiz + pontos de montagem comuns.
+    out.append(DirEntry(name="/", path="/", is_dir=True, kind="drive", label="Raiz"))
+    for mount in ("/mnt", "/media", "/Volumes"):
+        m = Path(mount)
+        if not m.is_dir():
+            continue
+        try:
+            out.extend(
+                DirEntry(
+                    name=child.name,
+                    path=str(child),
+                    is_dir=True,
+                    kind="drive",
+                    label="",
+                )
+                for child in sorted(m.iterdir(), key=lambda p: p.name.lower())
+                if child.is_dir() and not child.name.startswith(".")
+            )
+        except (PermissionError, OSError):
+            continue
+    return out
+
+
 @router.get("/BrowseDir", response_model=BrowseResponse)
 async def browse_dir(
     request: Request,
@@ -350,6 +440,18 @@ async def browse_dir(
 
     registry = get_safe_root_registry()
     privileged = _is_privileged(request)
+
+    # Modo "lista de drives" — só faz sentido para usuários privilegiados.
+    # User comum só navega dentro dos safe-roots, então drives ficariam
+    # vazios e inacessíveis.
+    if path == _DRIVES_PSEUDO_PATH and privileged:
+        return BrowseResponse(
+            path=_DRIVES_PSEUDO_PATH,
+            parent=None,
+            entries=_list_drives(),
+            safe_root_id=None,
+            at_drives_root=True,
+        )
 
     base = Path(path).expanduser() if path else Path.home()
     try:
@@ -399,11 +501,14 @@ async def browse_dir(
     except PermissionError:
         pass
 
-    # `parent` só preenche se ainda está sob algum safe-root (user comum)
-    # ou se há um pai real (privileged).
+    # `parent`:
+    # - User privileged na raiz de um volume (`C:\\`, `/`): aponta para
+    #   o pseudo-path `__drives__` para que "voltar" liste discos.
+    # - User comum: só sobe se ainda dentro de algum safe-root.
+    # - Else: caminho do pai real.
     parent: str | None
     if base.parent == base:
-        parent = None
+        parent = _DRIVES_PSEUDO_PATH if privileged else None
     elif privileged:
         parent = str(base.parent)
     else:
@@ -545,6 +650,18 @@ async def create_worktree(body: CreateWorktreeRequest) -> StatusResponse:
 # router Connect-style acima sem colisão.
 
 view_router = APIRouter(prefix="/workspaces", tags=["workspaces-view"])
+
+
+@view_router.get("/browse", response_model=BrowseResponse)
+async def browse_view(
+    request: Request,
+    path: Annotated[str, Query()] = "",
+) -> BrowseResponse:
+    """Atalho REST-friendly para ``BrowseDir`` — consumido pelo trust
+    dialog. Mantemos o handler Connect-style para clients que falam o
+    naming antigo e este alias serve a SPA do chat sem cruzar
+    namespaces."""
+    return await browse_dir(request=request, path=path)
 
 
 class TreeEntry(BaseModel):

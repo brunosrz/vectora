@@ -247,6 +247,7 @@ workspace.trust_title,Trust this folder?,¿Confiar en esta carpeta?,Confiar nest
 workspace.trust_desc,"Vectora can only read, write and run commands inside trusted folders. Outside this folder nothing is accessible.","Vectora solo puede leer, escribir y ejecutar comandos dentro de carpetas confiables. Fuera de esta carpeta nada es accesible.","O Vectora só pode ler, escrever e rodar comandos dentro de pastas confiáveis. Fora dela nada é acessível."
 workspace.browse_title,Choose a folder,Elige una carpeta,Escolha uma pasta
 workspace.browse_up,Up one level,Subir un nivel,Subir um nível
+workspace.browse_drives,View drives,Ver discos,Ver discos
 workspace.path_placeholder,Type a path and press Enter…,Escribe una ruta y pulsa Enter…,Digite um caminho e pressione Enter…
 workspace.go,Go,Ir,Ir
 workspace.browse_empty,No subfolders here,No hay subcarpetas aquí,Nenhuma subpasta aqui
@@ -260,7 +261,7 @@ workspace.tab_local,Local,Local,Local
 workspace.transport.ssh,SSH,SSH,SSH
 workspace.transport.codespace,Codespace,Codespace,Codespace
 license.dismiss,Dismiss,Cerrar,Fechar
-license.banner.unconfigured,VECTORA_TOKEN not configured. Add yours in Settings → Envs to unlock chat.,VECTORA_TOKEN no configurado. Agrégalo en Configuración → Envs para usar el chat.,VECTORA_TOKEN não configurado. Adicione o seu em Configurações → Envs.
+license.banner.unconfigured,VECTORA_TOKEN not configured. Add yours in Settings → Administration → Configuration to unlock chat.,VECTORA_TOKEN no configurado. Agrégalo en Configuración → Administración → Configuración para usar el chat.,VECTORA_TOKEN não configurado. Adicione o seu em Configurações → Administração → Configurações.
 license.banner.configure,Configure,Configurar,Configurar
 license.banner.expired,License expired. Renew to keep using Vectora.,Licencia vencida. Renueva para seguir usando Vectora.,Licença expirada. Renove para continuar usando o Vectora.
 license.banner.renew,Renew,Renovar,Renovar

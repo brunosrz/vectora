@@ -32,8 +32,8 @@ _PUBLIC_PREFIXES: tuple[str, ...] = (
 
 # Prefixos exclusivos da API Vectora.
 # Rotas que NÃO batem com nenhum desses prefixos são tratadas como
-# rotas do frontend (proxy reverso) e portanto são públicas — o Next.js
-# cuida da própria autenticação via cookie.
+# rotas do frontend (SPA / proxy dev) e portanto são públicas.
+# O TanStack Router na SPA cuida da autenticação via beforeLoad.
 _API_PREFIXES: tuple[str, ...] = (
     "/auth/",
     "/admin",
@@ -45,10 +45,20 @@ _API_PREFIXES: tuple[str, ...] = (
     "/health",
     "/license",
     "/metrics",
+    "/workspaces",
+    "/skills",
+    "/artifacts",
+    "/threads",
     "/docs",
     "/openapi.json",
     "/redoc",
     "/favicon",
+)
+
+# Rotas de API que são publicamente acessíveis (sem token).
+# Sobrepõe _API_PREFIXES: um path que bate aqui é público mesmo sendo API.
+_EXTRA_PUBLIC_PREFIXES: tuple[str, ...] = (
+    "/threads/share/",  # viewer público de conversas compartilhadas
 )
 
 # VECTORA_AUTH_REQUIRED=false desabilita auth (modo dev local / CLI)
@@ -72,12 +82,16 @@ def _is_public_route(path: str) -> bool:
 
     Lógica em camadas:
     1. Se a rota não bate com nenhum prefixo de API, é uma rota do frontend
-       que será proxiada para o Next.js → pública (o frontend cuida da auth).
-    2. Arquivos estáticos (extensão na última parte do path) → públicos.
-    3. Prefixos explicitamente públicos da API (_PUBLIC_PREFIXES).
+       (SPA / proxy dev) → pública; o TanStack Router cuida da auth no browser.
+    2. Prefixos de API explicitamente públicos (_EXTRA_PUBLIC_PREFIXES).
+    3. Arquivos estáticos (extensão na última parte do path) → públicos.
+    4. Prefixos explicitamente públicos da API (_PUBLIC_PREFIXES).
     """
-    # Rotas fora da API → proxy para o frontend → pública
+    # Rotas fora da API → frontend → pública
     if not any(path.startswith(p) for p in _API_PREFIXES):
+        return True
+    # Rotas de API marcadas explicitamente como públicas (ex.: viewer de share)
+    if any(path.startswith(p) for p in _EXTRA_PUBLIC_PREFIXES):
         return True
     # Arquivos estáticos (extensão presente) são sempre públicos
     last_segment = path.rsplit("/", maxsplit=1)[-1]
