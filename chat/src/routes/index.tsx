@@ -1,32 +1,44 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { queryClient } from "../router";
+import { threadsQueryKey } from "@/lib/queries/threads";
+import { listThreads, createThread } from "@/lib/api/vectora-client";
 
-/**
- * `/` — entrada do app. Por enquanto exibe uma tela mínima que confirma
- * que o Vite + TanStack Router estão funcionando.
- *
- * Quando os componentes de chat forem migrados, o `beforeLoad` aqui
- * redireciona para a última sessão ativa do usuário (via
- * `chat/lib/stores/threads-store`).
- */
+// `ToPath = never` permite usar paths não-registrados no type-check.
+type ToPath = never;
+
 export const Route = createFileRoute("/" as never)({
-  component: IndexComponent,
-});
+  loader: async () => {
+    // Prefetch da lista de threads para o beforeLoad abaixo.
+    await queryClient.ensureQueryData({
+      queryKey: threadsQueryKey,
+      queryFn: () => listThreads(1),
+      staleTime: 30_000,
+    });
+  },
+  beforeLoad: async () => {
+    const data = queryClient.getQueryData<{ threads: { id: string }[] }>(
+      threadsQueryKey,
+    );
+    const threads = data?.threads ?? [];
 
-function IndexComponent() {
-  return (
+    if (threads.length > 0) {
+      throw redirect({
+        to: "/session/$threadId" as ToPath,
+        params: { threadId: threads[0].id } as never,
+      });
+    }
+
+    // Nenhuma thread — cria uma nova e redireciona.
+    const thread = await createThread();
+    await queryClient.invalidateQueries({ queryKey: threadsQueryKey });
+    throw redirect({
+      to: "/session/$threadId" as ToPath,
+      params: { threadId: thread.id } as never,
+    });
+  },
+  component: () => (
     <main className="flex-1 flex items-center justify-center p-8">
-      <div className="max-w-md text-center space-y-3">
-        <h1 className="text-2xl font-semibold">Vectora</h1>
-        <p className="text-sm text-muted-foreground">
-          SPA Vite ativa. Os componentes do chat (ChatInterface, Workbench,
-          Sidebar) ainda usam o entry-point antigo — esta página será
-          substituída pelo chat completo quando as rotas forem portadas.
-        </p>
-        <p className="text-xs text-muted-foreground/60">
-          Backend FastAPI em <code>/auth</code>, <code>/vectora.chat.v1/*</code>
-          , <code>/license/status</code> etc.
-        </p>
-      </div>
+      <div className="text-sm text-muted-foreground">Carregando...</div>
     </main>
-  );
-}
+  ),
+});

@@ -1,21 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 
-import { router } from "./router";
+import { router, queryClient } from "./router";
 import "./styles.css";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // SWR-like: stale após 30s, mas usa cache enquanto refetch ocorre.
-      staleTime: 30_000,
-      refetchOnWindowFocus: true,
-      retry: 1,
-    },
-  },
-});
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -31,7 +20,7 @@ if (!rootElement) {
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} context={{ queryClient }} />
     </QueryClientProvider>
   </React.StrictMode>,
 );

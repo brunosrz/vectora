@@ -1,11 +1,14 @@
 /**
- * Shim para `next/image` — substitui por uma tag `<img>` nativa.
+ * Implementação do módulo virtual `next/image` (resolvido pelo
+ * `resolve.alias` do `vite.config.ts`). Renderiza `<img>` nativo.
  *
- * Em ambiente Vite/SPA não temos a otimização automática do Next.js,
- * mas os assets de marca do Vectora são pequenos e já vêm otimizados
- * (PNGs multi-res, SVGs vetoriais). A perda é desprezível.
+ * Aceita `src` (string ou `{src, width?, height?}`), `alt`, `width`,
+ * `height`, `priority`, `fill`, `sizes`. Os atributos `quality`,
+ * `placeholder`, `blurDataURL`, `unoptimized`, `loader` aparecem na
+ * assinatura mas não têm efeito.
  *
- * Mapeado via `resolve.alias` no `vite.config.ts`.
+ * `fill=true` posiciona absolute + object-fit: cover; ignora
+ * `width`/`height` nesse caso.
  */
 
 import type { ImgHTMLAttributes } from "react";

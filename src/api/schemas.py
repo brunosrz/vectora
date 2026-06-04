@@ -250,6 +250,30 @@ class GetHistoryResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Share schemas (leitura pública de threads compartilhadas)
+# ---------------------------------------------------------------------------
+
+
+class CreateShareRequest(BaseModel):
+    thread_id: str
+    ttl_hours: int = 72
+
+
+class CreateShareResponse(BaseModel):
+    token: str
+    url: str
+    expires_at: str
+
+
+class SharedThread(BaseModel):
+    thread_id: str
+    title: str = ""
+    messages: list[HistoryMessage]
+    created_at: str
+    expires_at: str = ""
+
+
+# ---------------------------------------------------------------------------
 # Tools schema (autodescoberta)
 # ---------------------------------------------------------------------------
 

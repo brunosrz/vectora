@@ -1,15 +1,14 @@
 /**
- * Vectora API Client
+ * Cliente HTTP do frontend para o backend FastAPI.
  *
- * Cliente que conecta ao backend FastAPI usando `fetch` nativo. Os paths
- * `/vectora.chat.v1.ChatService/...` são apenas convenção de nomenclatura
- * estilo gRPC; o backend responde POST/JSON puro, sem runtime ConnectRPC
- * nem protobuf. Schemas espelham `src/api/schemas.py` (Pydantic).
+ * - Streaming via SSE (`streamChat`, `resumeChat`) consome `Response.body`
+ *   diretamente; abortar requer passar `AbortSignal`.
+ * - Em 401 retenta uma vez via `/auth/refresh` antes de redirecionar para
+ *   `/auth/signin`. Refresh concorrente não é coordenado.
+ * - Caminhos relativos no mesmo origin do backend; cookies httpOnly viajam
+ *   em todas as chamadas via `credentials: "include"`.
  *
- * Em produção o frontend roda no mesmo origin do backend (FastAPI serve
- * `chat/dist/` via StaticFiles). Em dev, o proxy do Vite redireciona
- * `/vectora.chat.v1/*` etc. para `http://127.0.0.1:8080`. Cookies httpOnly
- * funcionam em ambos sem ajuste extra.
+ * Schemas espelham `src/api/schemas.py` (Pydantic).
  */
 
 import { VECTORA_API_URL } from "@/lib/constants/api";
@@ -295,6 +294,29 @@ export const getHistory = (
   thread_id: string,
 ): Promise<{ messages: HistoryMessage[] }> =>
   _post("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
+
+// ============================================================================
+// Share (read-only, rota pública — sem auth necessária)
+// ============================================================================
+
+export interface SharedThread {
+  thread_id: string;
+  title?: string;
+  messages: HistoryMessage[];
+  created_at: string;
+  expires_at?: string;
+}
+
+export async function getSharedThread(
+  token: string,
+): Promise<SharedThread | null> {
+  const res = await fetch(`${VECTORA_API_URL}/threads/share/${token}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`share/${token}: ${res.status}`);
+  return res.json() as Promise<SharedThread>;
+}
 
 // ============================================================================
 // SSE parser interno

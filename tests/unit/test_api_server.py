@@ -100,6 +100,11 @@ class TestRoutes:
         ):
             assert route in paths, f"Rota ausente: {route}"
 
+    def test_share_routes_exist(self, headless_app):
+        paths = self._route_paths(headless_app)
+        assert "/threads/share" in paths
+        assert "/threads/share/{token}" in paths
+
 
 # ---------------------------------------------------------------------------
 # GetTools (endpoint síncrono — pode testar sem graph)

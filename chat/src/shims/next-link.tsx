@@ -1,10 +1,13 @@
 /**
- * Shim para `next/link` — redireciona para o `Link` do TanStack Router.
+ * Implementação do módulo virtual `next/link` (resolvido pelo
+ * `resolve.alias` do `vite.config.ts`).
  *
- * Mapeado via `resolve.alias` no `vite.config.ts`. Preserva a API mais
- * comum (`href`, `prefetch`, `replace`, children). Props específicos do
- * Next.js (`scroll`, `as`, `passHref`, `legacyBehavior`) são aceitos mas
- * ignorados.
+ * Aceita `href`, `prefetch`, `replace`, children. Os atributos
+ * `scroll`, `as`, `passHref`, `legacyBehavior`, `locale` são
+ * preservados na assinatura mas não têm efeito.
+ *
+ * URLs externas (http(s):, mailto:, tel:, wa.me) caem para `<a>`
+ * nativo — `RouterLink` só conhece rotas internas.
  */
 
 import type { AnchorHTMLAttributes, ReactNode } from "react";

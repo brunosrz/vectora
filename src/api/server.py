@@ -1,13 +1,12 @@
 """FastAPI app factory do Vectora API.
 
 Modos:
-    chat     — API + StaticFiles da SPA Vite (`chat/dist/`)
-    headless — apenas API (sem catch-all SPA) — para integrações
+    chat     — API + StaticFiles da SPA (``chat/dist/``)
+    headless — apenas API (sem catch-all SPA)
 
-Endpoints registrados (paths estilo gRPC/Connect são apenas convenção
-de nomenclatura — handlers são POST + JSON puros, sem runtime ConnectRPC
-ou protobuf; schemas vivem em ``src/api/schemas.py`` como Pydantic):
+Schemas request/response vivem em ``src/api/schemas.py`` (Pydantic).
 
+Endpoints registrados:
     POST /vectora.chat.v1.ChatService/StreamChat
     POST /vectora.chat.v1.ChatService/ResumeChat
     GET  /vectora.chat.v1.ChatService/GetTools
@@ -44,6 +43,7 @@ from src.api.handlers.license import router as license_router
 from src.api.handlers.memory import router as memory_router
 from src.api.handlers.oauth import router as oauth_router
 from src.api.handlers.plugins import router as plugins_router
+from src.api.handlers.share import router as share_router
 from src.api.handlers.skills import router as skills_router
 from src.api.handlers.terminal import router as terminal_router
 from src.api.handlers.threads import router as thread_router
@@ -254,6 +254,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(chat_router)
     app.include_router(thread_router)
+    app.include_router(share_router)
     app.include_router(memory_router)
     app.include_router(oauth_router)
     app.include_router(admin_router)

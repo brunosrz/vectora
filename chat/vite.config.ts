@@ -10,9 +10,9 @@ import { VitePWA } from "vite-plugin-pwa";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const shimsDir = resolve(__dirname, "src/shims");
 
-// Backend FastAPI default; o Electron sobrescreve via porta efêmera em prod
-// e o dev local sem Electron usa 8080. Em prod (binário Nuitka), o FastAPI
-// serve `chat/dist/` direto e este proxy nem é consultado.
+// Apenas o `vite dev` consulta este proxy. O FastAPI da build de produção
+// serve `chat/dist/` no mesmo origin do browser, então não há request HTTP
+// cruzando a rede.
 const VECTORA_API_URL = process.env.VECTORA_API_URL ?? "http://127.0.0.1:8080";
 
 const apiProxy = {

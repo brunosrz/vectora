@@ -14,6 +14,8 @@ import pytest
 
 from src.api.schemas import (
     ChatConfig,
+    CreateShareRequest,
+    CreateShareResponse,
     CreateThreadRequest,
     DeleteThreadRequest,
     DoneEvent,
@@ -28,6 +30,7 @@ from src.api.schemas import (
     ListThreadsResponse,
     NodeEvent,
     ResumeChatRequest,
+    SharedThread,
     StreamChatRequest,
     Thread,
     ThreadEvent,
@@ -240,3 +243,47 @@ class TestToolSchema:
             ]
         )
         assert resp.tools[0].render_hint == "search_results"
+
+
+# ---------------------------------------------------------------------------
+# Share schemas
+# ---------------------------------------------------------------------------
+
+
+class TestShareSchemas:
+    def test_create_share_request_defaults(self):
+        req = CreateShareRequest(thread_id="t1")
+        assert req.ttl_hours == 72
+
+    def test_create_share_request_custom_ttl(self):
+        req = CreateShareRequest(thread_id="t1", ttl_hours=48)
+        assert req.ttl_hours == 48
+
+    def test_create_share_response(self):
+        resp = CreateShareResponse(
+            token="tok123",  # noqa: S106  # fixture
+            url="http://localhost/share/tok123",
+            expires_at="2026-06-07T00:00:00Z",
+        )
+        assert resp.token == "tok123"  # noqa: S105  # fixture
+        assert "/share/" in resp.url
+
+    def test_shared_thread_defaults(self):
+        st = SharedThread(
+            thread_id="t1",
+            messages=[HistoryMessage(role="human", content="Oi")],
+            created_at="2026-06-04T00:00:00Z",
+        )
+        assert st.title == ""
+        assert st.expires_at == ""
+        assert len(st.messages) == 1
+
+    def test_shared_thread_with_title(self):
+        st = SharedThread(
+            thread_id="t1",
+            title="Minha conversa",
+            messages=[],
+            created_at="2026-06-04T00:00:00Z",
+            expires_at="2026-06-07T00:00:00Z",
+        )
+        assert st.title == "Minha conversa"

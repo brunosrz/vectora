@@ -1,14 +1,14 @@
 import {
   Outlet,
-  createRootRoute,
+  createRootRouteWithContext,
   redirect,
   useLocation,
 } from "@tanstack/react-router";
+import type { RouterContext } from "../router";
 
-// As rotas auth e share são tipadas pelo plugin do TanStack Router após o
-// primeiro `vite dev`/`vite build` gerar `routeTree.gen.ts`. Antes disso,
-// o stub do routeTree não conhece os paths e o TS reclama no `to:` string.
-// Usamos `as never` para silenciar — o runtime resolve corretamente.
+// `ToPath = never` faz os paths literais passarem pelo type-check sem
+// estarem registrados no `routeTree.gen.ts`. O resolver real do
+// TanStack Router valida em runtime.
 type ToPath = never;
 
 const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/"];
@@ -86,7 +86,7 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
   });
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ location }) => {
     await ensureAuthenticated(location.pathname);
   },

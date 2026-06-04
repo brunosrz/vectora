@@ -1,10 +1,11 @@
 /**
- * Declarações ambient para os shims de `next/*` mapeados via
- * `resolve.alias` no `vite.config.ts`.
+ * Tipos ambient dos módulos virtuais `next/link`, `next/image`,
+ * `next/navigation` resolvidos pelo `resolve.alias` do
+ * `vite.config.ts` para os arquivos em `chat/src/shims/`.
  *
- * IMPORTANTE: este arquivo NÃO pode ter `import`/`export` no top
- * level — qualquer um deles transforma o `.d.ts` em módulo e as
- * declarações `declare module` deixam de ser ambient.
+ * Invariante: este arquivo NÃO pode ter `import`/`export` no top
+ * level — qualquer um transforma o `.d.ts` em módulo e os
+ * `declare module` deixam de ser ambient.
  */
 
 declare module "next/link" {
