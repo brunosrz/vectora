@@ -36,6 +36,7 @@ import {
   parseSlashCommand,
   isKnownCommand,
 } from "@/lib/constants/slash-commands";
+import { detectAtMention } from "@/components/chat/features/at-mention-menu";
 
 /** Idioma da UI → código BCP-47 do reconhecimento de voz. */
 const VOICE_LANG: Record<Lang, string> = {
@@ -175,6 +176,20 @@ export function ChatInterface({
       consumeDraft();
     }
   }, [pendingDraft, setInput, consumeDraft]);
+
+  // Consume @mentions injetados pelo painel de arquivos (Files tab → chat).
+  const pendingMention = useChatInputStore((s) => s.mention);
+  const consumeMention = useChatInputStore((s) => s.consumeMention);
+  // Ref estável para o input atual sem torná-lo dep do efeito.
+  const currentInputRef = useRef(uiState.input);
+  currentInputRef.current = uiState.input;
+  useEffect(() => {
+    if (!pendingMention) return;
+    const cur = currentInputRef.current.trimEnd();
+    setInput(cur ? `${cur} @${pendingMention} ` : `@${pendingMention} `);
+    consumeMention();
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  }, [pendingMention, setInput, consumeMention]);
 
   // File upload state
   const {
@@ -723,6 +738,66 @@ export function ChatInterface({
     [setMessages, router, t, onAgentConfigChange, agentConfig],
   );
 
+  // Handler de seleção no AtMentionMenu: substitui @query pelo @path escolhido.
+  const handleAtMentionSelect = useCallback(
+    (path: string, startIdx: number, endIdx: number) => {
+      const cur = uiState.input;
+      const suffix = path.endsWith("/") ? "" : " ";
+      const next =
+        cur.slice(0, startIdx) + "@" + path + suffix + cur.slice(endIdx);
+      setLimitedInput(next);
+      if (!path.endsWith("/")) {
+        setTimeout(() => textareaRef.current?.focus(), 10);
+      }
+    },
+    [uiState.input, setLimitedInput],
+  );
+
+  // Resolve tokens @path no conteúdo da mensagem antes de enviar ao agente.
+  // Busca o conteúdo de cada arquivo referenciado e o prepende como bloco de
+  // contexto — o usuário vê @tokens na UI, mas o agente recebe o conteúdo real.
+  const resolveAtMentions = useCallback(
+    async (content: string): Promise<string> => {
+      const mentionRegex = /@([^\s@]+)/g;
+      const paths: string[] = [];
+      let m: RegExpExecArray | null;
+      while ((m = mentionRegex.exec(content)) !== null) {
+        paths.push(m[1]);
+      }
+      if (paths.length === 0) return content;
+
+      const ws = useWorkspacesStore.getState().getActive();
+      if (!ws) return content;
+
+      const results = await Promise.allSettled(
+        paths.map(async (p) => {
+          const qs = new URLSearchParams({ path: p });
+          const res = await fetch(
+            `/workspaces/${encodeURIComponent(ws.id)}/file?${qs}`,
+          );
+          if (!res.ok) return null;
+          const data = await res.json().catch(() => null);
+          if (!data || data.kind === "binary") return null;
+          return { path: p, content: String(data.content ?? "") };
+        }),
+      );
+
+      const blocks = results
+        .filter(
+          (r): r is PromiseFulfilledResult<{ path: string; content: string }> =>
+            r.status === "fulfilled" && r.value !== null,
+        )
+        .map(
+          ({ value: { path, content: fc } }) =>
+            `\`\`\`\n// @${path}\n${fc}\n\`\`\``,
+        );
+
+      if (blocks.length === 0) return content;
+      return `${blocks.join("\n\n")}\n\n${content}`;
+    },
+    [],
+  );
+
   const handleSend = useCallback(async () => {
     if (inputLocked) {
       return;
@@ -745,12 +820,15 @@ export function ChatInterface({
       return;
     }
 
-    const userMessage = createUserMessage(uiState.input);
+    const rawInput = uiState.input;
+    const userMessage = createUserMessage(rawInput);
     if (attachedFiles.length > 0) {
       userMessage.images = attachedFiles;
     }
 
-    const currentInput = uiState.input;
+    // Resolve @path tokens antes de enviar — preserva display original na UI.
+    const resolvedInput = await resolveAtMentions(rawInput);
+    const currentInput = resolvedInput;
     const currentFiles = [...attachedFiles];
 
     // Clear input and files immediately
@@ -811,6 +889,7 @@ export function ChatInterface({
     processMessage,
     processQueue,
     dispatchSlash,
+    resolveAtMentions,
     setMessages,
     inputLocked,
   ]);
@@ -1050,6 +1129,7 @@ export function ChatInterface({
         <ChatInput
           input={cappedDisplayInput}
           onInputChange={setLimitedInput}
+          onAtMentionSelect={handleAtMentionSelect}
           onSend={handleSend}
           onKeyDown={handleKeyDown}
           isLoading={uiState.isLoading}

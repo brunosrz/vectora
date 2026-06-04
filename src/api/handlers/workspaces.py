@@ -1022,3 +1022,73 @@ async def workspace_git_diff_file(
         diff_text = ""
 
     return DiffFileResponse(path=path, hunks=_parse_unified_diff(diff_text))
+
+
+# ---------------------------------------------------------------------------
+# File system CRUD — criação e deleção de arquivos/pastas
+# ---------------------------------------------------------------------------
+
+
+class CreateFsNodeRequest(BaseModel):
+    path: str
+    content: str = ""
+
+
+@view_router.post("/{workspace_id}/fs/file", response_model=StatusResponse)
+async def create_fs_file(
+    workspace_id: str, body: CreateFsNodeRequest
+) -> StatusResponse:
+    """Cria um arquivo vazio (ou com conteúdo inicial) dentro do workspace."""
+    resolved = _resolve_inside(workspace_id, body.path)
+    if resolved is None:
+        return StatusResponse(
+            status="error", message="Caminho inválido ou fora do workspace."
+        )
+    if resolved.exists():
+        return StatusResponse(status="error", message="Arquivo já existe.")
+    try:
+        resolved.parent.mkdir(parents=True, exist_ok=True)
+        resolved.write_text(body.content, encoding="utf-8")
+        return StatusResponse(status="ok")
+    except OSError as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+@view_router.post("/{workspace_id}/fs/dir", response_model=StatusResponse)
+async def create_fs_dir(workspace_id: str, body: CreateFsNodeRequest) -> StatusResponse:
+    """Cria um diretório dentro do workspace."""
+    resolved = _resolve_inside(workspace_id, body.path)
+    if resolved is None:
+        return StatusResponse(
+            status="error", message="Caminho inválido ou fora do workspace."
+        )
+    try:
+        resolved.mkdir(parents=True, exist_ok=True)
+        return StatusResponse(status="ok")
+    except OSError as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+@view_router.delete("/{workspace_id}/fs", response_model=StatusResponse)
+async def delete_fs_node(
+    workspace_id: str,
+    path: Annotated[str, Query()],
+) -> StatusResponse:
+    """Remove um arquivo ou diretório (recursivo) do workspace."""
+    import shutil as _shutil
+
+    resolved = _resolve_inside(workspace_id, path)
+    if resolved is None:
+        return StatusResponse(
+            status="error", message="Caminho inválido ou fora do workspace."
+        )
+    if not resolved.exists():
+        return StatusResponse(status="error", message="Caminho não encontrado.")
+    try:
+        if resolved.is_dir():
+            _shutil.rmtree(resolved)
+        else:
+            resolved.unlink()
+        return StatusResponse(status="ok")
+    except OSError as exc:
+        return StatusResponse(status="error", message=str(exc))

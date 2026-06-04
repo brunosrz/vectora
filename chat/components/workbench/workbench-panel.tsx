@@ -40,6 +40,8 @@ import { PlanTab } from "./tabs/plan-tab";
 
 interface WorkbenchPanelProps {
   threadId: string;
+  /** Injetar @path no chat ao clicar no botão @ de um arquivo/pasta. */
+  onAddToContext?: (path: string) => void;
 }
 
 const TAB_ICON: Record<
@@ -127,7 +129,10 @@ function TabButton({
   );
 }
 
-export function WorkbenchPanel({ threadId }: WorkbenchPanelProps) {
+export function WorkbenchPanel({
+  threadId,
+  onAddToContext,
+}: WorkbenchPanelProps) {
   const t = useT();
   const hydrated = useHydrated();
   const workspace = useWorkspacesStore((s) => s.getActive());
@@ -169,7 +174,9 @@ export function WorkbenchPanel({ threadId }: WorkbenchPanelProps) {
       {/* Body — só monta a aba ativa (poupa recurso) */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === "terminal" && <TerminalPanel threadId={threadId} />}
-        {activeTab === "files" && <FilesTab threadId={threadId} />}
+        {activeTab === "files" && (
+          <FilesTab threadId={threadId} onAddToContext={onAddToContext} />
+        )}
         {activeTab === "diff" && <DiffTab threadId={threadId} />}
         {activeTab === "plan" && <PlanTab threadId={threadId} />}
       </div>

@@ -22,6 +22,7 @@ import { queryClient } from "../../router";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getDefaultModel } from "@/lib/config/deployment-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
+import { useChatInputStore } from "@/lib/stores/chat-input-store";
 
 export const Route = createFileRoute("/session/$threadId")({
   // Garante que a lista de threads está em cache antes do componente montar
@@ -40,6 +41,7 @@ function SessionPage() {
   const navigate = useNavigate();
 
   const userId = useAuthStore((s) => s.user?.id);
+  const pushMention = useChatInputStore((s) => s.pushMention);
 
   // ── Queries e mutations (TanStack Query) ──────────────────────────────────
   const { data: threads = [], isLoading } = useThreadsQuery(userId);
@@ -150,7 +152,7 @@ function SessionPage() {
               onThreadNotFound={() => void navigate({ to: "/" })}
               inputLocked={inputLocked}
             />
-            <WorkbenchPanel threadId={threadId} />
+            <WorkbenchPanel threadId={threadId} onAddToContext={pushMention} />
           </div>
         </div>
       </div>

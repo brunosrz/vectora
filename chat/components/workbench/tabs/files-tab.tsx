@@ -8,24 +8,30 @@
  *   - arquivo aberto + conteúdo → mesmo
  *   - filtro de busca → idem
  *
- * T10.2 — Pin de arquivo (persistido por threadId via `pinnedFiles`):
- *   - Seção "Fixados" no topo quando há pins
- *   - Botão pin/unpin aparece em hover no item file
+ * T10.2 — Pin de arquivo (persistido por threadId via `pinnedFiles`).
  *
- * SWR via `useWorkbenchSWR`: render imediato do cache + revalidação
- * silenciosa quando stale. A verdade vive no backend.
+ * Novas features:
+ *   - Toolbar VS Code-like: Novo Arquivo · Nova Pasta · Refresh
+ *   - Criação inline: input aparece na árvore ao criar
+ *   - Delete: botão trash visível em hover (arquivo + pasta)
+ *   - Add to context: botão @ visível em hover → injeta @path no chat
  */
 
 import {
+  AtSign,
   ChevronRight,
   File,
+  FilePlus,
   FolderClosed,
+  FolderPlus,
   Loader2,
   Pin,
   PinOff,
+  RefreshCw,
   Search,
+  Trash2,
 } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/i18n";
@@ -37,6 +43,10 @@ import {
   type FileEntry,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
 
 async function fetchTree(
   workspaceId: string,
@@ -63,21 +73,66 @@ async function fetchFile(
   return res.json();
 }
 
-/** Linha de arquivo na árvore — com botão pin/unpin em hover. */
+async function apiFsCreate(
+  workspaceId: string,
+  type: "file" | "dir",
+  path: string,
+): Promise<boolean> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/fs/${type}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    },
+  );
+  return res.ok;
+}
+
+async function apiFsDelete(
+  workspaceId: string,
+  path: string,
+): Promise<boolean> {
+  const qs = new URLSearchParams({ path });
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/fs?${qs}`,
+    { method: "DELETE" },
+  );
+  return res.ok;
+}
+
+// ---------------------------------------------------------------------------
+// Estado de criação inline
+// ---------------------------------------------------------------------------
+
+interface CreatingState {
+  type: "file" | "dir";
+  parentDir: string; // path relativo do diretório onde criar
+}
+
+// ---------------------------------------------------------------------------
+// FileItem
+// ---------------------------------------------------------------------------
+
 function FileItem({
   threadId,
   entry,
   depth,
   onOpenFile,
+  onAddToContext,
+  onDelete,
 }: {
   threadId: string;
   entry: FileEntry;
   depth: number;
   onOpenFile: (path: string) => void;
+  onAddToContext?: (path: string) => void;
+  onDelete: (path: string, name: string) => void;
 }) {
   const pinned = useWorkbenchStore((s) => s.isPinned(threadId, entry.path));
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
   const t = useT();
+
   return (
     <div
       className="group flex items-center px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm"
@@ -91,23 +146,90 @@ function FileItem({
       >
         {entry.name}
       </button>
-      <button
-        onClick={() => togglePinned(threadId, entry.path)}
-        className={`shrink-0 p-0.5 rounded ${
-          pinned
-            ? "text-primary"
-            : "text-muted-foreground/0 group-hover:text-muted-foreground hover:text-foreground"
-        }`}
-        aria-label={
-          pinned ? t("workbench.files.unpin") : t("workbench.files.pin")
-        }
-        title={pinned ? t("workbench.files.unpin") : t("workbench.files.pin")}
-      >
-        {pinned ? <Pin className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
-      </button>
+
+      {/* Ações em hover */}
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {onAddToContext && (
+          <button
+            onClick={() => onAddToContext(entry.path)}
+            className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+            aria-label={t("workbench.files.add_context")}
+            title={t("workbench.files.add_context")}
+          >
+            <AtSign className="w-3 h-3" />
+          </button>
+        )}
+        <button
+          onClick={() => onDelete(entry.path, entry.name)}
+          className="p-0.5 rounded text-muted-foreground hover:text-destructive"
+          aria-label={t("workbench.files.delete")}
+          title={t("workbench.files.delete")}
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+        <button
+          onClick={() => togglePinned(threadId, entry.path)}
+          className={`p-0.5 rounded ${
+            pinned
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          aria-label={
+            pinned ? t("workbench.files.unpin") : t("workbench.files.pin")
+          }
+          title={pinned ? t("workbench.files.unpin") : t("workbench.files.pin")}
+        >
+          <Pin className="w-3 h-3" />
+        </button>
+      </div>
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// InlineCreateInput — input que aparece na árvore para digitar nome
+// ---------------------------------------------------------------------------
+
+function InlineCreateInput({
+  placeholder,
+  onConfirm,
+  onCancel,
+  depth,
+}: {
+  placeholder: string;
+  onConfirm: (name: string) => void;
+  onCancel: () => void;
+  depth: number;
+}) {
+  const [value, setValue] = useState("");
+
+  return (
+    <div
+      className="flex items-center px-2 py-0.5"
+      style={{ paddingLeft: 8 + (depth + 1) * 12 }}
+    >
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && value.trim()) {
+            onConfirm(value.trim());
+          } else if (e.key === "Escape") {
+            onCancel();
+          }
+        }}
+        onBlur={() => onCancel()}
+        placeholder={placeholder}
+        className="flex-1 text-xs bg-background border border-primary/60 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-primary/40 font-mono"
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DirNode
+// ---------------------------------------------------------------------------
 
 interface DirNodeProps {
   threadId: string;
@@ -117,6 +239,12 @@ interface DirNodeProps {
   depth: number;
   filter: string;
   onOpenFile: (path: string) => void;
+  onAddToContext?: (path: string) => void;
+  onDelete: (path: string, name: string) => void;
+  creating: CreatingState | null;
+  onInlineCreate: (name: string) => void;
+  onCancelCreate: () => void;
+  onRequestCreate: (type: "file" | "dir", parentDir: string) => void;
 }
 
 function DirNode({
@@ -127,7 +255,14 @@ function DirNode({
   depth,
   filter,
   onOpenFile,
+  onAddToContext,
+  onDelete,
+  creating,
+  onInlineCreate,
+  onCancelCreate,
+  onRequestCreate,
 }: DirNodeProps) {
+  const t = useT();
   const expanded = useWorkbenchStore((s) =>
     depth === 0 ? true : s.getFiles(workspaceId).expandedDirs.includes(path),
   );
@@ -159,21 +294,48 @@ function DirNode({
     return entries.filter((e) => e.name.toLowerCase().includes(f));
   }, [entries, filter]);
 
+  // Verifica se o inline create input deve aparecer neste diretório
+  const showCreateHere =
+    creating !== null && creating.parentDir === path && expanded;
+
   return (
     <div>
       {depth > 0 && (
-        <button
-          onClick={() => toggleExpanded(workspaceId, path)}
-          className="w-full flex items-center gap-1 px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm"
-          style={{ paddingLeft: 8 + depth * 12 }}
-        >
-          <ChevronRight
-            className={`w-3 h-3 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
-          />
-          <FolderClosed className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">{name}</span>
-        </button>
+        <div className="group flex items-center px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm">
+          <button
+            onClick={() => toggleExpanded(workspaceId, path)}
+            className="flex items-center gap-1 flex-1 min-w-0"
+            style={{ paddingLeft: depth * 12 }}
+          >
+            <ChevronRight
+              className={`w-3 h-3 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
+            />
+            <FolderClosed className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{name}</span>
+          </button>
+
+          {/* Ações em hover na pasta */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            {onAddToContext && (
+              <button
+                onClick={() => onAddToContext(path)}
+                className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                title={t("workbench.files.add_context")}
+              >
+                <AtSign className="w-3 h-3" />
+              </button>
+            )}
+            <button
+              onClick={() => onDelete(path, name)}
+              className="p-0.5 rounded text-muted-foreground hover:text-destructive"
+              title={t("workbench.files.delete")}
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
       )}
+
       {expanded && (
         <div>
           {!entries && (
@@ -185,6 +347,21 @@ function DirNode({
               <span>…</span>
             </div>
           )}
+
+          {/* Input de criação inline */}
+          {showCreateHere && (
+            <InlineCreateInput
+              placeholder={
+                creating!.type === "file"
+                  ? t("workbench.files.creating_file")
+                  : t("workbench.files.creating_folder")
+              }
+              onConfirm={onInlineCreate}
+              onCancel={onCancelCreate}
+              depth={depth}
+            />
+          )}
+
           {entries &&
             visible.map((entry) =>
               entry.kind === "dir" ? (
@@ -197,6 +374,12 @@ function DirNode({
                   depth={depth + 1}
                   filter={filter}
                   onOpenFile={onOpenFile}
+                  onAddToContext={onAddToContext}
+                  onDelete={onDelete}
+                  creating={creating}
+                  onInlineCreate={onInlineCreate}
+                  onCancelCreate={onCancelCreate}
+                  onRequestCreate={onRequestCreate}
                 />
               ) : (
                 <FileItem
@@ -205,6 +388,8 @@ function DirNode({
                   entry={entry}
                   depth={depth}
                   onOpenFile={onOpenFile}
+                  onAddToContext={onAddToContext}
+                  onDelete={onDelete}
                 />
               ),
             )}
@@ -214,13 +399,18 @@ function DirNode({
   );
 }
 
-/** Seção "Fixados" no topo — mostra os pins do thread. */
+// ---------------------------------------------------------------------------
+// PinnedSection
+// ---------------------------------------------------------------------------
+
 function PinnedSection({
   threadId,
   onOpenFile,
+  onAddToContext,
 }: {
   threadId: string;
   onOpenFile: (path: string) => void;
+  onAddToContext?: (path: string) => void;
 }) {
   const t = useT();
   const pinned = useWorkbenchStore(
@@ -250,14 +440,25 @@ function PinnedSection({
             >
               {name}
             </button>
-            <button
-              onClick={() => togglePinned(threadId, path)}
-              className="shrink-0 p-0.5 rounded text-muted-foreground/0 group-hover:text-muted-foreground hover:text-foreground"
-              aria-label={t("workbench.files.unpin")}
-              title={t("workbench.files.unpin")}
-            >
-              <PinOff className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              {onAddToContext && (
+                <button
+                  onClick={() => onAddToContext(path)}
+                  className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                  title={t("workbench.files.add_context")}
+                >
+                  <AtSign className="w-3 h-3" />
+                </button>
+              )}
+              <button
+                onClick={() => togglePinned(threadId, path)}
+                className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                aria-label={t("workbench.files.unpin")}
+                title={t("workbench.files.unpin")}
+              >
+                <PinOff className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         );
       })}
@@ -265,14 +466,19 @@ function PinnedSection({
   );
 }
 
-/** Lista vazia estável (evita re-render por nova referência). */
 const EMPTY_PINNED: string[] = [];
+
+// ---------------------------------------------------------------------------
+// FilesTab principal
+// ---------------------------------------------------------------------------
 
 interface FilesTabProps {
   threadId: string;
+  /** Adicionar arquivo/pasta ao contexto do chat como @mention. */
+  onAddToContext?: (path: string) => void;
 }
 
-export function FilesTab({ threadId }: FilesTabProps) {
+export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
@@ -285,6 +491,10 @@ export function FilesTab({ threadId }: FilesTabProps) {
   const setFilesFilter = useWorkbenchStore((s) => s.setFilesFilter);
   const setOpenFile = useWorkbenchStore((s) => s.setOpenFile);
   const setFileContent = useWorkbenchStore((s) => s.setFileContent);
+  const invalidateFiles = useWorkbenchStore((s) => s.invalidateFiles);
+
+  // Estado de criação inline
+  const [creating, setCreating] = useState<CreatingState | null>(null);
 
   const handleOpenFile = useCallback(
     (path: string) => {
@@ -294,11 +504,57 @@ export function FilesTab({ threadId }: FilesTabProps) {
     [wsId, setOpenFile],
   );
 
-  // Carrega o conteúdo do arquivo aberto via SWR.
+  // Refresh: invalida cache e força re-fetch
+  const handleRefresh = useCallback(() => {
+    if (!wsId) return;
+    invalidateFiles(wsId);
+  }, [wsId, invalidateFiles]);
+
+  // Criar arquivo ou pasta
+  const handleRequestCreate = useCallback(
+    (type: "file" | "dir", parentDir: string) => {
+      setCreating({ type, parentDir });
+    },
+    [],
+  );
+
+  const handleInlineCreate = useCallback(
+    async (name: string) => {
+      if (!wsId || !creating) return;
+      setCreating(null);
+      const relPath = creating.parentDir
+        ? `${creating.parentDir}/${name}`
+        : name;
+      const ok = await apiFsCreate(wsId, creating.type, relPath);
+      if (ok) invalidateFiles(wsId);
+    },
+    [wsId, creating, invalidateFiles],
+  );
+
+  const handleCancelCreate = useCallback(() => {
+    setCreating(null);
+  }, []);
+
+  // Deletar arquivo/pasta com confirmação simples
+  const handleDelete = useCallback(
+    async (path: string, name: string) => {
+      if (!wsId) return;
+      // eslint-disable-next-line no-alert
+      if (!window.confirm(`${t("workbench.files.delete")} "${name}"?`)) return;
+      const ok = await apiFsDelete(wsId, path);
+      if (ok) {
+        invalidateFiles(wsId);
+        if (openPath === path) setOpenFile(wsId, null);
+      }
+    },
+    [wsId, openPath, invalidateFiles, setOpenFile, t],
+  );
+
+  // SWR para o conteúdo do arquivo aberto
   useWorkbenchSWR({
     key: `file:${wsId}:${openPath ?? ""}`,
     hasCache: openContent !== undefined,
-    isStale: false, // conteúdo só revalida via invalidate (T11.5)
+    isStale: false,
     revalidate: async () => {
       if (!wsId || !openPath) return;
       const data = await fetchFile(wsId, openPath);
@@ -320,6 +576,37 @@ export function FilesTab({ threadId }: FilesTabProps) {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Toolbar VS Code-like */}
+      <div className="flex items-center gap-0.5 px-2 py-1 border-b border-border/60 bg-muted/10">
+        <span className="text-[10px] font-medium text-muted-foreground truncate flex-1 select-none">
+          {workspace.name}
+        </span>
+        <button
+          onClick={() => handleRequestCreate("file", "")}
+          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+          title={t("workbench.files.new_file")}
+          aria-label={t("workbench.files.new_file")}
+        >
+          <FilePlus className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={() => handleRequestCreate("dir", "")}
+          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+          title={t("workbench.files.new_folder")}
+          aria-label={t("workbench.files.new_folder")}
+        >
+          <FolderPlus className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={handleRefresh}
+          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+          title={t("workbench.files.refresh")}
+          aria-label={t("workbench.files.refresh")}
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
       {/* Busca */}
       <div className="px-2 py-1.5 border-b border-border/60">
         <div className="relative">
@@ -335,7 +622,26 @@ export function FilesTab({ threadId }: FilesTabProps) {
 
       {/* Tree */}
       <div className="flex-1 overflow-y-auto py-1">
-        <PinnedSection threadId={threadId} onOpenFile={handleOpenFile} />
+        <PinnedSection
+          threadId={threadId}
+          onOpenFile={handleOpenFile}
+          onAddToContext={onAddToContext}
+        />
+
+        {/* Input de criação na raiz */}
+        {creating && creating.parentDir === "" && (
+          <InlineCreateInput
+            placeholder={
+              creating.type === "file"
+                ? t("workbench.files.creating_file")
+                : t("workbench.files.creating_folder")
+            }
+            onConfirm={handleInlineCreate}
+            onCancel={handleCancelCreate}
+            depth={0}
+          />
+        )}
+
         <DirNode
           threadId={threadId}
           workspaceId={wsId}
@@ -344,6 +650,12 @@ export function FilesTab({ threadId }: FilesTabProps) {
           depth={0}
           filter={filter}
           onOpenFile={handleOpenFile}
+          onAddToContext={onAddToContext}
+          onDelete={handleDelete}
+          creating={creating}
+          onInlineCreate={handleInlineCreate}
+          onCancelCreate={handleCancelCreate}
+          onRequestCreate={handleRequestCreate}
         />
       </div>
 
@@ -354,13 +666,24 @@ export function FilesTab({ threadId }: FilesTabProps) {
             <span className="truncate font-mono text-muted-foreground">
               {openPath ?? "…"}
             </span>
-            <button
-              onClick={() => setOpenFile(wsId, null)}
-              className="text-muted-foreground hover:text-foreground px-1"
-              title={t("workbench.close")}
-            >
-              ×
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              {onAddToContext && openPath && (
+                <button
+                  onClick={() => onAddToContext(openPath)}
+                  className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                  title={t("workbench.files.add_context")}
+                >
+                  <AtSign className="w-3 h-3" />
+                </button>
+              )}
+              <button
+                onClick={() => setOpenFile(wsId, null)}
+                className="text-muted-foreground hover:text-foreground px-1"
+                title={t("workbench.close")}
+              >
+                ×
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-auto p-2">
             {loadingFile ? (

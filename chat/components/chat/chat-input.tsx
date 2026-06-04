@@ -22,6 +22,7 @@ import { PermissionModeMenu } from "./features/permission-mode-menu";
 import { PlusMenu } from "./features/plus-menu";
 import { UsagePopover } from "./features/usage-popover";
 import { SlashCommandMenu } from "./features/slash-command-menu";
+import { AtMentionMenu } from "./features/at-mention-menu";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import {
@@ -76,6 +77,8 @@ interface ChatInputProps {
 
   // F.2.3 — overlay de drop zone mais explícito no estado vazio
   dropHintExpanded?: boolean;
+  /** Callback de seleção de arquivo via @mention. */
+  onAtMentionSelect?: (path: string, startIdx: number, endIdx: number) => void;
 }
 
 /**
@@ -114,6 +117,7 @@ export function ChatInput({
   agentConfig,
   onAgentConfigChange,
   dropHintExpanded = false,
+  onAtMentionSelect,
 }: ChatInputProps) {
   const t = useT();
   const allowedModels = getAllowedModels();
@@ -187,6 +191,11 @@ export function ChatInput({
           )}
 
           <div className="relative group">
+            {/* Autocomplete de @arquivo — aparece antes do slash para não conflitar */}
+            {onAtMentionSelect && (
+              <AtMentionMenu input={input} onSelect={onAtMentionSelect} />
+            )}
+
             {/* Autocomplete de slash commands (Bloco H) */}
             <SlashCommandMenu
               input={input}

@@ -446,6 +446,15 @@ workbench.plan.ask_prompt,"Crie um plano de implementação para…","Crea un pl
 workbench.files.pin,Pin to top,Fijar arriba,Fixar no topo
 workbench.files.unpin,Unpin,Desfijar,Desafixar
 workbench.files.pinned,Pinned,Fijados,Fixados
+workbench.files.new_file,New file,Nuevo archivo,Novo arquivo
+workbench.files.new_folder,New folder,Nueva carpeta,Nova pasta
+workbench.files.refresh,Refresh,Actualizar,Atualizar
+workbench.files.delete,Delete,Eliminar,Excluir
+workbench.files.add_context,Add to context,Agregar al contexto,Adicionar ao contexto
+workbench.files.creating_file,File name…,Nombre del archivo…,Nome do arquivo…
+workbench.files.creating_folder,Folder name…,Nombre de la carpeta…,Nome da pasta…
+workbench.files.collapse,Collapse all,Colapsar todo,Recolher tudo
+at.title,Workspace files,Archivos del workspace,Arquivos do workspace
 workbench.diff.clean_hint,"Run ""git log"" to inspect recent commits.","Ejecuta ""git log"" para ver commits recientes.","Rode ""git log"" para inspecionar commits recentes."
 `;
 
