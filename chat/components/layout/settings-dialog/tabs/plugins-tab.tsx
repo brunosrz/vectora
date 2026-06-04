@@ -63,7 +63,7 @@ export function PluginsTab() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/plugins");
+      const res = await fetch("/plugins");
       const data = res.ok ? await res.json() : { servers: [] };
       setServers(data.servers ?? []);
     } catch {
@@ -88,7 +88,7 @@ export function PluginsTab() {
         .filter(Boolean),
     };
     try {
-      const res = await fetch("/api/plugins", {
+      const res = await fetch("/plugins", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -110,7 +110,7 @@ export function PluginsTab() {
   };
 
   const handleRemove = async (name: string) => {
-    await fetch(`/api/plugins/${encodeURIComponent(name)}`, {
+    await fetch(`/plugins/${encodeURIComponent(name)}`, {
       method: "DELETE",
     });
     setServers((prev) => prev.filter((s) => s.name !== name));
@@ -119,12 +119,9 @@ export function PluginsTab() {
   const handleVerify = async (name: string) => {
     setVerify((p) => ({ ...p, [name]: { state: "loading", msg: "" } }));
     try {
-      const res = await fetch(
-        `/api/plugins/${encodeURIComponent(name)}/verify`,
-        {
-          method: "POST",
-        },
-      );
+      const res = await fetch(`/plugins/${encodeURIComponent(name)}/verify`, {
+        method: "POST",
+      });
       const d = await res.json();
       setVerify((p) => ({
         ...p,

@@ -1,9 +1,5 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
@@ -12,9 +8,6 @@ import type { AuthUser } from "@/lib/types/auth";
 
 const schema = z
   .object({
-    // Nome aceita qualquer caractere UTF-8 (acentos, espaços, etc.). O
-    // backend trim+normaliza espaços internos e limita a 100 chars; aqui
-    // só exigimos um mínimo razoável.
     name: z
       .string()
       .trim()
@@ -29,8 +22,18 @@ const schema = z
     path: ["confirm"],
   });
 
-export default function SignUpPage() {
-  const router = useRouter();
+const searchSchema = z.object({
+  invite: z.string().optional(),
+});
+
+export const Route = createFileRoute("/auth/signup" as never)({
+  validateSearch: searchSchema,
+  component: SignUpPage,
+});
+
+function SignUpPage() {
+  const navigate = useNavigate();
+  const { invite: inviteFromUrl } = Route.useSearch();
   const setUser = useAuthStore((s) => s.setUser);
 
   const [name, setName] = useState("");
@@ -46,32 +49,31 @@ export default function SignUpPage() {
   const [inviteToken, setInviteToken] = useState("");
   const [inviteRole, setInviteRole] = useState<string | null>(null);
 
-  // Resolve o fluxo de entrada: primeiro acesso, convite válido, ou bloqueado.
   useEffect(() => {
-    const token =
-      new URLSearchParams(window.location.search).get("invite") ?? "";
-
+    let cancelled = false;
     async function resolve() {
       let hasUsers = true;
       try {
-        const r = await fetch("/api/auth/has-users");
+        const r = await fetch("/auth/has-users", { credentials: "include" });
         hasUsers = Boolean((await r.json()).exists);
       } catch {
         hasUsers = true;
       }
+      if (cancelled) return;
 
-      // Sem usuários → setup do root, sem necessidade de convite
       if (!hasUsers) {
         setReady(true);
         return;
       }
 
-      // Com usuários → exige convite válido
+      const token = inviteFromUrl ?? "";
       if (token) {
         try {
-          const r = await fetch(`/api/auth/invite/${token}`);
+          const r = await fetch(`/auth/invite/${token}`, {
+            credentials: "include",
+          });
           const data = await r.json();
-          if (data.valid) {
+          if (!cancelled && data.valid) {
             setInviteToken(token);
             setInviteRole(data.role ?? "member");
             if (data.email) setEmail(data.email);
@@ -83,12 +85,16 @@ export default function SignUpPage() {
         }
       }
 
-      // Sem convite válido e com usuários → signup público bloqueado
-      router.replace("/auth/signin");
+      if (!cancelled) {
+        void navigate({ to: "/auth/signin" as never });
+      }
     }
 
     void resolve();
-  }, [router]);
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, inviteFromUrl]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -108,8 +114,9 @@ export default function SignUpPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch("/auth/signup", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
@@ -126,7 +133,7 @@ export default function SignUpPage() {
       }
 
       setUser(data.user as AuthUser);
-      router.replace("/");
+      void navigate({ to: "/" as never });
     } catch {
       setServerError("Erro de conexão. Verifique se o servidor está rodando.");
     } finally {
@@ -145,15 +152,8 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
         <div className="flex flex-col items-center gap-3">
-          <Image
-            src="/vectora.svg"
-            alt="Vectora"
-            width={48}
-            height={48}
-            priority
-          />
+          <img src="/vectora.svg" alt="Vectora" width={48} height={48} />
           <h1
             className="text-2xl font-semibold tracking-tight text-foreground"
             style={{ fontFamily: "var(--font-aeonik-mono)" }}
@@ -182,7 +182,6 @@ export default function SignUpPage() {
           </div>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
             <label
@@ -194,7 +193,6 @@ export default function SignUpPage() {
             <input
               id="name"
               type="text"
-              // UTF-8 livre — acentos, espaços, ç, traços ('Bruno Soares', 'João D'Ávila' etc.)
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -331,7 +329,10 @@ export default function SignUpPage() {
 
         <p className="text-center text-xs text-muted-foreground">
           Já tem conta?{" "}
-          <Link href="/auth/signin" className="text-primary hover:underline">
+          <Link
+            to={"/auth/signin" as never}
+            className="text-primary hover:underline"
+          >
             Entrar
           </Link>
         </p>

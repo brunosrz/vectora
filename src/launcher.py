@@ -78,7 +78,7 @@ def main() -> int:
     except LicenseError as exc:
         _print_error(str(exc))
         return 2
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _print_error(
             f"Falha inesperada validando licença: {exc}. "
             "Suporte: https://vectora.company/support."
@@ -107,13 +107,9 @@ def main() -> int:
             "Renove em https://vectora.company/pricing.\n\n"
         )
 
-    # Sobe o Next.js standalone como sidecar antes do FastAPI iniciar o
-    # proxy reverso. Se não houver bundle (dev mode), retorna None e o
-    # backend continua apontando para VECTORA_FRONTEND_URL padrão.
-    from src.services.next_sidecar import start_next_sidecar
-
-    start_next_sidecar()
-
+    # Após a migração para Vite SPA (Bloco D), o FastAPI serve `chat/dist/`
+    # diretamente via StaticFiles (ver src/api/server.py::_chat_static_root).
+    # Não há mais sidecar Node.js — o launcher só precisa delegar ao CLI.
     from src.main import run as cli_run
 
     cli_run()

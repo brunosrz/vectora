@@ -5,7 +5,7 @@
  *
  * Wrapper client-only do xterm.js. Conecta direto ao WebSocket do backend
  * (uvicorn) — o proxy Hono/Next App Router não faz upgrade de WS. O token de
- * autenticação é obtido via /api/auth/ws-token (cookies httpOnly não trafegam
+ * autenticação é obtido via /auth/ws-token (cookies httpOnly não trafegam
  * em WS cross-origin) e passa na query string.
  */
 
@@ -77,7 +77,7 @@ export function XtermView({
       // Token para o WS
       let token = "";
       try {
-        const r = await fetch("/api/auth/ws-token");
+        const r = await fetch("/auth/ws-token");
         if (r.ok) {
           const data = await r.json();
           token = String(data?.token ?? "");

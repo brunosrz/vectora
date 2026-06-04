@@ -120,18 +120,17 @@ export interface HistoryMessage {
 // ============================================================================
 
 /**
- * Tenta renovar o access token via /api/auth/refresh (proxy Hono).
+ * Tenta renovar o access token via /auth/refresh.
  *
  * Chamado automaticamente quando qualquer endpoint retorna 401.
- * O proxy Hono repassa os cookies corretamente, garantindo que o
- * refresh token seja enviado ao backend e que os novos cookies sejam
- * definidos no browser antes de retornar.
+ * Em produção (binário Nuitka) e em dev (Vite proxy), o browser fala
+ * direto com o FastAPI — cookies httpOnly viajam no `credentials: include`.
  *
  * @returns true se o refresh foi bem-sucedido
  */
 async function _tryRefreshToken(): Promise<boolean> {
   try {
-    const res = await fetch("/api/auth/refresh", {
+    const res = await fetch("/auth/refresh", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -161,7 +160,7 @@ function _redirectToLogin(): void {
  * Inicia ou continua um chat via SSE streaming.
  *
  * Se o backend retornar 401 (token expirado), renova o access token
- * automaticamente via /api/auth/refresh e retenta uma vez antes de
+ * automaticamente via /auth/refresh e retenta uma vez antes de
  * redirecionar para /auth/signin.
  *
  * @yields StreamEvent — eventos tipados (token, tool_call, done, etc.)

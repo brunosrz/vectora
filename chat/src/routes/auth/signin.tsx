@@ -1,8 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
@@ -14,8 +11,22 @@ const schema = z.object({
   password: z.string().min(1, "Informe a senha."),
 });
 
-export default function SignInPage() {
-  const router = useRouter();
+const searchSchema = z.object({
+  from: z.string().optional(),
+});
+
+// `as never` em createFileRoute e nos `to:`: o tipo definitivo de cada rota
+// só fica disponível depois que o plugin do TanStack Router gera o
+// `routeTree.gen.ts`. Durante a primeira execução do tsc os tipos são
+// "vazios" e o type-check estrito recusa as strings literais.
+export const Route = createFileRoute("/auth/signin" as never)({
+  validateSearch: searchSchema,
+  component: SignInPage,
+});
+
+function SignInPage() {
+  const navigate = useNavigate();
+  const search = Route.useSearch();
   const setUser = useAuthStore((s) => s.setUser);
 
   const [email, setEmail] = useState("");
@@ -26,15 +37,21 @@ export default function SignInPage() {
 
   // Primeiro acesso (sem usuários) → setup do root
   useEffect(() => {
-    fetch("/api/auth/has-users")
+    let cancelled = false;
+    fetch("/auth/has-users", { credentials: "include" })
       .then((r) => r.json())
-      .then((d) => {
-        if (!d.exists) router.replace("/auth/signup");
+      .then((d: { exists?: boolean }) => {
+        if (!cancelled && d.exists === false) {
+          void navigate({ to: "/auth/signup" as never });
+        }
       })
       .catch(() => {
         // Falha de rede → permanece no login
       });
-  }, [router]);
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,8 +65,9 @@ export default function SignInPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/signin", {
+      const res = await fetch("/auth/signin", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
@@ -61,7 +79,8 @@ export default function SignInPage() {
       }
 
       setUser(data.user as AuthUser);
-      router.replace("/");
+      const from = (search as { from?: string }).from;
+      void navigate({ to: (from ?? "/") as never });
     } catch {
       setError("Erro de conexão. Verifique se o servidor está rodando.");
     } finally {
@@ -72,15 +91,8 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
         <div className="flex flex-col items-center gap-3">
-          <Image
-            src="/vectora.svg"
-            alt="Vectora"
-            width={48}
-            height={48}
-            priority
-          />
+          <img src="/vectora.svg" alt="Vectora" width={48} height={48} />
           <h1
             className="text-2xl font-semibold tracking-tight text-foreground"
             style={{ fontFamily: "var(--font-aeonik-mono)" }}
@@ -92,7 +104,6 @@ export default function SignInPage() {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
             <label

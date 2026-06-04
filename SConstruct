@@ -56,56 +56,37 @@ def _run(cmd: list[str], env: dict | None = None) -> None:
 
 
 def _action_build_chat(target, source, env):
-    """Gera o standalone do Next.js para empacotar como sidecar Node.
+    """Build da SPA Vite em `chat/dist/`.
 
-    next.config.mjs tem `output: "standalone"` -> gera:
-      chat/.next/standalone/  (servidor Node mínimo, ~20MB)
-      chat/.next/static/      (assets versionados, JS/CSS hashed)
-
-    A pasta `static/` precisa ser copiada para dentro de `standalone/.next/`
-    para o servidor encontrá-la em runtime — o Next.js documenta isso.
-    O resultado final fica em `chat/.next/standalone/` pronto para o Nuitka.
+    O FastAPI faz `StaticFiles.mount` apontando para esta pasta em prod
+    (extraída pelo Nuitka como `chat_static/`) ou diretamente para
+    `chat/dist/` em dev.
     """
     _run([PNPM, "--dir", "chat", "install", "--frozen-lockfile"])
     _run([PNPM, "--dir", "chat", "build"])
 
-    standalone = os.path.join(ROOT, "chat", ".next", "standalone")
-    # Next.js standalone gera server.js na raiz; precisa de .next/static e
-    # public/ ao lado, conforme docs oficiais.
-    static_src = os.path.join(ROOT, "chat", ".next", "static")
-    static_dst = os.path.join(standalone, ".next", "static")
-    public_src = os.path.join(ROOT, "chat", "public")
-    public_dst = os.path.join(standalone, "public")
-
-    if not os.path.isdir(standalone):
+    dist = os.path.join(ROOT, "chat", "dist")
+    if not os.path.isdir(dist) or not os.path.isfile(os.path.join(dist, "index.html")):
         raise SystemExit(
-            "ERRO: chat/.next/standalone/ não foi gerado. "
-            "Verifique que next.config.mjs tem `output: \"standalone\"`."
+            "ERRO: chat/dist/index.html não foi gerado. "
+            "Verifique a configuração do Vite em chat/vite.config.ts."
         )
-
-    # Sobrescreve cópias antigas para garantir consistência.
-    for dst, src in [(static_dst, static_src), (public_dst, public_src)]:
-        if os.path.isdir(dst):
-            shutil.rmtree(dst)
-        if os.path.isdir(src):
-            shutil.copytree(src, dst)
-
-    print(f">> chat standalone pronto em {standalone}")
+    print(f">> chat dist pronto em {dist}")
 
 
 def _action_build_nuitka(target, source, env):
-    """Compila o launcher Python embutindo o standalone do Next.js.
+    """Compila o launcher Python embutindo a SPA Vite como data dir.
 
-    O standalone (servidor Node + assets) entra como data dir e é
-    extraído em runtime para uma pasta temporária; o launcher Python
-    sabe localizá-lo via `sys._MEIPASS` (no Nuitka onefile) ou
-    `__file__` (no Nuitka standalone).
+    `chat/dist/` é incluído como `chat_static/` no binário. Em runtime,
+    o FastAPI (src/api/server.py::_chat_static_root) localiza essa pasta
+    via `__compiled__.containing_dir` ou `NUITKA_ONEFILE_PARENT` e
+    serve via `StaticFiles`.
     """
     _run(
         [
             "uv", "run", "nuitka",
             "--mode=onefile",
-            "--include-data-dir=chat/.next/standalone=chat_standalone",
+            "--include-data-dir=chat/dist=chat_static",
             "--enable-plugin=multiprocessing",
             "--enable-plugin=anti-bloat",
             "--output-filename=vectora",
@@ -155,7 +136,14 @@ def _action_lint(target, source, env):
 
 
 def _action_clean(target, source, env):
-    for path in ["dist-nuitka", "chat/out", "chat/.next", "desktop/dist", "desktop/dist-electron"]:
+    for path in [
+        "dist-nuitka",
+        "chat/dist",
+        "chat/.next",
+        "chat/out",
+        "desktop/dist",
+        "desktop/dist-electron",
+    ]:
         full = os.path.join(ROOT, path.replace("/", os.sep))
         if os.path.exists(full):
             shutil.rmtree(full)
@@ -173,15 +161,15 @@ def _action_help(target, source, env):
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
 
   Passos individuais
-    scons build-chat       Next.js build + export -> chat/out/
+    scons build-chat       Vite SPA build -> chat/dist/
     scons build-nuitka     Nuitka onefile -> dist-nuitka/  (10-30 min)
     scons build-desktop    TypeScript Electron -> desktop/dist/
     scons package          electron-builder -> desktop/dist-electron/
 
   Desenvolvimento
-    scons dev              backend (8080) + Next.js dev (3000)
+    scons dev              backend (8080) + Vite dev (5173)
     scons dev-backend      apenas backend
-    scons dev-chat         apenas Next.js dev
+    scons dev-chat         apenas Vite dev
 
   Qualidade
     scons gen-proto        buf generate (stubs Python + TypeScript)

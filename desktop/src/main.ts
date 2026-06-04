@@ -85,7 +85,7 @@ function backendPath(): string {
   if (override) {
     return path.join(
       override,
-      process.platform === "win32" ? "src.exe" : "vectora",
+      process.platform === "win32" ? "vectora.exe" : "vectora",
     );
   }
   const resources = process.resourcesPath || path.join(__dirname, "..");

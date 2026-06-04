@@ -3,7 +3,7 @@
  *
  * Cache client-side da lista de workspaces e do workspace ativo.
  * Padrão stale-while-revalidate: exibe cache imediatamente e revalida
- * em background. Ações async conversam com o proxy Hono em /api/workspaces.
+ * em background. Ações async conversam com o proxy Hono em /workspaces.
  */
 
 import { create } from "zustand";
@@ -145,7 +145,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
 
   hydrate: async () => {
     set({ loading: true });
-    const data = await fetchJson("/api/workspaces");
+    const data = await fetchJson("/workspaces");
     if (data?.workspaces) {
       set({
         workspaces: data.workspaces,
@@ -158,7 +158,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
 
   setActive: async (id) => {
     set({ active_id: id });
-    await fetchJson("/api/workspaces/set-active", {
+    await fetchJson("/workspaces/set-active", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ workspace_id: id }),
@@ -166,7 +166,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
   },
 
   create: async (path, opts) => {
-    const data = await fetchJson("/api/workspaces/create", {
+    const data = await fetchJson("/workspaces/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -184,7 +184,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
   },
 
   trust: async (id) => {
-    const data = await fetchJson("/api/workspaces/trust", {
+    const data = await fetchJson("/workspaces/trust", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ workspace_id: id }),
@@ -199,7 +199,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
   },
 
   gitInit: async (id) => {
-    const data = await fetchJson("/api/workspaces/git-init", {
+    const data = await fetchJson("/workspaces/git-init", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ workspace_id: id }),
@@ -215,20 +215,20 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
 
   browse: async (path) => {
     const q = path ? `?path=${encodeURIComponent(path)}` : "";
-    const data = await fetchJson(`/api/workspaces/browse${q}`);
+    const data = await fetchJson(`/workspaces/browse${q}`);
     if (data?.path !== undefined) return data as BrowseResult;
     return null;
   },
 
   loadSafeRoots: async () => {
-    const data = await fetchJson("/api/workspaces/safe-roots");
+    const data = await fetchJson("/workspaces/safe-roots");
     if (data?.roots && Array.isArray(data.roots)) {
       set({ safeRoots: data.roots as SafeRootSummary[] });
     }
   },
 
   listSshKeys: async () => {
-    const data = await fetchJson("/api/auth/ssh-keys");
+    const data = await fetchJson("/auth/ssh-keys");
     return Array.isArray(data?.keys) ? (data.keys as string[]) : [];
   },
 
@@ -236,7 +236,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
     const form = new FormData();
     form.append("key", file);
     try {
-      const res = await fetch("/api/auth/ssh-keys", {
+      const res = await fetch("/auth/ssh-keys", {
         method: "POST",
         body: form,
       });
@@ -250,12 +250,9 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
 
   deleteSshKey: async (keyId) => {
     try {
-      const res = await fetch(
-        `/api/auth/ssh-keys/${encodeURIComponent(keyId)}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const res = await fetch(`/auth/ssh-keys/${encodeURIComponent(keyId)}`, {
+        method: "DELETE",
+      });
       return res.ok;
     } catch {
       return false;
@@ -264,7 +261,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
 
   testSsh: async (host, keyId) => {
     try {
-      const res = await fetch("/api/workspaces/test-ssh", {
+      const res = await fetch("/workspaces/test-ssh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ host, key_id: keyId ?? null }),
@@ -283,7 +280,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
   },
 
   listCodespaces: async () => {
-    const data = await fetchJson("/api/workspaces/codespaces");
+    const data = await fetchJson("/workspaces/codespaces");
     return {
       codespaces: Array.isArray(data?.codespaces)
         ? (data.codespaces as CodespaceSummary[])
@@ -294,7 +291,7 @@ export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
   },
 
   createRemote: async (body) => {
-    const data = await fetchJson("/api/workspaces/create-remote", {
+    const data = await fetchJson("/workspaces/create-remote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

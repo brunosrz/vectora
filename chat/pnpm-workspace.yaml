@@ -1,2 +1,3 @@
 allowBuilds:
-  sharp: true
+  esbuild: true
+  sharp: set this to true or false

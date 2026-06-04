@@ -36,7 +36,7 @@ export function GitStatusBadge() {
   const fetchStatus = useCallback(async () => {
     if (!activeWorkspace?.is_git_repo || pausedRef.current) return;
     try {
-      const res = await fetch("/api/workspaces/active");
+      const res = await fetch("/workspaces/active");
       if (!res.ok) return;
       const data = await res.json();
       if (data?.git_current_branch) {

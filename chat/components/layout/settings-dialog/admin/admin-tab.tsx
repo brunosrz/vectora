@@ -95,41 +95,40 @@ interface ServerConfig {
 
 const api = {
   users: {
-    list: () => fetch("/api/admin/users").then((r) => r.json()),
+    list: () => fetch("/admin/users").then((r) => r.json()),
     updateRole: (id: string, role: string) =>
-      fetch(`/api/admin/users/${id}/role`, {
+      fetch(`/admin/users/${id}/role`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
       }),
-    delete: (id: string) =>
-      fetch(`/api/admin/users/${id}`, { method: "DELETE" }),
+    delete: (id: string) => fetch(`/admin/users/${id}`, { method: "DELETE" }),
   },
   tools: {
-    list: () => fetch("/api/admin/tools").then((r) => r.json()),
+    list: () => fetch("/admin/tools").then((r) => r.json()),
     toggle: (name: string, enabled: boolean) =>
-      fetch(`/api/admin/tools/${name}/toggle`, {
+      fetch(`/admin/tools/${name}/toggle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled }),
       }),
   },
   invites: {
-    list: () => fetch("/api/admin/invites").then((r) => r.json()),
+    list: () => fetch("/admin/invites").then((r) => r.json()),
     create: (body: { role: string; email?: string; ttl_hours: number }) =>
-      fetch("/api/admin/invites", {
+      fetch("/admin/invites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       }).then((r) => r.json()),
     revoke: (tokenHash: string) =>
-      fetch(`/api/admin/invites/${tokenHash}`, { method: "DELETE" }),
+      fetch(`/admin/invites/${tokenHash}`, { method: "DELETE" }),
   },
-  system: () => fetch("/api/admin/system").then((r) => r.json()),
+  system: () => fetch("/admin/system").then((r) => r.json()),
   config: {
-    get: () => fetch("/api/admin/config").then((r) => r.json()),
+    get: () => fetch("/admin/config").then((r) => r.json()),
     patch: (body: Partial<ServerConfig>) =>
-      fetch("/api/admin/config", {
+      fetch("/admin/config", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -350,7 +349,7 @@ function UserToolsRow({ userId }: { userId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/admin/users/${userId}/tools`)
+    fetch(`/admin/users/${userId}/tools`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (cancelled || !d) return;
@@ -376,7 +375,7 @@ function UserToolsRow({ userId }: { userId: string }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await fetch(`/api/admin/users/${userId}/tools`, {
+      await fetch(`/admin/users/${userId}/tools`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ disabled: [...disabled] }),
@@ -794,7 +793,7 @@ function SafeRootsPanel() {
   const reload = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/safe-roots");
+      const res = await fetch("/admin/safe-roots");
       if (res.ok) {
         const data = await res.json();
         setRoots(data.roots ?? []);
@@ -813,7 +812,7 @@ function SafeRootsPanel() {
     setCreating(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/safe-roots", {
+      const res = await fetch("/admin/safe-roots", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -839,7 +838,7 @@ function SafeRootsPanel() {
       setEditingId(null);
       return;
     }
-    await fetch(`/api/admin/safe-roots/${id}`, {
+    await fetch(`/admin/safe-roots/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ label: editLabel.trim() }),
@@ -853,7 +852,7 @@ function SafeRootsPanel() {
       "Remover esta pasta segura? Workspaces existentes não são afetados.",
     );
     if (!ok) return;
-    await fetch(`/api/admin/safe-roots/${id}`, { method: "DELETE" });
+    await fetch(`/admin/safe-roots/${id}`, { method: "DELETE" });
     await reload();
   };
 

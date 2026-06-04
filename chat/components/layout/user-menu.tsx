@@ -30,7 +30,7 @@ export function UserMenu() {
   async function handleLogout() {
     setOpen(false);
     try {
-      await fetch("/api/auth/signout", {
+      await fetch("/auth/signout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),

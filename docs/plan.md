@@ -13,8 +13,6 @@
 > `docs/oem.md` e `docs/pitch_deck.md`): **OEM**, **Vectora Cloud**, **Data
 > Store**. São iniciativas pós-lançamento e não entram no roadmap atual.
 
----
-
 ## Sumário (TOC)
 
 | Bloco | Tema                                                                                                                          | Status       |
@@ -22,7 +20,7 @@
 | **A** | UX & Chat Foundation — base do chat, polish, reasoning/HITL, file handling, i18n, mobile                                      | ✅ Concluído |
 | **B** | Security & Workflow — auth/RBAC, workspaces+git, slash commands, conversation, admin, OAuth                                   | ✅ Concluído |
 | **C** | Power Features — plugins MCP, skills, terminal/workbench, memória, settings, workspaces remotos, license gate, OXC            | ✅ Concluído |
-| **D** | Distribuição Comercial — Nuitka launcher + frontend bundle + Electron + instaladores assinados + auto-update                  | ⏳ Planejado |
+| **D** | Distribuição Comercial — Vite SPA + Electron + FastAPI + Nuitka + instaladores assinados + auto-update                        | ⏳ Planejado |
 | **E** | Deep Agents — refactor para `create_deep_agent` + TUI textual                                                                 | ⏳ Planejado |
 | **F** | Storage Infrastructure — hardening lite + schema versioning + langgraph.{checkpoint,store} + LanceDB/Qdrant/Postgres + BaaS   | ⏳ Planejado |
 | **G** | Cache Distribuído — Redis (KV + LLM bind invalidation + usage + rate-limit + langchain-redis)                                 | ⏳ Planejado |
@@ -46,8 +44,6 @@ Blocos D–J podem rodar em **paralelo parcial** (E↔F são independentes;
 H/I dependem de E; J depende de F). Blocos K–N podem rodar em paralelo
 parcial após D estar pronto. O–S são sequenciais (legal precede site
 precede docs precede suporte precede marketing).
-
----
 
 ## Diretrizes (vinculantes para todo PR)
 
@@ -111,15 +107,13 @@ explícita.
 Cache cliente é stale-while-revalidate. Reload sempre vai ao
 backend. Nunca persistir state crítico só em localStorage.
 
----
-
-## BLOCO A — UX & Chat Foundation [CONCLUÍDO]
+### BLOCO A — UX & Chat Foundation [CONCLUÍDO]
 
 > Resumo condensado dos blocos antigos **A, B, D, E, F (+F.2/F.3/F.4),
 > M (+M6–M10), J (+J.2), K (+K.2), L, R (+R6–R10)**. Tudo que toca a
 > experiência visual e a fundação do chat web.
 
-### A1 — Chat Foundations & Schema-Driven Rendering
+#### A1 — Chat Foundations & Schema-Driven Rendering
 
 Base completa do chat: backend FastAPI + SSE (`src/api/server.py`,
 `handlers/chat.py`, `handlers/threads.py`, `adapters.py`,
@@ -129,6 +123,11 @@ Base completa do chat: backend FastAPI + SSE (`src/api/server.py`,
 rotas em `chat/server/routes/`) montado no App Router via
 `chat/app/api/[[...route]]/route.ts`. Stack: React 19 + Turbopack +
 Zustand 5 + shadcn/ui + Tailwind.
+
+> **Nota Bloco D**: o stack `Next.js + Hono` é substituído por
+> **Vite + TanStack Router (SPA)** no Bloco D, onde a auth e API
+> passam a falar diretamente com o FastAPI. Os componentes React
+> permanecem inalterados.
 
 Tools com `metadata={"render_hint", "category", "destructive",
 "icon"}` em todas as 17 tools (`src/tools/*.py`). Endpoint
@@ -143,7 +142,7 @@ SSE heartbeat (`: heartbeat` a cada 25s) + `X-Accel-Buffering: no`
 para nginx-friendly streaming. Observabilidade: `VectoraTracer`
 SQLite + `GET /metrics` (últimos 50 spans).
 
-### A2 — Polish, Branding & Models Registry
+#### A2 — Polish, Branding & Models Registry
 
 Migração completa do fork `chat-langchain`: `chat/src/` deletado,
 deps LangSmith out, package renomeado `vectora-chat`. Modelos reais
@@ -169,7 +168,7 @@ lifecycle robusto (`_lifespan` + `asyncio.gather` shutdown +
 `VECTORA_SHUTDOWN_TIMEOUT_S` + `os._exit(0)`). Logs auditáveis:
 `_BackgroundConsoleFilter` silencia langsmith/uvicorn.access/fastapi.
 
-### A3 — Reasoning Reveal + Thinking UX + HITL + Permission Modes
+#### A3 — Reasoning Reveal + Thinking UX + HITL + Permission Modes
 
 **Reasoning**: backend emite `ThinkingEvent` no `on_chain_end` do
 orchestrator com `reason`, `delegate_to`, `task_query`. Frontend:
@@ -197,7 +196,7 @@ de tool em Settings → Chat. Default seguro: `requireHitl: true`.
 
 Chip "Modo" no command-bar + atalho ⇧Ctrl M. Persistido por user.
 
-### A4 — File Handling Completo + Safe Roots + Paste-as-File
+#### A4 — File Handling Completo + Safe Roots + Paste-as-File
 
 **Multimodal & ingestão** (`StreamChatRequest.attachments`):
 `HumanMessage(content=[{"type": "image_url", ...}])` em
@@ -226,7 +225,7 @@ eliminado de `chat/lib/constants/features.ts`. `LARGE_PASTE_THRESHOLD
   no trust dialog (Input + Enter + "Ir"), erro 403 inline. Sidebar
   ganha grupo "PASTAS" colapsável (workspaces ativos + safe-roots).
 
-### A5 — i18n CSV-Driven, Theme & Idioma
+#### A5 — i18n CSV-Driven, Theme & Idioma
 
 Sistema CSV puro em `chat/lib/i18n/strings.csv.ts` — 3 colunas
 `en`, `es`, `pt-BR` (~440 chaves). Parser próprio (~20 linhas),
@@ -246,7 +245,7 @@ state, atalhos de teclado, error toasts. Empty states, tooltips,
 aria-label, placeholders — todos via `t()`. Rename Threads →
 Sessions feito nos **valores** do CSV (chaves preservadas).
 
-### A6 — Mobile, PWA & Touch
+#### A6 — Mobile, PWA & Touch
 
 **LAN/Tailscale**: `next.config.mjs` com `allowedDevOrigins`
 expandido (`100.*`, RFC1918 ranges) + override
@@ -267,7 +266,7 @@ hamburger. Workbench mobile: `Sheet` overlay com swipe-down.
 - onTouchStart` fallback; tap targets ≥ 44×44px; auto-resize
   textarea respeita keyboard.
 
-### A7 — Live Metrics + Usage Popover + Performance
+#### A7 — Live Metrics + Usage Popover + Performance
 
 **`GET /auth/usage`** enriquecido com 3 janelas: `context` (used/
 window/model), `five_hour` (used/limit/resets), `weekly` (used/
@@ -299,7 +298,7 @@ Per-message badges em `message-item.tsx`: `⏱ 2.3s · 🪙 1.4k in /
   RefreshCw); thread otimista (`addOptimisticThread()` antes do
   streaming, substituição sem flash).
 
-### A8 — Settings Architecture, Command Bar, Plus Menu & Unified Input
+#### A8 — Settings Architecture, Command Bar, Plus Menu & Unified Input
 
 **Settings** (`chat/components/layout/settings-dialog/`): 8 tabs —
 Conta, Preferências, Memória, Integrações, Plugins, Skills, Envs,
@@ -333,15 +332,13 @@ command-bar, model selector e context-meter disponíveis desde
 o primeiro carregamento. Drop hint expandido via prop. Bubble AI
 com `pb-3` + `mt-2` no footer (sem buraco).
 
----
-
-## BLOCO B — Security, Workspaces & Conversation [CONCLUÍDO]
+### BLOCO B — Security, Workspaces & Conversation [CONCLUÍDO]
 
 > Resumo condensado dos blocos antigos **C, G (+G.2), H, I, O, P, Q
 > (+Q1–Q8)**. Tudo que toca segurança, RBAC, workspaces, git, slash
 > commands, busca/export/share, integrações OAuth e painel admin.
 
-### B1 — Authentication, RBAC & Vault (KeePassXC)
+#### B1 — Authentication, RBAC & Vault (KeePassXC)
 
 **Identity model** (`src/services/auth.py`): `User`, `Session`,
 `Role`, `Credentials`. Password hash via `argon2-cffi` (Argon2id,
@@ -429,7 +426,7 @@ pendentes.
 redirect direto para `/auth/signup` (setup root). Com usuários
 existentes → tela de login sem opção de criar conta pública.
 
-### B2 — Workspaces P1+P2: Trust Folder, Scope Guard Rails
+#### B2 — Workspaces P1+P2: Trust Folder, Scope Guard Rails
 
 **Workspace model** (`src/types/workspace.py`): `id` (sha256[:8] do
 `abspath(cwd)`), `name`, `cwd`, `is_git_repo`, `git_remote`,
@@ -489,11 +486,11 @@ hidratado no boot. `agentConfig.workspace_id` propagado na request.
 **Workspaces remotos** (G.2): ver C6 abaixo (tabs SSH/Codespace
 no trust dialog, `TransportBackend` Protocol).
 
-### B3 — Git Integration + gh CLI + Worktrees
+#### B3 — Git Integration + gh CLI + Worktrees
 
 **Tools git** (`src/tools/git.py`):
 | Tool | render_hint | destructive | HITL |
-| --------------------------------------- | ------------ | ----------- | ----------- |
+| ------------ | ------------ | ----------- | ----------- |
 | `git_status` | `diff` | false | não |
 | `git_log(n=10, branch?)` | `table` | false | não |
 | `git_diff(ref?)` | `diff` | false | não |
@@ -537,7 +534,7 @@ lado-a-lado com comentários AI inline).
 (semantic commits, worktree antes de mudanças grandes, never force
 push em main, `gh_issue_list` antes de feature nova).
 
-### B4 — Slash Commands
+#### B4 — Slash Commands
 
 **Autocomplete inline** com `/`: popup `slash-command-menu.tsx`
 filtrado em tempo real. Cada comando: nome + descrição + arg
@@ -565,7 +562,7 @@ user_id).
 `POST /threads/{id}/share` → `share_token`, tabela
 `shared_threads(token, thread_id, expires_at, created_by)`.
 
-### B5 — Conversation Features: Search, Export, Share, Edit, Branch
+#### B5 — Conversation Features: Search, Export, Share, Edit, Branch
 
 **Search dentro da thread + global** (I1): search bar no topo de
 cada thread; search global na sidebar. Backend `POST /threads/search`
@@ -589,11 +586,11 @@ user; editar → submit → drop posteriores → re-stream. Botão
 Cria nova thread copiando histórico até aquela mensagem (útil para
 "e se eu tivesse perguntado X em vez de Y").
 
-### B6 — Workspace Integrations (OAuth GitHub + API Keys)
+#### B6 — Workspace Integrations (OAuth GitHub + API Keys)
 
 **API Key integrations** (O1) — user insere chave, vai no vault dele:
 | Integração | Env var | Uso no agente |
-| ----------- | --------------------- | --------------------------- |
+| ---------- | ------------------- | --------------------------- |
 | OpenAI | `OPENAI_API_KEY` | LLM + embeddings fallback |
 | Anthropic | `ANTHROPIC_API_KEY` | Claude 4.x |
 | Cohere | `COHERE_API_KEY` | Reranker + LLM + embeddings |
@@ -625,7 +622,7 @@ do user. Card GitHub no Settings: status badge + "Conectar"/"Desconectar"
 mesmo padrão; tokens no vault, scopes apropriados. Tools
 `drive_*`, `notion_*`, `linear_*` consomem.
 
-### B7 — Root Admin Panel (RBAC/ABAC Global)
+#### B7 — Root Admin Panel (RBAC/ABAC Global)
 
 Aba "Administração" no Settings (root/admin only). Sub-abas:
 
@@ -676,15 +673,13 @@ Aba "Administração" no Settings (root/admin only). Sub-abas:
 
 `require_admin` em todos. Proxy Hono em `chat/server/routes/admin.ts`.
 
----
-
-## BLOCO C — Power Features, Plugins, Terminal & Distribution Foundation [CONCLUÍDO]
+### BLOCO C — Power Features, Plugins, Terminal & Distribution Foundation [CONCLUÍDO]
 
 > Resumo condensado dos blocos antigos **N, S (+S1–S8), T (T1–T11+T.X),
 > T.12 (parte) + T.13, G.2 (workspaces remotos)**. Tudo que dá poder
 > ao usuário avançado e a base da distribuição comercial.
 
-### C1 — Per-User Memory
+#### C1 — Per-User Memory
 
 Memória escopada por usuário (`vectora/tools/memory.py`): operações
 usam `namespace = f"user:{user_id}"` quando autenticado (fallback
@@ -703,7 +698,7 @@ Frontend `memoria-tab.tsx`: lista de memórias do user (truncadas
   contexto (via `NodeEvent.metadata.memories_loaded`), clicável para
   expandir lista.
 
-### C2 — MCP Plugins Manager + Tool Policy (ABAC)
+#### C2 — MCP Plugins Manager + Tool Policy (ABAC)
 
 **MCP registry por usuário** (S2): `src/services/plugins.py` —
 `McpServer` Pydantic (name, transport `stdio|sse|http`, command,
@@ -750,7 +745,7 @@ bump.
 `ALL_TOOLS` menos desabilitadas + MCP do user. Frontend já consome
 sem mudança.
 
-### C3 — Skills Manager (S8 — `langchain-skills` style)
+#### C3 — Skills Manager (S8 — `langchain-skills` style)
 
 **Registry por usuário** (`src/services/skills.py`): `~/.vectora/
 skills/<user_id>/index.json` + `<skill_id>/` (uma pasta por skill
@@ -779,7 +774,7 @@ feedback inline (CheckCircle2/XCircle). Proxy Hono
 `list_skill_paths(user_id) -> list[Path]` consumido pelo
 `agent_factory` no Bloco E para montar `skills=[...]` do Deep Agent.
 
-### C4 — Embedded Terminal (PTY persistente)
+#### C4 — Embedded Terminal (PTY persistente)
 
 **PTY cross-platform** (T1): `src/services/pty_session.py` —
 classe `PtySession` que abre shell (`pwsh`/`cmd` Win, `$SHELL`/`bash`
@@ -817,7 +812,7 @@ Workspace **não-confiável** → painel mostra aviso e não abre o PTY.
 i18n `terminal.*` em 3 línguas. Status (conectado/encerrado) +
 reconexão automática leve.
 
-### C5 — Workbench Multi-Tab (Terminal · Files · Diff · Plan) + SWR
+#### C5 — Workbench Multi-Tab (Terminal · Files · Diff · Plan) + SWR
 
 **Workbench shell** (T5): rename `terminals-store.ts` →
 `workbench-store.ts`. Novo `chat/components/workbench/workbench-panel.tsx`
@@ -889,7 +884,7 @@ Conteúdo do `<Panel>` condicional **dentro** (`{showWorkbench ?
   encapsula "lê do store → render imediato → refetch se stale →
   escreve no store".
 
-### C6 — Workspaces Remotos: SSH + GitHub Codespaces
+#### C6 — Workspaces Remotos: SSH + GitHub Codespaces
 
 **Workspace.transport** (G.2.1): `Literal["local", "ssh", "codespace"]`
 
@@ -946,7 +941,7 @@ do nome, com tooltip mostrando `remote_host`/`codespace_name`.
 Mesma lógica no dropdown (substitui `FolderGit2`/`FolderOpen` quando
 non-local). i18n `workspace.transport.ssh` + `.codespace`.
 
-### C7 — License Gate (Plus/Pro) + Status Endpoint (T.12.1+T.12.7)
+#### C7 — License Gate (Plus/Pro) + Status Endpoint (T.12.1+T.12.7)
 
 `src/services/license.py`: validação de `VECTORA_TOKEN` contra
 edge function Supabase (configurável via `VECTORA_LICENSE_URL`,
@@ -994,7 +989,7 @@ Testes em `tests/unit/test_services_license.py`: bypass, missing
 token, cache fresco, cache stale offline (graceful 48h),
 `read_cached_status`.
 
-### C8 — OXC Toolchain (T.13)
+#### C8 — OXC Toolchain (T.13)
 
 `chat/.oxlintrc.json` com plugins `react`, `typescript`, `nextjs`,
 `unicorn`, `import`. Categorias `correctness`/`suspicious`/`perf`
@@ -1014,195 +1009,648 @@ cross-platform). Script `pnpm lint:oxc` em `chat/package.json`.
   (Bloco D) — reduzir `_next/static/*.js` ~30–40%.
 - Endurecer categorias para `error` conforme warnings fechadas.
 
----
-
-## ============================================================================
+> **Nota Bloco D**: as configurações OXC continuam válidas após a
+> migração para Vite — `oxlint` opera sobre TypeScript/React, não
+> sobre o framework de routing.
 
 ## ⏳ PRODUTO: blocos D–J (pendentes — distribuição, agents, storage, API)
 
-## ============================================================================
+### BLOCO D — Distribuição Comercial: Vite SPA + Electron + FastAPI + Nuitka
 
-## BLOCO D — Distribuição Comercial: Nuitka + Electron + Instaladores
+> **Contexto.** A pipeline de distribuição estava bloqueada por uma
+> inconsistência fundamental: o frontend Next.js usa `output:
+"standalone"` (servidor Node.js sidecar), mas o CI tenta fazer
+> `next export` (estático) — incompatível. O `next_sidecar.py` foi a
+> tentativa de fechar essa lacuna spawnando um terceiro processo
+> (Node.js) dentro do binário Nuitka, somando complexidade: três
+> processos (Electron + FastAPI + Node), ~150MB de instalador, e
+> health-check só do FastAPI deixando o sidecar Node como ponto de
+> falha silenciosa.
+>
+> **Decisão.** Migrar o frontend para **Vite + TanStack Router (SPA)**.
+> FastAPI passa a servir os assets estáticos diretamente. Electron
+> spawna **um único** processo. Sem Node.js no instalador, sem proxy
+> Hono, sem `next_sidecar.py`. Todos os componentes React
+> (`chat/components/**`), Zustand stores, shadcn/ui, Tailwind, hooks
+> e tipos permanecem **inalterados**. A migração é estrutural
+> (routing, server-layer, build), não de UI.
+>
+> **Princípio fundamental:** o produto continua sendo **dois modos
+> com a mesma codebase**:
+>
+> 1. **App desktop** (Electron + Nuitka) — usuário instala via
+>    `.msi`/`.dmg`/`.AppImage` e a janela carrega
+>    `http://127.0.0.1:<porta_efêmera>/`.
+> 2. **Web app self-hosted** — usuário sobe `vectora server chat
+--port 8080` em VPS e acessa `https://chat.example.com` via
+>    nginx reverse proxy.
+>
+> Ambos os modos usam o **mesmo backend FastAPI** servindo a **mesma
+> SPA Vite**. A única diferença é quem hospeda.
 
-> **Contexto.** O Launcher (`src/launcher.py`), gate de licença, config
-> Nuitka (`build/nuitka.toml`), skeleton Electron (`desktop/src/main.ts`)
-> e `electron-builder.yml` já estão prontos do Bloco C7+. Falta: rodar o
-> pipeline real, validar build em cada SO da matrix, ligar code signing
-> pipeline, fechar canal de updates e remover canais públicos legados.
+#### D1 — Migração do frontend para Vite + TanStack Router
 
-### D1 — Pipeline Nuitka onefile + bundle do frontend (em CI matrix)
+**Antes** (Next.js 16 App Router + Hono):
 
-- **GitHub Actions matrix** (`runs-on: [windows-latest, macos-latest,
-ubuntu-latest]`):
-  1. `pnpm --dir chat install --frozen-lockfile`
-  2. `pnpm --dir chat build`
-  3. `pnpm --dir chat exec next export` → `chat/out/`
-  4. (após N6 abaixo: `pnpm --dir chat exec oxc-minify chat/out/`)
-  5. `uv sync --frozen`
-  6. `uv run nuitka --config-file=build/nuitka.toml src/launcher.py`
-  7. Output: `dist-nuitka/vectora-<os>-<arch>`
-- **Validações por SO** (smoke tests):
-  - `vectora --version` retorna versão correta.
-  - `vectora --help` lista subcomandos.
-  - `VECTORA_LICENSE_BYPASS=1 vectora server chat --port 0` sobe
-    e responde `GET /health` em <10s.
-  - `vectora server mcp --transport stdio` faz handshake.
-- **Otimizações**: validar plugins Nuitka específicos por dep com
-  ext C (`lancedb`, `pyarrow`, `tantivy`, `pykeepass`, `asyncssh`).
-  Ajustar `include_package_data` por SO conforme imports lazy
-  falham.
+```
+Browser → chat/app/[[...route]] → Hono (Node.js server-side)
+                                → fetch → FastAPI :8080
+                                → cookies httpOnly retornam ao browser
+```
 
-### D2 — Electron shell production-ready (sidecar + reload)
+**Depois** (Vite SPA):
 
-- **Path do binário** (`desktop/src/main.ts::backendPath()`): hoje
-  aponta para `resources/vectora-core/`. Adicionar fallback em dev
-  (`process.env.VECTORA_CORE_PATH` para apontar para
-  `dist-nuitka/`).
-- **Health-check robusto**: `waitForBackend` com retry exponencial
-  - cap 30s; abrir janela de erro com botão "Reiniciar" se passar
-    do timeout (em vez de só morrer).
-- **Reload** (Ctrl+R / Cmd+R): bloqueado em prod (devTools off);
-  liberado se `process.env.VECTORA_DEV=1`.
-- **Crash handler**: `backend.on("exit")` chama Sentry (M2) com
-  payload {code, signal, last_logs}.
-- **Tray icon** (opcional MVP): mostra status (verde/vermelho/
-  amarelo conforme `GET /health/ready`) com menu "Open Vectora",
-  "Restart Backend", "Quit".
-- **Deep-link** `vectora://`: para magic links (signin pelo browser
-  → desktop) e `vectora://workspace/<id>` para abrir workspace
-  específico.
-- **IPC tipado** (`contextBridge`): expor `vectora.platform`,
-  `vectora.openExternal(url)` para Stripe portal handoff (Bloco K).
+```
+Browser → fetch direto → FastAPI :PORT (mesmo origin)
+                       → cookies httpOnly retornam ao browser
+                       (sem proxy intermediário)
+```
 
-### D3 — Code Signing Pipeline (Win/macOS/Linux)
+**Stack alvo**:
+
+- **Vite 6.x** com `@vitejs/plugin-react`
+- **TanStack Router** (file-based, com type-safety completa)
+- **TanStack Query** para data fetching (já é a base do SWR atual)
+- **vite-plugin-pwa** substitui `chat/public/service-worker.js` manual
+- React 19, Zustand 5, shadcn/ui, Tailwind 4 — **inalterados**
+
+**Estrutura nova** (`chat/`):
+
+```
+chat/
+├── src/
+│   ├── routes/                 ← TanStack Router file-based
+│   │   ├── __root.tsx          ← layout root (substitui app/layout.tsx)
+│   │   ├── index.tsx           ← / → redireciona /session/<latest>
+│   │   ├── auth/
+│   │   │   ├── signin.tsx
+│   │   │   └── signup.tsx
+│   │   ├── session/
+│   │   │   └── $threadId.tsx   ← rota dinâmica
+│   │   └── share/
+│   │       └── $token.tsx
+│   ├── components/             ← MOVIDO de chat/components/ sem mudanças
+│   ├── lib/                    ← MOVIDO de chat/lib/ com ajustes mínimos
+│   ├── main.tsx                ← entry point Vite
+│   └── routeTree.gen.ts        ← auto-gerado pelo TanStack Router plugin
+├── public/                     ← assets estáticos (favicons, manifest)
+├── index.html                  ← shell HTML do Vite
+├── vite.config.ts              ← config Vite + plugins
+├── tsconfig.json
+└── package.json
+```
+
+**Removido**:
+
+- `chat/app/` — App Router Next.js deletado por completo
+- `chat/next.config.mjs` — sem mais Next.js
+- `chat/server/` — proxy Hono inteiro (rotas `auth`, `chat`, `threads`,
+  `admin`, `workspaces`, `plugins`, `skills`, `license`, `updates`,
+  `tools`, `artifacts`, `memory`, `integrations`, `health`)
+- `chat/server/index.ts`
+- `chat/proxy.ts` — substituído por `beforeLoad` no TanStack Router
+- `src/services/next_sidecar.py` — sem mais sidecar Node.js
+- `chat/public/service-worker.js` — substituído por vite-plugin-pwa
+
+**Adicionado**:
+
+- `chat/vite.config.ts` com proxy dev para FastAPI:
+  ```ts
+  server: {
+    proxy: {
+      '/auth':                  'http://localhost:8080',
+      '/vectora.chat.v1':       'http://localhost:8080',
+      '/vectora.workspace.v1':  'http://localhost:8080',
+      '/vectora.terminal.v1':   { target: 'ws://localhost:8080', ws: true },
+      '/admin':                 'http://localhost:8080',
+      '/workspaces':            'http://localhost:8080',
+      '/plugins':               'http://localhost:8080',
+      '/skills':                'http://localhost:8080',
+      '/license':               'http://localhost:8080',
+      '/memory':                'http://localhost:8080',
+      '/tools':                 'http://localhost:8080',
+      '/artifacts':             'http://localhost:8080',
+      '/health':                'http://localhost:8080',
+      '/metrics':               'http://localhost:8080',
+    },
+  }
+  ```
+- `chat/src/lib/router.tsx` com `createRouter` + `RouterProvider` + auth
+  guard global (`beforeLoad` no `__root.tsx`):
+  ```ts
+  beforeLoad: async ({ location }) => {
+    const { hasUsers, isAuthenticated } = await authStore.hydrate();
+    if (!hasUsers) throw redirect({ to: "/auth/signup" });
+    if (!isAuthenticated && !location.pathname.startsWith("/auth/"))
+      throw redirect({ to: "/auth/signin", search: { from: location.href } });
+  };
+  ```
+
+**Mudanças em `chat/lib/api/vectora-client.ts`**:
+
+- Remover prefixo `/api/` de TODAS as URLs (browser fala direto com
+  FastAPI: `/auth/signin` em vez de `/api/auth/signin`).
+- Manter retry automático em 401 → `/auth/refresh` → retry.
+- `credentials: 'include'` permanece (cookies `vectora_access`/
+  `vectora_refresh` continuam sendo httpOnly + SameSite=Lax).
+
+**Mudanças em `chat/components/layout/license-banner.tsx`**:
+
+- Fetch `/license/status` direto (sem `/api/` prefix).
+
+**i18n CSV** (`chat/lib/i18n/strings.csv.ts`): inalterado — parser
+funciona em ambiente Vite sem mudanças.
+
+**PWA** (vite-plugin-pwa):
+
+```ts
+VitePWA({
+  registerType: "autoUpdate",
+  workbox: {
+    navigateFallback: "/index.html",
+    runtimeCaching: [
+      { urlPattern: /^\/auth\//, handler: "NetworkOnly" },
+      { urlPattern: /^\/vectora\./, handler: "NetworkOnly" },
+      { urlPattern: /^\/.*\.(js|css|png|svg)$/, handler: "CacheFirst" },
+    ],
+  },
+  manifest: {
+    /* mesmo manifest.json atual */
+  },
+});
+```
+
+#### D2 — FastAPI serve assets Vite diretamente
+
+**`src/api/server.py`** ganha mount `StaticFiles` antes do catch-all:
+
+```python
+from fastapi.staticfiles import StaticFiles
+
+# Localiza o bundle Vite — embutido pelo Nuitka como data dir
+# `chat_static/` (ou em dev: caminho relativo ao repo).
+def _chat_static_root() -> Path:
+    compiled = getattr(sys, "__compiled__", None)
+    if compiled is not None:
+        return Path(compiled.containing_dir) / "chat_static"
+    bootstrap = os.environ.get("NUITKA_ONEFILE_PARENT")
+    if bootstrap:
+        return Path(bootstrap) / "chat_static"
+    # Dev: chat/dist/ ao lado do repo (após `pnpm --dir chat build`)
+    return Path(__file__).resolve().parent.parent.parent / "chat" / "dist"
+
+static_root = _chat_static_root()
+if static_root.is_dir():
+    # Catch-all SPA: rota não-API serve index.html, route-handler
+    # client-side cuida da navegação.
+    app.mount(
+        "/",
+        StaticFiles(directory=static_root, html=True),
+        name="chat-spa",
+    )
+```
+
+**Whitelist de rotas API** (não interceptadas pelo StaticFiles):
+todas as rotas registradas em `routers/` (`/auth/*`,
+`/vectora.chat.v1/*`, `/vectora.workspace.v1/*`,
+`/vectora.terminal.v1/*` WebSocket, `/admin/*`, `/workspaces/*`,
+`/plugins/*`, `/skills/*`, `/license/*`, `/memory/*`, `/tools/*`,
+`/artifacts/*`, `/health`, `/metrics`).
+
+**CORS em dev** (Vite roda em :5173, FastAPI em :8080):
+
+```python
+if os.environ.get("VECTORA_DEV") == "1":
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+```
+
+Em produção (binário Nuitka / app desktop): **sem CORS** —
+browser, frontend e API são todos same-origin (`http://127.0.0.1:PORT`).
+
+**Cookies httpOnly**: continuam idênticos. `Set-Cookie:
+vectora_access=...; HttpOnly; SameSite=Lax; Path=/`. Sem `Secure` em
+HTTP local; com `Secure` quando atrás de nginx + TLS.
+
+#### D3 — Pipeline Nuitka onefile (CI matrix Win/macOS/Linux)
+
+**GitHub Actions matrix** (`runs-on: [windows-latest, macos-latest,
+ubuntu-latest, macos-13]`) — `macos-13` para builds x64 (Intel),
+`macos-latest` para arm64 (Apple Silicon):
+
+```yaml
+- pnpm --dir chat install --frozen-lockfile
+- pnpm --dir chat build # gera chat/dist/ (Vite estático)
+- pnpm --dir chat exec oxc-minify chat/dist/ || true # otimização opcional
+- uv sync --frozen
+- uv run nuitka \
+  --mode=onefile \
+  --include-data-dir=chat/dist=chat_static \
+  --enable-plugin=multiprocessing \
+  --enable-plugin=anti-bloat \
+  --output-filename=vectora \
+  --output-dir=dist-nuitka \
+  src/launcher.py
+```
+
+**Smoke tests** por SO (depois do build, antes do package Electron):
+
+- `vectora --version` retorna versão correta.
+- `VECTORA_LICENSE_BYPASS=1 vectora server chat --port 8080 &` sobe
+- `curl http://localhost:8080/health` retorna 200 em <10s.
+- `curl http://localhost:8080/` retorna `<html>` (a SPA Vite).
+- `curl http://localhost:8080/auth/has-users` retorna JSON
+  (não-HTML, confirma que catch-all não engoliu API).
+- `vectora server mcp --transport stdio` faz handshake.
+
+**Ajustes no `build/nuitka.toml`** (referência documental, sincronizada
+com CI):
+
+- `include_data_dirs = ["chat/dist=chat_static"]` (em vez de
+  `chat/.next/standalone` ou `chat/out`).
+- Sem mais `include_module = ["langgraph.checkpoint.sqlite.aio"]`
+  para o `next_sidecar` — esse caminho desaparece.
+- Mantém `include_package_data` para `lancedb`, `pyarrow`, `tantivy`,
+  `pykeepass`, `asyncssh`.
+
+**Validação de plugins Nuitka**: ajustar `include_package_data` por
+SO conforme imports lazy do langchain falharem em runtime. CI deve
+falhar smoke test → erro de import → adicionar plugin → re-rodar.
+
+#### D4 — Electron shell production-ready (sidecar único)
+
+**`desktop/src/main.ts`** — limpeza após eliminar Node sidecar:
+
+- **Path do binário**: `backendPath()` retorna nome correto
+  (`vectora.exe` no Windows, `vectora` em macOS/Linux). Override em
+  dev via `VECTORA_CORE_PATH=../dist-nuitka pnpm --dir desktop start`.
+- **`startBackend()`**: spawn **único** (`vectora server chat`).
+  Sem mais terceiro processo Node.js.
+- **`waitForBackend()`**: retry exponencial até 30s, polling
+  `GET /health`. Não precisa mais separar health do sidecar do health
+  do FastAPI — só um processo.
+- **`createWindow()`**: `loadURL('http://127.0.0.1:<port>/')` — a SPA
+  Vite responde no `/` servida pelo FastAPI.
+- **Crash handler**: `backend.on("exit")` mostra dialog
+  "Reiniciar/Sair". Se Sentry estiver configurado (M2), envia
+  `{ code, signal, last_logs }`.
+- **Tray icon**: status visual (verde/amarelo/vermelho) conforme
+  `GET /health/ready`; menu "Abrir Vectora", "Reiniciar backend",
+  "Aplicar atualização" (quando disponível), "Sair".
+- **Deep-link** `vectora://`: registro de protocol handler para
+  magic-links (signin do site web → app desktop) e
+  `vectora://workspace/<id>` para abrir workspace específico.
+- **IPC tipado** (`contextBridge` em `preload.ts`): expõe
+  `window.vectora.{platform, appVersion, openExternal,
+onDeepLink, onUpdateStatus, quitAndInstallUpdate}`. Frontend
+  detecta `window.vectora` para mostrar UI desktop-only (banner
+  "Aplicar atualização", `openExternal` para Stripe portal).
+
+#### D5 — Code Signing Pipeline (Win + macOS + Linux)
 
 - **Windows** — Azure Trusted Signing (EV cert):
   - Secrets em GitHub: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`,
     `AZURE_CLIENT_SECRET`, `AZURE_CERTIFICATE_PROFILE_NAME`,
     `AZURE_ENDPOINT`, `AZURE_CODE_SIGNING_ACCOUNT_NAME`.
-  - Action `azure/trusted-signing-action@v0.5+`. SignTool valida
-    `signtool.exe verify /pa /v vectora.exe` em smoke test.
+  - Action `azure/trusted-signing-action@v0.5+` assina tanto
+    `vectora.exe` (Nuitka onefile) quanto `Vectora-Setup.exe` (NSIS).
+  - Validação pós-build: `signtool verify /pa /v vectora.exe`.
 - **macOS** — Apple Developer ID + notarização:
   - Secrets: `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`,
     `APPLE_TEAM_ID`, `APPLE_DEVELOPER_ID_CERT` (base64 .p12) +
     `APPLE_DEVELOPER_ID_CERT_PASSWORD`.
-  - `electron-builder.yml` já tem `notarize: true` + `hardenedRuntime`
-    - `entitlements`. Validar `xcrun stapler validate Vectora.dmg`.
+  - `electron-builder.yml` já tem `notarize: true` +
+    `hardenedRuntime: true`.
   - Entitlements (`build-resources/entitlements.mac.plist`):
-    `com.apple.security.cs.allow-unsigned-executable-memory` (para
-    Nuitka), `com.apple.security.cs.allow-jit`,
-    `com.apple.security.network.client/server`,
-    `com.apple.security.files.user-selected.read-write`.
+    - `com.apple.security.cs.allow-unsigned-executable-memory`
+      (necessário para o binário Nuitka embutido)
+    - `com.apple.security.cs.allow-jit`
+    - `com.apple.security.network.client`
+    - `com.apple.security.network.server`
+    - `com.apple.security.files.user-selected.read-write`
+  - Validação pós-build: `xcrun stapler validate Vectora.dmg`.
 - **Linux**:
-  - AppImage: sem assinatura (mantém).
-  - `.deb` / `.rpm`: assinar com GPG do projeto
-    (`VECTORA_GPG_KEY`/`VECTORA_GPG_KEY_PASSWORD`). `apt-secure` /
-    `dnf` validam.
+  - AppImage: sem assinatura (mantém — convenção do formato).
+  - `.deb` e `.rpm`: assinar com GPG do projeto
+    (`VECTORA_GPG_KEY`/`VECTORA_GPG_KEY_PASSWORD`).
+    `apt-secure` e `dnf` validam.
 
-### D4 — Auto-Update Channel Server (electron-updater)
+#### D6 — Auto-Update Channel Server (electron-updater)
 
-- **Backend leve** em Cloudflare Workers ou Vercel Edge:
-  rota `/updates/<channel>/<os>/<arch>/RELEASES` + `/latest.yml`
-  consultada pelo electron-updater. Channels: `latest`, `beta`,
-  `alpha`.
-- **Storage**: R2 ou Vercel Blob com instaladores assinados.
-- **Auth do download**: presigned URLs por `VECTORA_TOKEN` (Bloco
-  K) — só quem tem licença válida baixa.
-- **Manifesto** (gerado por electron-builder): `latest.yml` +
-  `latest-mac.yml` + `latest-linux.yml` com checksums sha512 +
-  `releaseDate` + `releaseNotes` (markdown).
-- **Delta updates**: `differentialPackage` no electron-builder
-  (gera `.blockmap` para downloads incrementais ~80% menores).
-- **Rollback**: se nova versão crashar 3x consecutivas no boot,
-  electron-updater faz `quitAndRevert` para a versão anterior
-  preservada em `~/Library/Application Support/Vectora/old-versions/`.
-- **Banner no chat** ("Atualização disponível — v1.2.0"): hook em
-  `command-bar.tsx` consumindo `GET /api/updates/status` que faz
-  proxy para o manifesto.
+**Server**: já existe esqueleto em `update-server/src/worker.ts`
+(Cloudflare Workers + Hono + R2 + KV). Endpoints:
 
-### D5 — Instaladores nativos finais (electron-builder)
+- `GET /updates/:channel/:os/:arch/latest.yml` — manifesto consumido
+  pelo electron-updater. Requer query `?token=<VECTORA_TOKEN>` ou
+  header `X-Vectora-Token`.
+- `GET /updates/:channel/:os/:arch/:version/:filename` — download do
+  instalador (R2 com checksum sha512 + blockmap para delta).
+- `POST /telemetry/update-result` — telemetria de
+  `started`/`completed`/`failed`. 3+ falhas em 1h na mesma versão →
+  quarentina automática (versão removida de novos downloads,
+  electron-updater faz fallback para `previous_stable`).
+
+**Channels**: `latest` (default, produção), `beta`, `alpha`.
+
+**Phased rollout** (N3): rollout faseado por bucket hash do token
+(5% → 25% → 100%) configurado em KV `config.json`.
+
+**Manifesto gerado** por electron-builder após assinar:
+
+- `latest.yml` + `latest-mac.yml` + `latest-linux.yml`
+- Checksums sha512 + `releaseDate` + `releaseNotes` (markdown).
+- `.blockmap` para downloads incrementais (~80% menores).
+
+**Banner no chat** (`chat/src/components/layout/update-banner.tsx`):
+já implementado — subscreve `window.vectora.onUpdateStatus(...)` do
+preload.ts e mostra "Aplicar atualização e reiniciar" quando
+electron-updater termina o download. Invisível em web mode (puro
+browser não tem `window.vectora`).
+
+#### D7 — Instaladores nativos finais (electron-builder)
 
 - **Windows**:
-  - NSIS `oneClick: false`, `allowToChangeInstallationDirectory:
-true`, shortcut Vectora no menu iniciar.
-  - MSI para deploy corporativo (GPO friendly).
+  - **NSIS** `oneClick: false`, `allowToChangeInstallationDirectory:
+true`, shortcut Vectora no menu iniciar + desktop.
+  - **MSI** para deploy corporativo (GPO-friendly).
   - Per-machine + per-user opt-in no NSIS.
 - **macOS**:
-  - DMG com background custom (`build-resources/dmg-background.png`),
-    layout `Vectora.app` → `/Applications` drag.
-  - Universal binary (x64 + arm64) via `--universal` no
-    electron-builder.
+  - **DMG universal** (x64 + arm64) via `--universal` ou builds
+    separados (`macos-13` x64 + `macos-latest` arm64 → `lipo` ou
+    DMG por arch).
+  - Background custom em `build-resources/dmg-background.png`,
+    layout `Vectora.app` → `/Applications`.
 - **Linux**:
-  - AppImage com `--no-sandbox` documentado (alguns kernels
+  - **AppImage** com `--no-sandbox` documentado (alguns kernels
     precisam).
-  - `.deb` para Ubuntu/Debian — `Depends: libgtk-3-0, libnotify4,
-libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0`.
-  - `.rpm` para Fedora/RHEL — `Requires` equivalente.
+  - **`.deb`** Ubuntu/Debian — `Depends: libgtk-3-0, libnotify4,
+libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libdrm2,
+libgbm1`. Hooks pre/post install em
+    `build-resources/linux-after-install.sh` (xdg-mime para deep-link
+    `vectora://`).
+  - **`.rpm`** Fedora/RHEL — `Requires` equivalente.
 
-### D6 — License + Stripe Customer Portal handoff
+**Estrutura do instalador** (mesma em todas plataformas):
 
-- **Settings → "Gerenciar assinatura"** em `chat/components/layout/
-settings-dialog/tabs/conta-tab.tsx`: botão que chama
-  `POST /api/license/portal` (proxy Hono) → endpoint backend
-  `POST /license/portal` que chama edge function Supabase
-  `create-portal` (`docs/company.md` B6) → retorna `url`.
-- **Desktop**: `shell.openExternal(url)` abre o Stripe Customer
-  Portal no navegador padrão (não dentro do Electron — segurança).
-- **Trial banner** (E2 company): hook em `chat/components/layout/
-license-banner.tsx`:
-  - Sem token configurado → laranja, link "Configure em Settings
-    → Envs".
-  - Trial ≤ 7 dias → amarelo, "Trial expira em N dias — Assinar".
-  - Expirado → vermelho, bloqueia input, "Renovar".
-- **Tier enforcement no chat**: feature gates leem
-  `VECTORA_TIER` do `GET /license/status` e desabilitam UIs Pro
-  quando `tier=plus` (badges "Pro only" nos backends storage/cache
-  do Settings → Admin → Storage — ver F9, G).
+```
+Vectora.app/                      (macOS) ou C:\Program Files\Vectora\  (Win)
+├── Vectora.exe                   (Electron shell)
+└── resources/
+    ├── app.asar                  (TypeScript compilado: dist/main.js, preload.js)
+    └── vectora-core/
+        └── vectora{.exe}         (binário Nuitka onefile — backend completo
+                                   com SPA Vite embutida em chat_static/)
+```
 
-### D7 — Mirror PyPI somente-leitura do CLI Plus (compat early adopters)
+Cliente final recebe **um** arquivo (`.msi`, `.dmg`, `.AppImage`).
+Sem pip, sem npm, sem Node.js. Vectora abre e funciona.
+
+#### D8 — License banner + Stripe Customer Portal handoff
+
+- **Settings → Conta → "Gerenciar assinatura"** (`chat/src/components/
+layout/settings-dialog/tabs/conta-tab.tsx`):
+  - Botão chama `POST /license/portal` (rota nova em
+    `src/api/handlers/license.py`) → backend chama edge function
+    Supabase `create-portal` (Bloco K) → retorna URL.
+  - Frontend abre URL via `window.vectora?.openExternal(url) ??
+window.open(url, '_blank')` — desktop abre navegador externo,
+    web abre nova aba.
+- **Trial banner** (`chat/src/components/layout/license-banner.tsx`):
+  já implementado, hook `useLicenseStatus()` consome
+  `GET /license/status` (SWR 5min + on-focus). Estados:
+  - Sem token (`configured: false`) → laranja, "Configurar".
+  - Trial ≤ 7 dias → amarelo, "Assinar".
+  - `past_due` → laranja, "Regularizar".
+  - Expirado/revogado → vermelho, **bloqueia input** via
+    `onBlockingChange` prop.
+- **Tier enforcement no chat**: feature gates leem `tier` de
+  `GET /license/status` e desabilitam opções Pro no Admin → Storage
+  (F10) com badge "Pro only" quando `tier=plus`. Link "Fazer upgrade"
+  abre Customer Portal via `window.vectora.openExternal`.
+
+#### D9 — PyPI mirror `vectora-cli` (compat early adopters)
 
 - Pacote `vectora-cli` no PyPI contém **apenas** o CLI Python
-  (sem frontend, sem Electron). Reutiliza `src/launcher.py` mas
-  pula gate de licença em modo `--cli-only` (acessa **só** CLI
-  features — `vectora chat` textual, `vectora rag`, `vectora setup`).
-- Para tudo que requer chat web ou desktop, redireciona para
-  `https://vectora.company` download nativo.
-- `pyproject.toml` separa packages: `vectora-cli` (mirror) vs
-  `vectora` (full, GitHub Releases privado).
-- **Mensagem clara**: ao rodar `vectora server chat` no PyPI mirror
-  → erro explicativo apontando para download nativo.
+  (sem `chat/` Vite, sem `desktop/` Electron). Reutiliza
+  `src/launcher.py` mas pula gate de licença em modo `--cli-only`
+  (acessa **só** CLI features — `vectora chat` textual,
+  `vectora rag`, `vectora setup`, `vectora traces`, `vectora
+sessions`, `vectora config`, `vectora auth`).
+- Subcomandos `server chat`, `server headless`, `server mcp`
+  rejeitados com mensagem explicativa redirecionando para
+  `https://vectora.company/download`.
+- `packaging/pypi/vectora-cli/pyproject.toml` já existe — apenas
+  ajustar exclusões para remover referências a Next.js
+  (`chat`, `desktop`, `update-server`).
+- `vectora-cli` é publicado via job separado no CI (não no fluxo
+  principal de release nativo).
 
-### Arquivos críticos (Bloco D)
+#### D10 — Build orchestration: SCons como task runner único
 
-| Sub | Arquivos                                                                                                                                                                                                                            |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D1  | `.github/workflows/runner.yml` (matrix), `build/nuitka.toml` (ajustes por SO), `Dockerfile.build` (Linux build container)                                                                                                           |
-| D2  | `desktop/src/main.ts` (retry/crash handler/tray/deep-link), `desktop/src/preload.ts` (contextBridge), `desktop/package.json` (+`electron-updater`, +`@sentry/electron`)                                                             |
-| D3  | `.github/workflows/runner.yml` (steps de signing), `desktop/electron-builder.yml` (entitlements path, signing flags), `build-resources/entitlements.mac.plist` (novo)                                                               |
-| D4  | `update-server/` (novo repo Cloudflare Workers), `chat/components/chat/features/update-banner.tsx` (novo), `chat/server/routes/updates.ts` (novo)                                                                                   |
-| D5  | `desktop/electron-builder.yml` (NSIS oneClick/MSI/DMG layout), `build-resources/dmg-background.png`                                                                                                                                 |
-| D6  | `chat/components/layout/settings-dialog/tabs/conta-tab.tsx` (+"Gerenciar assinatura"), `chat/components/layout/license-banner.tsx` (novo), `chat/server/routes/license.ts` (proxy), `src/api/handlers/license.py` (+`POST /portal`) |
-| D7  | `pyproject.toml` (split packages), `src/launcher.py` (`--cli-only` mode), CI publish-pypi do `vectora-cli`                                                                                                                          |
+> O Makefile já foi substituído por SConstruct (commits recentes).
+> O Bloco D consolida SCons como **única fonte de verdade** para
+> build — CI deve chamar alvos SCons em vez de duplicar comandos.
 
-### Verificação (Bloco D)
+Alvos SCons relevantes (atualizados para Vite):
 
-- CI matrix produz 3 binários (Win .msi + .exe NSIS, macOS .dmg
-  universal, Linux .AppImage + .deb + .rpm) — todos assinados,
-  notarizados (macOS), em <30 min de build.
-- Instalar em VM limpa Win/macOS/Linux sem Python/Node — app abre,
-  pede `VECTORA_TOKEN`, valida, carrega chat.
-- Auto-update: subir `vN+1` no canal `beta` → cliente em `vN`
-  recebe banner, baixa delta, reinicia, está em `vN+1`.
-- Stripe portal: clicar "Gerenciar assinatura" no desktop abre
-  navegador externo no Customer Portal.
-- Trial banner muda cor conforme dias restantes; expirado
-  bloqueia input.
-- PyPI mirror: `pip install vectora-cli` + `vectora chat` funciona;
-  `vectora server chat` mostra mensagem redirecionando ao site.
+| Alvo                  | Ação                                                          |
+| --------------------- | ------------------------------------------------------------- |
+| `scons dev`           | Backend FastAPI :8080 + Vite dev server :5173 simultâneos     |
+| `scons dev-backend`   | Apenas FastAPI (license bypass)                               |
+| `scons dev-chat`      | Apenas `vite dev`                                             |
+| `scons gen-proto`     | `buf generate` (stubs Python + TypeScript)                    |
+| `scons build-chat`    | `pnpm --dir chat build` → `chat/dist/`                        |
+| `scons build-nuitka`  | Nuitka onefile com `chat/dist/` embutido → `dist-nuitka/`     |
+| `scons build-desktop` | TypeScript Electron → `desktop/dist/`                         |
+| `scons package`       | electron-builder → `desktop/dist-electron/`                   |
+| `scons release-win`   | Build completo + instalador Windows (.msi + .exe NSIS)        |
+| `scons release-mac`   | Build completo + instalador macOS (.dmg universal)            |
+| `scons release-linux` | Build completo + instaladores Linux (.AppImage + .deb + .rpm) |
+| `scons release`       | Release para o SO atual                                       |
+| `scons test`          | `pytest tests/unit/`                                          |
+| `scons lint`          | `ruff + ty + tsc + oxlint`                                    |
+| `scons clean`         | Remove `dist-nuitka/`, `chat/dist/`, `desktop/dist*/`         |
 
----
+**CI mudança**: `.github/workflows/runner.yml` invoca alvos SCons
+em vez de duplicar comandos. Garante que dev local e CI executam
+exatamente o mesmo build.
 
-## BLOCO E — Deep Agents: Refactor do Harness + TUI Textual
+#### Arquivos críticos (Bloco D)
+
+| Sub | Arquivos                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | **NOVO**: `chat/vite.config.ts`, `chat/index.html`, `chat/src/main.tsx`, `chat/src/routes/__root.tsx`, `chat/src/routes/index.tsx`, `chat/src/routes/auth/{signin,signup}.tsx`, `chat/src/routes/session/$threadId.tsx`, `chat/src/routes/share/$token.tsx`, `chat/src/lib/router.tsx`. **MOVIDO**: `chat/components/**` → `chat/src/components/**`, `chat/lib/**` → `chat/src/lib/**`. **DELETADO**: `chat/app/`, `chat/next.config.mjs`, `chat/server/`, `chat/proxy.ts`, `chat/public/service-worker.js`, `src/services/next_sidecar.py`. **AJUSTADO**: `chat/lib/api/vectora-client.ts` (remove prefixo `/api/`), `chat/package.json` (deps: `vite`, `@vitejs/plugin-react`, `@tanstack/react-router`, `@tanstack/router-plugin`, `@tanstack/react-query`, `vite-plugin-pwa`; out: `next`, `hono`, `@hono/node-server`). |
+| D2  | `src/api/server.py` (mount `StaticFiles` + CORS condicional dev), `src/launcher.py` (remover import de `next_sidecar`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| D3  | `.github/workflows/runner.yml` (matrix Win/macOS/Linux invocando SCons; remover `next export`), `build/nuitka.toml` (`chat/dist=chat_static`), `SConstruct` (`build-nuitka` aponta para `chat/dist/`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| D4  | `desktop/src/main.ts` (`vectora.exe` no Windows, sem mais Node sidecar nos diagnósticos), `desktop/src/preload.ts` (bridge tipada inalterada), `desktop/package.json` (sem mudanças de deps Electron — `electron-updater`, `@sentry/electron`, `tree-kill` permanecem)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| D5  | `.github/workflows/runner.yml` (steps de signing Azure + Apple + GPG), `desktop/electron-builder.yml` (`hardenedRuntime`, `notarize`, `entitlements`), `build-resources/entitlements.mac.plist`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| D6  | `update-server/src/worker.ts` (já existe — phased rollout + quarentine), `chat/src/components/layout/update-banner.tsx` (já existe, subscreve `window.vectora.onUpdateStatus`), `chat/src/lib/router.tsx` (link para Settings → Avançado para escolher canal beta/stable)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| D7  | `desktop/electron-builder.yml` (NSIS + MSI + DMG universal + AppImage + deb + rpm), `build-resources/dmg-background.png`, `build-resources/linux-after-install.sh` (xdg-mime para `vectora://`), `build-resources/linux-after-remove.sh`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| D8  | `chat/src/components/layout/license-banner.tsx` (sem prefixo `/api/`), `chat/src/components/layout/settings-dialog/tabs/conta-tab.tsx` (+"Gerenciar assinatura"), `src/api/handlers/license.py` (+`POST /license/portal`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| D9  | `packaging/pypi/vectora-cli/pyproject.toml` (excluir referências a `chat`, `desktop`, `update-server` que não existem mais como Next.js), `src/launcher.py` (modo `--cli-only` já implementado), `.github/workflows/runner.yml` (`publish-pypi` job para `vectora-cli`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| D10 | `SConstruct` (alvos atualizados para Vite), `.github/workflows/runner.yml` (invoca `scons build-chat`, `scons build-nuitka`, `scons release-<os>`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+
+#### Plano de migração em 3 fases (D1 — sub-tasks ordenadas)
+
+Para evitar PRs gigantes, D1 é dividido em três PRs sequenciais:
+
+**Fase 1 — Scaffold Vite ao lado do Next.js** (PR #1, ~1 dia):
+
+- Criar `chat/vite.config.ts`, `chat/index.html`, `chat/src/main.tsx`,
+  `chat/src/routes/__root.tsx` e uma rota dummy
+  `chat/src/routes/index.tsx`.
+- Adicionar deps Vite ao `package.json` (não remover Next.js ainda).
+- Script `pnpm --dir chat vite-dev` para rodar Vite em paralelo
+  ao `next dev`.
+- FastAPI ainda não serve estáticos — apenas validar que `vite build`
+  produz `chat/dist/` correto.
+
+**Fase 2 — Migrar componentes e rotas** (PR #2, ~2 dias):
+
+- Mover `chat/components/` → `chat/src/components/`.
+- Mover `chat/lib/` → `chat/src/lib/` (preservando `gen/` protobuf).
+- Portar rotas: `chat/app/auth/signin/page.tsx` →
+  `chat/src/routes/auth/signin.tsx`, etc.
+- Portar `chat/app/session/[threadId]/page.tsx` →
+  `chat/src/routes/session/$threadId.tsx`.
+- Reescrever `chat/proxy.ts` como `beforeLoad` no
+  `__root.tsx`.
+- Ajustar `vectora-client.ts` para remover prefixo `/api/`.
+- FastAPI ganha `StaticFiles` mount para `chat/dist/` em produção.
+- CORS condicional em dev (Vite :5173 → FastAPI :8080).
+- **Smoke test manual**: subir backend, abrir `http://localhost:5173`,
+  fazer signup → login → criar thread → enviar mensagem → confirmar
+  SSE chega e tool calls renderizam.
+
+**Fase 3 — Deletar Next.js e Hono** (PR #3, ~0.5 dia):
+
+- Remover `chat/app/`, `chat/next.config.mjs`, `chat/server/`,
+  `chat/proxy.ts`, `chat/public/service-worker.js`,
+  `src/services/next_sidecar.py`.
+- Remover deps do `package.json`: `next`, `hono`,
+  `@hono/node-server`, `next-themes` (substituir por solução
+  Tailwind), `@vercel/og` (se houver).
+- Atualizar `SConstruct`: `build-chat` aponta para `chat/dist/`,
+  remove cópia de `static/`/`public/` para standalone.
+- Atualizar `build/nuitka.toml`: `chat/dist=chat_static`.
+- Atualizar CI: remover `next export` + cópia standalone, adicionar
+  `pnpm --dir chat build` simples.
+- Remover testes de proxy Hono (`chat/server/routes/__tests__/`).
+- Atualizar i18n keys obsoletas (PWA install prompt agora é
+  vite-plugin-pwa).
+
+#### Verificação (Bloco D)
+
+**D1 (frontend Vite):**
+
+- `pnpm --dir chat dev` abre `http://localhost:5173` com HMR <300ms.
+- Build: `pnpm --dir chat build` em <20s → `chat/dist/` com ~200
+  arquivos JS chunks + CSS + assets.
+- Bundle total: <500 KB initial + chunks lazy.
+- TanStack Router type-check: `pnpm tsc --noEmit` verde.
+- Auth flow E2E: signup root → login → cookies persistem entre
+  reloads → logout limpa cookies.
+- SSE streaming: enviar mensagem → tokens chegam → tool call HITL
+  → approve → execução → resposta final. Sem erro de cookie/CORS.
+- WebSocket terminal: abrir aba terminal → conectar PTY → digitar
+  comando → output retorna em tempo real.
+
+**D2 (FastAPI serve SPA):**
+
+- `vectora server chat --port 8080` em pasta vazia:
+  - `curl http://localhost:8080/` retorna `<html>` (a SPA Vite).
+  - `curl http://localhost:8080/auth/has-users` retorna JSON.
+  - `curl http://localhost:8080/health` retorna `{status: "ok"}`.
+- Abrir browser em `http://localhost:8080` carrega o chat completo.
+- Recarregar (F5) numa rota profunda
+  (`http://localhost:8080/session/abc123`) **não** dá 404 — o
+  StaticFiles com `html=True` faz fallback para `index.html`, e o
+  TanStack Router resolve client-side.
+
+**D3 (CI Nuitka matrix):**
+
+- Push em branch → matrix Win/macOS/Linux executa em paralelo.
+- Cada job produz `dist-nuitka/vectora{.exe}` em <15 min.
+- Smoke tests verdes: `--version`, `/health`, `/auth/has-users`,
+  MCP handshake.
+- Artifacts upados para GitHub Actions com retention 30d.
+
+**D4 (Electron):**
+
+- `cd desktop && VECTORA_CORE_PATH=../dist-nuitka pnpm start` abre
+  janela Electron em <30s (license bypass dev), apontando para
+  `http://127.0.0.1:<porta_efêmera>/`.
+- SPA Vite carrega dentro do Electron sem erros.
+- Tray icon aparece, menu funciona.
+- Quit pelo menu encerra **um** processo (FastAPI). Sem Node.js
+  sidecar zumbi.
+- Deep-link: `start vectora://workspace/abc123` (Win) /
+  `open vectora://workspace/abc123` (macOS) abre a app e navega.
+
+**D5 (signing):**
+
+- Tag `v0.x.y` no GitHub dispara `release-native` job.
+- Windows: `signtool verify /pa /v Vectora-Setup.exe` → "Successfully
+  verified".
+- macOS: `xcrun stapler validate Vectora-0.x.y.dmg` → "The validate
+  action worked!".
+- Linux: `gpg --verify vectora_0.x.y_amd64.deb.asc
+vectora_0.x.y_amd64.deb` → "Good signature".
+
+**D6 (auto-update):**
+
+- Subir `v0.x.y+1` no canal `beta` → cliente em `v0.x.y` recebe
+  banner verde em <6h.
+- Click "Reiniciar para atualizar" → electron-updater aplica delta
+  (~10MB em vez de ~100MB do instalador completo) → app reinicia em
+  `v0.x.y+1`.
+- Quarentena: instalar versão `v0.x.y+broken` que crash 3x no boot →
+  electron-updater faz rollback para `v0.x.y` automaticamente.
+
+**D7 (instaladores):**
+
+- VM limpa Windows 11 sem Python/Node/Visual C++ Redistributable
+  separado: `Vectora-Setup.exe` instala em <60s, abre, valida token,
+  carrega chat. Desinstalação remove tudo de `C:\Program
+Files\Vectora\` e shortcut do menu iniciar.
+- VM limpa macOS 14: montar DMG, arrastar para Applications, abrir
+  → primeiro launch pede permissão de notarização → abre janela.
+- VM limpa Ubuntu 24.04: `sudo dpkg -i vectora_0.x.y_amd64.deb` →
+  app entra no menu Activities, abre, funciona. `dpkg -P vectora`
+  remove limpo.
+
+**D8 (license + portal):**
+
+- Click "Gerenciar assinatura" em desktop → navegador externo abre
+  Stripe Customer Portal logado.
+- Trial banner muda cor conforme dias restantes
+  (verde > 7d → amarelo ≤7d → laranja `past_due` → vermelho
+  `expired` bloqueia input).
+
+**D9 (PyPI mirror):**
+
+- VM limpa: `pip install vectora-cli` em <30s.
+- `vectora --version` funciona.
+- `vectora chat` (TUI textual ou rich) abre.
+- `vectora server chat` falha com mensagem clara apontando para
+  https://vectora.company/download.
+
+**D10 (orchestration):**
+
+- `scons release-win` num runner Windows produz `.msi` + `.exe`
+  assinados em <30 min.
+- `scons release-linux` produz `.AppImage` + `.deb` + `.rpm`
+  assinados.
+- CI roda **exatamente** os mesmos alvos SCons em todos os pushes.
+- Dev local: `scons dev` sobe backend + Vite com hot-reload em
+  ambos. Ctrl+C encerra os dois.
+
+### BLOCO E — Deep Agents: Refactor do Harness + TUI Textual
 
 > **Contexto.** Hoje o Vectora tem harness custom sobre LangGraph:
 > `src/graph.py` compõe orchestrator + 2 subagents (coder, search) + nó
@@ -1217,7 +1665,7 @@ license-banner.tsx`:
 > **Bloco E é APENAS refactor.** Comportamento observável, eventos SSE e
 > contratos da API permanecem **idênticos**.
 
-### E1 — `agent_factory` por usuário (núcleo)
+#### E1 — `agent_factory` por usuário (núcleo)
 
 `src/services/agent_factory.py`:
 
@@ -1243,7 +1691,7 @@ Substitui `_get_orchestrator_llm()`, `_get_coder_llm()`,
 `_get_search_llm()` e `services/llm_tools.get_user_bound_llm()`
 (reusado **internamente** pelo DeepAgent quando rebinda).
 
-### E2 — Subagents (coder/search/rag) como dicts DeepAgent
+#### E2 — Subagents (coder/search/rag) como dicts DeepAgent
 
 Subagents declarados no formato `deepagents`:
 
@@ -1273,7 +1721,7 @@ DeepAgent já implementa `respond`/`delegate`/`parallel` nativos.
 Schemas `CoderResult`/`SearchResult` permanecem para
 `*_finalize` middleware.
 
-### E3 — Adapters SSE & node labels
+#### E3 — Adapters SSE & node labels
 
 `src/api/adapters.py` mapeia eventos LangGraph do DeepAgent
 (`main_agent`, `subagent:coder`, `subagent:search`, `subagent:rag`)
@@ -1284,11 +1732,11 @@ para SSE preservando schemas (`ThinkingEvent`, `TokenEvent`,
 `ThinkingEvent` (A3): extrai do raciocínio do main agent
 (callback/middleware do DeepAgent); preserva campos `reason`,
 `action`, `delegate_to`, `task_query` que o frontend consome
-(`chat/lib/types/messages.ts:38-43`).
+(`chat/src/lib/types/messages.ts:38-43`).
 
 **Zustand stale-while-revalidate** (A2 B14) **não muda**.
 
-### E4 — HITL via `interrupt_on` (5 modos preservados)
+#### E4 — HITL via `interrupt_on` (5 modos preservados)
 
 Substitui o nó `hitl_check`. Mapping `permission_mode` (A3) → config
 do DeepAgent:
@@ -1304,7 +1752,7 @@ do DeepAgent:
 HITL endpoints (`/ResumeChat`) e `interrupt_id` continuam idênticos
 — DeepAgent usa `interrupt` do LangGraph (mesmo mecanismo).
 
-### E5 — Cleanup (sumiço de código legado)
+#### E5 — Cleanup (sumiço de código legado)
 
 Deletar:
 
@@ -1319,7 +1767,7 @@ Deletar:
   observabilidade; preservar tracing via middleware (logging +
   tracer).
 
-### E6 — Testes (regressão obrigatória)
+#### E6 — Testes (regressão obrigatória)
 
 Que **devem continuar passando**:
 
@@ -1337,7 +1785,7 @@ cada um recebe seu próprio toolset (deny + MCP) e cache é por
 E2E: "rode `ls` na pasta" em `permission_mode=ask` → 1 evento HITL
 → approve → execução. `plan` → recusa imediata sem HITL.
 
-### E7 — CLI textual TUI (`vectora chat` rich → textual)
+#### E7 — CLI textual TUI (`vectora chat` rich → textual)
 
 > Mantém os comandos one-shot (`vectora traces`, `vectora sessions`,
 > `vectora config`) em `rich`. Só o interativo migra.
@@ -1353,7 +1801,7 @@ E2E: "rode `ls` na pasta" em `permission_mode=ask` → 1 evento HITL
 - **`src/ui/textual/widgets/`**: um widget por `render_hint`
   (`DiffWidget`, `CodeBlockWidget`, `TableWidget`,
   `TerminalBlockWidget`, `ArtifactCardWidget`, `ThinkingWidget`).
-  Reuso direto dos tipos em `chat/lib/types/render.ts`
+  Reuso direto dos tipos em `chat/src/lib/types/render.ts`
   (espelhamento).
 - **Input**: `textual.widgets.Input` com history + autocomplete
   via `Suggester`. Slash commands B4 ganham suggester nativo.
@@ -1367,14 +1815,14 @@ E2E: "rode `ls` na pasta" em `permission_mode=ask` → 1 evento HITL
 - **`src/main.py`**: subcomando `chat` instancia `VectoraChatApp`.
   `--legacy` mantém caminho `rich` por 1 versão (rollback rápido).
 
-### Dependências
+#### Dependências
 
 ```toml
 deepagents = ">=0.6.3"     # já presente, fixar exato
 textual    = ">=0.83"      # NOVO — TUI vectora chat
 ```
 
-### Arquivos críticos (Bloco E)
+#### Arquivos críticos (Bloco E)
 
 | Sub | Arquivos                                                                                                                                                                                          |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1386,7 +1834,7 @@ textual    = ">=0.83"      # NOVO — TUI vectora chat
 | E6  | `tests/unit/test_agent_factory.py` (novo); migrar `test_nodes_hitl.py`                                                                                                                            |
 | E7  | `src/ui/textual/{app,streaming}.py` (novos), `src/ui/textual/widgets/*.py` (novos), `src/ui/commands/*` (portar para actions), `src/ui/setup_wizard.py` (vira Screen), `src/main.py` (subcomando) |
 
-### Verificação (Bloco E)
+#### Verificação (Bloco E)
 
 - Mesmas perguntas que hoje produzem `delegate_to=coder|search|rag`
   continuam produzindo mesmo `node_label` na UI.
@@ -1399,9 +1847,7 @@ textual    = ">=0.83"      # NOVO — TUI vectora chat
 - `vectora chat` (textual): split visual igual ao web, atalhos
   funcionam, slash commands com suggester.
 
----
-
-## BLOCO F — Storage Infrastructure: Lite Hardening + Postgres/Qdrant + BaaS
+### BLOCO F — Storage Infrastructure: Lite Hardening + Postgres/Qdrant + BaaS
 
 > **Contexto.** Antes de adicionar backends (Postgres/Qdrant),
 > **fortalecemos** o que já existe (SQLite + LanceDB) e construímos uma
@@ -1421,7 +1867,7 @@ textual    = ">=0.83"      # NOVO — TUI vectora chat
 > `VECTORA_MODE`/`VECTORA_DATABASE_URL`/`VECTORA_QDRANT_URL`/
 > `VECTORA_REDIS_URL`.
 
-### F1 — Hardening do modo lite (SQLite + LanceDB)
+#### F1 — Hardening do modo lite (SQLite + LanceDB)
 
 - **SQLite pool** (`storage/sqlite/pool.py` novo): `AsyncConnectionPool`
   com `aiosqlite`, `min=1 max=8` por banco. PRAGMAs globais:
@@ -1442,7 +1888,7 @@ textual    = ">=0.83"      # NOVO — TUI vectora chat
 - **Documentação** `docs/storage-lite.md`: VACUUM, WAL checkpoint
   manual, backup hot/cold.
 
-### F2 — Schema versioning (substitui `ALTER … suppress(Exception)`)
+#### F2 — Schema versioning (substitui `ALTER … suppress(Exception)`)
 
 - **`storage/migrations/`** com migrations numeradas:
   `0001_create_users.sql`, `0002_add_user_name.sql`, etc. Cada
@@ -1457,7 +1903,7 @@ textual    = ">=0.83"      # NOVO — TUI vectora chat
   por versão alvo). Lite roda auto no startup; completo prefere
   rodar manual antes do deploy.
 
-### F3 — Camada `storage/` (Protocols + factories)
+#### F3 — Camada `storage/` (Protocols + factories)
 
 - **`storage/protocols.py`**: `Checkpointer`, `Store`,
   `VectorStore`, `AuthDB`, `SessionDB`, `QueueDB`, `SecretsDB`,
@@ -1469,7 +1915,7 @@ textual    = ">=0.83"      # NOVO — TUI vectora chat
   finos sobre o que já existe — comportamento **idêntico** ao
   pré-F para reversibilidade.
 
-### F4 — Checkpointer via `langgraph.checkpoint.{sqlite,postgres}`
+#### F4 — Checkpointer via `langgraph.checkpoint.{sqlite,postgres}`
 
 - **Lite** (já é): `AsyncSqliteSaver` apontando para
   `~/.vectora/data/vectora.db` via pool F1.
@@ -1480,7 +1926,7 @@ textual    = ">=0.83"      # NOVO — TUI vectora chat
 - **Factory**: `get_checkpointer()` devolve um ou outro conforme
   config. `services/checkpoint.py` vira fino wrapper.
 
-### F5 — BaseStore via `langgraph.store.{sqlite,postgres}` (refactor memory)
+#### F5 — BaseStore via `langgraph.store.{sqlite,postgres}` (refactor memory)
 
 > Substitui implementação custom de `services/memory.py` (cosine em
 > Python puro, embeddings JSON-encoded) pelo `BaseStore` oficial do
@@ -1499,7 +1945,7 @@ textual    = ">=0.83"      # NOVO — TUI vectora chat
   copia da tabela `memories` antiga para o novo store preservando
   TTL e metadata.
 
-### F6 — VectorStore via `langchain-community` (LanceDB) e `langchain-qdrant`
+#### F6 — VectorStore via `langchain-community` (LanceDB) e `langchain-qdrant`
 
 Substitui uso direto de `lancedb.connect_async` por integrations
 oficiais — recebe hybrid search, retry e tipagem grátis.
@@ -1524,7 +1970,7 @@ vector_backend = "pgvector"`.
   `search`); `workspace_id` continua em metadata para filtro
   pós-retrieval (B2).
 
-### F7 — Auth/Sessions/Secrets/Audit/Invites/Queue em Postgres
+#### F7 — Auth/Sessions/Secrets/Audit/Invites/Queue em Postgres
 
 - Dep: `asyncpg>=0.29` (+ opcional `sqlalchemy[asyncio]>=2.0`).
 - **Migração de schema**: tabelas com prefixo `vectora_*`. Cada
@@ -1535,14 +1981,14 @@ vector_backend = "pgvector"`.
     e `ON CONFLICT … DO UPDATE`).
 - **Compatibilidade**: serviço fala com abstração; só a config muda.
 
-### F8 — Embedding queue em Postgres (multi-worker)
+#### F8 — Embedding queue em Postgres (multi-worker)
 
 - `services/queue.py` + `services/background.py` migram para tabela
   `vectora_embedding_queue` com `SELECT ... FOR UPDATE SKIP LOCKED`
   — múltiplos workers consumindo sem corrida. No lite continua
   SQLite + lock por arquivo.
 
-### F9 — BaaS recipes (Supabase, Neon, Qdrant Cloud)
+#### F9 — BaaS recipes (Supabase, Neon, Qdrant Cloud)
 
 > Usuários do modo completo raramente vão querer hospedar
 > Postgres/Qdrant próprio. Cada provedor tem **pegadinhas** específicas
@@ -1561,12 +2007,12 @@ vector` para pgvector hosted).
 - **Wizard CLI** (F11) e **UI admin** (F10) usam recipes para
   gerar config certa.
 
-### F10 — UI: aba "Storage" no Admin
+#### F10 — UI: aba "Storage" no Admin
 
 > Hoje admin só configura `default_model`/`allow_public_signup`/
 > `max_recursion`. Storage é invisível.
 
-- **`chat/components/layout/settings-dialog/admin/storage-panel.tsx`**:
+- **`chat/src/components/layout/settings-dialog/admin/storage-panel.tsx`**:
   subaba dentro de Administração com 4 seções:
   - **Checkpointer**: select (SQLite/Postgres) + DSN field + "Testar
     conexão" + status (badge verde/amarelo/vermelho).
@@ -1586,7 +2032,7 @@ vector` para pgvector hosted).
   desabilitadas com badge "Pro only" quando `VECTORA_TIER=plus`.
 - i18n `storage.*`.
 
-### F11 — CLI `vectora storage`
+#### F11 — CLI `vectora storage`
 
 > Espelho CLI da F10. Operadores headless precisam configurar storage
 > sem subir o frontend.
@@ -1602,7 +2048,7 @@ vector` para pgvector hosted).
 - `vectora storage backup` / `restore` — dump físico simplificado
   (sqlite `.backup`, `pg_dump`, snapshot Qdrant).
 
-### F12 — Migration tool (`vectora storage migrate`)
+#### F12 — Migration tool (`vectora storage migrate`)
 
 - **`to-postgres`**: lê SQLite local (3 bancos) → cria schema no
   Postgres (runner F2) → bulk insert via `COPY` em transações.
@@ -1616,7 +2062,7 @@ vector` para pgvector hosted).
 - Logs progressivos via `tqdm`/`textual.ProgressBar`; `--dry-run`
   estima volume.
 
-### F13 — `docker-compose` de referência
+#### F13 — `docker-compose` de referência
 
 - **`deploy/compose.complete.yml`**: `postgres:16` (com `pgvector`
   pré-instalado), `qdrant/qdrant:latest`, `redis:7` (G), `vectora`
@@ -1627,7 +2073,7 @@ vector` para pgvector hosted).
 - **README** `deploy/README.md` cobrindo 3 variantes (lite, complete
   self-hosted, complete BaaS).
 
-### F14 — Tests (parametrizados lite/complete)
+#### F14 — Tests (parametrizados lite/complete)
 
 - Fixtures `@pytest.fixture(params=["lite","complete"])` em auth,
   memory, sessions, queue, traces, vector store. CI Lite (default)
@@ -1646,7 +2092,7 @@ storage`.
 - Smoke: `vectora storage migrate to-postgres` lite→complete preserva
   rows + sample integrity check.
 
-### F15 — Provedores LLM via SDKs oficiais (consistência + Cohere completo)
+#### F15 — Provedores LLM via SDKs oficiais (consistência + Cohere completo)
 
 Hoje `services/utils.load_llm()` mistura `init_chat_model` com paths
 legados, e `tools/memory.py` usa `cohere.AsyncClient` direto
@@ -1675,7 +2121,7 @@ legados, e `tools/memory.py` usa `cohere.AsyncClient` direto
 - **pyproject** sem version pins fixos (princípio 5): faixas abertas
   `>=` com major estável; CI valida upgrade automático.
 
-### Arquivos críticos (Bloco F)
+#### Arquivos críticos (Bloco F)
 
 | Sub | Arquivos                                                                                                                                                                                                                                                                                  |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1688,14 +2134,14 @@ legados, e `tools/memory.py` usa `cohere.AsyncClient` direto
 | F7  | `storage/postgres/{auth,session,secrets,audit,invites}.py` (novos); refactor de `src/services/{auth,session,secrets/internal}.py`                                                                                                                                                         |
 | F8  | `storage/postgres/queue.py`; refactor de `src/services/{queue,background}.py`                                                                                                                                                                                                             |
 | F9  | `storage/recipes/{supabase,neon,qdrant_cloud}.py` (novos); `tests/unit/test_storage_recipes.py`                                                                                                                                                                                           |
-| F10 | `chat/components/layout/settings-dialog/admin/storage-panel.tsx` (novo); `src/api/handlers/admin.py` (+`/admin/storage`); i18n `storage.*`                                                                                                                                                |
+| F10 | `chat/src/components/layout/settings-dialog/admin/storage-panel.tsx` (novo); `src/api/handlers/admin.py` (+`/admin/storage`); i18n `storage.*`                                                                                                                                            |
 | F11 | `src/main.py` (subcomando `storage` info/test/wizard/migrate/backup)                                                                                                                                                                                                                      |
 | F12 | `src/services/migrate.py` (novo, helpers bulk insert)                                                                                                                                                                                                                                     |
 | F13 | `deploy/compose.{lite,complete}.yml`, `deploy/postgres/init.sql`, `deploy/README.md`                                                                                                                                                                                                      |
 | F14 | `tests/unit/test_storage_{pool,lancedb,migrations,recipes}.py`; parametrização de `test_services_{auth,memory,session,queue}.py`                                                                                                                                                          |
 | F15 | `src/services/utils.py` (`load_llm` consolidado); `src/tools/memory.py` (remover `cohere.AsyncClient`); `pyproject.toml` (+9 deps: langchain-google-genai/openai/anthropic/cohere/community/postgres/qdrant + langgraph-checkpoint-{sqlite,postgres} + langgraph-store-{sqlite,postgres}) |
 
-### Verificação (Bloco F)
+#### Verificação (Bloco F)
 
 **Lite hardening (F1–F3):**
 
@@ -1733,9 +2179,7 @@ legados, e `tools/memory.py` usa `cohere.AsyncClient` direto
   sem mover. Sem `--dry-run` move e zero rows perdem; `--force`
   sobrescreve.
 
----
-
-## BLOCO G — Cache Distribuído: Redis + `langchain-redis`
+### BLOCO G — Cache Distribuído: Redis + `langchain-redis`
 
 > **Contexto.** O backend tem 7 caches em memória que travam o Vectora
 > em single-process: `llm_tools._bound_cache` (C2), `plugins.
@@ -1745,7 +2189,7 @@ _mcp_tools_cache` + `_versions` (C2), `services/usage.usage_tracker`
 > Multi-server exige externalização. Redis também alimenta o rate
 > limiter (M).
 
-### G1 — Cache abstrato
+#### G1 — Cache abstrato
 
 - `src/services/cache.py`: Protocol `KVCache` (`get`, `set`, `incr`,
   `delete`, `hset`/`hget`, `zadd`/`zrangebyscore`/
@@ -1753,7 +2197,7 @@ _mcp_tools_cache` + `_versions` (C2), `services/usage.usage_tracker`
 - Impls: `memory` (dict atual, default) e `redis` (`redis-py>=5.0`
   asyncio).
 
-### G2 — LLM bind cache em Redis (pub/sub de invalidação)
+#### G2 — LLM bind cache em Redis (pub/sub de invalidação)
 
 - `services/llm_tools._bound_cache` deixa de armazenar o objeto LLM
   (não serializável); passa a guardar **assinaturas** (versão das
@@ -1762,39 +2206,39 @@ _mcp_tools_cache` + `_versions` (C2), `services/usage.usage_tracker`
   versão) coordena os processos. Multi-server sem rebind
   desnecessário.
 
-### G3 — MCP tools cache + versions
+#### G3 — MCP tools cache + versions
 
 - `services/plugins._mcp_tools_cache` mantém-se em memória local por
   processo (objetos `BaseTool` não serializam). `_versions` migra
   para Redis hash (`vectora:plugins:version:<user_id>` → int).
   `add_server`/`remove_server` fazem `INCR`.
 
-### G4 — Usage tracker em Redis sorted set
+#### G4 — Usage tracker em Redis sorted set
 
 - `services/usage.UsageTracker` migra para sorted set por user
   (`ZADD usage:<user_id> <ts> <id>`; `ZREMRANGEBYSCORE` para janela
   deslizante; `ZCARD` para uso atual). Endpoint `GET /auth/usage`
   (A7) passa a ler de lá. Modo lite continua dict em memória.
 
-### G5 — Workspace active em Redis hash
+#### G5 — Workspace active em Redis hash
 
 - `workspace_registry._active` migra para Redis hash
   (`workspace:active` → `user_id → workspace_id`). Persistência ainda
   em JSON (lista de workspaces); ativo é volátil.
 
-### G6 — Rate limit Redis sliding window
+#### G6 — Rate limit Redis sliding window
 
 - `services/rate_limit.py` substitui `slowapi` em memória por
   contagem Redis (sliding window). Suporta limites por user_id E
   por OAuth client (Bloco J).
 
-### G7 — Cache opcional de embeddings
+#### G7 — Cache opcional de embeddings
 
 - `services/cache_embeddings.py`: `hash(text+model) → vector` em
   Redis com TTL longo (24h). Reduz custo de chamadas Cohere
   repetidas no RAG e nas memórias. Lite: ignora.
 
-### G8 — `langchain-redis` para caches semânticos e history
+#### G8 — `langchain-redis` para caches semânticos e history
 
 > Caches G2/G7 são `KV{string→bytes}`. Para 3 features de alto valor,
 > usar `langchain-redis` em vez de cozinhar à mão:
@@ -1812,12 +2256,12 @@ _mcp_tools_cache` + `_versions` (C2), `services/usage.usage_tracker`
 - Convive com G1–G7: KV cru continua para usage/plugins/workspace;
   Redis "semântico" só para LLM/embedding.
 
-### G9 — Tests
+#### G9 — Tests
 
 - Fixtures `fakeredis` para CI sem docker; CI complete usa Redis
   real.
 
-### Arquivos críticos (Bloco G)
+#### Arquivos críticos (Bloco G)
 
 | Sub | Arquivos                                                                                                                                             |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1831,7 +2275,7 @@ _mcp_tools_cache` + `_versions` (C2), `services/usage.usage_tracker`
 | G8  | `src/services/cache_llm.py` (wraps `RedisCache`/`RedisSemanticCache`); `storage/redis/chat_history.py` (novo); `pyproject.toml` (+`langchain-redis`) |
 | G9  | `tests/unit/test_cache_*.py` (novos)                                                                                                                 |
 
-### Verificação (Bloco G)
+#### Verificação (Bloco G)
 
 - Rodar 2 instâncias do Vectora atrás de load balancer: trocar
   `permission_mode` numa requisição → próxima requisição em qualquer
@@ -1839,16 +2283,14 @@ _mcp_tools_cache` + `_versions` (C2), `services/usage.usage_tracker`
 - Rate limit 60/min compartilhado entre instâncias.
 - Cache de embedding: 2ª requisição idêntica não chama Cohere.
 
----
-
-## BLOCO H — Deep Agents 1: Skills, AGENTS.md, Prompt Cache, Compressão, Web Tools
+### BLOCO H — Deep Agents 1: Skills, AGENTS.md, Prompt Cache, Compressão, Web Tools
 
 > **Contexto.** Depende do **Bloco E** consolidado. Aqui ficam features
 > que a arquitetura DeepAgent destrava sem rewrites: skills nativas,
 > AGENTS.md memory, prompt caching Anthropic, compressão de contexto,
 > profiles e suite completa de web tools.
 
-### H1 — Skills nativas (continuação do C3)
+#### H1 — Skills nativas (continuação do C3)
 
 `services/skills.py` expõe `list_skill_paths(user_id) -> list[Path]`
 consumido pelo `services/agent_factory.py` (E1) ao montar
@@ -1856,7 +2298,7 @@ consumido pelo `services/agent_factory.py` (E1) ao montar
 Thinking quando agente acessa o `SKILL.md`. `GET /v1/tools/schema`
 (J) ganha `skills_loaded` no resumo.
 
-### H2 — AGENTS.md memory (convenção DeepAgent)
+#### H2 — AGENTS.md memory (convenção DeepAgent)
 
 Convenção do DeepAgent para "memória de longo prazo" via filesystem
 virtual. Integra com `services/memory.py` C1 — o AGENTS.md do user
@@ -1864,27 +2306,27 @@ vira a visão consolidada das memórias salvas; o `save_memory`
 continua escrevendo para memory, mas o agente lê o `AGENTS.md` no
 boot da conversa.
 
-### H3 — Prompt caching Anthropic
+#### H3 — Prompt caching Anthropic
 
 Anthropic prompt cache para `system_prompt` longo (`VECTORA_IDENTITY`
 
 - `ORCHESTRATOR_PROMPT`) — economia significativa em tokens. Config
   no `agent_factory` via `cache_control: ephemeral`.
 
-### H4 — Compressão de contexto
+#### H4 — Compressão de contexto
 
 Middleware default do DeepAgent (summarization). Configurar janela
 em `agent_factory` via env `VECTORA_CONTEXT_COMPRESSION_THRESHOLD`
 (default: 75% da `context_window` do modelo).
 
-### H5 — Profiles (defaults por provider/modelo)
+#### H5 — Profiles (defaults por provider/modelo)
 
 `src/services/profiles.py`: perfil por provider/modelo (defaults
 para Anthropic, OpenAI, Google) consumido pelo `agent_factory` —
 inclui sugestão de `reasoning_effort`, `temperature`,
 `cache_control`, system prompt overrides.
 
-### H6 — Web tools completas via `langchain-tavily`
+#### H6 — Web tools completas via `langchain-tavily`
 
 Hoje `src/tools/web.py` expõe só 2 tools (`web_search`, `fetch_url`).
 A integração `langchain-tavily` traz **6 classes** — adicionar
@@ -1913,7 +2355,7 @@ transparente).
 - **Render**: frontend já tem `SearchResultsViewer`, `TableViewer`,
   `QueueBadge` — zero código novo.
 
-### Arquivos críticos (Bloco H)
+#### Arquivos críticos (Bloco H)
 
 | Sub | Arquivos                                                                                                                                                                                                                             |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -1924,7 +2366,7 @@ transparente).
 | H5  | `src/services/profiles.py` (novo)                                                                                                                                                                                                    |
 | H6  | `src/tools/web.py` (+`web_crawl`, +`web_map`, +`web_research`, +`web_get_research`; rename `fetch_url`→`web_fetch`), `src/agents/search.py` (registra 4 tools no toolset), `pyproject.toml` (`langchain-tavily` versão mais recente) |
 
-### Verificação (Bloco H)
+#### Verificação (Bloco H)
 
 - Skill instalada via C3 muda comportamento do agente (carregamento
   on-demand do SKILL.md).
@@ -1933,13 +2375,11 @@ transparente).
   resultado em TableViewer. Idem `web_crawl` em "indexe docs de
   https://example.com até 3 níveis".
 
----
-
-## BLOCO I — Deep Agents 2: Sandbox + Worktree, Interpreters, Async, ACP, Remote
+### BLOCO I — Deep Agents 2: Sandbox + Worktree, Interpreters, Async, ACP, Remote
 
 > **Contexto.** Depende de E (Deep Agents refactor) e H (skills + web).
 
-### I1 — Sandbox + git worktree integrado (workspace isolado por user)
+#### I1 — Sandbox + git worktree integrado (workspace isolado por user)
 
 > **Cardinal.** No modo lite (C4) o terminal opera direto no
 > filesystem, confinado por `resolve_within_workspace` (B2). No modo
@@ -1970,14 +2410,14 @@ transparente).
   `src/services/security.py::resolve_within_workspace` (B2) — guards
   apontam para path da worktree em vez do workspace original.
 
-### I2 — Interpretadores Python/JS persistentes
+#### I2 — Interpretadores Python/JS persistentes
 
 `deepagents` expõe `PythonInterpreter`/`JSInterpreter` como tools
 stateful (mantêm variáveis entre calls). Substitui parte do uso de
 `terminal` para análise/cálculo. Atalho: orchestrator prefere
 interpreter quando tarefa é "compute" puro.
 
-### I3 — Async subagents (paralelismo real)
+#### I3 — Async subagents (paralelismo real)
 
 DeepAgent ≥0.7 permite subagents async-first. Substitui o
 `parallel_dispatch` artesanal que hoje roda sequencial; paralelismo
@@ -1985,7 +2425,7 @@ real entre coder/search/rag quando orchestrator escolhe `action:
 "parallel"`. O `_synthesize_after_parallel` (orchestrator) continua
 intacto.
 
-### I4 — ACP — Vectora como servidor e cliente de outros agentes
+#### I4 — ACP — Vectora como servidor e cliente de outros agentes
 
 - **Server** (`deepagents-acp.server`): expõe agent do Vectora via
   endpoint ACP em `/acp/v1` — clientes ACP (Claude Code, dcode,
@@ -1999,13 +2439,13 @@ intacto.
 - Auth via Bloco J (OAuth2 client credentials) — mesmo mecanismo
   do REST público.
 
-### I5 — Remote backends (filesystem/sandbox remoto)
+#### I5 — Remote backends (filesystem/sandbox remoto)
 
 `deepagents.backends.RemoteFileSystem` (S3, GCS, Azure Blob) como
 backend opcional para filesystem virtual do DeepAgent. Útil para
 deploys multi-host.
 
-### I6 — `dcode` como TUI alternativo (opt-in)
+#### I6 — `dcode` como TUI alternativo (opt-in)
 
 > O DeepAgent ecosystem traz seu próprio TUI textual
 > (`deepagents-code`, aka `dcode`). É um app textual completo já
@@ -2018,7 +2458,7 @@ deploys multi-host.
   usa default.
 - Reuso: ambos compartilham agent, auth, secrets, tools.
 
-### Arquivos críticos (Bloco I)
+#### Arquivos críticos (Bloco I)
 
 | Sub | Arquivos                                                                                                                                                                                                                                 |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -2029,9 +2469,7 @@ deploys multi-host.
 | I5  | `storage/protocols.py` (+`RemoteFileSystem`); `storage/backends/{s3,gcs,azure}.py` (novos)                                                                                                                                               |
 | I6  | `src/main.py` (subcomando `chat --dcode`); `pyproject.toml` (+`deepagents-code`)                                                                                                                                                         |
 
----
-
-## BLOCO J — REST API v1 (OAuth2 Client Credentials + OpenAI-compat + ACP)
+### BLOCO J — REST API v1 (OAuth2 Client Credentials + OpenAI-compat + ACP)
 
 > **Contexto.** Vectora já fala 4 modos: CLI, Chat (Connect-RPC + SSE),
 > MCP (stdio/SSE), Headless. Falta o 5º: **REST público** para
@@ -2040,7 +2478,7 @@ deploys multi-host.
 > completo" — RAG + IA + auth + governança per-user — atrás de uma
 > REST limpa.
 
-### J1 — OAuth2 client credentials
+#### J1 — OAuth2 client credentials
 
 - `src/services/oauth_clients.py`: modelo `OAuthClient` (`client_id`,
   `client_secret_hash`, `name`, `owner_user_id`, `scopes`,
@@ -2062,7 +2500,7 @@ expires_in:3600, scope}`. Claim `sub = owner_user_id`,
   `memory.write`, `tools.read`, `plugins.read`, `plugins.write`,
   `openai-compat`, `acp`.
 
-### J2 — Middleware bearer + scopes
+#### J2 — Middleware bearer + scopes
 
 - `src/api/middleware/oauth_bearer.py`: valida `Authorization:
 Bearer <jwt>` para `/v1/*`. Resolve `user_id` do JWT do J1 e
@@ -2076,7 +2514,7 @@ Bearer <jwt>` para `/v1/*`. Resolve `user_id` do JWT do J1 e
 - 401/403 conforme RFC 6749 (`error="invalid_token"`,
   `error="insufficient_scope"`).
 
-### J3 — Endpoints Vectora-nativos sob `/v1`
+#### J3 — Endpoints Vectora-nativos sob `/v1`
 
 - **Chat & Threads**:
   - `POST /v1/chat/stream` (SSE — mesma payload do `StreamChat`
@@ -2109,7 +2547,7 @@ path?, url?, collection="articles", metadata}`).
   `X-Vectora-Workspace-Id` força workspace específico;
   `X-Vectora-Rag-Collection`, `X-Vectora-Permission-Mode`.
 
-### J4 — Compatibilidade OpenAI
+#### J4 — Compatibilidade OpenAI
 
 - `src/api/handlers/openai_compat.py`:
   - `GET /v1/models` — `{data:[{id, object:"model", ...}],
@@ -2129,7 +2567,7 @@ max_tokens?, response_format?}`). Tradutor
 - **Multimodal**: `messages[].content` array com `{type:"image_url"}`
   é mapeado para `Attachment(kind=IMAGE)` do schema interno.
 
-### J5 — OpenAPI / Docs
+#### J5 — OpenAPI / Docs
 
 - FastAPI já gera. Expor:
   - `GET /v1/openapi.json` (público).
@@ -2139,9 +2577,9 @@ max_tokens?, response_format?}`). Tradutor
   OpenAI-compat (curl + n8n HTTP node + Python OpenAI SDK apontando
   `base_url=https://<host>/v1`).
 
-### J6 — Frontend (Settings tab "API")
+#### J6 — Frontend (Settings tab "API")
 
-- `chat/components/layout/settings-dialog/tabs/api-tab.tsx`:
+- `chat/src/components/layout/settings-dialog/tabs/api-tab.tsx`:
   - Listar OAuth clients do user (nome, criado em, scopes, último
     uso).
   - "Criar client" → modal com nome + scopes → mostra
@@ -2149,11 +2587,11 @@ max_tokens?, response_format?}`). Tradutor
     será exibido novamente.
   - Revogar.
   - Link para `/v1/docs`.
-- Proxy Hono `chat/server/routes/oauth_clients.ts` (CRUD via
-  cookie).
+- Browser fala direto com `/v1/oauth/clients` (sem proxy Hono — D1
+  removeu essa camada).
 - i18n `api.*`.
 
-### J7 — Endpoint ACP público
+#### J7 — Endpoint ACP público
 
 - Expõe ACP server (I4) em `/v1/acp/*` sob OAuth2 client credentials
   do J1 — clientes externos (Claude Code, dcode, IDEs) conectam
@@ -2161,7 +2599,7 @@ max_tokens?, response_format?}`). Tradutor
 - A IDE-integration (I4) aponta para esse endpoint quando user
   conecta editor a servidor Vectora remoto.
 
-### J8 — Tests
+#### J8 — Tests
 
 - `tests/unit/test_api_v1_oauth.py`: criação de client, token grant,
   scope enforcement, revogação, expiração.
@@ -2173,20 +2611,20 @@ max_tokens?, response_format?}`). Tradutor
 - `tests/unit/test_api_v1_openai_compat.py`: shape OpenAI
   (validação JSON schema dos response objects).
 
-### Arquivos críticos (Bloco J)
+#### Arquivos críticos (Bloco J)
 
-| Sub | Arquivos chat                                                                                          | Arquivos vectora                                                                                                                                                                          |
-| --- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| J1  | —                                                                                                      | `src/services/oauth_clients.py`, `storage/{sqlite,postgres}/oauth_clients.py`, `src/api/handlers/oauth_clients.py` (novos)                                                                |
-| J2  | —                                                                                                      | `src/api/middleware/oauth_bearer.py` (novo), `src/api/server.py` (registrar middleware), `src/api/middleware/auth.py` (`/v1/` é público p/ esse middleware — cobertura é do oauth_bearer) |
-| J3  | —                                                                                                      | `src/api/handlers/v1/{chat,threads,rag,workspaces,memory,tools,plugins,skills}.py` (delegam aos services internos já existentes)                                                          |
-| J4  | —                                                                                                      | `src/api/handlers/openai_compat.py` (novo)                                                                                                                                                |
-| J5  | —                                                                                                      | `src/api/server.py` (rotas docs `/v1`), `docs/rest-api.md`                                                                                                                                |
-| J6  | `chat/components/layout/settings-dialog/tabs/api-tab.tsx`, `chat/server/routes/oauth_clients.ts`, i18n | —                                                                                                                                                                                         |
-| J7  | —                                                                                                      | `src/api/handlers/v1/acp.py` (mount I4 server sob `/v1/acp`); reuso de `src/services/acp/server.py`                                                                                       |
-| J8  | —                                                                                                      | `tests/unit/test_api_v1_*.py` (novos)                                                                                                                                                     |
+| Sub | Arquivos chat                                                       | Arquivos vectora                                                                                                                                                                          |
+| --- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| J1  | —                                                                   | `src/services/oauth_clients.py`, `storage/{sqlite,postgres}/oauth_clients.py`, `src/api/handlers/oauth_clients.py` (novos)                                                                |
+| J2  | —                                                                   | `src/api/middleware/oauth_bearer.py` (novo), `src/api/server.py` (registrar middleware), `src/api/middleware/auth.py` (`/v1/` é público p/ esse middleware — cobertura é do oauth_bearer) |
+| J3  | —                                                                   | `src/api/handlers/v1/{chat,threads,rag,workspaces,memory,tools,plugins,skills}.py` (delegam aos services internos já existentes)                                                          |
+| J4  | —                                                                   | `src/api/handlers/openai_compat.py` (novo)                                                                                                                                                |
+| J5  | —                                                                   | `src/api/server.py` (rotas docs `/v1`), `docs/rest-api.md`                                                                                                                                |
+| J6  | `chat/src/components/layout/settings-dialog/tabs/api-tab.tsx`, i18n | —                                                                                                                                                                                         |
+| J7  | —                                                                   | `src/api/handlers/v1/acp.py` (mount I4 server sob `/v1/acp`); reuso de `src/services/acp/server.py`                                                                                       |
+| J8  | —                                                                   | `tests/unit/test_api_v1_*.py` (novos)                                                                                                                                                     |
 
-### Verificação (Bloco J)
+#### Verificação (Bloco J)
 
 - `POST /v1/oauth/token` com client creds devolve JWT 1h.
 - n8n HTTP node `Authorization: Bearer <token>` em `POST
@@ -2199,15 +2637,9 @@ stream=True)` e recebe streaming compatível.
   `client_id`).
 - 2 clients do mesmo user têm rate limits independentes (G6 Redis).
 
----
-
-## ============================================================================
-
 ## ⏳ PROFISSIONALIZAÇÃO: blocos K–N (billing, SDK, observability, distribution)
 
-## ============================================================================
-
-## BLOCO K — Billing & License Infra: Supabase + Stripe + Asaas + Tier Enforcement
+### BLOCO K — Billing & License Infra: Supabase + Stripe + Asaas + Tier Enforcement
 
 > **Contexto.** O license gate (C7) valida `VECTORA_TOKEN` contra uma
 > edge function. Falta construir a infra completa que emite tokens,
@@ -2217,7 +2649,7 @@ stream=True)` e recebe streaming compatível.
 > entra como provedor BR-first, mantendo Stripe para USD/cartão
 > internacional.
 
-### K1 — Supabase schema + RLS (Backend SaaS)
+#### K1 — Supabase schema + RLS (Backend SaaS)
 
 Migrations em `vectora-company/supabase/migrations/`:
 
@@ -2288,7 +2720,7 @@ processed_at timestamptz DEFAULT now()
 (auth.uid() = user_id). `license_checks` e `payment_events` sem
 policy pública (apenas `service_role` via edge functions).
 
-### K2 — Edge functions (`supabase/functions/`)
+#### K2 — Edge functions (`supabase/functions/`)
 
 - **`on-signup`** (trigger `auth.users INSERT`):
   1. Cria `profiles`.
@@ -2339,7 +2771,7 @@ policy pública (apenas `service_role` via edge functions).
   Asaas dashboard endpoint equivalente (BR — Asaas suporta
   cancelamento e atualização via API, frontend embutido no site).
 
-### K3 — Stripe products & subscriptions (INTL)
+#### K3 — Stripe products & subscriptions (INTL)
 
 - **Produtos**:
   - `vectora_plus_monthly` — $7 USD
@@ -2351,7 +2783,7 @@ policy pública (apenas `service_role` via edge functions).
 - **Customer Portal** para cancelar/upgrade self-service. Habilitar
   via Stripe Dashboard → "Customer portal".
 
-### K4 — Asaas integration (BR: PIX + Boleto + Cartão recorrente)
+#### K4 — Asaas integration (BR: PIX + Boleto + Cartão recorrente)
 
 > Asaas é o provedor BR-first. Cobertura: PIX (instantâneo + Pix
 > Automático recorrente regulado pelo Banco Central — exigência
@@ -2386,7 +2818,7 @@ policy pública (apenas `service_role` via edge functions).
 manualmente (`VECTORA25` 25% off Plus 100 redemptions; `PROEARLY`
 ~18% off Pro 50 redemptions; ambos `duration: "forever"`).
 
-### K5 — Payment routing (BR via Asaas, INTL via Stripe)
+#### K5 — Payment routing (BR via Asaas, INTL via Stripe)
 
 Edge function `create-checkout` decide provider:
 
@@ -2397,7 +2829,7 @@ Edge function `create-checkout` decide provider:
 Usuário sempre pode override no dashboard ("Pagar via Stripe
 internacional" como link secundário em BR).
 
-### K6 — Tier enforcement no Vectora Agent (hooks por backend)
+#### K6 — Tier enforcement no Vectora Agent (hooks por backend)
 
 Camada storage (F) e cache (G) consultam `VECTORA_TIER`:
 
@@ -2420,11 +2852,12 @@ worker exige Pro).
 
 Frontend admin storage panel (F10): opções Pro desabilitadas com
 badge "Pro only" quando `tier=plus`. Link "Fazer upgrade" abre
-Customer Portal via `shell.openExternal()` (D6).
+Customer Portal via `window.vectora.openExternal()` (D8).
 
-### K7 — License banners frontend (consumindo `/license/status`)
+#### K7 — License banners frontend (consumindo `/license/status`)
 
-Banner único no header `chat/components/layout/license-banner.tsx`:
+Banner único no header `chat/src/components/layout/license-banner.tsx`
+(já implementado no Bloco D8). Estados:
 
 - **Sem token configurado** (laranja): `⚠ VECTORA_TOKEN não
 configurado. Configure em Configurações → Envs.` Botão
@@ -2436,17 +2869,17 @@ vectora.company/dashboard.`
 - **Licença expirada** (vermelho, bloqueia input): `❌ Licença
 expirada.` Botão "Renovar".
 
-Consome `GET /api/license/status` que faz proxy para
-`/license/status` (C7). SWR 5min + after-login + on-focus.
+Consome `GET /license/status` direto (sem proxy Hono — D1 removeu
+essa camada). SWR 5min + after-login + on-focus.
 
-### K8 — Onboarding wizard pós-root (no chat web)
+#### K8 — Onboarding wizard pós-root (no chat web)
 
 Modal multi-step que aparece no primeiro login do root:
 
-1. **VECTORA_TOKEN**: input + valida via `/api/license/validate`.
+1. **VECTORA_TOKEN**: input + valida via `/license/validate`.
    Botão "Pular por agora" → banner laranja persistente.
 2. **Provedor de IA**: select (Gemini/OpenAI/Anthropic/Ollama) +
-   API Key + Testar conexão → salva via `POST /api/auth/envs`.
+   API Key + Testar conexão → salva via `POST /auth/envs`.
 3. **Cohere (RAG)**: input + Testar → salva via envs. "Pular" →
    aviso de capacidade reduzida.
 4. **Conclusão**: links rápidos para "Adicionar usuários",
@@ -2455,7 +2888,7 @@ Modal multi-step que aparece no primeiro login do root:
 Flag `vectora-onboarding-done-{userId}` em localStorage previne
 reabrir.
 
-### K9 — Tests
+#### K9 — Tests
 
 - **Webhook signature verification** (Stripe HMAC SHA-256 +
   Asaas token bearer): garantir que payload modificado é rejeitado.
@@ -2466,21 +2899,21 @@ reabrir.
 - **Tier enforcement**: tentar montar Postgres checkpointer com
   `VECTORA_TIER=plus` → `LicenseError`.
 
-### Arquivos críticos (Bloco K)
+#### Arquivos críticos (Bloco K)
 
-| Sub | Arquivos chat                                                                                  | Arquivos vectora                                            | Arquivos vectora-company                                                                                                                                     |
-| --- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| K1  | —                                                                                              | —                                                           | `vectora-company/supabase/migrations/00{1..5}_*.sql` (novos)                                                                                                 |
-| K2  | —                                                                                              | —                                                           | `vectora-company/supabase/functions/{on-signup,validate-license,get-token,rotate-token,create-checkout,stripe-webhook,asaas-webhook,create-portal}/index.ts` |
-| K3  | —                                                                                              | —                                                           | docs Stripe products no `vectora-company/docs/stripe.md`                                                                                                     |
-| K4  | —                                                                                              | —                                                           | `vectora-company/supabase/functions/_shared/asaas.ts` (cliente Asaas)                                                                                        |
-| K5  | —                                                                                              | —                                                           | logic no `create-checkout`                                                                                                                                   |
-| K6  | F10 storage panel (badge "Pro only")                                                           | `storage/factory.py` (gate), `src/services/cache.py` (gate) | —                                                                                                                                                            |
-| K7  | `chat/components/layout/license-banner.tsx` (novo); proxy Hono `chat/server/routes/license.ts` | `src/api/handlers/license.py` (+`POST /portal`)             | —                                                                                                                                                            |
-| K8  | `chat/components/onboarding/setup-wizard.tsx` (novo, multi-step modal)                         | —                                                           | —                                                                                                                                                            |
-| K9  | —                                                                                              | `tests/unit/test_license_tier_gate.py` (novo)               | `vectora-company/supabase/functions/__tests__/`                                                                                                              |
+| Sub | Arquivos chat                                                              | Arquivos vectora                                            | Arquivos vectora-company                                                                                                                                     |
+| --- | -------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| K1  | —                                                                          | —                                                           | `vectora-company/supabase/migrations/00{1..5}_*.sql` (novos)                                                                                                 |
+| K2  | —                                                                          | —                                                           | `vectora-company/supabase/functions/{on-signup,validate-license,get-token,rotate-token,create-checkout,stripe-webhook,asaas-webhook,create-portal}/index.ts` |
+| K3  | —                                                                          | —                                                           | docs Stripe products no `vectora-company/docs/stripe.md`                                                                                                     |
+| K4  | —                                                                          | —                                                           | `vectora-company/supabase/functions/_shared/asaas.ts` (cliente Asaas)                                                                                        |
+| K5  | —                                                                          | —                                                           | logic no `create-checkout`                                                                                                                                   |
+| K6  | F10 storage panel (badge "Pro only")                                       | `storage/factory.py` (gate), `src/services/cache.py` (gate) | —                                                                                                                                                            |
+| K7  | `chat/src/components/layout/license-banner.tsx` (D8 — já implementado)     | `src/api/handlers/license.py` (+`POST /portal`)             | —                                                                                                                                                            |
+| K8  | `chat/src/components/onboarding/setup-wizard.tsx` (novo, multi-step modal) | —                                                           | —                                                                                                                                                            |
+| K9  | —                                                                          | `tests/unit/test_license_tier_gate.py` (novo)               | `vectora-company/supabase/functions/__tests__/`                                                                                                              |
 
-### Verificação (Bloco K)
+#### Verificação (Bloco K)
 
 - Signup no site (Supabase Auth) → trigger `on-signup` cria
   `profiles + tokens + subscriptions(trialing 30d)`. Dashboard
@@ -2500,16 +2933,14 @@ status:"trialing", days_remaining:30}`.
 - Trial banner muda cor conforme dias; expirado bloqueia input.
 - Onboarding wizard aparece no 1º login root, não reabre depois.
 
----
-
-## BLOCO L — SDKs & API Ecosystem
+### BLOCO L — SDKs & API Ecosystem
 
 > **Contexto.** Bloco J entrega a REST `/v1`. Para tração com
 > integradores, precisamos de SDKs oficiais (Python + TypeScript),
 > webhooks bem documentados para integração reverse (Vectora →
 > sistemas externos), e ferramentas de DX (GitHub Actions, Postman).
 
-### L1 — Python SDK (`vectora-sdk`)
+#### L1 — Python SDK (`vectora-sdk`)
 
 Pacote separado em `sdks/python/`:
 
@@ -2529,9 +2960,9 @@ Pacote separado em `sdks/python/`:
 - Streaming SSE parsing via `httpx-sse`.
 - Type hints completos via `pydantic` v2.
 - Publish: PyPI público (livre, separado do `vectora-cli` mirror
-  D7).
+  D9).
 
-### L2 — TypeScript SDK (`@vectora/sdk`)
+#### L2 — TypeScript SDK (`@vectora/sdk`)
 
 Pacote em `sdks/typescript/`:
 
@@ -2545,7 +2976,7 @@ Pacote em `sdks/typescript/`:
   `@vectora/sdk/chat`, `@vectora/sdk/rag`.
 - Publish: npm público, dual `cjs`/`esm`.
 
-### L3 — Webhooks (Vectora → sistemas externos)
+#### L3 — Webhooks (Vectora → sistemas externos)
 
 > Hoje só o `validate-license` é "webhook entrante". Falta o
 > reverso: notificar sistemas externos quando eventos relevantes
@@ -2595,7 +3026,7 @@ last_status: int | None
 **Frontend**: aba "Webhooks" no Settings → API com lista + form
 add/remove + deliveries log.
 
-### L4 — GitHub Actions oficiais (`vectora/setup-action`)
+#### L4 — GitHub Actions oficiais (`vectora/setup-action`)
 
 Repositório `vectora-company/setup-action`:
 
@@ -2622,7 +3053,7 @@ Action complementar `vectora/chat-action` para rodar prompt
     workspace: ${{ github.workspace }}
 ```
 
-### L5 — OpenAPI polish + Swagger UI customizado
+#### L5 — OpenAPI polish + Swagger UI customizado
 
 - Gerar OpenAPI 3.1.0 spec completa via FastAPI; revisar
   descrições, exemplos, error responses.
@@ -2635,7 +3066,7 @@ Action complementar `vectora/chat-action` para rodar prompt
   para uso por geradores de SDK terceiros (OpenAPI Generator,
   swagger-codegen).
 
-### L6 — Postman / Insomnia collections
+#### L6 — Postman / Insomnia collections
 
 `sdks/collections/`:
 
@@ -2646,18 +3077,18 @@ Action complementar `vectora/chat-action` para rodar prompt
 - Publish em postman.com workspace público "Vectora API" +
   insomnia.rest community library.
 
-### Arquivos críticos (Bloco L)
+#### Arquivos críticos (Bloco L)
 
-| Sub | Arquivos                                                                                                                                                                      |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| L1  | `sdks/python/` (novo repo ou subpasta), CI publish PyPI                                                                                                                       |
-| L2  | `sdks/typescript/` (novo), CI publish npm                                                                                                                                     |
-| L3  | `src/types/webhook.py`, `src/services/webhook_dispatcher.py`, `src/api/handlers/webhooks.py` (novos); `chat/components/layout/settings-dialog/tabs/webhooks-panel.tsx` (novo) |
-| L4  | `setup-action/` + `chat-action/` (novos repos em `vectora-company/`)                                                                                                          |
-| L5  | `src/api/server.py` (Swagger config), `docs/openapi-spec.md`                                                                                                                  |
-| L6  | `sdks/collections/` (novo)                                                                                                                                                    |
+| Sub | Arquivos                                                                                                                                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L1  | `sdks/python/` (novo repo ou subpasta), CI publish PyPI                                                                                                                           |
+| L2  | `sdks/typescript/` (novo), CI publish npm                                                                                                                                         |
+| L3  | `src/types/webhook.py`, `src/services/webhook_dispatcher.py`, `src/api/handlers/webhooks.py` (novos); `chat/src/components/layout/settings-dialog/tabs/webhooks-panel.tsx` (novo) |
+| L4  | `setup-action/` + `chat-action/` (novos repos em `vectora-company/`)                                                                                                              |
+| L5  | `src/api/server.py` (Swagger config), `docs/openapi-spec.md`                                                                                                                      |
+| L6  | `sdks/collections/` (novo)                                                                                                                                                        |
 
-### Verificação (Bloco L)
+#### Verificação (Bloco L)
 
 - `pip install vectora-sdk` → cliente Python conecta, chama
   `client.chat.completions.create(...)` com streaming.
@@ -2672,16 +3103,14 @@ Action complementar `vectora/chat-action` para rodar prompt
 - Postman collection: importar → Auth helper popula token → POST
   `/v1/threads` cria.
 
----
-
-## BLOCO M — Observability & Reliability Production-Grade
+### BLOCO M — Observability & Reliability Production-Grade
 
 > **Contexto.** Hoje `VectoraTracer` SQLite + `/metrics` (A1) é base
 > básica. Em produção self-hosted ou em vendas para empresas
 > precisamos: tracing distribuído, error tracking, structured
 > logging, health probes, SLOs públicos, backup/DR.
 
-### M1 — OpenTelemetry (traces + metrics + logs)
+#### M1 — OpenTelemetry (traces + metrics + logs)
 
 - **Instrumentação automática** via `opentelemetry-distro` +
   instrumentations para FastAPI, httpx, sqlalchemy, asyncpg, redis.
@@ -2699,7 +3128,7 @@ Action complementar `vectora/chat-action` para rodar prompt
 - **Resource attributes**: `service.name=vectora`,
   `service.version`, `deployment.environment`, `vectora.tier`.
 
-### M2 — Sentry (error tracking + performance)
+#### M2 — Sentry (error tracking + performance)
 
 - `sentry-sdk[fastapi]>=2.0` integrado em `src/api/server.py` e
   `desktop/main.ts` (`@sentry/electron`).
@@ -2712,7 +3141,7 @@ Action complementar `vectora/chat-action` para rodar prompt
   `tool_args` (regex masking de emails, tokens, paths sensíveis).
 - **Release tracking**: `release=vectora@<version>` no init.
 
-### M3 — Structured logging (JSON, correlation IDs)
+#### M3 — Structured logging (JSON, correlation IDs)
 
 - `structlog` substitui `logging` em hot paths
   (`src/services/log_setup.py` refactor).
@@ -2727,7 +3156,7 @@ Action complementar `vectora/chat-action` para rodar prompt
   aplicável).
 - Compatível com agregadores (Loki, ELK, Datadog Logs).
 
-### M4 — Health probes (Kubernetes-style)
+#### M4 — Health probes (Kubernetes-style)
 
 `src/api/handlers/health.py` expande de `/health` único para 3:
 
@@ -2745,7 +3174,7 @@ Action complementar `vectora/chat-action` para rodar prompt
 Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
 `readinessProbe`/`startupProbe` YAML.
 
-### M5 — SLOs + Status Page
+#### M5 — SLOs + Status Page
 
 - **SLOs definidos** em `docs/slos.md`:
   - `/v1/chat/stream` p95 latency < 1s (first token), error rate
@@ -2761,7 +3190,7 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
   - Subscribe via email/RSS.
 - **Histórico de incidentes** público.
 
-### M6 — Backup automation + restore CLI
+#### M6 — Backup automation + restore CLI
 
 - **`vectora backup create [--output <path>]`**:
   - Lite: SQLite `.backup` API (todos os 3 bancos) + LanceDB
@@ -2777,7 +3206,7 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
 - **Encryption**: opcional via `--encrypt` (passphrase + AES-256-GCM
   via `cryptography`).
 
-### M7 — Disaster recovery playbook
+#### M7 — Disaster recovery playbook
 
 `docs/disaster-recovery.md`:
 
@@ -2790,7 +3219,7 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
 - **Tests anuais**: `vectora backup restore` em VM staging para
   validar.
 
-### Arquivos críticos (Bloco M)
+#### Arquivos críticos (Bloco M)
 
 | Sub | Arquivos                                                                                                                   |
 | --- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -2802,7 +3231,7 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
 | M6  | `src/services/backup.py` (novo), `src/main.py` (subcomando `backup`)                                                       |
 | M7  | `docs/disaster-recovery.md`                                                                                                |
 
-### Verificação (Bloco M)
+#### Verificação (Bloco M)
 
 - Trace de um request `/v1/chat/stream` aparece no Honeycomb com
   spans `agent.invoke → tool.execute → llm.call`.
@@ -2815,16 +3244,15 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
 - `vectora backup create` → tar.gz contendo todos os dados;
   `vectora backup restore` em VM nova reconstrói operacional.
 
----
+### BLOCO N — Distribution Hardening & IDE Integrations
 
-## BLOCO N — Distribution Hardening & IDE Integrations
+> **Contexto.** Bloco D entregou pipeline base de Vite + Nuitka +
+> Electron. Bloco N expande para canais nativos por OS, multi-arch,
+> integrações com editores e workflows. Habilita "instalar via
+> `brew install vectora`" / `apt install vectora` / VS Code
+> Marketplace.
 
-> **Contexto.** Bloco D entregou pipeline base de Nuitka + Electron.
-> Bloco N expande para canais nativos por OS, multi-arch, integrações
-> com editores e workflows. Habilita "instalar via `brew install
-vectora`" / `apt install vectora` / VS Code Marketplace.
-
-### N1 — Multi-arch builds (x86_64 + arm64)
+#### N1 — Multi-arch builds (x86_64 + arm64)
 
 - GitHub Actions matrix com `arch: [amd64, arm64]` por OS:
   - Win: cross-compile via Nuitka (`--target=arm64` quando
@@ -2834,9 +3262,9 @@ vectora`" / `apt install vectora` / VS Code Marketplace.
   - Linux: cross-compile via QEMU + Docker `buildx`.
 - Validar boot em cada arch.
 
-### N2 — Code signing pipeline aprofundado
+#### N2 — Code signing pipeline aprofundado
 
-- **Reuse** de D3 (Azure Trusted Signing Win + Apple notarize
+- **Reuse** de D5 (Azure Trusted Signing Win + Apple notarize
   macOS + GPG Linux).
 - **Adicionar**:
   - Timestamping com RFC3161 (`http://timestamp.digicert.com`)
@@ -2847,9 +3275,9 @@ vectora`" / `apt install vectora` / VS Code Marketplace.
   `codesign --verify --deep --strict`,
   `gpg --verify .deb.asc .deb`.
 
-### N3 — Auto-update channel server avançado
+#### N3 — Auto-update channel server avançado
 
-- **Reuse** de D4 (channel server básico).
+- **Reuse** de D6 (channel server básico).
 - **Adicionar**:
   - **Phased rollout**: novo release vai para 5% dos usuários por
     24h, depois 25%, depois 100%. Configurável via
@@ -2862,21 +3290,24 @@ vectora`" / `apt install vectora` / VS Code Marketplace.
     `update_failed` na mesma versão → channel server marca
     versão como `quarantined` e novos clients param de baixar.
 
-### N4 — Docker images oficiais
+#### N4 — Docker images oficiais
 
 - `vectora/vectora:latest`, `vectora/vectora:1.0.0` em Docker Hub
   - GHCR (`ghcr.io/vectora-company/vectora`).
 - **Multi-stage Dockerfile**:
-  - Stage 1: build do frontend (`node:24-alpine`).
+  - Stage 1: build do frontend Vite (`node:24-alpine` —
+    `pnpm --dir chat build` → `chat/dist/`).
   - Stage 2: build do backend (`python:3.13-slim`).
   - Stage 3: runtime mínimo (Distroless ou
     `python:3.13-slim` com `--no-install-recommends`).
+  - FastAPI mount `StaticFiles` aponta para `chat/dist/` copiado
+    do stage 1 (mesma lógica D2).
 - Variants:
   - `:latest` (default Plus, lite storage).
   - `:pro` (extras: postgres client, qdrant CLI).
 - Image scanning via Trivy no CI (block merge se CVE high+).
 
-### N5 — Linux distros (APT/DNF/Flathub/Snap)
+#### N5 — Linux distros (APT/DNF/Flathub/Snap)
 
 - **APT** (`apt install vectora`):
   - Repo `apt.vectora.company` (debian + ubuntu pools).
@@ -2894,7 +3325,7 @@ vectora`" / `apt install vectora` / VS Code Marketplace.
   - Confinement `classic` (precisa de aprovação) para acessar
     filesystem fora do home.
 
-### N6 — macOS Homebrew tap
+#### N6 — macOS Homebrew tap
 
 - Tap em `github.com/vectora-company/homebrew-tap`.
 - Formula `vectora.rb`:
@@ -2911,7 +3342,7 @@ vectora`" / `apt install vectora` / VS Code Marketplace.
   ```
 - `brew install vectora-company/tap/vectora`.
 
-### N7 — IDE plugins (VS Code, JetBrains, Zed, Neovim)
+#### N7 — IDE plugins (VS Code, JetBrains, Zed, Neovim)
 
 - **VS Code extension** (`vectora.code`):
   - Sidebar com chat panel (webview apontando para
@@ -2942,7 +3373,7 @@ vectora`" / `apt install vectora` / VS Code Marketplace.
   - Floating window para chat; `vim.lsp.*` para inline
     completions.
 
-### N8 — Workflow integrations (n8n, Zapier, Make)
+#### N8 — Workflow integrations (n8n, Zapier, Make)
 
 - **n8n custom nodes** (`@vectora/n8n-nodes`):
   - `Vectora Chat` — stream completion.
@@ -2954,7 +3385,7 @@ vectora`" / `apt install vectora` / VS Code Marketplace.
   - Actions: `Send Message`, `Search RAG`, `Ingest Document`.
 - **Make.com (Integromat)**: app similar ao Zapier.
 
-### N9 — Claude Code MCP Registry oficial
+#### N9 — Claude Code MCP Registry oficial
 
 - Submeter Vectora MCP server ao `modelcontextprotocol/registry`:
   PR em `github.com/modelcontextprotocol/registry` adicionando
@@ -2963,21 +3394,21 @@ mcp`, descrição, ícone, link para docs.
 - Tornar Vectora descoberta automática em Claude Desktop via
   `MCP Settings → Browse Registry`.
 
-### Arquivos críticos (Bloco N)
+#### Arquivos críticos (Bloco N)
 
-| Sub | Arquivos                                                                                                                     |
-| --- | ---------------------------------------------------------------------------------------------------------------------------- |
-| N1  | `.github/workflows/runner.yml` (matrix arch)                                                                                 |
-| N2  | `.github/workflows/runner.yml` (timestamping, staple, verify)                                                                |
-| N3  | `update-server/config.yml` (rollout %), `chat/components/layout/settings-dialog/tabs/preferencias-tab.tsx` (+channel select) |
-| N4  | `Dockerfile` (multi-stage), `.github/workflows/docker.yml` (publish + scan)                                                  |
-| N5  | `packaging/apt/`, `packaging/dnf/`, `packaging/flatpak/com.vectora.Vectora.yml`, `packaging/snap/snapcraft.yaml`             |
-| N6  | `vectora-company/homebrew-tap/Formula/vectora.rb`                                                                            |
-| N7  | `ide/vscode/` (novo repo), `ide/jetbrains/` (novo), `ide/zed/`, `ide/neovim/vectora.nvim`                                    |
-| N8  | `integrations/n8n-nodes/` (novo repo), `integrations/zapier/`, `integrations/make/`                                          |
-| N9  | PR no `modelcontextprotocol/registry`                                                                                        |
+| Sub | Arquivos                                                                                                                         |
+| --- | -------------------------------------------------------------------------------------------------------------------------------- |
+| N1  | `.github/workflows/runner.yml` (matrix arch)                                                                                     |
+| N2  | `.github/workflows/runner.yml` (timestamping, staple, verify)                                                                    |
+| N3  | `update-server/config.yml` (rollout %), `chat/src/components/layout/settings-dialog/tabs/preferencias-tab.tsx` (+channel select) |
+| N4  | `Dockerfile` (multi-stage), `.github/workflows/docker.yml` (publish + scan)                                                      |
+| N5  | `packaging/apt/`, `packaging/dnf/`, `packaging/flatpak/com.vectora.Vectora.yml`, `packaging/snap/snapcraft.yaml`                 |
+| N6  | `vectora-company/homebrew-tap/Formula/vectora.rb`                                                                                |
+| N7  | `ide/vscode/` (novo repo), `ide/jetbrains/` (novo), `ide/zed/`, `ide/neovim/vectora.nvim`                                        |
+| N8  | `integrations/n8n-nodes/` (novo repo), `integrations/zapier/`, `integrations/make/`                                              |
+| N9  | PR no `modelcontextprotocol/registry`                                                                                            |
 
-### Verificação (Bloco N)
+#### Verificação (Bloco N)
 
 - VM Ubuntu limpa: `apt install vectora` → app funciona.
 - macOS limpa: `brew install vectora-company/tap/vectora` → CLI
@@ -2989,13 +3420,7 @@ mcp`, descrição, ícone, link para docs.
 - Claude Desktop: Browse Registry → vê Vectora, instala com 1
   clique.
 
----
-
-## ============================================================================
-
 ## ⏳ VECTORA COMPANY: blocos O–S (legal, site, docs, suporte, marketing)
-
-## ============================================================================
 
 > **Escopo dos blocos O–S.** Aqui ficam **apenas** as frentes da empresa
 > que não são código de produto: pessoa jurídica, marca, contratos,
@@ -3006,7 +3431,7 @@ mcp`, descrição, ícone, link para docs.
 > processos de distribuição, mas **não** é o plano do site — quem
 > implementa o site é P.
 
-## BLOCO O — Vectora Company: Identidade & Legal
+### BLOCO O — Vectora Company: Identidade & Legal
 
 > **Contexto.** Antes de vender qualquer coisa, a empresa precisa de
 > identidade clara (nome, marca, domínio), termos legais válidos e uma
@@ -3014,7 +3439,7 @@ mcp`, descrição, ícone, link para docs.
 > receber pagamentos. Sem isso, nem Stripe nem Asaas podem ser
 > integrados em produção (K).
 
-### O1 — Estrutura jurídica (MEI/ME no CNPJ de Bruno Soares)
+#### O1 — Estrutura jurídica (MEI/ME no CNPJ de Bruno Soares)
 
 - **Decisão**: abrir MEI primeiro; migra para ME se faturamento
   ultrapassar R$81k/ano (teto MEI).
@@ -3032,7 +3457,7 @@ mcp`, descrição, ícone, link para docs.
 - **Inscrição municipal**: se exigida pela prefeitura local, abrir
   para emissão de NFS-e (nota fiscal eletrônica de serviço).
 
-### O2 — Marca e domínios
+#### O2 — Marca e domínios
 
 **Domínio principal já adquirido**: `vectora.company`.
 
@@ -3067,7 +3492,7 @@ mcp`, descrição, ícone, link para docs.
   PNGs multi-res, dark/light variants, favicon kit, social cards
   templates (Open Graph 1200×630).
 
-### O3 — Termos legais (LGPD + GDPR-ready)
+#### O3 — Termos legais (LGPD + GDPR-ready)
 
 Dois documentos obrigatórios para o site (P) e para o billing (K):
 
@@ -3140,7 +3565,7 @@ Versão "tldr" no topo de cada documento. Submeter para revisão de
 um advogado especializado em SaaS antes do lançamento (custo
 estimado R$2.000–R$5.000).
 
-### O4 — Email, comunicação corporativa e GitHub Organization
+#### O4 — Email, comunicação corporativa e GitHub Organization
 
 **Provedor de email**: Google Workspace (Business Starter ~R$30/
 mês por caixa).
@@ -3183,9 +3608,9 @@ mês por caixa).
   (L4), `chat-action` (L4), `mcp-server-vectora` (N9), `oauth-clients`
   (samples L1/L2).
 - Repos privados: `vectora` (código principal),
-  `vectora-releases` (binários assinados D3),
+  `vectora-releases` (binários assinados D5),
   `vectora-company/site` (P), `vectora-company/supabase` (K1/K2),
-  `vectora-company/update-server` (D4/N3),
+  `vectora-company/update-server` (D6/N3),
   `vectora-company/brand` (assets oficiais),
   `vectora-company/ops` (runbooks, playbooks DR M7,
   setup-mei.md, etc).
@@ -3194,7 +3619,7 @@ mês por caixa).
 - Dependabot ativo nos repos públicos.
 - Security advisories ativos.
 
-### Verificação (Bloco O)
+#### Verificação (Bloco O)
 
 - MEI/ME aberto com CNPJ ativo; emite NFS-e via prefeitura.
 - Conta bancária PJ operacional, recebe transferências.
@@ -3209,16 +3634,20 @@ mês por caixa).
 - WhatsApp Business com perfil completo + auto-resposta
   configurada.
 
----
-
-## BLOCO P — Vectora Company: Site `vectora.company`
+### BLOCO P — Vectora Company: Site `vectora.company`
 
 > **Stack:** Next.js 16 + Tailwind + shadcn/ui + Supabase Auth SSR
 >
 > - Stripe/Asaas (K). Deploy: Vercel (integração Supabase nativa).
 >   Repo separado: `vectora-company/site`.
+>
+> **Importante**: o site `vectora.company` permanece Next.js
+> (SSR + SEO crítico) — independente da migração do **chat** para Vite
+> no Bloco D. São dois projetos distintos com requisitos opostos:
+> chat precisa de SPA leve embutível em Electron; site precisa de
+> SEO e renderização server-side para landing/pricing.
 
-### P1 — Landing Page (`/`)
+#### P1 — Landing Page (`/`)
 
 Scroll único, seções âncora, mobile-first.
 
@@ -3291,7 +3720,7 @@ testers (R5).
 - Social: GitHub · X · LinkedIn · WhatsApp · YouTube.
 - "Made with ❤ in Brazil" + CNPJ no rodapé.
 
-### P2 — Auth (`/signup`, `/login`)
+#### P2 — Auth (`/signup`, `/login`)
 
 **`/signup`**:
 
@@ -3310,7 +3739,7 @@ testers (R5).
 - Sem OAuth no MVP (Google pode entrar depois).
 - Botão "Voltar ao site" no header.
 
-### P3 — Dashboard (`/dashboard`)
+#### P3 — Dashboard (`/dashboard`)
 
 **Sidebar** (esquerda): Token, Licença, Pagamento, API Keys,
 Conta, Suporte.
@@ -3389,7 +3818,7 @@ K1):
 4. vectora chat             (começar a usar)
 ```
 
-### P4 — Pricing dedicado (`/pricing`)
+#### P4 — Pricing dedicado (`/pricing`)
 
 Página completa com tabela comparativa expandida (todas features
 de A–N visíveis), FAQ inline de preços (8 perguntas comuns),
@@ -3399,7 +3828,7 @@ CTAs duplos por plano.
 Toggle BR/INTL no topo muda a coluna de preço (default detectado
 por geo IP).
 
-### P5 — FAQ (`/faq`)
+#### P5 — FAQ (`/faq`)
 
 Categorias com accordion:
 
@@ -3419,7 +3848,7 @@ Categorias com accordion:
 Cada resposta com link "Saiba mais" para docs (Q) ou guia
 específico.
 
-### P6 — Issues & Suporte (`/issues`, `/support`)
+#### P6 — Issues & Suporte (`/issues`, `/support`)
 
 **`/issues`**: formulário (título, descrição, categoria
 bug/feature/docs/billing) → submete via GitHub Issues API para
@@ -3433,13 +3862,13 @@ para billing).
 - GitHub Issues (link `/issues`).
 - Status page (link `status.vectora.company`).
 
-### P7 — Páginas legais (`/privacy`, `/terms`, `/cookies`, `/sla`, `/dpa`)
+#### P7 — Páginas legais (`/privacy`, `/terms`, `/cookies`, `/sla`, `/dpa`)
 
 Conteúdo conforme O3. Linguagem clara, "tldr" no topo, versionado
 (footer mostra "Versão 1.0 — 01/06/2026"; mudanças notificadas
 por email aos usuários com diff link).
 
-### P8 — i18n + SEO + Performance
+#### P8 — i18n + SEO + Performance
 
 **i18n**: `pt-BR` (default) e `en`. `next-intl` ou Paraglide.
 Vídeos sem voz — sem necessidade de versionar por idioma. Diagramas
@@ -3470,7 +3899,7 @@ SVG em inglês (linguagem técnica universal).
 - Events trackeados: signup, trial_started, paid_conversion,
   cancel, video_played, pricing_viewed.
 
-### Estrutura de arquivos (Bloco P)
+#### Estrutura de arquivos (Bloco P)
 
 ```
 vectora-company/site/
@@ -3514,7 +3943,7 @@ vectora-company/site/
 └── emails/                    (React Email templates O4)
 ```
 
-### Verificação (Bloco P)
+#### Verificação (Bloco P)
 
 - Landing carrega com vídeo 1 em loop, sem som. Lighthouse ≥ 95.
 - Signup BR → dashboard com token + status trial + opções de
@@ -3534,15 +3963,13 @@ vectora-company/site/
 - Deletar conta → confirmação por email + soft delete + hard
   delete em 30d.
 
----
-
-## BLOCO Q — Vectora Company: Documentação `docs.vectora.company`
+### BLOCO Q — Vectora Company: Documentação `docs.vectora.company`
 
 > **Stack:** Docusaurus 3 (recomendado) ou Mintlify. Subdomínio
 > `docs.vectora.company`. Repo público: `vectora-company/docs`.
 > Contribuições da comunidade via PR.
 
-### Q1 — Setup + tema + i18n
+#### Q1 — Setup + tema + i18n
 
 - **Docusaurus 3** com `@docusaurus/theme-classic` + customização
   visual alinhada ao site P (paleta navy + azul claro, JetBrains
@@ -3555,7 +3982,7 @@ vectora-company/site/
 - **Sidebar navegável** com auto-collapse + breadcrumbs no topo.
 - **Versionamento de docs** por release major (`/v1.x/...`).
 
-### Q2 — Getting Started
+#### Q2 — Getting Started
 
 ```
 docs.vectora.company/getting-started/
@@ -3570,7 +3997,7 @@ docs.vectora.company/getting-started/
 Cada página: intro de 1 parágrafo, pré-requisitos, passos
 numerados, resultado esperado, troubleshooting.
 
-### Q3 — Guides
+#### Q3 — Guides
 
 ```
 guides/
@@ -3589,7 +4016,7 @@ guides/
 └── data-migration        (de outros agents/assistants para Vectora)
 ```
 
-### Q4 — Reference
+#### Q4 — Reference
 
 ```
 reference/
@@ -3606,7 +4033,7 @@ reference/
 REST API reference auto-gerada a partir do OpenAPI 3.1 (L5) via
 `redocly` ou `swagger-ui-react` embarcado.
 
-### Q5 — Self-hosting
+#### Q5 — Self-hosting
 
 ```
 self-hosting/
@@ -3620,7 +4047,7 @@ self-hosting/
 └── updates               (auto-update no desktop vs manual no server)
 ```
 
-### Q6 — Changelog público + RSS
+#### Q6 — Changelog público + RSS
 
 Página `/changelog` com:
 
@@ -3633,7 +4060,7 @@ Página `/changelog` com:
   ferramentas como Feedly.
 - Webhook (L3) `release.published` para integradores.
 
-### Q7 — Padrões de qualidade + contribuição
+#### Q7 — Padrões de qualidade + contribuição
 
 **Padrões**:
 
@@ -3654,7 +4081,7 @@ Página `/changelog` com:
   ativa).
 - Bot DCO (Developer Certificate of Origin) para PRs externos.
 
-### Verificação (Bloco Q)
+#### Verificação (Bloco Q)
 
 - `docs.vectora.company` resolve corretamente; HTTPS verde.
 - Algolia DocSearch funciona; busca por "rag" retorna resultados
@@ -3667,11 +4094,9 @@ Página `/changelog` com:
 - Trocar idioma PT-BR ↔ EN preserva a página atual.
 - Changelog RSS válido (passa W3C feed validator).
 
----
+### BLOCO R — Vectora Company: Suporte & Comunidade
 
-## BLOCO R — Vectora Company: Suporte & Comunidade
-
-### R1 — WhatsApp Business
+#### R1 — WhatsApp Business
 
 - Link direto no site, na doc e no chat (Settings → Suporte).
 - Horário de atendimento explícito (seg–sex 9h–18h BRT).
@@ -3679,7 +4104,7 @@ Página `/changelog` com:
 - Templates de mensagem aprovados para outbound (notificação de
   expiração, oferta de upgrade) — opt-in pelo user no dashboard.
 
-### R2 — Email `support@vectora.company`
+#### R2 — Email `support@vectora.company`
 
 - Para questões de billing, técnicas e legais.
 - SLA: resposta em até 48h úteis (Plus) ou 24h úteis (Pro).
@@ -3692,7 +4117,7 @@ Página `/changelog` com:
 - Macros para resposta rápida com link para docs/guia
   específico.
 
-### R3 — GitHub Issues público
+#### R3 — GitHub Issues público
 
 Repositório `vectora-company/issues` (separado do código privado):
 
@@ -3704,7 +4129,7 @@ Repositório `vectora-company/issues` (separado do código privado):
 - Auto-assign para Bruno; auto-label baseado em palavras-chave
   via GitHub Actions.
 
-### R4 — Comunidade (Discord OU GitHub Discussions)
+#### R4 — Comunidade (Discord OU GitHub Discussions)
 
 **Decisão MVP**: começar com GitHub Discussions (zero manutenção,
 público, pesquisável por SEO). Avaliar Discord pós-lançamento se
@@ -3725,7 +4150,7 @@ volume justificar.
   quick-start.
 - Webhooks (L3) para postar releases e status em `#announcements`.
 
-### R5 — Programa de beta testers
+#### R5 — Programa de beta testers
 
 Antes da campanha de influenciadores (S):
 
@@ -3744,7 +4169,7 @@ Antes da campanha de influenciadores (S):
 - **Hall of Fame** no site: "Primeiros 20 betas — obrigado!" com
   avatar/nome/empresa.
 
-### R6 — Status page (`status.vectora.company`)
+#### R6 — Status page (`status.vectora.company`)
 
 - **Tooling**: BetterStack Uptime (free tier suficiente para MVP)
   ou Upptime (self-hosted via GitHub Actions, zero custo).
@@ -3761,7 +4186,7 @@ Antes da campanha de influenciadores (S):
 - **Histórico** público (90 dias).
 - **Subscribe**: email, RSS, webhook (L3).
 
-### R7 — Knowledge base interna + rotinas
+#### R7 — Knowledge base interna + rotinas
 
 `vectora-company/ops/` (repo privado):
 
@@ -3774,7 +4199,7 @@ Antes da campanha de influenciadores (S):
 - `monthly-review.md`: MRR, churn, NPS, top requested features,
   decisões de roadmap.
 
-### Verificação (Bloco R)
+#### Verificação (Bloco R)
 
 - WhatsApp Business com perfil completo + auto-resposta + 5
   templates aprovados.
@@ -3790,17 +4215,15 @@ Antes da campanha de influenciadores (S):
   incidente teste documentado.
 - Runbook de "DB down" testado em staging (RTO atingido).
 
----
-
-## BLOCO S — Vectora Company: Marketing & Lançamento
+### BLOCO S — Vectora Company: Marketing & Lançamento
 
 > **Pré-requisito**: blocos O–R prontos + produto estável (D–N
 > entregues + smoke tests passando) + 10+ beta testers com
 > depoimentos.
 
-### S1 — Releases oficiais (PyPI 1.0 + Docker Hub + GHCR)
+#### S1 — Releases oficiais (PyPI 1.0 + Docker Hub + GHCR)
 
-**PyPI** (`vectora-cli` mirror D7):
+**PyPI** (`vectora-cli` mirror D9):
 
 - Versão `1.0.0` com changelog completo (Q6).
 - `README.md` PyPI atualizado: descrição, quickstart, link para
@@ -3818,7 +4241,7 @@ Antes da campanha de influenciadores (S):
 - Image scanning Trivy verde.
 - `README.md` no Docker Hub com docker-compose exemplo.
 
-**GitHub Releases** (privado, T.12.3 / D3):
+**GitHub Releases** (privado, D5):
 
 - Release `v1.0.0` com:
   - Binários nativos assinados (Win .msi + .exe NSIS, macOS .dmg
@@ -3826,9 +4249,9 @@ Antes da campanha de influenciadores (S):
   - Checksums SHA-512.
   - Release notes em PT-BR + EN com migration guide se aplicável.
 - Auto-update channel `latest` publica para clientes existentes
-  (D4).
+  (D6).
 
-### S2 — Kit para influenciadores e canais
+#### S2 — Kit para influenciadores e canais
 
 Um kit por destinatário, enviado com **1–2 semanas de antecedência**:
 
@@ -3879,7 +4302,7 @@ Um kit por destinatário, enviado com **1–2 semanas de antecedência**:
   r/SaaS.
 - Hacker News.
 
-### S3 — Posts de lançamento (redes próprias)
+#### S3 — Posts de lançamento (redes próprias)
 
 **LinkedIn** (perfil Bruno):
 
@@ -3915,7 +4338,7 @@ Um kit por destinatário, enviado com **1–2 semanas de antecedência**:
 - Post detalhado: jornada de construção, números (LOC,
   contributors, tempo), arquitetura.
 
-### S4 — Canal próprio Vectora (YouTube + LinkedIn Video)
+#### S4 — Canal próprio Vectora (YouTube + LinkedIn Video)
 
 Editor de vídeo contratado (~R$2k para o pacote inicial):
 
@@ -3933,7 +4356,7 @@ Editor de vídeo contratado (~R$2k para o pacote inicial):
 Publicação simultânea em YouTube + LinkedIn Video + corte vertical
 para Shorts/Reels/TikTok.
 
-### S5 — Cronograma de lançamento
+#### S5 — Cronograma de lançamento
 
 ```
 T-30 dias: R5 — recrutar beta testers (10+ confirmados).
@@ -3956,7 +4379,7 @@ T+14    : Fase 2 — canais internacionais (Reddit EN, HN repost se
 T+30    : retro do lançamento; ajustes de produto e marketing.
 ```
 
-### S6 — Métricas de sucesso
+#### S6 — Métricas de sucesso
 
 **Meta conservadora (semana 1)**:
 
@@ -3989,7 +4412,7 @@ T+30    : retro do lançamento; ajustes de produto e marketing.
 - BetterStack Status Page — uptime.
 - Sentry (M2) — error rate.
 
-### S7 — Conteúdo pós-lançamento (semanas 2–8)
+#### S7 — Conteúdo pós-lançamento (semanas 2–8)
 
 Manter tração orgânica após semana de lançamento:
 
@@ -4013,7 +4436,7 @@ P optional `/blog`):
 - Comentários técnicos nos posts dos influenciadores.
 - Post semanal no `r/selfhosted` sobre uso real.
 
-### S8 — Cupons early adopter
+#### S8 — Cupons early adopter
 
 Para incentivar conversão rápida:
 
@@ -4029,7 +4452,7 @@ Para incentivar conversão rápida:
 - Cupons rastreados por canal (S2): kit para Lucas Montano com
   `MONTANO25`, etc.
 
-### S9 — Roadmap público (`/roadmap`)
+#### S9 — Roadmap público (`/roadmap`)
 
 Página no site (P) com roadmap em linguagem de usuário:
 
@@ -4060,7 +4483,7 @@ Updates via blog post + email mensal a usuários ativos. Voting na
 seção "Planejado" via emoji reactions (GitHub Discussions ou
 Canny.io). Sem datas firmes — apenas ordem aproximada.
 
-### Verificação (Bloco S)
+#### Verificação (Bloco S)
 
 - PyPI `vectora-cli 1.0.0` publicado; `pip install` em VM limpa
   funciona.
@@ -4080,8 +4503,6 @@ Canny.io). Sem datas firmes — apenas ordem aproximada.
   editorial em `vectora-company/ops/content-calendar.md`).
 - Cupons early adopter ativos e rastreáveis no dashboard.
 - `/roadmap` publicado com 4 seções e ≥10 itens.
-
----
 
 ## Princípios da Vectora (cardinais)
 
@@ -4116,8 +4537,6 @@ Canny.io). Sem datas firmes — apenas ordem aproximada.
    regras técnicas cardinais herdadas dos blocos A–C continuam
    válidas em D–S.
 
----
-
 ## Verificação end-to-end por bloco (resumo executivo)
 
 - **A**: chat + welcome unificado + i18n + PWA + mobile + usage
@@ -4128,8 +4547,11 @@ Canny.io). Sem datas firmes — apenas ordem aproximada.
 - **C**: MCP plugin add → tool funciona; skill install via git URL;
   PTY persistente; workbench 4 tabs com SWR; SSH/Codespace
   transparente; license validate cached.
-- **D**: instalador nativo em VM limpa abre, valida licença, chat
-  funciona. Auto-update beta→stable funciona com delta.
+- **D**: chat migra para Vite SPA + TanStack Router; FastAPI serve
+  `chat/dist/` direto (sem Node sidecar); instalador nativo em VM
+  limpa abre, valida licença, chat funciona; auto-update beta→stable
+  funciona com delta; web app self-hosted em VPS continua acessível
+  via `https://chat.example.com`.
 - **E**: pergunta complexa → DeepAgent delega coder/search/rag; HITL
   em 5 modos; `vectora chat --legacy` ainda funciona por 1 versão.
 - **F**: lite hardening passa; trocar para `complete` → Postgres +

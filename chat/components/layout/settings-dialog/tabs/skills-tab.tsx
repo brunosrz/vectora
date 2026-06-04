@@ -46,7 +46,7 @@ export function SkillsTab() {
   async function refresh() {
     setLoading(true);
     try {
-      const res = await fetch("/api/skills");
+      const res = await fetch("/skills");
       const data = await res.json();
       setSkills(Array.isArray(data.skills) ? data.skills : []);
     } catch {
@@ -65,7 +65,7 @@ export function SkillsTab() {
     setInstalling(true);
     setError(null);
     try {
-      const res = await fetch("/api/skills", {
+      const res = await fetch("/skills", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: source.trim() }),
@@ -86,14 +86,14 @@ export function SkillsTab() {
 
   async function handleRemove(id: string) {
     if (!confirm(t("skills.confirm_remove"))) return;
-    await fetch(`/api/skills/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await fetch(`/skills/${encodeURIComponent(id)}`, { method: "DELETE" });
     await refresh();
   }
 
   async function handleVerify(id: string) {
     setVerify((v) => ({ ...v, [id]: { state: "loading", msg: "" } }));
     try {
-      const res = await fetch(`/api/skills/${encodeURIComponent(id)}/verify`, {
+      const res = await fetch(`/skills/${encodeURIComponent(id)}/verify`, {
         method: "POST",
       });
       const data = await res.json();

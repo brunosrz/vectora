@@ -4,7 +4,7 @@
  * ToolPolicyPanel — controle do usuário sobre quais tools built-in o agente
  * pode usar em seu nome (Bloco S, S5 self-service).
  *
- * GET /api/tools/policy → {disabled, available}; PUT salva as desabilitadas.
+ * GET /tools/policy → {disabled, available}; PUT salva as desabilitadas.
  * Mudanças entram em vigor no próximo request (S4/S6 invalidam o cache).
  */
 
@@ -31,7 +31,7 @@ export function ToolPolicyPanel() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/tools/policy")
+    fetch("/tools/policy")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (cancelled) return;
@@ -63,7 +63,7 @@ export function ToolPolicyPanel() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/tools/policy", {
+      const res = await fetch("/tools/policy", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ disabled: [...disabled] }),

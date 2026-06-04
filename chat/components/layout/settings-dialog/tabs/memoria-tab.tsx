@@ -4,11 +4,11 @@
  * MemoriaTab — lista e gerencia memórias persistentes do usuário (Bloco N).
  *
  * Funcionalidades:
- * - Lista todas as memórias do usuário (fetch GET /api/memory)
- * - Adiciona memória manualmente (POST /api/memory)
- * - Edita conteúdo de uma memória inline (PUT /api/memory/:key)
- * - Deleta uma memória específica (DELETE /api/memory/:key)
- * - Limpa todas as memórias (DELETE /api/memory) com confirmação
+ * - Lista todas as memórias do usuário (fetch GET /memory)
+ * - Adiciona memória manualmente (POST /memory)
+ * - Edita conteúdo de uma memória inline (PUT /memory/:key)
+ * - Deleta uma memória específica (DELETE /memory/:key)
+ * - Limpa todas as memórias (DELETE /memory) com confirmação
  */
 
 import { Brain, Edit2, Loader2, Plus, Trash2 } from "lucide-react";
@@ -51,13 +51,13 @@ async function fetchMemories(
   limit = 50,
   offset = 0,
 ): Promise<ListMemoriesResponse> {
-  const res = await fetch(`/api/memory/?limit=${limit}&offset=${offset}`);
+  const res = await fetch(`/memory/?limit=${limit}&offset=${offset}`);
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
 
 async function updateMemory(key: string, content: string): Promise<void> {
-  const res = await fetch(`/api/memory/${encodeURIComponent(key)}`, {
+  const res = await fetch(`/memory/${encodeURIComponent(key)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content }),
@@ -66,19 +66,19 @@ async function updateMemory(key: string, content: string): Promise<void> {
 }
 
 async function deleteMemory(key: string): Promise<void> {
-  const res = await fetch(`/api/memory/${encodeURIComponent(key)}`, {
+  const res = await fetch(`/memory/${encodeURIComponent(key)}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
 async function clearAllMemories(): Promise<void> {
-  const res = await fetch(`/api/memory/`, { method: "DELETE" });
+  const res = await fetch(`/memory/`, { method: "DELETE" });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
 async function createMemory(key: string, content: string): Promise<void> {
-  const res = await fetch(`/api/memory/`, {
+  const res = await fetch(`/memory/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, content }),

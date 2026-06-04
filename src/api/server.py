@@ -22,13 +22,16 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.responses import Response as FastAPIResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.api.handlers.admin import router as admin_router
 from src.api.handlers.artifacts import router as artifacts_router
@@ -58,6 +61,40 @@ _WARMUP_GRAPH = os.environ.get("VECTORA_WARMUP_GRAPH", "0").lower() in {
     "true",
     "yes",
 }
+
+
+def _chat_static_root() -> Path | None:
+    """Localiza o bundle estático da SPA do chat.
+
+    Resolução em ordem:
+      1. Nuitka onefile — ``__compiled__.containing_dir/chat_static``.
+      2. Nuitka onefile — ``$NUITKA_ONEFILE_PARENT/chat_static``.
+      3. Override via env ``VECTORA_CHAT_STATIC``.
+      4. Dev — ``<repo_root>/chat/dist`` (build Vite).
+
+    Retorna ``None`` se nenhuma das localizações tiver um ``index.html``.
+    """
+    candidates: list[Path] = []
+
+    compiled = getattr(sys, "__compiled__", None)
+    if compiled is not None and hasattr(compiled, "containing_dir"):
+        candidates.append(Path(compiled.containing_dir) / "chat_static")
+
+    nuitka_parent = os.environ.get("NUITKA_ONEFILE_PARENT")
+    if nuitka_parent:
+        candidates.append(Path(nuitka_parent) / "chat_static")
+
+    override = os.environ.get("VECTORA_CHAT_STATIC")
+    if override:
+        candidates.append(Path(override))
+
+    repo_dist = Path(__file__).resolve().parent.parent.parent / "chat" / "dist"
+    candidates.append(repo_dist)
+
+    for c in candidates:
+        if (c / "index.html").is_file():
+            return c
+    return None
 
 
 async def _stop_background_worker() -> None:
@@ -194,7 +231,13 @@ def create_app(serve_static: bool = True) -> FastAPI:
     _cors_origins = (
         [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
         if _cors_origins_env
-        else ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"]
+        else [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ]
     )
     app.add_middleware(
         CORSMiddleware,
@@ -235,26 +278,57 @@ def create_app(serve_static: bool = True) -> FastAPI:
         except Exception:
             return []
 
-    # ── Frontend proxy (catch-all) ────────────────────────────────────────────
-    # Encaminha qualquer rota não-API para o servidor Next.js.
-    # DEVE ser registrado por último para não sobrepor endpoints reais.
-    # Configurável via VECTORA_FRONTEND_URL (padrão: http://localhost:3000).
+    if not serve_static:
+        return app
+
+    # ── SPA Vite (preferido) ──────────────────────────────────────────────────
+    # Em produção (binário Nuitka) ou após `pnpm --dir chat build`, servimos
+    # o bundle estático diretamente. O catch-all devolve `index.html` para
+    # rotas client-side (TanStack Router resolve no browser).
+    chat_static = _chat_static_root()
+    if chat_static is not None:
+        logger.info("api/server: servindo SPA estática de %s", chat_static)
+
+        # Mount em /assets/ (e diretórios afins gerados pelo Vite) — caminho
+        # com extensão tem prioridade; rotas "limpas" caem no catch-all.
+        app.mount(
+            "/assets",
+            StaticFiles(directory=str(chat_static / "assets")),
+            name="vite-assets",
+        )
+
+        # Arquivos da raiz (favicon, manifest, ícones) servidos sob demanda.
+        @app.get("/{filename:path}", include_in_schema=False)
+        async def _spa_or_static(request: Request, filename: str) -> FastAPIResponse:
+            # Se for arquivo real na raiz do bundle, serve direto.
+            candidate = (chat_static / filename).resolve()
+            try:
+                candidate.relative_to(chat_static.resolve())
+            except ValueError:
+                # path traversal — bloqueia
+                return FastAPIResponse(status_code=404)
+            if candidate.is_file():
+                return FileResponse(candidate)
+            # Caso contrário, devolve index.html — o router client-side
+            # processa a rota.
+            return FileResponse(chat_static / "index.html")
+
+        return app
+
+    # ── Frontend proxy (fallback dev sem build) ───────────────────────────────
+    # Quando `chat/dist/` não existe, encaminhamos qualquer rota não-API para
+    # o servidor de dev externo (Vite em :5173 ou Next.js legado em :3000).
+    # Configurável via VECTORA_FRONTEND_URL.
     _frontend_url = os.environ.get(
-        "VECTORA_FRONTEND_URL", "http://localhost:3000"
+        "VECTORA_FRONTEND_URL", "http://localhost:5173"
     ).rstrip("/")
 
-    # Headers de request que não devem ser encaminhados ao upstream
     proxy_skip_req_headers = frozenset(
         {"host", "connection", "transfer-encoding", "accept-encoding"}
     )
-    # Headers de resposta gerenciados pelo FastAPI/Starlette — não encaminhar
-    # para evitar conflitos (ex: content-length incorreto após descompressão)
     proxy_skip_resp_headers = frozenset(
         {"transfer-encoding", "connection", "content-encoding", "content-length"}
     )
-
-    if not serve_static:
-        return app
 
     @app.api_route("/{path:path}", methods=["GET", "HEAD"])
     async def _frontend_proxy(request: Request, path: str) -> FastAPIResponse:
@@ -302,11 +376,17 @@ def create_app(serve_static: bool = True) -> FastAPI:
             )
         except httpx.ConnectError:
             logger.warning("frontend_proxy: frontend indisponível em %s", _frontend_url)
+            # Mensagem hardcoded em pt-BR — backend ainda não tem i18n
+            # estruturado (ver `src/ui/strings/` futuro, espelhando o CSV
+            # de `chat/lib/i18n/strings.csv.ts`). `.encode("utf-8")` evita
+            # restrição ASCII-only dos bytes literals do Python.
             return FastAPIResponse(
                 content=(
-                    b"<html><body><h2>Frontend indispon\xedvel</h2>"
-                    b"<p>Certifique-se que o servidor Next.js est\xe1 rodando.</p></body></html>"
-                ),
+                    "<html><body><h2>Frontend indisponível</h2>"
+                    "<p>Rode <code>pnpm --dir chat dev</code> ou faça o build "
+                    "com <code>pnpm --dir chat build</code> para gerar "
+                    "<code>chat/dist/</code>.</p></body></html>"
+                ).encode(),
                 status_code=502,
                 media_type="text/html; charset=utf-8",
             )

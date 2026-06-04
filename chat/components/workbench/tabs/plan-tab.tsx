@@ -24,7 +24,7 @@ import {
 
 async function fetchArtifacts(threadId: string): Promise<PlanItem[]> {
   const qs = new URLSearchParams({ session_id: threadId });
-  const res = await fetch(`/api/artifacts/?${qs}`);
+  const res = await fetch(`/artifacts/?${qs}`);
   if (!res.ok) return [];
   const data = await res.json();
   return data.artifacts ?? [];
@@ -35,7 +35,7 @@ async function fetchArtifactContent(
   slug: string,
 ): Promise<string | null> {
   const qs = new URLSearchParams({ session_id: threadId });
-  const res = await fetch(`/api/artifacts/${encodeURIComponent(slug)}?${qs}`);
+  const res = await fetch(`/artifacts/${encodeURIComponent(slug)}?${qs}`);
   if (!res.ok) return null;
   const data = await res.json();
   return data.content ?? null;

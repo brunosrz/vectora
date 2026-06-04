@@ -65,9 +65,7 @@ function WorktreeChip() {
       return;
     }
     let cancelled = false;
-    fetch(
-      `/api/workspaces/worktrees?workspace_id=${encodeURIComponent(active.id)}`,
-    )
+    fetch(`/workspaces/worktrees?workspace_id=${encodeURIComponent(active.id)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!cancelled && d?.worktrees) setWorktrees(d.worktrees);
@@ -100,7 +98,7 @@ function PluginsChip() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/plugins")
+    fetch("/plugins")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!cancelled && typeof d?.total === "number") setCount(d.total);

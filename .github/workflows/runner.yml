@@ -599,14 +599,8 @@ jobs:
       - name: Install frontend deps
         run: pnpm --dir chat install --frozen-lockfile
 
-      - name: Build Next.js frontend (standalone)
+      - name: Build chat SPA (Vite)
         run: pnpm --dir chat build
-
-      - name: Copy static assets into standalone bundle
-        shell: bash
-        run: |
-          cp -r chat/.next/static   chat/.next/standalone/.next/static
-          cp -r chat/public         chat/.next/standalone/public
 
       - name: Sync Python deps
         run: uv sync --frozen
@@ -615,7 +609,7 @@ jobs:
         run: |
           uv run python -m nuitka \
             --mode=onefile \
-            --include-data-dir=chat/.next/standalone=chat_standalone \
+            --include-data-dir=chat/dist=chat_static \
             --enable-plugin=multiprocessing \
             --enable-plugin=anti-bloat \
             --output-filename=vectora \

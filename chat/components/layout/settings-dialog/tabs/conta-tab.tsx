@@ -62,7 +62,7 @@ export function ContaTab() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/me", {
+      const res = await fetch("/auth/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: draft.trim() }),

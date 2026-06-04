@@ -3,7 +3,7 @@
 /**
  * IntegracoesTab — cards de integrações externas (Bloco O).
  *
- * O1 — API key: usuário insere chave manualmente; salva via /api/auth/envs.
+ * O1 — API key: usuário insere chave manualmente; salva via /auth/envs.
  * O2 — OAuth: botão "Conectar" redireciona para o fluxo GitHub OAuth.
  *
  * Cada card mostra:
@@ -54,14 +54,14 @@ type VerifyState = "idle" | "loading" | "ok" | "error";
 // ---------------------------------------------------------------------------
 
 async function fetchIntegrations(): Promise<Integration[]> {
-  const res = await fetch("/api/integrations/");
+  const res = await fetch("/integrations/");
   if (!res.ok) return [];
   const data = await res.json();
   return data.integrations ?? [];
 }
 
 async function saveApiKey(envVar: string, value: string): Promise<void> {
-  const res = await fetch("/api/auth/envs", {
+  const res = await fetch("/auth/envs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key: envVar, value }),
@@ -70,7 +70,7 @@ async function saveApiKey(envVar: string, value: string): Promise<void> {
 }
 
 async function removeApiKey(envVar: string): Promise<void> {
-  const res = await fetch(`/api/auth/envs/${encodeURIComponent(envVar)}`, {
+  const res = await fetch(`/auth/envs/${encodeURIComponent(envVar)}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
@@ -79,7 +79,7 @@ async function removeApiKey(envVar: string): Promise<void> {
 async function verifyIntegration(
   id: string,
 ): Promise<{ ok: boolean; message: string }> {
-  const res = await fetch(`/api/integrations/${id}/verify`, {
+  const res = await fetch(`/integrations/${id}/verify`, {
     method: "POST",
   });
   if (!res.ok) return { ok: false, message: `Erro ${res.status}` };
@@ -87,7 +87,7 @@ async function verifyIntegration(
 }
 
 async function disconnectGitBranch(): Promise<void> {
-  await fetch("/api/integrations/github", { method: "DELETE" });
+  await fetch("/integrations/github", { method: "DELETE" });
 }
 
 // ---------------------------------------------------------------------------

@@ -13,9 +13,15 @@
 # testing
 /coverage
 
-# next.js
+# next.js (legado — removido pelo Bloco D)
 /.next/
 /out/
+
+# vite
+/dist/
+
+# tanstack router auto-gen
+/src/routeTree.gen.ts
 
 # production
 /build

@@ -27,7 +27,7 @@ interface AuthState {
   clearUser: () => void;
 
   /**
-   * Hidrata o store a partir de GET /api/auth/me.
+   * Hidrata o store a partir de GET /auth/me.
    * Chamado no layout root — garante que o estado está sincronizado com
    * o servidor sem depender do sessionStorage (que pode estar desatualizado).
    */
@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
 
       hydrate: async () => {
         try {
-          const res = await fetch("/api/auth/me");
+          const res = await fetch("/auth/me");
           if (res.ok) {
             const user: AuthUser = await res.json();
             set({ user, isAuthenticated: true });

@@ -2,19 +2,14 @@
   "$schema": "https://v2-9-15.turborepo.dev/schema.json",
   "tasks": {
     "build": {
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**"]
     },
     "dev": {
       "persistent": true,
       "cache": false
     },
-    "lint": {
+    "lint:oxc": {
       "outputs": []
-    },
-    "start": {
-      "dependsOn": ["build"],
-      "persistent": true,
-      "cache": false
     }
   }
 }

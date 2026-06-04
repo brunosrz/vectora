@@ -3,7 +3,7 @@
 /**
  * AuthProvider — hidrata o auth store no mount.
  *
- * Faz GET /api/auth/me para sincronizar o usuário com o servidor a cada
+ * Faz GET /auth/me para sincronizar o usuário com o servidor a cada
  * carregamento de página. Redireciona para /auth/signin quando o servidor
  * retorna 401 (token expirado, servidor reiniciado, DB recriado etc.).
  */
@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Primeiro acesso (sem usuários) → setup do root; senão → login
         let hasUsers = true;
         try {
-          const res = await fetch("/api/auth/has-users");
+          const res = await fetch("/auth/has-users");
           if (res.ok) hasUsers = Boolean((await res.json()).exists);
         } catch {
           // Falha de rede → assume login (signup público fica fechado por padrão)

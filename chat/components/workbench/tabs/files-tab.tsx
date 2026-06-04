@@ -44,7 +44,7 @@ async function fetchTree(
 ): Promise<FileEntry[] | null> {
   const qs = new URLSearchParams({ path });
   const res = await fetch(
-    `/api/workspaces/${encodeURIComponent(workspaceId)}/tree?${qs}`,
+    `/workspaces/${encodeURIComponent(workspaceId)}/tree?${qs}`,
   );
   if (!res.ok) return null;
   const data = await res.json();
@@ -57,7 +57,7 @@ async function fetchFile(
 ): Promise<FileContent | null> {
   const qs = new URLSearchParams({ path });
   const res = await fetch(
-    `/api/workspaces/${encodeURIComponent(workspaceId)}/file?${qs}`,
+    `/workspaces/${encodeURIComponent(workspaceId)}/file?${qs}`,
   );
   if (!res.ok) return null;
   return res.json();

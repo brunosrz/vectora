@@ -26,7 +26,7 @@ import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
 async function fetchDiff(workspaceId: string): Promise<DiffSummary | null> {
   const res = await fetch(
-    `/api/workspaces/${encodeURIComponent(workspaceId)}/git/diff`,
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/diff`,
   );
   if (!res.ok) return null;
   return res.json();
@@ -38,7 +38,7 @@ async function fetchDiffFile(
 ): Promise<DiffHunk[] | null> {
   const qs = new URLSearchParams({ path });
   const res = await fetch(
-    `/api/workspaces/${encodeURIComponent(workspaceId)}/git/diff/file?${qs}`,
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/diff/file?${qs}`,
   );
   if (!res.ok) return null;
   const data = await res.json();

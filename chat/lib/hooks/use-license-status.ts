@@ -32,7 +32,7 @@ const REVALIDATE_MS = 5 * 60 * 1000;
 
 async function fetchStatus(): Promise<LicenseStatus | null> {
   try {
-    const res = await fetch("/api/license/status", {
+    const res = await fetch("/license/status", {
       headers: { Accept: "application/json" },
     });
     if (!res.ok && res.status !== 503) return null;

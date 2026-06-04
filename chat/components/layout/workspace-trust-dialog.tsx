@@ -114,7 +114,7 @@ export function WorkspaceTrustDialog({
     setError(null);
     try {
       const q = path ? `?path=${encodeURIComponent(path)}` : "";
-      const res = await fetch(`/api/workspaces/browse${q}`);
+      const res = await fetch(`/workspaces/browse${q}`);
       if (res.status === 403) {
         const data = await res.json().catch(() => ({}));
         setError(data.detail ?? "Caminho fora das pastas seguras.");

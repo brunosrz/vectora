@@ -1,25 +1,26 @@
-# Referência das flags Nuitka usadas pelo Makefile (build-nuitka) e CI
+# Referência das flags Nuitka usadas pelo SCons (build-nuitka) e CI
 # (runner.yml / release-native job).
 #
 # ATENÇÃO: Nuitka 4.x NÃO lê este arquivo diretamente. Ele existe como
 # documentação centralizada das opções. O comando real está em:
-#   Makefile → target build-nuitka
+#   SConstruct → _action_build_nuitka
 #   .github/workflows/runner.yml → step "Build Nuitka onefile"
 #
 # Comando equivalente:
 #
 #   uv run nuitka \
 #     --mode=onefile \
-#     --include-data-dir=chat/out=chat_static \
+#     --include-data-dir=chat/dist=chat_static \
 #     --enable-plugin=multiprocessing \
 #     --enable-plugin=anti-bloat \
 #     --output-filename=vectora \
 #     --output-dir=dist-nuitka \
 #     src/launcher.py
 #
-# Em CI (matrix Win/macOS/Linux), o runner.yml executa isto
-# após `pnpm --dir chat build && pnpm --dir chat exec next export` para
-# garantir que `chat/out/` existe.
+# Em CI (matrix Win/macOS/Linux), o runner.yml executa isto após
+# `pnpm --dir chat build` para garantir que `chat/dist/` existe (a SPA Vite).
+# O FastAPI localiza esse data dir em runtime via `__compiled__.containing_dir`
+# ou `NUITKA_ONEFILE_PARENT` e serve via `StaticFiles`.
 
 [main]
 # Entry point — o Launcher (T.12.1) faz o gate de licença e delega para
@@ -50,13 +51,12 @@ disable_plugins = [
     "tk-inter",
 ]
 
-# Empacota o servidor Next.js standalone como data dir. O next_sidecar.py
-# localiza chat_standalone/server.js e o spawna em runtime como Node.js sidecar.
-# Antes de rodar nuitka, garantir: pnpm --dir chat build &&
-#   cp -r chat/.next/static chat/.next/standalone/.next/static &&
-#   cp -r chat/public chat/.next/standalone/public
+# Empacota a SPA Vite (chat/dist/) como data dir. O FastAPI
+# (src/api/server.py::_chat_static_root) localiza essa pasta em runtime
+# via __compiled__.containing_dir ou NUITKA_ONEFILE_PARENT e a serve via
+# StaticFiles. Antes de rodar nuitka: pnpm --dir chat build.
 include_data_dirs = [
-    "chat/.next/standalone=chat_standalone",
+    "chat/dist=chat_static",
 ]
 
 # Deps com extensões C que precisam ser empacotadas explicitamente. Ajustar

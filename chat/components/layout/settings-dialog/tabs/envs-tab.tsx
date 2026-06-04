@@ -4,7 +4,7 @@
  * EnvsTab — tabela de variáveis de ambiente personalizadas do usuário.
  * Cada variável sobrescreve o env do sistema apenas para as requests deste usuário.
  *
- * Backend: GET/POST /api/auth/envs + DELETE /api/auth/envs/:key.
+ * Backend: GET/POST /auth/envs + DELETE /auth/envs/:key.
  * Valores chegam mascarados na resposta — nunca expostos ao cliente.
  */
 
@@ -33,13 +33,13 @@ interface EnvsResponse {
 }
 
 async function fetchEnvs(): Promise<EnvsResponse> {
-  const res = await fetch("/api/auth/envs");
+  const res = await fetch("/auth/envs");
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
 
 async function setEnv(key: string, value: string): Promise<void> {
-  const res = await fetch("/api/auth/envs", {
+  const res = await fetch("/auth/envs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, value }),
@@ -48,7 +48,7 @@ async function setEnv(key: string, value: string): Promise<void> {
 }
 
 async function deleteEnv(key: string): Promise<void> {
-  const res = await fetch(`/api/auth/envs/${encodeURIComponent(key)}`, {
+  const res = await fetch(`/auth/envs/${encodeURIComponent(key)}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);

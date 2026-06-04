@@ -59,7 +59,7 @@ def _vectora_token() -> str:
 
 
 @router.post("/portal")
-async def license_portal(request: Request) -> dict:  # noqa: ARG001
+async def license_portal(request: Request) -> dict:
     """Cria sessão de Customer Portal (Stripe INTL ou Asaas BR).
 
     Repassa o ``VECTORA_TOKEN`` para a edge function `create-portal` que
@@ -100,7 +100,7 @@ async def license_portal(request: Request) -> dict:  # noqa: ARG001
         detail = "Erro ao criar sessão de portal."
         try:
             detail = resp.json().get("message", detail)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         raise HTTPException(status_code=resp.status_code, detail=detail)
 

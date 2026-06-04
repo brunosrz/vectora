@@ -1,9 +1,7 @@
-"use client";
-
 /**
  * Banner único de licença que aparece abaixo do header.
  *
- * Estados visuais derivados de ``GET /api/license/status``:
+ * Estados visuais derivados de ``GET /license/status``:
  * - **laranja** — sem token configurado ou pagamento em atraso (`past_due`).
  * - **amarelo** — trial expira em ≤7 dias.
  * - **vermelho** — licença expirada/revogada (bloqueia input no chat
@@ -11,7 +9,7 @@
  * - **oculto** — licença ativa e fora da janela de aviso.
  *
  * Click em "Configurar" abre Settings → Envs; "Renovar"/"Assinar" abre
- * o Customer Portal via ``POST /api/license/portal`` em nova aba (web)
+ * o Customer Portal via ``POST /license/portal`` em nova aba (web)
  * ou ``window.vectora.openExternal`` (desktop Electron).
  */
 
@@ -62,7 +60,7 @@ export function LicenseBanner({
     if (portalLoading) return;
     setPortalLoading(true);
     try {
-      const res = await fetch("/api/license/portal", { method: "POST" });
+      const res = await fetch("/license/portal", { method: "POST" });
       if (!res.ok) {
         // Sem assinatura ativa → manda pro site de pricing.
         void openUrl("https://vectora.company/pricing");
