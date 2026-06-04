@@ -121,13 +121,6 @@ def _action_test(target, source, env):
     _run(["uv", "run", "pytest", "tests/unit/", "-v", "--tb=short"])
 
 
-def _action_gen_proto(target, source, env):
-    proto_dir = os.path.join(ROOT, "src", "api", "protos")
-    result = subprocess.run(["buf", "generate"], cwd=proto_dir, env={**os.environ})
-    if result.returncode != 0:
-        raise SystemExit(result.returncode)
-
-
 def _action_lint(target, source, env):
     _run(["uv", "run", "ruff", "check", "src", "tests"])
     _run(["uv", "run", "ty", "check", "src", "tests"])
@@ -172,7 +165,6 @@ def _action_help(target, source, env):
     scons dev-chat         apenas Vite dev
 
   Qualidade
-    scons gen-proto        buf generate (stubs Python + TypeScript)
     scons test             pytest tests/unit/
     scons lint             ruff + ty + tsc + oxlint
     scons clean            remove todos os outputs de build
@@ -223,7 +215,6 @@ _cmd("dev-backend", lambda t, s, e: _run(
 _cmd("dev-chat",    lambda t, s, e: _run([PNPM, "--dir", "chat", "dev"]))
 
 # Qualidade
-_cmd("gen-proto", _action_gen_proto)
 _cmd("test",  _action_test)
 _cmd("lint",  _action_lint)
 _cmd("clean", _action_clean)

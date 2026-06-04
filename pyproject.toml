@@ -92,7 +92,7 @@ target-version = "py313"
 fix = true
 show-fixes = true
 indent-width = 4
-exclude = [".venv", "data", "logs", "src/api/gen"]
+exclude = [".venv", "data", "logs"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -138,10 +138,8 @@ indent-style = "space"
 line-ending = "lf"
 
 # ─── ty (Astral type checker) ──────────────────────────────────────────────────
-# Excluímos código auto-gerado (protoc/grpcio) — a tipagem desses arquivos é
-# responsabilidade do gerador, não nossa.
 [tool.ty.src]
-exclude = ["src/api/gen"]
+exclude = []
 
 [tool.bandit]
 exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py"]

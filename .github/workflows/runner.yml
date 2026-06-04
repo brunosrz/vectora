@@ -88,11 +88,6 @@ jobs:
             venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
       - name: Sync dependencies
         run: uv sync --frozen --all-extras
-      - name: Install buf CLI
-        uses: bufbuild/buf-setup-action@v1
-      - name: Generate proto stubs
-        run: buf generate
-        working-directory: src/api/protos
       - name: Run Ruff check
         run: uv run ruff check vectora tests
 
@@ -162,11 +157,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install buf CLI
-        uses: bufbuild/buf-setup-action@v1
-      - name: Generate proto stubs
-        run: buf generate
-        working-directory: src/api/protos
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:

@@ -1,9 +1,9 @@
-"""Schemas Pydantic da API de chat — espelho do proto src/chat/v1/chat.proto.
+"""Schemas Pydantic da API de chat — single source-of-truth dos contratos.
 
 Usados como request/response models do FastAPI e como tipos internos dos
-handlers. Em produção com buf + grpcio, estes modelos poderiam ser gerados
-automaticamente; aqui são mantidos manualmente para eliminar a dependência
-de build-time durante desenvolvimento.
+handlers. Os paths estilo gRPC (`/vectora.chat.v1.ChatService/...`) são
+apenas convenção de nomenclatura — não há runtime ConnectRPC nem geração
+de stubs protobuf no projeto.
 """
 
 from __future__ import annotations

@@ -1,10 +1,15 @@
 /**
  * Vectora API Client
  *
- * Cliente que conecta ao backend FastAPI do Vectora.
- * Substitui o LangGraph SDK — usa fetch nativo para SSE e REST.
+ * Cliente que conecta ao backend FastAPI usando `fetch` nativo. Os paths
+ * `/vectora.chat.v1.ChatService/...` são apenas convenção de nomenclatura
+ * estilo gRPC; o backend responde POST/JSON puro, sem runtime ConnectRPC
+ * nem protobuf. Schemas espelham `src/api/schemas.py` (Pydantic).
  *
- * Endpoints base: NEXT_PUBLIC_VECTORA_API_URL (default: http://localhost:8080)
+ * Em produção o frontend roda no mesmo origin do backend (FastAPI serve
+ * `chat/dist/` via StaticFiles). Em dev, o proxy do Vite redireciona
+ * `/vectora.chat.v1/*` etc. para `http://127.0.0.1:8080`. Cookies httpOnly
+ * funcionam em ambos sem ajuste extra.
  */
 
 import { VECTORA_API_URL } from "@/lib/constants/api";

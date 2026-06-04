@@ -1,10 +1,13 @@
 """FastAPI app factory do Vectora API.
 
 Modos:
-    chat     — API + static files do frontend compilado (Next.js out/)
-    headless — apenas API (sem static files) — para Paperclip e integrações
+    chat     — API + StaticFiles da SPA Vite (`chat/dist/`)
+    headless — apenas API (sem catch-all SPA) — para integrações
 
-Endpoints registrados:
+Endpoints registrados (paths estilo gRPC/Connect são apenas convenção
+de nomenclatura — handlers são POST + JSON puros, sem runtime ConnectRPC
+ou protobuf; schemas vivem em ``src/api/schemas.py`` como Pydantic):
+
     POST /vectora.chat.v1.ChatService/StreamChat
     POST /vectora.chat.v1.ChatService/ResumeChat
     GET  /vectora.chat.v1.ChatService/GetTools
@@ -193,9 +196,9 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 def create_app(serve_static: bool = True) -> FastAPI:
     """Cria e configura a aplicação FastAPI do Vectora.
 
-    ``serve_static=False`` desliga o catch-all que faz proxy do frontend Next.js
-    — usado em testes para que rotas não-API retornem 404 reais em vez de cair
-    no proxy.
+    ``serve_static=False`` desliga o catch-all que serve a SPA Vite — usado
+    em testes para que rotas não-API retornem 404 reais em vez de devolver
+    ``index.html`` ou cair no proxy dev.
     """
     from src.version import __version__
 
