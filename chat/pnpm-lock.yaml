@@ -242,9 +242,6 @@ importers:
       vite-plugin-pwa:
         specifier: ^1.3.0
         version: 1.3.0(vite@8.0.16(@types/node@25.9.1)(jiti@2.7.0)(terser@5.48.0))(workbox-build@7.4.1)(workbox-window@7.4.1)
-      vite-tsconfig-paths:
-        specifier: ^6.1.1
-        version: 6.1.1(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.1)(jiti@2.7.0)(terser@5.48.0))
       vitest:
         specifier: ^4.1.8
         version: 4.1.8(@types/node@25.9.1)(vite@8.0.16(@types/node@25.9.1)(jiti@2.7.0)(terser@5.48.0))
@@ -4460,12 +4457,6 @@ packages:
       }
     engines: { node: ">= 0.4" }
 
-  globrex@0.1.2:
-    resolution:
-      {
-        integrity: sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==,
-      }
-
   gopd@1.2.0:
     resolution:
       {
@@ -6277,19 +6268,6 @@ packages:
         integrity: sha512-tmMpK00BjZiUyVyvrBK7knerNgmgvcV/KLVyuma/SC+TQN167GrMRciANTz09+k3zW8L8t60jWO1GpfkZdjTaw==,
       }
 
-  tsconfck@3.1.6:
-    resolution:
-      {
-        integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==,
-      }
-    engines: { node: ^18 || >=20 }
-    hasBin: true
-    peerDependencies:
-      typescript: ^5.0.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   tslib@2.8.1:
     resolution:
       {
@@ -6540,14 +6518,6 @@ packages:
     peerDependenciesMeta:
       "@vite-pwa/assets-generator":
         optional: true
-
-  vite-tsconfig-paths@6.1.1:
-    resolution:
-      {
-        integrity: sha512-2cihq7zliibCCZ8P9cKJrQBkfgdvcFkOOc3Y02o3GWUDLgqjWsZudaoiuOwO/gzTzy17cS5F7ZPo4bsnS4DGkg==,
-      }
-    peerDependencies:
-      vite: "*"
 
   vite@8.0.16:
     resolution:
@@ -9548,8 +9518,6 @@ snapshots:
       define-properties: 1.2.1
       gopd: 1.2.0
 
-  globrex@0.1.2: {}
-
   gopd@1.2.0: {}
 
   graceful-fs@4.2.11: {}
@@ -10906,10 +10874,6 @@ snapshots:
 
   trough@2.2.0: {}
 
-  tsconfck@3.1.6(typescript@6.0.3):
-    optionalDependencies:
-      typescript: 6.0.3
-
   tslib@2.8.1: {}
 
   tw-animate-css@1.4.0: {}
@@ -11091,16 +11055,6 @@ snapshots:
       workbox-window: 7.4.1
     transitivePeerDependencies:
       - supports-color
-
-  vite-tsconfig-paths@6.1.1(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.1)(jiti@2.7.0)(terser@5.48.0)):
-    dependencies:
-      debug: 4.4.3
-      globrex: 0.1.2
-      tsconfck: 3.1.6(typescript@6.0.3)
-      vite: 8.0.16(@types/node@25.9.1)(jiti@2.7.0)(terser@5.48.0)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   vite@8.0.16(@types/node@25.9.1)(jiti@2.7.0)(terser@5.48.0):
     dependencies:

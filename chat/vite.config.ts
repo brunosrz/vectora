@@ -3,7 +3,6 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -35,7 +34,6 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    tsconfigPaths(),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: [
@@ -118,9 +116,12 @@ export default defineConfig({
     },
   },
   resolve: {
-    // Shims que permitem reaproveitar componentes Next.js sem reescrita:
-    // `next/link`, `next/image`, `next/navigation` ganham equivalentes
-    // baseados em TanStack Router e `<img>` nativo.
+    // Resolução de paths do `tsconfig.json` (`@/*`) — suporte nativo do
+    // Vite 8+, dispensa o plugin `vite-tsconfig-paths`.
+    tsconfigPaths: true,
+    // Os módulos virtuais `next/link`, `next/image` e `next/navigation`
+    // resolvem para os shims em `src/shims/`. Sem esses aliases os
+    // imports literais falham na resolução do Vite.
     alias: {
       "next/navigation": resolve(shimsDir, "next-navigation.ts"),
       "next/image": resolve(shimsDir, "next-image.tsx"),

@@ -26,7 +26,7 @@ const searchSchema = z.object({
   invite: z.string().optional(),
 });
 
-export const Route = createFileRoute("/auth/signup" as never)({
+export const Route = createFileRoute("/auth/signup")({
   validateSearch: searchSchema,
   component: SignUpPage,
 });
@@ -86,7 +86,7 @@ function SignUpPage() {
       }
 
       if (!cancelled) {
-        void navigate({ to: "/auth/signin" as never });
+        void navigate({ to: "/auth/signin" });
       }
     }
 
@@ -133,7 +133,7 @@ function SignUpPage() {
       }
 
       setUser(data.user as AuthUser);
-      void navigate({ to: "/" as never });
+      void navigate({ to: "/" });
     } catch {
       setServerError("Erro de conexão. Verifique se o servidor está rodando.");
     } finally {
@@ -329,10 +329,7 @@ function SignUpPage() {
 
         <p className="text-center text-xs text-muted-foreground">
           Já tem conta?{" "}
-          <Link
-            to={"/auth/signin" as never}
-            className="text-primary hover:underline"
-          >
+          <Link to={"/auth/signin"} className="text-primary hover:underline">
             Entrar
           </Link>
         </p>

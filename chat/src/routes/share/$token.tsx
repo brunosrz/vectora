@@ -9,7 +9,7 @@ import { getSharedThread, type SharedThread } from "@/lib/api/vectora-client";
 
 // Rota pública — não exige autenticação.
 // O auth guard em __root.tsx já exclui o prefixo "/share/".
-export const Route = createFileRoute("/share/$token" as never)({
+export const Route = createFileRoute("/share/$token")({
   component: SharePage,
 });
 

@@ -23,7 +23,7 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { getDefaultModel } from "@/lib/config/deployment-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 
-export const Route = createFileRoute("/session/$threadId" as never)({
+export const Route = createFileRoute("/session/$threadId")({
   // Garante que a lista de threads está em cache antes do componente montar
   // (sidebar aparece preenchida sem flash de "carregando").
   loader: () =>
@@ -61,8 +61,8 @@ function SessionPage() {
   const goTo = useCallback(
     (id: string) =>
       void navigate({
-        to: "/session/$threadId" as never,
-        params: { threadId: id } as never,
+        to: "/session/$threadId",
+        params: { threadId: id },
       }),
     [navigate],
   );
@@ -84,7 +84,7 @@ function SessionPage() {
   const handleDeleteThread = useCallback(
     async (id: string) => {
       await deleteThreadMutation.mutateAsync(id);
-      if (id === threadId) void navigate({ to: "/" as never });
+      if (id === threadId) void navigate({ to: "/" });
     },
     [deleteThreadMutation, threadId, navigate],
   );
@@ -147,7 +147,7 @@ function SessionPage() {
               agentConfig={agentConfig}
               onAgentConfigChange={setAgentConfig}
               onThreadUpdate={handleThreadUpdate}
-              onThreadNotFound={() => void navigate({ to: "/" as never })}
+              onThreadNotFound={() => void navigate({ to: "/" })}
               inputLocked={inputLocked}
             />
             <WorkbenchPanel threadId={threadId} />

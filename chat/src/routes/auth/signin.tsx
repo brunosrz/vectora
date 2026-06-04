@@ -15,11 +15,7 @@ const searchSchema = z.object({
   from: z.string().optional(),
 });
 
-// `as never` em createFileRoute e nos `to:`: o tipo definitivo de cada rota
-// só fica disponível depois que o plugin do TanStack Router gera o
-// `routeTree.gen.ts`. Durante a primeira execução do tsc os tipos são
-// "vazios" e o type-check estrito recusa as strings literais.
-export const Route = createFileRoute("/auth/signin" as never)({
+export const Route = createFileRoute("/auth/signin")({
   validateSearch: searchSchema,
   component: SignInPage,
 });
@@ -42,7 +38,7 @@ function SignInPage() {
       .then((r) => r.json())
       .then((d: { exists?: boolean }) => {
         if (!cancelled && d.exists === false) {
-          void navigate({ to: "/auth/signup" as never });
+          void navigate({ to: "/auth/signup" });
         }
       })
       .catch(() => {
@@ -80,7 +76,7 @@ function SignInPage() {
 
       setUser(data.user as AuthUser);
       const from = (search as { from?: string }).from;
-      void navigate({ to: (from ?? "/") as never });
+      void navigate({ to: from ?? "/" });
     } catch {
       setError("Erro de conexão. Verifique se o servidor está rodando.");
     } finally {

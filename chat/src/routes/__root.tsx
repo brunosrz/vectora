@@ -6,10 +6,9 @@ import {
 } from "@tanstack/react-router";
 import type { RouterContext } from "../router";
 
-// `ToPath = never` faz os paths literais passarem pelo type-check sem
-// estarem registrados no `routeTree.gen.ts`. O resolver real do
-// TanStack Router valida em runtime.
-type ToPath = never;
+// `redirect({...} as Parameters<typeof redirect>[0])`: a tipagem estrita
+// do TanStack exige `from` para inferir o destino. Como o guard roda na
+// rota raiz e não tem `from` ainda, fazemos cast direto.
 
 const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/"];
 
@@ -44,7 +43,7 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
     if (hasUsersRes.ok) {
       const data = (await hasUsersRes.json()) as { exists?: boolean };
       if (data.exists === false) {
-        throw redirect({ to: "/auth/signup" as ToPath });
+        throw redirect({ to: "/auth/signup" });
       }
     }
   } catch (err) {
@@ -58,9 +57,9 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
     meRes = await fetch("/auth/me", { credentials: "include" });
   } catch {
     throw redirect({
-      to: "/auth/signin" as ToPath,
-      search: { from: currentPath } as never,
-    });
+      to: "/auth/signin",
+      search: { from: currentPath },
+    } as unknown as Parameters<typeof redirect>[0]);
   }
 
   if (meRes.ok) return;
@@ -81,9 +80,9 @@ async function ensureAuthenticated(currentPath: string): Promise<void> {
   }
 
   throw redirect({
-    to: "/auth/signin" as ToPath,
-    search: { from: currentPath } as never,
-  });
+    to: "/auth/signin",
+    search: { from: currentPath },
+  } as unknown as Parameters<typeof redirect>[0]);
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
