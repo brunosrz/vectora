@@ -652,6 +652,11 @@ async def create_worktree(body: CreateWorktreeRequest) -> StatusResponse:
 view_router = APIRouter(prefix="/workspaces", tags=["workspaces-view"])
 
 
+@view_router.get("", response_model=ListWorkspacesResponse)
+async def list_workspaces_rest(request: Request) -> ListWorkspacesResponse:
+    return await list_workspaces(request)
+
+
 @view_router.get("/browse", response_model=BrowseResponse)
 async def browse_view(
     request: Request,
@@ -662,6 +667,54 @@ async def browse_view(
     naming antigo e este alias serve a SPA do chat sem cruzar
     namespaces."""
     return await browse_dir(request=request, path=path)
+
+
+@view_router.get("/safe-roots", response_model=ListSafeRootsResponse)
+async def list_safe_roots_rest() -> ListSafeRootsResponse:
+    return await list_safe_roots()
+
+
+@view_router.get("/codespaces", response_model=ListCodespacesResponse)
+async def list_codespaces_rest() -> ListCodespacesResponse:
+    return await list_codespaces_endpoint()
+
+
+@view_router.post("/create", response_model=StatusResponse)
+async def create_workspace_rest(
+    request: Request, body: CreateWorkspaceRequest
+) -> StatusResponse:
+    return await create_workspace(request, body)
+
+
+@view_router.post("/set-active", response_model=StatusResponse)
+async def set_active_workspace_rest(
+    request: Request, body: SetActiveRequest
+) -> StatusResponse:
+    return await set_active_workspace(request, body)
+
+
+@view_router.post("/trust", response_model=StatusResponse)
+async def trust_workspace_rest(request: Request, body: TrustRequest) -> StatusResponse:
+    return await trust_workspace(request, body)
+
+
+@view_router.post("/git-init", response_model=StatusResponse)
+async def git_init_workspace_rest(
+    request: Request, body: GitInitRequest
+) -> StatusResponse:
+    return await git_init_workspace(request, body)
+
+
+@view_router.post("/test-ssh", response_model=TestSshResponse)
+async def test_ssh_rest(body: TestSshRequest, request: Request) -> TestSshResponse:
+    return await test_ssh(body, request)
+
+
+@view_router.post("/create-remote", response_model=StatusResponse)
+async def create_remote_workspace_rest(
+    request: Request, body: CreateRemoteWorkspaceRequest
+) -> StatusResponse:
+    return await create_remote_workspace(request, body)
 
 
 class TreeEntry(BaseModel):
