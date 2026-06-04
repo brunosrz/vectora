@@ -96,12 +96,12 @@ async def license_portal(request: Request) -> dict:
             detail="Erro no servidor de billing.",
         )
     if resp.status_code >= 400:
-        # Repassa mensagem da edge function quando disponível.
+        import contextlib
+        import json
+
         detail = "Erro ao criar sessão de portal."
-        try:
+        with contextlib.suppress(json.JSONDecodeError, AttributeError, TypeError):
             detail = resp.json().get("message", detail)
-        except Exception:
-            pass
         raise HTTPException(status_code=resp.status_code, detail=detail)
 
     data = resp.json()

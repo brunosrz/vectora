@@ -1,3 +1,4 @@
+# ruff: noqa: A005  # consumidores acessam via `src.types.*` — sem colisão com stdlib
 from __future__ import annotations
 
 from src.types.agents import (

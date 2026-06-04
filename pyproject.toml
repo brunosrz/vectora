@@ -9,6 +9,10 @@ description = "Vectora - Advanced AI Assistant"
 readme = "README.md"
 authors = [{name = "Bruno Soares", email = "bruno.soarxz@gmail.com"}]
 requires-python = ">=3.13"
+# `Private :: Do Not Upload` impede `twine upload`/`uv publish` acidental.
+classifiers = [
+    "Private :: Do Not Upload",
+]
 
 dependencies = [
     "fastapi>=0.115",

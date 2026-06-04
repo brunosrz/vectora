@@ -115,8 +115,8 @@ def _parse_frontmatter(text: str) -> dict[str, str]:
     if not match:
         return {}
     out: dict[str, str] = {}
-    for line in match.group(1).splitlines():
-        line = line.strip()
+    for raw_line in match.group(1).splitlines():
+        line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
         kv = _KV_RE.match(line)
@@ -199,10 +199,27 @@ def install_skill(user_id: str, source: str) -> Skill:
 
     try:
         if _is_git_url(source):
+            # `shutil.which("git")` devolve path absoluto — boot do binário
+            # Nuitka inicializa com PATH minimizado, sem isso o spawn falha.
+            git_exe = shutil.which("git")
+            if git_exe is None:
+                raise ValueError(
+                    "git não encontrado no PATH. Instale o git para usar "
+                    "URLs como fonte de skills."
+                )
             try:
-                # Clone shallow controlado; sem shell=True, args como lista.
-                subprocess.run(  # nosec
-                    ["git", "clone", "--depth", "1", source, str(staging)],
+                # `source` é prefix-validado por `_is_git_url`; `staging` vem
+                # de Path interno (não-usuário). `--` impede source = "-X".
+                subprocess.run(  # noqa: S603  # nosec B603
+                    [
+                        git_exe,
+                        "clone",
+                        "--depth",
+                        "1",
+                        "--",
+                        source,
+                        str(staging),
+                    ],
                     check=True,
                     capture_output=True,
                     timeout=60,

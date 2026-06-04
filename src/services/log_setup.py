@@ -123,11 +123,9 @@ def setup_logging(
 
     # Resolve o caminho do arquivo de log — sempre em ~/.vectora/logs/
     if log_file is None:
-        env_log_file = os.getenv("LOG_FILE")
-        if env_log_file:
-            log_file = env_log_file
-        else:
-            log_file = str(Path.home() / ".vectora" / "logs" / "src.jsonl")
+        log_file = os.getenv("LOG_FILE") or str(
+            Path.home() / ".vectora" / "logs" / "src.jsonl"
+        )
 
     root_logger = logging.getLogger()
     root_logger.setLevel(getattr(logging, log_level))
