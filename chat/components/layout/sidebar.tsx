@@ -168,8 +168,8 @@ export const Sidebar = memo(function Sidebar({
   // Memoize renderThreadGroup to prevent recreation on every render
   // IMPORTANT: Must be defined before any conditional returns (Rules of Hooks)
   const renderThreadGroup = useCallback(
-    (groupThreads: Thread[], label: string) => {
-      if (groupThreads.length === 0) return null;
+    (items: Thread[], label: string) => {
+      if (items.length === 0) return null;
 
       return (
         <div className="mt-4 px-3 first:mt-0">
@@ -177,7 +177,7 @@ export const Sidebar = memo(function Sidebar({
             {label}
           </h3>
           <div className="space-y-2">
-            {groupThreads.map((thread) => {
+            {items.map((thread) => {
               const threadDate = new Date(
                 thread.updated_at || thread.created_at,
               );

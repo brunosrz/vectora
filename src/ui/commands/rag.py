@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from rich.panel import Panel
 from rich.table import Table
 
-from src.config.settings import settings
+from src.settings import settings
 
 logger = logging.getLogger(__name__)
 

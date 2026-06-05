@@ -146,19 +146,20 @@ export function useVoiceInput({
         }
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.addEventListener("error", (event: Event) => {
+        const errEvent = event as SpeechRecognitionErrorEvent;
         isStartingRef.current = false;
 
         // "aborted" is expected when user stops listening or component unmounts
-        if (event.error === "aborted") {
+        if (errEvent.error === "aborted") {
           setIsListening(false);
           return;
         }
 
-        console.error("Speech recognition error:", event.error);
+        console.error("Speech recognition error:", errEvent.error);
 
         let errorMessage: string;
-        switch (event.error) {
+        switch (errEvent.error) {
           case "no-speech":
             errorMessage = "No speech detected. Please try again.";
             break;
@@ -174,7 +175,7 @@ export function useVoiceInput({
               "Speech recognition unavailable. Try Chrome or Edge, or check browser privacy settings.";
             break;
           default:
-            errorMessage = `Error: ${event.error}`;
+            errorMessage = `Error: ${errEvent.error}`;
         }
 
         setError(errorMessage);
@@ -182,7 +183,7 @@ export function useVoiceInput({
 
         // Auto-dismiss error after 5 seconds
         setTimeout(() => setError(null), 5000);
-      };
+      });
 
       recognition.onend = () => {
         isStartingRef.current = false;

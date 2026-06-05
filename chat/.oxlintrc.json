@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "nextjs", "unicorn", "import"],
+  "plugins": ["react", "typescript", "unicorn", "import"],
   "categories": {
     "correctness": "warn",
     "suspicious": "warn",
@@ -18,7 +18,9 @@
     "unicorn/no-null": "off",
     "unicorn/prefer-module": "off",
     "unicorn/filename-case": "off",
-    "import/no-cycle": "off"
+    "import/no-cycle": "off",
+    "react/no-unstable-nested-components": ["warn", { "allowAsProps": true }],
+    "import/no-unassigned-import": ["warn", { "allow": ["**/*.css", "react"] }]
   },
   "ignorePatterns": [
     "node_modules",

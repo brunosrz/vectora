@@ -18,7 +18,7 @@ from typing import Any, Literal
 
 from langchain.tools import tool
 
-from src.config.settings import settings
+from src.settings import settings
 
 try:
     from langchain_tavily import TavilyExtract, TavilySearch

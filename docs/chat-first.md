@@ -182,7 +182,7 @@ de bugs reais, fricção de UX e oportunidades de melhoria descobertas em uso.
 
 - `chat/lib/config/deployment-config.ts` substituiu modelos do fork LangChain
   pelos **25 modelos reais** alinhados ao `AVAILABLE_MODELS` Python
-  (`src/config/settings.py`): 6 Google (Gemini 3.x + 2.5), 12 OpenAI
+  (`src/settings.py`): 6 Google (Gemini 3.x + 2.5), 12 OpenAI
   (GPT-5.5/5.4/5/4.1 + o3/o4-mini), 3 Anthropic (Claude 4.7/4.6/4.5), 4 Cohere
 - Default: `gemini-2.5-flash`
 
@@ -3948,7 +3948,7 @@ path?, url?, collection="articles", metadata}`);
 
 - **Novo** `src/api/handlers/openai_compat.py`:
   - `GET /v1/models` — devolve `{data:[{id, object:"model", ...}], object:"list"}`
-    a partir de `src/config/settings.py::AVAILABLE_MODELS`.
+    a partir de `src/settings.py::AVAILABLE_MODELS`.
   - `POST /v1/chat/completions` — aceita o shape OpenAI:
     `{model, messages:[{role,content}], stream, temperature?, max_tokens?,
 response_format?}`. Tradutor (`_translate_openai_to_streamchat()`)

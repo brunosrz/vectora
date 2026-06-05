@@ -139,7 +139,7 @@ class TestRagRetrieve:
 class TestCallVectorSearchAll:
     @pytest.mark.asyncio
     async def test_merges_all_collections_and_tags_web(self):
-        from src.config.settings import settings
+        from src.settings import settings
 
         curated = [_doc(0.9, "curated")]
         web = [Document(page_content="web", metadata={}, relevance_score=0.6)]
@@ -167,7 +167,7 @@ class TestCallVectorSearchAll:
 
     @pytest.mark.asyncio
     async def test_one_collection_failing_does_not_break(self):
-        from src.config.settings import settings
+        from src.settings import settings
 
         async def fake(query, collection, limit):
             if collection == settings.rag_collection_default:

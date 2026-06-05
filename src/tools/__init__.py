@@ -16,7 +16,7 @@ import logging
 
 from langchain.tools import BaseTool
 
-from src.config.settings import settings
+from src.settings import settings
 from src.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
 from src.tools.mcp import call_mcp_tool
 from src.tools.memory import delete_memory, get_memory, save_memory

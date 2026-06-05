@@ -2551,7 +2551,7 @@ path?, url?, collection="articles", metadata}`).
 
 - `src/api/handlers/openai_compat.py`:
   - `GET /v1/models` — `{data:[{id, object:"model", ...}],
-object:"list"}` a partir de `src/config/settings.py::
+object:"list"}` a partir de `src/settings.py::
 AVAILABLE_MODELS`.
   - `POST /v1/chat/completions` — aceita shape OpenAI
     (`{model, messages:[{role,content}], stream, temperature?,

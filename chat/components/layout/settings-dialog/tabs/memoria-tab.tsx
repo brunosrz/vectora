@@ -12,7 +12,7 @@
  */
 
 import { Brain, Edit2, Loader2, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -119,7 +119,7 @@ export function MemoriaTab() {
   const [newContent, setNewContent] = useState("");
   const [adding, setAdding] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -131,11 +131,11 @@ export function MemoriaTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const handleEditStart = (mem: MemoryItem) => {
     setEditingKey(mem.key);

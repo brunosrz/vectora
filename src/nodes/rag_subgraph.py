@@ -24,7 +24,7 @@ from typing import Any
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 
-from src.config.settings import settings
+from src.settings import settings
 from src.state import Document, State
 
 logger = logging.getLogger(__name__)

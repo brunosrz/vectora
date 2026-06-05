@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Any, cast
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from src.config.settings import Settings
+    from src.settings import Settings
 
 logger = logging.getLogger(__name__)
 

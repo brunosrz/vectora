@@ -5,8 +5,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from src.config.settings import settings
 from src.services.runtime_settings import runtime_settings
+from src.settings import settings
 from src.ui.main import SuccessPanel
 
 logger = logging.getLogger(__name__)

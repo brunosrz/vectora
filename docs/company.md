@@ -535,7 +535,7 @@ Features bloqueadas no plano Plus (requerem Pro):
 - Redis cache layer (`VECTORA_CACHE=redis`)
 - Multi-worker simultâneo no server (>1 worker uvicorn)
 
-Verificação em `src/config/settings.py` ao inicializar backends:
+Verificação em `src/settings.py` ao inicializar backends:
 
 ```python
 if settings.checkpointer == "postgres":

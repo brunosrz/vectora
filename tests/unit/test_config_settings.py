@@ -1,4 +1,4 @@
-"""Tests for src/config/settings.py"""
+"""Tests for src/settings.py"""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from src.config.settings import Settings
+from src.settings import Settings
 
 # ---------------------------------------------------------------------------
 # Smoke tests (existentes)

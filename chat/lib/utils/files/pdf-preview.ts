@@ -10,17 +10,17 @@
  *   // → "data:image/png;base64,..."
  */
 
-let _workerConfigured = false;
+let workerConfigured = false;
 
 /**
  * Inicializa o GlobalWorkerOptions uma única vez.
  * Lazy-init evita erro "window is not defined" em SSR.
  */
-async function _ensureWorker(): Promise<typeof import("pdfjs-dist")> {
+async function ensureWorker(): Promise<typeof import("pdfjs-dist")> {
   const pdfjs = await import("pdfjs-dist");
-  if (!_workerConfigured) {
+  if (!workerConfigured) {
     pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-    _workerConfigured = true;
+    workerConfigured = true;
   }
   return pdfjs;
 }
@@ -28,7 +28,7 @@ async function _ensureWorker(): Promise<typeof import("pdfjs-dist")> {
 /**
  * Converte base64 puro (sem prefixo data URL) em Uint8Array.
  */
-function _base64ToUint8Array(base64: string): Uint8Array {
+function base64ToUint8Array(base64: string): Uint8Array {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
@@ -48,9 +48,9 @@ export async function renderPdfFirstPage(
   base64: string,
   scale = 0.6,
 ): Promise<string> {
-  const pdfjs = await _ensureWorker();
+  const pdfjs = await ensureWorker();
 
-  const data = _base64ToUint8Array(base64);
+  const data = base64ToUint8Array(base64);
   const pdf = await pdfjs.getDocument({ data }).promise;
   const page = await pdf.getPage(1);
 

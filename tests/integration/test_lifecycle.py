@@ -133,7 +133,7 @@ async def test_embed_known_doc():
     # Verificação rápida: o doc está no LanceDB?
     import lancedb
 
-    from src.config.settings import settings
+    from src.settings import settings
 
     db = await lancedb.connect_async(str(settings.lancedb_dir))
     tables = await db.table_names()
@@ -250,7 +250,7 @@ async def test_lancedb_doc_survives_restart():
     """Step 6: Abre novo cliente LanceDB e verifica que KNOWN_TEXT ainda existe."""
     import lancedb
 
-    from src.config.settings import settings
+    from src.settings import settings
     from src.tools.rag import vector_search
 
     # Novo cliente LanceDB (simula restart)

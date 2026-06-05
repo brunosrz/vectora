@@ -41,7 +41,7 @@ def _user_id_from_config(config: RunnableConfig | None) -> str:
 
 async def _embed_for_memory(text: str) -> list[float] | None:
     """Gera embedding Cohere para uma memória (C4). Retorna None se não configurado."""
-    from src.config.settings import settings
+    from src.settings import settings
 
     if not settings.memory_semantic_enabled:
         return None
@@ -244,8 +244,8 @@ async def search_memory(query: str, config: RunnableConfig, limit: int = 5) -> s
         JSON com lista de memórias ordenadas por relevância semântica
     """
     try:
-        from src.config.settings import settings
         from src.services.memory import get_memory_store
+        from src.settings import settings
 
         user_id = _user_id_from_config(config)
         memory_store = await get_memory_store()

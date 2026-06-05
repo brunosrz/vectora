@@ -18,7 +18,7 @@ from typing import Any
 
 import aiosqlite
 
-from src.config.settings import settings
+from src.settings import settings
 
 logger = logging.getLogger(__name__)
 

@@ -359,7 +359,7 @@ class Settings(BaseSettings):
         """
         # Level 5 (lowest): Load embedded defaults.env via setdefault
         try:
-            defaults_env = resources.files("vectora").joinpath("defaults.env")
+            defaults_env = resources.files("src").joinpath("defaults.env")
             defaults_text = defaults_env.read_text(encoding="utf-8")
 
             for line in defaults_text.split("\n"):

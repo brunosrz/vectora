@@ -64,7 +64,7 @@ async def retrieval_node(state: State) -> dict:
 
 async def _rerank(docs: list[Document], query: str) -> list[Document]:
     """Aplica CohereRerank nos docs. Retorna docs originais se falhar."""
-    from src.config.settings import settings
+    from src.settings import settings
     from src.state import Document
 
     try:

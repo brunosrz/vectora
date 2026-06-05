@@ -33,8 +33,8 @@ try:
 except ImportError:
     CohereEmbeddings = None  # type: ignore
 
-from src.config.settings import settings
 from src.services.queue import EmbeddingQueueRecord, get_embedding_queue
+from src.settings import settings
 
 logger = logging.getLogger(__name__)
 

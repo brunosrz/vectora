@@ -142,9 +142,9 @@ export function ChatInterface({
     if (!threadId) return;
     let cancelled = false;
     getThread(threadId)
-      .then((t) => {
-        if (!cancelled && t.workspace_id) {
-          void useWorkspacesStore.getState().setActive(t.workspace_id);
+      .then((thread) => {
+        if (!cancelled && thread.workspace_id) {
+          void useWorkspacesStore.getState().setActive(thread.workspace_id);
         }
       })
       .catch(() => {
@@ -488,7 +488,7 @@ export function ChatInterface({
 
     // Load new thread immediately
     loadThreadHistory();
-  }, [threadId, uiDispatch, isNewThread]);
+  }, [threadId, uiDispatch, isNewThread, setMessages, onThreadNotFound]);
 
   // Auto-focus textarea when loading completes and userId is available
   useEffect(() => {
@@ -597,6 +597,7 @@ export function ChatInterface({
       messages,
       customTitle,
       uiDispatch,
+      setMessages,
     ],
   );
 
@@ -626,7 +627,7 @@ export function ChatInterface({
     if (messageQueueRef.current.length > 0) {
       processQueue();
     }
-  }, [processMessage]);
+  }, [processMessage, setMessages]);
 
   // Process queue when AI finishes responding
   useEffect(() => {
@@ -680,6 +681,7 @@ export function ChatInterface({
     uiDispatch,
     processMessage,
     onInitialMessageSent,
+    setMessages,
   ]);
 
   // Dispatch de slash commands (Bloco H) — executa ações locais cuja
@@ -878,13 +880,11 @@ export function ChatInterface({
     uiState.isRegenerating,
     attachedFiles,
     userId,
-    agentConfig?.model,
     customTitle,
     messages,
     onThreadUpdate,
     threadId,
     setInput,
-    setUploadError,
     clearFiles,
     processMessage,
     processQueue,
@@ -903,8 +903,8 @@ export function ChatInterface({
   const handleRegenerate = useCallback(async () => {
     if (uiState.isLoading || uiState.isRegenerating) return;
 
-    const lastUserMessage = [...messages]
-      .reverse()
+    const lastUserMessage = messages
+      .toReversed()
       .find((m) => m.role === "user");
     if (!lastUserMessage) return;
 
@@ -959,6 +959,8 @@ export function ChatInterface({
     onThreadUpdate,
     threadId,
     uiDispatch,
+    setMessages,
+    customTitle,
   ]);
 
   const handleEditAndRerun = useCallback(
@@ -1032,6 +1034,8 @@ export function ChatInterface({
       onThreadUpdate,
       threadId,
       uiDispatch,
+      setMessages,
+      customTitle,
     ],
   );
 

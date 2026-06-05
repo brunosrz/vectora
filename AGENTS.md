@@ -105,7 +105,7 @@ Before running `git commit`, verify:
 
 | File                                | Purpose                                      |
 | ----------------------------------- | -------------------------------------------- |
-| `src/config/settings.py`            | Single source of truth for configuration     |
+| `src/settings.py`                   | Single source of truth for configuration     |
 | `src/graph.py`                      | LangGraph graph builder                      |
 | `src/nodes/engine.py`               | Node implementations                         |
 | `src/agents/orchestrator.py`        | Intent classification and routing            |

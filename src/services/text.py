@@ -136,7 +136,7 @@ class TextService:
 
 
 def _build() -> TextService:
-    from src.config.settings import settings
+    from src.settings import settings
 
     return TextService(
         encoding_name=settings.tiktoken_encoding,

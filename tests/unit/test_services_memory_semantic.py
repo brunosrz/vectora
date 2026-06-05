@@ -153,7 +153,7 @@ class TestSearchMemoryTool:
         ]
 
         with (
-            patch("src.config.settings.settings") as ms,
+            patch("src.settings.settings") as ms,
             patch("src.services.memory.get_memory_store") as mock_gs,
         ):
             ms.memory_semantic_enabled = True
@@ -194,7 +194,7 @@ class TestSearchMemoryTool:
         ]
 
         with (
-            patch("src.config.settings.settings") as ms,
+            patch("src.settings.settings") as ms,
             patch("src.services.memory.get_memory_store") as mock_gs,
         ):
             ms.memory_semantic_enabled = False
@@ -220,7 +220,7 @@ class TestSearchMemoryTool:
         config = {"configurable": {"thread_id": "t3"}}
 
         with (
-            patch("src.config.settings.settings") as ms,
+            patch("src.settings.settings") as ms,
             patch("src.services.memory.get_memory_store") as mock_gs,
         ):
             ms.memory_semantic_enabled = True

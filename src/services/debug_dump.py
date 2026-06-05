@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
 
-from src.config.settings import settings
+from src.settings import settings
 from src.version import __version__
 
 logger = logging.getLogger(__name__)

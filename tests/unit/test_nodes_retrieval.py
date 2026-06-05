@@ -68,7 +68,7 @@ class TestRerank:
     @pytest.mark.asyncio
     async def test_no_api_key_returns_docs_unchanged(self):
         docs = self._docs(2)
-        with patch("src.config.settings.settings") as mock_settings:
+        with patch("src.settings.settings") as mock_settings:
             mock_settings.get_cohere_api_key.return_value = None
             result = await _rerank(docs, "query")
         assert result is docs
@@ -94,7 +94,7 @@ class TestRerank:
         mock_reranker = MagicMock()
         mock_reranker.compress_documents.return_value = reranked_lc
 
-        from src.config.settings import settings as real_settings
+        from src.settings import settings as real_settings
 
         original_key = real_settings.cohere_api_key
         try:
@@ -114,7 +114,7 @@ class TestRerank:
         mock_reranker = MagicMock()
         mock_reranker.compress_documents.side_effect = Exception("Cohere API error")
 
-        from src.config.settings import settings as real_settings
+        from src.settings import settings as real_settings
 
         original_key = real_settings.cohere_api_key
         try:

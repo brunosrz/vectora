@@ -12,8 +12,14 @@
  *   - Integrações — placeholder (Bloco O)
  *   - Envs        — env vars por usuário (Bloco C10)
  *   - Administração — root/admin only (Bloco P)
+ *
+ * Cada tab é code-split via `lazy()` — o bundle inicial do app não paga
+ * o custo de uma feature secundária. O dialog em si carrega imediato
+ * (componentes Radix já estão no shell), mas o conteúdo da tab ativa
+ * vem on-demand.
  */
 
+import { Suspense, lazy } from "react";
 import {
   Dialog,
   DialogContent,
@@ -27,14 +33,43 @@ import {
   useSettingsDialogStore,
   type SettingsTab,
 } from "@/lib/stores/settings-dialog-store";
-import { AdminTab } from "./admin/admin-tab";
-import { ContaTab } from "./tabs/conta-tab";
-import { EnvsTab } from "./tabs/envs-tab";
-import { IntegracoesTab } from "./tabs/integracoes-tab";
-import { MemoriaTab } from "./tabs/memoria-tab";
-import { PluginsTab } from "./tabs/plugins-tab";
-import { PreferenciasTab } from "./tabs/preferencias-tab";
-import { SkillsTab } from "./tabs/skills-tab";
+
+const AdminTab = lazy(() =>
+  import("./admin/admin-tab").then((m) => ({ default: m.AdminTab })),
+);
+const ContaTab = lazy(() =>
+  import("./tabs/conta-tab").then((m) => ({ default: m.ContaTab })),
+);
+const EnvsTab = lazy(() =>
+  import("./tabs/envs-tab").then((m) => ({ default: m.EnvsTab })),
+);
+const IntegracoesTab = lazy(() =>
+  import("./tabs/integracoes-tab").then((m) => ({
+    default: m.IntegracoesTab,
+  })),
+);
+const MemoriaTab = lazy(() =>
+  import("./tabs/memoria-tab").then((m) => ({ default: m.MemoriaTab })),
+);
+const PluginsTab = lazy(() =>
+  import("./tabs/plugins-tab").then((m) => ({ default: m.PluginsTab })),
+);
+const PreferenciasTab = lazy(() =>
+  import("./tabs/preferencias-tab").then((m) => ({
+    default: m.PreferenciasTab,
+  })),
+);
+const SkillsTab = lazy(() =>
+  import("./tabs/skills-tab").then((m) => ({ default: m.SkillsTab })),
+);
+
+function TabFallback() {
+  return (
+    <div className="flex items-center justify-center py-12 text-xs text-muted-foreground">
+      Carregando…
+    </div>
+  );
+}
 
 export function SettingsDialog() {
   const user = useAuthStore((s) => s.user);
@@ -91,32 +126,34 @@ export function SettingsDialog() {
           </TabsList>
 
           <div className="flex-1 overflow-y-auto pt-4">
-            <TabsContent value="conta" className="mt-0">
-              <ContaTab />
-            </TabsContent>
-            <TabsContent value="preferencias" className="mt-0">
-              <PreferenciasTab />
-            </TabsContent>
-            <TabsContent value="memoria" className="mt-0">
-              <MemoriaTab />
-            </TabsContent>
-            <TabsContent value="integracoes" className="mt-0">
-              <IntegracoesTab />
-            </TabsContent>
-            <TabsContent value="plugins" className="mt-0">
-              <PluginsTab />
-            </TabsContent>
-            <TabsContent value="skills" className="mt-0">
-              <SkillsTab />
-            </TabsContent>
-            <TabsContent value="envs" className="mt-0">
-              <EnvsTab />
-            </TabsContent>
-            {isAdminOrRoot && (
-              <TabsContent value="admin" className="mt-0">
-                <AdminTab />
+            <Suspense fallback={<TabFallback />}>
+              <TabsContent value="conta" className="mt-0">
+                <ContaTab />
               </TabsContent>
-            )}
+              <TabsContent value="preferencias" className="mt-0">
+                <PreferenciasTab />
+              </TabsContent>
+              <TabsContent value="memoria" className="mt-0">
+                <MemoriaTab />
+              </TabsContent>
+              <TabsContent value="integracoes" className="mt-0">
+                <IntegracoesTab />
+              </TabsContent>
+              <TabsContent value="plugins" className="mt-0">
+                <PluginsTab />
+              </TabsContent>
+              <TabsContent value="skills" className="mt-0">
+                <SkillsTab />
+              </TabsContent>
+              <TabsContent value="envs" className="mt-0">
+                <EnvsTab />
+              </TabsContent>
+              {isAdminOrRoot && (
+                <TabsContent value="admin" className="mt-0">
+                  <AdminTab />
+                </TabsContent>
+              )}
+            </Suspense>
           </div>
         </Tabs>
       </DialogContent>

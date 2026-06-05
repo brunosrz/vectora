@@ -14,9 +14,9 @@ from langchain_core.documents import Document as LCDoc
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
-from src.config.settings import settings
 from src.services.queue import get_embedding_queue
 from src.services.text import text_service
+from src.settings import settings
 
 try:
     import lancedb

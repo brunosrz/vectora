@@ -52,7 +52,7 @@ REQUIRES_BOTH = pytest.mark.skipif(
 
 async def _cleanup_session_1212() -> None:
     """Remove dados de teste da session 1212: checkpoints + LanceDB + traces."""
-    from src.config.settings import settings
+    from src.settings import settings
 
     # 1. Limpa checkpoints SQLite (tabelas checkpoints + writes do LangGraph)
     try:
@@ -74,7 +74,7 @@ async def _cleanup_session_1212() -> None:
     try:
         import lancedb
 
-        from src.config.settings import settings as s
+        from src.settings import settings as s
 
         db_lance = await lancedb.connect_async(str(s.lancedb_dir))
         tables = await db_lance.table_names()

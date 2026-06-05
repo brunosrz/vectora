@@ -604,7 +604,7 @@ async def _process_user_turn(
             import re
 
             try:
-                from src.config.settings import settings
+                from src.settings import settings
 
                 _provider = settings.llm_provider or "LLM"
             except Exception:
@@ -896,9 +896,9 @@ async def chat_loop(
             queue_depth = 0
             cohere_limited = False
             try:
-                from src.config.settings import settings as _settings
                 from src.services.background import get_background_worker
                 from src.services.queue import get_embedding_queue
+                from src.settings import settings as _settings
 
                 if _settings.embedding_queue_enabled:
                     _q = await get_embedding_queue(_settings.embedding_queue_dsn)
@@ -1047,7 +1047,7 @@ async def run_chat(
         session_id: If given, resume this specific session ID (--session flag).
         quit_after: If True, automatically quit after 10 seconds.
     """
-    from src.config.settings import Settings as SettingsClass
+    from src.settings import Settings as SettingsClass
 
     if settings is None:
         setup_logging()

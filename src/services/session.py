@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.types import RunnableConfig
 
-from src.config.settings import Settings
+from src.settings import Settings
 
 logger = logging.getLogger(__name__)
 

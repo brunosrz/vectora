@@ -109,11 +109,11 @@ export function XtermView({
         }
       };
 
-      ws.onopen = () => {
+      ws.addEventListener("open", () => {
         sendResize();
-      };
+      });
 
-      ws.onmessage = (ev) => {
+      ws.addEventListener("message", (ev: MessageEvent) => {
         if (typeof ev.data === "string") {
           try {
             const j = JSON.parse(ev.data);
@@ -130,15 +130,15 @@ export function XtermView({
         } else {
           term.write(new Uint8Array(ev.data));
         }
-      };
+      });
 
-      ws.onerror = () => {
+      ws.addEventListener("error", () => {
         term.write("\r\n\x1b[31m[erro de conexão]\x1b[0m\r\n");
-      };
+      });
 
-      ws.onclose = () => {
+      ws.addEventListener("close", () => {
         onClosed?.();
-      };
+      });
 
       // stdin do user → WS
       term.onData((data: string) => {

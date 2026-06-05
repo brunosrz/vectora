@@ -6,19 +6,19 @@
  * (ChatInterface usa isso para pular o fetch de histórico).
  */
 
-const _newThreads = new Set<string>();
+const newThreads = new Set<string>();
 
 /** Marca um thread como recém-criado (não existe no backend ainda). */
 export function markAsNew(threadId: string): void {
-  _newThreads.add(threadId);
+  newThreads.add(threadId);
 }
 
 /** Retorna true se o thread foi criado localmente e ainda não persistido. */
 export function isNew(threadId: string): boolean {
-  return _newThreads.has(threadId);
+  return newThreads.has(threadId);
 }
 
 /** Remove a marcação (chamado quando o thread é persistido no backend). */
 export function clearNew(threadId: string): void {
-  _newThreads.delete(threadId);
+  newThreads.delete(threadId);
 }

@@ -40,9 +40,11 @@ export function safeRandomUUID(): string {
     );
   }
   // Fallback final — não criptográfico, mas funcional para IDs locais.
-  const rnd = () =>
-    Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .slice(1);
   return `${rnd()}${rnd()}-${rnd()}-4${rnd().slice(1)}-${rnd()}-${rnd()}${rnd()}${rnd()}`;
+}
+
+function rnd(): string {
+  return Math.floor((1 + Math.random()) * 0x10000)
+    .toString(16)
+    .slice(1);
 }

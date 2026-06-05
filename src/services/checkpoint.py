@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
-from src.config.settings import settings
+from src.settings import settings
 
 logger = logging.getLogger(__name__)
 

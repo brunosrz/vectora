@@ -6,8 +6,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const shimsDir = resolve(__dirname, "src/shims");
+const currentDir = dirname(fileURLToPath(import.meta.url));
+const shimsDir = resolve(currentDir, "src/shims");
 
 // Apenas o `vite dev` consulta este proxy. O FastAPI da build de produção
 // serve `chat/dist/` no mesmo origin do browser, então não há request HTTP

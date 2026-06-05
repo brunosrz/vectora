@@ -440,7 +440,7 @@ async def get_server_config(request: Request) -> dict:
     require_admin(user)
 
     try:
-        from src.config.settings import settings
+        from src.settings import settings
 
         raw_token = os.environ.get("VECTORA_TOKEN", "").strip()
         # Mostra prefixo + sufixo para o operador conferir sem expor o segredo.
@@ -473,7 +473,7 @@ async def patch_server_config(request: Request, body: PatchConfigBody) -> dict:
     # TODO: persistir em ~/.vectora/config.toml
     updated: dict[str, Any] = {}
     try:
-        from src.config.settings import settings
+        from src.settings import settings
 
         if body.allow_public_signup is not None:
             settings.allow_public_signup = body.allow_public_signup  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]

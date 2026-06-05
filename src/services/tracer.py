@@ -144,7 +144,7 @@ class VectoraTracer:
         if self._db_path:
             return self._db_path
         try:
-            from src.config.settings import settings
+            from src.settings import settings
 
             data_dir = Path(settings.data_dir) if settings.data_dir else None  # type: ignore[arg-type]
             if data_dir:

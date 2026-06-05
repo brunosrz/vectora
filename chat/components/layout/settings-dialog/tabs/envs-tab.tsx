@@ -9,7 +9,7 @@
  */
 
 import { KeyRound, Loader2, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -73,7 +73,7 @@ export function EnvsTab() {
 
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -85,11 +85,11 @@ export function EnvsTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const handleAdd = async () => {
     if (!newKey.trim() || !newValue.trim()) return;

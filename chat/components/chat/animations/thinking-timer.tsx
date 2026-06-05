@@ -8,6 +8,16 @@ interface ThinkingTimerProps {
   isThinking: boolean;
 }
 
+function formatTime(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
 export function ThinkingTimer({
   startTime,
   duration,
@@ -27,16 +37,6 @@ export function ThinkingTimer({
       setElapsed(duration);
     }
   }, [isThinking, startTime, duration]);
-
-  const formatTime = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    if (seconds < 60) {
-      return `${seconds}s`;
-    }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
-  };
 
   return (
     <span className="text-muted-foreground font-mono text-[10px]">

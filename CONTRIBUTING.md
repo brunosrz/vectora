@@ -181,7 +181,7 @@ from pydantic import BaseModel
 from rich.panel import Panel
 
 # 3. local
-from vectora.config.settings import settings
+from vectora.settings import settings
 from vectora.services.security import is_safe_file_path
 ```
 
@@ -285,7 +285,7 @@ gh pr create --title "feat: my feature" --body "Description..."
 1. Create in `src/tools/<category>.py` with the `@tool` decorator
 2. Add to `src/tools/__init__.py` (imports + `__all__`)
 3. Register in `src/mcp/server.py` as `@mcp.tool()` with a timeout
-4. Update `src/config/settings.py` if a feature flag is needed
+4. Update `src/settings.py` if a feature flag is needed
 5. Write tests in `tests/unit/test_tools_<category>.py`
 6. Update `docs/MVP_SCOPE.md` and `README.md`
 

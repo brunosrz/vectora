@@ -184,7 +184,7 @@ async def _sample_recent_docs(workspace_id: str, max_docs: int = 20) -> list[dic
             try:
                 import lancedb
 
-                from src.config.settings import settings
+                from src.settings import settings
 
                 if settings.lancedb_dir is None:
                     continue

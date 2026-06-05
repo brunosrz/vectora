@@ -33,5 +33,3 @@ declare global {
     vectora?: VectoraDesktopBridge;
   }
 }
-
-export {};

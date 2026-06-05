@@ -132,7 +132,7 @@ export interface HistoryMessage {
  *
  * @returns true se o refresh foi bem-sucedido
  */
-async function _tryRefreshToken(): Promise<boolean> {
+async function tryRefreshToken(): Promise<boolean> {
   try {
     const res = await fetch("/auth/refresh", {
       method: "POST",
@@ -150,7 +150,7 @@ async function _tryRefreshToken(): Promise<boolean> {
  * Redireciona para login quando o refresh falha.
  * No-op em SSR (sem window).
  */
-function _redirectToLogin(): void {
+function redirectToLogin(): void {
   if (typeof window !== "undefined") {
     window.location.href = "/auth/signin";
   }
@@ -188,9 +188,9 @@ export async function* streamChat(
 
   // Refresh automático quando o access token expira (TTL: 15 min)
   if (response.status === 401) {
-    const refreshed = await _tryRefreshToken();
+    const refreshed = await tryRefreshToken();
     if (!refreshed) {
-      _redirectToLogin();
+      redirectToLogin();
       throw new Error("StreamChat: sessão expirada. Faça login novamente.");
     }
     response = await doFetch();
@@ -201,7 +201,7 @@ export async function* streamChat(
     throw new Error(`StreamChat failed (${response.status}): ${text}`);
   }
 
-  yield* _readSSEStream(response.body);
+  yield* readSSEStream(response.body);
 }
 
 /**
@@ -225,9 +225,9 @@ export async function* resumeChat(
   let response = await doFetch();
 
   if (response.status === 401) {
-    const refreshed = await _tryRefreshToken();
+    const refreshed = await tryRefreshToken();
     if (!refreshed) {
-      _redirectToLogin();
+      redirectToLogin();
       throw new Error("ResumeChat: sessão expirada. Faça login novamente.");
     }
     response = await doFetch();
@@ -238,14 +238,14 @@ export async function* resumeChat(
     throw new Error(`ResumeChat failed (${response.status}): ${text}`);
   }
 
-  yield* _readSSEStream(response.body);
+  yield* readSSEStream(response.body);
 }
 
 // ============================================================================
 // Thread management
 // ============================================================================
 
-async function _post<T>(
+async function postRpc<T>(
   path: string,
   body: object,
   isRetry = false,
@@ -257,9 +257,9 @@ async function _post<T>(
     body: JSON.stringify(body),
   });
   if (response.status === 401 && !isRetry) {
-    const refreshed = await _tryRefreshToken();
-    if (refreshed) return _post(path, body, true);
-    _redirectToLogin();
+    const refreshed = await tryRefreshToken();
+    if (refreshed) return postRpc(path, body, true);
+    redirectToLogin();
     throw new Error(`${path}: sessão expirada. Faça login novamente.`);
   }
   if (!response.ok) {
@@ -270,22 +270,22 @@ async function _post<T>(
 }
 
 export const createThread = (): Promise<Thread> =>
-  _post("/vectora.chat.v1.ThreadService/CreateThread", {});
+  postRpc("/vectora.chat.v1.ThreadService/CreateThread", {});
 
 export const getThread = (thread_id: string): Promise<Thread> =>
-  _post("/vectora.chat.v1.ThreadService/GetThread", { thread_id });
+  postRpc("/vectora.chat.v1.ThreadService/GetThread", { thread_id });
 
 export const listThreads = (limit = 50): Promise<{ threads: Thread[] }> =>
-  _post("/vectora.chat.v1.ThreadService/ListThreads", { limit });
+  postRpc("/vectora.chat.v1.ThreadService/ListThreads", { limit });
 
 export const deleteThread = (thread_id: string): Promise<{}> =>
-  _post("/vectora.chat.v1.ThreadService/DeleteThread", { thread_id });
+  postRpc("/vectora.chat.v1.ThreadService/DeleteThread", { thread_id });
 
 export const updateThread = (
   thread_id: string,
   updates: { title?: string },
 ): Promise<Thread> =>
-  _post("/vectora.chat.v1.ThreadService/UpdateThread", {
+  postRpc("/vectora.chat.v1.ThreadService/UpdateThread", {
     thread_id,
     title: updates.title ?? "",
   });
@@ -293,7 +293,7 @@ export const updateThread = (
 export const getHistory = (
   thread_id: string,
 ): Promise<{ messages: HistoryMessage[] }> =>
-  _post("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
+  postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
 
 // ============================================================================
 // Share (read-only, rota pública — sem auth necessária)
@@ -322,7 +322,7 @@ export async function getSharedThread(
 // SSE parser interno
 // ============================================================================
 
-async function* _readSSEStream(
+async function* readSSEStream(
   body: ReadableStream<Uint8Array>,
 ): AsyncGenerator<StreamEvent> {
   const decoder = new TextDecoder();
@@ -331,6 +331,8 @@ async function* _readSSEStream(
 
   try {
     while (true) {
+      // SSE é stream sequencial — Promise.all() seria incorreto aqui.
+      // eslint-disable-next-line no-await-in-loop
       const { done, value } = await reader.read();
       if (done) break;
 

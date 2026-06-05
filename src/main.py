@@ -381,7 +381,7 @@ def _apply_global_overrides(args: argparse.Namespace) -> None:
 
 async def _run_chat_async(args: argparse.Namespace) -> None:
     """Full chat startup — settings, session resolution, UI loop."""
-    from src.config.settings import Settings
+    from src.settings import Settings
 
     try:
         settings = Settings()
@@ -504,9 +504,9 @@ async def _run_sessions_async() -> None:
     from rich.console import Console
     from rich.table import Table
 
-    from src.config.settings import Settings
     from src.services.runtime_settings import runtime_settings
     from src.services.session import SessionService
+    from src.settings import Settings
 
     try:
         settings = Settings()

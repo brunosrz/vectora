@@ -81,6 +81,8 @@ interface ChatInputProps {
   onAtMentionSelect?: (path: string, startIdx: number, endIdx: number) => void;
 }
 
+const EMPTY_QUEUED_MESSAGES: NonNullable<ChatInputProps["queuedMessages"]> = [];
+
 /**
  * Chat input area with file upload support.
  * Displays at the bottom of the chat interface when there are existing messages.
@@ -111,7 +113,7 @@ export function ChatInput({
   isVoiceSupported,
   onVoiceToggle,
   voiceError,
-  queuedMessages = [],
+  queuedMessages = EMPTY_QUEUED_MESSAGES,
   tokensUsed,
   modelId,
   agentConfig,

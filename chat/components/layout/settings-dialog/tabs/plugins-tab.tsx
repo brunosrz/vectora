@@ -8,7 +8,7 @@
  * (url). As tools de servidores conectados ficam disponíveis no chat.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CheckCircle2,
   Loader2,
@@ -60,7 +60,7 @@ export function PluginsTab() {
   const [error, setError] = useState<string | null>(null);
   const [verify, setVerify] = useState<Record<string, VerifyState>>({});
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/plugins");
@@ -71,11 +71,11 @@ export function PluginsTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const handleSave = async () => {
     setSaving(true);

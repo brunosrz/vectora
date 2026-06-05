@@ -650,11 +650,6 @@ export const MessageItem = memo(
                             ? Math.round(file.size / 1024)
                             : 0;
 
-                          // Get file type icon color
-                          const getFileColor = () => {
-                            return "text-white";
-                          };
-
                           return (
                             <div
                               key={file.id}
@@ -691,7 +686,7 @@ export const MessageItem = memo(
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className={`w-10 h-10 mb-2 ${getFileColor()}`}
+                                    className="w-10 h-10 mb-2 text-white"
                                   >
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -703,9 +698,7 @@ export const MessageItem = memo(
                                     {fileName}
                                   </span>
                                   <div className="flex items-center gap-1.5">
-                                    <span
-                                      className={`text-xs font-bold px-1.5 py-0.5 rounded bg-muted ${getFileColor()}`}
-                                    >
+                                    <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-muted text-white">
                                       {fileExt?.toUpperCase().slice(0, 4)}
                                     </span>
                                     {fileSizeKB > 0 && (
@@ -769,7 +762,7 @@ export const MessageItem = memo(
                             className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-muted-foreground bg-muted/60 border border-border/50"
                             title={nd.node}
                           >
-                            {nd.label.replace(/[…\.]+$/, "")}{" "}
+                            {nd.label.replace(/[….]+$/, "")}{" "}
                             <span className="text-primary/70">
                               {nd.duration_ms >= 1000
                                 ? `${(nd.duration_ms / 1000).toFixed(1)}s`

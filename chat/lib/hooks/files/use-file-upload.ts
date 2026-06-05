@@ -80,31 +80,38 @@ export function useFileUpload(
   const processFiles = useCallback(
     async (files: File[]) => {
       setUploadError(null);
-      for (const file of files) {
-        const validation = validateImageFile(file);
-        if (!validation.valid) {
-          setUploadError(validation.error || "Invalid file");
-          continue;
-        }
-
-        try {
+      // Cada arquivo é independente; processar em paralelo preserva a ordem
+      // do array de entrada porque Promise.all mantém a ordem dos resultados.
+      const results = await Promise.all(
+        files.map(async (file) => {
+          const validation = validateImageFile(file);
+          if (!validation.valid) {
+            return { error: validation.error || "Invalid file" } as const;
+          }
           const isImage = isImageFile(file);
           if (isImage && disableImageUploads) {
-            setUploadError(IMAGE_UNSUPPORTED_MODEL_MESSAGE);
-            continue;
+            return { error: IMAGE_UNSUPPORTED_MODEL_MESSAGE } as const;
           }
-          let textLength: number | undefined;
-          if (!isImage) {
-            const text = await file.text();
-            textLength = text.length;
+          try {
+            const textLength = isImage ? undefined : (await file.text()).length;
+            const imageAttachment = await createImageAttachment(file);
+            imageAttachment.textLength = textLength;
+            return { attachment: imageAttachment } as const;
+          } catch (error) {
+            console.error("Error processing file:", error);
+            return { error: "Failed to process file" } as const;
           }
-          const imageAttachment = await createImageAttachment(file);
-          imageAttachment.textLength = textLength;
-          setAttachedFiles((prev) => [...prev, imageAttachment]);
-        } catch (error) {
-          console.error("Error processing file:", error);
-          setUploadError("Failed to process file");
-        }
+        }),
+      );
+
+      const attachments = results.flatMap((r): ImageAttachment[] =>
+        "attachment" in r ? [r.attachment as ImageAttachment] : [],
+      );
+      const lastError = results.toReversed().find((r) => "error" in r);
+      if (lastError && "error" in lastError)
+        setUploadError((lastError as { error: string }).error);
+      if (attachments.length > 0) {
+        setAttachedFiles((prev) => [...prev, ...attachments]);
       }
     },
     [disableImageUploads],
@@ -136,43 +143,24 @@ export function useFileUpload(
 
       setUploadError(null);
 
-      // Process clipboard items
+      // Coleta os arquivos de imagem do clipboard primeiro (síncrono),
+      // depois processa todos em paralelo para evitar await dentro de loop.
+      const imageFiles: File[] = [];
       for (const item of Array.from(items)) {
-        // Check if item is an image (paste only supports images for now)
-        if (item.type.startsWith("image/")) {
-          event.preventDefault(); // Prevent default paste behavior for images
-
-          if (disableImageUploads) {
-            setUploadError(IMAGE_UNSUPPORTED_MODEL_MESSAGE);
-            continue;
-          }
-
-          const file = item.getAsFile();
-          if (!file) continue;
-
-          // Validate file
-          const validation = validateImageFile(file);
-          if (!validation.valid) {
-            setUploadError(validation.error || "Invalid image");
-            continue;
-          }
-
-          try {
-            // Convert to image attachment
-            const imageAttachment = await createImageAttachment(file);
-            setAttachedFiles((prev) => [...prev, imageAttachment]);
-            console.log(
-              "Pasted image from clipboard:",
-              file.name || "screenshot",
-            );
-          } catch (error) {
-            console.error("Error processing pasted image:", error);
-            setUploadError("Failed to process pasted image");
-          }
+        if (!item.type.startsWith("image/")) continue;
+        event.preventDefault();
+        if (disableImageUploads) {
+          setUploadError(IMAGE_UNSUPPORTED_MODEL_MESSAGE);
+          continue;
         }
+        const file = item.getAsFile();
+        if (file) imageFiles.push(file);
       }
+
+      if (imageFiles.length === 0) return;
+      await processFiles(imageFiles);
     },
-    [disableImageUploads],
+    [disableImageUploads, processFiles],
   );
 
   /**

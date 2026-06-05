@@ -24,7 +24,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from src.config.settings import settings
+from src.settings import settings
 from src.state import Document
 from src.types import CurationDecision, WebResultVerdict
 

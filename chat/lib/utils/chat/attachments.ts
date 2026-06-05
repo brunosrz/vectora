@@ -15,7 +15,7 @@ import type { Attachment, AttachmentKind } from "@/lib/api/vectora-client";
  * - `application/pdf` → "pdf"
  * - qualquer outra coisa → "code" (tratado como código/texto pelo backend)
  */
-function _deriveKind(mimeType: string): AttachmentKind {
+function deriveKind(mimeType: string): AttachmentKind {
   if (mimeType.startsWith("image/")) return "image";
   if (mimeType === "application/pdf") return "pdf";
   // txt, json, yaml, markdown, código-fonte, etc.
@@ -32,7 +32,7 @@ export function toApiAttachments(files: ImageAttachment[]): Attachment[] {
   return files
     .filter((f) => Boolean(f.base64) && Boolean(f.name))
     .map((f) => ({
-      kind: _deriveKind(f.mimeType),
+      kind: deriveKind(f.mimeType),
       name: f.name ?? "unknown",
       mime_type: f.mimeType,
       // O campo base64 já armazena dados puros (sem prefixo data URL)

@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return;
 
     hydrate().then(async () => {
-      const { isAuthenticated, user } = useAuthStore.getState();
-      if (!isAuthenticated) {
+      const { isAuthenticated: authedNow, user } = useAuthStore.getState();
+      if (!authedNow) {
         // Primeiro acesso (sem usuários) → setup do root; senão → login
         let hasUsers = true;
         try {

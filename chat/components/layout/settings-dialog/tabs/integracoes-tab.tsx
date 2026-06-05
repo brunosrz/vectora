@@ -49,6 +49,11 @@ interface Integration {
 
 type VerifyState = "idle" | "loading" | "ok" | "error";
 
+function startGitBranchOAuth(): void {
+  // Redireciona para o backend que inicia o fluxo OAuth.
+  window.location.href = `${VECTORA_API_URL}/auth/github`;
+}
+
 // ---------------------------------------------------------------------------
 // API helpers
 // ---------------------------------------------------------------------------
@@ -154,12 +159,6 @@ function IntegrationCard({
       setVerifyState("error");
       setVerifyMsg("Falha na verificação");
     }
-  };
-
-  const handleGitBranchOAuth = () => {
-    // Redireciona para o backend que inicia o fluxo OAuth. Usa a URL pública
-    // configurada (NEXT_PUBLIC_VECTORA_API_URL) em vez de assumir portas fixas.
-    window.location.href = `${VECTORA_API_URL}/auth/github`;
   };
 
   const handleGitBranchDisconnect = async () => {
@@ -328,7 +327,7 @@ function IntegrationCard({
               <Button
                 size="sm"
                 className="h-7 text-xs"
-                onClick={handleGitBranchOAuth}
+                onClick={startGitBranchOAuth}
               >
                 <GitBranch className="w-3 h-3 mr-1.5" />
                 Conectar via OAuth

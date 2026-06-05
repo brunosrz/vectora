@@ -18,9 +18,9 @@ from langchain_core.messages import (
     trim_messages,
 )
 
-from src.config.settings import settings
 from src.services.memory import get_memory_store
 from src.services.text import text_service
+from src.settings import settings
 
 if TYPE_CHECKING:
     from langchain_core.runnables import Runnable

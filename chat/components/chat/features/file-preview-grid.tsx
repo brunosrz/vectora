@@ -54,18 +54,18 @@ const CODE_EXTENSIONS = new Set([
   "log",
 ]);
 
-function _ext(filename: string): string {
+function extOf(filename: string): string {
   return filename.includes(".") ? filename.split(".").pop()!.toLowerCase() : "";
 }
 
-function _isCode(file: ImageAttachment): boolean {
+function isCodeFile(file: ImageAttachment): boolean {
   if (file.mimeType?.startsWith("image/")) return false;
   if (file.mimeType === "application/pdf") return false;
-  return CODE_EXTENSIONS.has(_ext(file.name ?? ""));
+  return CODE_EXTENSIONS.has(extOf(file.name ?? ""));
 }
 
 /** Decodifica base64 → text (UTF-8 safe) */
-function _decodeBase64Text(b64: string): string {
+function decodeBase64Text(b64: string): string {
   try {
     const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
     return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
@@ -75,7 +75,7 @@ function _decodeBase64Text(b64: string): string {
 }
 
 /** Primeiras N linhas não-vazias de um texto */
-function _firstLines(text: string, n = 4): string {
+function firstLines(text: string, n = 4): string {
   return text
     .split("\n")
     .filter((l) => l.trim().length > 0)
@@ -168,12 +168,10 @@ function PdfThumbnail({ file }: { file: ImageAttachment }) {
 /** F4 — Preview de primeiras linhas para arquivos de código/texto */
 function CodePreview({ file }: { file: ImageAttachment }) {
   const fileName = file.name ?? "file";
-  const fileExt = _ext(fileName);
+  const fileExt = extOf(fileName);
   const fileSizeKB = file.size ? Math.round(file.size / 1024) : 0;
 
-  const snippet = file.base64
-    ? _firstLines(_decodeBase64Text(file.base64))
-    : "";
+  const snippet = file.base64 ? firstLines(decodeBase64Text(file.base64)) : "";
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -221,9 +219,9 @@ function FilePreviewCard({
 }) {
   const isImage = file.mimeType?.startsWith("image/");
   const isPdf = file.mimeType === "application/pdf";
-  const isCode = _isCode(file);
+  const isCode = isCodeFile(file);
   const fileName = file.name ?? "File";
-  const fileExt = _ext(fileName);
+  const fileExt = extOf(fileName);
   const fileSizeKB = file.size ? Math.round(file.size / 1024) : 0;
 
   return (

@@ -8,7 +8,7 @@
  * carregada pelo Deep Agent sob demanda (progressive disclosure).
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CheckCircle2,
   Loader2,
@@ -43,7 +43,7 @@ export function SkillsTab() {
   const [error, setError] = useState<string | null>(null);
   const [verify, setVerify] = useState<Record<string, VerifyState>>({});
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/skills");
@@ -54,11 +54,11 @@ export function SkillsTab() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [t]);
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refresh]);
 
   async function handleInstall() {
     if (!source.trim()) return;

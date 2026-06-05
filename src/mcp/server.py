@@ -36,8 +36,8 @@ logger = logging.getLogger("src.mcp.server")
 try:
     from mcp.server.fastmcp import FastMCP
 
-    from src.config.settings import settings
     from src.services.checkpoint import Checkpointer
+    from src.settings import settings
     from src.tools import (
         call_mcp_tool,
         embedding,

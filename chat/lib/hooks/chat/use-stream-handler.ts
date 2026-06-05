@@ -32,6 +32,7 @@ import {
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 
 // ============================================================================
 // Types
@@ -423,10 +424,8 @@ async function handleEvent(
         })),
       );
 
-      // T11.5 — Invalidate cache do workbench quando a tool muda o disco.
-      // Carregamento dinâmico para não acoplar este módulo ao store
-      // (importar topo a topo cria ciclo via providers).
-      void invalidateWorkbenchFor(event.tool_name, threadId);
+      // Invalidate cache do workbench quando a tool muda o disco.
+      invalidateWorkbenchFor(event.tool_name, threadId);
       break;
     }
 
@@ -528,7 +527,7 @@ async function handleEvent(
 }
 
 // ============================================================================
-// Workbench cache invalidation (T11.5)
+// Workbench cache invalidation
 // ============================================================================
 //
 // Mapeamento tool_name → caches a invalidar. As tools de filesystem/git/terminal
@@ -546,16 +545,10 @@ const FILES_DIFF_TOOLS = new Set([
   "git_worktree",
 ]);
 
-async function invalidateWorkbenchFor(
+function invalidateWorkbenchFor(
   toolName: string,
   threadId: string | undefined,
-): Promise<void> {
-  // Carregamento dinâmico evita import-order issues entre módulos.
-  const [{ useWorkbenchStore }, { useWorkspacesStore }] = await Promise.all([
-    import("@/lib/stores/workbench-store"),
-    import("@/lib/stores/workspaces-store"),
-  ]);
-
+): void {
   if (toolName === "create_artifact" && threadId) {
     useWorkbenchStore.getState().invalidatePlan(threadId);
     return;
