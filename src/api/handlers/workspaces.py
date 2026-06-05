@@ -1073,9 +1073,12 @@ async def create_fs_dir(workspace_id: str, body: CreateFsNodeRequest) -> StatusR
 async def delete_fs_node(
     workspace_id: str,
     path: Annotated[str, Query()],
+    permanent: Annotated[bool, Query()] = False,
 ) -> StatusResponse:
-    """Remove um arquivo ou diretório (recursivo) do workspace."""
+    """Move para a lixeira (padrão) ou apaga permanentemente (permanent=true)."""
     import shutil as _shutil
+
+    import send2trash
 
     resolved = _resolve_inside(workspace_id, path)
     if resolved is None:
@@ -1085,10 +1088,13 @@ async def delete_fs_node(
     if not resolved.exists():
         return StatusResponse(status="error", message="Caminho não encontrado.")
     try:
-        if resolved.is_dir():
-            _shutil.rmtree(resolved)
+        if permanent:
+            if resolved.is_dir():
+                _shutil.rmtree(resolved)
+            else:
+                resolved.unlink()
         else:
-            resolved.unlink()
+            send2trash.send2trash(str(resolved))
         return StatusResponse(status="ok")
     except OSError as exc:
         return StatusResponse(status="error", message=str(exc))

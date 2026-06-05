@@ -75,6 +75,7 @@ dependencies = [
     "asyncssh>=2.18",
     "nuitka[all]>=4.1.2",
     "scons>=4.10.1",
+    "send2trash>=2.1.0",
 ]
 
 [project.scripts]

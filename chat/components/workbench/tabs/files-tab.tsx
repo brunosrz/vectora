@@ -31,7 +31,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/i18n";
@@ -92,8 +92,10 @@ async function apiFsCreate(
 async function apiFsDelete(
   workspaceId: string,
   path: string,
+  permanent = false,
 ): Promise<boolean> {
   const qs = new URLSearchParams({ path });
+  if (permanent) qs.set("permanent", "true");
   const res = await fetch(
     `/workspaces/${encodeURIComponent(workspaceId)}/fs?${qs}`,
     { method: "DELETE" },
@@ -127,7 +129,7 @@ function FileItem({
   depth: number;
   onOpenFile: (path: string) => void;
   onAddToContext?: (path: string) => void;
-  onDelete: (path: string, name: string) => void;
+  onDelete: (path: string, name: string, permanent?: boolean) => void;
 }) {
   const pinned = useWorkbenchStore((s) => s.isPinned(threadId, entry.path));
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
@@ -135,8 +137,15 @@ function FileItem({
 
   return (
     <div
-      className="group flex items-center px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm"
+      tabIndex={0}
+      className="group flex items-center px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
       style={{ paddingLeft: 8 + (depth + 1) * 12 }}
+      onKeyDown={(e) => {
+        if (e.key === "Delete") {
+          e.preventDefault();
+          onDelete(entry.path, entry.name, e.shiftKey);
+        }
+      }}
     >
       <span className="w-3" />
       <File className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
@@ -160,10 +169,10 @@ function FileItem({
           </button>
         )}
         <button
-          onClick={() => onDelete(entry.path, entry.name)}
+          onClick={(e) => onDelete(entry.path, entry.name, e.shiftKey)}
           className="p-0.5 rounded text-muted-foreground hover:text-destructive"
           aria-label={t("workbench.files.delete")}
-          title={t("workbench.files.delete")}
+          title={`${t("workbench.files.delete")} (Shift: permanente)`}
         >
           <Trash2 className="w-3 h-3" />
         </button>
@@ -240,7 +249,7 @@ interface DirNodeProps {
   filter: string;
   onOpenFile: (path: string) => void;
   onAddToContext?: (path: string) => void;
-  onDelete: (path: string, name: string) => void;
+  onDelete: (path: string, name: string, permanent?: boolean) => void;
   creating: CreatingState | null;
   onInlineCreate: (name: string) => void;
   onCancelCreate: () => void;
@@ -301,7 +310,16 @@ function DirNode({
   return (
     <div>
       {depth > 0 && (
-        <div className="group flex items-center px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm">
+        <div
+          tabIndex={0}
+          className="group flex items-center px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+          onKeyDown={(e) => {
+            if (e.key === "Delete") {
+              e.preventDefault();
+              onDelete(path, name, e.shiftKey);
+            }
+          }}
+        >
           <button
             onClick={() => toggleExpanded(workspaceId, path)}
             className="flex items-center gap-1 flex-1 min-w-0"
@@ -326,9 +344,9 @@ function DirNode({
               </button>
             )}
             <button
-              onClick={() => onDelete(path, name)}
+              onClick={(e) => onDelete(path, name, e.shiftKey)}
               className="p-0.5 rounded text-muted-foreground hover:text-destructive"
-              title={t("workbench.files.delete")}
+              title={`${t("workbench.files.delete")} (Shift: permanente)`}
             >
               <Trash2 className="w-3 h-3" />
             </button>
@@ -535,20 +553,41 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     setCreating(null);
   }, []);
 
-  // Deletar arquivo/pasta com confirmação simples
+  // Deletar arquivo/pasta com confirmação; permanent=true vai para o lixo permanente
   const handleDelete = useCallback(
-    async (path: string, name: string) => {
+    async (path: string, name: string, permanent = false) => {
       if (!wsId) return;
+      const label = permanent
+        ? `Deletar permanentemente "${name}"? Esta ação não pode ser desfeita.`
+        : `Mover "${name}" para a Lixeira?`;
       // eslint-disable-next-line no-alert
-      if (!window.confirm(`${t("workbench.files.delete")} "${name}"?`)) return;
-      const ok = await apiFsDelete(wsId, path);
+      if (!window.confirm(label)) return;
+      const ok = await apiFsDelete(wsId, path, permanent);
       if (ok) {
         invalidateFiles(wsId);
         if (openPath === path) setOpenFile(wsId, null);
       }
     },
-    [wsId, openPath, invalidateFiles, setOpenFile, t],
+    [wsId, openPath, invalidateFiles, setOpenFile],
   );
+
+  // Ctrl+N → novo arquivo na raiz; Ctrl+Shift+N → nova pasta na raiz
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.ctrlKey) return;
+      if (e.key === "N" || e.key === "n") {
+        if (e.shiftKey) {
+          e.preventDefault();
+          handleRequestCreate("dir", "");
+        } else {
+          e.preventDefault();
+          handleRequestCreate("file", "");
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleRequestCreate]);
 
   // SWR para o conteúdo do arquivo aberto
   useWorkbenchSWR({
