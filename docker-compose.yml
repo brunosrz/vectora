@@ -1,13 +1,13 @@
 name: vectora
 
-# Vectora MCP Server — Multi-Agent Hub (SSE/HTTP)
+# Vectora — Web Chat + API (FastAPI + Vite SPA)
 #
-# Uso local (sem Traefik):
+# Uso local:
 #   docker compose up -d
-#   A API SSE fica disponível em http://localhost:8000/sse
+#   Acesse http://localhost:8080
 #
 # Uso em VPS com Traefik:
-#   Defina VECTORA_DOMAIN no .env (ex: vectora.meudominio.com)
+#   Defina VECTORA_DOMAIN no .env (ex: chat.meudominio.com)
 #   Certifique-se que a rede "traefik-public" já existe no host
 #   docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
 
@@ -17,39 +17,30 @@ services:
     restart: unless-stopped
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - COHERE_API_KEY=${COHERE_API_KEY}
-      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - COHERE_API_KEY=${COHERE_API_KEY:-}
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY:-}
-      - LANGSMITH_TRACING=${LANGSMITH_TRACING:-false}
-      - LANGSMITH_PROJECT=${LANGSMITH_PROJECT:-vectora}
+      - VECTORA_TOKEN=${VECTORA_TOKEN:-}
       - PYTHONUNBUFFERED=1
-      - MCP_TRANSPORT=sse
-      - MCP_HOST=0.0.0.0
-      - MCP_PORT=${MCP_PORT:-8000}
+      - HOST=0.0.0.0
+      - PORT=${PORT:-8080}
     volumes:
       - vectora-data:/root/.vectora
     ports:
-      - "${MCP_PORT:-8000}:8000"
+      - "${PORT:-8080}:8080"
     healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-
-  vectora-chat:
-    image: ghcr.io/brunosrz/vectora-chat:latest
-    restart: unless-stopped
-    depends_on:
-      vectora:
-        condition: service_healthy
-    environment:
-      # O backend LangGraph via endpoint HTTP
-      - VECTORA_API_URL=http://vectora:8000
-    ports:
-      - "3000:3000"
+      start_period: 60s
 
 volumes:
   vectora-data:

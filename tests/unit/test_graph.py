@@ -1,35 +1,37 @@
-"""Tests for src/graph.py"""
+"""Tests for graph routing and topology."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import pytest
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END
 
-from src.graph import _orchestrator_route, build_graph
+from src.agents.orchestrator import _orchestrator_route
 
 if TYPE_CHECKING:
     from src.state import State
 
 
-def test_build_graph_compiles():
-    checkpointer = MemorySaver()
-    graph = build_graph(checkpointer)
+@pytest.mark.asyncio
+async def test_build_graph_compiles():
+    from src.services.agent_factory import get_user_agent
+
+    graph = await get_user_agent("test-graph-compile")
     assert graph is not None
 
 
-def test_graph_has_expected_nodes():
-    checkpointer = MemorySaver()
-    graph = build_graph(checkpointer)
+@pytest.mark.asyncio
+async def test_graph_has_expected_nodes():
+    from src.services.agent_factory import get_user_agent
+
+    graph = await get_user_agent("test-graph-nodes")
     nodes = set(graph.nodes.keys())
     expected = {
         "orchestrator",
         "search",
         "coder",
         "process_retrieval",
-        # RAG pipeline achatado — sem rag_subgraph, rag_websearch, rag_search_audit
         "rag_expand_query",
         "rag_retrieve",
         "rag_decide_node",

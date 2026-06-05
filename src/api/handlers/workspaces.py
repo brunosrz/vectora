@@ -738,10 +738,26 @@ class FileResponse(BaseModel):
 
 
 class DiffFile(BaseModel):
+    """Estado git de um único path no workspace.
+
+    ``staged_change``, ``unstaged_change`` e ``untracked`` são flags
+    independentes que representam fielmente o par ``XY`` do
+    ``git status --porcelain=v1`` — incluindo o caso ``XY=MM`` em que
+    o mesmo path tem mudanças staged E unstaged ao mesmo tempo.
+
+    ``status`` traz o primeiro caracter não-vazio do par porcelain
+    (``"M"`` / ``"A"`` / ``"D"`` / ``"R"`` / ``"?"``), oferecido como
+    resumo single-char para consumidores que só precisam saber "houve
+    alguma mudança neste arquivo".
+    """
+
     path: str
-    status: str  # "M" | "A" | "D" | "R"
+    status: str  # "M" | "A" | "D" | "R" | "?" — primeiro flag não-vazio
     additions: int = 0
     deletions: int = 0
+    staged_change: str | None = None  # "M" | "A" | "D" | "R" | None
+    unstaged_change: str | None = None  # "M" | "D" | None
+    untracked: bool = False
 
 
 class DiffHunk(BaseModel):
@@ -914,12 +930,39 @@ def _parse_unified_diff(diff_text: str) -> list[DiffHunk]:
     return hunks
 
 
+def _parse_porcelain_v1(raw: str) -> list[tuple[str, str, str]]:
+    """Faz parse de ``git status --porcelain=v1 -uall`` em (staged, unstaged, path).
+
+    Cada linha tem 2 chars de status + espaço + path. ``??`` = untracked.
+    Renames usam ``R  old -> new`` — devolvemos o caminho destino.
+    """
+    out: list[tuple[str, str, str]] = []
+    for line in raw.splitlines():
+        if len(line) < 4:
+            continue
+        x, y, path = line[0], line[1], line[3:].rstrip()
+        # rename: "R  old -> new" — pegar o novo
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        # paths com espaços vêm sem quoting com `-z` mas estamos usando porcelain v1 sem -z;
+        # git escapa com aspas quando há espaço — strip simples.
+        path = path.strip('"').replace("\\", "/")
+        out.append((x, y, path))
+    return out
+
+
 @view_router.get("/{workspace_id}/git/diff", response_model=DiffSummary)
 async def workspace_git_diff(workspace_id: str) -> DiffSummary:
-    """Retorna o resumo do diff (uncommitted) do workspace.
+    """Resumo do diff (uncommitted) do workspace.
 
-    Inclui working tree + staged (HEAD..workdir). Para workspaces não-git
-    retorna ``is_git_repo=False`` e lista vazia.
+    Faz duas passadas no repositório:
+      - ``git status --porcelain=v1 -uall`` cobre staged, unstaged e
+        untracked numa única invocação;
+      - ``git diff HEAD --numstat`` fornece adições/remoções para os
+        paths modificados (untracked ficam com ``0/0``).
+
+    Retorna ``is_git_repo=False`` com lista vazia para workspaces sem
+    ``.git`` ou quando ``git`` não está disponível no ambiente.
     """
     from src.services.workspace import workspace_registry
 
@@ -941,11 +984,18 @@ async def workspace_git_diff(workspace_id: str) -> DiffSummary:
     except (InvalidGitRepositoryError, NoSuchPathError):
         return DiffSummary(is_git_repo=False, files=[])
 
-    files: list[DiffFile] = []
-    total_add = 0
-    total_del = 0
+    # Single porcelain pass — cobre staged + unstaged + untracked.
+    try:
+        porcelain = repo.git.status("--porcelain=v1", "-uall") or ""
+    except Exception:
+        porcelain = ""
 
-    # `git diff HEAD` cobre staged + unstaged. Vazio = working tree limpa.
+    flags_by_path: dict[str, tuple[str, str]] = {}
+    for x, y, path in _parse_porcelain_v1(porcelain):
+        flags_by_path[path] = (x, y)
+
+    # Single numstat pass — contagens para arquivos modificados (não untracked).
+    numstat_by_path: dict[str, tuple[int, int]] = {}
     try:
         diff_text = repo.git.diff("HEAD", numstat=True) or ""
     except Exception:
@@ -961,22 +1011,29 @@ async def workspace_git_diff(workspace_id: str) -> DiffSummary:
             dels = int(dels_s) if dels_s != "-" else 0
         except ValueError:
             adds = dels = 0
+        numstat_by_path[path.replace("\\", "/")] = (adds, dels)
 
-        # Status: M/A/D — derivado de name-status (ainda barato).
-        status = "M"
-        try:
-            ns = repo.git.diff("HEAD", "--name-status", path) or ""
-            head = ns.splitlines()[0].split("\t", 1)[0] if ns else "M"
-            status = head[:1] if head else "M"
-        except Exception:
-            status = "M"
+    files: list[DiffFile] = []
+    total_add = 0
+    total_del = 0
+
+    for path, (x, y) in flags_by_path.items():
+        untracked = x == "?" and y == "?"
+        staged = None if untracked or x in (" ", "?") else x
+        unstaged = None if untracked or y in (" ", "?") else y
+        # Resumo single-char: primeiro flag não-vazio, "?" para untracked.
+        summary_status = staged or unstaged or ("?" if untracked else "M")
+        adds, dels = numstat_by_path.get(path, (0, 0))
 
         files.append(
             DiffFile(
-                path=path.replace("\\", "/"),
-                status=status,
+                path=path,
+                status=summary_status,
                 additions=adds,
                 deletions=dels,
+                staged_change=staged,
+                unstaged_change=unstaged,
+                untracked=untracked,
             )
         )
         total_add += adds

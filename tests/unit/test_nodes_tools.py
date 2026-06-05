@@ -66,6 +66,6 @@ def test_search_memory_registered():
 
 
 def test_all_tools_count():
-    # 37 tools após o Bloco G3 (20 anteriores + 17 git/gh tools).
     # Guarda contra perda acidental de registro de ferramentas.
-    assert len(ALL_TOOLS) == 37
+    # Atualize ao adicionar/remover tool em src/tools/__init__.py.
+    assert len(ALL_TOOLS) == 39

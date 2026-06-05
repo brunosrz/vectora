@@ -1,7 +1,7 @@
 """Testes TDD para o Bloco E — HITL em Chat.
 
 E1 — adapt_stream detecta o evento __interrupt__ do LangGraph e emite HITLEvent.
-E2 — hitl_check trata as ações approve / reject / edit corretamente.
+E2 — get_interrupt_on configura o interrupt_on por modo de permissão.
 
 Todos os testes foram escritos ANTES da implementação (TDD: red → green).
 """
@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -268,72 +268,50 @@ class TestAdaptStreamHITL:
 
 
 # ===========================================================================
-# E2 — hitl_check: ação "edit"
+# E2 — get_interrupt_on: configuração HITL por modo de permissão
 # ===========================================================================
 
 
-class TestHITLCheckEditAction:
-    @pytest.mark.asyncio
-    async def test_hitl_check_edit_approves_not_cancelled(self) -> None:
-        """action='edit' deve aprovar a execução (hitl_cancelled=False)."""
-        from langchain_core.messages import AIMessage
+class TestGetInterruptOn:
+    def test_ask_mode_interrupts_all_destructive(self) -> None:
+        """Modo 'ask' pausa em todas as tools destrutivas."""
+        from src.services.agent_factory import REQUIRE_APPROVAL, get_interrupt_on
 
-        from src.nodes.hitl import hitl_check
+        result = get_interrupt_on("ask")
+        assert set(result.keys()) == REQUIRE_APPROVAL
+        assert all(v is True for v in result.values())
 
-        tool_call = {
-            "id": "tc1",
-            "name": "terminal",
-            "args": {"cmd": "ls"},
-            "type": "tool_call",
-        }
-        msg = AIMessage(content="", tool_calls=[tool_call], id="msg1")
-        state: dict = {"messages": [msg]}
+    def test_bypass_mode_returns_empty(self) -> None:
+        """Modo 'bypass' não interrompe nada."""
+        from src.services.agent_factory import get_interrupt_on
 
-        decision = {"action": "edit", "args": {"cmd": "echo hello"}}
-        with patch("src.nodes.hitl.interrupt", return_value=decision):
-            result = await hitl_check(state)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        assert get_interrupt_on("bypass") == {}
 
-        assert result.get("hitl_cancelled") is False
+    def test_auto_mode_returns_empty(self) -> None:
+        """Modo 'auto' não interrompe nada."""
+        from src.services.agent_factory import get_interrupt_on
 
-    @pytest.mark.asyncio
-    async def test_hitl_check_edit_updates_tool_args(self) -> None:
-        """Os args da tool editada devem ser atualizados na mensagem retornada."""
-        from langchain_core.messages import AIMessage
+        assert get_interrupt_on("auto") == {}
 
-        from src.nodes.hitl import hitl_check
+    def test_accept_edits_excludes_file_write(self) -> None:
+        """Modo 'accept_edits' auto-aprova file_write mas interrompe terminal."""
+        from src.services.agent_factory import ACCEPT_EDITS_AUTO, get_interrupt_on
 
-        tool_call = {
-            "id": "tc1",
-            "name": "terminal",
-            "args": {"cmd": "rm -rf /"},
-            "type": "tool_call",
-        }
-        msg = AIMessage(content="", tool_calls=[tool_call], id="msg1")
-        state: dict = {"messages": [msg]}
+        result = get_interrupt_on("accept_edits")
+        for tool in ACCEPT_EDITS_AUTO:
+            assert tool not in result
+        assert "terminal" in result
 
-        decision = {"action": "edit", "args": {"cmd": "echo safe"}}
-        with patch("src.nodes.hitl.interrupt", return_value=decision):
-            result = await hitl_check(state)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    def test_plan_mode_interrupts_all_destructive(self) -> None:
+        """Modo 'plan' interrompe todas as tools destrutivas (mesmo que 'ask')."""
+        from src.services.agent_factory import REQUIRE_APPROVAL, get_interrupt_on
 
-        # Deve retornar mensagem atualizada com novos args
-        assert result.get("hitl_cancelled") is False
-        updated_msgs = result.get("messages", [])
-        if updated_msgs:
-            updated_tc = updated_msgs[0].tool_calls[0]
-            assert updated_tc["args"]["cmd"] == "echo safe"
+        result = get_interrupt_on("plan")
+        assert set(result.keys()) == REQUIRE_APPROVAL
 
-    @pytest.mark.asyncio
-    async def test_hitl_check_unknown_action_rejects(self) -> None:
-        """Ação desconhecida deve resultar em cancelamento."""
-        from langchain_core.messages import AIMessage
+    def test_unknown_mode_defaults_to_ask(self) -> None:
+        """Modo desconhecido usa a política conservadora de 'ask'."""
+        from src.services.agent_factory import REQUIRE_APPROVAL, get_interrupt_on
 
-        from src.nodes.hitl import hitl_check
-
-        tool_call = {"id": "tc1", "name": "terminal", "args": {}, "type": "tool_call"}
-        msg = AIMessage(content="", tool_calls=[tool_call], id="msg1")
-        state: dict = {"messages": [msg]}
-
-        with patch("src.nodes.hitl.interrupt", return_value={"action": "unknown_xyz"}):
-            result = await hitl_check(state)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
-
-        assert result.get("hitl_cancelled") is True
+        result = get_interrupt_on("unknown_mode")
+        assert set(result.keys()) == REQUIRE_APPROVAL

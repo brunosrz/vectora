@@ -294,9 +294,9 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
     do grafo + abertura de uma nova connection SQLite a cada request.
     """
     try:
-        from src.api.handlers.chat import _get_graph
+        from src.services.agent_factory import get_user_agent
 
-        graph = await _get_graph()
+        graph = await get_user_agent()
         config = {"configurable": {"thread_id": request.thread_id}}
         state = await graph.aget_state(config)
 

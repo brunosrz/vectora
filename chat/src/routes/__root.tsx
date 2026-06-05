@@ -6,6 +6,8 @@ import {
 } from "@tanstack/react-router";
 import type { RouterContext } from "../router";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { Toaster } from "@/components/ui/toaster";
+import { NetworkStatusBanner } from "@/components/layout/network-status-banner";
 
 const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/"];
 
@@ -43,6 +45,28 @@ function redirectToSignin(currentPath: string): never {
  */
 async function ensureAuthenticated(currentPath: string): Promise<void> {
   if (!AUTH_REQUIRED || isPublicPath(currentPath)) return;
+
+  // Aguarda o rehydrate do persist antes de inspecionar o store: o
+  // contrato do `persist` em Zustand é assíncrono e ler o estado vazio
+  // antes da hidratação faria o guard despachar para `/auth/signin`
+  // mesmo com sessão válida em `sessionStorage`.
+  if (
+    typeof (
+      useAuthStore as unknown as {
+        persist?: { rehydrate?: () => Promise<void> };
+      }
+    ).persist?.rehydrate === "function"
+  ) {
+    try {
+      await (
+        useAuthStore as unknown as {
+          persist: { rehydrate: () => Promise<void> };
+        }
+      ).persist.rehydrate();
+    } catch {
+      /* rehydrate é best-effort — não bloqueia o guard */
+    }
+  }
 
   const store = useAuthStore.getState();
 
@@ -132,7 +156,9 @@ function RootComponent() {
   }
   return (
     <div className="min-h-screen flex flex-col" data-route={location.pathname}>
+      <NetworkStatusBanner />
       <Outlet />
+      <Toaster />
     </div>
   );
 }

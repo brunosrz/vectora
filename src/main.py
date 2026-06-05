@@ -1,18 +1,24 @@
 """Vectora CLI — Unified entry point.
 
-Usage:
-    vectora                                 Start chat (resume last session)
-    vectora --new                           Start chat with a new session
-    vectora --session 042731                Resume a specific session
-    vectora --model gpt-5.5                 Switch to GPT-5.5 (auto-detects openai)
-    vectora --model gemini-3.5-flash        Switch to Gemini (auto-detects google-genai)
-    vectora --model ollama:llama3.2         Ollama model (prefix required)
-    vectora --ollama --model llama3.2       Alias for ollama
-    vectora --verbosity 3                   Set verbosity level (persists)
-    vectora server mcp --transport stdio    Start MCP server (stdio)
+Modes:
+
+  cli (TUI):
+    vectora                                 Start TUI chat (resume last session)
+    vectora chat                            Same — explicit subcommand
+    vectora chat --new                      Start TUI with a new session
+    vectora chat --session 042731           Resume a specific session
+    vectora chat --legacy                   Use Rich-based TUI instead of Textual
+    vectora chat --model gpt-5.5            Switch model (auto-detects openai)
+    vectora chat --verbosity 3              Set verbosity level (persists)
+
+  web (FastAPI + Vite SPA, for browser access and Electron desktop):
+    vectora server web                      Start web server (FastAPI + UI, port 8080)
+    vectora server web --port 9000          Custom port
+    vectora server headless                 FastAPI only, no static UI (port 8080)
+
+  mcp (Model Context Protocol, for Claude Desktop / Claude Code):
+    vectora server mcp                      Start MCP server (stdio, default)
     vectora server mcp --transport sse      Start MCP server (SSE, port 8000)
-    vectora server chat                     Start web chat server (FastAPI + UI, port 8080)
-    vectora server headless                 Start API only, no UI (port 8080)
     vectora traces [--session] [--last N]   View observability traces
     vectora sessions                        List all sessions
     vectora config [--set KEY=VALUE ...]    Show or edit settings
@@ -79,21 +85,23 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Vectora — Advanced AI Assistant with RAG and MCP capabilities",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""examples:
-  vectora                              resume last session for this directory
-  vectora --new                        start a fresh session
-  vectora --session 042731             resume session 042731
-  vectora --model gpt-5.5              switch to GPT-5.5 (auto-detects openai)
-  vectora --model gemini-3.5-flash     switch to Gemini (auto-detects google-genai)
-  vectora --model claude-opus-4-7      switch to Claude (auto-detects anthropic)
-  vectora --model command-a-03-2025    switch to Cohere (auto-detects cohere)
-  vectora --model ollama:llama3.2      ollama (prefix required — names are arbitrary)
-  vectora --ollama --model llama3.2    alias: --ollama sets provider to ollama
-  vectora --model gpt-5.5 --new        switch model AND start fresh session
-  vectora --verbosity 3                set verbosity 0-5 (persists)
-  vectora server mcp --transport stdio  start MCP server (stdio, local)
-  vectora server mcp --transport sse   start MCP server (SSE, port 8000)
-  vectora server chat                  start web chat (FastAPI + UI, port 8080)
+  vectora                              resume TUI chat (last session)
+  vectora chat                         same — explicit subcommand
+  vectora chat --new                   start a fresh TUI session
+  vectora chat --session 042731        resume session 042731
+  vectora chat --legacy                use Rich TUI instead of Textual
+  vectora chat --model gpt-5.5         switch to GPT-5.5 (auto-detects openai)
+  vectora chat --model gemini-3.5-flash switch to Gemini (auto-detects google-genai)
+  vectora chat --model claude-opus-4-7 switch to Claude (auto-detects anthropic)
+  vectora chat --model command-a-03-2025 switch to Cohere (auto-detects cohere)
+  vectora chat --model ollama:llama3.2 ollama (prefix required — names are arbitrary)
+  vectora chat --ollama --model llama3.2 alias: --ollama sets provider to ollama
+  vectora chat --verbosity 3           set verbosity 0-5 (persists)
+  vectora server web                   start web server (FastAPI + UI, port 8080)
+  vectora server web --port 9000       custom port
   vectora server headless              start API only (no UI, port 8080)
+  vectora server mcp                   start MCP server (stdio, local)
+  vectora server mcp --transport sse   start MCP server (SSE, port 8000)
   vectora traces                       show last 50 traces
   vectora traces --session 042731 --last 100
   vectora traces --clear               delete all traces
@@ -152,20 +160,89 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Automatically quit Vectora after 10 seconds.",
     )
+    parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="Use the legacy Rich-based TUI instead of the new Textual interface.",
+    )
 
     # ── Subcommands ──────────────────────────────────────────────────────────
 
     sub = parser.add_subparsers(dest="command", metavar="subcommand")
 
-    # server — MCP (stdio/sse) + chat/headless (FastAPI)
+    # chat — TUI interactive (Textual or Rich --legacy)
+    def _add_chat_args(p: argparse.ArgumentParser) -> None:
+        """Shared args for the chat TUI (used by both root parser and 'chat' sub)."""
+        p.add_argument(
+            "--model",
+            metavar="MODEL",
+            help=(
+                "LLM model to use. Provider is auto-detected from the model name. "
+                "Examples: gpt-5.5, gemini-3.5-flash, claude-opus-4-7, command-a-03-2025. "
+                "For Ollama use 'ollama:<model>' or --ollama --model <model>. "
+                "Persists to ~/.vectora/settings.json."
+            ),
+        )
+        p.add_argument(
+            "--ollama",
+            action="store_true",
+            help=(
+                "Force provider to Ollama (for local models whose names don't have "
+                "a recognisable prefix). Equivalent to --model ollama:<model>."
+            ),
+        )
+        p.add_argument(
+            "--verbosity",
+            metavar="N",
+            type=int,
+            choices=range(6),
+            help="Verbosity level 0–5 (0=silent, 3=tool events, 5=debug panel). Persists.",
+        )
+        p.add_argument(
+            "--session",
+            metavar="ID",
+            help="Resume a specific session by 6-digit ID (e.g. 042731).",
+        )
+        p.add_argument(
+            "--new",
+            action="store_true",
+            help="Force a new session instead of resuming the last one.",
+        )
+        p.add_argument(
+            "--quit",
+            action="store_true",
+            help="Automatically quit Vectora after 10 seconds.",
+        )
+        p.add_argument(
+            "--legacy",
+            action="store_true",
+            help="Use the legacy Rich-based TUI instead of the new Textual interface.",
+        )
+
+    chat_p = sub.add_parser(
+        "chat",
+        help="Start interactive TUI chat (Textual, or --legacy for Rich)",
+        description=(
+            "Inicia o chat interativo no terminal.\n\n"
+            "  vectora chat              -> TUI Textual (default)\n"
+            "  vectora chat --legacy     -> TUI Rich (fallback)\n"
+            "  vectora chat --new        -> nova sessao\n"
+            "  vectora chat --model X    -> troca modelo\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    _add_chat_args(chat_p)
+
+    # server — mcp / web / headless
     server_p = sub.add_parser(
         "server",
-        help="Start a Vectora server (mcp, chat, or headless)",
+        help="Start a Vectora server (mcp, web, or headless)",
         description=(
             "Modos disponíveis:\n"
             "  mcp      — MCP server (stdio ou sse) para Claude Desktop/Code e agentes externos\n"
-            "  chat     — FastAPI + frontend web compilado (chat web em http://host:port)\n"
-            "  headless — FastAPI sem frontend (integração com Paperclip e terceiros)\n"
+            "  web      — FastAPI + frontend web compilado (chat web em http://host:port)\n"
+            "  headless — FastAPI sem frontend (integração com Paperclip e terceiros)\n\n"
+            "Aliases: 'chat' = 'web' (retroativamente compativel)\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -173,10 +250,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "mode",
         nargs="?",
         default=None,
-        choices=["mcp", "chat", "headless", "stdio", "sse"],
+        choices=["mcp", "web", "chat", "headless", "stdio", "sse"],
         help=(
             "Modo do servidor. 'mcp' inicia o MCP server (requer --transport). "
-            "'chat' e 'headless' iniciam a API FastAPI."
+            "'web' (ou 'chat') e 'headless' iniciam a API FastAPI."
         ),
     )
     # MCP-specific flags (compatibilidade com uso anterior)
@@ -192,12 +269,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default="stdio",
         help="[MCP] Transporte MCP: stdio (default) ou sse.",
     )
-    server_p.add_argument("--host", default="0.0.0.0", help="Host (chat/headless/sse)")  # noqa: S104  # nosec B104
+    server_p.add_argument("--host", default="0.0.0.0", help="Host (web/headless/sse)")  # noqa: S104  # nosec B104
     server_p.add_argument(
         "--port",
         type=int,
         default=None,
-        help="Porta (mcp sse=8000, chat/headless=8080)",
+        help="Porta (mcp sse=8000, web/headless=8080)",
     )
 
     # traces
@@ -394,20 +471,18 @@ async def _run_chat_async(args: argparse.Namespace) -> None:
 
     available_providers = settings.get_available_providers()
     if not available_providers:
-        logger.warning("No LLM providers configured — starting setup wizard.")
+        logger.warning("No LLM providers configured — running setup wizard.")
         from src.ui.setup_wizard import run_setup
 
         await run_setup()
         settings = Settings()
 
-    from src.ui.chat import run_chat
+    from src.ui.app import VectoraChatApp
 
-    await run_chat(
-        settings=settings,
-        force_new=args.new,
-        session_id=args.session,
-        quit_after=args.quit,
+    app = VectoraChatApp(
+        chat_thread_id=args.session if not getattr(args, "new", False) else None,
     )
+    await app.run_async()
 
 
 async def _run_traces_async(args: argparse.Namespace) -> None:
@@ -657,7 +732,7 @@ def run() -> None:
             mcp_run()
             return
 
-        if mode in ("chat", "headless"):
+        if mode in ("web", "chat", "headless"):
             import uvicorn
 
             from src.api.server import create_app
@@ -710,7 +785,7 @@ def run() -> None:
 
     # ── auth ──────────────────────────────────────────────────────────────────
     if command == "auth":
-        from src.cli.auth import (
+        from src.auth import (
             cmd_login,
             cmd_logout,
             cmd_refresh,
@@ -736,7 +811,7 @@ def run() -> None:
             sys.exit(1)
         sys.exit(handler(args))
 
-    # ── chat (default, no subcommand) ─────────────────────────────────────────
+    # ── chat (explicit subcommand OR default when no subcommand given) ────────
     _apply_global_overrides(args)
 
     try:

@@ -16,6 +16,7 @@ Uso:
 
 import json
 import logging
+import os
 import threading
 from pathlib import Path
 
@@ -154,3 +155,56 @@ class RuntimeSettings:
 
 # Singleton — único por processo
 runtime_settings = RuntimeSettings()
+
+
+# ── Orquestração de troca de modelo ──────────────────────────────────────────
+
+
+def _reset_llm_singletons() -> None:
+    """Zera singletons de LLM dos agentes para forçar recriação com novo provider/model."""
+    try:
+        import src.agents.coder as _c
+        import src.agents.orchestrator as _o
+        import src.agents.search as _s
+        import src.nodes.web_curation as _wc
+
+        _o._orchestrator_llm = None
+        _o._synthesis_llm = None
+        logger.debug("orchestrator singletons resetados")
+
+        _c._coder_llm = None
+        logger.debug("coder singletons resetados")
+
+        _s._search_llm = None
+        logger.debug("search singletons resetados")
+
+        _wc._judge_llm = None
+        logger.debug("web_curation singletons resetados")
+
+        logger.info("Todos os LLM singletons foram resetados com sucesso")
+    except Exception as e:
+        logger.warning("Erro ao resetar LLM singletons: %s", e)
+
+
+def apply_model_change(provider: str, model: str) -> None:
+    """Aplica troca de provider/model: settings.json + os.environ + Settings em memória + singletons LLM."""
+    from src.settings import PROVIDER_MODEL_ENV, settings
+
+    # 1. Persiste em settings.json
+    runtime_settings.set_active_model(provider, model)
+
+    # 2. Atualiza os.environ (efeito imediato para load_llm())
+    os.environ["LLM_PROVIDER"] = provider
+    if env_var := PROVIDER_MODEL_ENV.get(provider):
+        os.environ[env_var] = model
+
+    # 3. Atualiza o singleton Settings em memória
+    try:
+        settings.llm_provider = provider  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
+        settings.set_model(provider, model)
+    except Exception as e:
+        logger.warning("Erro ao atualizar settings singleton: %s", e)
+
+    # 4. Reseta singletons dos agentes -> próxima chamada cria novo LLM
+    _reset_llm_singletons()
+    logger.info("Model aplicado: provider=%s model=%s", provider, model)

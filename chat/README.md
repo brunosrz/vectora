@@ -1,8 +1,6 @@
 # <img src="../assets/vectora.svg" width="28" height="28"> Vectora Chat
 
-Interface web do **Vectora Agent** — construída com Next.js + Hono (TypeScript) e conectada ao agente via ConnectRPC.
-
-> **Origem:** fork do [chat-langchain](https://github.com/langchain-ai/chat-langchain) (LangChain AI). O backend Python original (LangGraph Cloud + LangSmith + FastAPI) foi removido integralmente e substituído por um backend TypeScript com Hono integrado ao Next.js, que se conecta ao Vectora Agent via `vectora server`.
+Interface web do **Vectora Agent** — SPA Vite + TanStack Router (TypeScript) servida pelo FastAPI.
 
 ---
 
@@ -10,24 +8,25 @@ Interface web do **Vectora Agent** — construída com Next.js + Hono (TypeScrip
 
 ```
 Browser
-  ↓ HTTP (Server-Sent Events)
-Next.js App (chat/)
-  ├── app/              — UI React + App Router
-  └── app/api/**        — Hono backend (mesmo processo, mesma porta)
-        ↓ ConnectRPC (server-streaming)
-  Vectora Agent (vectora server chat | headless)
-        ↓ LangGraph
-  graph.py:build_graph()
+  ↓ HTTP / SSE / WebSocket (mesmo origin)
+FastAPI (vectora server web)
+  ├── /            — Vite SPA (chat/dist/ via StaticFiles)
+  ├── /auth/*      — autenticação JWT + cookies httpOnly
+  ├── /vectora.*   — ConnectRPC handlers (chat, workspaces, terminal)
+  └── /admin/*     — painel de administração
+        ↓ LangGraph (astream_events v2)
+  agent_factory.get_user_agent() → DeepAgent
 ```
 
-O Hono roda como um route handler do App Router (`app/api/[[...route]]/route.ts`), eliminando a necessidade de servidor separado.
+Em desenvolvimento, o Vite dev server (`:5173`) proxia `/auth/*`, `/vectora.*`, etc.
+para o FastAPI (`:8080`). Em produção, tudo roda na mesma porta.
 
 ---
 
 ## Pré-requisitos
 
-- [Node.js 20+](https://nodejs.org/) e [pnpm](https://pnpm.io/)
-- Vectora Agent rodando (`vectora server chat` ou `vectora server headless`)
+- [Node.js 22+](https://nodejs.org/) e [pnpm 11+](https://pnpm.io/)
+- Vectora Agent rodando (`vectora server web` ou `vectora server headless`)
 
 ---
 
@@ -153,5 +152,5 @@ Adicionar uma nova tool no agente com `metadata={"render_hint": "table"}` funcio
 ## Relacionado
 
 - [Vectora Agent](../README.md) — o agente que o chat consome
-- `vectora server chat` — serve agent + chat estático em um único processo
+- `vectora server web` — serve agent + Vite SPA em um único processo
 - `vectora server headless` — serve só o agent (sem static files)

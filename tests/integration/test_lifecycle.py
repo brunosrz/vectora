@@ -200,7 +200,7 @@ async def test_rag_finds_embedded_doc(lifecycle_graph, lifecycle_config):
 async def test_checkpointer_persists():
     """Step 5: Fecha o graph e reabre — histórico da session 1212 deve persistir."""
     from src.context import Context
-    from src.graph import build_graph
+    from src.services.agent_factory import build_graph
     from src.services.checkpoint import Checkpointer
 
     context = Context(user_type="test", thread_id=TEST_THREAD_ID)

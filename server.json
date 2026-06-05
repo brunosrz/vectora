@@ -6,12 +6,12 @@
     "url": "https://github.com/brunosrz/vectora",
     "source": "github"
   },
-  "version": "0.1.0dev6",
+  "version": "0.1.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "vectora-agent",
-      "version": "0.1.0dev6",
+      "version": "0.1.0",
       "transport": {
         "type": "stdio",
         "command": "vectora",

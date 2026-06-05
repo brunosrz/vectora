@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     # APPLICATION IDENTITY & VERSIONING
     # ============================================================================
 
-    version: str = "0.1.0dev6"
+    version: str = "0.1.0"
     """Vectora version (synced with pyproject.toml)."""
 
     app_name: str = "Vectora"
@@ -629,6 +629,181 @@ class Settings(BaseSettings):
         if hasattr(self, key.lower()):
             setattr(self, key.lower(), value)
             logger.debug(f"Configuration updated: {key}={value}")
+
+
+# ============================================================================
+# PROVIDER REGISTRY
+# ============================================================================
+# Catálogo estático de providers/modelos suportados, env vars associadas e
+# metadados de display. Consumido pelo TUI (`src/ui/app.py`), pelo setup
+# wizard e pela orquestração de troca de modelo em
+# `src/services/runtime_settings.py::apply_model_change`.
+
+AVAILABLE_MODELS: dict[str, list[str]] = {
+    "google-genai": [
+        # Gemini 3.x — geração atual
+        "gemini-3.5-flash",
+        "gemini-3.1-pro-preview",
+        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite",
+        # Gemini 2.5 — ainda ativos e recomendados
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+    ],
+    "openai": [
+        # GPT-5.5 — geração atual (frontier)
+        "gpt-5.5",
+        "gpt-5.5-pro",
+        # GPT-5.4
+        "gpt-5.4",
+        "gpt-5.4-pro",
+        "gpt-5.4-mini",
+        "gpt-5.4-nano",
+        # GPT-5
+        "gpt-5",
+        "gpt-5-mini",
+        "gpt-5-nano",
+        # Geração anterior ainda suportada
+        "gpt-4.1",
+        # Série de raciocínio
+        "o3",
+        "o4-mini",
+    ],
+    "anthropic": [
+        # Claude 4 — geração atual
+        "claude-opus-4-7",
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5",
+    ],
+    "cohere": [
+        "command-a-03-2025",
+        "command-r-plus-08-2024",
+        "command-r-08-2024",
+        "command-r7b-12-2024",
+    ],
+}
+
+# Fontes públicas das janelas de contexto:
+#   Gemini: https://ai.google.dev/gemini-api/docs/models
+#   Claude: https://platform.claude.com/docs/en/about-claude/models/overview
+#   OpenAI: https://developers.openai.com/api/docs/models/all
+#   Cohere: https://docs.cohere.com/docs/{command-a-plus,command-r7b}
+MODEL_CONTEXT_WINDOWS: dict[str, int] = {
+    # Gemini — toda família roda em 1M
+    "gemini-3.5-flash": 1_000_000,
+    "gemini-3.1-pro-preview": 1_000_000,
+    "gemini-3-flash-preview": 1_000_000,
+    "gemini-3.1-flash-lite": 1_000_000,
+    "gemini-2.5-flash": 1_000_000,
+    "gemini-2.5-pro": 1_000_000,
+    # OpenAI — GPT-4.1 inflou para 1M; GPT-5.x e raciocínio ficaram em 200k+
+    "gpt-5.5": 400_000,
+    "gpt-5.5-pro": 400_000,
+    "gpt-5.4": 400_000,
+    "gpt-5.4-pro": 400_000,
+    "gpt-5.4-mini": 400_000,
+    "gpt-5.4-nano": 400_000,
+    "gpt-5": 400_000,
+    "gpt-5-mini": 400_000,
+    "gpt-5-nano": 400_000,
+    "gpt-4.1": 1_000_000,
+    "o3": 200_000,
+    "o4-mini": 200_000,
+    # Anthropic Claude 4 — todos 200k
+    "claude-opus-4-7": 200_000,
+    "claude-sonnet-4-6": 200_000,
+    "claude-haiku-4-5": 200_000,
+    # Cohere — Command A está em 256k; Command R em 128k
+    "command-a-03-2025": 256_000,
+    "command-r-plus-08-2024": 128_000,
+    "command-r-08-2024": 128_000,
+    "command-r7b-12-2024": 128_000,
+}
+
+# Fallback por família para modelos novos ainda não listados em
+# MODEL_CONTEXT_WINDOWS. Ordem importa — prefixo mais específico antes.
+_FAMILY_CONTEXT_FALLBACKS: tuple[tuple[tuple[str, ...], int], ...] = (
+    (("gemini-",), 1_000_000),
+    (("gpt-4.1",), 1_000_000),
+    (("gpt-", "o3", "o4-"), 200_000),
+    (("claude-",), 200_000),
+    (("command-a",), 256_000),
+    (("command-",), 128_000),
+)
+
+# Variável de ambiente da API key por provider. `None` = sem chave necessária
+# (Ollama roda local).
+PROVIDER_API_KEY_ENV: dict[str, str | None] = {
+    "google-genai": "GOOGLE_API_KEY",
+    "openai": "OPENAI_API_KEY",
+    "anthropic": "ANTHROPIC_API_KEY",
+    "ollama": None,
+    "cohere": "COHERE_API_KEY",
+}
+
+# Variável de ambiente do modelo ativo por provider.
+PROVIDER_MODEL_ENV: dict[str, str] = {
+    "google-genai": "GOOGLE_MODEL",
+    "openai": "OPENAI_MODEL",
+    "anthropic": "ANTHROPIC_MODEL",
+    "ollama": "OLLAMA_MODEL",
+    "cohere": "COHERE_CHAT_MODEL",
+}
+
+# Nome amigável para exibição no TUI / setup wizard.
+PROVIDER_DISPLAY: dict[str, str] = {
+    "google-genai": "Google Gemini",
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "ollama": "Ollama",
+    "cohere": "Cohere",
+}
+
+# URL para obtenção de API key (mostrada pelo setup wizard).
+PROVIDER_KEY_URL: dict[str, str] = {
+    "google-genai": "https://aistudio.google.com/app/apikey",
+    "openai": "https://platform.openai.com/api-keys",
+    "anthropic": "https://console.anthropic.com/",
+    "cohere": "https://dashboard.cohere.com/api-keys",
+}
+
+
+def get_available_models(provider: str | None = None) -> dict[str, list[str]]:
+    """Retorna modelos disponíveis para um provider ou todos."""
+    if provider:
+        return {provider: AVAILABLE_MODELS.get(provider, [])}
+    return AVAILABLE_MODELS
+
+
+def get_context_window(model: str) -> int:
+    """Janela de contexto (tokens) do modelo.
+
+    Olha primeiro a tabela explícita; se não estiver listado, cai num
+    fallback por família a partir do prefixo do id. Default final: 128k.
+    """
+    explicit = MODEL_CONTEXT_WINDOWS.get(model)
+    if explicit is not None:
+        return explicit
+    for prefixes, window in _FAMILY_CONTEXT_FALLBACKS:
+        if model.startswith(prefixes):
+            return window
+    return 128_000
+
+
+def find_provider_for_model(model: str) -> str | None:
+    """Retorna o provider que possui o modelo, ou None se não encontrado."""
+    for provider, models in AVAILABLE_MODELS.items():
+        if model in models:
+            return provider
+    return None
+
+
+def has_api_key(provider: str) -> bool:
+    """True se a env var da API key do provider está populada (Ollama → sempre True)."""
+    key_env = PROVIDER_API_KEY_ENV.get(provider)
+    if key_env is None:
+        return True
+    return bool(os.environ.get(key_env))
 
 
 # ============================================================================

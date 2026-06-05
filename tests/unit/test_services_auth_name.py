@@ -49,7 +49,7 @@ def isolate_db(tmp_path, monkeypatch):
             await auth_mod._db_conn.close()
             auth_mod._db_conn = None
 
-    asyncio.get_event_loop().run_until_complete(_close())
+    asyncio.run(_close())
 
 
 # ---------------------------------------------------------------------------

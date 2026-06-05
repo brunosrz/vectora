@@ -225,7 +225,11 @@ class TestStreamChatRegistersThread:
         """stream_chat chama _upsert_session com o thread_id do request."""
         upsert_calls: list[str] = []
 
-        async def mock_upsert(thread_id: str, title: str = "") -> None:
+        async def mock_upsert(
+            thread_id: str,
+            title: str = "",
+            workspace_id: str | None = None,
+        ) -> None:
             upsert_calls.append(thread_id)
 
         async def _empty_events(*_a: object, **_kw: object):
@@ -239,7 +243,7 @@ class TestStreamChatRegistersThread:
 
         with (
             patch(
-                "src.api.handlers.chat._get_graph",
+                "src.services.agent_factory.get_user_agent",
                 new=AsyncMock(return_value=mock_graph),
             ),
             patch(
@@ -254,7 +258,9 @@ class TestStreamChatRegistersThread:
             importlib.reload(chat_mod)
 
             request = StreamChatRequest(content="Olá", thread_id="explicit-thread-id")
-            _response = await chat_mod.stream_chat(request)  # type: ignore[call-arg]  # ty: ignore[missing-argument]
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            _response = await chat_mod.stream_chat(request, http_request)
 
         assert "explicit-thread-id" in upsert_calls, (
             "stream_chat deve chamar _upsert_session com o thread_id fornecido"
@@ -265,7 +271,11 @@ class TestStreamChatRegistersThread:
         """Quando thread_id é vazio, stream_chat gera UUID e chama _upsert_session."""
         upsert_calls: list[str] = []
 
-        async def mock_upsert(thread_id: str, title: str = "") -> None:
+        async def mock_upsert(
+            thread_id: str,
+            title: str = "",
+            workspace_id: str | None = None,
+        ) -> None:
             upsert_calls.append(thread_id)
 
         async def _empty_events(*_a: object, **_kw: object):
@@ -279,7 +289,7 @@ class TestStreamChatRegistersThread:
 
         with (
             patch(
-                "src.api.handlers.chat._get_graph",
+                "src.services.agent_factory.get_user_agent",
                 new=AsyncMock(return_value=mock_graph),
             ),
             patch(
@@ -294,7 +304,9 @@ class TestStreamChatRegistersThread:
             importlib.reload(chat_mod)
 
             request = StreamChatRequest(content="Sem thread id")
-            _response = await chat_mod.stream_chat(request)  # type: ignore[call-arg]  # ty: ignore[missing-argument]
+            http_request = MagicMock()
+            http_request.state = MagicMock(user=None)
+            _response = await chat_mod.stream_chat(request, http_request)
 
         assert len(upsert_calls) == 1, "Deve ter sido chamado exatamente uma vez"
         thread_id_used = upsert_calls[0]

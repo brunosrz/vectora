@@ -425,6 +425,29 @@ _PARALLEL_AGENT_PROMPTS: dict[str, str] = {
 }
 
 # ---------------------------------------------------------------------------
+# Graph routing — home permanente (movido de src/graph.py para E5)
+# ---------------------------------------------------------------------------
+
+
+def _orchestrator_route(state: object) -> str:
+    """Mapeia routing_decision para o nó de destino após orchestrator."""
+    from langgraph.constants import END
+
+    decision = (
+        state.get("routing_decision") if hasattr(state, "get") else None  # ty: ignore[call-non-callable]
+    ) or "respond"  # type: ignore[union-attr]
+    mapping = {
+        "respond": END,
+        "search": "search",
+        "coder": "coder",
+        "rag": "rag_expand_query",
+        "parallel": "parallel_dispatch",
+        "tools": "search",
+    }
+    return mapping.get(decision, END)  # type: ignore[return-value]
+
+
+# ---------------------------------------------------------------------------
 # LLM singletons
 # ---------------------------------------------------------------------------
 

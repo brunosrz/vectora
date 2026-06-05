@@ -115,7 +115,7 @@ async def lifecycle_graph():
     Cada teste abre e fecha sua própria conexão SQLite, mas compartilham o
     mesmo arquivo de banco — portanto o histórico persiste entre testes.
     """
-    from src.graph import build_graph
+    from src.services.agent_factory import build_graph
     from src.services.checkpoint import Checkpointer
 
     async with Checkpointer() as cp:

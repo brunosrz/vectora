@@ -393,12 +393,8 @@ async def run_setup() -> None:
         )
     )
     console.print()
-    console.print(Rule("[bold cyan]Iniciando Vectora Chat[/bold cyan]", style="cyan"))
+    console.print(Rule("[bold cyan]Setup concluído[/bold cyan]", style="cyan"))
     console.print()
-
-    from src.ui.chat import run_chat
-
-    await run_chat()
 
 
 def run_setup_sync() -> None:

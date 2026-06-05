@@ -231,8 +231,11 @@ typings/
 # parcel-bundler cache
 .cache/
 
-# Next.js build output
+# Next.js / Vite build output (rebuilt inside Docker)
 .next/
+chat/dist/
+chat/.tanstack/
+chat/.turbo/
 
 # Nuxt.js build / generate output
 .nuxt/

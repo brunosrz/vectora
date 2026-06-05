@@ -12,7 +12,8 @@ Uso (PowerShell / cmd, sem Git bash):
     scons build-nuitka  → Nuitka onefile → dist-nuitka/
     scons build-desktop → TypeScript Electron → desktop/dist/
     scons package       → electron-builder → desktop/dist-electron/
-    scons test          → pytest tests/unit/
+    scons tests         → pytest (unit + stress + ...) com coverage + vitest do chat
+    scons tests-full    → idem + tests/integration + tests/e2e (requer API keys)
     scons lint          → ruff + ty + tsc + oxlint
     scons clean         → remove outputs de build
 
@@ -117,7 +118,28 @@ def _action_dev(target, source, env):
     _run(["uv", "run", "python", "scripts/dev.py"])
 
 
-def _action_test(target, source, env):
+def _action_tests(target, source, env, *, include_external: bool = False):
+    """Roda a suíte de testes Python (pytest + coverage) e a do chat (vitest).
+
+    Default (``scons tests``): unit + stress + qualquer pasta sem marker;
+    pula ``integration`` e ``e2e`` que exigem GOOGLE_API_KEY / COHERE_API_KEY /
+    gemini CLI. Use ``scons tests-full`` para incluir essas suítes.
+    """
+    pytest_cmd = [
+        "uv", "run", "pytest", "tests",
+        "--cov=src",
+        "--cov-report=term-missing:skip-covered",
+        "--cov-report=html:htmlcov",
+        "--tb=short",
+    ]
+    if not include_external:
+        pytest_cmd += ["-m", "not e2e and not integration"]
+    _run(pytest_cmd)
+    _run([PNPM, "--dir", "chat", "test"])
+
+
+def _action_test_legacy(target, source, env):
+    """Compat: ``scons test`` continua rodando só `tests/unit/`."""
     _run(["uv", "run", "pytest", "tests/unit/", "-v", "--tb=short"])
 
 
@@ -165,7 +187,10 @@ def _action_help(target, source, env):
     scons dev-chat         apenas Vite dev
 
   Qualidade
-    scons test             pytest tests/unit/
+    scons tests            pytest tests/ + coverage + vitest do chat
+                           (pula -m e2e e -m integration)
+    scons tests-full       idem + integration + e2e (requer API keys)
+    scons test             [legado] pytest tests/unit/ apenas
     scons lint             ruff + ty + tsc + oxlint
     scons clean            remove todos os outputs de build
 """)
@@ -215,10 +240,12 @@ _cmd("dev-backend", lambda t, s, e: _run(
 _cmd("dev-chat",    lambda t, s, e: _run([PNPM, "--dir", "chat", "dev"]))
 
 # Qualidade
-_cmd("test",  _action_test)
-_cmd("lint",  _action_lint)
-_cmd("clean", _action_clean)
-_cmd("help",  _action_help)
+_cmd("tests",      _action_tests)
+_cmd("tests-full", lambda t, s, e: _action_tests(t, s, e, include_external=True))
+_cmd("test",       _action_test_legacy)  # back-compat
+_cmd("lint",       _action_lint)
+_cmd("clean",      _action_clean)
+_cmd("help",       _action_help)
 
 # Default: exibe ajuda
 Default(env.Command("_default", [], _action_help))

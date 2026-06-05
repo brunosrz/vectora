@@ -369,15 +369,7 @@ jobs:
           tags: |
             type=raw,value=latest
             type=sha,format=long
-      - name: Extract metadata for chat image
-        id: meta-chat
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}-chat
-          tags: |
-            type=raw,value=latest
-            type=sha,format=long
-      - name: Build and push main Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -386,17 +378,6 @@ jobs:
           labels: ${{ steps.meta-main.outputs.labels }}
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          secrets: |
-            GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push chat Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./chat
-          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          tags: ${{ steps.meta-chat.outputs.tags }}
-          labels: ${{ steps.meta-chat.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -438,7 +419,6 @@ jobs:
           set -e
           echo "$GHCR_TOKEN" | docker login ghcr.io -u $GHCR_USER --password-stdin
           docker pull $IMAGE:latest
-          docker pull ${IMAGE}-chat:latest
           cd /$DEPLOY_PATH
           docker compose down || true
           docker compose up -d

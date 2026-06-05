@@ -35,7 +35,7 @@ class TestParallelDispatch:
     @pytest.mark.asyncio
     async def test_empty_tasks_returns_empty_results(self):
         """Sem tasks, retorna lista vazia sem chamar o LLM."""
-        from src.graph import parallel_dispatch
+        from src.nodes.parallel import parallel_dispatch
 
         config: Any = {"configurable": {}}
         result = await parallel_dispatch(_state(), config=config)
@@ -44,7 +44,7 @@ class TestParallelDispatch:
     @pytest.mark.asyncio
     async def test_executes_all_tasks(self):
         """Todas as tasks devem ser executadas e retornar resultados."""
-        from src.graph import parallel_dispatch
+        from src.nodes.parallel import parallel_dispatch
 
         config: Any = {"configurable": {}}
         tasks = [
@@ -67,7 +67,7 @@ class TestParallelDispatch:
     @pytest.mark.asyncio
     async def test_results_contain_agent_and_task_fields(self):
         """Cada resultado deve conter agent, task, reason, response, success."""
-        from src.graph import parallel_dispatch
+        from src.nodes.parallel import parallel_dispatch
 
         config: Any = {"configurable": {}}
         tasks = [_task("search", "busca JWT", "precisamos de contexto")]
@@ -91,7 +91,7 @@ class TestParallelDispatch:
     @pytest.mark.asyncio
     async def test_task_failure_marked_as_not_success(self):
         """Uma task que falha não deve derrubar as demais — marca success=False."""
-        from src.graph import parallel_dispatch
+        from src.nodes.parallel import parallel_dispatch
 
         config: Any = {"configurable": {}}
         tasks = [
@@ -124,7 +124,8 @@ class TestParallelDispatch:
     @pytest.mark.asyncio
     async def test_uses_agent_specific_prompt(self):
         """Cada tipo de agente deve receber seu próprio system prompt."""
-        from src.graph import _PARALLEL_AGENT_PROMPTS, parallel_dispatch
+        from src.agents.orchestrator import _PARALLEL_AGENT_PROMPTS
+        from src.nodes.parallel import parallel_dispatch
 
         config: Any = {"configurable": {}}
         tasks = [
@@ -156,7 +157,8 @@ class TestParallelDispatch:
     @pytest.mark.asyncio
     async def test_unknown_agent_uses_search_prompt(self):
         """Agente desconhecido usa o prompt de search como fallback."""
-        from src.graph import _PARALLEL_AGENT_PROMPTS, parallel_dispatch
+        from src.agents.orchestrator import _PARALLEL_AGENT_PROMPTS
+        from src.nodes.parallel import parallel_dispatch
 
         config: Any = {"configurable": {}}
         tasks = [_task("inexistente", "tarefa desconhecida")]
@@ -229,7 +231,7 @@ class TestParallelStateFields:
 class TestOrchestratorParallelRouting:
     def test_parallel_maps_to_parallel_dispatch(self):
         """_orchestrator_route deve mapear 'parallel' → 'parallel_dispatch'."""
-        from src.graph import _orchestrator_route
+        from src.agents.orchestrator import _orchestrator_route
 
         state = _state(routing_decision="parallel")
         assert _orchestrator_route(state) == "parallel_dispatch"
@@ -238,7 +240,7 @@ class TestOrchestratorParallelRouting:
         """Routing 'respond' continua mapeando para END."""
         from langgraph.constants import END
 
-        from src.graph import _orchestrator_route
+        from src.agents.orchestrator import _orchestrator_route
 
         state = _state(routing_decision="respond")
         assert _orchestrator_route(state) == END
@@ -247,7 +249,7 @@ class TestOrchestratorParallelRouting:
         """Routing desconhecido deve cair no END como fallback seguro."""
         from langgraph.constants import END
 
-        from src.graph import _orchestrator_route
+        from src.agents.orchestrator import _orchestrator_route
 
         state = _state(routing_decision="inexistente")
         assert _orchestrator_route(state) == END

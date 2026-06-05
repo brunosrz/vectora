@@ -338,3 +338,7 @@ AbilitySystem_repo/
 
 # SCons cache
 .sconsign.dblite
+/dist-nuitka
+
+# WIP isolado fora do src/
+/.wip/

@@ -13,13 +13,11 @@ Formato de resposta:
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import contextlib
 import json
 import logging
 import uuid
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -30,13 +28,12 @@ from src.api.schemas import (
     Attachment,
     AttachmentKind,
     ChatConfig,
-    ErrorEvent,
     GetToolsResponse,
     ResumeChatRequest,
     StreamChatRequest,
     ToolSchema,
-    encode_event,
 )
+from src.services import agent_factory
 
 logger = logging.getLogger(__name__)
 
@@ -139,71 +136,24 @@ def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Lazy graph loader
+# Lazy graph loader — delegado para agent_factory
 # ---------------------------------------------------------------------------
-
-_graph: Any = None
-_checkpointer_ctx: Any = None  # mantém o AsyncSqliteSaver vivo durante todo o processo
-_graph_lock = asyncio.Lock()
-
-
-async def _get_graph() -> Any:
-    """Obtém o grafo LangGraph compilado (singleton).
-
-    O ``AsyncSqliteSaver`` é um async context manager — abrimos uma vez na primeira
-    chamada e mantemos a referência no módulo. ``aclose_graph()`` fecha tudo no
-    shutdown do servidor.
-    """
-    global _graph, _checkpointer_ctx
-    if _graph is not None:
-        return _graph
-    async with _graph_lock:
-        if _graph is not None:  # double-check após o lock
-            return _graph
-        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-
-        from src.graph import build_graph
-
-        db_path = str(Path.home() / ".vectora" / "checkpoints.db")
-        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
-        checkpointer = await _checkpointer_ctx.__aenter__()
-        _graph = build_graph(checkpointer)
-        logger.info("api/chat: grafo LangGraph inicializado (db=%s)", db_path)
-    return _graph
 
 
 async def aclose_graph() -> None:
     """Fecha o grafo + checkpointer SQLite. Idempotente.
 
-    Deve ser chamado no shutdown do FastAPI (lifespan). Encapsula o estado
-    privado do módulo (``_graph``, ``_checkpointer_ctx``) — o resto da app
-    nunca toca nesses globals diretamente.
+    Delegado para ``agent_factory.aclose()`` — estado de lifecycle mantido lá.
     """
-    global _graph, _checkpointer_ctx
-    async with _graph_lock:
-        if _checkpointer_ctx is None:
-            return
-        ctx = _checkpointer_ctx
-        _checkpointer_ctx = None
-        _graph = None
-        try:
-            await ctx.__aexit__(None, None, None)
-            logger.info("api/chat: checkpointer SQLite fechado")
-        except Exception as exc:
-            logger.warning("api/chat: erro ao fechar checkpointer: %s", exc)
+    await agent_factory.aclose()
 
 
 async def awarm_graph() -> None:
     """Inicializa o grafo eagerly no startup (opt-in).
 
-    Evita que a primeira request pague o custo de compilação (~3-5s).
-    Falhas aqui não derrubam o servidor — apenas logam aviso.
+    Delegado para ``agent_factory.awarm()``.
     """
-    try:
-        await _get_graph()
-    except Exception as exc:
-        logger.warning("api/chat: warmup do grafo falhou (continuando): %s", exc)
+    await agent_factory.awarm()
 
 
 # ---------------------------------------------------------------------------
@@ -334,7 +284,7 @@ async def stream_chat(
         )
 
     try:
-        graph = await _get_graph()
+        graph = await agent_factory.get_user_agent(user_id)
     except Exception as exc:
         logger.exception("api/chat: erro ao inicializar grafo")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -389,15 +339,16 @@ async def resume_chat(
     """
     from langgraph.types import Command
 
+    resume_user_id = _user_id_from_request(http_request)
     try:
-        graph = await _get_graph()
+        graph = await agent_factory.get_user_agent(resume_user_id)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     config: dict[str, Any] = {
         "configurable": {
             "thread_id": request.thread_id,
-            "user_id": _user_id_from_request(http_request),
+            "user_id": resume_user_id,
         },
         "recursion_limit": 50,
     }
