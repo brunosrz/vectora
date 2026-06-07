@@ -224,8 +224,8 @@ export const AGENTS = {
   },
 } as const satisfies Record<string, AgentConfig>;
 
-export type AgentKey = keyof typeof AGENTS;
-export type AgentType = (typeof AGENTS)[AgentKey]["id"];
+type AgentKey = keyof typeof AGENTS;
+type AgentType = (typeof AGENTS)[AgentKey]["id"];
 
 // =============================================================================
 // Deployment

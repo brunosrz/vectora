@@ -1,20 +1,15 @@
 "use client";
 
 /**
- * FilesTab (T6 + T11.2 + T10.2 pin)
+ * FilesTab — explorador de arquivos do workspace ativo.
  *
- * Estado vive no workbench-store (slice `files`):
- *   - árvore expandida e entradas já carregadas → sobrevivem a remount
- *   - arquivo aberto + conteúdo → mesmo
- *   - filtro de busca → idem
+ * Estado vive no workbench-store (slice `files`), sobrevivendo a remount:
+ * árvore expandida e entradas carregadas, arquivo aberto + conteúdo, filtro
+ * de busca. Arquivos fixados ("pin") persistem por threadId via `pinnedFiles`.
  *
- * T10.2 — Pin de arquivo (persistido por threadId via `pinnedFiles`).
- *
- * Novas features:
- *   - Toolbar VS Code-like: Novo Arquivo · Nova Pasta · Refresh
- *   - Criação inline: input aparece na árvore ao criar
- *   - Delete: botão trash visível em hover (arquivo + pasta)
- *   - Add to context: botão @ visível em hover → injeta @path no chat
+ * Funcionalidades: toolbar (novo arquivo/pasta, refresh), criação inline na
+ * árvore, delete em hover (arquivo e pasta) e botão @ que injeta o caminho
+ * como @mention no chat.
  */
 
 import {
@@ -39,10 +34,42 @@ import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
 import {
   WORKBENCH_STALE_MS,
   useWorkbenchStore,
+  type DiffSummary,
   type FileContent,
   type FileEntry,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+
+// ---------------------------------------------------------------------------
+// Badge de status git — derivado do diff porcelain por join client-side.
+// ---------------------------------------------------------------------------
+
+const GIT_BADGE_TONE: Record<string, string> = {
+  M: "text-amber-500",
+  A: "text-green-500",
+  D: "text-destructive",
+  R: "text-blue-400",
+  "?": "text-muted-foreground",
+};
+
+/** Normaliza separadores para "/" (backend devolve POSIX). */
+function norm(path: string): string {
+  return path.replace(/\\/g, "/");
+}
+
+function GitBadge({ status }: { status?: string }) {
+  if (!status) return null;
+  return (
+    <span
+      className={`w-3 text-center font-bold shrink-0 text-[10px] ${
+        GIT_BADGE_TONE[status] ?? "text-muted-foreground"
+      }`}
+      title={status}
+    >
+      {status}
+    </span>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // API helpers
@@ -59,6 +86,16 @@ async function fetchTree(
   if (!res.ok) return null;
   const data = await res.json();
   return data.entries ?? [];
+}
+
+async function fetchDiffSummary(
+  workspaceId: string,
+): Promise<DiffSummary | null> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/diff`,
+  );
+  if (!res.ok) return null;
+  return res.json();
 }
 
 async function fetchFile(
@@ -120,6 +157,7 @@ function FileItem({
   threadId,
   entry,
   depth,
+  status,
   onOpenFile,
   onAddToContext,
   onDelete,
@@ -127,6 +165,7 @@ function FileItem({
   threadId: string;
   entry: FileEntry;
   depth: number;
+  status?: string;
   onOpenFile: (path: string) => void;
   onAddToContext?: (path: string) => void;
   onDelete: (path: string, name: string, permanent?: boolean) => void;
@@ -155,6 +194,7 @@ function FileItem({
       >
         {entry.name}
       </button>
+      <GitBadge status={status} />
 
       {/* Ações em hover */}
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -247,6 +287,7 @@ interface DirNodeProps {
   name: string;
   depth: number;
   filter: string;
+  statusByPath: Map<string, string>;
   onOpenFile: (path: string) => void;
   onAddToContext?: (path: string) => void;
   onDelete: (path: string, name: string, permanent?: boolean) => void;
@@ -263,6 +304,7 @@ function DirNode({
   name,
   depth,
   filter,
+  statusByPath,
   onOpenFile,
   onAddToContext,
   onDelete,
@@ -391,6 +433,7 @@ function DirNode({
                   name={entry.name}
                   depth={depth + 1}
                   filter={filter}
+                  statusByPath={statusByPath}
                   onOpenFile={onOpenFile}
                   onAddToContext={onAddToContext}
                   onDelete={onDelete}
@@ -405,6 +448,7 @@ function DirNode({
                   threadId={threadId}
                   entry={entry}
                   depth={depth}
+                  status={statusByPath.get(norm(entry.path))}
                   onOpenFile={onOpenFile}
                   onAddToContext={onAddToContext}
                   onDelete={onDelete}
@@ -510,6 +554,37 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const setOpenFile = useWorkbenchStore((s) => s.setOpenFile);
   const setFileContent = useWorkbenchStore((s) => s.setFileContent);
   const invalidateFiles = useWorkbenchStore((s) => s.invalidateFiles);
+
+  // Badges M/A/D na árvore: join client-side com o diff porcelain.
+  const diffSummary = useWorkbenchStore((s) => s.getDiff(wsId).summary);
+  const diffFetchedAt = useWorkbenchStore(
+    (s) => s.getDiff(wsId).summaryFetchedAt,
+  );
+  const setDiffSummary = useWorkbenchStore((s) => s.setDiffSummary);
+  const clearPending = useWorkbenchStore((s) => s.clearPending);
+
+  // Abrir/revalidar a aba consome a pendência de atualização.
+  useEffect(() => {
+    if (wsId) clearPending(wsId, "files");
+  }, [wsId, diffFetchedAt, clearPending]);
+
+  const statusByPath = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const f of diffSummary?.files ?? []) m.set(norm(f.path), f.status);
+    return m;
+  }, [diffSummary]);
+
+  useWorkbenchSWR({
+    key: `files-diff-badges:${wsId}`,
+    hasCache: diffSummary !== null,
+    isStale: Date.now() - diffFetchedAt > WORKBENCH_STALE_MS,
+    revalidate: async () => {
+      if (!wsId) return;
+      const data = await fetchDiffSummary(wsId);
+      if (data) setDiffSummary(wsId, data);
+    },
+    skip: !wsId,
+  });
 
   // Estado de criação inline
   const [creating, setCreating] = useState<CreatingState | null>(null);
@@ -688,6 +763,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
           name={workspace.name}
           depth={0}
           filter={filter}
+          statusByPath={statusByPath}
           onOpenFile={handleOpenFile}
           onAddToContext={onAddToContext}
           onDelete={handleDelete}

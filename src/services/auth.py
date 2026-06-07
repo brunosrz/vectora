@@ -327,8 +327,8 @@ async def signup(
     Raises:
         ValueError: email já cadastrado ou validação falhou
     """
-    if len(password) < 12:
-        raise ValueError("Senha deve ter no mínimo 12 caracteres.")
+    if len(password) < 8:
+        raise ValueError("Senha deve ter no mínimo 8 caracteres.")
 
     # Sanitiza o nome: trim, normaliza espaços internos, limita o tamanho.
     name_clean = " ".join(name.split())[:100]
@@ -529,8 +529,8 @@ async def change_password(user_id: str, old_password: str, new_password: str) ->
     Raises:
         ValueError: senha atual incorreta ou nova senha inválida
     """
-    if len(new_password) < 12:
-        raise ValueError("Nova senha deve ter no mínimo 12 caracteres.")
+    if len(new_password) < 8:
+        raise ValueError("Nova senha deve ter no mínimo 8 caracteres.")
 
     db = await _get_db()
     async with db.execute("SELECT * FROM users WHERE id = ?", (user_id,)) as cur:

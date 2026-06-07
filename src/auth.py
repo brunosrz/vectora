@@ -133,7 +133,7 @@ def cmd_signup(args: Any) -> int:
         print("❌ E-mail não pode ser vazio.")
         return 1
 
-    password = getpass.getpass("Senha (min 12 chars): ")
+    password = getpass.getpass("Senha (min 8 chars): ")
     confirm = getpass.getpass("Confirme a senha: ")
     if password != confirm:
         print("❌ Senhas não conferem.")

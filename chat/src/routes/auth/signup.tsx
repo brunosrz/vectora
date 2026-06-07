@@ -1,26 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useT } from "@/lib/i18n";
 import type { AuthUser } from "@/lib/types/auth";
 
-const schema = z
-  .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, "Informe seu nome.")
-      .max(100, "Nome muito longo (máx. 100 caracteres)."),
-    email: z.string().email("E-mail inválido."),
-    password: z.string().min(12, "Senha deve ter no mínimo 12 caracteres."),
-    confirm: z.string(),
-  })
-  .refine((d) => d.password === d.confirm, {
-    message: "As senhas não conferem.",
-    path: ["confirm"],
-  });
+/** Tamanho mínimo de senha — espelha a validação do backend. */
+const PASSWORD_MIN = 8;
+const NAME_MAX = 100;
 
 const searchSchema = z.object({
   invite: z.string().optional(),
@@ -33,8 +22,34 @@ export const Route = createFileRoute("/auth/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
+  const t = useT();
   const { invite: inviteFromUrl } = Route.useSearch();
   const setUser = useAuthStore((s) => s.setUser);
+
+  const schema = useMemo(
+    () =>
+      z
+        .object({
+          name: z
+            .string()
+            .trim()
+            .min(1, t("auth.signup.name_required"))
+            .max(NAME_MAX, t("auth.signup.name_too_long", { n: NAME_MAX })),
+          email: z.string().email(t("auth.email_invalid")),
+          password: z
+            .string()
+            .min(
+              PASSWORD_MIN,
+              t("auth.signup.password_min", { n: PASSWORD_MIN }),
+            ),
+          confirm: z.string(),
+        })
+        .refine((d) => d.password === d.confirm, {
+          message: t("auth.signup.passwords_mismatch"),
+          path: ["confirm"],
+        }),
+    [t],
+  );
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -128,14 +143,14 @@ function SignUpPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setServerError(data.detail ?? "Erro ao criar conta.");
+        setServerError(data.detail ?? t("auth.signup.create_error"));
         return;
       }
 
       setUser(data.user as AuthUser);
       void navigate({ to: "/" });
     } catch {
-      setServerError("Erro de conexão. Verifique se o servidor está rodando.");
+      setServerError(t("auth.conn_error"));
     } finally {
       setLoading(false);
     }
@@ -144,7 +159,7 @@ function SignUpPage() {
   if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <p className="text-sm text-muted-foreground">{t("auth.loading")}</p>
       </div>
     );
   }
@@ -163,19 +178,35 @@ function SignUpPage() {
           <div className="text-center">
             {inviteRole ? (
               <>
-                <p className="text-sm text-muted-foreground">Criar conta</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("auth.signup.invite_title")}
+                </p>
                 <p className="text-xs text-muted-foreground/70 mt-0.5">
-                  Convite para função:{" "}
+                  {t("auth.signup.invite_role")}{" "}
                   <span className="text-primary font-medium">{inviteRole}</span>
                 </p>
               </>
             ) : (
               <>
-                <p className="text-sm text-muted-foreground">Primeiro acesso</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("auth.signup.first_access")}
+                </p>
                 <p className="text-xs text-muted-foreground/70 mt-0.5">
-                  O primeiro usuário criado vira{" "}
-                  <span className="text-yellow-400 font-medium">root</span>{" "}
-                  automaticamente.
+                  {t("auth.signup.root_hint")
+                    .split("{root}")
+                    .flatMap((part, i) =>
+                      i === 0
+                        ? [part]
+                        : [
+                            <span
+                              key="root"
+                              className="text-yellow-400 font-medium"
+                            >
+                              root
+                            </span>,
+                            part,
+                          ],
+                    )}
                 </p>
               </>
             )}
@@ -188,7 +219,7 @@ function SignUpPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="name"
             >
-              Nome
+              {t("auth.signup.name")}
             </label>
             <input
               id="name"
@@ -197,9 +228,9 @@ function SignUpPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              maxLength={100}
+              maxLength={NAME_MAX}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-              placeholder="Como o Vectora deve te chamar?"
+              placeholder={t("auth.signup.name_ph")}
             />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name}</p>
@@ -211,7 +242,7 @@ function SignUpPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="email"
             >
-              E-mail
+              {t("auth.email")}
             </label>
             <input
               id="email"
@@ -221,7 +252,7 @@ function SignUpPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-              placeholder="voce@empresa.com"
+              placeholder={t("auth.email_ph")}
             />
             {errors.email && (
               <p className="text-xs text-destructive">{errors.email}</p>
@@ -233,7 +264,7 @@ function SignUpPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="password"
             >
-              Senha
+              {t("auth.password")}
             </label>
             <div className="relative">
               <input
@@ -244,7 +275,7 @@ function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-                placeholder="Mínimo 12 caracteres"
+                placeholder={t("auth.signup.password_ph", { n: PASSWORD_MIN })}
               />
               <button
                 type="button"
@@ -255,7 +286,11 @@ function SignUpPage() {
                 }}
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute inset-y-0 right-0 flex items-center justify-center w-11 min-h-[44px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                aria-label={
+                  showPassword
+                    ? t("auth.hide_password")
+                    : t("auth.show_password")
+                }
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -274,7 +309,7 @@ function SignUpPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="confirm"
             >
-              Confirmar senha
+              {t("auth.signup.confirm")}
             </label>
             <div className="relative">
               <input
@@ -285,7 +320,7 @@ function SignUpPage() {
                 onChange={(e) => setConfirm(e.target.value)}
                 required
                 className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-                placeholder="••••••••••••"
+                placeholder={t("auth.signup.confirm_ph")}
               />
               <button
                 type="button"
@@ -297,7 +332,9 @@ function SignUpPage() {
                 onClick={() => setShowConfirm((v) => !v)}
                 className="absolute inset-y-0 right-0 flex items-center justify-center w-11 min-h-[44px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={
-                  showConfirm ? "Ocultar confirmação" : "Mostrar confirmação"
+                  showConfirm
+                    ? t("auth.signup.hide_confirm")
+                    : t("auth.signup.show_confirm")
                 }
               >
                 {showConfirm ? (
@@ -323,14 +360,14 @@ function SignUpPage() {
             disabled={loading}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
           >
-            {loading ? "Criando conta…" : "Criar conta"}
+            {loading ? t("auth.signup.submitting") : t("auth.signup.submit")}
           </button>
         </form>
 
         <p className="text-center text-xs text-muted-foreground">
-          Já tem conta?{" "}
+          {t("auth.signup.have_account")}{" "}
           <Link to={"/auth/signin"} className="text-primary hover:underline">
-            Entrar
+            {t("auth.signup.signin_link")}
           </Link>
         </p>
       </div>

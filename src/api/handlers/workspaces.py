@@ -23,7 +23,7 @@ import logging
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -642,7 +642,7 @@ async def create_worktree(body: CreateWorktreeRequest) -> StatusResponse:
 
 
 # ---------------------------------------------------------------------------
-# Workbench views (Bloco T cont., T6/T7) — REST-style /workspaces/{id}/...
+# Workbench views — REST-style /workspaces/{id}/...
 # ---------------------------------------------------------------------------
 #
 # Endpoints específicos consumidos pelas abas Arquivos e Diff do Workbench.
@@ -803,8 +803,8 @@ _IGNORED_DIR_NAMES = {
 def _resolve_inside(workspace_id: str, rel_path: str) -> Path | None:
     """Resolve ``rel_path`` para um caminho dentro do workspace ou None.
 
-    Reusa o helper de segurança do Bloco Q4 (`resolve_within_workspace`),
-    garantindo que `..` e symlinks para fora não escapem da pasta confiável.
+    Reusa o helper de segurança `resolve_within_workspace`, garantindo que
+    `..` e symlinks para fora não escapem da pasta confiável.
     """
     from src.services.security import resolve_within_workspace
     from src.services.workspace import workspace_registry
@@ -952,7 +952,7 @@ def _parse_porcelain_v1(raw: str) -> list[tuple[str, str, str]]:
 
 
 @view_router.get("/{workspace_id}/git/diff", response_model=DiffSummary)
-async def workspace_git_diff(workspace_id: str) -> DiffSummary:
+async def workspace_git_diff(workspace_id: str, response: Response) -> DiffSummary:
     """Resumo do diff (uncommitted) do workspace.
 
     Faz duas passadas no repositório:
@@ -965,6 +965,10 @@ async def workspace_git_diff(workspace_id: str) -> DiffSummary:
     ``.git`` ou quando ``git`` não está disponível no ambiente.
     """
     from src.services.workspace import workspace_registry
+
+    # Versão do schema de diff: cada arquivo traz flags independentes
+    # staged_change/unstaged_change/untracked (cobre XY=MM e untracked).
+    response.headers["X-Vectora-Diff-Schema"] = "2"
 
     ws = workspace_registry.get(workspace_id)
     if ws is None or not ws.cwd:

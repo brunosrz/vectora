@@ -1,21 +1,18 @@
 "use client";
 
 /**
- * WorkbenchPanel (Bloco T cont., T5 + T10.1)
+ * WorkbenchPanel — container do painel lateral direito multi-aba. O terminal
+ * é uma das abas, junto a Arquivos, Diff e Plano.
  *
- * Container do painel lateral direito multi-aba. Substitui o uso direto do
- * TerminalPanel — agora o terminal é apenas uma das abas, junto a Arquivos
- * (T6), Diff (T7) e Plano (T8). Espelha o painel lateral do Claude Code.
- *
- * T10.1 — Chips de contagem por aba:
+ * Cada aba mostra um chip de contagem lido do cache do workbench-store (não
+ * dispara fetch só para contar):
  *   - terminal: número de PTYs abertos na sessão
- *   - files: número de arquivos pinados (T10.2)
- *   - diff: `+N -M` quando há mudanças, ou número de arquivos modificados
+ *   - files: número de arquivos fixados
+ *   - diff: `+N -M` quando há mudanças
  *   - plan: número de artifacts na sessão
  *
- * O badge usa o cache do workbench-store (T11) — não dispara fetch só para
- * contar. Em SSR / antes de hidratar, o badge fica vazio (consistente com
- * o padrão `useHydrated`).
+ * Antes de hidratar, o badge fica vazio (consistente com `useHydrated`) para
+ * evitar divergência SSR/cliente.
  */
 
 import {
@@ -100,7 +97,16 @@ function TabButton({
   onSelect: () => void;
   label: string;
 }) {
+  const t = useT();
   const badge = useTabBadge(threadId, workspaceId, tab, hydrated);
+  const pending = useWorkbenchStore((s) =>
+    tab === "files"
+      ? Boolean(s.pending[workspaceId]?.files)
+      : tab === "diff"
+        ? Boolean(s.pending[workspaceId]?.diff)
+        : false,
+  );
+  const showPending = hydrated && pending && !active;
   const Icon = TAB_ICON[tab];
   return (
     <button
@@ -114,6 +120,13 @@ function TabButton({
     >
       <Icon className="w-3.5 h-3.5" />
       <span>{label}</span>
+      {showPending && (
+        <span
+          className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+          aria-label={t("workbench.tab.pending")}
+          title={t("workbench.tab.pending")}
+        />
+      )}
       {badge && (
         <span
           className={`ml-0.5 inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full text-[10px] font-mono leading-none ${

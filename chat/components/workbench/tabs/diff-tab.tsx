@@ -1,17 +1,15 @@
 "use client";
 
 /**
- * DiffTab (T7 + T11.3) — diff do workspace ativo.
+ * DiffTab — diff do workspace ativo.
  *
- * Estado vive no workbench-store (slice `diff`):
- *   - resumo (lista de arquivos modificados) → cacheado por workspace
- *   - arquivos com hunks abertos → idem
- *   - hunks já carregados → idem
- * SWR via `useWorkbenchSWR`.
+ * Estado vive no workbench-store (slice `diff`), cacheado por workspace:
+ * resumo (lista de arquivos modificados), arquivos com hunks abertos e os
+ * hunks já carregados. Revalidação via `useWorkbenchSWR`.
  */
 
 import { ChevronDown, ChevronRight, GitBranch, Loader2 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
@@ -50,6 +48,7 @@ const STATUS_TONE: Record<DiffFile["status"], string> = {
   A: "text-green-500",
   D: "text-destructive",
   R: "text-blue-400",
+  "?": "text-muted-foreground",
 };
 
 function HunkView({ hunk }: { hunk: DiffHunk }) {
@@ -152,6 +151,12 @@ export function DiffTab(_props: DiffTabProps) {
   const summary = useWorkbenchStore((s) => s.getDiff(wsId).summary);
   const fetchedAt = useWorkbenchStore((s) => s.getDiff(wsId).summaryFetchedAt);
   const setDiffSummary = useWorkbenchStore((s) => s.setDiffSummary);
+  const clearPending = useWorkbenchStore((s) => s.clearPending);
+
+  // Abrir/revalidar a aba consome a pendência de atualização.
+  useEffect(() => {
+    if (wsId) clearPending(wsId, "diff");
+  }, [wsId, fetchedAt, clearPending]);
 
   useWorkbenchSWR({
     key: `diff-summary:${wsId}`,
@@ -205,11 +210,38 @@ export function DiffTab(_props: DiffTabProps) {
     );
   }
 
+  return <DiffGroups workspaceId={wsId} summary={summary} t={t} />;
+}
+
+// ---------------------------------------------------------------------------
+// DiffGroups — agrupa em "Staged" e "Modificados / Não rastreados". Um arquivo
+// com XY=MM (staged E unstaged) aparece nos dois grupos.
+// ---------------------------------------------------------------------------
+
+function DiffGroups({
+  workspaceId,
+  summary,
+  t,
+}: {
+  workspaceId: string;
+  summary: DiffSummary;
+  t: ReturnType<typeof useT>;
+}) {
+  const { staged, unstaged } = useMemo(() => {
+    const stagedFiles: DiffFile[] = [];
+    const unstagedFiles: DiffFile[] = [];
+    for (const f of summary.files) {
+      if (f.staged_change) stagedFiles.push(f);
+      if (f.unstaged_change || f.untracked) unstagedFiles.push(f);
+    }
+    return { staged: stagedFiles, unstaged: unstagedFiles };
+  }, [summary.files]);
+
   return (
     <div className="h-full flex flex-col">
       <div className="px-2 py-1.5 border-b border-border/60 flex items-center justify-between bg-muted/20">
         <span className="text-xs text-muted-foreground">
-          {t("workbench.diff.summary", { n: summary.files.length })}
+          {t("workbench.diff.files_badge", { n: summary.files.length })}
         </span>
         <span className="text-xs font-mono">
           <span className="text-green-500">+{summary.total_additions}</span>{" "}
@@ -217,10 +249,56 @@ export function DiffTab(_props: DiffTabProps) {
         </span>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {summary.files.map((f) => (
-          <FileRow key={f.path} workspaceId={wsId} file={f} />
-        ))}
+        <DiffGroup
+          label={t("workbench.diff.group_staged")}
+          tone="text-green-500"
+          workspaceId={workspaceId}
+          files={staged}
+        />
+        <DiffGroup
+          label={t("workbench.diff.group_unstaged")}
+          tone="text-amber-500"
+          workspaceId={workspaceId}
+          files={unstaged}
+        />
       </div>
+    </div>
+  );
+}
+
+function DiffGroup({
+  label,
+  tone,
+  workspaceId,
+  files,
+}: {
+  label: string;
+  tone: string;
+  workspaceId: string;
+  files: DiffFile[];
+}) {
+  const [open, setOpen] = useState(true);
+
+  if (files.length === 0) return null;
+
+  return (
+    <div className="border-b border-border/40 last:border-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium uppercase tracking-wide hover:bg-muted/30 text-left"
+      >
+        {open ? (
+          <ChevronDown className="w-3 h-3 shrink-0 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />
+        )}
+        <span className={tone}>{label}</span>
+        <span className="text-muted-foreground">({files.length})</span>
+      </button>
+      {open &&
+        files.map((f) => (
+          <FileRow key={f.path} workspaceId={workspaceId} file={f} />
+        ))}
     </div>
   );
 }

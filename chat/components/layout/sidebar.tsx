@@ -241,7 +241,7 @@ export const Sidebar = memo(function Sidebar({
         onClick={onToggle}
         aria-hidden
       />
-      <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-56 bg-gradient-to-b from-sidebar via-sidebar-light to-sidebar-lighter border-r border-border/60 flex-col shadow-depth-md">
+      <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-full bg-gradient-to-b from-sidebar via-sidebar-light to-sidebar-lighter border-r border-border/60 flex-col shadow-depth-md">
         <div className="px-3 pt-[13px] pb-[14px] border-b border-border/60 bg-gradient-to-r from-sidebar-accent/20 via-sidebar-accent/10 to-transparent">
           <div className="flex items-center justify-between">
             <Button

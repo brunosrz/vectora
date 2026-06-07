@@ -7,10 +7,4 @@
  * diretamente.
  */
 
-export {
-  useTerminalsStore,
-  useWorkbenchStore,
-  WORKBENCH_TABS,
-  type TerminalInstance,
-  type WorkbenchTab,
-} from "./workbench-store";
+export { useTerminalsStore, type TerminalInstance } from "./workbench-store";

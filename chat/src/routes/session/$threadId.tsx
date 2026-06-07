@@ -1,14 +1,19 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
+import { HorizontalSplit } from "@/components/layout/horizontal-split";
 import { LicenseBanner } from "@/components/layout/license-banner";
 import { SettingsDialog } from "@/components/layout/settings-dialog";
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog";
+import { NewChatDialog } from "@/components/layout/new-chat-dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useHydrated } from "@/lib/hooks/use-hydrated";
+import { useWorkbenchStore } from "@/lib/stores/workbench-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 
 import {
   useThreadsQuery,
@@ -43,6 +48,48 @@ function SessionPage() {
   const userId = useAuthStore((s) => s.user?.id);
   const pushMention = useChatInputStore((s) => s.pushMention);
 
+  // Painel do workbench: visível e redimensionável via workbench-store. O gate
+  // de hidratação evita divergência SSR/cliente do estado persistido.
+  const hydrated = useHydrated();
+  const workbenchOpen = useWorkbenchStore((s) => s.isOpen(threadId));
+  const splitSize = useWorkbenchStore((s) => s.splitSize);
+  const setSplitSize = useWorkbenchStore((s) => s.setSplitSize);
+
+  // Largura da sidebar (desktop) arrastável pela borda direita.
+  const sidebarWidth = useSettingsStore((s) => s.sidebarWidth);
+  const setSidebarWidth = useSettingsStore((s) => s.setSidebarWidth);
+  const sidebarWrapRef = useRef<HTMLDivElement>(null);
+  const draggingSidebar = useRef(false);
+
+  const onSidebarResizeDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      draggingSidebar.current = true;
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    },
+    [],
+  );
+  const onSidebarResizeMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!draggingSidebar.current) return;
+      const rect = sidebarWrapRef.current?.getBoundingClientRect();
+      if (rect) setSidebarWidth(e.clientX - rect.left);
+    },
+    [setSidebarWidth],
+  );
+  const onSidebarResizeUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!draggingSidebar.current) return;
+      draggingSidebar.current = false;
+      (e.target as Element).releasePointerCapture?.(e.pointerId);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    },
+    [],
+  );
+
   // ── Queries e mutations (TanStack Query) ──────────────────────────────────
   const { data: threads = [], isLoading } = useThreadsQuery(userId);
   const createThreadMutation = useCreateThread();
@@ -54,6 +101,7 @@ function SessionPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [showToolCalls, setShowToolCalls] = useState(false);
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [inputLocked, setInputLocked] = useState(false);
   const [agentConfig, setAgentConfig] = useState<AgentConfig>(() => ({
     model: getDefaultModel(),
@@ -77,11 +125,18 @@ function SessionPage() {
     [goTo],
   );
 
-  const handleNewChat = useCallback(async () => {
-    const thread = await createThreadMutation.mutateAsync();
-    goTo(thread.id);
-    setIsMobileSidebarOpen(false);
-  }, [createThreadMutation, goTo]);
+  const handleNewChat = useCallback(() => {
+    setShowNewChatDialog(true);
+  }, []);
+
+  const handleConfirmNewChat = useCallback(
+    async (workspaceId: string | null) => {
+      const thread = await createThreadMutation.mutateAsync(workspaceId);
+      goTo(thread.id);
+      setIsMobileSidebarOpen(false);
+    },
+    [createThreadMutation, goTo],
+  );
 
   const handleDeleteThread = useCallback(
     async (id: string) => {
@@ -121,8 +176,30 @@ function SessionPage() {
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Sidebar desktop — oculto em mobile */}
-        <div className="hidden md:flex shrink-0">{sidebar}</div>
+        {/* Sidebar desktop — oculto em mobile. Largura arrastável quando
+            expandida; colapsada usa a largura própria (w-16) do componente. */}
+        <div
+          ref={sidebarWrapRef}
+          className="hidden md:flex shrink-0 relative"
+          style={
+            isSidebarCollapsed
+              ? undefined
+              : { width: hydrated ? sidebarWidth : 224 }
+          }
+        >
+          {sidebar}
+          {!isSidebarCollapsed && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              onPointerDown={onSidebarResizeDown}
+              onPointerMove={onSidebarResizeMove}
+              onPointerUp={onSidebarResizeUp}
+              onPointerCancel={onSidebarResizeUp}
+              className="absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors"
+            />
+          )}
+        </div>
 
         {/* Sidebar mobile como Sheet overlay */}
         <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
@@ -142,18 +219,29 @@ function SessionPage() {
             onOpenSidebar={() => setIsMobileSidebarOpen(true)}
           />
 
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-            <ChatInterface
-              threadId={threadId}
-              showToolCalls={showToolCalls}
-              agentConfig={agentConfig}
-              onAgentConfigChange={setAgentConfig}
-              onThreadUpdate={handleThreadUpdate}
-              onThreadNotFound={() => void navigate({ to: "/" })}
-              inputLocked={inputLocked}
-            />
-            <WorkbenchPanel threadId={threadId} onAddToContext={pushMention} />
-          </div>
+          <HorizontalSplit
+            className="flex-1 min-h-0"
+            showRight={hydrated && workbenchOpen}
+            rightSize={splitSize}
+            onResize={setSplitSize}
+            left={
+              <ChatInterface
+                threadId={threadId}
+                showToolCalls={showToolCalls}
+                agentConfig={agentConfig}
+                onAgentConfigChange={setAgentConfig}
+                onThreadUpdate={handleThreadUpdate}
+                onThreadNotFound={() => void navigate({ to: "/" })}
+                inputLocked={inputLocked}
+              />
+            }
+            right={
+              <WorkbenchPanel
+                threadId={threadId}
+                onAddToContext={pushMention}
+              />
+            }
+          />
         </div>
       </div>
 
@@ -162,6 +250,11 @@ function SessionPage() {
       <KeyboardShortcutsDialog
         open={showShortcutsDialog}
         onOpenChange={setShowShortcutsDialog}
+      />
+      <NewChatDialog
+        open={showNewChatDialog}
+        onOpenChange={setShowNewChatDialog}
+        onConfirm={(workspaceId) => void handleConfirmNewChat(workspaceId)}
       />
     </div>
   );

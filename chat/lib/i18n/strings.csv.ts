@@ -296,6 +296,13 @@ workspace.codespaces_loading,Loading codespaces…,Cargando codespaces…,Carreg
 workspace.codespaces_unavailable,GitHub CLI not authenticated.,GitHub CLI no autenticado.,GitHub CLI não autenticado.
 workspace.codespaces_empty,No codespaces found.,No se encontraron codespaces.,Nenhum codespace encontrado.
 workspace.cancel,Cancel,Cancelar,Cancelar
+new_chat.dialog_title,New conversation,Nueva conversación,Nova conversa
+new_chat.dialog_desc,Choose which workspace this conversation will work in.,Elige en qué espacio de trabajo va a operar esta conversación.,Escolha em qual workspace esta conversa vai trabalhar.
+new_chat.create_new,Create a workspace for this conversation,Crear un espacio de trabajo para esta conversación,Criar um workspace para esta conversa
+new_chat.create_new_desc,A dedicated folder will be created at ~/Documents/vectora/<conversation-id>.,Se creará una carpeta dedicada en ~/Documents/vectora/<id-de-conversación>.,Uma pasta dedicada será criada em ~/Documents/vectora/<id-da-conversa>.
+new_chat.existing_label,Existing workspaces,Espacios de trabajo existentes,Workspaces existentes
+new_chat.cancel,Cancel,Cancelar,Cancelar
+new_chat.confirm,Start conversation,Iniciar conversación,Iniciar conversa
 workspace.select_here,Use this folder,Usar esta carpeta,Usar esta pasta
 # =============================================================================
 # Auth onboarding (Q7)
@@ -304,6 +311,40 @@ auth.setup_title,Welcome to Vectora,Bienvenido a Vectora,Bem-vindo ao Vectora
 auth.setup_subtitle,Create the first account — it becomes the administrator (root).,Crea la primera cuenta — se convierte en administrador (root).,Crie a primeira conta — ela se torna o administrador (root).
 auth.signin_title,Sign in,Iniciar sesión,Entrar
 auth.no_public_signup,Public signup is disabled. Ask an administrator for an invite.,El registro público está deshabilitado. Pide una invitación a un administrador.,Cadastro público desabilitado. Peça um convite a um administrador.
+auth.email,Email,Correo electrónico,E-mail
+auth.email_ph,you@company.com,tu@empresa.com,voce@empresa.com
+auth.password,Password,Contraseña,Senha
+auth.show_password,Show password,Mostrar contraseña,Mostrar senha
+auth.hide_password,Hide password,Ocultar contraseña,Ocultar senha
+auth.email_invalid,Invalid email.,Correo inválido.,E-mail inválido.
+auth.conn_error,Connection error. Check that the server is running.,Error de conexión. Verifica que el servidor esté activo.,Erro de conexão. Verifique se o servidor está rodando.
+auth.signin.tagline,Sign in to your account to continue,Entra en tu cuenta para continuar,Entre na sua conta para continuar
+auth.signin.password_ph,Your password,Tu contraseña,Sua senha
+auth.signin.submit,Sign in,Entrar,Entrar
+auth.signin.submitting,Signing in...,Entrando...,Entrando...
+auth.signin.password_required,Enter your password.,Ingresa la contraseña.,Informe a senha.
+auth.signin.invalid_credentials,Invalid credentials.,Credenciales inválidas.,Credenciais inválidas.
+auth.signin.invalid_data,Invalid data.,Datos inválidos.,Dados inválidos.
+auth.signup.invite_title,Create account,Crear cuenta,Criar conta
+auth.signup.invite_role,Invite for role:,Invitación para rol:,Convite para função:
+auth.signup.first_access,First access,Primer acceso,Primeiro acesso
+auth.signup.root_hint,The first user created becomes {root} automatically.,El primer usuario creado se vuelve {root} automáticamente.,O primeiro usuário criado vira {root} automaticamente.
+auth.signup.name,Name,Nombre,Nome
+auth.signup.name_ph,How should Vectora call you?,¿Cómo debe llamarte Vectora?,Como o Vectora deve te chamar?
+auth.signup.password_ph,Minimum {n} characters,Mínimo {n} caracteres,Mínimo de {n} caracteres
+auth.signup.confirm,Confirm password,Confirmar contraseña,Confirmar senha
+auth.signup.confirm_ph,Repeat the password,Repite la contraseña,Repita a senha
+auth.signup.show_confirm,Show confirmation,Mostrar confirmación,Mostrar confirmação
+auth.signup.hide_confirm,Hide confirmation,Ocultar confirmación,Ocultar confirmação
+auth.signup.submit,Create account,Crear cuenta,Criar conta
+auth.signup.submitting,Creating account...,Creando cuenta...,Criando conta...
+auth.signup.have_account,Already have an account?,¿Ya tienes cuenta?,Já tem conta?
+auth.signup.signin_link,Sign in,Entrar,Entrar
+auth.signup.create_error,Error creating account.,Error al crear la cuenta.,Erro ao criar conta.
+auth.signup.name_required,Enter your name.,Ingresa tu nombre.,Informe seu nome.
+auth.signup.name_too_long,Name too long (max {n} characters).,Nombre muy largo (máx. {n} caracteres).,Nome muito longo (máx. {n} caracteres).
+auth.signup.password_min,Password must be at least {n} characters.,La contraseña debe tener al menos {n} caracteres.,Senha deve ter no mínimo {n} caracteres.
+auth.signup.passwords_mismatch,Passwords do not match.,Las contraseñas no coinciden.,As senhas não conferem.
 # =============================================================================
 # Invites (Q8)
 # =============================================================================
@@ -425,6 +466,8 @@ terminal.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem wo
 terminal.untrusted_title,Workspace not trusted,Espacio no confiable,Workspace não confiável
 terminal.untrusted_hint,The terminal only opens in folders you marked as trusted.,La terminal solo abre en carpetas marcadas como confiables.,O terminal só abre em pastas marcadas como confiáveis.
 terminal.no_sandbox_warning,Shell sem sandbox: tem o mesmo poder de um terminal local na pasta confiada.,Shell sin sandbox: tiene el mismo poder que un terminal local en la carpeta confiable.,Shell sem sandbox: tem o mesmo poder de um terminal local na pasta confiada.
+terminal.conn_error,connection error,error de conexión,erro de conexão
+terminal.ended,ended,finalizado,encerrado
 # Workbench (Bloco T cont.)
 workbench.toggle,Toggle workbench,Mostrar/ocultar workbench,Mostrar/ocultar workbench
 workbench.close,Close,Cerrar,Fechar
@@ -456,6 +499,10 @@ workbench.files.creating_folder,Folder name…,Nombre de la carpeta…,Nome da p
 workbench.files.collapse,Collapse all,Colapsar todo,Recolher tudo
 at.title,Workspace files,Archivos del workspace,Arquivos do workspace
 workbench.diff.clean_hint,"Run ""git log"" to inspect recent commits.","Ejecuta ""git log"" para ver commits recientes.","Rode ""git log"" para inspecionar commits recentes."
+workbench.diff.group_staged,Staged,Preparados,Staged
+workbench.diff.group_unstaged,Modified / Untracked,Modificados / Sin seguimiento,Modificados / Não rastreados
+workbench.diff.files_badge,"{n} files","{n} archivos","{n} arquivos"
+workbench.tab.pending,Pending updates,Actualizaciones pendientes,Atualizações pendentes
 `;
 
 export default CSV;

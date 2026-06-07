@@ -1,7 +1,6 @@
 /**
- * workbench-store — Bloco T cont. (T5 + T11)
- *
- * Estado do painel lateral multi-aba (Terminal · Arquivos · Diff · Plano).
+ * workbench-store — estado do painel lateral multi-aba
+ * (Terminal · Arquivos · Diff · Plano).
  *
  * Estrutura em duas camadas:
  *   1. **Shell persistido** (zustand/middleware/persist) — sobrevive reload:
@@ -46,7 +45,7 @@ export const WORKBENCH_TABS: WorkbenchTab[] = [
   "plan",
 ];
 
-// ── Files cache (T11.2) ────────────────────────────────────────────────────
+// ── Files cache ────────────────────────────────────────────────────────────
 
 export interface FileEntry {
   name: string;
@@ -78,13 +77,19 @@ interface FilesCache {
   fetchedAt: Record<string, number>;
 }
 
-// ── Diff cache (T11.3) ─────────────────────────────────────────────────────
+// ── Diff cache ─────────────────────────────────────────────────────────────
 
 export interface DiffFile {
   path: string;
-  status: "M" | "A" | "D" | "R";
+  status: "M" | "A" | "D" | "R" | "?";
   additions: number;
   deletions: number;
+  /** Flag staged (índice) — char do git status, ou null. Schema 2. */
+  staged_change?: string | null;
+  /** Flag unstaged (working tree) — char do git status, ou null. Schema 2. */
+  unstaged_change?: string | null;
+  /** Arquivo não rastreado. Schema 2. */
+  untracked?: boolean;
 }
 
 export interface DiffHunk {
@@ -107,7 +112,7 @@ interface DiffCache {
   fileFetchedAt: Record<string, number>;
 }
 
-// ── Plan cache (T11.4) ─────────────────────────────────────────────────────
+// ── Plan cache ─────────────────────────────────────────────────────────────
 
 export interface PlanItem {
   title: string;
@@ -129,14 +134,14 @@ interface PlanCache {
 // ---------------------------------------------------------------------------
 
 interface WorkbenchState {
-  // ── Shell persistido (T5 + T11.1) ─────────────────────────────────────────
+  // ── Shell persistido ──────────────────────────────────────────────────────
   byThread: Record<string, TerminalInstance[]>;
   activeByThread: Record<string, string | null>;
   panelOpen: Record<string, boolean>;
   activeTabByThread: Record<string, WorkbenchTab>;
   /** Tamanho do painel direito como % (default 40). */
   splitSize: number;
-  /** Arquivos pinados por sessão (T10.2). */
+  /** Arquivos fixados por sessão. */
   pinnedFiles: Record<string, string[]>;
 
   list: (threadId: string) => TerminalInstance[];
@@ -157,7 +162,7 @@ interface WorkbenchState {
   togglePinned: (threadId: string, path: string) => void;
   isPinned: (threadId: string, path: string) => boolean;
 
-  // ── Caches voláteis (T11.2/3/4) ───────────────────────────────────────────
+  // ── Caches voláteis ───────────────────────────────────────────────────────
   files: Record<string, FilesCache>;
   diff: Record<string, DiffCache>;
   plan: Record<string, PlanCache>;
@@ -184,6 +189,13 @@ interface WorkbenchState {
   setPlanOpenSlug: (threadId: string, slug: string | null) => void;
   setPlanContent: (threadId: string, slug: string, content: string) => void;
   invalidatePlan: (threadId?: string) => void;
+
+  // Pendência de atualização por aba (volátil). Marcada quando uma tool do
+  // agente edita o workspace e a aba Files/Diff não está montada; limpa
+  // quando a aba é aberta e revalida.
+  pending: Record<string, { files: boolean; diff: boolean }>;
+  markPending: (wsId: string) => void;
+  clearPending: (wsId: string, key: "files" | "diff") => void;
 }
 
 // Caches default usados pelos getters quando uma chave ainda não existe.
@@ -235,6 +247,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
       activeTabByThread: {},
       splitSize: 40,
       pinnedFiles: {},
+      pending: {},
 
       list: (threadId) => get().byThread[threadId] ?? EMPTY_LIST,
       active: (threadId) => {
@@ -474,6 +487,19 @@ export const useWorkbenchStore = create<WorkbenchState>()(
           if (!cur) return s;
           return {
             plan: { ...s.plan, [threadId]: { ...cur, fetchedAt: 0 } },
+          };
+        }),
+
+      markPending: (wsId) =>
+        set((s) => ({
+          pending: { ...s.pending, [wsId]: { files: true, diff: true } },
+        })),
+      clearPending: (wsId, key) =>
+        set((s) => {
+          const cur = s.pending[wsId];
+          if (!cur || !cur[key]) return s;
+          return {
+            pending: { ...s.pending, [wsId]: { ...cur, [key]: false } },
           };
         }),
     }),

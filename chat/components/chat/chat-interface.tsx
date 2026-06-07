@@ -1104,7 +1104,7 @@ export function ChatInterface({
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      <main className="h-full flex flex-col overflow-hidden relative">
         {isNewChat ? (
           <EmptyStateHeader />
         ) : (

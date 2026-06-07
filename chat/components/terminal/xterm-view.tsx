@@ -1,17 +1,15 @@
 "use client";
 
 /**
- * XtermView (Bloco T, T3)
- *
- * Wrapper client-only do xterm.js. Conecta direto ao WebSocket do backend
- * (uvicorn) — o proxy Hono/Next App Router não faz upgrade de WS. O token de
- * autenticação é obtido via /auth/ws-token (cookies httpOnly não trafegam
- * em WS cross-origin) e passa na query string.
+ * XtermView — wrapper client-only do xterm.js. Conecta direto ao WebSocket do
+ * backend (uvicorn); o token de autenticação é obtido via /auth/ws-token
+ * (cookies httpOnly não trafegam em WS cross-origin) e passa na query string.
  */
 
 import { useEffect, useRef } from "react";
 
 import { VECTORA_API_URL } from "@/lib/constants/api";
+import { useT } from "@/lib/i18n";
 
 interface XtermViewProps {
   terminalId: string;
@@ -26,11 +24,20 @@ export function XtermView({
   workspaceId,
   onClosed,
 }: XtermViewProps) {
+  const t = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<any | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const fitRef = useRef<any | null>(null);
   const resizeObsRef = useRef<ResizeObserver | null>(null);
+
+  // O callback e o tradutor mudam de identidade a cada render do pai; mantê-los
+  // fora das dependências do efeito evita reconectar (e derrubar) o WebSocket a
+  // cada re-render. Refs entregam sempre a versão atual sem re-executar o efeito.
+  const onClosedRef = useRef(onClosed);
+  onClosedRef.current = onClosed;
+  const tRef = useRef(t);
+  tRef.current = t;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -120,8 +127,10 @@ export function XtermView({
             if (j.type === "error") {
               term.write(`\r\n\x1b[31m${j.message}\x1b[0m\r\n`);
             } else if (j.type === "closed") {
-              term.write("\r\n\x1b[33m[encerrado]\x1b[0m\r\n");
-              onClosed?.();
+              term.write(
+                `\r\n\x1b[33m[${tRef.current("terminal.ended")}]\x1b[0m\r\n`,
+              );
+              onClosedRef.current?.();
             }
           } catch {
             // mensagens de texto não-JSON também viram saída crua
@@ -133,11 +142,16 @@ export function XtermView({
       });
 
       ws.addEventListener("error", () => {
-        term.write("\r\n\x1b[31m[erro de conexão]\x1b[0m\r\n");
+        term.write(
+          `\r\n\x1b[31m[${tRef.current("terminal.conn_error")}]\x1b[0m\r\n`,
+        );
       });
 
       ws.addEventListener("close", () => {
-        onClosed?.();
+        // Desmontagem (troca de aba) não encerra o terminal: o PTY sobrevive no
+        // backend e reconecta com o mesmo terminal_id. Só propaga o fechamento
+        // quando o socket cai durante uso real.
+        if (!cancelled) onClosedRef.current?.();
       });
 
       // stdin do user → WS
@@ -175,7 +189,7 @@ export function XtermView({
       fitRef.current = null;
       resizeObsRef.current = null;
     };
-  }, [terminalId, threadId, workspaceId, onClosed]);
+  }, [terminalId, threadId, workspaceId]);
 
   return <div ref={containerRef} className="h-full w-full bg-[#0a0a0a]" />;
 }

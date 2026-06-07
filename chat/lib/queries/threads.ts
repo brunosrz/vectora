@@ -61,15 +61,15 @@ export function useThreadsQuery(
 // Mutations
 // ---------------------------------------------------------------------------
 
-/** Cria uma nova thread e invalida o cache. */
+/** Cria uma nova thread (opcionalmente associada a um workspace) e invalida o cache. */
 export function useCreateThread(): UseMutationResult<
   VectoraThread,
   Error,
-  void
+  string | null | undefined
 > {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: createThread,
+    mutationFn: (workspaceId?: string | null) => createThread(workspaceId),
     onSuccess: () => qc.invalidateQueries({ queryKey: threadsQueryKey }),
   });
 }

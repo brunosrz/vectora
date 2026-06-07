@@ -77,7 +77,10 @@ class ResumeChatRequest(BaseModel):
 
 
 class CreateThreadRequest(BaseModel):
-    pass
+    """`workspace_id` vazio deixa o backend criar o workspace dedicado da
+    sessão (`~/Documents/vectora/<thread_id>`) na primeira mensagem."""
+
+    workspace_id: str = ""
 
 
 class GetThreadRequest(BaseModel):

@@ -221,7 +221,7 @@ class TestSignup:
     async def test_short_password_raises(self):
         from src.services.auth import signup
 
-        with pytest.raises(ValueError, match="mínimo 12"):
+        with pytest.raises(ValueError, match="mínimo 8"):
             await signup("short@example.com", "curta")
 
     @pytest.mark.asyncio
@@ -422,7 +422,7 @@ class TestChangePassword:
         from src.services.auth import change_password, signup
 
         user, _, _ = await signup("chpwd3@example.com", "senhaantiga1234")
-        with pytest.raises(ValueError, match="mínimo 12"):
+        with pytest.raises(ValueError, match="mínimo 8"):
             await change_password(user.id, "senhaantiga1234", "curta")
 
     @pytest.mark.asyncio

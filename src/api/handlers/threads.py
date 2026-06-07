@@ -19,7 +19,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from src.api.schemas import (
     CreateThreadRequest,
@@ -37,6 +37,15 @@ from src.api.schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _user_id(request: Request) -> str:
+    """Extrai o user_id do request autenticado, ou 'local' em modo CLI."""
+    user = getattr(request.state, "user", None)
+    if user is not None and getattr(user, "id", None):
+        return str(user.id)
+    return "local"
+
 
 # ---------------------------------------------------------------------------
 # Lazy DB loader
@@ -170,20 +179,43 @@ async def _upsert_session(
 
 
 @router.post("/vectora.chat.v1.ThreadService/CreateThread")
-async def create_thread(_: CreateThreadRequest) -> Thread:
-    """Cria uma nova thread vazia e persiste no banco."""
+async def create_thread(body: CreateThreadRequest, http_request: Request) -> Thread:
+    """Cria uma nova thread e a associa ao workspace escolhido pelo usuário.
+
+    Quando `workspace_id` vem vazio, a thread nasce sem workspace — o
+    backend cria e atribui o workspace dedicado da sessão
+    (`~/Documents/vectora/<thread_id>`) na primeira mensagem, em
+    `chat.py::_resolve_workspace_id`.
+    """
     db = await _get_db()
     thread_id = str(uuid.uuid4())[:8]
     now = datetime.now(UTC).isoformat()
+
+    workspace_id = body.workspace_id
+    if workspace_id:
+        from src.services.workspace import workspace_registry
+
+        if workspace_registry.get(workspace_id) is not None:
+            workspace_registry.set_active(workspace_id, _user_id(http_request))
+        else:
+            workspace_id = ""
+
+    extra = json.dumps({"workspace_id": workspace_id} if workspace_id else {})
     await db.execute(
         """
         INSERT INTO vectora_sessions (thread_id, created_at, last_activity, extra)
-        VALUES (?, ?, ?, '{}')
+        VALUES (?, ?, ?, ?)
         """,
-        (thread_id, now, now),
+        (thread_id, now, now, extra),
     )
     await db.commit()
-    return Thread(id=thread_id, created_at=now, updated_at=now, title="")
+    return Thread(
+        id=thread_id,
+        created_at=now,
+        updated_at=now,
+        title="",
+        workspace_id=workspace_id,
+    )
 
 
 # ---------------------------------------------------------------------------

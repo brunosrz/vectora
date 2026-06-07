@@ -202,20 +202,35 @@ class TestWorkspaceFile:
 class TestWorkspaceGitDiff:
     @pytest.mark.asyncio
     async def test_returns_empty_for_non_git_workspace(self, trusted_ws):
+        from fastapi import Response
+
         from src.api.handlers.workspaces import workspace_git_diff
 
         wsid, _ = trusted_ws
-        resp = await workspace_git_diff(workspace_id=wsid)
+        resp = await workspace_git_diff(workspace_id=wsid, response=Response())
         assert resp.is_git_repo is False
         assert resp.files == []
         assert resp.total_additions == 0
         assert resp.total_deletions == 0
 
     @pytest.mark.asyncio
-    async def test_returns_empty_for_unknown_workspace(self, trusted_ws):
+    async def test_sets_diff_schema_header(self, trusted_ws):
+        from fastapi import Response
+
         from src.api.handlers.workspaces import workspace_git_diff
 
-        resp = await workspace_git_diff(workspace_id="nope")
+        wsid, _ = trusted_ws
+        response = Response()
+        await workspace_git_diff(workspace_id=wsid, response=response)
+        assert response.headers["X-Vectora-Diff-Schema"] == "2"
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_for_unknown_workspace(self, trusted_ws):
+        from fastapi import Response
+
+        from src.api.handlers.workspaces import workspace_git_diff
+
+        resp = await workspace_git_diff(workspace_id="nope", response=Response())
         assert resp.is_git_repo is False
         assert resp.files == []
 

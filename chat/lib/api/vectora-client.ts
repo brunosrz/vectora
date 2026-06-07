@@ -269,8 +269,10 @@ async function postRpc<T>(
   return response.json();
 }
 
-export const createThread = (): Promise<Thread> =>
-  postRpc("/vectora.chat.v1.ThreadService/CreateThread", {});
+export const createThread = (workspaceId?: string | null): Promise<Thread> =>
+  postRpc("/vectora.chat.v1.ThreadService/CreateThread", {
+    workspace_id: workspaceId ?? "",
+  });
 
 export const getThread = (thread_id: string): Promise<Thread> =>
   postRpc("/vectora.chat.v1.ThreadService/GetThread", { thread_id });

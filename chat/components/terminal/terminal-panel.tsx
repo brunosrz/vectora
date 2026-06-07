@@ -1,11 +1,9 @@
 "use client";
 
 /**
- * TerminalPanel (Bloco T, T3)
- *
- * Container do painel direito de terminais: tabs por instância, botão de
- * abrir novo (split) e fechar. Cada aba renderiza um XtermView ligado ao seu
- * próprio PTY no backend (terminal_id).
+ * TerminalPanel — container de terminais: tabs por instância, botão de abrir
+ * novo e fechar. Cada aba renderiza um XtermView ligado ao seu próprio PTY no
+ * backend (identificado por terminal_id).
  */
 
 import { Plug, Plus, TerminalSquare, X } from "lucide-react";

@@ -346,6 +346,34 @@ describe("workbench-store: plan slice", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Pendência de atualização por aba
+// ---------------------------------------------------------------------------
+
+describe("workbench-store: pending", () => {
+  it("markPending(wsId) marca files e diff como pendentes", () => {
+    useWorkbenchStore.getState().markPending("ws");
+    expect(useWorkbenchStore.getState().pending["ws"]).toEqual({
+      files: true,
+      diff: true,
+    });
+  });
+
+  it("clearPending(wsId, key) limpa só a categoria informada", () => {
+    useWorkbenchStore.getState().markPending("ws");
+    useWorkbenchStore.getState().clearPending("ws", "diff");
+    expect(useWorkbenchStore.getState().pending["ws"]).toEqual({
+      files: true,
+      diff: false,
+    });
+  });
+
+  it("clearPending sem pendência prévia é no-op", () => {
+    useWorkbenchStore.getState().clearPending("ws-vazio", "files");
+    expect(useWorkbenchStore.getState().pending["ws-vazio"]).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Isolamento por thread / workspace
 // ---------------------------------------------------------------------------
 

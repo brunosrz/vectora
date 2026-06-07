@@ -559,6 +559,8 @@ function invalidateWorkbenchFor(
     if (ws) {
       useWorkbenchStore.getState().invalidateFiles(ws.id);
       useWorkbenchStore.getState().invalidateDiff(ws.id);
+      // Sinaliza pendência para a aba que não está montada no momento.
+      useWorkbenchStore.getState().markPending(ws.id);
     }
   }
 }

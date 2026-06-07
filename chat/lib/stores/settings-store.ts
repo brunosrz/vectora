@@ -1,7 +1,6 @@
 /**
- * settings-store.ts — Bloco L
+ * settings-store.ts — preferências do usuário.
  *
- * Zustand store para preferências do usuário.
  * Persiste no localStorage com chave prefixada por user_id:
  *   "vectora-settings-{userId}"
  * Permite isolamento de preferências por usuário (auth multi-tenant).
@@ -85,6 +84,8 @@ export interface SettingsState {
   reasoningEffort: ReasoningEffort;
   /** Modo rápido — desliga reasoning/thinking para latência mínima (R4) */
   fastMode: boolean;
+  /** Largura da sidebar em px (desktop), arrastável pela borda direita. */
+  sidebarWidth: number;
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
@@ -97,8 +98,13 @@ export interface SettingsState {
   setPermissionMode: (v: PermissionMode) => void;
   setReasoningEffort: (v: ReasoningEffort) => void;
   setFastMode: (v: boolean) => void;
+  setSidebarWidth: (v: number) => void;
   resetSettings: () => void;
 }
+
+/** Limites de largura da sidebar (px). */
+const SIDEBAR_MIN_WIDTH = 180;
+const SIDEBAR_MAX_WIDTH = 480;
 
 // ---------------------------------------------------------------------------
 // Defaults
@@ -115,6 +121,7 @@ const DEFAULTS = {
   permissionMode: "ask" as PermissionMode,
   reasoningEffort: "medium" as ReasoningEffort,
   fastMode: false,
+  sidebarWidth: 224,
 };
 
 // ---------------------------------------------------------------------------
@@ -151,6 +158,13 @@ export const useSettingsStore = create<SettingsState>()(
       setPermissionMode: (v) => set({ permissionMode: v }),
       setReasoningEffort: (v) => set({ reasoningEffort: v }),
       setFastMode: (v) => set({ fastMode: v }),
+      setSidebarWidth: (v) =>
+        set({
+          sidebarWidth: Math.max(
+            SIDEBAR_MIN_WIDTH,
+            Math.min(SIDEBAR_MAX_WIDTH, Math.round(v)),
+          ),
+        }),
       resetSettings: () => set({ ...DEFAULTS, language: detectLanguage() }),
     }),
     {
@@ -175,6 +189,7 @@ export const useSettingsStore = create<SettingsState>()(
         permissionMode: state.permissionMode,
         reasoningEffort: state.reasoningEffort,
         fastMode: state.fastMode,
+        sidebarWidth: state.sidebarWidth,
       }),
     },
   ),

@@ -1,15 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useT } from "@/lib/i18n";
 import type { AuthUser } from "@/lib/types/auth";
-
-const schema = z.object({
-  email: z.string().email("E-mail inválido."),
-  password: z.string().min(1, "Informe a senha."),
-});
 
 const searchSchema = z.object({
   from: z.string().optional(),
@@ -22,8 +18,18 @@ export const Route = createFileRoute("/auth/signin")({
 
 function SignInPage() {
   const navigate = useNavigate();
+  const t = useT();
   const search = Route.useSearch();
   const setUser = useAuthStore((s) => s.setUser);
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t("auth.email_invalid")),
+        password: z.string().min(1, t("auth.signin.password_required")),
+      }),
+    [t],
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,7 +61,9 @@ function SignInPage() {
 
     const result = schema.safeParse({ email, password });
     if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Dados inválidos.");
+      setError(
+        result.error.issues[0]?.message ?? t("auth.signin.invalid_data"),
+      );
       return;
     }
 
@@ -70,7 +78,7 @@ function SignInPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.detail ?? "Credenciais inválidas.");
+        setError(data.detail ?? t("auth.signin.invalid_credentials"));
         return;
       }
 
@@ -78,7 +86,7 @@ function SignInPage() {
       const from = (search as { from?: string }).from;
       void navigate({ to: from ?? "/" });
     } catch {
-      setError("Erro de conexão. Verifique se o servidor está rodando.");
+      setError(t("auth.conn_error"));
     } finally {
       setLoading(false);
     }
@@ -96,7 +104,7 @@ function SignInPage() {
             Vectora
           </h1>
           <p className="text-sm text-muted-foreground">
-            Entre na sua conta para continuar
+            {t("auth.signin.tagline")}
           </p>
         </div>
 
@@ -106,7 +114,7 @@ function SignInPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="email"
             >
-              E-mail
+              {t("auth.email")}
             </label>
             <input
               id="email"
@@ -116,7 +124,7 @@ function SignInPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-              placeholder="voce@empresa.com"
+              placeholder={t("auth.email_ph")}
             />
           </div>
 
@@ -125,7 +133,7 @@ function SignInPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="password"
             >
-              Senha
+              {t("auth.password")}
             </label>
             <div className="relative">
               <input
@@ -136,7 +144,7 @@ function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-                placeholder="••••••••••••"
+                placeholder={t("auth.signin.password_ph")}
               />
               <button
                 type="button"
@@ -147,7 +155,11 @@ function SignInPage() {
                 }}
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute inset-y-0 right-0 flex items-center justify-center w-11 min-h-[44px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                aria-label={
+                  showPassword
+                    ? t("auth.hide_password")
+                    : t("auth.show_password")
+                }
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -169,7 +181,7 @@ function SignInPage() {
             disabled={loading}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
           >
-            {loading ? "Entrando…" : "Entrar"}
+            {loading ? t("auth.signin.submitting") : t("auth.signin.submit")}
           </button>
         </form>
       </div>

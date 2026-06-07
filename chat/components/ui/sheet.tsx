@@ -112,14 +112,4 @@ function SheetDescription({
   );
 }
 
-export {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetOverlay,
-  SheetPortal,
-  SheetTitle,
-  SheetTrigger,
-};
+export { Sheet, SheetContent };
