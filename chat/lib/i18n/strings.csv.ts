@@ -366,6 +366,12 @@ invite.expires,Expires,Expira,Expira
 invite.context,Invite for role: {role},Invitación para función: {role},Convite para função: {role}
 invite.invalid,Invalid or expired invite.,Invitación inválida o expirada.,Convite inválido ou expirado.
 invite.error_create,Error generating invite,Error al generar invitación,Erro ao gerar convite
+
+# Administração — painel próprio (P4), separado do SettingsDialog
+admin.dialog_title,Administration,Administración,Administração
+admin.dialog_desc,Server administration — users, tools, safe folders, system and configuration.,Administración del servidor — usuarios, herramientas, carpetas seguras, sistema y configuración.,Administração do servidor — usuários, ferramentas, pastas seguras, sistema e configuração.
+admin.loading,Loading…,Cargando…,Carregando…
+admin.menu_label,Administration,Administración,Administração
 # =============================================================================
 # Permission modes (R2)
 # =============================================================================

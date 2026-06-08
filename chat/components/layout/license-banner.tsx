@@ -8,7 +8,7 @@
  *   via prop `onBlockingChange`).
  * - **oculto** — licença ativa e fora da janela de aviso.
  *
- * Click em "Configurar" abre Settings → Administração → Configurações;
+ * Click em "Configurar" abre o painel de Administração → Config (P4);
  * "Renovar"/"Assinar" abre o Customer Portal via ``POST /license/portal``
  * em nova aba (web) ou ``window.vectora.openExternal`` (desktop Electron).
  */
@@ -18,7 +18,7 @@ import { AlertTriangle, Clock, ShieldAlert, X } from "lucide-react";
 
 import { useT } from "@/lib/i18n";
 import { useLicenseStatus } from "@/lib/hooks/use-license-status";
-import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
+import { useAdminDialogStore } from "@/lib/stores/admin-dialog-store";
 
 interface LicenseBannerProps {
   /** Se true, banner ocupa toda a largura abaixo do header. */
@@ -44,7 +44,7 @@ export function LicenseBanner({
 }: LicenseBannerProps) {
   const t = useT();
   const { status } = useLicenseStatus();
-  const openSettings = useSettingsDialogStore((s) => s.openAt);
+  const openAdmin = useAdminDialogStore((s) => s.openAt);
   const [dismissed, setDismissed] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
@@ -88,7 +88,7 @@ export function LicenseBanner({
           type="button"
           onClick={
             spec.cta.action === "configure"
-              ? () => openSettings("admin", "config")
+              ? () => openAdmin("config")
               : handlePortal
           }
           disabled={portalLoading}

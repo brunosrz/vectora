@@ -11,7 +11,9 @@
  *   - Memória     — placeholder (Bloco N)
  *   - Integrações — placeholder (Bloco O)
  *   - Envs        — env vars por usuário (Bloco C10)
- *   - Administração — root/admin only (Bloco P)
+ *
+ * Administração (root/admin only) é um dialog próprio — `AdminDialog`,
+ * aberto via menu do usuário (P4) — não uma aba aqui.
  *
  * Cada tab é code-split via `lazy()` — o bundle inicial do app não paga
  * o custo de uma feature secundária. O dialog em si carrega imediato
@@ -28,15 +30,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuthStore } from "@/lib/stores/auth-store";
 import {
   useSettingsDialogStore,
   type SettingsTab,
 } from "@/lib/stores/settings-dialog-store";
 
-const AdminTab = lazy(() =>
-  import("./admin/admin-tab").then((m) => ({ default: m.AdminTab })),
-);
 const ContaTab = lazy(() =>
   import("./tabs/conta-tab").then((m) => ({ default: m.ContaTab })),
 );
@@ -72,9 +70,6 @@ function TabFallback() {
 }
 
 export function SettingsDialog() {
-  const user = useAuthStore((s) => s.user);
-  const isAdminOrRoot = user?.role === "root" || user?.role === "admin";
-
   const open = useSettingsDialogStore((s) => s.open);
   const setOpen = useSettingsDialogStore((s) => s.setOpen);
   const tab = useSettingsDialogStore((s) => s.tab);
@@ -118,11 +113,6 @@ export function SettingsDialog() {
             <TabsTrigger value="envs" className="rounded-md text-xs">
               Envs
             </TabsTrigger>
-            {isAdminOrRoot && (
-              <TabsTrigger value="admin" className="rounded-md text-xs">
-                Administração
-              </TabsTrigger>
-            )}
           </TabsList>
 
           <div className="flex-1 overflow-y-auto pt-4">
@@ -148,11 +138,6 @@ export function SettingsDialog() {
               <TabsContent value="envs" className="mt-0">
                 <EnvsTab />
               </TabsContent>
-              {isAdminOrRoot && (
-                <TabsContent value="admin" className="mt-0">
-                  <AdminTab />
-                </TabsContent>
-              )}
             </Suspense>
           </div>
         </Tabs>

@@ -6,13 +6,16 @@ import { LogOut, Settings, Shield } from "lucide-react";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
+import { useAdminDialogStore } from "@/lib/stores/admin-dialog-store";
 import { ROLE_COLORS, ROLE_LABELS } from "@/lib/types/auth";
 import { SettingsDialog } from "./settings-dialog";
+import { AdminDialog } from "./admin-dialog";
 
 export function UserMenu() {
   const router = useRouter();
   const { user, isAuthenticated, clearUser } = useAuthStore();
   const openSettings = useSettingsDialogStore((s) => s.openAt);
+  const openAdmin = useAdminDialogStore((s) => s.openAt);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +113,7 @@ export function UserMenu() {
                   className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
                   onClick={() => {
                     setOpen(false);
-                    openSettings("admin");
+                    openAdmin();
                   }}
                 >
                   <Shield className="w-4 h-4 shrink-0 text-muted-foreground" />
@@ -132,6 +135,8 @@ export function UserMenu() {
 
       {/* Settings Dialog — Bloco L2 (estado no settings-dialog-store) */}
       <SettingsDialog />
+      {/* Admin Dialog — painel próprio, separado do Settings (P4) */}
+      <AdminDialog />
     </>
   );
 }

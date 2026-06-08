@@ -1,11 +1,14 @@
 /**
- * settings-dialog-store — controla a abertura do Settings Dialog,
- * a aba ativa e a sub-aba (quando a aba tem painel interno como Admin).
+ * settings-dialog-store — controla a abertura do Settings Dialog
+ * (preferências de conta) e a aba ativa.
  *
  * Permite deep-link a partir de qualquer lugar (ex.: o menu "+" abrindo
- * direto em Conectores/Plugins, banner de licença em Administração →
- * Configurações) sem prop drilling — o dialog é renderizado uma única vez
- * (no UserMenu) e lê seu estado daqui.
+ * direto em Conectores/Plugins) sem prop drilling — o dialog é renderizado
+ * uma única vez (no UserMenu) e lê seu estado daqui.
+ *
+ * Administração (root/admin only) tem dialog e store próprios — ver
+ * `admin-dialog-store` / `AdminDialog` (P4) — por ser um painel de escopo
+ * de servidor, não de conta pessoal.
  */
 
 import { create } from "zustand";
@@ -17,38 +20,20 @@ export type SettingsTab =
   | "integracoes"
   | "plugins"
   | "skills"
-  | "envs"
-  | "admin";
-
-/** Sub-abas internas da aba `admin`. */
-export type AdminSubTab =
-  | "users"
-  | "tools"
-  | "system"
-  | "config"
-  | "safe-roots";
+  | "envs";
 
 interface SettingsDialogState {
   open: boolean;
   tab: SettingsTab;
-  /**
-   * Sub-aba alvo dentro de `tab`. Hoje só `admin` tem sub-abas; outras
-   * abas ignoram o campo. Painéis filhos sincronizam o `active` local
-   * com este valor via `useEffect`.
-   */
-  adminSubTab?: AdminSubTab;
-  openAt: (tab?: SettingsTab, adminSubTab?: AdminSubTab) => void;
+  openAt: (tab?: SettingsTab) => void;
   setOpen: (v: boolean) => void;
   setTab: (tab: SettingsTab) => void;
-  setAdminSubTab: (subTab: AdminSubTab) => void;
 }
 
 export const useSettingsDialogStore = create<SettingsDialogState>((set) => ({
   open: false,
   tab: "conta",
-  adminSubTab: undefined,
-  openAt: (tab = "conta", adminSubTab) => set({ open: true, tab, adminSubTab }),
+  openAt: (tab = "conta") => set({ open: true, tab }),
   setOpen: (v) => set({ open: v }),
   setTab: (tab) => set({ tab }),
-  setAdminSubTab: (adminSubTab) => set({ adminSubTab }),
 }));

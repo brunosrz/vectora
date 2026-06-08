@@ -26,7 +26,10 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
+import {
+  useAdminDialogStore,
+  type AdminSubTab,
+} from "@/lib/stores/admin-dialog-store";
 
 import { useT } from "@/lib/i18n";
 
@@ -1046,8 +1049,6 @@ function SafeRootsPanel() {
 // Componente principal
 // ---------------------------------------------------------------------------
 
-type AdminSubTab = "users" | "tools" | "system" | "config" | "safe-roots";
-
 const SUB_TABS: { id: AdminSubTab; label: string; icon: React.ReactNode }[] = [
   { id: "users", label: "Usuários", icon: <Users className="w-3.5 h-3.5" /> },
   {
@@ -1076,17 +1077,17 @@ export function AdminTab() {
   const [active, setActive] = useState<AdminSubTab>("users");
 
   // Deep-link: outros lugares (license-banner, etc.) usam
-  // `openAt("admin", "config")`. Quando o store recebe `adminSubTab`,
+  // `useAdminDialogStore.openAt("config")`. Quando o store recebe `subTab`,
   // sincronizamos com o `active` local e limpamos o slot para que
   // re-aberturas do dialog não voltem para a mesma sub-aba.
-  const adminSubTab = useSettingsDialogStore((s) => s.adminSubTab);
-  const setAdminSubTab = useSettingsDialogStore((s) => s.setAdminSubTab);
+  const subTab = useAdminDialogStore((s) => s.subTab);
+  const setSubTab = useAdminDialogStore((s) => s.setSubTab);
   useEffect(() => {
-    if (adminSubTab) {
-      setActive(adminSubTab);
-      setAdminSubTab(undefined as never);
+    if (subTab) {
+      setActive(subTab);
+      setSubTab(undefined);
     }
-  }, [adminSubTab, setAdminSubTab]);
+  }, [subTab, setSubTab]);
 
   return (
     <div className="space-y-4">
