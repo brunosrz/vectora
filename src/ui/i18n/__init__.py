@@ -93,7 +93,12 @@ def _normalize_lang_env(raw: str) -> str | None:
     """
     if not raw:
         return None
-    primary = raw.split(".")[0].split(":")[0].replace("_", "-").lower()
+    primary = (
+        raw.split(".", maxsplit=1)[0]
+        .split(":", maxsplit=1)[0]
+        .replace("_", "-")
+        .lower()
+    )
     if primary in ("c", "posix", ""):
         return None
     if primary.startswith("pt"):

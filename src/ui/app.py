@@ -26,11 +26,9 @@ from textual.widgets import (
     OptionList,
     Static,
 )
-from textual.widgets.option_list import Option
 
 from src.services.runtime_settings import runtime_settings
-from src.ui.components.slash_popup import build_popup_options
-from src.ui.components.status_bar import build_status_text
+from src.ui.components import build_popup_options, build_status_text
 from src.ui.i18n import t
 from src.ui.slash_handlers import SlashCommandsMixin
 from src.ui.streaming import StreamHandler
