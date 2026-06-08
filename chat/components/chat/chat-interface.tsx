@@ -134,6 +134,9 @@ export function ChatInterface({
   // Idioma do reconhecimento de voz acompanha o idioma da interface.
   const voiceLang = useSettingsStore((s) => s.language);
 
+  // A.2d — workspace ativo para o botão de rewind por mensagem.
+  const activeWorkspaceId = useWorkspacesStore((s) => s.active_id ?? undefined);
+
   const router = useRouter();
   const t = useT();
 
@@ -1138,6 +1141,7 @@ export function ChatInterface({
             onHitlDecision={handleHitlDecision}
             threadId={threadId}
             onRetry={handleRegenerate}
+            workspaceId={activeWorkspaceId}
           />
         )}
 

@@ -9,10 +9,19 @@ import {
   Brain,
   ChevronDown,
   ChevronRight,
+  RotateCcw,
 } from "lucide-react";
 import { ToolCallRenderer } from "./tool-call-renderer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -24,6 +33,8 @@ import type { Message } from "@/lib/types";
 import { stripMarkdownEnvelope } from "@/lib/utils/string";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
 import Image from "next/image";
+import { useT } from "@/lib/i18n";
+import { useToastStore } from "@/lib/stores/toast-store";
 
 // ============================================================================
 // Constants
@@ -328,6 +339,14 @@ interface MessageItemProps {
   threadId?: string;
   /** M5 — callback de retry para mensagens com isError=true */
   onRetry?: () => void;
+  /** A.2d — rewind: id do workspace ativo para restaurar estado */
+  workspaceId?: string;
+  /**
+   * A.2d — rewind: índice desta mensagem entre as mensagens do usuário,
+   * contando do fim (0 = última mensagem do usuário).
+   * Mapeia diretamente ao índice na lista de checkpoints (DESC).
+   */
+  humanMessageIndex?: number;
 }
 
 export const MessageItem = memo(
@@ -351,7 +370,10 @@ export const MessageItem = memo(
     onHitlDecision,
     threadId = "",
     onRetry,
+    workspaceId,
+    humanMessageIndex,
   }: MessageItemProps) {
+    const t = useT();
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(message.content);
     const [editError] = useState<string | null>(null);
@@ -385,6 +407,52 @@ export const MessageItem = memo(
       setEditContent(message.content);
       setIsEditing(false);
     }, [message.content]);
+
+    // ── A.2d — Rewind ─────────────────────────────────────────────────────
+    const [rewindOpen, setRewindOpen] = useState(false);
+    const [rewinding, setRewinding] = useState(false);
+
+    const handleRewind = useCallback(async () => {
+      if (!threadId || !workspaceId || humanMessageIndex === undefined) return;
+      setRewinding(true);
+      try {
+        const res = await fetch(
+          `/threads/${encodeURIComponent(threadId)}/checkpoints`,
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as {
+          checkpoints: { checkpoint_id: string }[];
+        };
+        const checkpoints = data.checkpoints ?? [];
+        const target = checkpoints[humanMessageIndex];
+        if (!target) {
+          useToastStore.getState().error(t("chat.rewind_no_checkpoint"));
+          setRewindOpen(false);
+          return;
+        }
+        const qs = new URLSearchParams({ workspace_id: workspaceId });
+        const rewindRes = await fetch(
+          `/threads/${encodeURIComponent(threadId)}/rewind?${qs}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ checkpoint_id: target.checkpoint_id }),
+          },
+        );
+        if (rewindRes.status === 409) {
+          useToastStore.getState().error(t("chat.rewind_busy"));
+        } else if (!rewindRes.ok) {
+          useToastStore.getState().error(t("chat.rewind_error"));
+        } else {
+          useToastStore.getState().success(t("chat.rewind_ok"));
+        }
+      } catch {
+        useToastStore.getState().error(t("chat.rewind_error"));
+      } finally {
+        setRewinding(false);
+        setRewindOpen(false);
+      }
+    }, [threadId, workspaceId, humanMessageIndex, t]);
 
     // Track code block index to generate stable IDs during streaming
     const codeBlockIndexRef = useRef(0);
@@ -796,6 +864,59 @@ export const MessageItem = memo(
               )}
             </div>
 
+            {/* A.2d — Botão de rewind para mensagens do usuário */}
+            {message.role === "user" &&
+              !isEditing &&
+              workspaceId &&
+              humanMessageIndex !== undefined && (
+                <>
+                  <div className="flex justify-end gap-1 mt-0.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRewindOpen(true)}
+                      className="h-6 px-2 text-xs opacity-0 group-hover/message:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                      title={t("chat.rewind")}
+                    >
+                      <RotateCcw className="w-3 h-3 mr-1" />
+                      {t("chat.rewind")}
+                    </Button>
+                  </div>
+
+                  <Dialog open={rewindOpen} onOpenChange={setRewindOpen}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{t("chat.rewind_title")}</DialogTitle>
+                        <DialogDescription>
+                          {t("chat.rewind_desc")}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => setRewindOpen(false)}
+                          disabled={rewinding}
+                        >
+                          {t("workbench.files.cancel")}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleRewind}
+                          disabled={rewinding}
+                        >
+                          {rewinding ? (
+                            <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                          ) : (
+                            <RotateCcw className="w-3 h-3 mr-1" />
+                          )}
+                          {t("chat.rewind_confirm")}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </>
+              )}
+
             {message.role === "assistant" && (
               <>
                 <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
@@ -1061,7 +1182,9 @@ export const MessageItem = memo(
       prevProps.showToolCalls !== nextProps.showToolCalls ||
       prevProps.isRegenerating !== nextProps.isRegenerating ||
       prevProps.isLastAssistant !== nextProps.isLastAssistant ||
-      prevProps.isDevMode !== nextProps.isDevMode;
+      prevProps.isDevMode !== nextProps.isDevMode ||
+      prevProps.workspaceId !== nextProps.workspaceId ||
+      prevProps.humanMessageIndex !== nextProps.humanMessageIndex;
 
     // Re-render if any relevant prop changed
     if (

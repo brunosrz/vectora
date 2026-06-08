@@ -56,6 +56,8 @@ interface MessageListProps {
   /** M5 — retry ao clicar no botão de erro */
   onRetry?: () => void;
   threadId?: string;
+  /** A.2d — rewind: id do workspace ativo */
+  workspaceId?: string;
 }
 
 export const MessageList = memo(function MessageList({
@@ -77,6 +79,7 @@ export const MessageList = memo(function MessageList({
   onHitlDecision,
   onRetry,
   threadId,
+  workspaceId,
 }: MessageListProps) {
   // D4 — dev mode detectado uma vez por render de lista
   const searchParams = useSearchParams();
@@ -344,6 +347,20 @@ export const MessageList = memo(function MessageList({
   }, [shouldVirtualize, virtualizer, messages.length]);
 
   // ──────────────────────────────────────────────────────────────────────────
+  // A.2d — humanMessageRevIdx: índice reverso de cada mensagem do usuário
+  // (0 = última, 1 = penúltima, …). Mapeia message.id → índice para o rewind.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  const humanMessageRevIdx = useMemo(() => {
+    const map = new Map<string, number>();
+    const userMsgs = messages.filter((m) => m.role === "user");
+    userMsgs.forEach((m, i) => {
+      map.set(m.id, userMsgs.length - 1 - i);
+    });
+    return map;
+  }, [messages]);
+
+  // ──────────────────────────────────────────────────────────────────────────
   // Props comuns para cada MessageItem
   // ──────────────────────────────────────────────────────────────────────────
 
@@ -365,6 +382,7 @@ export const MessageList = memo(function MessageList({
     onHitlDecision,
     threadId,
     onRetry,
+    workspaceId,
   };
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -448,6 +466,7 @@ export const MessageList = memo(function MessageList({
                     <MessageItem
                       message={message}
                       isLastAssistant={message.id === lastAssistantId}
+                      humanMessageIndex={humanMessageRevIdx.get(message.id)}
                       {...commonItemProps}
                     />
                   </div>
@@ -473,6 +492,7 @@ export const MessageList = memo(function MessageList({
                   <MessageItem
                     message={message}
                     isLastAssistant={message.id === lastAssistantId}
+                    humanMessageIndex={humanMessageRevIdx.get(message.id)}
                     {...commonItemProps}
                   />
                 </div>
