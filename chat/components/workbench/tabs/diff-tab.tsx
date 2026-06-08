@@ -8,7 +8,14 @@
  * hunks já carregados. Revalidação via `useWorkbenchSWR`.
  */
 
-import { ChevronDown, ChevronRight, GitBranch, Loader2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  GitBranch,
+  GitCommit,
+  Loader2,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useT } from "@/lib/i18n";
@@ -23,6 +30,47 @@ import {
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { DiffSkeleton } from "./diff-skeleton";
+
+// ---------------------------------------------------------------------------
+// A.7 — Git Log: tipos e funções de API
+// ---------------------------------------------------------------------------
+
+interface GitLogCommit {
+  sha: string;
+  sha_short: string;
+  author: string;
+  date: string;
+  message: string;
+  refs: string[];
+}
+
+interface GitLogData {
+  branch: string;
+  commits: GitLogCommit[];
+}
+
+async function fetchGitLog(workspaceId: string): Promise<GitLogData | null> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/log?n=50`,
+  );
+  if (!res.ok) return null;
+  return res.json() as Promise<GitLogData>;
+}
+
+async function fetchCommitDiff(
+  workspaceId: string,
+  sha: string,
+): Promise<string | null> {
+  const qs = new URLSearchParams({ sha });
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/commit/diff?${qs}`,
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  return (data.diff as string) ?? null;
+}
+
+// ---------------------------------------------------------------------------
 
 async function fetchDiff(workspaceId: string): Promise<DiffSummary | null> {
   const res = await fetch(
@@ -141,6 +189,163 @@ function FileRow({
   );
 }
 
+// ---------------------------------------------------------------------------
+// A.7 — CommitRow: linha de commit com diff expandível e ações
+// ---------------------------------------------------------------------------
+
+function CommitRow({
+  workspaceId,
+  commit,
+}: {
+  workspaceId: string;
+  commit: GitLogCommit;
+}) {
+  const [open, setOpen] = useState(false);
+  const [diff, setDiff] = useState<string | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleToggle = useCallback(async () => {
+    const next = !open;
+    setOpen(next);
+    if (next && diff === null) {
+      setDiffLoading(true);
+      const d = await fetchCommitDiff(workspaceId, commit.sha);
+      setDiffLoading(false);
+      setDiff(d ?? "");
+    }
+  }, [open, diff, workspaceId, commit.sha]);
+
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      void navigator.clipboard.writeText(commit.sha).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      });
+    },
+    [commit.sha],
+  );
+
+  const date = (() => {
+    try {
+      const d = new Date(commit.date);
+      return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    } catch {
+      return commit.date.slice(0, 10);
+    }
+  })();
+
+  return (
+    <div className="border-b border-border/40 last:border-0">
+      <button
+        onClick={handleToggle}
+        className="w-full flex items-start gap-2 px-2 py-1.5 text-xs hover:bg-muted/30 text-left group"
+      >
+        {open ? (
+          <ChevronDown className="w-3 h-3 shrink-0 text-muted-foreground mt-0.5" />
+        ) : (
+          <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground mt-0.5" />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="font-mono text-[10px] text-primary shrink-0">
+              {commit.sha_short}
+            </span>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {date}
+            </span>
+            {commit.refs.map((ref) => (
+              <span
+                key={ref}
+                className="text-[9px] px-1 py-px rounded bg-primary/10 text-primary shrink-0 truncate max-w-[80px]"
+                title={ref}
+              >
+                {ref}
+              </span>
+            ))}
+          </div>
+          <p className="truncate text-foreground/90">{commit.message}</p>
+          <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+            {commit.author.split("<")[0].trim()}
+          </p>
+        </div>
+        {/* Ação: copiar SHA */}
+        <button
+          onClick={handleCopy}
+          className="p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
+          title="Copiar SHA"
+        >
+          {copied ? (
+            <GitCommit className="w-3 h-3 text-green-500" />
+          ) : (
+            <Copy className="w-3 h-3" />
+          )}
+        </button>
+      </button>
+      {open && (
+        <div className="px-3 pb-2">
+          {diffLoading ? (
+            <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+          ) : (
+            <pre className="text-[10px] font-mono whitespace-pre-wrap break-all bg-muted/30 rounded-sm px-2 py-1 overflow-x-auto max-h-64 overflow-y-auto">
+              {diff ?? ""}
+            </pre>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// GitLogView: lista de commits para uma workspace
+function GitLogView({ workspaceId }: { workspaceId: string }) {
+  const [logData, setLogData] = useState<GitLogData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    setLoading(true);
+    void fetchGitLog(workspaceId).then((data) => {
+      setLoading(false);
+      setLogData(data);
+    });
+  }, [workspaceId]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!logData || logData.commits.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground text-center py-8 px-4">
+        Nenhum commit encontrado.
+      </p>
+    );
+  }
+  return (
+    <div className="h-full flex flex-col">
+      <div className="px-2 py-1 border-b border-border/60 bg-muted/10 flex items-center gap-1.5">
+        <GitBranch className="w-3 h-3 text-muted-foreground" />
+        <span className="text-[10px] font-mono text-muted-foreground">
+          {logData.branch}
+        </span>
+        <span className="text-[10px] text-muted-foreground ml-auto">
+          {logData.commits.length} commits
+        </span>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {logData.commits.map((c) => (
+          <CommitRow key={c.sha} workspaceId={workspaceId} commit={c} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface DiffTabProps {
   threadId: string;
 }
@@ -154,6 +359,7 @@ export function DiffTab(_props: DiffTabProps) {
   const fetchedAt = useWorkbenchStore((s) => s.getDiff(wsId).summaryFetchedAt);
   const setDiffSummary = useWorkbenchStore((s) => s.setDiffSummary);
   const clearPending = useWorkbenchStore((s) => s.clearPending);
+  const [logView, setLogView] = useState<"changes" | "log">("changes");
 
   // Abrir/revalidar a aba consome a pendência de atualização.
   useEffect(() => {
@@ -202,20 +408,52 @@ export function DiffTab(_props: DiffTabProps) {
     );
   }
 
-  if (summary.files.length === 0) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
-        <p className="text-xs text-muted-foreground">
-          {t("workbench.diff.clean")}
-        </p>
-        <p className="text-[10px] text-muted-foreground/60">
-          {t("workbench.diff.clean_hint")}
-        </p>
+  return (
+    <div className="h-full flex flex-col">
+      {/* Barra de abas Changes | Log */}
+      <div className="flex shrink-0 border-b border-border/60">
+        <button
+          onClick={() => setLogView("changes")}
+          aria-pressed={logView === "changes"}
+          className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+            logView === "changes"
+              ? "border-b-2 border-primary text-foreground -mb-px"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("workbench.diff.tab_changes")}
+        </button>
+        <button
+          onClick={() => setLogView("log")}
+          aria-pressed={logView === "log"}
+          className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+            logView === "log"
+              ? "border-b-2 border-primary text-foreground -mb-px"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("workbench.diff.tab_log")}
+        </button>
       </div>
-    );
-  }
-
-  return <DiffGroups workspaceId={wsId} summary={summary} t={t} />;
+      {/* Conteúdo */}
+      <div className="flex-1 min-h-0">
+        {logView === "log" ? (
+          <GitLogView workspaceId={wsId} />
+        ) : summary.files.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
+            <p className="text-xs text-muted-foreground">
+              {t("workbench.diff.clean")}
+            </p>
+            <p className="text-[10px] text-muted-foreground/60">
+              {t("workbench.diff.clean_hint")}
+            </p>
+          </div>
+        ) : (
+          <DiffGroups workspaceId={wsId} summary={summary} t={t} />
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------

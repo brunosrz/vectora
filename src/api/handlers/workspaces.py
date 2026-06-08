@@ -1221,6 +1221,132 @@ async def git_show_file(
 
 
 # ---------------------------------------------------------------------------
+# A.7 — Git Log visual
+# ---------------------------------------------------------------------------
+
+_MAX_COMMIT_DIFF_BYTES = 100 * 1024  # 100 KiB
+
+
+class GitLogCommit(BaseModel):
+    sha: str
+    sha_short: str
+    author: str
+    date: str  # ISO 8601
+    message: str
+    refs: list[str] = []  # branch/tag/HEAD decorations
+
+
+class GitLogResponse(BaseModel):
+    branch: str
+    commits: list[GitLogCommit]
+
+
+class CommitDiffResponse(BaseModel):
+    sha: str
+    diff: str
+    truncated: bool = False
+
+
+@view_router.get("/{workspace_id}/git/log", response_model=GitLogResponse)
+async def git_log(
+    workspace_id: str,
+    n: Annotated[int, Query(ge=1, le=200)] = 50,
+    branch: Annotated[str, Query()] = "",
+) -> GitLogResponse:
+    """Lista os últimos ``n`` commits do repositório com decorações de refs.
+
+    Reaproveita ``_open_workspace_repo`` e ``gitpython.iter_commits``.
+    Inclui o campo ``refs`` com os nomes de branches/tags/HEAD que apontam
+    para cada commit — equivalente ao ``--decorate`` do ``git log``.
+    """
+    import git  # type: ignore[import-not-found]
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return GitLogResponse(branch="", commits=[])
+
+    # Determina a ref de partida.
+    ref = branch or ""
+    try:
+        current_branch = repo.active_branch.name
+        ref = ref or current_branch
+    except TypeError:
+        current_branch = "(HEAD detached)"
+        ref = ref or "HEAD"
+
+    # Constrói mapa sha→refs para decorações.
+    ref_map: dict[str, list[str]] = {}
+    try:
+        for r in repo.references:
+            try:
+                c_sha = r.commit.hexsha
+                ref_map.setdefault(c_sha, []).append(r.name)
+            except Exception:  # noqa: S112  # nosec B112
+                continue
+    except Exception:
+        pass
+
+    # Insere HEAD no mapa.
+    try:
+        head_sha = repo.head.commit.hexsha
+        head_label = (
+            f"HEAD -> {current_branch}" if not repo.head.is_detached else "HEAD"
+        )
+        ref_map.setdefault(head_sha, []).insert(0, head_label)
+    except Exception:
+        pass
+
+    try:
+        commits = list(repo.iter_commits(ref, max_count=n))
+    except git.GitCommandError:
+        return GitLogResponse(branch=ref, commits=[])
+
+    return GitLogResponse(
+        branch=ref,
+        commits=[
+            GitLogCommit(
+                sha=c.hexsha,
+                sha_short=c.hexsha[:7],
+                author=str(c.author),
+                date=c.authored_datetime.isoformat(),
+                message=c.message.strip().splitlines()[0],
+                refs=ref_map.get(c.hexsha, []),
+            )
+            for c in commits
+        ],
+    )
+
+
+@view_router.get("/{workspace_id}/git/commit/diff", response_model=CommitDiffResponse)
+async def git_commit_diff(
+    workspace_id: str,
+    sha: Annotated[str, Query(min_length=4, max_length=40)],
+) -> CommitDiffResponse:
+    """Retorna o diff completo de um commit (``git show --unified=3 sha``).
+
+    Trunca em 100 KiB com ``truncated=true``.  Retorna diff vazio quando o
+    workspace não é um repositório git ou o SHA não existe.
+    """
+    import git  # type: ignore[import-not-found]
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return CommitDiffResponse(sha=sha, diff="")
+
+    try:
+        diff = repo.git.show("--unified=3", "--stat", sha)
+    except (git.GitCommandError, UnicodeDecodeError):
+        return CommitDiffResponse(sha=sha, diff="")
+
+    truncated = len(diff) > _MAX_COMMIT_DIFF_BYTES
+    return CommitDiffResponse(
+        sha=sha,
+        diff=diff[:_MAX_COMMIT_DIFF_BYTES],
+        truncated=truncated,
+    )
+
+
+# ---------------------------------------------------------------------------
 # File system CRUD — criação e deleção de arquivos/pastas
 # ---------------------------------------------------------------------------
 

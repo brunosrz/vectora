@@ -552,6 +552,8 @@ workbench.diff.clean_hint,"Run ""git log"" to inspect recent commits.","Ejecuta 
 workbench.diff.group_staged,Staged,Preparados,Staged
 workbench.diff.group_unstaged,Modified / Untracked,Modificados / Sin seguimiento,Modificados / Não rastreados
 workbench.diff.files_badge,"{n} files","{n} archivos","{n} arquivos"
+workbench.diff.tab_changes,Changes,Cambios,Mudanças
+workbench.diff.tab_log,Log,Log,Log
 workbench.tab.pending,Pending updates,Actualizaciones pendientes,Atualizações pendentes
 chat.rewind,Rewind to here,Rebobinar hasta aquí,Retroceder até aqui
 chat.rewind_title,Rewind to this point?,¿Rebobinar hasta aquí?,Retroceder até este ponto?
