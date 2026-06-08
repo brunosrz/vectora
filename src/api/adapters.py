@@ -236,14 +236,88 @@ def langgraph_event_to_payload(  # noqa: PLR0911
     return None
 
 
+async def _record_turn_checkpoint(
+    workspace_id: str, thread_id: str, event: Any
+) -> None:
+    """Grava um artefato de checkpoint de rewind após cada turno do orchestrador.
+
+    Chamado no ``on_chain_end`` do nó ``orchestrator`` — marca o fim de um turno
+    completo do agente. Best-effort: qualquer falha (workspace sem git, I/O,
+    banco indisponível) é registrada em log e descartada silenciosamente.
+    """
+    import uuid
+    from datetime import UTC, datetime
+
+    try:
+        from src.services.workspace import workspace_registry
+
+        ws = workspace_registry.get(workspace_id)
+        if ws is None:
+            return
+
+        import git as gitpy
+
+        try:
+            repo = gitpy.Repo(ws.cwd, search_parent_directories=True)
+        except gitpy.InvalidGitRepositoryError:
+            return  # workspace sem git — sem checkpoint
+
+        from src.services.checkpoint import create_git_checkpoint
+
+        checkpoint_id = event.get("run_id") or str(uuid.uuid4())
+        result = create_git_checkpoint(
+            repo,
+            thread_id,
+            f"turn:{thread_id}:{checkpoint_id[:8]}",
+        )
+        if result["status"] != "ok":
+            logger.warning("_record_turn_checkpoint: git snapshot falhou: %s", result)
+            return
+
+        now = datetime.now(UTC).isoformat()
+        from src.api.handlers.threads import _get_db
+
+        db = await _get_db()
+        await db.execute(
+            "INSERT INTO vectora_checkpoint_artifacts "
+            "(id, thread_id, checkpoint_id, strategy, git_sha, snapshot_path, files_touched, created_at) "
+            "VALUES (?,?,?,?,?,?,?,?)",
+            (
+                str(uuid.uuid4()),
+                thread_id,
+                checkpoint_id,
+                "git",
+                result["sha"],
+                None,
+                "[]",
+                now,
+            ),
+        )
+        await db.commit()
+        logger.debug(
+            "_record_turn_checkpoint: checkpoint gravado thread=%s sha=%s",
+            thread_id,
+            result["sha"][:7],
+        )
+    except Exception:
+        logger.exception("_record_turn_checkpoint: falha ao gravar checkpoint de turno")
+
+
 def adapt_stream(
     events: Any,
     thread_id: str,
+    workspace_id: str | None = None,
 ) -> Any:
     """AsyncGenerator que converte o stream de eventos LangGraph em linhas SSE.
 
     Yields:
         str — linhas ``data: {...}\\n\\n`` prontas para StreamingResponse.
+
+    ``workspace_id`` — quando fornecido e o workspace for um repositório git,
+    cria um checkpoint de rewind em ``refs/vectora/checkpoints/<thread_id>``
+    ao final de cada turno do orchestrador (``on_chain_end`` do nó
+    ``"orchestrator"``). Falhas são registradas em log e ignoradas — nunca
+    interrompem o stream.
     """
 
     async def _gen() -> Any:
@@ -311,6 +385,10 @@ def adapt_stream(
                         yield encode_event(
                             TokenEvent(content=response_text, node="orchestrator")
                         )
+                    # Grava um checkpoint de rewind ao final de cada turno
+                    # (best-effort — falha silenciosa para não cortar o stream).
+                    if workspace_id:
+                        await _record_turn_checkpoint(workspace_id, thread_id, event)
 
                 payload = langgraph_event_to_payload(event)
                 if payload is None:

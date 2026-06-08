@@ -312,7 +312,7 @@ async def stream_chat(
     )
 
     return StreamingResponse(
-        adapt_stream(events, thread_id),
+        adapt_stream(events, thread_id, workspace_id=workspace_id or None),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -378,7 +378,7 @@ async def resume_chat(
     )
 
     return StreamingResponse(
-        adapt_stream(events, request.thread_id),
+        adapt_stream(events, request.thread_id, workspace_id=None),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
