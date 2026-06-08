@@ -20,6 +20,7 @@ import {
   FolderClosed,
   FolderPlus,
   Loader2,
+  Pencil,
   Pin,
   PinOff,
   RefreshCw,
@@ -186,6 +187,23 @@ async function apiFsDelete(
   return res.ok;
 }
 
+async function apiFsMove(
+  workspaceId: string,
+  fromPath: string,
+  toPath: string,
+): Promise<{ ok: boolean; message?: string }> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/fs/move`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from_path: fromPath, to_path: toPath }),
+    },
+  );
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, message: data.message };
+}
+
 // ---------------------------------------------------------------------------
 // Estado de criação inline
 // ---------------------------------------------------------------------------
@@ -207,6 +225,7 @@ function FileItem({
   onOpenFile,
   onAddToContext,
   onDelete,
+  onRename,
 }: {
   threadId: string;
   entry: FileEntry;
@@ -215,10 +234,21 @@ function FileItem({
   onOpenFile: (path: string) => void;
   onAddToContext?: (path: string) => void;
   onDelete: (path: string, name: string, permanent?: boolean) => void;
+  onRename?: (oldPath: string, newName: string) => void;
 }) {
   const pinned = useWorkbenchStore((s) => s.isPinned(threadId, entry.path));
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
   const t = useT();
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState(entry.name);
+
+  const commitRename = () => {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== entry.name && onRename) {
+      onRename(entry.path, trimmed);
+    }
+    setRenaming(false);
+  };
 
   return (
     <div
@@ -226,7 +256,7 @@ function FileItem({
       className="group flex items-center px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
       style={{ paddingLeft: 8 + (depth + 1) * 12 }}
       onKeyDown={(e) => {
-        if (e.key === "Delete") {
+        if (e.key === "Delete" && !renaming) {
           e.preventDefault();
           onDelete(entry.path, entry.name, e.shiftKey);
         }
@@ -234,12 +264,39 @@ function FileItem({
     >
       <span className="w-3" />
       <File className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-      <button
-        onClick={() => onOpenFile(entry.path)}
-        className="flex-1 text-left truncate text-foreground/80 hover:text-foreground ml-1"
-      >
-        {entry.name}
-      </button>
+      {renaming ? (
+        <input
+          autoFocus
+          value={renameValue}
+          onChange={(e) => setRenameValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitRename();
+            } else if (e.key === "Escape") {
+              setRenaming(false);
+              setRenameValue(entry.name);
+            }
+          }}
+          onBlur={commitRename}
+          className="flex-1 text-xs bg-background border border-primary/60 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-primary/40 font-mono ml-1"
+          placeholder={t("workbench.files.rename_placeholder")}
+        />
+      ) : (
+        <button
+          onClick={() => onOpenFile(entry.path)}
+          onDoubleClick={() => {
+            if (onRename) {
+              setRenameValue(entry.name);
+              setRenaming(true);
+            }
+          }}
+          className="flex-1 text-left truncate text-foreground/80 hover:text-foreground ml-1"
+          title={onRename ? t("workbench.files.rename") : undefined}
+        >
+          {entry.name}
+        </button>
+      )}
       <GitBadge status={status} />
 
       {/* Ações em hover */}
@@ -252,6 +309,19 @@ function FileItem({
             title={t("workbench.files.add_context")}
           >
             <AtSign className="w-3 h-3" />
+          </button>
+        )}
+        {onRename && !renaming && (
+          <button
+            onClick={() => {
+              setRenameValue(entry.name);
+              setRenaming(true);
+            }}
+            className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+            aria-label={t("workbench.files.rename")}
+            title={t("workbench.files.rename")}
+          >
+            <Pencil className="w-3 h-3" />
           </button>
         )}
         <button
@@ -341,6 +411,8 @@ interface DirNodeProps {
   onInlineCreate: (name: string) => void;
   onCancelCreate: () => void;
   onRequestCreate: (type: "file" | "dir", parentDir: string) => void;
+  /** A.4 — rename/move: callback para renomear esta pasta ou arquivo filho */
+  onRename?: (oldPath: string, newName: string) => void;
 }
 
 function DirNode({
@@ -358,8 +430,19 @@ function DirNode({
   onInlineCreate,
   onCancelCreate,
   onRequestCreate,
+  onRename,
 }: DirNodeProps) {
   const t = useT();
+  const [renamingDir, setRenamingDir] = useState(false);
+  const [renameDirValue, setRenameDirValue] = useState(name);
+
+  const commitDirRename = () => {
+    const trimmed = renameDirValue.trim();
+    if (trimmed && trimmed !== name && onRename) {
+      onRename(path, trimmed);
+    }
+    setRenamingDir(false);
+  };
   const expanded = useWorkbenchStore((s) =>
     depth === 0 ? true : s.getFiles(workspaceId).expandedDirs.includes(path),
   );
@@ -376,6 +459,26 @@ function DirNode({
     const data = await fetchTree(workspaceId, path);
     if (data) setFilesEntries(workspaceId, path, data);
   }, [workspaceId, path, setFilesEntries]);
+
+  // A.4 — rename/move: chamado por FileItem / DirNode filho ao confirmar rename.
+  const handleChildRename = useCallback(
+    async (oldPath: string, newName: string) => {
+      const parentDir = oldPath.includes("/")
+        ? oldPath.split("/").slice(0, -1).join("/")
+        : "";
+      const toPath = parentDir ? `${parentDir}/${newName}` : newName;
+      const result = await apiFsMove(workspaceId, oldPath, toPath);
+      if (!result.ok) {
+        const msg =
+          result.message === "Já existe um arquivo ou pasta com esse nome."
+            ? t("workbench.files.rename_exists")
+            : t("workbench.files.rename_error");
+        useToastStore.getState().error(msg);
+      }
+      await revalidate();
+    },
+    [workspaceId, revalidate, t],
+  );
 
   useWorkbenchSWR({
     key: `files:${workspaceId}:${path}`,
@@ -414,17 +517,44 @@ function DirNode({
             }
           }}
         >
-          <button
-            onClick={() => toggleExpanded(workspaceId, path)}
-            className="flex items-center gap-1 flex-1 min-w-0"
-            style={{ paddingLeft: depth * 12 }}
-          >
-            <ChevronRight
-              className={`w-3 h-3 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
+          {renamingDir ? (
+            <input
+              autoFocus
+              value={renameDirValue}
+              onChange={(e) => setRenameDirValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitDirRename();
+                } else if (e.key === "Escape") {
+                  setRenamingDir(false);
+                  setRenameDirValue(name);
+                }
+              }}
+              onBlur={commitDirRename}
+              className="flex-1 text-xs bg-background border border-primary/60 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-primary/40 font-mono"
+              style={{ paddingLeft: depth * 12 + 4 }}
+              placeholder={t("workbench.files.rename_placeholder")}
             />
-            <FolderClosed className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-            <span className="truncate">{name}</span>
-          </button>
+          ) : (
+            <button
+              onClick={() => toggleExpanded(workspaceId, path)}
+              onDoubleClick={() => {
+                if (onRename && depth > 0) {
+                  setRenameDirValue(name);
+                  setRenamingDir(true);
+                }
+              }}
+              className="flex items-center gap-1 flex-1 min-w-0"
+              style={{ paddingLeft: depth * 12 }}
+            >
+              <ChevronRight
+                className={`w-3 h-3 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
+              />
+              <FolderClosed className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+              <span className="truncate">{name}</span>
+            </button>
+          )}
 
           {/* Ações em hover na pasta */}
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -435,6 +565,18 @@ function DirNode({
                 title={t("workbench.files.add_context")}
               >
                 <AtSign className="w-3 h-3" />
+              </button>
+            )}
+            {onRename && !renamingDir && (
+              <button
+                onClick={() => {
+                  setRenameDirValue(name);
+                  setRenamingDir(true);
+                }}
+                className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                title={t("workbench.files.rename")}
+              >
+                <Pencil className="w-3 h-3" />
               </button>
             )}
             <button
@@ -495,6 +637,7 @@ function DirNode({
                   onInlineCreate={onInlineCreate}
                   onCancelCreate={onCancelCreate}
                   onRequestCreate={onRequestCreate}
+                  onRename={handleChildRename}
                 />
               ) : (
                 <FileItem
@@ -506,6 +649,7 @@ function DirNode({
                   onOpenFile={onOpenFile}
                   onAddToContext={onAddToContext}
                   onDelete={onDelete}
+                  onRename={handleChildRename}
                 />
               ),
             )}

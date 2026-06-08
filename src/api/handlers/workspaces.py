@@ -1098,6 +1098,13 @@ class CreateFsNodeRequest(BaseModel):
     content: str = ""
 
 
+class MoveFsNodeRequest(BaseModel):
+    """Requisição de rename/move de arquivo ou pasta dentro do workspace."""
+
+    from_path: str
+    to_path: str
+
+
 @view_router.post("/{workspace_id}/fs/file", response_model=StatusResponse)
 async def create_fs_file(
     workspace_id: str, body: CreateFsNodeRequest
@@ -1230,6 +1237,38 @@ async def delete_fs_node(
                 resolved.unlink()
         else:
             send2trash.send2trash(str(resolved))
+        return StatusResponse(status="ok")
+    except OSError as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+@view_router.post("/{workspace_id}/fs/move", response_model=StatusResponse)
+async def move_fs_node(workspace_id: str, body: MoveFsNodeRequest) -> StatusResponse:
+    """Renomeia ou move um arquivo/pasta dentro do workspace.
+
+    Rejeita operações que saiam do sandbox do workspace (ambos os caminhos são
+    validados via ``_resolve_inside``) e recusa overwrite quando o destino já
+    existe.  Usa ``shutil.move`` para suportar cross-device (ex.: workspace em
+    disco diferente do sistema de arquivos padrão).
+    """
+    import shutil as _shutil
+
+    src = _resolve_inside(workspace_id, body.from_path)
+    dst = _resolve_inside(workspace_id, body.to_path)
+
+    if src is None or dst is None:
+        return StatusResponse(
+            status="error", message="Caminho inválido ou fora do workspace."
+        )
+    if not src.exists():
+        return StatusResponse(status="error", message="Origem não encontrada.")
+    if dst.exists():
+        return StatusResponse(
+            status="error", message="Já existe um arquivo ou pasta com esse nome."
+        )
+    try:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        _shutil.move(str(src), str(dst))
         return StatusResponse(status="ok")
     except OSError as exc:
         return StatusResponse(status="error", message=str(exc))

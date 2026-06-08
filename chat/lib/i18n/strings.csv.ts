@@ -553,6 +553,18 @@ workbench.diff.group_staged,Staged,Preparados,Staged
 workbench.diff.group_unstaged,Modified / Untracked,Modificados / Sin seguimiento,Modificados / Não rastreados
 workbench.diff.files_badge,"{n} files","{n} archivos","{n} arquivos"
 workbench.tab.pending,Pending updates,Actualizaciones pendientes,Atualizações pendentes
+chat.rewind,Rewind to here,Rebobinar hasta aquí,Retroceder até aqui
+chat.rewind_title,Rewind to this point?,¿Rebobinar hasta aquí?,Retroceder até este ponto?
+"chat.rewind_desc","Undo all changes made after this message — the workspace files will be restored to their state at this point.","Deshacer todos los cambios realizados después de este mensaje — los archivos del workspace se restaurarán a su estado en este punto.","Desfazer todas as alterações feitas após esta mensagem — os arquivos do workspace serão restaurados para o estado neste ponto."
+chat.rewind_confirm,Rewind,Rebobinar,Retroceder
+chat.rewind_ok,Workspace rewound successfully.,Workspace rebobinado con éxito.,Workspace revertido com sucesso.
+chat.rewind_busy,The workspace is busy — try again in a moment.,El workspace está ocupado — inténtelo de nuevo en un momento.,O workspace está ocupado — tente novamente em instantes.
+chat.rewind_no_checkpoint,No checkpoint available for this message.,No hay punto de control disponible para este mensaje.,Nenhum checkpoint disponível para esta mensagem.
+chat.rewind_error,Couldn't rewind the workspace.,No se pudo rebobinar el workspace.,Não foi possível retroceder o workspace.
+workbench.files.rename,Rename,Renombrar,Renomear
+workbench.files.rename_placeholder,New name…,Nuevo nombre…,Novo nome…
+workbench.files.rename_error,Couldn't rename.,No se pudo renombrar.,Não foi possível renomear.
+workbench.files.rename_exists,A file with this name already exists.,Ya existe un archivo con ese nombre.,Já existe um arquivo com esse nome.
 `;
 
 export default CSV;
