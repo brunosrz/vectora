@@ -8,9 +8,12 @@ sha256 truncado do caminho absoluto. Metadados ficam em
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar
@@ -322,3 +325,95 @@ class WorkspaceRegistry:
 
 #: Singleton global — importar este objeto em vez de instanciar WorkspaceRegistry
 workspace_registry: WorkspaceRegistry = WorkspaceRegistry.instance()
+
+
+# ---------------------------------------------------------------------------
+# Mutex por (workspace_id, thread_id) — serializa escritas concorrentes (A.2)
+# ---------------------------------------------------------------------------
+#
+# Tools que escrevem no filesystem do workspace (fs.py, git.py, terminal) e o
+# rewind (que restaura snapshots/commits) competem pelo mesmo estado em disco.
+# Sem serialização, um rewind disparado durante a execução de uma tool pode
+# deixar o workspace num estado inconsistente (metade restaurado, metade
+# sobrescrito pela tool em andamento).
+#
+# Uso típico:
+#     async with acquire_workspace_lock(workspace_id, thread_id):
+#         ...  # seção crítica: escreve no filesystem ou restaura checkpoint
+#
+# ``acquire_workspace_lock`` lança ``WorkspaceLockTimeoutError`` se não
+# conseguir adquirir o lock dentro de ``timeout`` segundos — evita deadlock
+# indefinido quando uma operação trava.
+
+#: Segundos de espera antes de desistir de adquirir o lock.
+DEFAULT_LOCK_TIMEOUT = 30.0
+
+
+class WorkspaceLockTimeoutError(Exception):
+    """Lançada quando o lock de (workspace_id, thread_id) não é adquirido a tempo."""
+
+    def __init__(self, workspace_id: str, thread_id: str, timeout: float) -> None:
+        self.workspace_id = workspace_id
+        self.thread_id = thread_id
+        self.timeout = timeout
+        super().__init__(
+            f"Não foi possível obter o lock do workspace {workspace_id!r} "
+            f"(thread {thread_id!r}) em {timeout:.0f}s — outra operação "
+            "ainda está em andamento."
+        )
+
+
+# Registro global de locks por chave "{workspace_id}:{thread_id}".
+# Locks são criados sob demanda e nunca removidos — o overhead de manter um
+# `asyncio.Lock` (alguns bytes) por par já visto é desprezível frente à
+# complexidade de coordenar a remoção sob concorrência.
+_workspace_locks: dict[str, asyncio.Lock] = {}
+_workspace_locks_guard = asyncio.Lock()
+
+
+def _lock_key(workspace_id: str, thread_id: str) -> str:
+    return f"{workspace_id}:{thread_id}"
+
+
+async def _get_workspace_lock(workspace_id: str, thread_id: str) -> asyncio.Lock:
+    key = _lock_key(workspace_id, thread_id)
+    lock = _workspace_locks.get(key)
+    if lock is not None:
+        return lock
+    async with _workspace_locks_guard:
+        lock = _workspace_locks.get(key)
+        if lock is None:
+            lock = asyncio.Lock()
+            _workspace_locks[key] = lock
+        return lock
+
+
+@asynccontextmanager
+async def acquire_workspace_lock(
+    workspace_id: str,
+    thread_id: str,
+    *,
+    timeout: float = DEFAULT_LOCK_TIMEOUT,  # noqa: ASYNC109
+) -> AsyncGenerator[None]:
+    """Adquire o mutex de ``(workspace_id, thread_id)`` com prazo-limite.
+
+    Levanta ``WorkspaceLockTimeoutError`` se o lock continuar ocupado após
+    ``timeout`` segundos — preferível a travar a request indefinidamente.
+    """
+    lock = await _get_workspace_lock(workspace_id, thread_id)
+    try:
+        async with asyncio.timeout(timeout):
+            await lock.acquire()
+    except TimeoutError as exc:
+        raise WorkspaceLockTimeoutError(workspace_id, thread_id, timeout) from exc
+
+    try:
+        yield
+    finally:
+        lock.release()
+
+
+def is_workspace_locked(workspace_id: str, thread_id: str) -> bool:
+    """Indica se o par já tem uma operação em andamento (não bloqueia)."""
+    lock = _workspace_locks.get(_lock_key(workspace_id, thread_id))
+    return lock is not None and lock.locked()
