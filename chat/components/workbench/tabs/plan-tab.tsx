@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * PlanTab (T8 + T11.4) — lista de artifacts da sessão.
+ * PlanTab — lista de artifacts da sessão.
  *
  * Estado vive no workbench-store (slice `plan`):
  *   - lista de artifacts da sessão → cacheada por threadId
