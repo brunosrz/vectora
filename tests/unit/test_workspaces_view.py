@@ -13,6 +13,8 @@ listar/ler.
 
 from __future__ import annotations
 
+import hashlib
+
 import pytest
 
 from src.types import Workspace
@@ -134,12 +136,18 @@ class TestWorkspaceFile:
         from src.api.handlers.workspaces import workspace_file
 
         wsid, root = trusted_ws
-        (root / "hello.txt").write_text("olá mundo\n", encoding="utf-8")
+        # `write_bytes` evita a tradução de newline de `write_text` (que no
+        # Windows trocaria "\n" por "\r\n"), mantendo o teste determinístico
+        # — o handler agora lê em modo binário para que o sha256 reflita
+        # exatamente os bytes em disco.
+        raw = "olá mundo\n".encode()
+        (root / "hello.txt").write_bytes(raw)
 
         resp = await workspace_file(workspace_id=wsid, path="hello.txt")
         assert resp.kind == "text"
         assert resp.content == "olá mundo\n"
         assert resp.truncated is False
+        assert resp.sha256 == hashlib.sha256(raw).hexdigest()
 
     @pytest.mark.asyncio
     async def test_detects_binary_file(self, trusted_ws):
@@ -168,6 +176,8 @@ class TestWorkspaceFile:
         assert resp.truncated is True
         assert resp.content is not None
         assert len(resp.content) == 256 * 1024
+        # Truncado → sem sha256 (edição inline fica desabilitada no frontend).
+        assert resp.sha256 is None
 
     @pytest.mark.asyncio
     async def test_returns_empty_for_missing_file(self, trusted_ws):
@@ -192,6 +202,111 @@ class TestWorkspaceFile:
         # Resolver bloqueia (resolve_within_workspace devolve None) →
         # handler responde como "arquivo não encontrado".
         assert resp.content is None or "segredo" not in (resp.content or "")
+
+
+# ---------------------------------------------------------------------------
+# PUT /workspaces/{id}/fs/file — A.1 (editor inline)
+# ---------------------------------------------------------------------------
+
+
+class TestUpdateFsFile:
+    @pytest.mark.asyncio
+    async def test_writes_with_matching_sha256(self, trusted_ws):
+        from src.api.handlers.workspaces import UpdateFsFileRequest, update_fs_file
+
+        wsid, root = trusted_ws
+        raw = "olá\n".encode()
+        (root / "hello.txt").write_bytes(raw)
+        current_sha = hashlib.sha256(raw).hexdigest()
+
+        resp = await update_fs_file(
+            workspace_id=wsid,
+            path="hello.txt",
+            body=UpdateFsFileRequest(content="mundo\n", expected_sha256=current_sha),
+        )
+        assert resp.status == "ok"
+        assert resp.sha256 == hashlib.sha256(b"mundo\n").hexdigest()
+        assert (root / "hello.txt").read_text(encoding="utf-8") == "mundo\n"
+
+    @pytest.mark.asyncio
+    async def test_writes_without_expected_sha256(self, trusted_ws):
+        """`expected_sha256=None` pula a checagem de conflito (sobrescreve sempre)."""
+        from src.api.handlers.workspaces import UpdateFsFileRequest, update_fs_file
+
+        wsid, root = trusted_ws
+        (root / "hello.txt").write_text("a\n", encoding="utf-8")
+
+        resp = await update_fs_file(
+            workspace_id=wsid,
+            path="hello.txt",
+            body=UpdateFsFileRequest(content="b\n", expected_sha256=None),
+        )
+        assert resp.status == "ok"
+        assert (root / "hello.txt").read_text(encoding="utf-8") == "b\n"
+
+    @pytest.mark.asyncio
+    async def test_conflict_returns_412(self, trusted_ws):
+        """sha256 divergente → 412, sem escrever no disco."""
+        from fastapi import HTTPException
+
+        from src.api.handlers.workspaces import UpdateFsFileRequest, update_fs_file
+
+        wsid, root = trusted_ws
+        (root / "hello.txt").write_text("original\n", encoding="utf-8")
+
+        with pytest.raises(HTTPException) as exc_info:
+            await update_fs_file(
+                workspace_id=wsid,
+                path="hello.txt",
+                body=UpdateFsFileRequest(content="novo\n", expected_sha256="0" * 64),
+            )
+        assert exc_info.value.status_code == 412
+        assert (root / "hello.txt").read_text(encoding="utf-8") == "original\n"
+
+    @pytest.mark.asyncio
+    async def test_missing_file_returns_error(self, trusted_ws):
+        from src.api.handlers.workspaces import UpdateFsFileRequest, update_fs_file
+
+        wsid, _ = trusted_ws
+        resp = await update_fs_file(
+            workspace_id=wsid,
+            path="nao-existe.txt",
+            body=UpdateFsFileRequest(content="x", expected_sha256=None),
+        )
+        assert resp.status == "error"
+
+    @pytest.mark.asyncio
+    async def test_blocks_traversal(self, trusted_ws):
+        from src.api.handlers.workspaces import UpdateFsFileRequest, update_fs_file
+
+        wsid, root = trusted_ws
+        outside = root.parent / "fora.txt"
+        outside.write_text("segredo", encoding="utf-8")
+
+        resp = await update_fs_file(
+            workspace_id=wsid,
+            path="../fora.txt",
+            body=UpdateFsFileRequest(content="hackeado", expected_sha256=None),
+        )
+        assert resp.status == "error"
+        assert outside.read_text(encoding="utf-8") == "segredo"
+
+    @pytest.mark.asyncio
+    async def test_rejects_oversized_content(self, trusted_ws):
+        from src.api.handlers.workspaces import UpdateFsFileRequest, update_fs_file
+
+        wsid, root = trusted_ws
+        (root / "hello.txt").write_text("a", encoding="utf-8")
+
+        resp = await update_fs_file(
+            workspace_id=wsid,
+            path="hello.txt",
+            body=UpdateFsFileRequest(
+                content="a" * (3 * 1024 * 1024), expected_sha256=None
+            ),
+        )
+        assert resp.status == "error"
+        assert (root / "hello.txt").read_text(encoding="utf-8") == "a"
 
 
 # ---------------------------------------------------------------------------

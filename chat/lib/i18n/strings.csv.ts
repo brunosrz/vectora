@@ -518,6 +518,17 @@ workbench.files.filter,Filter files…,Filtrar archivos…,Filtrar arquivos…
 workbench.files.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
 workbench.files.binary,"Binary file ({size} bytes) — preview not shown.","Archivo binario ({size} bytes) — vista previa no disponible.","Arquivo binário ({size} bytes) — preview indisponível."
 workbench.files.truncated,File truncated for preview.,Archivo truncado para vista previa.,Arquivo truncado para preview.
+workbench.files.read_only_truncated,File too large to edit inline — showing read-only preview.,Archivo demasiado grande para editar — vista de solo lectura.,Arquivo grande demais para editar — exibindo preview somente leitura.
+workbench.files.save,Save,Guardar,Salvar
+workbench.files.discard,Discard,Descartar,Descartar
+workbench.files.unsaved,Unsaved changes,Cambios sin guardar,Alterações não salvas
+workbench.files.discard_title,Discard unsaved changes?,¿Descartar los cambios sin guardar?,Descartar alterações não salvas?
+workbench.files.discard_desc,"Your edits to this file will be lost.","Tus cambios en este archivo se perderán.","Suas alterações neste arquivo serão perdidas."
+workbench.files.cancel,Cancel,Cancelar,Cancelar
+workbench.files.save_error,Couldn't save the file,No se pudo guardar el archivo,Não foi possível salvar o arquivo
+workbench.files.conflict_title,File changed on disk,El archivo cambió en disco,Arquivo foi alterado em disco
+workbench.files.conflict_desc,"This file was modified outside the editor since it was loaded. Reload to get the latest version — your unsaved edits will be lost.","Este archivo fue modificado fuera del editor desde que se cargó. Recarga para obtener la versión más reciente — tus cambios no guardados se perderán.","Este arquivo foi modificado fora do editor desde que foi carregado. Recarregue para obter a versão mais recente — suas alterações não salvas serão perdidas."
+workbench.files.reload,Reload,Recargar,Recarregar
 workbench.diff.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
 workbench.diff.not_git,This folder is not a git repository.,Esta carpeta no es un repositorio git.,Esta pasta não é um repositório git.
 workbench.diff.clean,No pending changes.,Sin cambios pendientes.,Sem mudanças pendentes.

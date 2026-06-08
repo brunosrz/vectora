@@ -18,6 +18,7 @@ em modo CLI/root local, usa ``"local"``.
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import json
 import logging
 from pathlib import Path
@@ -735,6 +736,9 @@ class FileResponse(BaseModel):
     content: str | None = None
     size: int = 0
     truncated: bool = False
+    # sha256 do conteúdo retornado — só presente quando não truncado, pois é
+    # o que habilita a edição inline (controle de conflito otimista no PUT).
+    sha256: str | None = None
 
 
 class DiffFile(BaseModel):
@@ -886,31 +890,30 @@ async def workspace_file(
     except OSError:
         size = 0
 
-    # Detecção rudimentar de binário: byte nulo nos primeiros 8 kB.
+    # Lê em modo binário (sem tradução de newline) para que o sha256 reflita
+    # exatamente os bytes em disco — é contra esse hash que o PUT confere
+    # `expected_sha256` antes de sobrescrever.
     try:
         with resolved.open("rb") as f:
-            head = f.read(8192)
+            raw = f.read(_MAX_FILE_PREVIEW + 1)
     except OSError:
         return FileResponse(path=path, kind="text", content=None, size=size)
 
-    if b"\x00" in head:
+    if b"\x00" in raw[:8192]:
         return FileResponse(path=path, kind="binary", size=size)
 
-    try:
-        with resolved.open("r", encoding="utf-8", errors="replace") as f:
-            content = f.read(_MAX_FILE_PREVIEW + 1)
-    except OSError:
-        return FileResponse(path=path, kind="text", content=None, size=size)
-
-    truncated = len(content) > _MAX_FILE_PREVIEW
+    truncated = len(raw) > _MAX_FILE_PREVIEW
     if truncated:
-        content = content[:_MAX_FILE_PREVIEW]
+        raw = raw[:_MAX_FILE_PREVIEW]
+    content = raw.decode("utf-8", errors="replace")
+    sha256 = None if truncated else hashlib.sha256(raw).hexdigest()
     return FileResponse(
         path=path,
         kind="text",
         content=content,
         size=size,
         truncated=truncated,
+        sha256=sha256,
     )
 
 
@@ -1113,6 +1116,77 @@ async def create_fs_file(
         return StatusResponse(status="ok")
     except OSError as exc:
         return StatusResponse(status="error", message=str(exc))
+
+
+# Limite de tamanho para edição inline via textarea (ver `update_fs_file`).
+_MAX_FILE_EDIT_SIZE = 2 * 1024 * 1024  # 2 MiB
+
+
+class UpdateFsFileRequest(BaseModel):
+    content: str
+    expected_sha256: str | None = None
+
+
+class FileWriteResponse(BaseModel):
+    status: str
+    message: str = ""
+    sha256: str | None = None
+
+
+@view_router.put("/{workspace_id}/fs/file", response_model=FileWriteResponse)
+async def update_fs_file(
+    workspace_id: str,
+    path: Annotated[str, Query()],
+    body: UpdateFsFileRequest,
+) -> FileWriteResponse:
+    """Sobrescreve o conteúdo de um arquivo de texto existente no workspace.
+
+    Controle de conflito otimista: quando `expected_sha256` é informado e não
+    bate com o sha256 do conteúdo atual em disco, devolve 412 sem escrever
+    nada — o frontend oferece recarregar antes de tentar de novo. Aceita
+    apenas texto utf-8/ascii até 2 MiB (acima disso, usar outras ferramentas).
+    """
+    from fastapi import HTTPException
+
+    resolved = _resolve_inside(workspace_id, path)
+    if resolved is None:
+        return FileWriteResponse(
+            status="error", message="Caminho inválido ou fora do workspace."
+        )
+    if not resolved.exists() or not resolved.is_file():
+        return FileWriteResponse(status="error", message="Arquivo não encontrado.")
+
+    try:
+        current_bytes = resolved.read_bytes()
+    except OSError as exc:
+        return FileWriteResponse(status="error", message=str(exc))
+
+    current_sha256 = hashlib.sha256(current_bytes).hexdigest()
+    if body.expected_sha256 is not None and body.expected_sha256 != current_sha256:
+        raise HTTPException(
+            status_code=412,
+            detail="O arquivo foi modificado por fora desde a última leitura.",
+        )
+
+    new_bytes: bytes | None = None
+    invalid_reason: str | None = None
+    try:
+        new_bytes = body.content.encode("utf-8")
+    except UnicodeEncodeError:
+        invalid_reason = "Conteúdo deve ser texto utf-8/ascii."
+    if new_bytes is not None and len(new_bytes) > _MAX_FILE_EDIT_SIZE:
+        invalid_reason = "Arquivo excede o limite de 2 MiB para edição."
+    if invalid_reason is not None or new_bytes is None:
+        return FileWriteResponse(
+            status="error", message=invalid_reason or "Conteúdo inválido."
+        )
+
+    try:
+        resolved.write_bytes(new_bytes)
+    except OSError as exc:
+        return FileWriteResponse(status="error", message=str(exc))
+
+    return FileWriteResponse(status="ok", sha256=hashlib.sha256(new_bytes).hexdigest())
 
 
 @view_router.post("/{workspace_id}/fs/dir", response_model=StatusResponse)

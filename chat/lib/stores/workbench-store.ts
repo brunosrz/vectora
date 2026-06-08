@@ -60,6 +60,8 @@ export interface FileContent {
   content?: string;
   size: number;
   truncated?: boolean;
+  /** sha256 do conteúdo — ausente quando truncado (edição fica desabilitada). */
+  sha256?: string | null;
 }
 
 interface FilesCache {

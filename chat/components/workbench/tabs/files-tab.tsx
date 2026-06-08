@@ -28,10 +28,20 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useToastStore } from "@/lib/stores/toast-store";
 import {
   WORKBENCH_STALE_MS,
   useWorkbenchStore,
@@ -110,6 +120,40 @@ async function fetchFile(
   );
   if (!res.ok) return null;
   return res.json();
+}
+
+type SaveFileResult =
+  | { ok: true; sha256: string | null }
+  | { ok: false; conflict: boolean; message?: string };
+
+async function apiUpdateFile(
+  workspaceId: string,
+  path: string,
+  content: string,
+  expectedSha256: string | null,
+): Promise<SaveFileResult> {
+  const qs = new URLSearchParams({ path });
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/fs/file?${qs}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, expected_sha256: expectedSha256 }),
+    },
+  );
+  if (res.status === 412) {
+    return { ok: false, conflict: true };
+  }
+  let data: { status?: string; message?: string; sha256?: string | null } = {};
+  try {
+    data = await res.json();
+  } catch {
+    // resposta sem corpo JSON — segue com `data` vazio
+  }
+  if (!res.ok || data.status !== "ok") {
+    return { ok: false, conflict: false, message: data.message };
+  }
+  return { ok: true, sha256: data.sha256 ?? null };
 }
 
 async function apiFsCreate(
@@ -599,13 +643,90 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   // Estado de criação inline
   const [creating, setCreating] = useState<CreatingState | null>(null);
 
+  // ── Editor inline (A.1): rascunho local + dirty-tracking ────────────────
+  const [draft, setDraft] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
+  const [pendingNav, setPendingNav] = useState<
+    { kind: "open"; path: string } | { kind: "close" } | null
+  >(null);
+
+  const dirty = draft !== null && draft !== (openContent?.content ?? "");
+  const editable =
+    openContent?.kind === "text" &&
+    !openContent.truncated &&
+    openContent.sha256 != null;
+
+  // Trocar de arquivo limpa o rascunho (cada arquivo tem seu próprio ciclo).
+  useEffect(() => {
+    setDraft(null);
+  }, [openPath]);
+
   const handleOpenFile = useCallback(
     (path: string) => {
       if (!wsId) return;
+      if (dirty) {
+        setPendingNav({ kind: "open", path });
+        return;
+      }
       setOpenFile(wsId, path);
     },
-    [wsId, setOpenFile],
+    [wsId, dirty, setOpenFile],
   );
+
+  const handleCloseViewer = useCallback(() => {
+    if (!wsId) return;
+    if (dirty) {
+      setPendingNav({ kind: "close" });
+      return;
+    }
+    setOpenFile(wsId, null);
+  }, [wsId, dirty, setOpenFile]);
+
+  const handleConfirmDiscardNav = useCallback(() => {
+    if (!wsId || !pendingNav) return;
+    setDraft(null);
+    if (pendingNav.kind === "open") setOpenFile(wsId, pendingNav.path);
+    else setOpenFile(wsId, null);
+    setPendingNav(null);
+  }, [wsId, pendingNav, setOpenFile]);
+
+  const handleSaveFile = useCallback(async () => {
+    if (!wsId || !openPath || draft === null || !openContent) return;
+    setSaving(true);
+    const result = await apiUpdateFile(
+      wsId,
+      openPath,
+      draft,
+      openContent.sha256 ?? null,
+    );
+    setSaving(false);
+    if (result.ok) {
+      setFileContent(wsId, openPath, {
+        ...openContent,
+        content: draft,
+        sha256: result.sha256,
+        truncated: false,
+      });
+      setDraft(null);
+      return;
+    }
+    if (result.conflict) {
+      setConflictOpen(true);
+      return;
+    }
+    useToastStore
+      .getState()
+      .error(t("workbench.files.save_error"), { description: result.message });
+  }, [wsId, openPath, draft, openContent, setFileContent, t]);
+
+  const handleReloadFile = useCallback(async () => {
+    if (!wsId || !openPath) return;
+    setConflictOpen(false);
+    setDraft(null);
+    const data = await fetchFile(wsId, openPath);
+    if (data) setFileContent(wsId, openPath, data);
+  }, [wsId, openPath, setFileContent]);
 
   // Refresh: invalida cache e força re-fetch
   const handleRefresh = useCallback(() => {
@@ -788,10 +909,34 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
       {showViewer && (
         <div className="border-t border-border/60 max-h-[50%] flex flex-col">
           <div className="flex items-center justify-between px-2 py-1 bg-muted/30 text-xs">
-            <span className="truncate font-mono text-muted-foreground">
+            <span className="truncate font-mono text-muted-foreground flex items-center gap-1.5">
               {openPath ?? "…"}
+              {dirty && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+                  title={t("workbench.files.unsaved")}
+                />
+              )}
             </span>
             <div className="flex items-center gap-1 shrink-0">
+              {dirty && (
+                <>
+                  <button
+                    onClick={() => setDraft(null)}
+                    className="px-1.5 py-0.5 rounded text-muted-foreground hover:text-foreground"
+                  >
+                    {t("workbench.files.discard")}
+                  </button>
+                  <button
+                    onClick={handleSaveFile}
+                    disabled={saving}
+                    className="px-1.5 py-0.5 rounded text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                  >
+                    {saving && <Loader2 className="w-3 h-3 animate-spin" />}
+                    {t("workbench.files.save")}
+                  </button>
+                </>
+              )}
               {onAddToContext && openPath && (
                 <button
                   onClick={() => onAddToContext(openPath)}
@@ -802,7 +947,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 </button>
               )}
               <button
-                onClick={() => setOpenFile(wsId, null)}
+                onClick={handleCloseViewer}
                 className="text-muted-foreground hover:text-foreground px-1"
                 title={t("workbench.close")}
               >
@@ -817,6 +962,13 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               <p className="text-xs text-muted-foreground">
                 {t("workbench.files.binary", { size: openContent.size })}
               </p>
+            ) : editable ? (
+              <textarea
+                value={draft ?? openContent?.content ?? ""}
+                onChange={(e) => setDraft(e.target.value)}
+                spellCheck={false}
+                className="w-full h-full min-h-[160px] resize-none bg-transparent text-xs font-mono leading-relaxed outline-none"
+              />
             ) : (
               <pre className="text-xs font-mono whitespace-pre-wrap break-all">
                 {openContent?.content ?? ""}
@@ -824,12 +976,57 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             )}
             {openContent?.truncated && (
               <p className="text-[10px] text-muted-foreground mt-2">
-                {t("workbench.files.truncated")}
+                {t("workbench.files.read_only_truncated")}
               </p>
             )}
           </div>
         </div>
       )}
+
+      {/* Conflito de edição concorrente — 412 do PUT */}
+      <Dialog open={conflictOpen} onOpenChange={setConflictOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("workbench.files.conflict_title")}</DialogTitle>
+            <DialogDescription>
+              {t("workbench.files.conflict_desc")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConflictOpen(false)}>
+              {t("workbench.files.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={handleReloadFile}>
+              {t("workbench.files.reload")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Aviso de descarte ao trocar/fechar arquivo com edições pendentes */}
+      <Dialog
+        open={pendingNav !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingNav(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("workbench.files.discard_title")}</DialogTitle>
+            <DialogDescription>
+              {t("workbench.files.discard_desc")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingNav(null)}>
+              {t("workbench.files.cancel")}
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDiscardNav}>
+              {t("workbench.files.discard")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
