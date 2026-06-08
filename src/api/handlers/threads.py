@@ -7,8 +7,12 @@ Endpoints (todos POST, padrão ConnectRPC):
     POST /vectora.chat.v1.ThreadService/DeleteThread
     POST /vectora.chat.v1.ThreadService/GetHistory
 
+Endpoints REST de rewind (A.2):
+    GET  /threads/{thread_id}/checkpoints  — lista checkpoints de turno
+    POST /threads/{thread_id}/rewind       — restaura workspace para checkpoint
+
 Persiste no mesmo banco SQLite que o chat TUI usa, via AsyncSqliteSaver
-+ tabela vectora_sessions.
++ tabelas vectora_sessions / vectora_checkpoint_artifacts.
 """
 
 from __future__ import annotations
@@ -17,9 +21,10 @@ import json
 import logging
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import BaseModel
 
 from src.api.schemas import (
     CreateThreadRequest,
@@ -55,12 +60,16 @@ _db_conn: Any = None
 
 
 async def _ensure_schema(db: Any) -> None:
-    """Cria a tabela ``vectora_sessions`` se ainda não existir.
+    """Cria as tabelas do banco de checkpoints/sessões se não existirem.
 
     Idempotente. Exportada para que o ``_lifespan`` do server possa chamar
-    no startup, garantindo que a tabela exista antes do primeiro request —
+    no startup, garantindo que as tabelas existam antes do primeiro request —
     evita race com o ``AsyncSqliteSaver`` do LangGraph que abre o mesmo
     arquivo ``~/.vectora/checkpoints.db``.
+
+    Tabelas gerenciadas:
+    - ``vectora_sessions`` — metadados de cada thread/sessão.
+    - ``vectora_checkpoint_artifacts`` — metadados dos snapshots de rewind (A.2).
     """
     await db.execute("""
         CREATE TABLE IF NOT EXISTS vectora_sessions (
@@ -70,6 +79,18 @@ async def _ensure_schema(db: Any) -> None:
             last_activity TEXT    NOT NULL,
             message_count INTEGER NOT NULL DEFAULT 0,
             extra         TEXT    NOT NULL DEFAULT '{}'
+        )
+    """)
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS vectora_checkpoint_artifacts (
+            id              TEXT PRIMARY KEY,
+            thread_id       TEXT NOT NULL,
+            checkpoint_id   TEXT NOT NULL,
+            strategy        TEXT NOT NULL DEFAULT 'git',
+            git_sha         TEXT,
+            snapshot_path   TEXT,
+            files_touched   TEXT NOT NULL DEFAULT '[]',
+            created_at      TEXT NOT NULL
         )
     """)
     await db.commit()
@@ -349,3 +370,177 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
     except Exception as exc:
         logger.exception("api/threads: erro ao carregar histórico")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# Rewind — A.2b: schema + endpoints REST
+# ---------------------------------------------------------------------------
+
+
+class CheckpointArtifact(BaseModel):
+    """Metadados de um snapshot de rewind gravado para uma thread."""
+
+    id: str
+    thread_id: str
+    checkpoint_id: str
+    strategy: str
+    git_sha: str | None
+    snapshot_path: str | None
+    files_touched: list[str]
+    created_at: str
+
+
+class CheckpointsResponse(BaseModel):
+    checkpoints: list[CheckpointArtifact]
+
+
+class RewindRequest(BaseModel):
+    checkpoint_id: str
+
+
+class RewindResponse(BaseModel):
+    status: str
+    message: str = ""
+
+
+@router.get("/threads/{thread_id}/checkpoints", response_model=CheckpointsResponse)
+async def list_thread_checkpoints(thread_id: str) -> CheckpointsResponse:
+    """Lista os checkpoints de rewind gravados para uma thread.
+
+    Retorna apenas artefatos com ``strategy='git'`` ou ``strategy='snapshot'``
+    associados a turnos completos (gravados pelo orchestrator após cada turno).
+    A filtragem por ``kind='turn'`` via metadados LangGraph é feita pelo
+    orchestrator ao gravar — aqui lemos apenas o que está em
+    ``vectora_checkpoint_artifacts``.
+    """
+    db = await _get_db()
+    async with db.execute(
+        "SELECT id, thread_id, checkpoint_id, strategy, git_sha, snapshot_path, "
+        "files_touched, created_at "
+        "FROM vectora_checkpoint_artifacts "
+        "WHERE thread_id = ? ORDER BY created_at DESC",
+        (thread_id,),
+    ) as cur:
+        rows = await cur.fetchall()
+
+    return CheckpointsResponse(
+        checkpoints=[
+            CheckpointArtifact(
+                id=r[0],
+                thread_id=r[1],
+                checkpoint_id=r[2],
+                strategy=r[3],
+                git_sha=r[4],
+                snapshot_path=r[5],
+                files_touched=json.loads(r[6] or "[]"),
+                created_at=r[7],
+            )
+            for r in rows
+        ]
+    )
+
+
+@router.post("/threads/{thread_id}/rewind", response_model=RewindResponse)
+async def rewind_thread(
+    thread_id: str,
+    body: RewindRequest,
+    workspace_id: Annotated[str, Query()] = "",
+) -> RewindResponse:
+    """Restaura o workspace para o estado do checkpoint indicado.
+
+    Requer que o ``workspace_id`` seja passado via query param (ou seja
+    encontrado no banco pela thread) e que o workspace seja um repositório git.
+    O mutex do workspace é adquirido durante a restauração — bloqueia escritas
+    concorrentes de tools. Retorna 409 se o workspace estiver ocupado.
+
+    Passos:
+    1. Busca o artefato pelo ``checkpoint_id`` na tabela.
+    2. Obtém o workspace via registry.
+    3. Adquire ``acquire_workspace_lock(workspace_id, thread_id)``.
+    4. Chama ``restore_git_checkpoint(repo, git_sha)``.
+    """
+    db = await _get_db()
+    async with db.execute(
+        "SELECT id, git_sha, snapshot_path, strategy "
+        "FROM vectora_checkpoint_artifacts "
+        "WHERE thread_id = ? AND checkpoint_id = ? "
+        "ORDER BY created_at DESC LIMIT 1",
+        (thread_id, body.checkpoint_id),
+    ) as cur:
+        row = await cur.fetchone()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Checkpoint {body.checkpoint_id!r} não encontrado para a thread.",
+        )
+
+    _artifact_id, git_sha, _snapshot_path, strategy = row
+
+    # Resolve workspace: query param > banco
+    wid = workspace_id or ""
+    if not wid:
+        async with db.execute(
+            "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+            (thread_id,),
+        ) as cur2:
+            session_row = await cur2.fetchone()
+        if session_row:
+            try:
+                wid = json.loads(session_row[0] or "{}").get("workspace_id", "")
+            except Exception:
+                wid = ""
+
+    if not wid:
+        raise HTTPException(
+            status_code=422,
+            detail="workspace_id é obrigatório para o rewind (passe via query param).",
+        )
+
+    from src.services.workspace import (
+        WorkspaceLockTimeoutError,
+        acquire_workspace_lock,
+        workspace_registry,
+    )
+
+    ws = workspace_registry.get(wid)
+    if ws is None:
+        raise HTTPException(
+            status_code=404, detail=f"Workspace {wid!r} não encontrado."
+        )
+
+    if strategy == "git":
+        if not git_sha:
+            raise HTTPException(
+                status_code=422, detail="Artefato de checkpoint sem git_sha."
+            )
+        try:
+            import git as gitpy
+
+            repo = gitpy.Repo(ws.cwd, search_parent_directories=True)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=422, detail=f"Não é um repositório git: {exc}"
+            ) from exc
+
+        try:
+            async with acquire_workspace_lock(wid, thread_id, timeout=5.0):
+                from src.services.checkpoint import restore_git_checkpoint
+
+                result = restore_git_checkpoint(repo, git_sha)
+        except WorkspaceLockTimeoutError as lock_exc:
+            raise HTTPException(
+                status_code=409,
+                detail="Workspace ocupado por outra operação — tente novamente em instantes.",
+            ) from lock_exc
+        if result["status"] != "ok":
+            raise HTTPException(
+                status_code=500, detail=result.get("message", "Falha no restore.")
+            )
+    else:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Estratégia de checkpoint {strategy!r} ainda não suportada pelo rewind.",
+        )
+
+    return RewindResponse(status="ok")
