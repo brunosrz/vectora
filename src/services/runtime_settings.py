@@ -28,7 +28,15 @@ _DEFAULTS: dict = {
     "active_provider": "google-genai",
     "active_model": "gemini-2.5-flash",
     "verbosity": 0,
+    "theme": "dark",
+    "language": "en",
 }
+
+# Temas válidos da TUI (ver `src/ui/theme.py`: VECTORA_DARK/LIGHT/SYSTEM).
+_VALID_THEMES = ("dark", "light", "system")
+
+# Idiomas válidos da TUI (ver `src/ui/i18n`: csv `key,en,es,pt-BR`).
+_VALID_LANGUAGES = ("en", "es", "pt-BR")
 
 
 class RuntimeSettings:
@@ -114,6 +122,22 @@ class RuntimeSettings:
         """Backward-compat: True when verbosity >= 5."""
         return self.verbosity >= 5
 
+    @property
+    def theme(self) -> str:
+        """Tema ativo da TUI: 'dark' | 'light' | 'system' (ver `src/ui/theme.py`)."""
+        raw = str(self.get("theme", "dark"))
+        return raw if raw in _VALID_THEMES else "dark"
+
+    @property
+    def language(self) -> str:
+        """Idioma ativo da TUI: 'en' | 'es' | 'pt-BR' (ver `src/ui/i18n`).
+
+        Resolução em `src/ui/i18n/__init__.py::t()` segue
+        `runtime_settings.language` → env `LANG` → "en".
+        """
+        raw = str(self.get("language", "en"))
+        return raw if raw in _VALID_LANGUAGES else "en"
+
     # ─── Métodos de negócio ───────────────────────────────────────────────────
 
     def set_active_model(self, provider: str, model: str) -> None:
@@ -131,6 +155,22 @@ class RuntimeSettings:
     def set_debug_mode(self, enabled: bool) -> None:
         """Backward-compat: liga/desliga verbosity entre 0 e 5."""
         self.set_verbosity(5 if enabled else 0)
+
+    def set_theme(self, theme: str) -> None:
+        """Define o tema da TUI ('dark'|'light'|'system') e persiste.
+
+        Valores fora de `_VALID_THEMES` caem em 'dark' — mantém o arquivo
+        consistente mesmo se um valor inválido chegar via edição manual
+        do settings.json ou de uma versão futura/antiga do app.
+        """
+        self.set("theme", theme if theme in _VALID_THEMES else "dark")
+
+    def set_language(self, language: str) -> None:
+        """Define o idioma da TUI ('en'|'es'|'pt-BR') e persiste.
+
+        Mesma lógica defensiva de `set_theme` — valor inválido cai em 'en'.
+        """
+        self.set("language", language if language in _VALID_LANGUAGES else "en")
 
     @property
     def last_session_by_dir(self) -> dict[str, str]:
