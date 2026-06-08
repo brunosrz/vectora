@@ -23,6 +23,7 @@ import { PlusMenu } from "./features/plus-menu";
 import { UsagePopover } from "./features/usage-popover";
 import { SlashCommandMenu } from "./features/slash-command-menu";
 import { AtMentionMenu } from "./features/at-mention-menu";
+import { WorkspaceSelector } from "@/components/layout/workspace-selector";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import {
@@ -321,27 +322,33 @@ export function ChatInput({
             </div>
           )}
 
-          {/* Rodapé do input no estilo Claude Code: modelo à esquerda,
-              modo de permissão e medidor de uso à direita. Sem barra de
+          {/* Rodapé do input — "meio-termo" entre o estilo Claude Code
+              (dois grupos minimalistas) e a chip row do Codex (contexto →
+              configuração). Grupo esquerdo: workspace (onde) → modelo (como);
+              direita: modo de permissão e medidor de uso. Sem barra de
               contexto acima do input (poluição visual desnecessária). */}
           <div className="flex items-center justify-between gap-2 mt-1 px-1 flex-wrap">
             <div className="flex items-center gap-1 min-w-0">
+              <WorkspaceSelector compact />
               {agentConfig && onAgentConfigChange && (
-                <Select
-                  value={agentConfig.model}
-                  onValueChange={handleModelChange}
-                >
-                  <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:text-foreground px-2 gap-1 w-auto shadow-none focus:ring-0 focus-visible:ring-0 text-muted-foreground [&_svg]:opacity-70">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allowedModels.map((model) => (
-                      <SelectItem key={model} value={model}>
-                        {getModelDisplayName(model as ModelOption)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <>
+                  <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
+                  <Select
+                    value={agentConfig.model}
+                    onValueChange={handleModelChange}
+                  >
+                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:text-foreground px-2 gap-1 w-auto shadow-none focus:ring-0 focus-visible:ring-0 text-muted-foreground [&_svg]:opacity-70">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allowedModels.map((model) => (
+                        <SelectItem key={model} value={model}>
+                          {getModelDisplayName(model as ModelOption)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
               )}
             </div>
 

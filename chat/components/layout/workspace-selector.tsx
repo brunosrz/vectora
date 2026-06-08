@@ -1,11 +1,17 @@
 "use client";
 
 /**
- * WorkspaceSelector (Q6)
+ * WorkspaceSelector
  *
- * Chip de pasta no header. Mostra o workspace ativo e, ao clicar, abre um
- * dropdown com a lista de workspaces conhecidos (com indicador de confiança)
- * e a opção de adicionar uma nova pasta via trust dialog.
+ * Chip de pasta — vive no rodapé do composer (estilo "chip row" do Codex,
+ * mesclado ao rodapé minimalista do Claude Code; ver `chat-input.tsx:330`).
+ * Mostra o workspace ativo e, ao clicar, abre um dropdown com a lista de
+ * workspaces conhecidos (com indicador de confiança) e a opção de adicionar
+ * uma nova pasta via trust dialog.
+ *
+ * `compact` ajusta o gatilho para a escala dos demais chips do rodapé
+ * (`PermissionModeMenu`, `SelectTrigger` de modelo: `text-xs h-7 px-2`) —
+ * o dropdown e a lógica de seleção/confiança permanecem inalterados.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +32,11 @@ import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { WorkspaceTrustDialog } from "./workspace-trust-dialog";
 
-export function WorkspaceSelector() {
+interface WorkspaceSelectorProps {
+  compact?: boolean;
+}
+
+export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
   const t = useT();
   // UX-16 — criar/confiar/inicializar workspace exigem o backend; offline
   // essas ações só produziriam erro silencioso.
@@ -66,14 +76,22 @@ export function WorkspaceSelector() {
       <div className="relative" ref={ref}>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors select-none max-w-[200px]"
+          className={
+            compact
+              ? "flex items-center gap-1.5 h-7 px-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors select-none max-w-[160px]"
+              : "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors select-none max-w-[200px]"
+          }
           title={active?.cwd ?? t("workspace.select_title")}
           aria-expanded={open}
         >
           {active?.is_git_repo ? (
-            <FolderGit2 className="w-4 h-4 shrink-0 text-primary" />
+            <FolderGit2
+              className={`shrink-0 text-primary ${compact ? "w-3.5 h-3.5" : "w-4 h-4"}`}
+            />
           ) : (
-            <FolderOpen className="w-4 h-4 shrink-0 text-muted-foreground" />
+            <FolderOpen
+              className={`shrink-0 text-muted-foreground ${compact ? "w-3.5 h-3.5" : "w-4 h-4"}`}
+            />
           )}
           <span className="truncate font-medium">
             {active?.name ?? t("workspace.add_folder")}
@@ -94,11 +112,15 @@ export function WorkspaceSelector() {
               <Cloud className="w-3.5 h-3.5 text-violet-500" />
             </span>
           )}
-          <ChevronDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+          <ChevronDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground [&_svg]:opacity-70" />
         </button>
 
         {open && (
-          <div className="absolute left-0 top-10 z-50 w-72 rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-top-2">
+          <div
+            className={`absolute left-0 z-50 w-72 rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-top-2 ${
+              compact ? "bottom-9" : "top-10"
+            }`}
+          >
             <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
               {t("workspace.select_title")}
             </div>
