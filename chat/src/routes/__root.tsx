@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Outlet,
   createRootRouteWithContext,
@@ -6,10 +7,21 @@ import {
 } from "@tanstack/react-router";
 import type { RouterContext } from "../router";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useSessionExpiry } from "@/lib/hooks/use-session-expiry";
+import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { Toaster } from "@/components/ui/toaster";
 import { NetworkStatusBanner } from "@/components/layout/network-status-banner";
 
 const PUBLIC_PATH_PREFIXES = ["/auth/", "/share/"];
+
+// UX-19 — `Lang` é de granularidade de idioma ("pt" cobre pt-BR/pt-PT…),
+// mas o atributo `lang` do HTML quer um código BCP-47 específico. O Vectora
+// só atende português brasileiro, então "pt" mapeia para "pt-BR".
+const HTML_LANG_BY_SETTING: Record<Lang, string> = {
+  en: "en",
+  es: "es",
+  pt: "pt-BR",
+};
 
 const AUTH_REQUIRED =
   (import.meta.env.VITE_VECTORA_AUTH_REQUIRED ?? "true").toLowerCase() !==
@@ -151,9 +163,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootComponent() {
   const location = useLocation();
-  if (typeof document !== "undefined") {
-    document.documentElement.lang = "pt-BR";
-  }
+  // UX-19 — `lang` refletia "pt-BR" hardcoded; agora segue a preferência
+  // persistida em settings-store (idioma de fato escolhido pelo usuário).
+  const language = useSettingsStore((s) => s.language);
+  // UX-21 — agenda o aviso "sessão expira em breve" perto da raiz, uma
+  // única vez por árvore (não por tela).
+  useSessionExpiry();
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = HTML_LANG_BY_SETTING[language] ?? "en";
+    }
+  }, [language]);
   return (
     <div className="min-h-screen flex flex-col" data-route={location.pathname}>
       <NetworkStatusBanner />

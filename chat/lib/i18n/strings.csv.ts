@@ -365,6 +365,14 @@ auth.signup.submit,Create account,Crear cuenta,Criar conta
 auth.signup.submitting,Creating account...,Creando cuenta...,Criando conta...
 auth.signup.have_account,Already have an account?,¿Ya tienes cuenta?,Já tem conta?
 auth.signup.signin_link,Sign in,Entrar,Entrar
+# =============================================================================
+# Renovação de sessão (UX-21) — aviso de expiração do access token
+# =============================================================================
+auth.session.expiring_title,Your session is about to expire,Tu sesión está por expirar,Sua sessão está prestes a expirar
+auth.session.expiring_desc,Renew now to avoid being signed out.,Renueva ahora para evitar que se cierre tu sesión.,Renove agora para evitar ser desconectado.
+auth.session.renew_action,Renew,Renovar,Renovar
+auth.session.renewed,Session renewed,Sesión renovada,Sessão renovada
+auth.session.renew_failed,Could not renew the session. Please sign in again soon.,No se pudo renovar la sesión. Inicia sesión de nuevo pronto.,Não foi possível renovar a sessão. Faça login novamente em breve.
 auth.signup.create_error,Error creating account.,Error al crear la cuenta.,Erro ao criar conta.
 auth.signup.name_required,Enter your name.,Ingresa tu nombre.,Informe seu nome.
 auth.signup.name_too_long,Name too long (max {n} characters).,Nombre muy largo (máx. {n} caracteres).,Nome muito longo (máx. {n} caracteres).

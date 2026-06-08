@@ -12,6 +12,7 @@
  */
 
 import { VECTORA_API_URL } from "@/lib/constants/api";
+import { saveReturnTo } from "@/lib/utils/return-to";
 
 // ============================================================================
 // Types — espelham os schemas do src/api/schemas.py
@@ -152,6 +153,9 @@ async function tryRefreshToken(): Promise<boolean> {
  */
 function redirectToLogin(): void {
   if (typeof window !== "undefined") {
+    // UX-20 — guarda onde o usuário estava antes do hard-redirect (que
+    // descarta a navegação em memória); `signin.tsx` consome e volta pra cá.
+    saveReturnTo(window.location.pathname + window.location.search);
     window.location.href = "/auth/signin";
   }
 }

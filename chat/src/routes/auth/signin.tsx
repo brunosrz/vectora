@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useT } from "@/lib/i18n";
 import type { AuthUser } from "@/lib/types/auth";
+import { consumeReturnTo } from "@/lib/utils/return-to";
 
 const searchSchema = z.object({
   from: z.string().optional(),
@@ -83,8 +84,12 @@ function SignInPage() {
       }
 
       setUser(data.user as AuthUser);
+      // UX-20 — `vectora:return_to` (sessão caiu no meio do uso, salvo por
+      // `redirectToLogin`) tem prioridade sobre `?from=` (carregamento
+      // inicial sem sessão, ver __root.tsx) por carregar path+query completos.
+      const returnTo = consumeReturnTo();
       const from = (search as { from?: string }).from;
-      void navigate({ to: from ?? "/" });
+      void navigate({ to: returnTo ?? from ?? "/" });
     } catch {
       setError(t("auth.conn_error"));
     } finally {

@@ -129,6 +129,11 @@ async def _extract_user(request: Request) -> Any:
         user_id: str = payload.get("sub", "")
         if not user_id:
             return None
+        # UX-21 — expõe o `exp` (epoch seconds) do access token via
+        # request.state para que /auth/me possa devolvê-lo ao frontend.
+        # Sem isso o cliente não tem como saber quando renovar (cookie
+        # httpOnly: o JS não enxerga o JWT bruto).
+        request.state.token_exp = payload.get("exp")
         return await get_user_by_id(user_id)
     except JWTError:
         return None

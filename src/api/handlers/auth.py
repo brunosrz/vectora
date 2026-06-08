@@ -96,6 +96,24 @@ def _client_ip(request: Request) -> str:
     return request.client.host if request.client else ""
 
 
+def _token_exp(access_token: str) -> int | None:
+    """Decodifica o `exp` (epoch seconds) de um access token recém-emitido.
+
+    UX-21 — devolvido em `TokenResponse.user.token_expires_at` para o
+    frontend agendar o aviso "sessão expira em breve" sem precisar decodificar
+    o JWT bruto (impossível: viaja em cookie httpOnly, opaco para o JS).
+    Decodificação best-effort — token acabou de ser assinado por nós, então
+    falha aqui só indicaria bug; não deve quebrar o fluxo de auth.
+    """
+    from src.services.auth import decode_access_token
+
+    try:
+        exp = decode_access_token(access_token).get("exp")
+        return int(exp) if exp is not None else None
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Endpoints públicos (sem auth)
 # ---------------------------------------------------------------------------
@@ -167,7 +185,7 @@ async def signup_endpoint(
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        user=UserResponse.from_user(user),
+        user=UserResponse.from_user(user, token_expires_at=_token_exp(access_token)),
     )
 
 
@@ -191,7 +209,7 @@ async def signin_endpoint(
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        user=UserResponse.from_user(user),
+        user=UserResponse.from_user(user, token_expires_at=_token_exp(access_token)),
     )
 
 
@@ -216,7 +234,7 @@ async def refresh_endpoint(
     return TokenResponse(
         access_token=access_token,
         refresh_token=new_refresh,
-        user=UserResponse.from_user(user),
+        user=UserResponse.from_user(user, token_expires_at=_token_exp(access_token)),
     )
 
 
@@ -245,7 +263,10 @@ async def me_endpoint(request: Request) -> UserResponse:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Não autenticado.")
-    return UserResponse.from_user(user)
+    # UX-21 — repassa o `exp` do access token (anexado pelo AuthMiddleware)
+    # para o frontend agendar o aviso de renovação de sessão.
+    token_exp = getattr(request.state, "token_exp", None)
+    return UserResponse.from_user(user, token_expires_at=token_exp)
 
 
 @router.patch("/me", response_model=UserResponse)

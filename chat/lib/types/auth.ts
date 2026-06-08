@@ -10,6 +10,13 @@ export interface AuthUser {
   name?: string;
   created_at: string;
   last_login_at?: string | null;
+  /**
+   * UX-21 — `exp` (epoch seconds) do access token corrente, repassado pelo
+   * backend (ver `UserResponse.token_expires_at` em `src/api/schemas.py`).
+   * O JWT em si é opaco para o JS (cookie httpOnly) — este campo é a única
+   * forma de o frontend saber quando agendar o aviso "sessão expira em breve".
+   */
+  token_expires_at?: number | null;
 }
 
 export interface TokenResponse {

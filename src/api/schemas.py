@@ -363,9 +363,14 @@ class UserResponse(BaseModel):
     name: str = ""
     created_at: str
     last_login_at: str | None = None
+    # UX-21 — `exp` (epoch seconds) do access token corrente, repassado pelo
+    # middleware via request.state.token_exp. Permite ao frontend agendar um
+    # aviso "sessão expira em breve" sem decodificar o JWT (cookie httpOnly —
+    # opaco para o JS). `None` quando o middleware não anexou o claim.
+    token_expires_at: int | None = None
 
     @classmethod
-    def from_user(cls, user: Any) -> UserResponse:
+    def from_user(cls, user: Any, token_expires_at: int | None = None) -> UserResponse:
         return cls(
             id=user.id,
             email=user.email,
@@ -373,6 +378,7 @@ class UserResponse(BaseModel):
             name=getattr(user, "name", "") or "",
             created_at=user.created_at,
             last_login_at=getattr(user, "last_login_at", None),
+            token_expires_at=token_expires_at,
         )
 
 
