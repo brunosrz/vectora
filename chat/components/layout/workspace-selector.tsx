@@ -22,11 +22,15 @@ import {
 
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useT } from "@/lib/i18n";
+import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { WorkspaceTrustDialog } from "./workspace-trust-dialog";
 
 export function WorkspaceSelector() {
   const t = useT();
+  // UX-16 — criar/confiar/inicializar workspace exigem o backend; offline
+  // essas ações só produziriam erro silencioso.
+  const { offline } = useNetworkStatus();
   const workspaces = useWorkspacesStore((s) => s.workspaces);
   const activeId = useWorkspacesStore((s) => s.active_id);
   const status = useWorkspacesStore((s) => s.status);
@@ -150,13 +154,23 @@ export function WorkspaceSelector() {
                   ) : (
                     <span
                       role="button"
-                      tabIndex={0}
-                      className="text-xs px-2 py-0.5 rounded-md text-primary hover:bg-primary/10 border border-primary/30 shrink-0"
+                      tabIndex={offline ? -1 : 0}
+                      aria-disabled={offline}
+                      className={`text-xs px-2 py-0.5 rounded-md text-primary border border-primary/30 shrink-0 ${
+                        offline
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-primary/10"
+                      }`}
                       onClick={async (e) => {
                         e.stopPropagation();
+                        if (offline) return;
                         await trust(w.id);
                       }}
-                      title={t("workspace.trust_confirm")}
+                      title={
+                        offline
+                          ? t("network.disabled_offline")
+                          : t("workspace.trust_confirm")
+                      }
                     >
                       {t("workspace.trust_confirm")}
                     </span>
@@ -167,7 +181,9 @@ export function WorkspaceSelector() {
 
             <div className="border-t border-border/60 mt-1 pt-1">
               <button
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-foreground/80"
+                disabled={offline}
+                title={offline ? t("network.disabled_offline") : undefined}
                 onClick={() => {
                   setOpen(false);
                   setTrustOpen(true);

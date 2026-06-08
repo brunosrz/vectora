@@ -26,6 +26,7 @@ import { useToastStore } from "@/lib/stores/toast-store";
 // Alias — este módulo já usa `t` como nome de variável local para threads
 // (ex.: `raw.map((t) => ...)`); evita colisão com a tradução fora de hooks.
 import { t as translate } from "@/lib/i18n";
+import { withRetry } from "@/lib/utils/fetch-retry";
 
 // ============================================================================
 // Types
@@ -92,7 +93,11 @@ export function useThreads(userId: string | undefined) {
   const getUserThreads = async (id: string, silent = false): Promise<void> => {
     if (!silent) setIsLoading(true);
     try {
-      const { threads: raw } = await listThreads(THREAD_FETCH_LIMIT);
+      // UX-17 — leitura idempotente: retenta em 5xx/queda de rede antes de
+      // admitir falha (a sidebar ficaria vazia por uma instabilidade passageira).
+      const { threads: raw } = await withRetry(() =>
+        listThreads(THREAD_FETCH_LIMIT),
+      );
       const mapped = raw.map((t) => toThread(t, id));
       setThreads(mapped);
     } catch (error) {

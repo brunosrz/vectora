@@ -25,7 +25,9 @@ import { estimateTokens } from "@/lib/utils/tokens";
 import { useThreadsStore } from "@/lib/stores/threads-store";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { useRouter } from "next/navigation";
-import { useT } from "@/lib/i18n";
+import { useT, t as translate } from "@/lib/i18n";
+import { useToastStore } from "@/lib/stores/toast-store";
+import { consumeInterruptedFlag } from "@/lib/utils/stream-interruption";
 import {
   getAllowedModels,
   getModelDisplayName,
@@ -412,6 +414,15 @@ export function ChatInterface({
         );
         uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
         return;
+      }
+
+      // UX-18 — se a aba fechou/recarregou no meio de uma resposta, a marca
+      // em localStorage (ver use-stream-handler.ts) ainda está presente;
+      // avisamos o usuário de que a resposta anterior pode ter sido cortada.
+      if (consumeInterruptedFlag(currentThreadId)) {
+        // `translate` (não o `t` do useT()) — evita acrescentar dependência
+        // de hook a este efeito só por causa de um toast condicional.
+        useToastStore.getState().warning(translate("chat.stream_interrupted"));
       }
 
       try {

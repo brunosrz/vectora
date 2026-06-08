@@ -32,6 +32,7 @@ import {
 } from "@/lib/config/deployment-config";
 import type { ImageAttachment } from "@/lib/types";
 import { useT } from "@/lib/i18n";
+import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 
 interface ChatInputProps {
   input: string;
@@ -122,6 +123,10 @@ export function ChatInput({
   onAtMentionSelect,
 }: ChatInputProps) {
   const t = useT();
+  // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
+  // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
+  // para uma falha certa.
+  const { offline } = useNetworkStatus();
   const allowedModels = getAllowedModels();
   const handleModelChange = (model: string) => {
     if (agentConfig && onAgentConfigChange) {
@@ -246,7 +251,7 @@ export function ChatInput({
                   {/* Menu + (anexos / pasta / comandos) — R3 */}
                   {!isLoading && (
                     <PlusMenu
-                      disabled={!userId}
+                      disabled={!userId || offline}
                       onAddFiles={onFileButtonClick}
                     />
                   )}
@@ -260,19 +265,22 @@ export function ChatInput({
                     placeholder={
                       !userId
                         ? t("input.initializing")
-                        : isLoading
-                          ? t("input.loading_placeholder")
-                          : t("input.placeholder")
+                        : offline
+                          ? t("network.disabled_offline")
+                          : isLoading
+                            ? t("input.loading_placeholder")
+                            : t("input.placeholder")
                     }
+                    title={offline ? t("network.disabled_offline") : undefined}
                     className="relative z-10 min-h-[36px] max-h-[240px] resize-none overflow-y-auto bg-transparent border-0 w-full px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 transition-[height] duration-150 break-words custom-scrollbar"
-                    disabled={!userId}
+                    disabled={!userId || offline}
                     rows={1}
                   />
 
                   {isVoiceSupported && onVoiceToggle && (
                     <VoiceInputButton
                       isListening={isVoiceListening ?? false}
-                      disabled={!userId}
+                      disabled={!userId || offline}
                       onClick={onVoiceToggle}
                       size="sm"
                     />

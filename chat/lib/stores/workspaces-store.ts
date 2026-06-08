@@ -22,6 +22,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { useToastStore } from "./toast-store";
 import { t } from "@/lib/i18n";
+import { fetchJsonWithRetry, FetchHttpError } from "@/lib/utils/fetch-retry";
 import {
   asyncError,
   asyncLoading,
@@ -164,8 +165,18 @@ interface WorkspacesState {
   }) => Promise<WorkspaceInfo | null>;
 }
 
+/**
+ * Wrapper tolerante a falha (`| null`) usado pelas leituras auxiliares do
+ * store (browse, safe-roots, ssh-keys, codespaces, set-active…).
+ *
+ * UX-17 — para `GET`s (leituras idempotentes) delega a `fetchJsonWithRetry`
+ * (retry exponencial em 5xx/queda de rede, sem retentar 4xx). Mutações
+ * (`POST`/`PUT`/…) seguem sem retry — repetir poderia duplicar o efeito.
+ */
 async function fetchJson(url: string, init?: RequestInit): Promise<any | null> {
+  const isRead = !init?.method || init.method.toUpperCase() === "GET";
   try {
+    if (isRead) return await fetchJsonWithRetry(url, init);
     const res = await fetch(url, init);
     if (!res.ok) return null;
     return await res.json();
@@ -180,6 +191,29 @@ async function readErrorMessage(res: Response): Promise<string> {
   if (data && typeof data.message === "string" && data.message)
     return data.message;
   return `HTTP ${res.status}`;
+}
+
+/**
+ * Equivalente a `readErrorMessage`, mas para erros já capturados de
+ * `fetchJsonWithRetry` — o corpo chega como texto bruto em `err.message`.
+ */
+function httpErrorMessage(err: unknown): string | null {
+  if (!(err instanceof FetchHttpError)) return null;
+  try {
+    const data: unknown = JSON.parse(err.message);
+    if (
+      data &&
+      typeof data === "object" &&
+      "message" in data &&
+      typeof (data as { message?: unknown }).message === "string" &&
+      (data as { message: string }).message
+    ) {
+      return (data as { message: string }).message;
+    }
+  } catch {
+    // Corpo não é JSON — usa o fallback `HTTP {status}` do toErrorMessage.
+  }
+  return `HTTP ${err.status}`;
 }
 
 function setPending(
@@ -229,9 +263,12 @@ export const useWorkspacesStore = create<WorkspacesState>()(
           pending: { ...s.pending, hydrate: true },
         }));
         try {
-          const res = await fetch("/workspaces");
-          if (!res.ok) throw new Error(await readErrorMessage(res));
-          const data = await res.json();
+          // UX-17 — leitura idempotente: retenta em 5xx/queda de rede
+          // (até 2x, backoff exponencial) antes de admitir falha ao usuário.
+          const data = await fetchJsonWithRetry<{
+            workspaces: WorkspaceInfo[];
+            active_id?: string | null;
+          }>("/workspaces");
           if (!data?.workspaces) {
             throw new Error("Resposta inesperada do servidor.");
           }
@@ -243,7 +280,7 @@ export const useWorkspacesStore = create<WorkspacesState>()(
             pending: { ...s.pending, hydrate: false },
           }));
         } catch (err) {
-          const message = toErrorMessage(err);
+          const message = httpErrorMessage(err) ?? toErrorMessage(err);
           set((s) => ({
             ...asyncError(message),
             pending: { ...s.pending, hydrate: false },

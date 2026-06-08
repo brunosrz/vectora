@@ -55,6 +55,14 @@ threads.error.list,Couldn't load your conversations.,No se pudieron cargar tus c
 threads.error.rename,Couldn't save the new title.,No se pudo guardar el nuevo título.,Não foi possível salvar o novo título.
 threads.error.delete,Couldn't delete the conversation.,No se pudo eliminar la conversación.,Não foi possível excluir a conversa.
 # =============================================================================
+# Resiliência de rede (SX-UX-2) — banner de status, reconexão SSE
+# =============================================================================
+network.offline_banner,No connection. Some actions are disabled until the network returns.,Sin conexión. Algunas acciones están deshabilitadas hasta que vuelva la red.,Sem conexão. Algumas ações estão desabilitadas até o retorno da rede.
+network.reconnecting_banner,Reconnecting to the server…,Reconectando con el servidor…,Reconectando ao servidor…
+network.sse_reconnected,Connection restored,Conexión restablecida,Conexão restabelecida
+network.disabled_offline,Unavailable while offline,No disponible sin conexión,Indisponível sem conexão
+chat.stream_interrupted,The previous response may have been interrupted (tab closed or reloaded mid-stream).,La respuesta anterior puede haberse interrumpido (la pestaña se cerró o recargó durante la transmisión).,A resposta anterior pode ter sido interrompida (aba fechada ou recarregada durante a geração).
+# =============================================================================
 # Relative time (sidebar)
 # =============================================================================
 time.just_now,Just now,Ahora mismo,Agora mesmo

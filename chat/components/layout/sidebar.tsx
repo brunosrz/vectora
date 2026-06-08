@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Thread } from "@/lib/hooks/threads";
 import { useT } from "@/lib/i18n";
+import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 import {
   useWorkspacesStore,
   type WorkspaceInfo,
@@ -189,6 +190,8 @@ export const Sidebar = memo(function Sidebar({
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const t = useT();
+  // UX-16 — criar thread exige round-trip ao backend; sem rede só geraria erro.
+  const { offline } = useNetworkStatus();
 
   // Filter threads based on search query
   const filteredThreads = useMemo(() => {
@@ -398,7 +401,9 @@ export const Sidebar = memo(function Sidebar({
           <div className="px-3 pt-2">
             <button
               onClick={onNewChat}
-              className="group w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap"
+              disabled={offline}
+              title={offline ? t("network.disabled_offline") : undefined}
+              className="group w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-primary/15 disabled:hover:to-primary/5 disabled:hover:border-primary/30"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

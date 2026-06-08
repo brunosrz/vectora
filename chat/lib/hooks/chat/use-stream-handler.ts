@@ -33,6 +33,49 @@ import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
+import { useToastStore } from "@/lib/stores/toast-store";
+import { useNetworkStore } from "@/lib/hooks/use-network-status";
+import { t } from "@/lib/i18n";
+import {
+  markStreamStarted,
+  markStreamEnded,
+} from "@/lib/utils/stream-interruption";
+
+// ============================================================================
+// UX-15 — Resiliência de rede: status do SSE
+// ============================================================================
+//
+// Não há `EventSource` aqui — o stream é lido via `fetch().body` (SSE manual,
+// ver `vectora-client.ts::readSSEStream`). Por isso "onerror"/"onopen" são
+// simulados: marcamos `connected` ao receber o primeiro evento do stream e
+// `reconnecting` quando o erro capturado é de transporte (não uma falha de
+// aplicação reportada pelo backend via evento `error`).
+
+/** `true` para falhas de rede/conexão (fetch caiu, DNS, timeout de socket). */
+function isNetworkError(err: unknown): boolean {
+  if (err instanceof TypeError) return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return /failed to fetch|network ?error|load failed|ECONNRESET|ECONNREFUSED/i.test(
+    msg,
+  );
+}
+
+/** Marca o stream como conectado; se vínhamos de uma queda, avisa via toast. */
+function announceSSEConnected(): void {
+  const prev = useNetworkStore.getState().sseStatus;
+  if (prev === "reconnecting" || prev === "failed") {
+    useToastStore.getState().success(t("network.sse_reconnected"));
+  }
+  if (prev !== "connected")
+    useNetworkStore.getState().setSSEStatus("connected");
+}
+
+/** Marca o stream como caído por erro de transporte (badge "Reconectando…"). */
+function announceSSEDropped(err: unknown): void {
+  if (isNetworkError(err)) {
+    useNetworkStore.getState().setSSEStatus("reconnecting");
+  }
+}
 
 // ============================================================================
 // Types
@@ -104,6 +147,8 @@ export function useStreamHandler({
 
       let assistantContent = "";
       let resolvedRunId: string | undefined;
+      // UX-15 — primeiro evento recebido = conexão SSE estabelecida
+      let sseConnected = false;
 
       // Monta config da request
       const config: ChatConfig = {};
@@ -163,6 +208,11 @@ export function useStreamHandler({
         );
       };
 
+      // UX-18 — marca início; `finally` desmarca por qualquer saída conhecida
+      // (done/hitl/error/abort). Se a aba fechar/recarregar no meio, a marca
+      // sobrevive e o próximo mount acusa "resposta pode ter sido interrompida".
+      markStreamStarted(threadId);
+
       try {
         const events = streamChat(
           {
@@ -175,6 +225,12 @@ export function useStreamHandler({
         );
 
         for await (const event of events) {
+          // UX-15 — primeiro evento do stream = conexão SSE de fato estabelecida
+          if (!sseConnected) {
+            sseConnected = true;
+            announceSSEConnected();
+          }
+
           // Interrupção solicitada pelo usuário
           if (shouldInterruptRef?.current) {
             abort.abort();
@@ -225,6 +281,9 @@ export function useStreamHandler({
             })),
           );
         } else {
+          // UX-15 — distingue queda de transporte (badge "Reconectando…") de
+          // erro de aplicação reportado pelo próprio backend via evento `error`.
+          announceSSEDropped(err);
           const msg = err instanceof Error ? err.message : String(err);
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
@@ -239,6 +298,9 @@ export function useStreamHandler({
           );
         }
       } finally {
+        // UX-18 — qualquer saída conhecida do loop desmarca a thread como
+        // "streaming em andamento" (só sobra marcado o caso de aba fechada).
+        markStreamEnded(threadId);
         // Defesa em profundidade: garante que o spinner sempre encerra
         setMessages((prev) =>
           updateMessageInList(prev, assistantMessageId, (m) =>
@@ -280,6 +342,8 @@ export function useStreamHandler({
       );
 
       let assistantContent = "";
+      // UX-15 — primeiro evento recebido = conexão SSE estabelecida
+      let sseConnected = false;
 
       // M2 — mesmo buffering de tokens usado em processStream
       let pendingTokenBatch = "";
@@ -318,10 +382,19 @@ export function useStreamHandler({
         );
       };
 
+      // UX-18 — mesma marca de "stream em andamento" do processStream
+      markStreamStarted(threadId);
+
       try {
         const events = resumeChat(request, abortRef.current?.signal);
 
         for await (const event of events) {
+          // UX-15 — primeiro evento do stream = conexão SSE de fato estabelecida
+          if (!sseConnected) {
+            sseConnected = true;
+            announceSSEConnected();
+          }
+
           if (shouldInterruptRef?.current) {
             abortRef.current?.abort();
             break;
@@ -347,6 +420,8 @@ export function useStreamHandler({
         // Defensivo: flush antes de qualquer mutação no branch de erro.
         flushNow();
         if ((err as { name?: string }).name !== "AbortError") {
+          // UX-15 — mesma distinção transporte vs. aplicação do processStream
+          announceSSEDropped(err);
           const msg = err instanceof Error ? err.message : String(err);
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
@@ -357,6 +432,10 @@ export function useStreamHandler({
           );
         }
       } finally {
+        // UX-18 — qualquer saída conhecida do loop (done/hitl/error/abort)
+        // desmarca a thread como "streaming em andamento"; só sobra marcado
+        // o caso em que a aba fechou/recarregou no meio da resposta.
+        markStreamEnded(threadId);
         setMessages((prev) =>
           updateMessageInList(prev, assistantMessageId, (m) =>
             m.isThinking
