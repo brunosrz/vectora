@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import {
   WORKBENCH_STALE_MS,
   useWorkbenchStore,
@@ -21,6 +22,7 @@ import {
   type DiffSummary,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { DiffSkeleton } from "./diff-skeleton";
 
 async function fetchDiff(workspaceId: string): Promise<DiffSummary | null> {
   const res = await fetch(
@@ -170,6 +172,10 @@ export function DiffTab(_props: DiffTabProps) {
     skip: !wsId,
   });
 
+  // UX-9 — só exibe o skeleton se o carregamento levar mais que 100ms
+  // (cache quente resolve quase instantâneo; evita o "flash").
+  const showSkeleton = useDelayedLoading(summary === null && Boolean(wsId));
+
   if (!workspace) {
     return (
       <div className="h-full flex items-center justify-center text-xs text-muted-foreground p-4 text-center">
@@ -179,11 +185,10 @@ export function DiffTab(_props: DiffTabProps) {
   }
 
   if (!summary) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      </div>
-    );
+    // Sem skeleton nos primeiros 100ms — cache quente costuma resolver antes
+    // disso, e mostrar+esconder um placeholder em sequência pisca mais do que
+    // simplesmente esperar o conteúdo real aparecer.
+    return showSkeleton ? <DiffSkeleton /> : <div className="h-full" />;
   }
 
   if (!summary.is_git_repo) {

@@ -65,3 +65,11 @@ export const MessageSkeletons = memo(function MessageSkeletons() {
     </div>
   );
 });
+
+/**
+ * Alias — UX-9 padroniza o nome `MessageListSkeleton` entre os skeletons do
+ * produto (`ThreadListSkeleton`, `FileTreeSkeleton`, `DiffSkeleton`,
+ * `MessageListSkeleton`). Mantém `MessageSkeletons` para não quebrar imports
+ * existentes.
+ */
+export const MessageListSkeleton = MessageSkeletons;

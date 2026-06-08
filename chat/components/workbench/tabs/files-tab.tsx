@@ -31,6 +31,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import {
   WORKBENCH_STALE_MS,
   useWorkbenchStore,
@@ -39,6 +40,7 @@ import {
   type FileEntry,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { FileTreeSkeleton } from "./file-tree-skeleton";
 
 // ---------------------------------------------------------------------------
 // Badge de status git — derivado do diff porcelain por join client-side.
@@ -339,6 +341,12 @@ function DirNode({
     skip: !expanded,
   });
 
+  // UX-9 — skeleton só na raiz (primeira carga da árvore); subpastas usam o
+  // spinner inline de "…" para não competir visualmente com o nó pai.
+  const showRootSkeleton = useDelayedLoading(
+    depth === 0 && expanded && !entries,
+  );
+
   const visible = useMemo(() => {
     if (!filter || !entries) return entries ?? [];
     const f = filter.toLowerCase();
@@ -398,7 +406,9 @@ function DirNode({
 
       {expanded && (
         <div>
-          {!entries && (
+          {!entries && depth === 0 ? (
+            showRootSkeleton && <FileTreeSkeleton />
+          ) : !entries ? (
             <div
               className="flex items-center gap-2 text-xs text-muted-foreground py-1"
               style={{ paddingLeft: 8 + (depth + 1) * 12 }}
@@ -406,7 +416,7 @@ function DirNode({
               <Loader2 className="w-3 h-3 animate-spin" />
               <span>…</span>
             </div>
-          )}
+          ) : null}
 
           {/* Input de criação inline */}
           {showCreateHere && (

@@ -4,9 +4,32 @@
  * Cache client-side da lista de workspaces e do workspace ativo.
  * Padrão stale-while-revalidate: exibe cache imediatamente e revalida
  * em background. Ações async conversam com o proxy Hono em /workspaces.
+ *
+ * SX-UX-1:
+ *  - `status`/`error` substituem `loading: boolean` (máquina `AsyncStatus`);
+ *    `hasLoaded(fetchedAt)` indica se já existe cache renderizável — refresh
+ *    em background não derruba esse cache para um estado "carregando".
+ *  - `pending` rastreia operações individuais (hydrate/create/trust/gitInit)
+ *    para que a UI desabilite só o botão certo, não a tela inteira.
+ *  - Falhas de rede/servidor em ações do usuário viram toast (canal único de
+ *    feedback — UX-7); nenhuma ação retorna silenciosamente `null`.
+ *  - Persistência via `localStorage`, mas só de `active_id`: a lista de
+ *    workspaces é sempre revalidada do backend (source of truth).
  */
 
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+
+import { useToastStore } from "./toast-store";
+import { t } from "@/lib/i18n";
+import {
+  asyncError,
+  asyncLoading,
+  asyncSuccess,
+  hasLoaded as computeHasLoaded,
+  toErrorMessage,
+  type AsyncStatus,
+} from "@/lib/types/async-state";
 
 export type WorkspaceTransport = "local" | "ssh" | "codespace";
 
@@ -68,20 +91,41 @@ export interface CodespaceSummary {
   git_status?: Record<string, unknown> | null;
 }
 
+/** Operações individuais cujo progresso a UI precisa refletir (UX-8). */
+export interface WorkspacesPending {
+  hydrate: boolean;
+  create: boolean;
+  trust: boolean;
+  gitInit: boolean;
+}
+
+const PENDING_IDLE: WorkspacesPending = {
+  hydrate: false,
+  create: false,
+  trust: false,
+  gitInit: false,
+};
+
 interface WorkspacesState {
   workspaces: WorkspaceInfo[];
   active_id: string | null;
   fetchedAt: number | null;
-  loading: boolean;
+  /** Máquina de estado da última revalidação (substitui `loading: boolean`). */
+  status: AsyncStatus;
+  /** Mensagem da última falha — `null` enquanto não houver erro. */
+  error: string | null;
+  /** Progresso por operação — habilita feedback granular (UX-8). */
+  pending: WorkspacesPending;
   safeRoots: SafeRootSummary[];
 
   // ── Reads ─────────────────────────────────────────────────────────────────
   getActive: () => WorkspaceInfo | null;
   getById: (id: string) => WorkspaceInfo | null;
+  /** `true` quando já existe cache renderizável (ainda que stale). */
+  hasLoaded: () => boolean;
 
   // ── Local writes ────────────────────────────────────────────────────────────
   setWorkspaces: (list: WorkspaceInfo[], activeId: string | null) => void;
-  setLoading: (v: boolean) => void;
   invalidate: () => void;
 
   // ── Async (proxy Hono) ──────────────────────────────────────────────────────
@@ -130,189 +174,310 @@ async function fetchJson(url: string, init?: RequestInit): Promise<any | null> {
   }
 }
 
-export const useWorkspacesStore = create<WorkspacesState>((set, get) => ({
-  workspaces: [],
-  active_id: null,
-  fetchedAt: null,
-  loading: false,
-  safeRoots: [],
+/** Extrai uma mensagem de erro de uma resposta `{status, message?}` ou HTTP cru. */
+async function readErrorMessage(res: Response): Promise<string> {
+  const data = await res.json().catch(() => null);
+  if (data && typeof data.message === "string" && data.message)
+    return data.message;
+  return `HTTP ${res.status}`;
+}
 
-  getActive: () => {
-    const { workspaces, active_id } = get();
-    if (!active_id) return workspaces[0] ?? null;
-    return workspaces.find((w) => w.id === active_id) ?? workspaces[0] ?? null;
-  },
+function setPending(
+  set: (fn: (s: WorkspacesState) => Partial<WorkspacesState>) => void,
+  key: keyof WorkspacesPending,
+  value: boolean,
+) {
+  set((s) => ({ pending: { ...s.pending, [key]: value } }));
+}
 
-  getById: (id) => get().workspaces.find((w) => w.id === id) ?? null,
+export const useWorkspacesStore = create<WorkspacesState>()(
+  persist(
+    (set, get) => ({
+      workspaces: [],
+      active_id: null,
+      fetchedAt: null,
+      status: "idle",
+      error: null,
+      pending: PENDING_IDLE,
+      safeRoots: [],
 
-  setWorkspaces: (list, activeId) =>
-    set({ workspaces: list, active_id: activeId, fetchedAt: Date.now() }),
+      getActive: () => {
+        const { workspaces, active_id } = get();
+        if (!active_id) return workspaces[0] ?? null;
+        return (
+          workspaces.find((w) => w.id === active_id) ?? workspaces[0] ?? null
+        );
+      },
 
-  setLoading: (v) => set({ loading: v }),
+      getById: (id) => get().workspaces.find((w) => w.id === id) ?? null,
 
-  invalidate: () => set({ fetchedAt: null }),
+      hasLoaded: () => computeHasLoaded(get().fetchedAt),
 
-  hydrate: async () => {
-    set({ loading: true });
-    const data = await fetchJson("/workspaces");
-    if (data?.workspaces) {
-      set({
-        workspaces: data.workspaces,
-        active_id: data.active_id ?? null,
-        fetchedAt: Date.now(),
-      });
-    }
-    set({ loading: false });
-  },
+      setWorkspaces: (list, activeId) =>
+        set({
+          workspaces: list,
+          active_id: activeId,
+          fetchedAt: Date.now(),
+          ...asyncSuccess(),
+        }),
 
-  setActive: async (id) => {
-    set({ active_id: id });
-    await fetchJson("/workspaces/set-active", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workspace_id: id }),
-    });
-  },
+      invalidate: () => set({ fetchedAt: null }),
 
-  create: async (path, opts) => {
-    const data = await fetchJson("/workspaces/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        path,
-        trust: opts?.trust ?? false,
-        git_init: opts?.git_init ?? false,
-      }),
-    });
-    if (data?.status === "ok" && data.workspace) {
-      await get().hydrate();
-      set({ active_id: data.workspace.id });
-      return data.workspace as WorkspaceInfo;
-    }
-    return null;
-  },
+      hydrate: async () => {
+        set((s) => ({
+          ...asyncLoading(),
+          pending: { ...s.pending, hydrate: true },
+        }));
+        try {
+          const res = await fetch("/workspaces");
+          if (!res.ok) throw new Error(await readErrorMessage(res));
+          const data = await res.json();
+          if (!data?.workspaces) {
+            throw new Error("Resposta inesperada do servidor.");
+          }
+          set((s) => ({
+            workspaces: data.workspaces,
+            active_id: data.active_id ?? null,
+            fetchedAt: Date.now(),
+            ...asyncSuccess(),
+            pending: { ...s.pending, hydrate: false },
+          }));
+        } catch (err) {
+          const message = toErrorMessage(err);
+          set((s) => ({
+            ...asyncError(message),
+            pending: { ...s.pending, hydrate: false },
+          }));
+          useToastStore.getState().error(t("workspaces.error.hydrate"), {
+            description: message,
+          });
+        }
+      },
 
-  trust: async (id) => {
-    const data = await fetchJson("/workspaces/trust", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workspace_id: id }),
-    });
-    if (data?.status === "ok" && data.workspace) {
-      set((s) => ({
-        workspaces: s.workspaces.map((w) => (w.id === id ? data.workspace : w)),
-      }));
-      return data.workspace as WorkspaceInfo;
-    }
-    return null;
-  },
+      setActive: async (id) => {
+        set({ active_id: id });
+        await fetchJson("/workspaces/set-active", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ workspace_id: id }),
+        });
+      },
 
-  gitInit: async (id) => {
-    const data = await fetchJson("/workspaces/git-init", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workspace_id: id }),
-    });
-    if (data?.status === "ok" && data.workspace) {
-      set((s) => ({
-        workspaces: s.workspaces.map((w) => (w.id === id ? data.workspace : w)),
-      }));
-      return data.workspace as WorkspaceInfo;
-    }
-    return null;
-  },
+      create: async (path, opts) => {
+        setPending(set, "create", true);
+        try {
+          const res = await fetch("/workspaces/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              path,
+              trust: opts?.trust ?? false,
+              git_init: opts?.git_init ?? false,
+            }),
+          });
+          if (!res.ok) throw new Error(await readErrorMessage(res));
+          const data = await res.json();
+          if (data?.status !== "ok" || !data.workspace) {
+            throw new Error(
+              typeof data?.message === "string"
+                ? data.message
+                : "Resposta inesperada do servidor.",
+            );
+          }
+          await get().hydrate();
+          set({ active_id: data.workspace.id });
+          return data.workspace as WorkspaceInfo;
+        } catch (err) {
+          const message = toErrorMessage(err);
+          useToastStore.getState().error(t("workspaces.error.create"), {
+            description: message,
+          });
+          return null;
+        } finally {
+          setPending(set, "create", false);
+        }
+      },
 
-  browse: async (path) => {
-    const q = path ? `?path=${encodeURIComponent(path)}` : "";
-    const data = await fetchJson(`/workspaces/browse${q}`);
-    if (data?.path !== undefined) return data as BrowseResult;
-    return null;
-  },
+      trust: async (id) => {
+        setPending(set, "trust", true);
+        try {
+          const res = await fetch("/workspaces/trust", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ workspace_id: id }),
+          });
+          if (!res.ok) throw new Error(await readErrorMessage(res));
+          const data = await res.json();
+          if (data?.status !== "ok" || !data.workspace) {
+            throw new Error(
+              typeof data?.message === "string"
+                ? data.message
+                : "Resposta inesperada do servidor.",
+            );
+          }
+          set((s) => ({
+            workspaces: s.workspaces.map((w) =>
+              w.id === id ? data.workspace : w,
+            ),
+          }));
+          return data.workspace as WorkspaceInfo;
+        } catch (err) {
+          const message = toErrorMessage(err);
+          useToastStore.getState().error(t("workspaces.error.trust"), {
+            description: message,
+          });
+          return null;
+        } finally {
+          setPending(set, "trust", false);
+        }
+      },
 
-  loadSafeRoots: async () => {
-    const data = await fetchJson("/workspaces/safe-roots");
-    if (data?.roots && Array.isArray(data.roots)) {
-      set({ safeRoots: data.roots as SafeRootSummary[] });
-    }
-  },
+      gitInit: async (id) => {
+        setPending(set, "gitInit", true);
+        try {
+          const res = await fetch("/workspaces/git-init", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ workspace_id: id }),
+          });
+          if (!res.ok) throw new Error(await readErrorMessage(res));
+          const data = await res.json();
+          if (data?.status !== "ok" || !data.workspace) {
+            throw new Error(
+              typeof data?.message === "string"
+                ? data.message
+                : "Resposta inesperada do servidor.",
+            );
+          }
+          set((s) => ({
+            workspaces: s.workspaces.map((w) =>
+              w.id === id ? data.workspace : w,
+            ),
+          }));
+          return data.workspace as WorkspaceInfo;
+        } catch (err) {
+          const message = toErrorMessage(err);
+          useToastStore.getState().error(t("workspaces.error.git_init"), {
+            description: message,
+          });
+          return null;
+        } finally {
+          setPending(set, "gitInit", false);
+        }
+      },
 
-  listSshKeys: async () => {
-    const data = await fetchJson("/auth/ssh-keys");
-    return Array.isArray(data?.keys) ? (data.keys as string[]) : [];
-  },
+      browse: async (path) => {
+        const q = path ? `?path=${encodeURIComponent(path)}` : "";
+        const data = await fetchJson(`/workspaces/browse${q}`);
+        if (data?.path !== undefined) return data as BrowseResult;
+        return null;
+      },
 
-  uploadSshKey: async (file) => {
-    const form = new FormData();
-    form.append("key", file);
-    try {
-      const res = await fetch("/auth/ssh-keys", {
-        method: "POST",
-        body: form,
-      });
-      if (!res.ok) return null;
-      const data = await res.json();
-      return typeof data?.key_id === "string" ? data.key_id : null;
-    } catch {
-      return null;
-    }
-  },
+      loadSafeRoots: async () => {
+        const data = await fetchJson("/workspaces/safe-roots");
+        if (data?.roots && Array.isArray(data.roots)) {
+          set({ safeRoots: data.roots as SafeRootSummary[] });
+        }
+      },
 
-  deleteSshKey: async (keyId) => {
-    try {
-      const res = await fetch(`/auth/ssh-keys/${encodeURIComponent(keyId)}`, {
-        method: "DELETE",
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  },
+      listSshKeys: async () => {
+        const data = await fetchJson("/auth/ssh-keys");
+        return Array.isArray(data?.keys) ? (data.keys as string[]) : [];
+      },
 
-  testSsh: async (host, keyId) => {
-    try {
-      const res = await fetch("/workspaces/test-ssh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ host, key_id: keyId ?? null }),
-      });
-      const data = await res.json().catch(() => ({}));
-      return {
-        ok: Boolean(data?.ok),
-        message: String(data?.message ?? (res.ok ? "" : `Erro ${res.status}`)),
-      };
-    } catch (e) {
-      return {
-        ok: false,
-        message: e instanceof Error ? e.message : "Falha de rede.",
-      };
-    }
-  },
+      uploadSshKey: async (file) => {
+        const form = new FormData();
+        form.append("key", file);
+        try {
+          const res = await fetch("/auth/ssh-keys", {
+            method: "POST",
+            body: form,
+          });
+          if (!res.ok) return null;
+          const data = await res.json();
+          return typeof data?.key_id === "string" ? data.key_id : null;
+        } catch {
+          return null;
+        }
+      },
 
-  listCodespaces: async () => {
-    const data = await fetchJson("/workspaces/codespaces");
-    return {
-      codespaces: Array.isArray(data?.codespaces)
-        ? (data.codespaces as CodespaceSummary[])
-        : [],
-      available: data?.available !== false,
-      message: typeof data?.message === "string" ? data.message : "",
-    };
-  },
+      deleteSshKey: async (keyId) => {
+        try {
+          const res = await fetch(
+            `/auth/ssh-keys/${encodeURIComponent(keyId)}`,
+            { method: "DELETE" },
+          );
+          return res.ok;
+        } catch {
+          return false;
+        }
+      },
 
-  createRemote: async (body) => {
-    const data = await fetchJson("/workspaces/create-remote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (data?.status === "ok" && data.workspace) {
-      const ws = data.workspace as WorkspaceInfo;
-      set((s) => ({
-        workspaces: [...s.workspaces.filter((w) => w.id !== ws.id), ws],
-        active_id: ws.id,
-      }));
-      return ws;
-    }
-    return null;
-  },
-}));
+      testSsh: async (host, keyId) => {
+        try {
+          const res = await fetch("/workspaces/test-ssh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ host, key_id: keyId ?? null }),
+          });
+          const data = await res.json().catch(() => ({}));
+          return {
+            ok: Boolean(data?.ok),
+            message: String(
+              data?.message ?? (res.ok ? "" : `Erro ${res.status}`),
+            ),
+          };
+        } catch (e) {
+          return {
+            ok: false,
+            message: e instanceof Error ? e.message : "Falha de rede.",
+          };
+        }
+      },
+
+      listCodespaces: async () => {
+        const data = await fetchJson("/workspaces/codespaces");
+        return {
+          codespaces: Array.isArray(data?.codespaces)
+            ? (data.codespaces as CodespaceSummary[])
+            : [],
+          available: data?.available !== false,
+          message: typeof data?.message === "string" ? data.message : "",
+        };
+      },
+
+      createRemote: async (body) => {
+        const data = await fetchJson("/workspaces/create-remote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (data?.status === "ok" && data.workspace) {
+          const ws = data.workspace as WorkspaceInfo;
+          set((s) => ({
+            workspaces: [...s.workspaces.filter((w) => w.id !== ws.id), ws],
+            active_id: ws.id,
+          }));
+          return ws;
+        }
+        return null;
+      },
+    }),
+    {
+      name: "vectora-workspaces",
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined"
+          ? localStorage
+          : {
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            },
+      ),
+      // Só `active_id` persiste — a lista de workspaces é sempre revalidada
+      // do backend (source of truth); cache stale na primeira pintura não
+      // compensa o risco de mostrar workspaces que não existem mais.
+      partialize: (state) => ({ active_id: state.active_id }),
+    },
+  ),
+);

@@ -22,6 +22,10 @@ import {
 } from "../../api/vectora-client";
 import { logger } from "../../utils/logger";
 import { THREAD_FETCH_LIMIT } from "../../constants/features";
+import { useToastStore } from "@/lib/stores/toast-store";
+// Alias — este módulo já usa `t` como nome de variável local para threads
+// (ex.: `raw.map((t) => ...)`); evita colisão com a tradução fora de hooks.
+import { t as translate } from "@/lib/i18n";
 
 // ============================================================================
 // Types
@@ -94,6 +98,8 @@ export function useThreads(userId: string | undefined) {
     } catch (error) {
       logger.error("useThreads: erro ao buscar threads:", error);
       setThreads([]);
+      // UX-7 — falha visível (sidebar ficaria vazia sem explicação alguma).
+      useToastStore.getState().error(translate("threads.error.list"));
     } finally {
       if (!silent) setIsLoading(false);
     }
@@ -140,6 +146,9 @@ export function useThreads(userId: string | undefined) {
         await updateThreadApi(threadId, { title: metadata.title });
       } catch (error) {
         logger.error("useThreads: erro ao persistir title da thread:", error);
+        // UX-7 — o título mudou na UI (otimista) mas não foi salvo; o
+        // usuário precisa saber que vai reverter no próximo reload.
+        useToastStore.getState().error(translate("threads.error.rename"));
       }
     }
   };
@@ -174,6 +183,9 @@ export function useThreads(userId: string | undefined) {
       const msg = error instanceof Error ? error.message : String(error);
       if (msg.includes("404")) return; // Já deletada
       logger.error("useThreads: erro ao deletar thread:", error);
+      // UX-7 — sem isso o item simplesmente reaparece e o usuário não
+      // entende por quê.
+      useToastStore.getState().error(translate("threads.error.delete"));
       // Reverte update otimista
       if (userId) await getUserThreads(userId);
     }

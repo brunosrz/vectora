@@ -22,12 +22,15 @@ import {
 
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useT } from "@/lib/i18n";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { WorkspaceTrustDialog } from "./workspace-trust-dialog";
 
 export function WorkspaceSelector() {
   const t = useT();
   const workspaces = useWorkspacesStore((s) => s.workspaces);
   const activeId = useWorkspacesStore((s) => s.active_id);
+  const status = useWorkspacesStore((s) => s.status);
+  const error = useWorkspacesStore((s) => s.error);
   const hydrate = useWorkspacesStore((s) => s.hydrate);
   const setActive = useWorkspacesStore((s) => s.setActive);
   const trust = useWorkspacesStore((s) => s.trust);
@@ -95,6 +98,12 @@ export function WorkspaceSelector() {
             <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
               {t("workspace.select_title")}
             </div>
+
+            {status === "error" && error && (
+              <div className="px-2 pb-2">
+                <ErrorBanner message={error} onRetry={() => hydrate()} />
+              </div>
+            )}
 
             <div className="max-h-72 overflow-y-auto">
               {workspaces.length === 0 && (

@@ -42,6 +42,19 @@ sidebar.workspace_collapse,Collapse folder,Contraer carpeta,Recolher pasta
 sidebar.workspace_expand,Expand folder,Expandir carpeta,Expandir pasta
 sidebar.workspace_thread_count,{n} sessions,{n} sesiones,{n} sessões
 # =============================================================================
+# Feedback e estado assíncrono (SX-UX-1) — ErrorBanner, toasts de operação
+# =============================================================================
+error_banner.title,Something went wrong,Algo salió mal,Algo deu errado
+error_banner.retry,Retry,Reintentar,Tentar novamente
+error_banner.retrying,Retrying…,Reintentando…,Tentando novamente…
+workspaces.error.hydrate,Couldn't load your workspaces.,No se pudieron cargar tus carpetas de trabajo.,Não foi possível carregar seus workspaces.
+workspaces.error.create,Couldn't create the workspace.,No se pudo crear la carpeta de trabajo.,Não foi possível criar o workspace.
+workspaces.error.trust,Couldn't trust this folder.,No se pudo confiar en esta carpeta.,Não foi possível confiar nesta pasta.
+workspaces.error.git_init,Couldn't initialize the git repository.,No se pudo inicializar el repositorio git.,Não foi possível inicializar o repositório git.
+threads.error.list,Couldn't load your conversations.,No se pudieron cargar tus conversaciones.,Não foi possível carregar suas conversas.
+threads.error.rename,Couldn't save the new title.,No se pudo guardar el nuevo título.,Não foi possível salvar o novo título.
+threads.error.delete,Couldn't delete the conversation.,No se pudo eliminar la conversación.,Não foi possível excluir a conversa.
+# =============================================================================
 # Relative time (sidebar)
 # =============================================================================
 time.just_now,Just now,Ahora mismo,Agora mesmo

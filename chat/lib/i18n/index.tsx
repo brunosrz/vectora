@@ -138,24 +138,50 @@ export function useT(): (
   const language = useSettingsStore((s) => s.language);
 
   return useCallback(
-    (key: string, params?: Record<string, string | number>): string => {
-      const entry = TRANSLATIONS[key];
-      if (!entry) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn(`[i18n] Missing key: "${key}"`);
-        }
-        return key;
-      }
-
-      // Fallback: idioma selecionado → inglês → chave
-      const str = entry[language] ?? entry["en"] ?? key;
-
-      if (!params) return str;
-      // Interpolação simples: {varName}
-      return str.replace(/\{(\w+)\}/g, (_, k: string) =>
-        String(params[k] ?? `{${k}}`),
-      );
-    },
+    (key: string, params?: Record<string, string | number>): string =>
+      translate(language, key, params),
     [language],
   );
+}
+
+// =============================================================================
+// translate / t — tradução fora de componentes React (stores, utilitários)
+// =============================================================================
+
+function translate(
+  language: Lang,
+  key: string,
+  params?: Record<string, string | number>,
+): string {
+  const entry = TRANSLATIONS[key];
+  if (!entry) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(`[i18n] Missing key: "${key}"`);
+    }
+    return key;
+  }
+
+  // Fallback: idioma selecionado → inglês → chave
+  const str = entry[language] ?? entry["en"] ?? key;
+
+  if (!params) return str;
+  // Interpolação simples: {varName}
+  return str.replace(/\{(\w+)\}/g, (_, k: string) =>
+    String(params[k] ?? `{${k}}`),
+  );
+}
+
+/**
+ * Tradução para contextos sem hooks (stores Zustand, handlers fora de React).
+ * Lê o idioma atual direto do `settings-store` — não reage a mudanças, então
+ * não deve ser usada para renderizar UI (use `useT` nesse caso).
+ *
+ * @example
+ *   useToastStore.getState().error(t("workspaces.error.hydrate"));
+ */
+export function t(
+  key: string,
+  params?: Record<string, string | number>,
+): string {
+  return translate(useSettingsStore.getState().language, key, params);
 }
