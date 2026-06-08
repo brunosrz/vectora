@@ -1272,3 +1272,182 @@ async def move_fs_node(workspace_id: str, body: MoveFsNodeRequest) -> StatusResp
         return StatusResponse(status="ok")
     except OSError as exc:
         return StatusResponse(status="error", message=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# A.5 — Busca de texto em arquivos do workspace
+# ---------------------------------------------------------------------------
+
+
+class SearchHit(BaseModel):
+    path: str
+    line_number: int
+    line_text: str
+
+
+class SearchResponse(BaseModel):
+    hits: list[SearchHit]
+    truncated: bool = False
+
+
+def _python_text_search(
+    cwd: Path,
+    query: str,
+    max_hits: int = 200,
+    max_columns: int = 200,
+) -> tuple[list[SearchHit], bool]:
+    """Busca textual (case-insensitive) com Python puro — fallback sem ripgrep.
+
+    Percorre o workspace recursivamente ignorando diretórios de build/cache e
+    retorna as linhas que contêm ``query``.  Arquivos maiores que 1 MiB são
+    pulados silenciosamente.  Retorna ``(hits, truncated)``; ``truncated=True``
+    quando o total de resultados foi cortado em ``max_hits``.
+    """
+    import re as _re
+
+    exclude: frozenset[str] = frozenset(
+        {
+            ".git",
+            ".hg",
+            ".svn",
+            "node_modules",
+            "__pycache__",
+            ".mypy_cache",
+            ".ruff_cache",
+            ".pytest_cache",
+            ".tox",
+            ".nox",
+            "dist",
+            "build",
+            ".next",
+            ".nuxt",
+            ".svelte-kit",
+            "target",
+            "venv",
+            ".venv",
+            "env",
+            ".vectora",
+        }
+    )
+    max_file_bytes = 1 * 1024 * 1024  # 1 MiB
+
+    hits: list[SearchHit] = []
+    pattern = _re.compile(_re.escape(query), _re.IGNORECASE)
+
+    stack = [cwd]
+    while stack:
+        current = stack.pop()
+        try:
+            entries = sorted(current.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if entry.is_symlink():
+                continue
+            if entry.is_dir():
+                if entry.name not in exclude:
+                    stack.append(entry)
+            elif entry.is_file():
+                try:
+                    size = entry.stat().st_size
+                except OSError:
+                    continue
+                if size > max_file_bytes:
+                    continue
+                try:
+                    text = entry.read_text(encoding="utf-8", errors="replace")
+                except OSError:
+                    continue
+                for lineno, line in enumerate(text.splitlines(), start=1):
+                    if pattern.search(line):
+                        rel = str(entry.relative_to(cwd)).replace("\\", "/")
+                        hits.append(
+                            SearchHit(
+                                path=rel,
+                                line_number=lineno,
+                                line_text=line[:max_columns],
+                            )
+                        )
+                        if len(hits) >= max_hits:
+                            return hits, True
+    return hits, False
+
+
+@view_router.get("/{workspace_id}/fs/search", response_model=SearchResponse)
+async def search_workspace_files(
+    workspace_id: str,
+    q: Annotated[str, Query(min_length=1, max_length=200)],
+    path: Annotated[str, Query()] = "",
+) -> SearchResponse:
+    """Busca textual no conteúdo dos arquivos do workspace.
+
+    Tenta ``rg`` (ripgrep) primeiro com ``--max-filesize 1M --max-count 50
+    --max-columns 200`` (respeita ``.gitignore``, timeout 30s); cai para
+    busca Python pura quando ``rg`` não está no PATH.  Retorna até 200
+    resultados; ``truncated=true`` indica que o resultado foi cortado.
+    """
+    import json as _json
+    import shutil as _shutil
+    import subprocess as _subprocess  # nosec B404
+
+    cwd_root = _resolve_inside(workspace_id, path)
+    if cwd_root is None or not cwd_root.is_dir():
+        return SearchResponse(hits=[], truncated=False)
+
+    # Tenta ripgrep (rápido, respeita .gitignore).
+    rg_bin = _shutil.which("rg")
+    if rg_bin:
+        try:
+            proc = _subprocess.run(  # noqa: ASYNC221 S603  # nosec B603
+                [
+                    rg_bin,
+                    "--json",
+                    "--max-filesize",
+                    "1M",
+                    "--max-count",
+                    "50",
+                    "--max-columns",
+                    "200",
+                    "--",
+                    q,
+                    str(cwd_root),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+            rg_hits: list[SearchHit] = []
+            rg_truncated = False
+            for rg_line in proc.stdout.splitlines():
+                stripped = rg_line.strip()
+                if not stripped:
+                    continue
+                try:
+                    obj = _json.loads(stripped)
+                except ValueError:
+                    continue
+                if obj.get("type") == "match":
+                    data = obj.get("data", {})
+                    fpath = data.get("path", {}).get("text", "")
+                    try:
+                        rel = str(Path(fpath).relative_to(cwd_root)).replace("\\", "/")
+                    except ValueError:
+                        rel = fpath
+                    lineno: int = data.get("line_number", 0)
+                    line_text = (
+                        data.get("lines", {}).get("text", "").rstrip("\n\r")[:200]
+                    )
+                    rg_hits.append(
+                        SearchHit(path=rel, line_number=lineno, line_text=line_text)
+                    )
+                    if len(rg_hits) >= 200:
+                        rg_truncated = True
+                        break
+            return SearchResponse(hits=rg_hits, truncated=rg_truncated)
+        except (_subprocess.TimeoutExpired, OSError):
+            logger.warning("search_workspace_files: rg falhou, usando fallback Python")
+
+    # Fallback: Python puro.
+    py_hits, py_truncated = _python_text_search(cwd_root, q)
+    return SearchResponse(hits=py_hits, truncated=py_truncated)

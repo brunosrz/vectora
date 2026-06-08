@@ -26,6 +26,7 @@ import {
   RefreshCw,
   Search,
   Trash2,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -202,6 +203,35 @@ async function apiFsMove(
   );
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok, message: data.message };
+}
+
+// ---------------------------------------------------------------------------
+// A.5 — Busca de texto em arquivos
+// ---------------------------------------------------------------------------
+
+interface SearchHit {
+  path: string;
+  line_number: number;
+  line_text: string;
+}
+
+interface SearchResult {
+  hits: SearchHit[];
+  truncated: boolean;
+}
+
+async function apiFsSearch(
+  workspaceId: string,
+  query: string,
+  path = "",
+): Promise<SearchResult | null> {
+  const qs = new URLSearchParams({ q: query });
+  if (path) qs.set("path", path);
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/fs/search?${qs}`,
+  );
+  if (!res.ok) return null;
+  return res.json() as Promise<SearchResult>;
 }
 
 // ---------------------------------------------------------------------------
@@ -729,6 +759,65 @@ function PinnedSection({
 const EMPTY_PINNED: string[] = [];
 
 // ---------------------------------------------------------------------------
+// SearchResultGroup — grupo colapsável de resultados por arquivo (A.5)
+// ---------------------------------------------------------------------------
+
+function SearchResultGroup({
+  filePath,
+  hits,
+  onOpenHit,
+}: {
+  filePath: string;
+  hits: SearchHit[];
+  onOpenHit: (path: string, lineNumber: number) => void;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const fileName = filePath.split("/").pop() ?? filePath;
+
+  return (
+    <div className="mb-0.5">
+      <button
+        onClick={() => setCollapsed((v) => !v)}
+        className="flex items-center gap-1 w-full px-2 py-0.5 hover:bg-muted/40 rounded text-left"
+      >
+        <ChevronRight
+          className={`w-3 h-3 text-muted-foreground shrink-0 transition-transform ${
+            collapsed ? "" : "rotate-90"
+          }`}
+        />
+        <span
+          className="text-[11px] font-medium truncate flex-1"
+          title={filePath}
+        >
+          {fileName}
+        </span>
+        <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
+          {hits.length}
+        </span>
+      </button>
+      {!collapsed && (
+        <div className="ml-4">
+          {hits.map((hit, i) => (
+            <button
+              key={i}
+              onClick={() => onOpenHit(hit.path, hit.line_number)}
+              className="flex items-start gap-2 w-full px-2 py-px hover:bg-muted/40 rounded text-left"
+            >
+              <span className="text-[10px] text-muted-foreground shrink-0 w-7 text-right leading-relaxed tabular-nums">
+                {hit.line_number}
+              </span>
+              <span className="text-[11px] font-mono text-foreground/80 truncate leading-relaxed">
+                {hit.line_text.trimStart()}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // FilesTab principal
 // ---------------------------------------------------------------------------
 
@@ -800,6 +889,48 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     openContent?.kind === "text" &&
     !openContent.truncated &&
     openContent.sha256 != null;
+
+  // ── Busca em conteúdo (A.5) ─────────────────────────────────────────────
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
+  const [searching, setSearching] = useState(false);
+  // Linha destacada no viewer quando resultado de busca é aberto.
+  const [highlightLine, setHighlightLine] = useState<number | null>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
+
+  // Scroll automático para a linha destacada quando o arquivo abre.
+  useEffect(() => {
+    highlightRef.current?.scrollIntoView({ block: "center" });
+  }, [openPath, highlightLine]);
+
+  // Busca com debounce de 350ms — dispara quando query muda.
+  useEffect(() => {
+    if (!searchMode || !wsId) return;
+    if (searchQuery.trim().length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      const res = await apiFsSearch(wsId, searchQuery.trim());
+      setSearching(false);
+      setSearchResults(res);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchMode, wsId]);
+
+  // Agrupa hits por arquivo para exibição.
+  const searchGrouped = useMemo(() => {
+    if (!searchResults) return [];
+    const map = new Map<string, SearchHit[]>();
+    for (const hit of searchResults.hits) {
+      const list = map.get(hit.path) ?? [];
+      list.push(hit);
+      map.set(hit.path, list);
+    }
+    return Array.from(map.entries());
+  }, [searchResults]);
 
   // Trocar de arquivo limpa o rascunho (cada arquivo tem seu próprio ciclo).
   useEffect(() => {
@@ -903,6 +1034,15 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     setCreating(null);
   }, []);
 
+  // Abre arquivo a partir de um resultado de busca, destacando a linha.
+  const handleOpenHit = useCallback(
+    (path: string, lineNumber: number) => {
+      setHighlightLine(lineNumber);
+      handleOpenFile(path);
+    },
+    [handleOpenFile],
+  );
+
   // Deletar arquivo/pasta com confirmação; permanent=true vai para o lixo permanente
   const handleDelete = useCallback(
     async (path: string, name: string, permanent = false) => {
@@ -994,59 +1134,140 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
         >
           <RefreshCw className="w-3.5 h-3.5" />
         </button>
-      </div>
-
-      {/* Busca */}
-      <div className="px-2 py-1.5 border-b border-border/60">
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-          <Input
-            value={filter}
-            onChange={(e) => setFilesFilter(wsId, e.target.value)}
-            placeholder={t("workbench.files.filter")}
-            className="h-7 text-xs pl-7"
-          />
-        </div>
-      </div>
-
-      {/* Tree */}
-      <div className="flex-1 overflow-y-auto py-1">
-        <PinnedSection
-          threadId={threadId}
-          onOpenFile={handleOpenFile}
-          onAddToContext={onAddToContext}
-        />
-
-        {/* Input de criação na raiz */}
-        {creating && creating.parentDir === "" && (
-          <InlineCreateInput
-            placeholder={
-              creating.type === "file"
-                ? t("workbench.files.creating_file")
-                : t("workbench.files.creating_folder")
+        {/* Toggle de busca em conteúdo (A.5) */}
+        <button
+          onClick={() => {
+            if (searchMode) {
+              setSearchMode(false);
+              setSearchQuery("");
+              setSearchResults(null);
+              setHighlightLine(null);
+            } else {
+              setSearchMode(true);
             }
-            onConfirm={handleInlineCreate}
-            onCancel={handleCancelCreate}
-            depth={0}
-          />
-        )}
+          }}
+          className={`p-1 rounded transition-colors ${
+            searchMode
+              ? "bg-primary/20 text-primary"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+          }`}
+          title={t("workbench.files.search_in_files")}
+          aria-label={t("workbench.files.search_in_files")}
+          aria-pressed={searchMode}
+        >
+          <Search className="w-3.5 h-3.5" />
+        </button>
+      </div>
 
-        <DirNode
-          threadId={threadId}
-          workspaceId={wsId}
-          path=""
-          name={workspace.name}
-          depth={0}
-          filter={filter}
-          statusByPath={statusByPath}
-          onOpenFile={handleOpenFile}
-          onAddToContext={onAddToContext}
-          onDelete={handleDelete}
-          creating={creating}
-          onInlineCreate={handleInlineCreate}
-          onCancelCreate={handleCancelCreate}
-          onRequestCreate={handleRequestCreate}
-        />
+      {/* Filtro de nomes ou busca em conteúdo */}
+      {searchMode ? (
+        <div className="px-2 py-1.5 border-b border-border/60">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+            <Input
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t("workbench.files.search_placeholder")}
+              className="h-7 text-xs pl-7 pr-6"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSearchResults(null);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                title={t("workbench.files.cancel")}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+          {searching && (
+            <div className="flex justify-center pt-1">
+              <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="px-2 py-1.5 border-b border-border/60">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+            <Input
+              value={filter}
+              onChange={(e) => setFilesFilter(wsId, e.target.value)}
+              placeholder={t("workbench.files.filter")}
+              className="h-7 text-xs pl-7"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Árvore de arquivos ou resultados de busca */}
+      <div className="flex-1 overflow-y-auto py-1">
+        {searchMode ? (
+          <div className="px-1">
+            {searchResults !== null && searchResults.hits.length === 0 && (
+              <p className="text-[10px] text-muted-foreground text-center py-4">
+                {t("workbench.files.search_no_results")}
+              </p>
+            )}
+            {searchGrouped.map(([filePath, hits]) => (
+              <SearchResultGroup
+                key={filePath}
+                filePath={filePath}
+                hits={hits}
+                onOpenHit={handleOpenHit}
+              />
+            ))}
+            {searchResults?.truncated && (
+              <p className="text-[10px] text-muted-foreground px-2 py-1">
+                {t("workbench.files.search_truncated")}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <PinnedSection
+              threadId={threadId}
+              onOpenFile={handleOpenFile}
+              onAddToContext={onAddToContext}
+            />
+
+            {/* Input de criação na raiz */}
+            {creating && creating.parentDir === "" && (
+              <InlineCreateInput
+                placeholder={
+                  creating.type === "file"
+                    ? t("workbench.files.creating_file")
+                    : t("workbench.files.creating_folder")
+                }
+                onConfirm={handleInlineCreate}
+                onCancel={handleCancelCreate}
+                depth={0}
+              />
+            )}
+
+            <DirNode
+              threadId={threadId}
+              workspaceId={wsId}
+              path=""
+              name={workspace.name}
+              depth={0}
+              filter={filter}
+              statusByPath={statusByPath}
+              onOpenFile={handleOpenFile}
+              onAddToContext={onAddToContext}
+              onDelete={handleDelete}
+              creating={creating}
+              onInlineCreate={handleInlineCreate}
+              onCancelCreate={handleCancelCreate}
+              onRequestCreate={handleRequestCreate}
+            />
+          </>
+        )}
       </div>
 
       {/* Viewer */}
@@ -1113,6 +1334,31 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 spellCheck={false}
                 className="w-full h-full min-h-[160px] resize-none bg-transparent text-xs font-mono leading-relaxed outline-none"
               />
+            ) : highlightLine !== null ? (
+              // Renderização linha-a-linha com destaque para busca em conteúdo
+              <div className="text-xs font-mono leading-relaxed">
+                {(openContent?.content ?? "").split("\n").map((line, i) => {
+                  const lineNum = i + 1;
+                  return (
+                    <div
+                      key={i}
+                      ref={lineNum === highlightLine ? highlightRef : undefined}
+                      className={
+                        lineNum === highlightLine
+                          ? "bg-yellow-500/20 rounded"
+                          : undefined
+                      }
+                    >
+                      <span className="select-none text-muted-foreground inline-block w-8 text-right mr-3 text-[10px]">
+                        {lineNum}
+                      </span>
+                      <span className="whitespace-pre-wrap break-all">
+                        {line}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
               <pre className="text-xs font-mono whitespace-pre-wrap break-all">
                 {openContent?.content ?? ""}

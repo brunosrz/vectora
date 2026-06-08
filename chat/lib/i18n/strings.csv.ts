@@ -565,6 +565,10 @@ workbench.files.rename,Rename,Renombrar,Renomear
 workbench.files.rename_placeholder,New name…,Nuevo nombre…,Novo nome…
 workbench.files.rename_error,Couldn't rename.,No se pudo renombrar.,Não foi possível renomear.
 workbench.files.rename_exists,A file with this name already exists.,Ya existe un archivo con ese nombre.,Já existe um arquivo com esse nome.
+workbench.files.search_in_files,Search in files,Buscar en archivos,Buscar nos arquivos
+workbench.files.search_placeholder,Search in files…,Buscar en archivos…,Buscar nos arquivos…
+workbench.files.search_no_results,No results.,Sin resultados.,Sem resultados.
+workbench.files.search_truncated,Showing first 200 results — refine your query to narrow down.,Mostrando los primeros 200 resultados — refine su consulta.,Mostrando os primeiros 200 resultados — refine sua busca.
 `;
 
 export default CSV;
