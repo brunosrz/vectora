@@ -537,6 +537,26 @@ async def rewind_thread(
             raise HTTPException(
                 status_code=500, detail=result.get("message", "Falha no restore.")
             )
+    elif strategy == "snapshot":
+        if not _snapshot_path:
+            raise HTTPException(
+                status_code=422,
+                detail="Artefato de checkpoint sem snapshot_path.",
+            )
+        try:
+            async with acquire_workspace_lock(wid, thread_id, timeout=5.0):
+                from src.services.checkpoint import restore_snapshot_checkpoint
+
+                result = restore_snapshot_checkpoint(_snapshot_path, ws.cwd)
+        except WorkspaceLockTimeoutError as lock_exc:
+            raise HTTPException(
+                status_code=409,
+                detail="Workspace ocupado por outra operação — tente novamente em instantes.",
+            ) from lock_exc
+        if result["status"] != "ok":
+            raise HTTPException(
+                status_code=500, detail=result.get("message", "Falha no restore.")
+            )
     else:
         raise HTTPException(
             status_code=422,

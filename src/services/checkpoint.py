@@ -4,15 +4,24 @@ Manages SQLite-backed checkpointing for LangGraph execution state.
 Enables resuming interrupted conversations, thread-level history,
 and state snapshots for debugging and auditing.
 
-Também expõe a estratégia git de "checkpoint de workspace" usada pelo rewind
-(``create_git_checkpoint``/``restore_git_checkpoint``/``list_git_checkpoints``):
-snapshots do worktree gravados como commits soltos em
-``refs/vectora/checkpoints/<thread_id>``, sem mover HEAD nem o índice real."""
+Expõe duas estratégias de "checkpoint de workspace" usadas pelo rewind:
+
+* **Git** (``create_git_checkpoint`` / ``restore_git_checkpoint`` /
+  ``list_git_checkpoints``): snapshots gravados como commits soltos em
+  ``refs/vectora/checkpoints/<thread_id>`` — não move HEAD nem o índice real.
+
+* **Snapshot** (``create_snapshot_checkpoint`` / ``restore_snapshot_checkpoint`` /
+  ``gc_snapshots``): fallback para workspaces sem ``.git`` — arquiva arquivos do
+  workspace num tarball comprimido em ``~/.vectora/snapshots/<thread_id>/``.
+  GC periódico mantém cap de tamanho/quantidade."""
 
 import logging
+import tarfile
 import tempfile
+import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -171,3 +180,210 @@ def list_git_checkpoints(repo: git.Repo, thread_id: str, n: int = 50) -> dict[st
             for c in commits
         ],
     }
+
+
+# ---------------------------------------------------------------------------
+# Estratégia snapshot (fallback para workspaces sem .git — A.3)
+# ---------------------------------------------------------------------------
+
+# Diretórios ignorados ao criar um snapshot — build artifacts, caches, VCS.
+_SNAPSHOT_EXCLUDE_DIRS: frozenset[str] = frozenset(
+    {
+        ".git",
+        ".hg",
+        ".svn",
+        "node_modules",
+        "__pycache__",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".pytest_cache",
+        ".tox",
+        ".nox",
+        "dist",
+        "build",
+        ".next",
+        ".nuxt",
+        ".svelte-kit",
+        "target",
+        "venv",
+        ".venv",
+        "env",
+        ".env",
+        ".vectora",
+    }
+)
+
+# Tamanho máximo de um arquivo individual incluído no snapshot (10 MiB).
+_SNAPSHOT_MAX_FILE_BYTES = 10 * 1024 * 1024
+
+# Cap de tamanho total por snapshot (50 MiB). Arquivos além do cap são omitidos.
+_SNAPSHOT_MAX_TOTAL_BYTES = 50 * 1024 * 1024
+
+
+def _iter_snapshot_files(cwd: Path) -> list[Path]:
+    """Lista arquivos do workspace excluindo diretórios ignorados.
+
+    Retorna caminhos absolutos ordenados para arquivamento determinístico.
+    """
+    result: list[Path] = []
+    stack = [cwd]
+    while stack:
+        current = stack.pop()
+        try:
+            entries = list(current.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if entry.is_symlink():
+                continue
+            if entry.is_dir():
+                if entry.name not in _SNAPSHOT_EXCLUDE_DIRS:
+                    stack.append(entry)
+            elif entry.is_file():
+                result.append(entry)
+    result.sort()
+    return result
+
+
+def create_snapshot_checkpoint(
+    cwd: str,
+    snapshot_dir: Path,
+    thread_id: str,
+    message: str,
+) -> dict[str, Any]:
+    """Cria um tarball comprimido do workspace como checkpoint de rewind.
+
+    Usado como fallback quando o workspace não é um repositório git.  Arquiva
+    todos os arquivos do diretório ``cwd`` (excluindo build artifacts / VCS /
+    caches) num arquivo ``.tar.gz`` em ``snapshot_dir``.
+
+    Arquivos individuais maiores que ``_SNAPSHOT_MAX_FILE_BYTES`` (10 MiB) e
+    arquivos que fariam o tarball ultrapassar ``_SNAPSHOT_MAX_TOTAL_BYTES``
+    (50 MiB) são omitidos silenciosamente.
+
+    Retorna::
+
+        {"status": "ok", "snapshot_path": "/abs/path/to/snap.tar.gz",
+         "files_touched": ["rel/path1", ...]}
+        {"status": "error", "message": "..."}
+    """
+    cwd_path = Path(cwd).resolve()
+    if not cwd_path.is_dir():
+        return {"status": "error", "message": f"cwd não é um diretório: {cwd}"}
+
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+
+    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+    uid = str(uuid.uuid4())[:8]
+    archive_name = f"{ts}-{uid}.tar.gz"
+    archive_path = snapshot_dir / archive_name
+
+    files = _iter_snapshot_files(cwd_path)
+    files_touched: list[str] = []
+    total_bytes = 0
+
+    try:
+        with tarfile.open(archive_path, "w:gz") as tar:
+            for fpath in files:
+                try:
+                    size = fpath.stat().st_size
+                except OSError:
+                    continue
+                if size > _SNAPSHOT_MAX_FILE_BYTES:
+                    continue
+                if total_bytes + size > _SNAPSHOT_MAX_TOTAL_BYTES:
+                    continue
+                arcname = str(fpath.relative_to(cwd_path))
+                tar.add(str(fpath), arcname=arcname, recursive=False)
+                files_touched.append(arcname)
+                total_bytes += size
+
+            # Manifesto interno com metadados do checkpoint.
+            import io
+            import json as _json
+
+            manifest = _json.dumps(
+                {
+                    "thread_id": thread_id,
+                    "message": message,
+                    "created_at": datetime.now(UTC).isoformat(),
+                    "files": files_touched,
+                },
+                ensure_ascii=False,
+            ).encode()
+            minfo = tarfile.TarInfo(name=".vectora-snapshot-manifest.json")
+            minfo.size = len(manifest)
+            tar.addfile(minfo, io.BytesIO(manifest))
+
+    except Exception as exc:
+        archive_path.unlink(missing_ok=True)
+        return {"status": "error", "message": str(exc)}
+
+    return {
+        "status": "ok",
+        "snapshot_path": str(archive_path),
+        "files_touched": files_touched,
+    }
+
+
+def restore_snapshot_checkpoint(snapshot_path: str, cwd: str) -> dict[str, Any]:
+    """Restaura o workspace a partir de um tarball de snapshot.
+
+    Extrai o arquivo sobre ``cwd``, sobrescrevendo os arquivos existentes.
+    Não remove arquivos criados após o snapshot — cobertura completa de
+    "desfazer criação de arquivo" fica para uma iteração futura (requer
+    manifesto de arquivos excluídos).
+
+    Retorna ``{"status": "ok"}`` ou ``{"status": "error", "message": ...}``.
+    """
+    snap = Path(snapshot_path)
+    if not snap.is_file():
+        return {
+            "status": "error",
+            "message": f"Snapshot não encontrado: {snapshot_path}",
+        }
+    cwd_path = Path(cwd).resolve()
+    try:
+        with tarfile.open(str(snap), "r:gz") as tar:
+            tar.extractall(path=str(cwd_path), filter="data")  # type: ignore[call-arg]
+    except TypeError:
+        # Python < 3.12: filter= não suportado; extrai sem filtro
+        with tarfile.open(str(snap), "r:gz") as tar:
+            tar.extractall(path=str(cwd_path))  # noqa: S202  # nosec B202
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+    return {"status": "ok", "snapshot_path": snapshot_path}
+
+
+def gc_snapshots(
+    snapshot_dir: Path,
+    max_snapshots: int = 30,
+    max_bytes: int = 500 * 1024 * 1024,
+) -> int:
+    """Remove snapshots antigos que excedam ``max_snapshots`` ou ``max_bytes``.
+
+    Ordena por mtime ascendente (mais antigo primeiro) e deleta até que ambos
+    os limites sejam satisfeitos.  Retorna o número de arquivos removidos.
+    """
+    if not snapshot_dir.is_dir():
+        return 0
+
+    archives = sorted(
+        snapshot_dir.glob("*.tar.gz"),
+        key=lambda p: p.stat().st_mtime,
+    )
+
+    total = sum(p.stat().st_size for p in archives)
+    removed = 0
+
+    while archives and (len(archives) > max_snapshots or total > max_bytes):
+        oldest = archives.pop(0)
+        size = oldest.stat().st_size
+        try:
+            oldest.unlink()
+            total -= size
+            removed += 1
+        except OSError:
+            pass  # já deletado por processo concorrente — ignora
+
+    return removed

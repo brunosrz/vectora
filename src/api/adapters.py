@@ -257,22 +257,42 @@ async def _record_turn_checkpoint(
 
         import git as gitpy
 
+        checkpoint_id = event.get("run_id") or str(uuid.uuid4())
+        msg = f"turn:{thread_id}:{checkpoint_id[:8]}"
+
+        strategy: str
+        git_sha: str | None = None
+        snapshot_path: str | None = None
+        files_touched: str = "[]"
+
         try:
             repo = gitpy.Repo(ws.cwd, search_parent_directories=True)
+            from src.services.checkpoint import create_git_checkpoint
+
+            result = create_git_checkpoint(repo, thread_id, msg)
+            if result["status"] != "ok":
+                logger.warning(
+                    "_record_turn_checkpoint: git snapshot falhou: %s", result
+                )
+                return
+            strategy = "git"
+            git_sha = result["sha"]
         except gitpy.InvalidGitRepositoryError:
-            return  # workspace sem git — sem checkpoint
+            # Fallback: snapshot tarball para workspaces sem git.
+            from pathlib import Path as _Path
 
-        from src.services.checkpoint import create_git_checkpoint
+            from src.services.checkpoint import create_snapshot_checkpoint, gc_snapshots
 
-        checkpoint_id = event.get("run_id") or str(uuid.uuid4())
-        result = create_git_checkpoint(
-            repo,
-            thread_id,
-            f"turn:{thread_id}:{checkpoint_id[:8]}",
-        )
-        if result["status"] != "ok":
-            logger.warning("_record_turn_checkpoint: git snapshot falhou: %s", result)
-            return
+            snap_dir = _Path.home() / ".vectora" / "snapshots" / workspace_id
+            result = create_snapshot_checkpoint(str(ws.cwd), snap_dir, thread_id, msg)
+            if result["status"] != "ok":
+                logger.warning("_record_turn_checkpoint: snapshot falhou: %s", result)
+                return
+            strategy = "snapshot"
+            snapshot_path = result["snapshot_path"]
+            files_touched = __import__("json").dumps(result.get("files_touched", []))
+            # GC: limpa snapshots antigos desta thread.
+            gc_snapshots(snap_dir)
 
         now = datetime.now(UTC).isoformat()
         from src.api.handlers.threads import _get_db
@@ -286,18 +306,18 @@ async def _record_turn_checkpoint(
                 str(uuid.uuid4()),
                 thread_id,
                 checkpoint_id,
-                "git",
-                result["sha"],
-                None,
-                "[]",
+                strategy,
+                git_sha,
+                snapshot_path,
+                files_touched,
                 now,
             ),
         )
         await db.commit()
         logger.debug(
-            "_record_turn_checkpoint: checkpoint gravado thread=%s sha=%s",
+            "_record_turn_checkpoint: checkpoint gravado thread=%s strategy=%s",
             thread_id,
-            result["sha"][:7],
+            strategy,
         )
     except Exception:
         logger.exception("_record_turn_checkpoint: falha ao gravar checkpoint de turno")
