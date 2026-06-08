@@ -565,6 +565,9 @@ workbench.files.rename,Rename,Renombrar,Renomear
 workbench.files.rename_placeholder,New name…,Nuevo nombre…,Novo nome…
 workbench.files.rename_error,Couldn't rename.,No se pudo renombrar.,Não foi possível renomear.
 workbench.files.rename_exists,A file with this name already exists.,Ya existe un archivo con ese nombre.,Já existe um arquivo com esse nome.
+workbench.files.history,File history,Historial del archivo,Histórico do arquivo
+workbench.files.history_viewing_at,Viewing at,Viendo en,Exibindo revisão
+workbench.files.history_back,Back to current,Volver al actual,Voltar ao atual
 workbench.files.search_in_files,Search in files,Buscar en archivos,Buscar nos arquivos
 workbench.files.search_placeholder,Search in files…,Buscar en archivos…,Buscar nos arquivos…
 workbench.files.search_no_results,No results.,Sin resultados.,Sem resultados.

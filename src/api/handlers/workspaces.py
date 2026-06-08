@@ -1089,6 +1089,138 @@ async def workspace_git_diff_file(
 
 
 # ---------------------------------------------------------------------------
+# A.6 — Histórico de arquivo e visualização de revisão específica
+# ---------------------------------------------------------------------------
+
+_MAX_SHOW_BYTES = 512 * 1024  # 512 KiB — limite de conteúdo retornado por git show
+
+
+class FileLogEntry(BaseModel):
+    sha: str
+    sha_short: str
+    author: str
+    date: str  # ISO 8601
+    message: str  # primeira linha do commit message
+
+
+class FileLogResponse(BaseModel):
+    path: str
+    entries: list[FileLogEntry]
+
+
+class ShowFileAtRevResponse(BaseModel):
+    path: str
+    sha: str
+    content: str | None = None
+    binary: bool = False
+    truncated: bool = False
+
+
+def _open_workspace_repo(workspace_id: str) -> Any | None:
+    """Abre o repositório git do workspace ou retorna None.
+
+    Retorna None quando o workspace não existe, não é um repositório git ou
+    quando a biblioteca ``gitpython`` não está disponível.
+    """
+    try:
+        from git import Repo  # type: ignore[import-not-found]
+
+        from src.services.workspace import workspace_registry
+
+        ws = workspace_registry.get(workspace_id)
+        if ws is None:
+            return None
+        return Repo(ws.cwd, search_parent_directories=False)
+    except Exception:
+        return None
+
+
+@view_router.get("/{workspace_id}/git/log/file", response_model=FileLogResponse)
+async def git_log_file(
+    workspace_id: str,
+    path: Annotated[str, Query()],
+    n: Annotated[int, Query(ge=1, le=200)] = 50,
+    follow: Annotated[bool, Query()] = True,
+) -> FileLogResponse:
+    """Lista os commits que tocaram ``path`` no histórico do repositório.
+
+    Reaproveita ``git log`` via gitpython.  ``follow=true`` passa ``--follow``
+    para rastrear renames.  Retorna lista vazia para workspaces sem git.
+    """
+    import git  # type: ignore[import-not-found]
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return FileLogResponse(path=path, entries=[])
+
+    # Usa \x00 como separador para lidar com mensagens que contêm pipes.
+    fmt = "%H%x00%h%x00%an <%ae>%x00%aI%x00%s"
+    try:
+        raw = repo.git.log(
+            f"--max-count={n}",
+            f"--format={fmt}",
+            *(["--follow"] if follow else []),
+            "--",
+            path,
+        )
+    except git.GitCommandError:
+        return FileLogResponse(path=path, entries=[])
+
+    entries: list[FileLogEntry] = []
+    for line in raw.strip().splitlines():
+        parts = line.split("\x00", 4)
+        if len(parts) == 5:
+            sha, sha_short, author, date, message = parts
+            entries.append(
+                FileLogEntry(
+                    sha=sha,
+                    sha_short=sha_short,
+                    author=author,
+                    date=date,
+                    message=message,
+                )
+            )
+    return FileLogResponse(path=path, entries=entries)
+
+
+@view_router.get("/{workspace_id}/git/show", response_model=ShowFileAtRevResponse)
+async def git_show_file(
+    workspace_id: str,
+    sha: Annotated[str, Query(min_length=4, max_length=40)],
+    path: Annotated[str, Query()],
+) -> ShowFileAtRevResponse:
+    """Retorna o conteúdo de ``path`` no commit ``sha``.
+
+    Devolve ``binary=true`` quando o arquivo não é texto.  Trunca em
+    ``_MAX_SHOW_BYTES`` com ``truncated=true`` para arquivos grandes.
+    """
+    import git  # type: ignore[import-not-found]
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return ShowFileAtRevResponse(path=path, sha=sha, content=None)
+
+    try:
+        content = repo.git.show(f"{sha}:{path}")
+    except git.GitCommandError:
+        return ShowFileAtRevResponse(path=path, sha=sha, content=None)
+    except UnicodeDecodeError:
+        return ShowFileAtRevResponse(path=path, sha=sha, binary=True)
+
+    # Heurística de binário: null bytes no conteúdo.
+    if "\x00" in content:
+        return ShowFileAtRevResponse(path=path, sha=sha, binary=True)
+
+    truncated = len(content) > _MAX_SHOW_BYTES
+    return ShowFileAtRevResponse(
+        path=path,
+        sha=sha,
+        content=content[:_MAX_SHOW_BYTES],
+        truncated=truncated,
+    )
+
+
+# ---------------------------------------------------------------------------
 # File system CRUD — criação e deleção de arquivos/pastas
 # ---------------------------------------------------------------------------
 

@@ -19,6 +19,7 @@ import {
   FilePlus,
   FolderClosed,
   FolderPlus,
+  History,
   Loader2,
   Pencil,
   Pin,
@@ -232,6 +233,67 @@ async function apiFsSearch(
   );
   if (!res.ok) return null;
   return res.json() as Promise<SearchResult>;
+}
+
+// ---------------------------------------------------------------------------
+// A.6 — Histórico de arquivo (git log/file + git show)
+// ---------------------------------------------------------------------------
+
+interface FileLogEntry {
+  sha: string;
+  sha_short: string;
+  author: string;
+  date: string; // ISO 8601
+  message: string;
+}
+
+interface FileLogResponse {
+  path: string;
+  entries: FileLogEntry[];
+}
+
+interface ShowFileAtRevResponse {
+  path: string;
+  sha: string;
+  content: string | null;
+  binary: boolean;
+  truncated: boolean;
+}
+
+async function apiFsGitLogFile(
+  workspaceId: string,
+  path: string,
+  n = 50,
+): Promise<FileLogResponse | null> {
+  const qs = new URLSearchParams({ path, n: String(n) });
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/log/file?${qs}`,
+  );
+  if (!res.ok) return null;
+  return res.json() as Promise<FileLogResponse>;
+}
+
+async function apiFsGitShow(
+  workspaceId: string,
+  sha: string,
+  path: string,
+): Promise<ShowFileAtRevResponse | null> {
+  const qs = new URLSearchParams({ sha, path });
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/show?${qs}`,
+  );
+  if (!res.ok) return null;
+  return res.json() as Promise<ShowFileAtRevResponse>;
+}
+
+/** Formata data ISO 8601 em string compacta (dd/mm/yyyy). */
+function fmtDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  } catch {
+    return iso.slice(0, 10);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -759,6 +821,65 @@ function PinnedSection({
 const EMPTY_PINNED: string[] = [];
 
 // ---------------------------------------------------------------------------
+// FileHistoryPanel — lista de commits que tocaram um arquivo (A.6)
+// ---------------------------------------------------------------------------
+
+function FileHistoryPanel({
+  entries,
+  loading,
+  selectedSha,
+  onSelectSha,
+}: {
+  entries: FileLogEntry[] | null;
+  loading: boolean;
+  selectedSha: string | null;
+  onSelectSha: (sha: string) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="flex justify-center py-6">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!entries || entries.length === 0) {
+    return (
+      <p className="text-[10px] text-muted-foreground text-center py-6 px-4">
+        Nenhum commit encontrado para este arquivo.
+      </p>
+    );
+  }
+  return (
+    <div className="px-1 py-1">
+      {entries.map((entry) => (
+        <button
+          key={entry.sha}
+          onClick={() => onSelectSha(entry.sha)}
+          className={`w-full text-left px-2 py-1.5 rounded mb-0.5 hover:bg-muted/40 transition-colors ${
+            selectedSha === entry.sha ? "bg-primary/10 hover:bg-primary/15" : ""
+          }`}
+        >
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-[10px] font-mono text-primary shrink-0">
+              {entry.sha_short}
+            </span>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {fmtDate(entry.date)}
+            </span>
+          </div>
+          <p className="text-[11px] text-foreground/90 truncate leading-tight">
+            {entry.message}
+          </p>
+          <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+            {entry.author.split("<")[0].trim()}
+          </p>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // SearchResultGroup — grupo colapsável de resultados por arquivo (A.5)
 // ---------------------------------------------------------------------------
 
@@ -932,6 +1053,28 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     return Array.from(map.entries());
   }, [searchResults]);
 
+  // ── Histórico de arquivo (A.6) ───────────────────────────────────────────
+  const [historyMode, setHistoryMode] = useState(false);
+  const [historyPath, setHistoryPath] = useState<string | null>(null);
+  const [historyEntries, setHistoryEntries] = useState<FileLogEntry[] | null>(
+    null,
+  );
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historicSha, setHistoricSha] = useState<string | null>(null);
+  const [historicContent, setHistoricContent] =
+    useState<ShowFileAtRevResponse | null>(null);
+  const [historicLoading, setHistoricLoading] = useState(false);
+
+  // Fecha o histórico quando o arquivo aberto muda (navegação na árvore).
+  useEffect(() => {
+    if (historyMode && openPath !== historyPath) {
+      setHistoryMode(false);
+      setHistoryEntries(null);
+      setHistoricSha(null);
+      setHistoricContent(null);
+    }
+  }, [openPath, historyMode, historyPath]);
+
   // Trocar de arquivo limpa o rascunho (cada arquivo tem seu próprio ciclo).
   useEffect(() => {
     setDraft(null);
@@ -1041,6 +1184,33 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
       handleOpenFile(path);
     },
     [handleOpenFile],
+  );
+
+  // Abre o painel de histórico para o arquivo atualmente aberto.
+  const handleOpenHistory = useCallback(async () => {
+    if (!wsId || !openPath) return;
+    setHistoryMode(true);
+    setHistoryPath(openPath);
+    setHistoryEntries(null);
+    setHistoricSha(null);
+    setHistoricContent(null);
+    setHistoryLoading(true);
+    const res = await apiFsGitLogFile(wsId, openPath);
+    setHistoryLoading(false);
+    setHistoryEntries(res?.entries ?? []);
+  }, [wsId, openPath]);
+
+  // Seleciona um commit do histórico e carrega o conteúdo do arquivo naquele ponto.
+  const handleSelectHistoricSha = useCallback(
+    async (sha: string) => {
+      if (!wsId || !historyPath) return;
+      setHistoricSha(sha);
+      setHistoricLoading(true);
+      const res = await apiFsGitShow(wsId, sha, historyPath);
+      setHistoricLoading(false);
+      setHistoricContent(res);
+    },
+    [wsId, historyPath],
   );
 
   // Deletar arquivo/pasta com confirmação; permanent=true vai para o lixo permanente
@@ -1205,9 +1375,36 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
         </div>
       )}
 
-      {/* Árvore de arquivos ou resultados de busca */}
+      {/* Árvore de arquivos, resultados de busca ou histórico de arquivo */}
       <div className="flex-1 overflow-y-auto py-1">
-        {searchMode ? (
+        {historyMode ? (
+          <>
+            {/* Cabeçalho do painel de histórico */}
+            <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/40">
+              <span className="text-[10px] font-medium text-muted-foreground truncate flex-1">
+                {t("workbench.files.history")}: {historyPath?.split("/").pop()}
+              </span>
+              <button
+                onClick={() => {
+                  setHistoryMode(false);
+                  setHistoryEntries(null);
+                  setHistoricSha(null);
+                  setHistoricContent(null);
+                }}
+                className="p-0.5 text-muted-foreground hover:text-foreground"
+                title={t("workbench.close")}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+            <FileHistoryPanel
+              entries={historyEntries}
+              loading={historyLoading}
+              selectedSha={historicSha}
+              onSelectSha={handleSelectHistoricSha}
+            />
+          </>
+        ) : searchMode ? (
           <div className="px-1">
             {searchResults !== null && searchResults.hits.length === 0 && (
               <p className="text-[10px] text-muted-foreground text-center py-4">
@@ -1311,6 +1508,21 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                   <AtSign className="w-3 h-3" />
                 </button>
               )}
+              {/* Botão de histórico — só para workspaces git (A.6) */}
+              {workspace.is_git_repo && openPath && (
+                <button
+                  onClick={handleOpenHistory}
+                  className={`p-0.5 rounded transition-colors ${
+                    historyMode
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title={t("workbench.files.history")}
+                  aria-pressed={historyMode}
+                >
+                  <History className="w-3 h-3" />
+                </button>
+              )}
               <button
                 onClick={handleCloseViewer}
                 className="text-muted-foreground hover:text-foreground px-1"
@@ -1320,8 +1532,52 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               </button>
             </div>
           </div>
+          {/* Banner de revisão histórica (A.6) */}
+          {historicSha && (
+            <div className="flex items-center gap-2 px-2 py-1 bg-amber-500/10 border-b border-amber-500/20 text-[10px]">
+              {historicLoading ? (
+                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0" />
+              ) : (
+                <History className="w-3 h-3 text-amber-500 shrink-0" />
+              )}
+              <span className="text-muted-foreground truncate flex-1">
+                {t("workbench.files.history_viewing_at")}{" "}
+                <span className="font-mono text-amber-500">
+                  {historicSha.slice(0, 7)}
+                </span>
+              </span>
+              <button
+                onClick={() => {
+                  setHistoricSha(null);
+                  setHistoricContent(null);
+                }}
+                className="text-muted-foreground hover:text-foreground shrink-0"
+              >
+                {t("workbench.files.history_back")}
+              </button>
+            </div>
+          )}
           <div className="flex-1 overflow-auto p-2">
-            {loadingFile ? (
+            {historicSha && historicLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            ) : historicSha && historicContent ? (
+              historicContent.binary ? (
+                <p className="text-xs text-muted-foreground">
+                  {t("workbench.files.binary", { size: 0 })}
+                </p>
+              ) : (
+                <>
+                  <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                    {historicContent.content ?? ""}
+                  </pre>
+                  {historicContent.truncated && (
+                    <p className="text-[10px] text-muted-foreground mt-2">
+                      {t("workbench.files.read_only_truncated")}
+                    </p>
+                  )}
+                </>
+              )
+            ) : loadingFile ? (
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : openContent?.kind === "binary" ? (
               <p className="text-xs text-muted-foreground">
