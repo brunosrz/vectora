@@ -37,6 +37,10 @@ sidebar.report_issue,Report an issue,Reportar problema,Reportar problema
 sidebar.open,Open sessions,Abrir sesiones,Abrir sessões
 sidebar.folders,Folders,Carpetas,Pastas
 sidebar.folders_empty,No folders yet. Ask the admin to add one.,Aún no hay carpetas. Pide al admin que agregue una.,Nenhuma pasta ainda. Peça ao admin para adicionar uma.
+sidebar.group.other_conversations,Other conversations,Otras conversaciones,Outras conversas
+sidebar.workspace_collapse,Collapse folder,Contraer carpeta,Recolher pasta
+sidebar.workspace_expand,Expand folder,Expandir carpeta,Expandir pasta
+sidebar.workspace_thread_count,{n} sessions,{n} sesiones,{n} sessões
 # =============================================================================
 # Relative time (sidebar)
 # =============================================================================

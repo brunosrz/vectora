@@ -37,6 +37,7 @@ function toSidebarThread(t: VectoraThread, userId: string): Thread {
     created_at: t.created_at,
     updated_at: t.updated_at,
     metadata: { user_id: userId, title: t.title ?? "" },
+    workspace_id: t.workspace_id,
   };
 }
 

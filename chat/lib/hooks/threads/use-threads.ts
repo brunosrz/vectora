@@ -48,6 +48,8 @@ export interface Thread {
   updated_at: string;
   metadata: ThreadMetadata;
   values?: Record<string, unknown>;
+  /** Workspace físico associado à sessão (P3 — sidebar pasta=workspace). */
+  workspace_id?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -60,6 +62,7 @@ function toThread(t: VectoraThread, userId: string): Thread {
     created_at: t.created_at,
     updated_at: t.updated_at,
     metadata: { user_id: userId, title: t.title ?? "" },
+    workspace_id: t.workspace_id,
   };
 }
 
