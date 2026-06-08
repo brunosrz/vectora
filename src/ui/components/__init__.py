@@ -3,9 +3,7 @@
 Cada submódulo transforma dados (texto digitado, modo de permissão etc.) em
 texto/opções prontos para os widgets consumirem — sem montar nada, o que
 permite testar a lógica sem instanciar a App completa. Reexporta as funções
-para que os consumidores importem direto de `src.ui.components`:
-
-    from src.ui.components import build_popup_options, build_status_text
+para que os consumidores importem direto de `src.ui.components`.
 """
 
 from __future__ import annotations

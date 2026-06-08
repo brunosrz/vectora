@@ -1,4 +1,4 @@
-"""Camada de transporte para o filesystem do workspace (G.2).
+"""Camada de transporte para o filesystem do workspace.
 
 Workspaces podem viver em três lugares: local, host SSH remoto, ou
 GitHub Codespace. Para que as tools (``fs.py``, ``git.py``, terminal)

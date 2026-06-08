@@ -60,3 +60,6 @@ def get_secrets_provider() -> Any:
         from src.services.secrets.internal import InternalSecretsProvider
 
         return InternalSecretsProvider()
+
+
+__all__ = ["get_secrets_provider"]
