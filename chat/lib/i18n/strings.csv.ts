@@ -438,6 +438,16 @@ stack.java.3,Identify any thread-safety issues,Identifica problemas de thread-sa
 stack.unknown.1,Explain the project structure and key files,Explica la estructura del proyecto y los archivos clave,Explique a estrutura do projeto e os arquivos principais
 stack.unknown.2,Find and fix any bugs or issues in the codebase,Encuentra y corrige errores en el código,Encontre e corrija bugs ou problemas no código
 stack.unknown.3,Write tests for the most critical functions,Escribe tests para las funciones más críticas,Escreva testes para as funções mais críticas
+# =============================================================================
+# Contextual help (C.25)
+# =============================================================================
+help.title,Tips & Shortcuts,Consejos y atajos,Dicas e atalhos
+help.tip_no_workspace,"Add a folder: click the workspace selector in the chat footer to start working with files.","Agrega una carpeta: haz clic en el selector de workspace en el pie del chat para trabajar con archivos.","Adicione uma pasta: clique no seletor de workspace no rodapé do chat para começar a trabalhar com arquivos."
+help.tip_no_git,"Initialize a git repo: open the Diff tab in the workbench to enable version control.","Inicializa un repositorio git: abre la pestaña Diff en el workbench para habilitar el control de versiones.","Inicialize um repositório git: abra a aba Diff no workbench para ativar o controle de versões."
+help.tip_git_diff,"Staged changes & commit: use the Diff tab in the workbench to stage files and create commits.","Cambios preparados y commit: usa la pestaña Diff en el workbench para preparar archivos y crear commits.","Mudanças staged e commit: use a aba Diff no workbench para preparar arquivos e criar commits."
+help.tip_git_stash,"Save work in progress: in the Diff tab → Stash, push a stash to keep changes without committing.","Guarda trabajo en progreso: en la pestaña Diff → Stash, guarda cambios sin hacer commit.","Salve trabalho em progresso: na aba Diff → Stash, faça um push para guardar mudanças sem commitar."
+help.tip_slash_commands,"Type / in the chat to see available commands (e.g. /model to switch models).","Escribe / en el chat para ver los comandos disponibles (ej. /model para cambiar modelos).","Digite / no chat para ver os comandos disponíveis (ex. /model para trocar modelos)."
+help.view_shortcuts,View all keyboard shortcuts,Ver todos los atajos de teclado,Ver todos os atalhos de teclado
 
 # Administração — painel próprio (P4), separado do SettingsDialog
 admin.dialog_title,Administration,Administración,Administração
