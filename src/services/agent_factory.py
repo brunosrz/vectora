@@ -195,52 +195,38 @@ Reconheça-o com base neste system prompt — sem RAG, sem web search.
 # ---------------------------------------------------------------------------
 
 
-def _build_subagents() -> list[Any]:
-    """Constrói a lista de SubAgent specs para create_deep_agent.
+def _subagent_specs(user_id: str | None = None) -> list[Any]:
+    """Retorna a lista de SubAgent specs filtrada pela política ABAC do usuário.
 
     Importações lazy evitam circular imports e carregamento desnecessário
     em contextos que não instanciam o grafo (CLI, testes unitários).
+
+    Quando ``user_id`` é fornecido, as tools de cada subagent são filtradas
+    removendo as que constam em ``tool_policy.get_disabled(user_id)``.
+    Sem ``user_id`` (padrão), retorna o toolset completo.
+
+    As specs base são definidas em ``src/agents/{coder,search}.py`` como
+    ``SUBAGENT_SPEC`` — ponto único de verdade para nome, descrição e tools.
     """
-    from deepagents.middleware.subagents import SubAgent  # type: ignore[attr-defined]
+    import copy
 
-    from src.agents.coder import SYSTEM_PROMPT as CODER_PROMPT
-    from src.agents.search import SYSTEM_PROMPT as SEARCH_PROMPT
-    from src.nodes.tools import (
-        FS_TOOLS,
-        GIT_TOOLS,
-        MEMORY_TOOLS,
-        RAG_TOOLS,
-        SEARCH_TOOLS,
-    )
+    from src.agents.coder import SUBAGENT_SPEC as CODER_SPEC
+    from src.agents.search import SUBAGENT_SPEC as SEARCH_SPEC
 
-    coder_tools = FS_TOOLS + GIT_TOOLS + MEMORY_TOOLS + RAG_TOOLS
-    search_tools = SEARCH_TOOLS + MEMORY_TOOLS
+    specs = [copy.copy(CODER_SPEC), copy.copy(SEARCH_SPEC)]
 
-    coder: SubAgent = {
-        "name": "coder",
-        "description": (
-            "Especialista em filesystem, código, terminal e git. "
-            "Use para: criar/editar/ler arquivos, executar comandos, "
-            "git (commit/branch/push), npm/pip/uv, testes, "
-            "indexar/embedar pastas (ingest_docs)."
-        ),
-        "system_prompt": CODER_PROMPT,
-        "tools": coder_tools,
-    }
+    if user_id:
+        disabled: set[str] = set(tool_policy.get_disabled(user_id))
+        if disabled:
+            for spec in specs:
+                spec["tools"] = [t for t in spec["tools"] if t.name not in disabled]
+            logger.debug(
+                "agent_factory: subagent tools filtradas por ABAC user=%s disabled=%s",
+                user_id,
+                disabled,
+            )
 
-    search: SubAgent = {
-        "name": "search",
-        "description": (
-            "Especialista em busca web em tempo real e fetch de URLs. "
-            "Use para: pesquisar informação atual na internet, "
-            "acessar documentação online (https://...), "
-            "verificar notícias ou dados recentes."
-        ),
-        "system_prompt": SEARCH_PROMPT,
-        "tools": search_tools,
-    }
-
-    return [coder, search]
+    return specs
 
 
 # ---------------------------------------------------------------------------
@@ -306,7 +292,7 @@ async def _build_graph_async() -> Any:
 
     # load_llm() retorna BaseChatModel em runtime; a anotação usa a base mais genérica.
     llm: BaseChatModel = _cast("BaseChatModel", load_llm())
-    subagents = _build_subagents()
+    subagents = _subagent_specs()  # sem user_id: toolset completo no singleton
 
     system_prompt = _build_session_system_prompt()
 

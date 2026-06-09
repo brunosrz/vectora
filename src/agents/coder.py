@@ -3,18 +3,21 @@
 Recebe ALL_TOOLS — a especialidade vem do system prompt, não de restrição de ferramentas.
 Objetivo: criar/editar arquivos, executar comandos, navegação de código.
 Também capaz de indexar pastas via ingest_docs quando solicitado.
+
+``SUBAGENT_SPEC`` é o dict canônico consumido por ``agent_factory._subagent_specs()``.
+Exportado para que o factory não precise duplicar descrição/ferramentas.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from langchain_core.messages import AIMessage
 
 from src.agents._identity import VECTORA_IDENTITY
 from src.nodes.base import invoke_llm
-from src.nodes.tools import ALL_TOOLS
+from src.nodes.tools import FS_TOOLS, GIT_TOOLS, MEMORY_TOOLS, RAG_TOOLS
 from src.services.llm_tools import get_user_bound_llm, user_id_from_config
 from src.services.utils import load_llm
 from src.types import CoderResult
@@ -75,18 +78,34 @@ automaticamente pela tool.
 - Adapte o idioma ao da conversa
 """
 
+#: Spec canônica do subagent coder para ``create_deep_agent``.
+#: Importada por ``agent_factory._subagent_specs(user_id)`` que filtra
+#: as tools de acordo com a política ABAC antes de passar ao grafo.
+SUBAGENT_SPEC: dict[str, Any] = {
+    "name": "coder",
+    "description": (
+        "Especialista em filesystem, código, terminal e git. "
+        "Use para: criar/editar/ler arquivos, executar comandos, "
+        "git (commit/branch/push), npm/pip/uv, testes, "
+        "indexar/embedar pastas (ingest_docs)."
+    ),
+    "system_prompt": SYSTEM_PROMPT,
+    "tools": FS_TOOLS + GIT_TOOLS + MEMORY_TOOLS + RAG_TOOLS,
+}
+
 _coder_llm = None
 
 
 def _get_coder_llm() -> Runnable:  # mantido p/ Studio/local; o nó usa bind por user
     global _coder_llm
     if _coder_llm is None:
-        if not ALL_TOOLS:
+        tools = SUBAGENT_SPEC["tools"]
+        if not tools:
             _coder_llm = load_llm()
             logger.warning("coder_worker: sem ferramentas disponíveis")
         else:
-            _coder_llm = load_llm().bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
-            logger.debug("coder_worker LLM inicializado com %d tools", len(ALL_TOOLS))
+            _coder_llm = load_llm().bind_tools(tools)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+            logger.debug("coder_worker LLM inicializado com %d tools", len(tools))
     return _coder_llm
 
 

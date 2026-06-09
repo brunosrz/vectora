@@ -2,18 +2,21 @@
 
 Recebe ALL_TOOLS — a especialidade vem do system prompt, não de restrição de ferramentas.
 Objetivo: pesquisar informações atuais + consultar e indexar base vetorial.
+
+``SUBAGENT_SPEC`` é o dict canônico consumido por ``agent_factory._subagent_specs()``.
+Exportado para que o factory não precise duplicar descrição/ferramentas.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from langchain_core.messages import AIMessage
 
 from src.agents._identity import VECTORA_IDENTITY
 from src.nodes.base import invoke_llm
-from src.nodes.tools import ALL_TOOLS
+from src.nodes.tools import MEMORY_TOOLS, RAG_TOOLS, SEARCH_TOOLS
 from src.services.llm_tools import get_user_bound_llm, user_id_from_config
 from src.services.utils import load_llm
 from src.types import SearchResult
@@ -101,14 +104,30 @@ Quando `ingest_docs` ou `embedding` retornarem `"status": "fire_and_forget"`, os
 - Adapte o idioma ao da conversa
 """
 
+#: Spec canônica do subagent search para ``create_deep_agent``.
+#: Importada por ``agent_factory._subagent_specs(user_id)`` que filtra
+#: as tools de acordo com a política ABAC antes de passar ao grafo.
+SUBAGENT_SPEC: dict[str, Any] = {
+    "name": "search",
+    "description": (
+        "Especialista em busca web em tempo real e fetch de URLs. "
+        "Use para: pesquisar informação atual na internet, "
+        "acessar documentação online (https://...), "
+        "verificar notícias ou dados recentes."
+    ),
+    "system_prompt": SYSTEM_PROMPT,
+    "tools": SEARCH_TOOLS + MEMORY_TOOLS + RAG_TOOLS,
+}
+
 _search_llm = None
 
 
 def _get_search_llm() -> Runnable:
     global _search_llm
     if _search_llm is None:
-        _search_llm = load_llm().bind_tools(ALL_TOOLS)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
-        logger.debug("search_worker LLM inicializado com %d tools", len(ALL_TOOLS))
+        tools = SUBAGENT_SPEC["tools"]
+        _search_llm = load_llm().bind_tools(tools)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+        logger.debug("search_worker LLM inicializado com %d tools", len(tools))
     return _search_llm
 
 
