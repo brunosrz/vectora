@@ -421,6 +421,9 @@ export const MessageList = memo(function MessageList({
         className="flex-1 overflow-y-auto custom-scrollbar relative"
         ref={scrollRef}
         onScroll={handleScroll}
+        aria-live="polite"
+        aria-busy={isLoadingThread}
+        aria-label="Messages"
         style={{
           willChange: "scroll-position",
           contain: "layout style paint",

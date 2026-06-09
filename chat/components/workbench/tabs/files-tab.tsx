@@ -313,6 +313,7 @@ interface CreatingState {
 
 function FileItem({
   threadId,
+  workspaceId,
   entry,
   depth,
   status,
@@ -322,6 +323,7 @@ function FileItem({
   onRename,
 }: {
   threadId: string;
+  workspaceId: string;
   entry: FileEntry;
   depth: number;
   status?: string;
@@ -332,6 +334,7 @@ function FileItem({
 }) {
   const pinned = useWorkbenchStore((s) => s.isPinned(threadId, entry.path));
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
+  const openPath = useWorkbenchStore((s) => s.getFiles(workspaceId).openPath);
   const t = useT();
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(entry.name);
@@ -347,6 +350,8 @@ function FileItem({
   return (
     <div
       tabIndex={0}
+      role="treeitem"
+      aria-selected={openPath === entry.path}
       className="group flex items-center px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
       style={{ paddingLeft: 8 + (depth + 1) * 12 }}
       onKeyDown={(e) => {
@@ -603,6 +608,8 @@ function DirNode({
       {depth > 0 && (
         <div
           tabIndex={0}
+          role="treeitem"
+          aria-expanded={expanded}
           className="group flex items-center px-2 py-0.5 text-xs text-foreground/80 hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
           onKeyDown={(e) => {
             if (e.key === "Delete") {
@@ -737,6 +744,7 @@ function DirNode({
                 <FileItem
                   key={entry.path}
                   threadId={threadId}
+                  workspaceId={workspaceId}
                   entry={entry}
                   depth={depth}
                   status={statusByPath.get(norm(entry.path))}
@@ -964,6 +972,12 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const setOpenFile = useWorkbenchStore((s) => s.setOpenFile);
   const setFileContent = useWorkbenchStore((s) => s.setFileContent);
   const invalidateFiles = useWorkbenchStore((s) => s.invalidateFiles);
+
+  // aria-busy: verdadeiro enquanto a raiz ainda não chegou do servidor.
+  const rootEntriesLoaded = useWorkbenchStore(
+    (s) => wsId !== "" && Array.isArray(s.getFiles(wsId).entriesByDir[""]),
+  );
+  const showSkeleton = !rootEntriesLoaded && !!wsId;
 
   // Badges M/A/D na árvore: join client-side com o diff porcelain.
   const diffSummary = useWorkbenchStore((s) => s.getDiff(wsId).summary);
@@ -1448,7 +1462,12 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
       )}
 
       {/* Árvore de arquivos, resultados de busca ou histórico de arquivo */}
-      <div className="flex-1 overflow-y-auto py-1">
+      <div
+        className="flex-1 overflow-y-auto py-1"
+        role="tree"
+        aria-label={t("workbench.files.tree_label")}
+        aria-busy={showSkeleton}
+      >
         {historyMode ? (
           <>
             {/* Cabeçalho do painel de histórico */}

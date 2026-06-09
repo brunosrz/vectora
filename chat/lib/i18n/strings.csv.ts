@@ -603,6 +603,7 @@ workbench.files.rename_exists,A file with this name already exists.,Ya existe un
 workbench.files.history,File history,Historial del archivo,Histórico do arquivo
 workbench.files.history_viewing_at,Viewing at,Viendo en,Exibindo revisão
 workbench.files.history_back,Back to current,Volver al actual,Voltar ao atual
+workbench.files.tree_label,File tree,Árbol de archivos,Árvore de arquivos
 workbench.files.search_in_files,Search in files,Buscar en archivos,Buscar nos arquivos
 workbench.files.search_placeholder,Search in files…,Buscar en archivos…,Buscar nos arquivos…
 workbench.files.search_no_results,No results.,Sin resultados.,Sem resultados.
