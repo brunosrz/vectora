@@ -296,21 +296,28 @@ async def _build_graph_async() -> Any:
 
     system_prompt = _build_session_system_prompt()
 
+    # Middleware stack: SummarizationMiddleware (compressão de contexto) +
+    # HumanInTheLoopMiddleware com mode="ask" para o singleton compartilhado.
+    # E.B-5 (context_schema=VectoraContext) permitirá modo dinâmico por usuário.
+    from src.services.middleware import build_middleware_stack
+
+    middleware = build_middleware_stack(permission_mode="ask", llm=llm)
+
     _graph = create_deep_agent(
         llm,
         tools=ALL_TOOLS,
         system_prompt=system_prompt,
         subagents=subagents,
+        middleware=middleware,
         checkpointer=checkpointer,
         name="vectora",
-        # interrupt_on omitido — HITL via HumanInTheLoopMiddleware em E.B-3.
-        # Até lá, ferramentas destrutivas executam sem pausa (modo bypass efetivo).
     )
 
     logger.info(
-        "agent_factory: grafo compilado (deepagents + %d tools + %d subagents)",
+        "agent_factory: grafo compilado (deepagents + %d tools + %d subagents + %d middleware)",
         len(ALL_TOOLS),
         len(subagents),
+        len(middleware),
     )
     return _graph
 
