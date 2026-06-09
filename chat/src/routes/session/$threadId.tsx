@@ -34,6 +34,7 @@ import {
   BROADCAST_THREADS,
   BROADCAST_WORKSPACES,
 } from "@/lib/hooks/use-broadcast-sync";
+import { useGlobalShortcuts } from "@/lib/hooks/use-global-shortcuts";
 
 export const Route = createFileRoute("/session/$threadId")({
   // Garante que a lista de threads está em cache antes do componente montar
@@ -110,6 +111,23 @@ function SessionPage() {
   // ou altera workspaces, revalida o cache desta aba silenciosamente.
   useBroadcastSync(BROADCAST_THREADS, () => void refetchThreads(), !!userId);
   useBroadcastSync(BROADCAST_WORKSPACES, () => void refetchThreads(), !!userId);
+
+  // Registry central de atalhos globais (C.11).
+  useGlobalShortcuts({
+    "ctrl+t": () => {
+      void handleConfirmNewChat(null);
+      return true;
+    },
+    "ctrl+backslash": () => {
+      const { togglePanel } = useWorkbenchStore.getState();
+      togglePanel(threadId);
+      return true;
+    },
+    "ctrl+,": () => {
+      setShowShortcutsDialog(true);
+      return true;
+    },
+  });
 
   // ── UI state local ────────────────────────────────────────────────────────
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
