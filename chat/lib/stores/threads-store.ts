@@ -20,6 +20,7 @@
  */
 
 import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
 import type { Message } from "@/lib/types";
 
 /** Limite de entradas simultâneas no cache (threads únicas). */
@@ -117,77 +118,79 @@ interface ThreadsState {
   gcCache: () => void;
 }
 
-export const useThreadsStore = create<ThreadsState>((set, get) => ({
-  cache: {},
-  revalidating: {},
+export const useThreadsStore = create<ThreadsState>()(
+  immer((set, get) => ({
+    cache: {},
+    revalidating: {},
 
-  getCached: (threadId) => get().cache[threadId],
+    getCached: (threadId) => get().cache[threadId],
 
-  setMessages: (threadId, messages) => {
-    const now = Date.now();
-    const sizeBytes = estimateBytes(messages);
-    set((state) => {
-      const updatedCache = applyGC({
-        ...state.cache,
-        [threadId]: { messages, fetchedAt: now, updatedAt: now, sizeBytes },
-      });
-      return { cache: updatedCache };
-    });
-  },
-
-  patchMessages: (threadId, updater) => {
-    set((state) => {
-      const prev = state.cache[threadId];
-      const prevMessages = prev?.messages ?? [];
-      const next = updater(prevMessages);
-      // Identidade preservada se updater retornar o mesmo array.
-      if (next === prevMessages && prev) return state;
+    setMessages: (threadId, messages) => {
       const now = Date.now();
-      const sizeBytes = estimateBytes(next);
-      const updatedCache = applyGC({
-        ...state.cache,
-        [threadId]: {
-          messages: next,
-          fetchedAt: prev?.fetchedAt ?? now,
-          updatedAt: now,
-          sizeBytes,
-        },
+      const sizeBytes = estimateBytes(messages);
+      set((state) => {
+        const updatedCache = applyGC({
+          ...state.cache,
+          [threadId]: { messages, fetchedAt: now, updatedAt: now, sizeBytes },
+        });
+        return { cache: updatedCache };
       });
-      return { cache: updatedCache };
-    });
-  },
+    },
 
-  setRevalidating: (threadId, value) => {
-    set((state) => {
-      if (state.revalidating[threadId] === value) return state;
-      const nextRevalidating = { ...state.revalidating };
-      if (value) nextRevalidating[threadId] = true;
-      else delete nextRevalidating[threadId];
-      return { revalidating: nextRevalidating };
-    });
-  },
+    patchMessages: (threadId, updater) => {
+      set((state) => {
+        const prev = state.cache[threadId];
+        const prevMessages = prev?.messages ?? [];
+        const next = updater(prevMessages);
+        // Identidade preservada se updater retornar o mesmo array.
+        if (next === prevMessages && prev) return state;
+        const now = Date.now();
+        const sizeBytes = estimateBytes(next);
+        const updatedCache = applyGC({
+          ...state.cache,
+          [threadId]: {
+            messages: next,
+            fetchedAt: prev?.fetchedAt ?? now,
+            updatedAt: now,
+            sizeBytes,
+          },
+        });
+        return { cache: updatedCache };
+      });
+    },
 
-  invalidate: (threadId) => {
-    set((state) => {
-      if (!(threadId in state.cache) && !(threadId in state.revalidating))
-        return state;
-      const nextCache = { ...state.cache };
-      const nextRevalidating = { ...state.revalidating };
-      delete nextCache[threadId];
-      delete nextRevalidating[threadId];
-      return { cache: nextCache, revalidating: nextRevalidating };
-    });
-  },
+    setRevalidating: (threadId, value) => {
+      set((state) => {
+        if (state.revalidating[threadId] === value) return state;
+        const nextRevalidating = { ...state.revalidating };
+        if (value) nextRevalidating[threadId] = true;
+        else delete nextRevalidating[threadId];
+        return { revalidating: nextRevalidating };
+      });
+    },
 
-  clear: () => set({ cache: {}, revalidating: {} }),
+    invalidate: (threadId) => {
+      set((state) => {
+        if (!(threadId in state.cache) && !(threadId in state.revalidating))
+          return state;
+        const nextCache = { ...state.cache };
+        const nextRevalidating = { ...state.revalidating };
+        delete nextCache[threadId];
+        delete nextRevalidating[threadId];
+        return { cache: nextCache, revalidating: nextRevalidating };
+      });
+    },
 
-  gcCache: () => {
-    set((state) => {
-      const next = applyGC(state.cache);
-      // Evita re-render desnecessário se nada foi removido.
-      if (Object.keys(next).length === Object.keys(state.cache).length)
-        return state;
-      return { cache: next };
-    });
-  },
-}));
+    clear: () => set({ cache: {}, revalidating: {} }),
+
+    gcCache: () => {
+      set((state) => {
+        const next = applyGC(state.cache);
+        // Evita re-render desnecessário se nada foi removido.
+        if (Object.keys(next).length === Object.keys(state.cache).length)
+          return;
+        state.cache = next;
+      });
+    },
+  })),
+);

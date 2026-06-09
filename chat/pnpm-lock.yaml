@@ -133,6 +133,9 @@ importers:
       geist:
         specifier: ^1.7.2
         version: 1.7.2(next@16.2.6(@babel/core@7.29.7)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
+      immer:
+        specifier: ^11.1.8
+        version: 11.1.8
       input-otp:
         specifier: 1.4.2
         version: 1.4.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

@@ -16,6 +16,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
 
 /** Referência estável de lista vazia (evita criar novo [] a cada selector). */
 const EMPTY_LIST: TerminalInstance[] = [];
@@ -240,30 +241,47 @@ function pruneContents(
 }
 
 export const useWorkbenchStore = create<WorkbenchState>()(
-  persist(
-    (set, get) => ({
-      // ── Shell defaults ──────────────────────────────────────────────────
-      byThread: {},
-      activeByThread: {},
-      panelOpen: {},
-      activeTabByThread: {},
-      splitSize: 40,
-      pinnedFiles: {},
-      pending: {},
+  immer(
+    persist(
+      (set, get) => ({
+        // ── Shell defaults ──────────────────────────────────────────────────
+        byThread: {},
+        activeByThread: {},
+        panelOpen: {},
+        activeTabByThread: {},
+        splitSize: 40,
+        pinnedFiles: {},
+        pending: {},
 
-      list: (threadId) => get().byThread[threadId] ?? EMPTY_LIST,
-      active: (threadId) => {
-        const list = get().byThread[threadId] ?? EMPTY_LIST;
-        const id = get().activeByThread[threadId];
-        return list.find((t) => t.id === id) ?? list[0] ?? null;
-      },
-      isOpen: (threadId) => Boolean(get().panelOpen[threadId]),
+        list: (threadId) => get().byThread[threadId] ?? EMPTY_LIST,
+        active: (threadId) => {
+          const list = get().byThread[threadId] ?? EMPTY_LIST;
+          const id = get().activeByThread[threadId];
+          return list.find((t) => t.id === id) ?? list[0] ?? null;
+        },
+        isOpen: (threadId) => Boolean(get().panelOpen[threadId]),
 
-      open: (threadId, instance) =>
-        set((s) => {
-          const existing = s.byThread[threadId] ?? [];
-          if (existing.some((t) => t.id === instance.id)) {
+        open: (threadId, instance) =>
+          set((s) => {
+            const existing = s.byThread[threadId] ?? [];
+            if (existing.some((t) => t.id === instance.id)) {
+              return {
+                activeByThread: {
+                  ...s.activeByThread,
+                  [threadId]: instance.id,
+                },
+                panelOpen: { ...s.panelOpen, [threadId]: true },
+                activeTabByThread: {
+                  ...s.activeTabByThread,
+                  [threadId]: "terminal",
+                },
+              };
+            }
             return {
+              byThread: {
+                ...s.byThread,
+                [threadId]: [...existing, instance],
+              },
               activeByThread: { ...s.activeByThread, [threadId]: instance.id },
               panelOpen: { ...s.panelOpen, [threadId]: true },
               activeTabByThread: {
@@ -271,262 +289,252 @@ export const useWorkbenchStore = create<WorkbenchState>()(
                 [threadId]: "terminal",
               },
             };
-          }
-          return {
-            byThread: {
-              ...s.byThread,
-              [threadId]: [...existing, instance],
-            },
-            activeByThread: { ...s.activeByThread, [threadId]: instance.id },
+          }),
+
+        close: (threadId, id) =>
+          set((s) => {
+            const filtered = (s.byThread[threadId] ?? []).filter(
+              (t) => t.id !== id,
+            );
+            const wasActive = s.activeByThread[threadId] === id;
+            return {
+              byThread: { ...s.byThread, [threadId]: filtered },
+              activeByThread: {
+                ...s.activeByThread,
+                [threadId]: wasActive
+                  ? (filtered[0]?.id ?? null)
+                  : s.activeByThread[threadId],
+              },
+            };
+          }),
+
+        setActive: (threadId, id) =>
+          set((s) => ({
+            activeByThread: { ...s.activeByThread, [threadId]: id },
+          })),
+
+        togglePanel: (threadId) =>
+          set((s) => ({
+            panelOpen: { ...s.panelOpen, [threadId]: !s.panelOpen[threadId] },
+          })),
+
+        setPanelOpen: (threadId, open) =>
+          set((s) => ({ panelOpen: { ...s.panelOpen, [threadId]: open } })),
+
+        getActiveTab: (threadId) =>
+          get().activeTabByThread[threadId] ?? "terminal",
+        setActiveTab: (threadId, tab) =>
+          set((s) => ({
+            activeTabByThread: { ...s.activeTabByThread, [threadId]: tab },
             panelOpen: { ...s.panelOpen, [threadId]: true },
-            activeTabByThread: {
-              ...s.activeTabByThread,
-              [threadId]: "terminal",
-            },
-          };
-        }),
+          })),
 
-      close: (threadId, id) =>
-        set((s) => {
-          const filtered = (s.byThread[threadId] ?? []).filter(
-            (t) => t.id !== id,
-          );
-          const wasActive = s.activeByThread[threadId] === id;
-          return {
-            byThread: { ...s.byThread, [threadId]: filtered },
-            activeByThread: {
-              ...s.activeByThread,
-              [threadId]: wasActive
-                ? (filtered[0]?.id ?? null)
-                : s.activeByThread[threadId],
-            },
-          };
-        }),
+        setSplitSize: (size) => set({ splitSize: size }),
 
-      setActive: (threadId, id) =>
-        set((s) => ({
-          activeByThread: { ...s.activeByThread, [threadId]: id },
-        })),
+        togglePinned: (threadId, path) =>
+          set((s) => {
+            const cur = s.pinnedFiles[threadId] ?? [];
+            const next = cur.includes(path)
+              ? cur.filter((p) => p !== path)
+              : [...cur, path];
+            return { pinnedFiles: { ...s.pinnedFiles, [threadId]: next } };
+          }),
+        isPinned: (threadId, path) =>
+          (get().pinnedFiles[threadId] ?? []).includes(path),
 
-      togglePanel: (threadId) =>
-        set((s) => ({
-          panelOpen: { ...s.panelOpen, [threadId]: !s.panelOpen[threadId] },
-        })),
+        // ── Caches voláteis ─────────────────────────────────────────────────
+        files: {},
+        diff: {},
+        plan: {},
 
-      setPanelOpen: (threadId, open) =>
-        set((s) => ({ panelOpen: { ...s.panelOpen, [threadId]: open } })),
-
-      getActiveTab: (threadId) =>
-        get().activeTabByThread[threadId] ?? "terminal",
-      setActiveTab: (threadId, tab) =>
-        set((s) => ({
-          activeTabByThread: { ...s.activeTabByThread, [threadId]: tab },
-          panelOpen: { ...s.panelOpen, [threadId]: true },
-        })),
-
-      setSplitSize: (size) => set({ splitSize: size }),
-
-      togglePinned: (threadId, path) =>
-        set((s) => {
-          const cur = s.pinnedFiles[threadId] ?? [];
-          const next = cur.includes(path)
-            ? cur.filter((p) => p !== path)
-            : [...cur, path];
-          return { pinnedFiles: { ...s.pinnedFiles, [threadId]: next } };
-        }),
-      isPinned: (threadId, path) =>
-        (get().pinnedFiles[threadId] ?? []).includes(path),
-
-      // ── Caches voláteis ─────────────────────────────────────────────────
-      files: {},
-      diff: {},
-      plan: {},
-
-      getFiles: (wsId) => get().files[wsId] ?? EMPTY_FILES,
-      setFilesEntries: (wsId, path, entries) =>
-        set((s) => {
-          const cur = s.files[wsId] ?? EMPTY_FILES;
-          return {
-            files: {
-              ...s.files,
-              [wsId]: {
-                ...cur,
-                entriesByDir: { ...cur.entriesByDir, [path]: entries },
-                fetchedAt: { ...cur.fetchedAt, [path]: Date.now() },
+        getFiles: (wsId) => get().files[wsId] ?? EMPTY_FILES,
+        setFilesEntries: (wsId, path, entries) =>
+          set((s) => {
+            const cur = s.files[wsId] ?? EMPTY_FILES;
+            return {
+              files: {
+                ...s.files,
+                [wsId]: {
+                  ...cur,
+                  entriesByDir: { ...cur.entriesByDir, [path]: entries },
+                  fetchedAt: { ...cur.fetchedAt, [path]: Date.now() },
+                },
               },
-            },
-          };
-        }),
-      toggleExpanded: (wsId, path) =>
-        set((s) => {
-          const cur = s.files[wsId] ?? EMPTY_FILES;
-          const expanded = cur.expandedDirs.includes(path)
-            ? cur.expandedDirs.filter((p) => p !== path)
-            : [...cur.expandedDirs, path];
-          return {
-            files: { ...s.files, [wsId]: { ...cur, expandedDirs: expanded } },
-          };
-        }),
-      setOpenFile: (wsId, path) =>
-        set((s) => {
-          const cur = s.files[wsId] ?? EMPTY_FILES;
-          return { files: { ...s.files, [wsId]: { ...cur, openPath: path } } };
-        }),
-      setFileContent: (wsId, path, content) =>
-        set((s) => {
-          const cur = s.files[wsId] ?? EMPTY_FILES;
-          const nextContents = pruneContents({
-            ...cur.contents,
-            [path]: content,
-          });
-          return {
-            files: {
-              ...s.files,
-              [wsId]: { ...cur, contents: nextContents },
-            },
-          };
-        }),
-      setFilesFilter: (wsId, filter) =>
-        set((s) => {
-          const cur = s.files[wsId] ?? EMPTY_FILES;
-          return { files: { ...s.files, [wsId]: { ...cur, filter } } };
-        }),
-      invalidateFiles: (wsId) =>
-        set((s) => {
-          if (!wsId) return { files: {} };
-          const cur = s.files[wsId];
-          if (!cur) return s;
-          return {
-            files: { ...s.files, [wsId]: { ...cur, fetchedAt: {} } },
-          };
-        }),
-
-      getDiff: (wsId) => get().diff[wsId] ?? EMPTY_DIFF,
-      setDiffSummary: (wsId, summary) =>
-        set((s) => {
-          const cur = s.diff[wsId] ?? EMPTY_DIFF;
-          return {
-            diff: {
-              ...s.diff,
-              [wsId]: {
-                ...cur,
-                summary,
-                summaryFetchedAt: Date.now(),
+            };
+          }),
+        toggleExpanded: (wsId, path) =>
+          set((s) => {
+            const cur = s.files[wsId] ?? EMPTY_FILES;
+            const expanded = cur.expandedDirs.includes(path)
+              ? cur.expandedDirs.filter((p) => p !== path)
+              : [...cur.expandedDirs, path];
+            return {
+              files: { ...s.files, [wsId]: { ...cur, expandedDirs: expanded } },
+            };
+          }),
+        setOpenFile: (wsId, path) =>
+          set((s) => {
+            const cur = s.files[wsId] ?? EMPTY_FILES;
+            return {
+              files: { ...s.files, [wsId]: { ...cur, openPath: path } },
+            };
+          }),
+        setFileContent: (wsId, path, content) =>
+          set((s) => {
+            const cur = s.files[wsId] ?? EMPTY_FILES;
+            const nextContents = pruneContents({
+              ...cur.contents,
+              [path]: content,
+            });
+            return {
+              files: {
+                ...s.files,
+                [wsId]: { ...cur, contents: nextContents },
               },
-            },
-          };
-        }),
-      setDiffOpenFile: (wsId, path, open) =>
-        set((s) => {
-          const cur = s.diff[wsId] ?? EMPTY_DIFF;
-          const next = open
-            ? [...new Set([...cur.openFiles, path])]
-            : cur.openFiles.filter((p) => p !== path);
-          return { diff: { ...s.diff, [wsId]: { ...cur, openFiles: next } } };
-        }),
-      setDiffHunks: (wsId, path, hunks) =>
-        set((s) => {
-          const cur = s.diff[wsId] ?? EMPTY_DIFF;
-          return {
-            diff: {
-              ...s.diff,
-              [wsId]: {
-                ...cur,
-                hunksByFile: { ...cur.hunksByFile, [path]: hunks },
-                fileFetchedAt: { ...cur.fileFetchedAt, [path]: Date.now() },
-              },
-            },
-          };
-        }),
-      invalidateDiff: (wsId) =>
-        set((s) => {
-          if (!wsId) return { diff: {} };
-          const cur = s.diff[wsId];
-          if (!cur) return s;
-          return {
-            diff: {
-              ...s.diff,
-              [wsId]: { ...cur, summaryFetchedAt: 0, fileFetchedAt: {} },
-            },
-          };
-        }),
+            };
+          }),
+        setFilesFilter: (wsId, filter) =>
+          set((s) => {
+            const cur = s.files[wsId] ?? EMPTY_FILES;
+            return { files: { ...s.files, [wsId]: { ...cur, filter } } };
+          }),
+        invalidateFiles: (wsId) =>
+          set((s) => {
+            if (!wsId) return { files: {} };
+            const cur = s.files[wsId];
+            if (!cur) return s;
+            return {
+              files: { ...s.files, [wsId]: { ...cur, fetchedAt: {} } },
+            };
+          }),
 
-      getPlan: (threadId) => get().plan[threadId] ?? EMPTY_PLAN,
-      setPlanItems: (threadId, items) =>
-        set((s) => {
-          const cur = s.plan[threadId] ?? EMPTY_PLAN;
-          return {
-            plan: {
-              ...s.plan,
-              [threadId]: { ...cur, items, fetchedAt: Date.now() },
-            },
-          };
-        }),
-      setPlanOpenSlug: (threadId, slug) =>
-        set((s) => {
-          const cur = s.plan[threadId] ?? EMPTY_PLAN;
-          return {
-            plan: { ...s.plan, [threadId]: { ...cur, openSlug: slug } },
-          };
-        }),
-      setPlanContent: (threadId, slug, content) =>
-        set((s) => {
-          const cur = s.plan[threadId] ?? EMPTY_PLAN;
-          return {
-            plan: {
-              ...s.plan,
-              [threadId]: {
-                ...cur,
-                contentsBySlug: { ...cur.contentsBySlug, [slug]: content },
+        getDiff: (wsId) => get().diff[wsId] ?? EMPTY_DIFF,
+        setDiffSummary: (wsId, summary) =>
+          set((s) => {
+            const cur = s.diff[wsId] ?? EMPTY_DIFF;
+            return {
+              diff: {
+                ...s.diff,
+                [wsId]: {
+                  ...cur,
+                  summary,
+                  summaryFetchedAt: Date.now(),
+                },
               },
-            },
-          };
-        }),
-      invalidatePlan: (threadId) =>
-        set((s) => {
-          if (!threadId) return { plan: {} };
-          const cur = s.plan[threadId];
-          if (!cur) return s;
-          return {
-            plan: { ...s.plan, [threadId]: { ...cur, fetchedAt: 0 } },
-          };
-        }),
+            };
+          }),
+        setDiffOpenFile: (wsId, path, open) =>
+          set((s) => {
+            const cur = s.diff[wsId] ?? EMPTY_DIFF;
+            const next = open
+              ? [...new Set([...cur.openFiles, path])]
+              : cur.openFiles.filter((p) => p !== path);
+            return { diff: { ...s.diff, [wsId]: { ...cur, openFiles: next } } };
+          }),
+        setDiffHunks: (wsId, path, hunks) =>
+          set((s) => {
+            const cur = s.diff[wsId] ?? EMPTY_DIFF;
+            return {
+              diff: {
+                ...s.diff,
+                [wsId]: {
+                  ...cur,
+                  hunksByFile: { ...cur.hunksByFile, [path]: hunks },
+                  fileFetchedAt: { ...cur.fileFetchedAt, [path]: Date.now() },
+                },
+              },
+            };
+          }),
+        invalidateDiff: (wsId) =>
+          set((s) => {
+            if (!wsId) return { diff: {} };
+            const cur = s.diff[wsId];
+            if (!cur) return s;
+            return {
+              diff: {
+                ...s.diff,
+                [wsId]: { ...cur, summaryFetchedAt: 0, fileFetchedAt: {} },
+              },
+            };
+          }),
 
-      markPending: (wsId) =>
-        set((s) => ({
-          pending: { ...s.pending, [wsId]: { files: true, diff: true } },
-        })),
-      clearPending: (wsId, key) =>
-        set((s) => {
-          const cur = s.pending[wsId];
-          if (!cur || !cur[key]) return s;
-          return {
-            pending: { ...s.pending, [wsId]: { ...cur, [key]: false } },
-          };
-        }),
-    }),
-    {
-      name: "vectora-workbench",
-      storage: createJSONStorage(() =>
-        typeof window !== "undefined"
-          ? localStorage
-          : {
-              getItem: () => null,
-              setItem: () => {},
-              removeItem: () => {},
-            },
-      ),
-      // Apenas o "shell" persiste. Caches voláteis (files/diff/plan) ficam
-      // de fora — são revalidados rápido e a verdade vive no backend.
-      partialize: (state) => ({
-        byThread: state.byThread,
-        activeByThread: state.activeByThread,
-        panelOpen: state.panelOpen,
-        activeTabByThread: state.activeTabByThread,
-        splitSize: state.splitSize,
-        pinnedFiles: state.pinnedFiles,
+        getPlan: (threadId) => get().plan[threadId] ?? EMPTY_PLAN,
+        setPlanItems: (threadId, items) =>
+          set((s) => {
+            const cur = s.plan[threadId] ?? EMPTY_PLAN;
+            return {
+              plan: {
+                ...s.plan,
+                [threadId]: { ...cur, items, fetchedAt: Date.now() },
+              },
+            };
+          }),
+        setPlanOpenSlug: (threadId, slug) =>
+          set((s) => {
+            const cur = s.plan[threadId] ?? EMPTY_PLAN;
+            return {
+              plan: { ...s.plan, [threadId]: { ...cur, openSlug: slug } },
+            };
+          }),
+        setPlanContent: (threadId, slug, content) =>
+          set((s) => {
+            const cur = s.plan[threadId] ?? EMPTY_PLAN;
+            return {
+              plan: {
+                ...s.plan,
+                [threadId]: {
+                  ...cur,
+                  contentsBySlug: { ...cur.contentsBySlug, [slug]: content },
+                },
+              },
+            };
+          }),
+        invalidatePlan: (threadId) =>
+          set((s) => {
+            if (!threadId) return { plan: {} };
+            const cur = s.plan[threadId];
+            if (!cur) return s;
+            return {
+              plan: { ...s.plan, [threadId]: { ...cur, fetchedAt: 0 } },
+            };
+          }),
+
+        markPending: (wsId) =>
+          set((s) => ({
+            pending: { ...s.pending, [wsId]: { files: true, diff: true } },
+          })),
+        clearPending: (wsId, key) =>
+          set((s) => {
+            const cur = s.pending[wsId];
+            if (!cur || !cur[key]) return s;
+            return {
+              pending: { ...s.pending, [wsId]: { ...cur, [key]: false } },
+            };
+          }),
       }),
-    },
+      {
+        name: "vectora-workbench",
+        storage: createJSONStorage(() =>
+          typeof window !== "undefined"
+            ? localStorage
+            : {
+                getItem: () => null,
+                setItem: () => {},
+                removeItem: () => {},
+              },
+        ),
+        // Apenas o "shell" persiste. Caches voláteis (files/diff/plan) ficam
+        // de fora — são revalidados rápido e a verdade vive no backend.
+        partialize: (state) => ({
+          byThread: state.byThread,
+          activeByThread: state.activeByThread,
+          panelOpen: state.panelOpen,
+          activeTabByThread: state.activeTabByThread,
+          splitSize: state.splitSize,
+          pinnedFiles: state.pinnedFiles,
+        }),
+      },
+    ),
   ),
 );
 
