@@ -22,7 +22,6 @@ import {
   useWorkspacesStore,
   type WorkspaceInfo,
 } from "@/lib/stores/workspaces-store";
-import { SidebarFolders } from "./sidebar-folders";
 import { ThreadListSkeleton } from "./thread-list-skeleton";
 import { queryClient } from "../../src/router";
 import { getHistory, listThreads } from "@/lib/api/vectora-client";
@@ -318,8 +317,8 @@ export const Sidebar = memo(function Sidebar({
     [renderThreadItem],
   );
 
-  // Pasta-nó expansível por workspace (P3) — sessões aninhadas, ordenadas
-  // por atividade recente. Reusa o visual de SidebarFolders como base.
+  // Pasta-nó expansível por workspace (C.34) — sessões aninhadas, ordenadas
+  // por atividade recente.
   const renderWorkspaceGroup = useCallback(
     (group: WorkspaceThreadGroup) => {
       const { workspace, threads: wsThreads } = group;
@@ -440,9 +439,6 @@ export const Sidebar = memo(function Sidebar({
             </button>
           </div>
         )}
-
-        {/* F.3.5 — Acesso rápido: workspaces + safe-roots */}
-        <SidebarFolders />
 
         {/* Search Bar */}
         <div className="px-3 py-2 bg-gradient-to-r from-sidebar-accent/5 via-transparent to-transparent">
