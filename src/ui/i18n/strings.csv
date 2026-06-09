@@ -139,6 +139,13 @@ tui.hitl.reject,Reject,Rechazar,Rejeitar
 tui.thinking.label,Thinking -> {action},Pensando -> {action},Pensando -> {action}
 
 # ---------------------------------------------------------------------------
+# HelpScreen (src/ui/screens/help_screen.py)
+# ---------------------------------------------------------------------------
+tui.help.screen_title,Help — Vectora TUI,Ayuda — Vectora TUI,Ajuda — Vectora TUI
+tui.help.shortcuts_section,Keyboard shortcuts:,Atajos de teclado:,Atalhos de teclado:
+tui.help.close,Close,Cerrar,Fechar
+
+# ---------------------------------------------------------------------------
 # SettingsScreen (src/ui/screens/settings_screen.py)
 # ---------------------------------------------------------------------------
 tui.settings.title,Settings,Configuración,Configurações

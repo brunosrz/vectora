@@ -54,6 +54,7 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
         Binding("ctrl+grave_accent", "workbench", "Workbench", show=False),
         Binding("ctrl+m", "model_picker", "Modelo", show=False),
         Binding("ctrl+u", "usage", "Uso", show=False),
+        Binding("ctrl+question_mark", "help_screen", "Ajuda", show=False),
     ]
 
     SLASH_COMMANDS: list[tuple[str, str]] = [
@@ -200,6 +201,11 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
         from src.ui.screens.usage_screen import UsageScreen
 
         await self.app.push_screen(UsageScreen())
+
+    async def action_help_screen(self) -> None:
+        from src.ui.screens.help_screen import HelpScreen
+
+        await self.app.push_screen(HelpScreen())
 
     async def action_new_session(self) -> None:
         self._chat_thread_id = str(uuid.uuid4())
