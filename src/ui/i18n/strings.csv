@@ -134,6 +134,11 @@ tui.hitl.skip,Skip,Omitir,Pular
 tui.hitl.reject,Reject,Rechazar,Rejeitar
 
 # ---------------------------------------------------------------------------
+# ThinkingWidget (src/ui/widgets/thinking.py)
+# ---------------------------------------------------------------------------
+tui.thinking.label,Thinking -> {action},Pensando -> {action},Pensando -> {action}
+
+# ---------------------------------------------------------------------------
 # SettingsScreen (src/ui/screens/settings_screen.py)
 # ---------------------------------------------------------------------------
 tui.settings.title,Settings,Configuración,Configurações

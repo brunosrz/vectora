@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from textual.widgets import Static
 
+from src.ui.i18n import t
+
 
 class ThinkingWidget(Static):
     """Collapsible thinking block for orchestrator reasoning."""
@@ -21,7 +23,7 @@ class ThinkingWidget(Static):
     def __init__(
         self, reason: str, action: str = "respond", delegate_to: str | None = None
     ) -> None:
-        label = f"[dim]Pensando -> {action}"
+        label = f"[dim]{t('tui.thinking.label', action=action)}"
         if delegate_to:
             label += f" [{delegate_to}]"
         label += "[/dim]"

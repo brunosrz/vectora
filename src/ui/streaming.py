@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any
 
 from langchain_core.messages import HumanMessage
 
+from src.ui.i18n import t
+
 if TYPE_CHECKING:
     from src.ui.screens.chat_screen import ChatScreen
 
@@ -66,7 +68,7 @@ class StreamHandler:
                 await self._dispatch(event)
         except Exception as exc:
             logger.exception("stream: erro inesperado")
-            self._app.append_line(f"[red]Erro: {exc}[/red]")
+            self._app.append_line(f"[red]{t('tui.stream.error', error=exc)}[/red]")
 
         self._app.end_response()
 
@@ -95,7 +97,9 @@ class StreamHandler:
                 await self._dispatch(event)
         except Exception as exc:
             logger.exception("resume: erro inesperado")
-            self._app.append_line(f"[red]Erro ao retomar: {exc}[/red]")
+            self._app.append_line(
+                f"[red]{t('tui.stream.resume_error', error=exc)}[/red]"
+            )
 
         self._app.end_response()
 
@@ -120,7 +124,7 @@ class StreamHandler:
                 self._handle_interrupt(chunk["__interrupt__"])
 
         elif event_type == _TOOL_START:
-            self._app.append_line(f"[dim cyan]⚙ {name}[/dim cyan]")
+            self._app.append_line(f"[dim cyan]⚙ {name}[/dim cyan]")  # tool name is code
 
         elif event_type == _TOOL_END:
             output = data.get("output")
