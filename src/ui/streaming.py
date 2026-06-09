@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from langchain_core.messages import HumanMessage
 
 if TYPE_CHECKING:
-    from src.ui.app import VectoraChatApp
+    from src.ui.screens.chat_screen import ChatScreen
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +32,13 @@ class StreamHandler:
 
     def __init__(
         self,
-        app: VectoraChatApp,
+        screen: ChatScreen,
         graph: Any,
         thread_id: str,
         permission_mode: str = "ask",
         user_id: str = "local",
     ) -> None:
-        self._app = app
+        self._app = screen  # alias mantido para compatibilidade interna
         self._graph = graph
         self._thread_id = thread_id
         self._permission_mode = permission_mode

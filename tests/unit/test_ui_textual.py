@@ -48,12 +48,16 @@ def test_streaming_module_constants() -> None:
 
 def test_vectora_app_construct_defaults() -> None:
     from src.ui.app import VectoraChatApp
+    from src.ui.screens.chat_screen import ChatScreen
 
     app = VectoraChatApp()
     assert app._permission_mode == "ask"
     assert app._user_id == "local"
-    assert app._chat_thread_id  # UUID gerado
-    assert app._streaming is False
+    assert app._chat_thread_id is None  # passa para ChatScreen no on_mount
+
+    # _streaming vive no ChatScreen, não no App
+    screen = ChatScreen()
+    assert screen._streaming is False
 
 
 def test_vectora_app_construct_custom() -> None:
@@ -71,13 +75,19 @@ def test_vectora_app_construct_custom() -> None:
 
 def test_vectora_app_bindings_include_shortcuts() -> None:
     from src.ui.app import VectoraChatApp
+    from src.ui.screens.chat_screen import ChatScreen
 
-    keys = {
+    app_keys = {
         getattr(b, "key", b[0] if isinstance(b, tuple) else None)
         for b in VectoraChatApp.BINDINGS
     }
-    assert "ctrl+n" in keys
-    assert "ctrl+q" in keys
+    screen_keys = {
+        getattr(b, "key", b[0] if isinstance(b, tuple) else None)
+        for b in ChatScreen.BINDINGS
+    }
+    all_keys = app_keys | screen_keys
+    assert "ctrl+n" in all_keys
+    assert "ctrl+q" in all_keys
 
 
 # ---------------------------------------------------------------------------
@@ -107,7 +117,7 @@ async def test_stream_handler_dispatch_token() -> None:
     from src.ui.streaming import StreamHandler
 
     app = _make_app()
-    handler = StreamHandler(app, graph=MagicMock(), thread_id="t1")
+    handler = StreamHandler(screen=app, graph=MagicMock(), thread_id="t1")
 
     await handler._dispatch(
         {
@@ -124,7 +134,7 @@ async def test_stream_handler_dispatch_thinking_from_orchestrator() -> None:
     from src.ui.streaming import StreamHandler
 
     app = _make_app()
-    handler = StreamHandler(app, graph=MagicMock(), thread_id="t1")
+    handler = StreamHandler(screen=app, graph=MagicMock(), thread_id="t1")
 
     await handler._dispatch(
         {
@@ -151,7 +161,7 @@ async def test_stream_handler_dispatch_tool_end() -> None:
     from src.ui.streaming import StreamHandler
 
     app = _make_app()
-    handler = StreamHandler(app, graph=MagicMock(), thread_id="t1")
+    handler = StreamHandler(screen=app, graph=MagicMock(), thread_id="t1")
 
     tool_output = MagicMock(content="ok", status="success")
 
@@ -173,7 +183,7 @@ async def test_stream_handler_dispatch_tool_start_appends_line() -> None:
     from src.ui.streaming import StreamHandler
 
     app = _make_app()
-    handler = StreamHandler(app, graph=MagicMock(), thread_id="t1")
+    handler = StreamHandler(screen=app, graph=MagicMock(), thread_id="t1")
 
     await handler._dispatch({"event": "on_tool_start", "name": "terminal", "data": {}})
 
@@ -185,7 +195,7 @@ async def test_stream_handler_dispatch_interrupt() -> None:
     from src.ui.streaming import StreamHandler
 
     app = _make_app()
-    handler = StreamHandler(app, graph=MagicMock(), thread_id="t1")
+    handler = StreamHandler(screen=app, graph=MagicMock(), thread_id="t1")
 
     fake_interrupt = MagicMock()
     fake_interrupt.value = {
