@@ -297,12 +297,17 @@ class WorkspaceRegistry:
     ) -> Workspace:
         """Workspace padrão de uma sessão: ``~/Documents/vectora/<thread_id>``.
 
-        Usado quando o usuário inicia um chat sem escolher uma pasta. A pasta é
-        criada sob demanda e marcada como confiável — foi gerada pelo próprio
-        Vectora para aquela sessão, então não exige confirmação manual.
+        Registra o workspace e o marca como confiável, mas NÃO cria a pasta
+        em disco imediatamente — a pasta só é materializada quando uma ferramenta
+        de fs/git a usar pela primeira vez. Isso evita pastas órfãs em conversas
+        que não utilizam o sistema de arquivos.
         """
         base = _session_workspaces_root() / thread_id
-        base.mkdir(parents=True, exist_ok=True)
+        # Não cria base.mkdir() aqui. A pasta é criada sob demanda:
+        #   - escrita de arquivo: path.parent.mkdir(parents=True, exist_ok=True)
+        #     em src/tools/fs.py já garante a criação na primeira operação real.
+        #   - acesso de leitura/listagem a um workspace ainda vazio retorna erro
+        #     adequado (diretório não encontrado), o que é o comportamento correto.
         return self.create(str(base), trust=True, user_id=user_id)
 
     def set_active(self, workspace_id: str, user_id: str | None = None) -> bool:

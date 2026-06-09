@@ -74,14 +74,19 @@ class TestTrust:
 
 
 class TestSessionWorkspace:
-    def test_creates_folder_under_documents(self, reg, tmp_path, monkeypatch):
+    def test_registers_workspace_without_creating_folder(
+        self, reg, tmp_path, monkeypatch
+    ):
+        """C.41 — Pasta não é criada no registro; apenas na primeira operação real."""
         monkeypatch.setattr(
             "src.services.workspace._session_workspaces_root",
             lambda: tmp_path / "docs",
         )
         ws = reg.get_or_create_session_workspace("thread123", "u")
-        assert (tmp_path / "docs" / "thread123").is_dir()
+        # O workspace fica registrado com o caminho correto…
         assert ws.cwd.endswith("thread123")
+        # …mas a pasta em disco NÃO é criada imediatamente.
+        assert not (tmp_path / "docs" / "thread123").exists()
 
     def test_session_workspace_is_trusted(self, reg, tmp_path, monkeypatch):
         monkeypatch.setattr(
