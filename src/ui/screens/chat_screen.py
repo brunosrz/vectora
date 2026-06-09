@@ -17,7 +17,8 @@ from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.screen import Screen
 from textual.widgets import Input, OptionList, Static
 
-from src.ui.components import build_popup_options, build_status_text
+from src.ui.components import build_popup_options
+from src.ui.components.command_bar import CommandBar
 from src.ui.i18n import t
 from src.ui.slash_handlers import SlashCommandsMixin
 from src.ui.widgets.code_block import CodeBlockWidget
@@ -86,9 +87,7 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
             with Horizontal(id="input-row"):
                 yield Static(">", id="input-prompt")
                 yield Input(placeholder=t("tui.input.placeholder"), id="chat-input")
-            with Horizontal(id="status-bar"):
-                yield Static("", id="status-info")
-                yield Static(t("tui.status.keys_hint"), id="status-keys")
+            yield CommandBar(permission_mode=self._permission_mode, id="cmd-bar")
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -115,7 +114,6 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
         await area.mount(
             Static(f"[dim]{t('tui.welcome.hint')}[/dim]", classes="msg-system")
         )
-        self.query_one("#status-info", Static).update(self._build_status())
         self.query_one("#chat-input", Input).focus()
 
     # ── Input ─────────────────────────────────────────────────────────────────
@@ -204,14 +202,18 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
         )
         if self._stream_handler:
             self._stream_handler._thread_id = self._chat_thread_id
-        self.query_one("#status-info", Static).update(self._build_status())
 
     async def action_clear_messages(self) -> None:
         area = self.query_one("#messages", ScrollableContainer)
         await area.remove_children()
 
-    def _build_status(self) -> str:
-        return build_status_text(self._permission_mode)
+    def on_command_bar_chip_pressed(self, event: CommandBar.ChipPressed) -> None:
+        """Abre a tela correspondente ao chip clicado."""
+        chip = event.chip_id
+        if chip in ("chip-mode",):
+            self.run_worker(self.action_settings(), exclusive=False, thread=False)
+        elif chip in ("chip-branch", "chip-model"):
+            self.run_worker(self.action_workbench(), exclusive=False, thread=False)
 
     # ── Stream callbacks (chamados pelo StreamHandler) ────────────────────────
 
