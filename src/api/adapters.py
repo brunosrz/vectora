@@ -71,16 +71,6 @@ def _get_tool_meta(tool_name: str) -> dict:
 _STRUCTURED_OUTPUT_NODES: set[str] = set()
 
 
-def _extract_orchestrator_thinking(event: dict[str, Any]) -> dict[str, Any] | None:
-    """Stub preservado para compatibilidade com testes legados (E.B-5 remove).
-
-    Com deepagents (E.B-1), o orchestrator não usa mais structured output;
-    thinking events serão emitidos via streaming v3 em E.B-6.
-    Sempre retorna None nesta versão.
-    """
-    return None
-
-
 def langgraph_event_to_payload(  # noqa: PLR0911
     event: dict[str, Any],
 ) -> StreamChatEventPayload | None:

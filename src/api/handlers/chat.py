@@ -308,7 +308,7 @@ async def stream_chat(
     events = graph.astream_events(
         {"messages": [human_msg]},
         config=config,
-        version="v2",
+        version="v3",
     )
 
     return StreamingResponse(
@@ -374,7 +374,7 @@ async def resume_chat(
     events = graph.astream_events(
         Command(resume=resume_value),
         config=config,
-        version="v2",
+        version="v3",
     )
 
     return StreamingResponse(

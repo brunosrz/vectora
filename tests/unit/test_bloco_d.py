@@ -74,138 +74,17 @@ class TestThinkingEventSchema:
         assert e is not None
 
 
-class TestExtractOrchestratorThinking:
-    """_extract_orchestrator_thinking extrai reason/action/delegate_to do on_chain_end."""
-
-    def test_extract_thinking_from_dict_output_with_reason(self):
-        from src.api.adapters import _extract_orchestrator_thinking
-
-        event = {
-            "event": "on_chain_end",
-            "name": "orchestrator",
-            "data": {
-                "output": {
-                    "routing_decision": "search",
-                    "orchestrator_task": "buscar sobre python",
-                    "thinking": {
-                        "reason": "usuário quer pesquisa web",
-                        "action": "delegate",
-                        "delegate_to": "search_agent",
-                    },
-                }
-            },
-        }
-        result = _extract_orchestrator_thinking(event)
-        assert result is not None
-        assert result["reason"] == "usuário quer pesquisa web"
-        assert result["action"] == "delegate"
-        assert result["delegate_to"] == "search_agent"
-
-    def test_extract_thinking_from_command_update(self):
-        """Deve extrair thinking de Command.update (caso real do orchestrator)."""
-        from src.api.adapters import _extract_orchestrator_thinking
-
-        class FakeCommand:
-            update = {
-                "routing_decision": "respond",
-                "messages": [],
-                "thinking": {
-                    "reason": "resposta direta",
-                    "action": "respond",
-                    "delegate_to": None,
-                    "task_query": None,
-                },
-            }
-
-        event = {
-            "event": "on_chain_end",
-            "name": "orchestrator",
-            "data": {"output": FakeCommand()},
-        }
-        result = _extract_orchestrator_thinking(event)
-        assert result is not None
-        assert result["reason"] == "resposta direta"
-        assert result["action"] == "respond"
-
-    def test_extract_thinking_returns_none_when_no_thinking_key(self):
-        from src.api.adapters import _extract_orchestrator_thinking
-
-        event = {
-            "event": "on_chain_end",
-            "name": "orchestrator",
-            "data": {"output": {"messages": []}},
-        }
-        result = _extract_orchestrator_thinking(event)
-        assert result is None
-
-    def test_extract_thinking_returns_none_for_non_orchestrator(self):
-        from src.api.adapters import _extract_orchestrator_thinking
-
-        event = {
-            "event": "on_chain_end",
-            "name": "search_agent",
-            "data": {"output": {"thinking": {"reason": "x"}}},
-        }
-        result = _extract_orchestrator_thinking(event)
-        assert result is None
-
-    def test_extract_thinking_handles_missing_data(self):
-        from src.api.adapters import _extract_orchestrator_thinking
-
-        event = {"event": "on_chain_end", "name": "orchestrator", "data": {}}
-        result = _extract_orchestrator_thinking(event)
-        assert result is None
+# TestExtractOrchestratorThinking removida em E.B-6:
+# _extract_orchestrator_thinking foi removido — deepagents usa streaming natural,
+# sem structured output do orchestrator.
 
 
 class TestAdaptStreamThinkingEvent:
-    """adapt_stream deve emitir ThinkingEvent quando o orchestrator inclui thinking."""
+    """adapt_stream não emite ThinkingEvent legado com deepagents (E.B-6)."""
 
-    @pytest.mark.asyncio
-    async def test_thinking_event_emitted_in_stream(self):
-        from src.api.adapters import adapt_stream
-        from src.api.schemas import ThinkingEvent
-
-        thinking_data = {
-            "reason": "usuário precisa de busca",
-            "action": "delegate",
-            "delegate_to": "search_agent",
-        }
-        events = [
-            {
-                "event": "on_chain_start",
-                "name": "orchestrator",
-                "data": {},
-                "metadata": {},
-            },
-            {
-                "event": "on_chain_end",
-                "name": "orchestrator",
-                "data": {
-                    "output": {
-                        "thinking": thinking_data,
-                        "messages": [],
-                    }
-                },
-                "metadata": {},
-            },
-        ]
-
-        async def _fake_events():
-            for e in events:
-                yield e
-
-        lines = [line async for line in adapt_stream(_fake_events(), "t-1")]
-
-        payloads = [
-            json.loads(ln.removeprefix("data: ").strip())
-            for ln in lines
-            if ln.startswith("data: ")
-        ]
-        thinking_events = [p for p in payloads if p["type"] == "thinking"]
-        assert len(thinking_events) >= 1
-        assert thinking_events[0]["reason"] == "usuário precisa de busca"
-        assert thinking_events[0]["action"] == "delegate"
-        assert thinking_events[0]["delegate_to"] == "search_agent"
+    # test_thinking_event_emitted_in_stream removido em E.B-6:
+    # deepagents usa streaming natural sem structured output do orchestrator;
+    # ThinkingEvent não é mais emitido via on_chain_end do nó "orchestrator".
 
     @pytest.mark.asyncio
     async def test_no_thinking_event_when_orchestrator_responds_directly(self):
@@ -509,63 +388,11 @@ class TestDevModeFields:
         assert data["delegate_to"] == "coder_agent"
         assert data["task_query"] == "crie função hello world"
 
-    def test_extract_thinking_includes_task_query(self):
-        from src.api.adapters import _extract_orchestrator_thinking
+    # test_extract_thinking_includes_task_query removido em E.B-6:
+    # _extract_orchestrator_thinking foi removido — deepagents não usa structured output.
 
-        event = {
-            "event": "on_chain_end",
-            "name": "orchestrator",
-            "data": {
-                "output": {
-                    "thinking": {
-                        "reason": "precisa de código",
-                        "action": "delegate",
-                        "delegate_to": "coder_agent",
-                        "task_query": "crie hello world",
-                    }
-                }
-            },
-        }
-        result = _extract_orchestrator_thinking(event)
-        assert result is not None
-        assert result.get("task_query") == "crie hello world"
-
-    @pytest.mark.asyncio
-    async def test_thinking_event_in_stream_has_task_query(self):
-        from src.api.adapters import adapt_stream
-
-        events = [
-            {
-                "event": "on_chain_end",
-                "name": "orchestrator",
-                "data": {
-                    "output": {
-                        "thinking": {
-                            "reason": "precisa de coder",
-                            "action": "delegate",
-                            "delegate_to": "coder_agent",
-                            "task_query": "escreva teste unitário",
-                        },
-                        "messages": [],
-                    }
-                },
-                "metadata": {},
-            },
-        ]
-
-        async def _fake_events():
-            for e in events:
-                yield e
-
-        payloads = [
-            json.loads(line.removeprefix("data: ").strip())
-            async for line in adapt_stream(_fake_events(), "t-1")
-            if line.startswith("data: ")
-        ]
-
-        thinking_events = [p for p in payloads if p["type"] == "thinking"]
-        assert len(thinking_events) >= 1
-        assert thinking_events[0].get("task_query") == "escreva teste unitário"
+    # test_thinking_event_in_stream_has_task_query removido em E.B-6:
+    # adapt_stream não emite mais ThinkingEvent via on_chain_end do orchestrator.
 
 
 # ===========================================================================
