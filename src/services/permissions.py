@@ -8,12 +8,31 @@ Hierarquia de roles (maior índice = mais permissões):
     member  (1)  — threads/workspace próprios, RAG, terminal restrito
     admin   (2)  — threads de terceiros, audit log, workspaces compartilhados
     root    (3)  — tudo (igual admin + mudar roles, deletar root)
+
+FilesystemPermission
+--------------------
+Regras declarativas first-match-wins para acesso ao filesystem pelo harness
+deepagents. Substitui ``resolve_within_workspace()`` em ferramentas migradas
+para o harness (E.B-9). Ferramentas artesanais legadas ainda usam
+``src/services/security.py::resolve_within_workspace`` até a migração completa.
+
+Cada ``FsRule`` tem:
+    pattern   — glob simples (`fnmatch`-compatible) ou prefixo ``path:``
+    action    — ``"allow"`` | ``"deny"`` | ``"interrupt"``
+    ops       — conjunto de operações afetadas: ``{"read","write","delete","list"}``
+                Se vazio, aplica a todas as ops.
+
+Avaliação: percorre ``FilesystemPermission.rules`` em ordem; retorna
+``FsDecision`` da primeira regra que bate. Sem match → ``"deny"`` (fail-closed).
 """
 
 from __future__ import annotations
 
+import fnmatch
 import logging
-from typing import Any
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Literal
 
 from fastapi import HTTPException
 
@@ -94,3 +113,193 @@ def can_read_audit(user: Any) -> bool:
 def can_manage_users(user: Any) -> bool:
     """True se o usuário pode criar/deletar/modificar outros usuários."""
     return has_min_role(user, "root")
+
+
+# ---------------------------------------------------------------------------
+# FilesystemPermission — regras declarativas first-match-wins
+# ---------------------------------------------------------------------------
+
+FsDecision = Literal["allow", "deny", "interrupt"]
+FsOp = Literal["read", "write", "delete", "list"]
+
+
+@dataclass
+class FsRule:
+    """Regra individual de permissão de filesystem.
+
+    Args:
+        pattern: Glob (`fnmatch`) ou prefixo de path. Exemplos:
+            - ``"**/.env"`` — qualquer .env em qualquer subdir
+            - ``"/etc/*"`` — qualquer arquivo sob /etc/
+            - ``"**/id_rsa"`` — chave privada SSH
+        action: Decisão quando a regra bate.
+        ops: Subconjunto de operações. Vazio = todas as operações.
+        description: Nota humana (opcional, para logging/debugging).
+    """
+
+    pattern: str
+    action: FsDecision
+    ops: frozenset[FsOp] = field(default_factory=frozenset)
+    description: str = ""
+
+    def matches(self, path: str, op: FsOp) -> bool:
+        """True se esta regra cobre o path + operação dados."""
+        if self.ops and op not in self.ops:
+            return False
+        # Normaliza para forward-slashes para compatibilidade cross-platform
+        norm = path.replace("\\", "/")
+        # Suporte a globs simples via fnmatch; também aceita prefixo de diretório
+        if fnmatch.fnmatch(norm, self.pattern):
+            return True
+        # Tenta match com apenas o basename para padrões como "*.env"
+        basename = norm.rsplit("/", 1)[-1]
+        return fnmatch.fnmatch(basename, self.pattern)
+
+
+@dataclass
+class FilesystemPermission:
+    """Conjunto ordenado de regras de permissão de filesystem.
+
+    Regras avaliadas em ordem; primeira que bater é usada (first-match-wins).
+    Se nenhuma regra bater, retorna ``"deny"`` (fail-closed).
+
+    Uso no harness (futuro):
+        ``create_deep_agent(..., filesystem_permission=build_fs_permission())``
+
+    Uso em tools artesanais (atual):
+        ``FS_PERMISSION.check(path, "write")``
+    """
+
+    rules: list[FsRule] = field(default_factory=list)
+
+    def check(self, path: str, op: FsOp) -> FsDecision:
+        """Avalia o path+op contra as regras e retorna a decisão.
+
+        Returns:
+            ``"allow"`` — prosseguir sem interrupção.
+            ``"deny"``  — bloquear operação (lança ou retorna erro).
+            ``"interrupt"`` — pausar e perguntar ao usuário (HITL).
+        """
+        for rule in self.rules:
+            if rule.matches(path, op):
+                logger.debug(
+                    "fs_permission: path=%r op=%s → %s (rule: %r)",
+                    path,
+                    op,
+                    rule.action,
+                    rule.description or rule.pattern,
+                )
+                return rule.action
+        # Fail-closed: sem regra matching = negar
+        logger.debug("fs_permission: path=%r op=%s → deny (sem match)", path, op)
+        return "deny"
+
+    def is_allowed(self, path: str, op: FsOp) -> bool:
+        """Atalho: True se ``check()`` retornar ``"allow"``."""
+        return self.check(path, op) == "allow"
+
+    def requires_interrupt(self, path: str, op: FsOp) -> bool:
+        """True se a operação precisa de aprovação do usuário."""
+        return self.check(path, op) == "interrupt"
+
+
+# ---------------------------------------------------------------------------
+# Regras canônicas do Vectora
+# ---------------------------------------------------------------------------
+
+#: Padrões de paths sensíveis do sistema — sempre DENY (qualquer op).
+_SENSITIVE_DENY: list[FsRule] = [
+    FsRule("**/.env", "deny", description="variáveis de ambiente com segredos"),
+    FsRule("**/.env.*", "deny", description="variáveis de ambiente com segredos"),
+    FsRule("**/id_rsa", "deny", description="chave privada SSH RSA"),
+    FsRule("**/id_ed25519", "deny", description="chave privada SSH Ed25519"),
+    FsRule("**/id_ecdsa", "deny", description="chave privada SSH ECDSA"),
+    FsRule("**/*.pem", "deny", description="certificado/chave PEM"),
+    FsRule("**/*.key", "deny", description="arquivo de chave privada"),
+    FsRule("**/*.p12", "deny", description="keystore PKCS#12"),
+    FsRule("**/*.pfx", "deny", description="keystore PKCS#12 Windows"),
+    FsRule("/etc/*", "deny", description="configurações do sistema"),
+    FsRule("/proc/*", "deny", description="pseudo-filesystem do kernel"),
+    FsRule("/sys/*", "deny", description="pseudo-filesystem do kernel"),
+    FsRule("**/master.kek", "deny", description="chave mestra do Vectora"),
+    FsRule("**/jwt_keys/*", "deny", description="chaves JWT do Vectora"),
+]
+
+#: Skills — leitura OK, escrita/deleção DENY (skills são somente-leitura pelo agente).
+_SKILLS_RULES: list[FsRule] = [
+    FsRule(
+        "/memories/skills/**",
+        "deny",
+        ops=frozenset({"write", "delete"}),
+        description="skills do usuário — somente-leitura pelo agente",
+    ),
+    FsRule(
+        "/memories/skills/**",
+        "allow",
+        ops=frozenset({"read", "list"}),
+        description="skills do usuário — leitura permitida",
+    ),
+]
+
+#: Memories — leitura e escrita OK (o agente gerencia memórias).
+_MEMORIES_RULES: list[FsRule] = [
+    FsRule(
+        "/memories/**",
+        "allow",
+        description="memórias do usuário — leitura e escrita permitidas",
+    ),
+]
+
+#: Workspace — paths não-sensíveis ALLOW; escrita fora do workspace → INTERRUPT.
+_WORKSPACE_RULES: list[FsRule] = [
+    FsRule(
+        "/workspace/**",
+        "allow",
+        description="workspace ativo — acesso completo",
+    ),
+]
+
+#: Paths fora do workspace ativo — escrita pede confirmação.
+_EXTERNAL_WRITE_RULES: list[FsRule] = [
+    FsRule(
+        "**",
+        "interrupt",
+        ops=frozenset({"write", "delete"}),
+        description="escrita fora do workspace — requer aprovação HITL",
+    ),
+    FsRule(
+        "**",
+        "allow",
+        ops=frozenset({"read", "list"}),
+        description="leitura fora do workspace — permitida",
+    ),
+]
+
+
+def build_fs_permission() -> FilesystemPermission:
+    """Constrói o ``FilesystemPermission`` canônico do Vectora.
+
+    Ordem das regras (first-match-wins):
+    1. DENY paths sensíveis (segredos, chaves, sistema)
+    2. DENY escrita em skills
+    3. ALLOW leitura em skills
+    4. ALLOW tudo em memories
+    5. ALLOW tudo em workspace
+    6. INTERRUPT escrita fora do workspace
+    7. ALLOW leitura fora do workspace
+
+    Returns:
+        ``FilesystemPermission`` pronto para passar ao harness ou às tools.
+    """
+    rules = (
+        _SENSITIVE_DENY
+        + _SKILLS_RULES
+        + _MEMORIES_RULES
+        + _WORKSPACE_RULES
+        + _EXTERNAL_WRITE_RULES
+    )
+    return FilesystemPermission(rules=rules)
+
+
+#: Instância singleton — use em tools artesanais via ``FS_PERMISSION.check(path, op)``.
+FS_PERMISSION: FilesystemPermission = build_fs_permission()
