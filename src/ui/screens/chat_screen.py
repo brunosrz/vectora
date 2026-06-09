@@ -49,6 +49,7 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
     BINDINGS = [
         Binding("ctrl+n", "new_session", "Nova sessao", show=True),
         Binding("ctrl+l", "clear_messages", "Limpar", show=False),
+        Binding("ctrl+comma", "settings", "Config", show=False),
     ]
 
     SLASH_COMMANDS: list[tuple[str, str]] = [
@@ -178,6 +179,11 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
             self._streaming = False
 
     # ── Actions ───────────────────────────────────────────────────────────────
+
+    async def action_settings(self) -> None:
+        from src.ui.screens.settings_screen import SettingsScreen
+
+        await self.app.push_screen(SettingsScreen())
 
     async def action_new_session(self) -> None:
         self._chat_thread_id = str(uuid.uuid4())

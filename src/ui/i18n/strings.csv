@@ -131,3 +131,15 @@ tui.stream.resume_error,Error resuming: {error},Error al reanudar: {error},Erro 
 tui.hitl.approval_needed,Approval needed:,Aprobación necesaria:,Aprovação necessária:
 tui.hitl.approve,Approve,Aprobar,Aprovar
 tui.hitl.reject,Reject,Rechazar,Rejeitar
+
+# ---------------------------------------------------------------------------
+# SettingsScreen (src/ui/screens/settings_screen.py)
+# ---------------------------------------------------------------------------
+tui.settings.title,Settings,Configuración,Configurações
+tui.settings.theme,Theme,Tema,Tema
+tui.settings.theme_dark,Dark,Oscuro,Escuro
+tui.settings.theme_light,Light,Claro,Claro
+tui.settings.theme_system,System,Sistema,Sistema
+tui.settings.language,Language,Idioma,Idioma
+tui.settings.save,Save,Guardar,Salvar
+tui.settings.cancel,Cancel,Cancelar,Cancelar
