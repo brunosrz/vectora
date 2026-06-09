@@ -115,6 +115,10 @@ export type StreamEvent =
       /** Modo de permissão ativo (default/yolo/etc.) (opcional). */
       permission_mode?: string;
     }
+  | {
+      type: "rag_citations";
+      citations: Array<{ index: number; source: string; chunk: string }>;
+    }
   | { type: "error"; message: string; code?: string }
   | { type: "done"; thread_id: string; run_id?: string };
 

@@ -580,6 +580,17 @@ async function handleEvent(
     case "ui_metrics":
       break;
 
+    // C.28 — RAG citations: armazena fontes para renderizar referências [N]
+    case "rag_citations": {
+      setMessages((prev) =>
+        updateMessageInList(prev, assistantMessageId, (m) => ({
+          ...m,
+          ragCitations: event.citations,
+        })),
+      );
+      break;
+    }
+
     // E1 — HITLEvent: pausa do stream para aprovação humana
     case "hitl": {
       setMessages((prev) =>

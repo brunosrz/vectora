@@ -175,6 +175,23 @@ class HITLEvent(BaseModel):
     diff_preview: str = ""
 
 
+class RagCitation(BaseModel):
+    index: int
+    source: str
+    chunk: str = ""
+
+
+class RagCitationEvent(BaseModel):
+    """Emitido após busca RAG com a lista de fontes recuperadas.
+
+    O campo ``citations`` expõe cada documento como um item numerado
+    (índice 1-based), permitindo ao frontend renderizar referências
+    ``[1][2]`` como popovers clicáveis.
+    """
+
+    citations: list[RagCitation]
+
+
 class ErrorEvent(BaseModel):
     message: str
     code: str = "INTERNAL"
@@ -201,6 +218,7 @@ StreamChatEventPayload = (
     | UIMetricsEvent
     | HITLEvent
     | ThinkingEvent
+    | RagCitationEvent
     | ErrorEvent
     | DoneEvent
 )
@@ -214,6 +232,7 @@ _TYPE_MAP: dict[type, str] = {
     UIMetricsEvent: "ui_metrics",
     HITLEvent: "hitl",
     ThinkingEvent: "thinking",
+    RagCitationEvent: "rag_citations",
     ErrorEvent: "error",
     DoneEvent: "done",
 }

@@ -63,6 +63,10 @@ export interface Message {
   /** Mensagem é uma falha de stream — exibe botão de retry */
   isError?: boolean;
 
+  // C.28 — RAG citations
+  /** Fontes RAG retornadas durante a resposta, para renderizar referências [N]. */
+  ragCitations?: Array<{ index: number; source: string; chunk: string }>;
+
   // Bloco E — HITL em Chat
   /** Preenchido quando o stream pausa para aprovação humana. */
   hitlPending?: {

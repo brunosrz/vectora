@@ -29,6 +29,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { ThinkingTimer } from "./animations/thinking-timer";
 import { AnimatedThinking } from "./animations/animated-thinking";
 import { HITLPanel } from "./features/hitl-panel";
+import type { RagCitation } from "./features/rag-citation-popover";
 import type { Message } from "@/lib/types";
 import { stripMarkdownEnvelope } from "@/lib/utils/string";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
@@ -212,6 +213,49 @@ const CodeBlock = memo(
     );
   },
 );
+
+// ============================================================================
+// C.28 — RagCitationList: lista colapsável de fontes RAG
+// ============================================================================
+
+function RagCitationList({ citations }: { citations: RagCitation[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-2 text-xs">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+        aria-expanded={open}
+      >
+        <span className="text-[10px] font-mono bg-primary/10 text-primary px-1 rounded">
+          {citations.length} fonte{citations.length !== 1 ? "s" : ""}
+        </span>
+        <span className="text-[10px]">RAG</span>
+        <span className="text-[9px] opacity-60">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="mt-1.5 space-y-1.5">
+          {citations.map((c) => (
+            <div
+              key={c.index}
+              className="rounded border border-border/40 bg-muted/20 px-2 py-1.5"
+            >
+              <p className="text-[10px] font-medium text-primary truncate">
+                [{c.index}] {c.source || "Fonte desconhecida"}
+              </p>
+              {c.chunk && (
+                <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+                  {c.chunk}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ============================================================================
 // D1 — ThinkingBlock: raciocínio colapsável do orchestrator
@@ -858,6 +902,11 @@ export const MessageItem = memo(
                         ))}
                       </div>
                     )}
+
+                  {/* C.28 — RAG citation list */}
+                  {message.ragCitations && message.ragCitations.length > 0 && (
+                    <RagCitationList citations={message.ragCitations} />
+                  )}
 
                   {/* Metadata — duração total e tokens */}
                   {!message.isThinking && message.thinkingDuration != null && (

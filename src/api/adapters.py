@@ -21,6 +21,8 @@ from src.api.schemas import (
     ErrorEvent,
     HITLEvent,
     NodeEvent,
+    RagCitation,
+    RagCitationEvent,
     StreamChatEventPayload,
     ThinkingEvent,
     TokenEvent,
@@ -389,6 +391,27 @@ def adapt_stream(
                 # `response` do AIMessage emitido pelo Command e envia como
                 # TokenEvent único (já que os tokens do LLM foram filtrados
                 # acima por serem JSON estruturado).
+                # Emite RagCitationEvent quando o nó rag_inject conclui —
+                # extrai a lista de docs do output para expor as fontes ao frontend.
+                if kind == "on_chain_end" and name == "rag_inject":
+                    output = event.get("data", {}).get("output", {}) or {}
+                    msgs = output.get("messages") or []
+                    rag_docs = event.get("data", {}).get("input", {}) or {}
+                    rag_docs = rag_docs.get("rag_docs") or []
+                    if rag_docs:
+                        citations = [
+                            RagCitation(
+                                index=i,
+                                source=(
+                                    doc.get("metadata", {}).get("source", "")
+                                    or doc.get("metadata", {}).get("title", "")
+                                ),
+                                chunk=doc.get("page_content", "")[:200],
+                            )
+                            for i, doc in enumerate(rag_docs[:5], 1)
+                        ]
+                        yield encode_event(RagCitationEvent(citations=citations))
+
                 if kind == "on_chain_end" and name == "orchestrator":
                     thinking = _extract_orchestrator_thinking(event)
                     if thinking:
