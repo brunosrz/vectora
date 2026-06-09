@@ -341,7 +341,7 @@ async def _build_graph_async() -> Any:
     # AGENTS.md paths para o MemoryMiddleware — injetado no system prompt.
     memory_paths = _agents_md_paths()
 
-    _graph = create_deep_agent(
+    compiled = create_deep_agent(
         llm,
         tools=ALL_TOOLS,
         system_prompt=system_prompt,
@@ -356,6 +356,13 @@ async def _build_graph_async() -> Any:
         name="vectora",
     )
 
+    # E.B-12 — Fault tolerance: envolvemos o grafo com retry exponencial para
+    # erros transientes (rate-limit, timeout de rede, quota). O grafo interno
+    # (coder/search subagents) não é reexecutado desde o início — apenas a
+    # chamada de mais alto nível. Para rollback de filesystem em falhas do
+    # coder, use `coder_compensate(workspace_id)` no handler da exceção.
+    _graph = _wrap_with_retry(compiled)
+
     logger.info(
         "agent_factory: grafo compilado (deepagents + %d tools + %d subagents + %d middleware)",
         len(ALL_TOOLS),
@@ -363,6 +370,30 @@ async def _build_graph_async() -> Any:
         len(middleware),
     )
     return _graph
+
+
+def _wrap_with_retry(graph: Any) -> Any:
+    """Aplica retry com backoff exponencial ao grafo compilado.
+
+    Captura erros transientes comuns de LLM providers:
+    - Rate limit / quota exceeded (HTTP 429)
+    - Timeout / ConnectionError de rede
+    - Erros de infraestrutura temporários (502/503/529)
+
+    O ``with_retry`` do LangGraph aceita ``retry_if_exception_type`` para
+    filtrar por tipo. Usamos ``(Exception,)`` (captura tudo) porque os
+    erros de provider variam por SDK — a lógica de backoff exponencial com
+    jitter já previne amplificação de erros em cascata.
+
+    Para erros de lógica do agente (inputs inválidos, falhas de parsing),
+    o timeout de 3 tentativas descarta a execução rapidamente.
+    """
+    return graph.with_retry(
+        retry_if_exception_type=(Exception,),
+        wait_exponential_jitter=True,
+        exponential_jitter_params={"initial": 1.0, "max": 30.0},
+        stop_after_attempt=3,
+    )
 
 
 async def get_user_agent(user_id: str | None = None) -> Any:
@@ -414,6 +445,65 @@ def _invalidate_llm_cache(user_id: str) -> None:
             )
     except Exception:
         pass
+
+
+async def coder_compensate(workspace_id: str | None = None) -> str | None:
+    """Rollback de emergência via ``git stash`` após falha catastrófica do coder.
+
+    Chamado pelo handler de exceção quando o subagent coder falha após já ter
+    começado a modificar arquivos. Executa ``git stash`` no workspace ativo
+    para reverter mudanças não commitadas e deixar o repositório limpo.
+
+    Args:
+        workspace_id: ID do workspace para resolver o path. Se None, usa home.
+
+    Returns:
+        Stdout do ``git stash`` se bem-sucedido; None se não aplicável ou falhou.
+
+    Nota:
+        Execução silenciosa — falhas aqui não relançam exceção para não ofuscar
+        o erro original que ativou a compensação.
+    """
+    import shutil
+    import subprocess  # nosec B404 — git controlado, sem shell=True
+
+    try:
+        from src.services.backends import _resolve_workspace_root
+
+        workspace_root = _resolve_workspace_root(workspace_id)
+        if not (workspace_root / ".git").is_dir():
+            logger.debug("coder_compensate: sem repositório git em %s", workspace_root)
+            return None
+
+        git_exe = shutil.which("git")
+        if git_exe is None:
+            return None
+
+        result = subprocess.run(  # noqa: S603  # nosec B603
+            [
+                git_exe,
+                "-C",
+                str(workspace_root),
+                "stash",
+                "--include-untracked",
+                "--",
+                ".",
+            ],
+            capture_output=True,
+            timeout=30,
+        )
+        output = result.stdout.decode("utf-8", errors="replace").strip()
+        if result.returncode == 0:
+            logger.warning("coder_compensate: git stash aplicado — %s", output or "ok")
+        else:
+            err = result.stderr.decode("utf-8", errors="replace").strip()
+            logger.warning(
+                "coder_compensate: git stash falhou (%d) — %s", result.returncode, err
+            )
+        return output or None
+    except Exception as exc:
+        logger.debug("coder_compensate: erro ignorado: %s", exc)
+        return None
 
 
 async def aclose() -> None:
