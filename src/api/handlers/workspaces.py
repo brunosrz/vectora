@@ -1347,6 +1347,67 @@ async def git_commit_diff(
 
 
 # ---------------------------------------------------------------------------
+# A.11 — Abrir no VS Code
+# ---------------------------------------------------------------------------
+
+
+class VscodeOption(BaseModel):
+    strategy: str  # "local" | "ssh" | "devcontainer"
+    label: str
+    url: str  # vscode:// deep-link ou comando sugerido
+
+
+class VscodeOptionsResponse(BaseModel):
+    options: list[VscodeOption]
+
+
+@view_router.get("/{workspace_id}/vscode-options", response_model=VscodeOptionsResponse)
+async def vscode_options(workspace_id: str) -> VscodeOptionsResponse:
+    """Retorna estratégias disponíveis para abrir o workspace no VS Code."""
+    from urllib.parse import quote
+
+    from src.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return VscodeOptionsResponse(options=[])
+
+    opts: list[VscodeOption] = []
+    cwd = ws.cwd.replace("\\", "/")
+
+    if getattr(ws, "transport", "local") == "local":
+        # Estratégia A: vscode://file/<path>
+        opts.append(
+            VscodeOption(
+                strategy="local",
+                label="Open in VS Code (local)",
+                url=f"vscode://file/{quote(cwd, safe='/:@')}",
+            )
+        )
+        # Estratégia devcontainer (se houver .devcontainer)
+        if (Path(ws.cwd) / ".devcontainer").is_dir():
+            opts.append(
+                VscodeOption(
+                    strategy="devcontainer",
+                    label="Open in Dev Container",
+                    url=f"vscode://ms-vscode-remote.remote-containers/openFolder?folderUri=vscode-local%3A%2F%2F{quote(cwd, safe='/:@')}",
+                )
+            )
+    elif getattr(ws, "transport", "") == "ssh":
+        host = getattr(ws, "remote_host", "") or ""
+        remote_path = getattr(ws, "remote_path", cwd) or cwd
+        opts.append(
+            VscodeOption(
+                strategy="ssh",
+                label=f"Open via SSH ({host})",
+                url=f"vscode://vscode-remote/ssh-remote+{quote(host, safe='')}{quote(remote_path, safe='/:@')}",
+            )
+        )
+
+    return VscodeOptionsResponse(options=opts)
+
+
+# ---------------------------------------------------------------------------
 # A.10 — Gerenciador de .gitignore
 # ---------------------------------------------------------------------------
 

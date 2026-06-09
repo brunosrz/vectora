@@ -510,6 +510,8 @@ terminal.ended,ended,finalizado,encerrado
 # Workbench (Bloco T cont.)
 workbench.toggle,Toggle workbench,Mostrar/ocultar workbench,Mostrar/ocultar workbench
 workbench.close,Close,Cerrar,Fechar
+workbench.open_vscode,Open in VS Code,Abrir en VS Code,Abrir no VS Code
+workbench.open_vscode_unavailable,No VS Code options available.,Sin opciones de VS Code disponibles.,Nenhuma opção de VS Code disponível.
 workbench.tab.terminal,Terminal,Terminal,Terminal
 workbench.tab.files,Files,Archivos,Arquivos
 workbench.tab.diff,Diff,Diff,Diff
