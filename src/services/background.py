@@ -189,7 +189,16 @@ class BackgroundEmbeddingWorker:
         self._poll_interval: float = POLL_INTERVAL_MIN
 
     async def _get_queue(self) -> Any:
-        """Obtém a queue (singleton lazy-loaded)."""
+        """Obtém a queue de acordo com ``settings.storage_mode``.
+
+        Lite  → ``EmbeddingQueue`` SQLAlchemy (SQLite/Postgres via DSN).
+        Complete → ``PostgresQueueDB`` com ``SELECT … FOR UPDATE SKIP LOCKED``
+                   para suporte multi-worker seguro.
+        """
+        if self.config.storage_mode == "complete" and self.config.postgres_dsn:
+            from src.services.queue import PostgresQueueDB
+
+            return PostgresQueueDB()
         return await get_embedding_queue(self.config.embedding_queue_dsn)
 
     async def start(self) -> None:

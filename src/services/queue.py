@@ -749,3 +749,72 @@ class PostgresQueueDB:
                 """,
                 queue_id,
             )
+
+    # ------------------------------------------------------------------
+    # Compatibilidade com a interface do BackgroundEmbeddingWorker (F8)
+    # ------------------------------------------------------------------
+
+    async def get_pending(self, limit: int = 10) -> list[Any]:
+        """Retorna até ``limit`` tarefas via SKIP LOCKED, marcando como 'processing'.
+
+        Retorna objetos ``SimpleNamespace`` com os mesmos atributos de
+        ``EmbeddingQueueRecord`` para compatibilidade com o worker existente.
+        """
+        import types
+
+        tasks = await self.dequeue(limit)
+        result = []
+        for t in tasks:
+            ns = types.SimpleNamespace(
+                queue_id=t.get("queue_id", ""),
+                text=t.get("text", ""),
+                collection=t.get("collection", ""),
+                doc_metadata=t.get("doc_metadata"),
+                attempt_count=t.get("attempt_count", 0),
+                status="processing",
+            )
+            result.append(ns)
+        return result
+
+    async def mark_processing(self, queue_id: str) -> None:
+        """No-op: SKIP LOCKED já marca como 'processing' no dequeue."""
+
+    async def mark_success(self, queue_id: str) -> None:
+        """Alias de ``ack`` para compatibilidade com o worker."""
+        await self.ack(queue_id)
+
+    async def mark_failed(
+        self, queue_id: str, error: str = "", move_to_dlq: bool = False
+    ) -> None:
+        """Alias de ``nack`` para compatibilidade com o worker."""
+        await self.nack(queue_id, error)
+
+    async def move_to_dlq(self, queue_id: str, reason: str = "") -> None:
+        """Marca a tarefa como DLQ (dead-letter)."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE vectora_embedding_queue
+                SET status = 'dlq', processed_at = now()
+                WHERE queue_id = $1
+                """,
+                queue_id,
+            )
+
+    async def reconcile(self) -> None:
+        """Reset de tarefas presas em 'processing' por mais de 5 minutos."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE vectora_embedding_queue
+                SET status = 'pending'
+                WHERE status = 'processing'
+                  AND created_at < now() - INTERVAL '5 minutes'
+                """
+            )
