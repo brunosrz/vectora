@@ -24,12 +24,23 @@ export function formatResetIn(seconds: number): string {
 /**
  * Classifica uma porcentagem em níveis semafóricos. As barras do popover
  * usam essas classes para refletir a saúde do consumo.
+ *
+ * Thresholds alinhados com C.17:
+ *   ≥95% → "danger" (input bloqueado)
+ *   ≥80% → "warn"   (aviso visual)
+ *   <80% → "ok"
  */
 export function usageLevel(pct: number): "ok" | "warn" | "danger" {
-  if (pct >= 85) return "danger";
-  if (pct >= 60) return "warn";
+  if (pct >= 95) return "danger";
+  if (pct >= 80) return "warn";
   return "ok";
 }
+
+/** Porcentagem a partir da qual o contexto é considerado cheio (bloqueio). */
+export const CONTEXT_BLOCK_PCT = 95;
+
+/** Porcentagem a partir da qual emite aviso de contexto próximo do limite. */
+export const CONTEXT_WARN_PCT = 80;
 
 /** Cor de fundo Tailwind para a barra por nível. */
 export function usageBarColor(level: "ok" | "warn" | "danger"): string {

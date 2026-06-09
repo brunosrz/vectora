@@ -27,6 +27,7 @@ import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { estimateTokens } from "@/lib/utils/tokens";
+import { CONTEXT_BLOCK_PCT, CONTEXT_WARN_PCT } from "@/lib/utils/usage";
 import { useThreadsStore } from "@/lib/stores/threads-store";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { useRouter } from "next/navigation";
@@ -35,6 +36,7 @@ import { useToastStore } from "@/lib/stores/toast-store";
 import { consumeInterruptedFlag } from "@/lib/utils/stream-interruption";
 import {
   getAllowedModels,
+  getContextWindow,
   getModelDisplayName,
   type ModelOption,
 } from "@/lib/config/deployment-config";
@@ -135,6 +137,32 @@ export function ChatInterface({
 
   // Cached por threadId via Zustand — switching back não causa flash vazio.
   const [messages, setMessages] = useThreadMessages(threadId);
+
+  // C.17 — Barra de uso de contexto: estima tokens e deriva pct de uso.
+  // Aviso (toast) em 80% e bloqueio de send em 95%.
+  const contextTokens = estimateTokens(
+    messages.map((m) => (typeof m.content === "string" ? m.content : "")),
+  );
+  const contextWindowSize = getContextWindow(
+    (agentConfig?.model ?? "") as ModelOption,
+  );
+  const contextPct =
+    contextWindowSize > 0 ? (contextTokens / contextWindowSize) * 100 : 0;
+  const contextFull = contextPct >= CONTEXT_BLOCK_PCT;
+  const warnedContextRef = useRef(false);
+  useEffect(() => {
+    if (contextPct >= CONTEXT_WARN_PCT && !warnedContextRef.current) {
+      warnedContextRef.current = true;
+      useToastStore
+        .getState()
+        .warning(
+          `Contexto em ${contextPct.toFixed(0)}% — inicie um novo chat para evitar limitações.`,
+        );
+    }
+    if (contextPct < CONTEXT_WARN_PCT) {
+      warnedContextRef.current = false;
+    }
+  }, [contextPct]);
 
   // Idioma do reconhecimento de voz acompanha o idioma da interface.
   const voiceLang = useSettingsStore((s) => s.language);
@@ -827,7 +855,7 @@ export function ChatInterface({
   );
 
   const handleSend = useCallback(async () => {
-    if (inputLocked) {
+    if (inputLocked || contextFull) {
       return;
     }
     if (!uiState.input.trim() && attachedFiles.length === 0) {
@@ -1186,11 +1214,7 @@ export function ChatInterface({
           voiceError={voiceError}
           queuedMessages={queuedMessagesDisplay}
           modelId={agentConfig?.model}
-          tokensUsed={estimateTokens(
-            messages.map((m) =>
-              typeof m.content === "string" ? m.content : "",
-            ),
-          )}
+          tokensUsed={contextTokens}
           agentConfig={agentConfig}
           onAgentConfigChange={onAgentConfigChange}
           dropHintExpanded={isNewChat}
