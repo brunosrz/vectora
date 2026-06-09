@@ -678,7 +678,10 @@ export function ChatInterface({
       processMessage(trimmedMessage, [], userMessage)
         .then(() => onInitialMessageSent?.())
         .catch((error) => {
-          console.error("Failed to auto-send initial message:", error);
+          const msg = error instanceof Error ? error.message : String(error);
+          useToastStore.getState().error(translate("chat.auto_send_failed"), {
+            description: msg,
+          });
           onInitialMessageSent?.(); // Clear URL param even on error to prevent retry loops
         });
     } else {

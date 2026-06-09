@@ -62,6 +62,7 @@ network.reconnecting_banner,Reconnecting to the server…,Reconectando con el se
 network.sse_reconnected,Connection restored,Conexión restablecida,Conexão restabelecida
 network.disabled_offline,Unavailable while offline,No disponible sin conexión,Indisponível sem conexão
 chat.stream_interrupted,The previous response may have been interrupted (tab closed or reloaded mid-stream).,La respuesta anterior puede haberse interrumpido (la pestaña se cerró o recargó durante la transmisión).,A resposta anterior pode ter sido interrompida (aba fechada ou recarregada durante a geração).
+chat.auto_send_failed,Failed to auto-send message,No se pudo enviar el mensaje automáticamente,Falha ao enviar mensagem automaticamente
 # =============================================================================
 # Relative time (sidebar)
 # =============================================================================
