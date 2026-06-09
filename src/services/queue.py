@@ -598,3 +598,154 @@ async def get_embedding_queue(db_url: str | None) -> EmbeddingQueue:
             _queue = EmbeddingQueue(db_url)
             await _queue.init()
     return _queue
+
+
+# ---------------------------------------------------------------------------
+# Backend Postgres — QueueDB protocol (F7 — complete mode)
+# ---------------------------------------------------------------------------
+
+
+class PostgresQueueDB:
+    """Implementação Postgres do protocolo ``QueueDB``.
+
+    Gere a tabela ``vectora_embedding_queue`` usando asyncpg com
+    ``SELECT … FOR UPDATE SKIP LOCKED`` para dequeue concorrente seguro.
+    F8 adicionará o multi-worker completo com retry e DLQ.
+
+    Schema (Postgres — criado pela migration correspondente):
+
+        CREATE TABLE IF NOT EXISTS vectora_embedding_queue (
+            id           BIGSERIAL PRIMARY KEY,
+            queue_id     TEXT        NOT NULL UNIQUE,
+            task_json    JSONB       NOT NULL,
+            status       TEXT        NOT NULL DEFAULT 'pending',
+            created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+            processed_at TIMESTAMPTZ
+        );
+    """
+
+    _CREATE_TABLE = """
+        CREATE TABLE IF NOT EXISTS vectora_embedding_queue (
+            id           BIGSERIAL    PRIMARY KEY,
+            queue_id     TEXT         NOT NULL UNIQUE,
+            task_json    JSONB        NOT NULL,
+            status       TEXT         NOT NULL DEFAULT 'pending',
+            created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+            processed_at TIMESTAMPTZ
+        );
+        CREATE INDEX IF NOT EXISTS ix_veq_status
+            ON vectora_embedding_queue (status);
+    """
+
+    async def _ensure_table(self) -> None:
+        """Cria a tabela se não existir (idempotente)."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(self._CREATE_TABLE)
+
+    async def health(self) -> dict[str, object]:
+        """Verifica se a conexão Postgres está acessível."""
+        try:
+            from src.storage.factory import get_pg_pool
+
+            pool = await get_pg_pool()
+            async with pool.acquire() as conn:
+                await conn.execute("SELECT 1")
+            return {"ok": True, "error": None}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    async def enqueue(self, task: dict[str, Any]) -> str:
+        """Enfileira uma tarefa e retorna o ``queue_id``."""
+        import json
+        import uuid
+
+        from src.storage.factory import get_pg_pool
+
+        queue_id = task.get("queue_id") or str(uuid.uuid4())
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO vectora_embedding_queue (queue_id, task_json)
+                VALUES ($1, $2::jsonb)
+                ON CONFLICT (queue_id) DO NOTHING
+                """,
+                queue_id,
+                json.dumps(task),
+            )
+        return queue_id
+
+    async def dequeue(self, limit: int = 1) -> list[dict[str, Any]]:
+        """Retira até ``limit`` tarefas pending com SKIP LOCKED (sem bloqueio).
+
+        Marca as tarefas retiradas como ``processing``.
+        """
+        import json
+
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            async with conn.transaction():
+                rows = await conn.fetch(
+                    """
+                    SELECT id, queue_id, task_json
+                    FROM vectora_embedding_queue
+                    WHERE status = 'pending'
+                    ORDER BY id
+                    LIMIT $1
+                    FOR UPDATE SKIP LOCKED
+                    """,
+                    limit,
+                )
+                if not rows:
+                    return []
+                ids = [r["id"] for r in rows]
+                await conn.execute(
+                    """
+                    UPDATE vectora_embedding_queue
+                    SET status = 'processing'
+                    WHERE id = ANY($1::bigint[])
+                    """,
+                    ids,
+                )
+
+        result = []
+        for row in rows:
+            task = json.loads(row["task_json"])
+            task["queue_id"] = row["queue_id"]
+            result.append(task)
+        return result
+
+    async def ack(self, queue_id: str) -> None:
+        """Marca a tarefa como concluída com sucesso."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE vectora_embedding_queue
+                SET status = 'success', processed_at = now()
+                WHERE queue_id = $1
+                """,
+                queue_id,
+            )
+
+    async def nack(self, queue_id: str, error: str = "") -> None:
+        """Marca a tarefa como falha (voltará para reprocessamento em F8)."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE vectora_embedding_queue
+                SET status = 'failed', processed_at = now()
+                WHERE queue_id = $1
+                """,
+                queue_id,
+            )

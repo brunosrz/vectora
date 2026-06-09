@@ -815,3 +815,165 @@ write_audit = _write_audit
 async def get_db_for_audit() -> Any:
     """Expõe conexão para handlers externos escreverem audit entries."""
     return await _get_db()
+
+
+# ---------------------------------------------------------------------------
+# Backend Postgres — AuthDB protocol (F7 — complete mode)
+# ---------------------------------------------------------------------------
+
+
+class PostgresAuthDB:
+    """Implementação Postgres do protocolo ``AuthDB``.
+
+    Usa o pool asyncpg de ``storage.factory.get_pg_pool()`` para todas as
+    operações. O schema deve ter sido criado via ``vectora storage migrate``
+    (migration 0001_auth.sql adaptada para Postgres).
+
+    Placeholders asyncpg: ``$1, $2, ...`` (diferente do ``?`` do SQLite).
+    """
+
+    async def health(self) -> dict[str, object]:
+        """Verifica se a conexão Postgres está acessível."""
+        try:
+            from src.storage.factory import get_pg_pool
+
+            pool = await get_pg_pool()
+            async with pool.acquire() as conn:
+                await conn.execute("SELECT 1")
+            return {"ok": True, "error": None}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    async def count_users(self) -> int:
+        """Retorna o total de usuários cadastrados."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT COUNT(*) AS n FROM users")
+        return row["n"] if row else 0
+
+    async def create_user(
+        self,
+        email: str,
+        password_hash: str,
+        role: str = "member",
+        name: str = "",
+        user_id: str | None = None,
+    ) -> str:
+        """Cria um usuário e retorna seu ID."""
+        import uuid
+        from datetime import UTC, datetime
+
+        from src.storage.factory import get_pg_pool
+
+        uid = user_id or str(uuid.uuid4())
+        now = datetime.now(UTC).isoformat()
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO users
+                    (id, email, password_hash, role, name,
+                     env_overrides_json, created_at)
+                VALUES ($1, $2, $3, $4, $5, '{}', $6)
+                """,
+                uid,
+                email,
+                password_hash,
+                role,
+                name,
+                now,
+            )
+        return uid
+
+    async def get_user_by_email(self, email: str) -> dict[str, object] | None:
+        """Retorna o usuário pelo e-mail ou None."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT * FROM users WHERE email = $1", email)
+        return dict(row) if row else None
+
+    async def get_user_by_id(self, user_id: str) -> dict[str, object] | None:
+        """Retorna o usuário pelo ID ou None."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
+        return dict(row) if row else None
+
+    async def upsert_refresh_token(
+        self,
+        token_hash: str,
+        user_id: str,
+        expires_at: str,
+    ) -> None:
+        """Insere ou substitui um refresh token."""
+        from datetime import UTC, datetime
+
+        from src.storage.factory import get_pg_pool
+
+        now = datetime.now(UTC).isoformat()
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO refresh_tokens
+                    (token_hash, user_id, expires_at, revoked, created_at)
+                VALUES ($1, $2, $3, false, $4)
+                ON CONFLICT (token_hash) DO UPDATE
+                    SET expires_at = EXCLUDED.expires_at, revoked = false
+                """,
+                token_hash,
+                user_id,
+                expires_at,
+                now,
+            )
+
+    async def revoke_refresh_tokens(self, user_id: str) -> None:
+        """Revoga todos os refresh tokens do usuário."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute("DELETE FROM refresh_tokens WHERE user_id = $1", user_id)
+
+    async def write_audit(
+        self,
+        user_id: str | None,
+        action: str,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        metadata_json: str = "{}",
+        ip: str | None = None,
+    ) -> None:
+        """Grava uma entrada de auditoria."""
+        import uuid
+        from datetime import UTC, datetime
+
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            try:
+                await conn.execute(
+                    """
+                    INSERT INTO audit
+                        (id, user_id, action, target_type, target_id,
+                         metadata_json, ip, created_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    """,
+                    str(uuid.uuid4()),
+                    user_id,
+                    action,
+                    target_type,
+                    target_id,
+                    metadata_json,
+                    ip,
+                    datetime.now(UTC).isoformat(),
+                )
+            except Exception as exc:
+                logger.warning("PostgresAuthDB: falha ao escrever audit: %s", exc)

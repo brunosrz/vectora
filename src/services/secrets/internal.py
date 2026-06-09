@@ -112,3 +112,78 @@ class InternalSecretsProvider:
         ) as cur:
             rows = await cur.fetchall()
         return [r[0] for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Backend Postgres — SecretsDB protocol (F7 — complete mode)
+# ---------------------------------------------------------------------------
+
+
+class PostgresSecretsDB:
+    """Implementação Postgres do protocolo ``SecretsDB``.
+
+    Armazena ``ciphertext`` e ``nonce`` em bytes nativos (Postgres BYTEA).
+    A criptografia (NaCl SecretBox) é responsabilidade da camada de serviço —
+    este backend apenas persiste bytes opacos, sem conhecimento da chave.
+
+    Usa o pool asyncpg de ``storage.factory.get_pg_pool()``.
+    """
+
+    async def health(self) -> dict[str, object]:
+        """Verifica se a conexão Postgres está acessível."""
+        try:
+            from src.storage.factory import get_pg_pool
+
+            pool = await get_pg_pool()
+            async with pool.acquire() as conn:
+                await conn.execute("SELECT 1")
+            return {"ok": True, "error": None}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    async def get(self, user_id: str, key: str) -> bytes | None:
+        """Retorna o ciphertext cifrado ou None se não existir."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT ciphertext FROM secrets WHERE user_id = $1 AND key = $2",
+                user_id,
+                key,
+            )
+        return bytes(row["ciphertext"]) if row else None
+
+    async def set(
+        self, user_id: str, key: str, ciphertext: bytes, nonce: bytes
+    ) -> None:
+        """Grava ou substitui o segredo cifrado."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO secrets (user_id, key, ciphertext, nonce)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT (user_id, key) DO UPDATE
+                    SET ciphertext = EXCLUDED.ciphertext,
+                        nonce      = EXCLUDED.nonce
+                """,
+                user_id,
+                key,
+                ciphertext,
+                nonce,
+            )
+
+    async def delete(self, user_id: str, key: str) -> None:
+        """Remove o segredo (sem erro se não existir)."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                "DELETE FROM secrets WHERE user_id = $1 AND key = $2",
+                user_id,
+                key,
+            )

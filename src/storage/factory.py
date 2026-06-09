@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 _checkpointer_cm: Any = None  # context manager (AsyncSqliteSaver etc.)
 _store: Any = None  # BaseStore
+_pg_pool: Any = None  # asyncpg.Pool (complete mode only)
 _vector_stores: dict[str, Any] = {}  # collection → lancedb.AsyncTable (raw)
 _lc_vector_stores: dict[
     str, Any
@@ -293,6 +294,62 @@ def _build_sparse_embeddings() -> Any:
 
 
 # ---------------------------------------------------------------------------
+# Asyncpg pool (F7 — complete mode)
+# ---------------------------------------------------------------------------
+
+
+async def get_pg_pool(dsn: str | None = None) -> Any:
+    """Retorna (ou cria) o pool asyncpg compartilhado do modo complete.
+
+    O pool é um singleton por processo — criado na primeira chamada e
+    reutilizado em todas as chamadas subsequentes. Para fechar explicitamente
+    (ex: teardown de testes) use ``close_pg_pool()``.
+
+    Args:
+        dsn: DSN asyncpg (``postgresql://user:pass@host/db``). None usa
+             ``settings.postgres_dsn``. Deve ser asyncpg nativo (não
+             ``postgresql+asyncpg://`` do SQLAlchemy).
+
+    Returns:
+        ``asyncpg.Pool`` configurado com min_size=2, max_size=20.
+
+    Raises:
+        RuntimeError: Se nenhum DSN estiver configurado.
+    """
+    global _pg_pool
+    if _pg_pool is not None:
+        return _pg_pool
+
+    import asyncpg
+
+    from src.settings import settings as _s
+
+    effective_dsn = dsn or _s.postgres_dsn
+    if not effective_dsn:
+        msg = (
+            "postgres_dsn não configurado. "
+            "Defina POSTGRES_DSN no .env ou settings.json para usar o modo complete."
+        )
+        raise RuntimeError(msg)
+
+    # asyncpg espera postgresql:// — normaliza se vier com +asyncpg do SQLAlchemy
+    normalized = effective_dsn.replace("postgresql+asyncpg://", "postgresql://")
+
+    _pg_pool = await asyncpg.create_pool(normalized, min_size=2, max_size=20)
+    logger.debug("storage/factory: asyncpg pool criado dsn=%s", normalized[:30] + "…")
+    return _pg_pool
+
+
+async def close_pg_pool() -> None:
+    """Fecha o pool asyncpg gracefully. Usado no shutdown do servidor e em testes."""
+    global _pg_pool
+    if _pg_pool is not None:
+        await _pg_pool.close()
+        _pg_pool = None
+        logger.debug("storage/factory: asyncpg pool fechado")
+
+
+# ---------------------------------------------------------------------------
 # Health check agregado
 # ---------------------------------------------------------------------------
 
@@ -341,6 +398,20 @@ async def storage_health() -> dict[str, Any]:
     except Exception as exc:
         result["lancedb"] = {"ok": False, "error": str(exc)}
 
+    # Postgres — testado apenas no modo complete
+    try:
+        from src.settings import settings as _s
+
+        if _s.storage_mode == "complete" and _s.postgres_dsn:
+            pool = await get_pg_pool()
+            async with pool.acquire() as conn:
+                await conn.execute("SELECT 1")
+            result["postgres"] = {"ok": True, "error": None}
+        else:
+            result["postgres"] = {"ok": None, "error": "não configurado (modo lite)"}
+    except Exception as exc:
+        result["postgres"] = {"ok": False, "error": str(exc)}
+
     return result
 
 
@@ -351,8 +422,9 @@ async def storage_health() -> dict[str, Any]:
 
 def _reset_singletons() -> None:
     """Limpa os singletons. Para uso exclusivo em testes."""
-    global _store, _checkpointer_cm
+    global _store, _checkpointer_cm, _pg_pool
     _store = None
     _checkpointer_cm = None
+    _pg_pool = None
     _vector_stores.clear()
     _lc_vector_stores.clear()

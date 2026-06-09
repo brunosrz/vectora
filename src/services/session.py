@@ -366,3 +366,113 @@ class SessionService:
 
         self.checkpointer = None
         self._checkpointer_context = None
+
+
+# ---------------------------------------------------------------------------
+# Backend Postgres — SessionDB protocol (F7 — complete mode)
+# ---------------------------------------------------------------------------
+
+
+class PostgresSessionDB:
+    """Implementação Postgres do protocolo ``SessionDB``.
+
+    Gere as tabelas ``vectora_sessions`` e ``vectora_checkpoint_artifacts``
+    via pool asyncpg de ``storage.factory.get_pg_pool()``.
+    """
+
+    async def health(self) -> dict[str, object]:
+        """Verifica se a conexão Postgres está acessível."""
+        try:
+            from src.storage.factory import get_pg_pool
+
+            pool = await get_pg_pool()
+            async with pool.acquire() as conn:
+                await conn.execute("SELECT 1")
+            return {"ok": True, "error": None}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    async def create_session(
+        self,
+        thread_id: str,
+        user_type: str = "human",
+        extra: str = "{}",
+    ) -> None:
+        """Cria ou ignora uma sessão existente."""
+        from datetime import UTC, datetime
+
+        from src.storage.factory import get_pg_pool
+
+        now = datetime.now(UTC).isoformat()
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO vectora_sessions
+                    (thread_id, user_type, created_at, last_activity,
+                     message_count, extra)
+                VALUES ($1, $2, $3, $3, 0, $4)
+                ON CONFLICT (thread_id) DO NOTHING
+                """,
+                thread_id,
+                user_type,
+                now,
+                extra,
+            )
+
+    async def get_session(self, thread_id: str) -> dict[str, object] | None:
+        """Retorna os metadados da sessão ou None."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM vectora_sessions WHERE thread_id = $1", thread_id
+            )
+        return dict(row) if row else None
+
+    async def list_sessions(self, *, limit: int = 50) -> list[dict[str, object]]:
+        """Lista sessões ordenadas por atividade recente."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT * FROM vectora_sessions
+                ORDER BY last_activity DESC
+                LIMIT $1
+                """,
+                limit,
+            )
+        return [dict(r) for r in rows]
+
+    async def delete_session(self, thread_id: str) -> None:
+        """Remove a sessão e seus artifacts."""
+        from src.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                "DELETE FROM vectora_sessions WHERE thread_id = $1", thread_id
+            )
+
+    async def update_activity(self, thread_id: str) -> None:
+        """Atualiza ``last_activity`` e incrementa ``message_count``."""
+        from datetime import UTC, datetime
+
+        from src.storage.factory import get_pg_pool
+
+        now = datetime.now(UTC).isoformat()
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE vectora_sessions
+                SET last_activity = $2,
+                    message_count = message_count + 1
+                WHERE thread_id = $1
+                """,
+                thread_id,
+                now,
+            )
