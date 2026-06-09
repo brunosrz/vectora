@@ -13,10 +13,21 @@
  *
  * Não persiste em localStorage — cache é por sessão de browser (intencional:
  * o backend é a source of truth, queremos invalidar ao recarregar a página).
+ *
+ * GC automático: no máximo MESSAGES_IN_MEMORY_CAP entradas no cache;
+ * TTL de 5min (por inatividade); pressão total estimada ≤ 50MB.
+ * Entradas eviccionadas podem ser recuperadas via GET /threads/{id}/history.
  */
 
 import { create } from "zustand";
 import type { Message } from "@/lib/types";
+
+/** Limite de entradas simultâneas no cache (threads únicas). */
+export const MESSAGES_IN_MEMORY_CAP = 200;
+/** Inatividade máxima antes de GC (ms). */
+const CACHE_TTL_MS = 5 * 60 * 1000;
+/** Pressão máxima estimada do cache (bytes). */
+const CACHE_MAX_BYTES = 50 * 1024 * 1024; // 50 MiB
 
 interface ThreadCacheEntry {
   messages: Message[];
@@ -24,6 +35,49 @@ interface ThreadCacheEntry {
   fetchedAt: number;
   /** Quando o usuário interagiu pela última vez (envio/recebimento). */
   updatedAt: number;
+  /** Tamanho estimado em bytes (JSON do array de mensagens). */
+  sizeBytes: number;
+}
+
+/** Estima o tamanho em bytes de um array de mensagens. */
+function estimateBytes(messages: Message[]): number {
+  try {
+    return new TextEncoder().encode(JSON.stringify(messages)).byteLength;
+  } catch {
+    return messages.length * 512; // fallback conservador
+  }
+}
+
+/**
+ * Retorna um cache saneado: remove entradas expiradas (TTL) e então aplica
+ * LRU por updatedAt até respeitar cap e limite de memória.
+ */
+function applyGC(
+  cache: Record<string, ThreadCacheEntry>,
+): Record<string, ThreadCacheEntry> {
+  const now = Date.now();
+
+  // 1. Remover entradas expiradas por TTL.
+  let entries = Object.entries(cache).filter(
+    ([, entry]) => now - entry.updatedAt < CACHE_TTL_MS,
+  );
+
+  // 2. Ordenar por updatedAt decrescente (mais recentes primeiro).
+  entries.sort(([, a], [, b]) => b.updatedAt - a.updatedAt);
+
+  // 3. Aplicar cap de quantidade.
+  if (entries.length > MESSAGES_IN_MEMORY_CAP) {
+    entries = entries.slice(0, MESSAGES_IN_MEMORY_CAP);
+  }
+
+  // 4. Aplicar pressão de memória (descarta os mais antigos até caber).
+  let totalBytes = entries.reduce((sum, [, e]) => sum + e.sizeBytes, 0);
+  while (totalBytes > CACHE_MAX_BYTES && entries.length > 1) {
+    const removed = entries.pop()!;
+    totalBytes -= removed[1].sizeBytes;
+  }
+
+  return Object.fromEntries(entries);
 }
 
 interface ThreadsState {
@@ -54,6 +108,13 @@ interface ThreadsState {
 
   /** Limpa todo o cache (logout, troca de usuário). */
   clear: () => void;
+
+  /**
+   * Executa GC manualmente (TTL + cap + pressão de memória).
+   * Chamado internamente a cada escrita; pode ser chamado externamente
+   * por um setInterval periódico se necessário.
+   */
+  gcCache: () => void;
 }
 
 export const useThreadsStore = create<ThreadsState>((set, get) => ({
@@ -64,16 +125,14 @@ export const useThreadsStore = create<ThreadsState>((set, get) => ({
 
   setMessages: (threadId, messages) => {
     const now = Date.now();
-    set((state) => ({
-      cache: {
+    const sizeBytes = estimateBytes(messages);
+    set((state) => {
+      const updatedCache = applyGC({
         ...state.cache,
-        [threadId]: {
-          messages,
-          fetchedAt: now,
-          updatedAt: now,
-        },
-      },
-    }));
+        [threadId]: { messages, fetchedAt: now, updatedAt: now, sizeBytes },
+      });
+      return { cache: updatedCache };
+    });
   },
 
   patchMessages: (threadId, updater) => {
@@ -84,16 +143,17 @@ export const useThreadsStore = create<ThreadsState>((set, get) => ({
       // Identidade preservada se updater retornar o mesmo array.
       if (next === prevMessages && prev) return state;
       const now = Date.now();
-      return {
-        cache: {
-          ...state.cache,
-          [threadId]: {
-            messages: next,
-            fetchedAt: prev?.fetchedAt ?? now,
-            updatedAt: now,
-          },
+      const sizeBytes = estimateBytes(next);
+      const updatedCache = applyGC({
+        ...state.cache,
+        [threadId]: {
+          messages: next,
+          fetchedAt: prev?.fetchedAt ?? now,
+          updatedAt: now,
+          sizeBytes,
         },
-      };
+      });
+      return { cache: updatedCache };
     });
   },
 
@@ -120,4 +180,14 @@ export const useThreadsStore = create<ThreadsState>((set, get) => ({
   },
 
   clear: () => set({ cache: {}, revalidating: {} }),
+
+  gcCache: () => {
+    set((state) => {
+      const next = applyGC(state.cache);
+      // Evita re-render desnecessário se nada foi removido.
+      if (Object.keys(next).length === Object.keys(state.cache).length)
+        return state;
+      return { cache: next };
+    });
+  },
 }));
