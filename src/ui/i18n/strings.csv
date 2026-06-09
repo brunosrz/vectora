@@ -146,6 +146,19 @@ tui.help.shortcuts_section,Keyboard shortcuts:,Atajos de teclado:,Atalhos de tec
 tui.help.close,Close,Cerrar,Fechar
 
 # ---------------------------------------------------------------------------
+# RewindScreen (src/ui/screens/rewind_screen.py)
+# ---------------------------------------------------------------------------
+tui.rewind.title,↶ Rewind session,↶ Rebobinar sesión,↶ Retroceder sessão
+tui.rewind.description,Select a checkpoint to restore:,Selecciona un checkpoint para restaurar:,Selecione um checkpoint para restaurar:
+tui.rewind.confirm,Restore,Restaurar,Restaurar
+tui.rewind.cancel,Cancel,Cancelar,Cancelar
+tui.rewind.no_checkpoints,No checkpoints available.,Sin checkpoints disponibles.,Nenhum checkpoint disponível.
+tui.rewind.unavailable,Could not load checkpoints.,No se pudieron cargar los checkpoints.,Não foi possível carregar os checkpoints.
+tui.rewind.no_workspace,No active workspace for rewind.,Sin workspace activo para rebobinar.,Nenhum workspace ativo para rewind.
+tui.rewind.done,Session rewound. History cleared.,Sesión rebobinada. Historial borrado.,Sessão retrocedida. Histórico limpo.
+tui.rewind.error,Rewind failed: {error},Error al rebobinar: {error},Falha no rewind: {error}
+
+# ---------------------------------------------------------------------------
 # SettingsScreen (src/ui/screens/settings_screen.py)
 # ---------------------------------------------------------------------------
 tui.settings.title,Settings,Configuración,Configurações

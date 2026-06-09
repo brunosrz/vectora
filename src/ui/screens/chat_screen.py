@@ -55,6 +55,7 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
         Binding("ctrl+m", "model_picker", "Modelo", show=False),
         Binding("ctrl+u", "usage", "Uso", show=False),
         Binding("ctrl+question_mark", "help_screen", "Ajuda", show=False),
+        Binding("ctrl+r", "rewind", "Rewind", show=False),
     ]
 
     SLASH_COMMANDS: list[tuple[str, str]] = [
@@ -206,6 +207,41 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
         from src.ui.screens.help_screen import HelpScreen
 
         await self.app.push_screen(HelpScreen())
+
+    async def action_rewind(self) -> None:
+        from src.ui.screens.rewind_screen import RewindScreen
+
+        def on_result(cp_id: str | None) -> None:
+            if cp_id:
+                self.run_worker(self._do_rewind(cp_id), exclusive=False, thread=False)
+
+        await self.app.push_screen(RewindScreen(self._chat_thread_id), on_result)
+
+    async def _do_rewind(self, checkpoint_id: str) -> None:
+        try:
+            import git as gitpkg  # type: ignore[import-untyped]
+
+            from src.services.checkpoint import restore_git_checkpoint
+            from src.services.workspace import workspace_registry
+
+            workspaces = workspace_registry.list_all()
+            if not workspaces:
+                self.append_line(f"[red]{t('tui.rewind.no_workspace')}[/red]")
+                return
+            ws = workspaces[0]
+            repo = gitpkg.Repo(ws.cwd, search_parent_directories=True)
+            restore_git_checkpoint(repo, checkpoint_id)
+            area = self.query_one("#messages", ScrollableContainer)
+            await area.remove_children()
+            await area.mount(
+                Static(
+                    f"[bold #60a5fa]Vectora[/bold #60a5fa] [dim]— "
+                    f"{t('tui.rewind.done')}[/dim]",
+                    classes="msg-system",
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            self.append_line(f"[red]{t('tui.rewind.error', error=exc)}[/red]")
 
     async def action_new_session(self) -> None:
         self._chat_thread_id = str(uuid.uuid4())
