@@ -195,7 +195,7 @@ async def test_search_finalize_no_web_search():
 @pytest.mark.asyncio
 async def test_graph_has_coder_finalize_node():
     """O grafo compilado deve conter o nó coder_finalize."""
-    from src.services.agent_factory import get_user_agent
+    from src.graph import get_user_agent
 
     g = await get_user_agent("test-finalize-topology")
     assert "coder_finalize" in g.nodes
@@ -204,7 +204,7 @@ async def test_graph_has_coder_finalize_node():
 @pytest.mark.asyncio
 async def test_graph_has_search_finalize_node():
     """O grafo compilado deve conter o nó search_finalize."""
-    from src.services.agent_factory import get_user_agent
+    from src.graph import get_user_agent
 
     g = await get_user_agent("test-finalize-topology")
     assert "search_finalize" in g.nodes
@@ -213,7 +213,7 @@ async def test_graph_has_search_finalize_node():
 @pytest.mark.asyncio
 async def test_graph_coder_routes_to_coder_finalize():
     """coder deve ter coder_finalize como destino (sem tool_calls)."""
-    from src.services.agent_factory import get_user_agent
+    from src.graph import get_user_agent
 
     g = await get_user_agent("test-finalize-topology")
     assert "coder_finalize" in g.nodes
@@ -223,7 +223,7 @@ async def test_graph_coder_routes_to_coder_finalize():
 @pytest.mark.asyncio
 async def test_graph_search_routes_to_search_finalize():
     """search deve ter search_finalize como destino (sem tool_calls)."""
-    from src.services.agent_factory import get_user_agent
+    from src.graph import get_user_agent
 
     g = await get_user_agent("test-finalize-topology")
     assert "search_finalize" in g.nodes

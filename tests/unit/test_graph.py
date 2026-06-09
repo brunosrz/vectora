@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.asyncio
 async def test_build_graph_compiles():
-    from src.services.agent_factory import get_user_agent
+    from src.graph import get_user_agent
 
     graph = await get_user_agent("test-graph-compile")
     assert graph is not None
@@ -23,7 +23,7 @@ async def test_build_graph_compiles():
 
 @pytest.mark.asyncio
 async def test_graph_has_expected_nodes():
-    from src.services.agent_factory import get_user_agent
+    from src.graph import get_user_agent
 
     graph = await get_user_agent("test-graph-nodes")
     nodes = set(graph.nodes.keys())

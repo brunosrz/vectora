@@ -100,7 +100,7 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
     async def on_mount(self) -> None:
-        from src.services.agent_factory import get_user_agent
+        from src.graph import get_user_agent
         from src.ui.streaming import StreamHandler as _StreamHandler
 
         self._graph = await get_user_agent(self._user_id)

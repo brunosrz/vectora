@@ -275,7 +275,7 @@ class TestAdaptStreamHITL:
 class TestGetInterruptOn:
     def test_ask_mode_interrupts_all_destructive(self) -> None:
         """Modo 'ask' pausa em todas as tools destrutivas."""
-        from src.services.agent_factory import REQUIRE_APPROVAL, get_interrupt_on
+        from src.graph import REQUIRE_APPROVAL, get_interrupt_on
 
         result = get_interrupt_on("ask")
         assert set(result.keys()) == REQUIRE_APPROVAL
@@ -283,19 +283,19 @@ class TestGetInterruptOn:
 
     def test_bypass_mode_returns_empty(self) -> None:
         """Modo 'bypass' não interrompe nada."""
-        from src.services.agent_factory import get_interrupt_on
+        from src.graph import get_interrupt_on
 
         assert get_interrupt_on("bypass") == {}
 
     def test_auto_mode_returns_empty(self) -> None:
         """Modo 'auto' não interrompe nada."""
-        from src.services.agent_factory import get_interrupt_on
+        from src.graph import get_interrupt_on
 
         assert get_interrupt_on("auto") == {}
 
     def test_accept_edits_excludes_file_write(self) -> None:
         """Modo 'accept_edits' auto-aprova file_write mas interrompe terminal."""
-        from src.services.agent_factory import ACCEPT_EDITS_AUTO, get_interrupt_on
+        from src.graph import ACCEPT_EDITS_AUTO, get_interrupt_on
 
         result = get_interrupt_on("accept_edits")
         for tool in ACCEPT_EDITS_AUTO:
@@ -304,14 +304,14 @@ class TestGetInterruptOn:
 
     def test_plan_mode_interrupts_all_destructive(self) -> None:
         """Modo 'plan' interrompe todas as tools destrutivas (mesmo que 'ask')."""
-        from src.services.agent_factory import REQUIRE_APPROVAL, get_interrupt_on
+        from src.graph import REQUIRE_APPROVAL, get_interrupt_on
 
         result = get_interrupt_on("plan")
         assert set(result.keys()) == REQUIRE_APPROVAL
 
     def test_unknown_mode_defaults_to_ask(self) -> None:
         """Modo desconhecido usa a política conservadora de 'ask'."""
-        from src.services.agent_factory import REQUIRE_APPROVAL, get_interrupt_on
+        from src.graph import REQUIRE_APPROVAL, get_interrupt_on
 
         result = get_interrupt_on("unknown_mode")
         assert set(result.keys()) == REQUIRE_APPROVAL

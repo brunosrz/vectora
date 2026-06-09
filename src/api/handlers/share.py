@@ -131,7 +131,7 @@ async def get_shared_thread(token: str) -> SharedThread:
     # Busca histórico via grafo LangGraph
     messages: list[HistoryMessage] = []
     try:
-        from src.services.agent_factory import get_user_agent
+        from src.graph import get_user_agent
 
         graph = await get_user_agent()
         config = {"configurable": {"thread_id": thread_id}}

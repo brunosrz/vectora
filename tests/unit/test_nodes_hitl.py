@@ -1,4 +1,4 @@
-"""Tests para hitl_check — Human-in-the-Loop HITL check node (src/services/agent_factory)."""
+"""Tests para hitl_check — Human-in-the-Loop HITL check node (src/graph)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 
-from src.services.agent_factory import ACCEPT_EDITS_AUTO, REQUIRE_APPROVAL, hitl_check
+from src.graph import ACCEPT_EDITS_AUTO, REQUIRE_APPROVAL, hitl_check
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -94,9 +94,7 @@ async def test_hitl_check_terminal_approve():
     """Aprovação via dict {"action": "approve"} → hitl_cancelled=False."""
     state = _make_state([_tc("terminal", {"command": "ls -la"})])
 
-    with patch(
-        "src.services.agent_factory.interrupt", return_value={"action": "approve"}
-    ):
+    with patch("src.graph.interrupt", return_value={"action": "approve"}):
         result = await hitl_check(state)
 
     assert result == {"hitl_cancelled": False}
@@ -107,7 +105,7 @@ async def test_hitl_check_terminal_approve_bare_string():
     """Aprovação via string "approve" → hitl_cancelled=False."""
     state = _make_state([_tc("terminal", {"command": "rm -rf /tmp/test"})])
 
-    with patch("src.services.agent_factory.interrupt", return_value="approve"):
+    with patch("src.graph.interrupt", return_value="approve"):
         result = await hitl_check(state)
 
     assert result == {"hitl_cancelled": False}
@@ -118,7 +116,7 @@ async def test_hitl_check_terminal_approve_empty_string():
     """Aprovação via string vazia (Enter) → hitl_cancelled=False."""
     state = _make_state([_tc("terminal")])
 
-    with patch("src.services.agent_factory.interrupt", return_value=""):
+    with patch("src.graph.interrupt", return_value=""):
         result = await hitl_check(state)
 
     assert result == {"hitl_cancelled": False}
@@ -129,9 +127,7 @@ async def test_hitl_check_file_write_approve():
     """file_write aprovado → hitl_cancelled=False."""
     state = _make_state([_tc("file_write", {"path": "out.py", "content": "# ok"})])
 
-    with patch(
-        "src.services.agent_factory.interrupt", return_value={"action": "approve"}
-    ):
+    with patch("src.graph.interrupt", return_value={"action": "approve"}):
         result = await hitl_check(state)
 
     assert result == {"hitl_cancelled": False}
@@ -147,9 +143,7 @@ async def test_hitl_check_terminal_reject():
     """Rejeição → hitl_cancelled=True + ToolMessage de cancelamento injetada."""
     state = _make_state([_tc("terminal", {"command": "rm -rf /"}, tc_id="abc123")])
 
-    with patch(
-        "src.services.agent_factory.interrupt", return_value={"action": "reject"}
-    ):
+    with patch("src.graph.interrupt", return_value={"action": "reject"}):
         result = await hitl_check(state)
 
     assert result["hitl_cancelled"] is True
@@ -170,9 +164,7 @@ async def test_hitl_check_reject_multiple_sensitive_tools():
         ]
     )
 
-    with patch(
-        "src.services.agent_factory.interrupt", return_value={"action": "reject"}
-    ):
+    with patch("src.graph.interrupt", return_value={"action": "reject"}):
         result = await hitl_check(state)
 
     assert result["hitl_cancelled"] is True
@@ -191,9 +183,7 @@ async def test_hitl_check_reject_only_sensitive_tools_get_cancel_msg():
         ]
     )
 
-    with patch(
-        "src.services.agent_factory.interrupt", return_value={"action": "reject"}
-    ):
+    with patch("src.graph.interrupt", return_value={"action": "reject"}):
         result = await hitl_check(state)
 
     # Apenas "danger" deve ter ToolMessage
@@ -217,7 +207,7 @@ async def test_hitl_check_interrupt_receives_payload():
         captured_payload.append(payload)
         return {"action": "approve"}
 
-    with patch("src.services.agent_factory.interrupt", side_effect=_fake_interrupt):
+    with patch("src.graph.interrupt", side_effect=_fake_interrupt):
         await hitl_check(state)
 
     assert len(captured_payload) == 1
@@ -257,7 +247,7 @@ async def test_accept_edits_excludes_terminal():
 async def test_bypass_mode_skips_interrupt():
     """bypass: tool destrutiva passa sem pausar o grafo."""
     state = _make_state([_tc("terminal", {"command": "rm -rf /"})])
-    with patch("src.services.agent_factory.interrupt", side_effect=_boom):
+    with patch("src.graph.interrupt", side_effect=_boom):
         result = await hitl_check(state, _cfg("bypass"))
     assert result == {"hitl_cancelled": False}
 
@@ -266,7 +256,7 @@ async def test_bypass_mode_skips_interrupt():
 async def test_auto_mode_skips_interrupt():
     """auto: auto-aprova tudo (confinamento de escopo é garantido pelas tools)."""
     state = _make_state([_tc("terminal", {"command": "ls"})])
-    with patch("src.services.agent_factory.interrupt", side_effect=_boom):
+    with patch("src.graph.interrupt", side_effect=_boom):
         result = await hitl_check(state, _cfg("auto"))
     assert result == {"hitl_cancelled": False}
 
@@ -275,7 +265,7 @@ async def test_auto_mode_skips_interrupt():
 async def test_plan_mode_cancels_destructive():
     """plan: ações destrutivas não são executadas — recebem ToolMessage de cancelamento."""
     state = _make_state([_tc("terminal", {"command": "ls"}, tc_id="p1")])
-    with patch("src.services.agent_factory.interrupt", side_effect=_boom):
+    with patch("src.graph.interrupt", side_effect=_boom):
         result = await hitl_check(state, _cfg("plan"))
     assert result["hitl_cancelled"] is True
     msgs = result["messages"]
@@ -289,7 +279,7 @@ async def test_plan_mode_cancels_destructive():
 async def test_accept_edits_auto_approves_file_write():
     """accept_edits: file_write não pausa o grafo."""
     state = _make_state([_tc("file_write", {"path": "a.py", "content": "x"})])
-    with patch("src.services.agent_factory.interrupt", side_effect=_boom):
+    with patch("src.graph.interrupt", side_effect=_boom):
         result = await hitl_check(state, _cfg("accept_edits"))
     assert result == {"hitl_cancelled": False}
 
@@ -298,9 +288,7 @@ async def test_accept_edits_auto_approves_file_write():
 async def test_accept_edits_still_confirms_terminal():
     """accept_edits: terminal ainda exige confirmação."""
     state = _make_state([_tc("terminal", {"command": "ls"})])
-    with patch(
-        "src.services.agent_factory.interrupt", return_value={"action": "approve"}
-    ):
+    with patch("src.graph.interrupt", return_value={"action": "approve"}):
         result = await hitl_check(state, _cfg("accept_edits"))
     assert result == {"hitl_cancelled": False}
 
@@ -320,7 +308,7 @@ async def test_accept_edits_mixed_only_confirms_terminal():
         captured.append(payload)
         return {"action": "approve"}
 
-    with patch("src.services.agent_factory.interrupt", side_effect=_fake):
+    with patch("src.graph.interrupt", side_effect=_fake):
         result = await hitl_check(state, _cfg("accept_edits"))
 
     assert result == {"hitl_cancelled": False}
@@ -333,9 +321,7 @@ async def test_accept_edits_mixed_only_confirms_terminal():
 async def test_ask_mode_explicit_interrupts():
     """ask explícito: comportamento padrão de confirmação."""
     state = _make_state([_tc("terminal", {"command": "ls"})])
-    with patch(
-        "src.services.agent_factory.interrupt", return_value={"action": "approve"}
-    ):
+    with patch("src.graph.interrupt", return_value={"action": "approve"}):
         result = await hitl_check(state, _cfg("ask"))
     assert result == {"hitl_cancelled": False}
 
@@ -344,9 +330,7 @@ async def test_ask_mode_explicit_interrupts():
 async def test_unknown_mode_falls_back_to_ask():
     """Modo desconhecido cai no comportamento seguro (ask → interrupt)."""
     state = _make_state([_tc("terminal", {"command": "ls"})])
-    with patch(
-        "src.services.agent_factory.interrupt", return_value={"action": "approve"}
-    ) as it:
+    with patch("src.graph.interrupt", return_value={"action": "approve"}) as it:
         result = await hitl_check(state, _cfg("nonsense"))
     assert result == {"hitl_cancelled": False}
     assert it.called
@@ -368,7 +352,7 @@ async def test_plan_mode_ignores_safe_tools():
 @pytest.mark.asyncio
 async def test_graph_has_hitl_check_node():
     """O grafo compilado deve conter o nó hitl_check."""
-    from src.services.agent_factory import get_user_agent
+    from src.graph import get_user_agent
 
     g = await get_user_agent("test-hitl-topology")
     assert "hitl_check" in g.nodes
@@ -377,7 +361,7 @@ async def test_graph_has_hitl_check_node():
 @pytest.mark.asyncio
 async def test_graph_coder_routes_to_hitl_check():
     """A aresta condicional de coder deve ter hitl_check como destino, não coder_tools."""
-    from src.services.agent_factory import get_user_agent
+    from src.graph import get_user_agent
 
     g = await get_user_agent("test-hitl-topology")
     assert "hitl_check" in g.nodes

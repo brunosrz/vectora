@@ -14,7 +14,7 @@ Fontes suportadas:
 Validação: a raiz da skill deve ter ``SKILL.md`` com frontmatter declarando
 ``name`` e ``description``. Sem isso, a instalação é rejeitada.
 
-O resolver do agente (``services/agent_factory`` no Bloco U) consulta
+O resolver do agente (``graph`` no Bloco U) consulta
 ``list_skill_paths(user_id)`` para montar o ``skills=[...]`` do Deep Agent.
 """
 

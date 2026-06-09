@@ -14,7 +14,7 @@ import pytest
 @pytest.fixture(autouse=True)
 async def reset_factory():
     """Garante estado limpo do factory entre testes."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     # Estado original
     orig_graph = af._graph
@@ -36,7 +36,7 @@ async def reset_factory():
 
 async def test_get_user_agent_singleton():
     """Chamadas repetidas devem retornar o mesmo grafo."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     fake_graph = MagicMock(name="compiled_graph")
     af._graph = fake_graph
@@ -49,7 +49,7 @@ async def test_get_user_agent_singleton():
 
 async def test_get_user_agent_none_user_id():
     """user_id=None deve funcionar sem erro."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     af._graph = MagicMock()
     result = await af.get_user_agent(None)
@@ -58,7 +58,7 @@ async def test_get_user_agent_none_user_id():
 
 async def test_get_user_agent_calls_build_when_none():
     """Primeira chamada (grafo=None) deve chamar _build_graph."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     af._graph = None
     af._checkpointer_ctx = None
@@ -82,7 +82,7 @@ async def test_get_user_agent_calls_build_when_none():
 
 async def test_aclose_idempotent():
     """aclose() chamado múltiplas vezes não deve levantar exceção."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     af._graph = None
     af._checkpointer_ctx = None
@@ -93,7 +93,7 @@ async def test_aclose_idempotent():
 
 async def test_aclose_clears_state():
     """aclose() deve limpar _graph, _checkpointer_ctx e _version_tracker."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     fake_ctx = MagicMock()
     fake_ctx.__aexit__ = AsyncMock(return_value=None)
@@ -112,7 +112,7 @@ async def test_aclose_clears_state():
 
 async def test_aclose_handles_ctx_error():
     """aclose() deve silenciar erros do __aexit__ do checkpointer."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     fake_ctx = MagicMock()
     fake_ctx.__aexit__ = AsyncMock(side_effect=RuntimeError("db error"))
@@ -130,7 +130,7 @@ async def test_aclose_handles_ctx_error():
 
 async def test_awarm_does_not_raise_on_error():
     """awarm() deve silenciar erros de inicialização."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     with patch.object(af, "get_user_agent", new_callable=AsyncMock) as mock_get:
         mock_get.side_effect = RuntimeError("db locked")
@@ -144,15 +144,15 @@ async def test_awarm_does_not_raise_on_error():
 
 async def test_version_tracker_registers_first_version():
     """_track_versions deve registrar a versão na primeira chamada sem invalidar."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     af._version_tracker.clear()
 
     with (
-        patch("src.services.agent_factory.tools_version", return_value=3),
-        patch("src.services.agent_factory.tool_policy") as mock_policy,
-        patch("src.services.agent_factory.skills_version", return_value=5),
-        patch("src.services.agent_factory._invalidate_llm_cache") as mock_inv,
+        patch("src.graph.tools_version", return_value=3),
+        patch("src.graph.tool_policy") as mock_policy,
+        patch("src.graph.skills_version", return_value=5),
+        patch("src.graph._invalidate_llm_cache") as mock_inv,
     ):
         mock_policy.policy_version.return_value = 7
         af._track_versions("u1")
@@ -163,15 +163,15 @@ async def test_version_tracker_registers_first_version():
 
 async def test_version_tracker_invalidates_on_change():
     """_track_versions deve chamar _invalidate_llm_cache quando versão muda."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     af._version_tracker["u1"] = (3, 7, 5)
 
     with (
-        patch("src.services.agent_factory.tools_version", return_value=4),
-        patch("src.services.agent_factory.tool_policy") as mock_policy,
-        patch("src.services.agent_factory.skills_version", return_value=5),
-        patch("src.services.agent_factory._invalidate_llm_cache") as mock_inv,
+        patch("src.graph.tools_version", return_value=4),
+        patch("src.graph.tool_policy") as mock_policy,
+        patch("src.graph.skills_version", return_value=5),
+        patch("src.graph._invalidate_llm_cache") as mock_inv,
     ):
         mock_policy.policy_version.return_value = 7
         af._track_versions("u1")
@@ -182,15 +182,15 @@ async def test_version_tracker_invalidates_on_change():
 
 async def test_version_tracker_invalidates_on_skills_change():
     """Skills version mudando deve invalidar o cache do LLM."""
-    import src.services.agent_factory as af
+    import src.graph as af
 
     af._version_tracker["u1"] = (3, 7, 5)
 
     with (
-        patch("src.services.agent_factory.tools_version", return_value=3),
-        patch("src.services.agent_factory.tool_policy") as mock_policy,
-        patch("src.services.agent_factory.skills_version", return_value=6),
-        patch("src.services.agent_factory._invalidate_llm_cache") as mock_inv,
+        patch("src.graph.tools_version", return_value=3),
+        patch("src.graph.tool_policy") as mock_policy,
+        patch("src.graph.skills_version", return_value=6),
+        patch("src.graph._invalidate_llm_cache") as mock_inv,
     ):
         mock_policy.policy_version.return_value = 7
         af._track_versions("u1")
@@ -206,7 +206,7 @@ async def test_version_tracker_invalidates_on_skills_change():
 
 async def test_invalidate_removes_only_target_user():
     """_invalidate_llm_cache deve remover apenas as entradas do usuário alvo."""
-    import src.services.agent_factory as af
+    import src.graph as af
     from src.services import llm_tools
 
     llm_tools._bound_cache[("u1", 1, 1)] = "llm_u1_a"

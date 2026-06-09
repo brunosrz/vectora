@@ -243,7 +243,7 @@ class TestStreamChatRegistersThread:
 
         with (
             patch(
-                "src.services.agent_factory.get_user_agent",
+                "src.graph.get_user_agent",
                 new=AsyncMock(return_value=mock_graph),
             ),
             patch(
@@ -289,7 +289,7 @@ class TestStreamChatRegistersThread:
 
         with (
             patch(
-                "src.services.agent_factory.get_user_agent",
+                "src.graph.get_user_agent",
                 new=AsyncMock(return_value=mock_graph),
             ),
             patch(

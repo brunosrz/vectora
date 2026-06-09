@@ -405,7 +405,7 @@ async def _build_graph_async() -> Any:
     _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
     checkpointer = await _checkpointer_ctx.__aenter__()
     _graph = build_graph(checkpointer=checkpointer)
-    logger.info("agent_factory: grafo compilado (db=%s)", db_path)
+    logger.info("graph: grafo compilado (db=%s)", db_path)
     return _graph
 
 
@@ -457,7 +457,7 @@ def _invalidate_llm_cache(user_id: str) -> None:
             del llm_tools._bound_cache[k]
         if stale_keys:
             logger.debug(
-                "agent_factory: %d entradas de LLM cache invalidadas para %s",
+                "graph: %d entradas de LLM cache invalidadas para %s",
                 len(stale_keys),
                 user_id,
             )
@@ -481,9 +481,9 @@ async def aclose() -> None:
         _version_tracker.clear()
         try:
             await ctx.__aexit__(None, None, None)
-            logger.info("agent_factory: checkpointer fechado")
+            logger.info("graph: checkpointer fechado")
         except Exception as exc:
-            logger.warning("agent_factory: erro ao fechar checkpointer: %s", exc)
+            logger.warning("graph: erro ao fechar checkpointer: %s", exc)
 
 
 async def awarm() -> None:
@@ -495,4 +495,4 @@ async def awarm() -> None:
     try:
         await get_user_agent()
     except Exception as exc:
-        logger.warning("agent_factory: warmup falhou (continuando): %s", exc)
+        logger.warning("graph: warmup falhou (continuando): %s", exc)

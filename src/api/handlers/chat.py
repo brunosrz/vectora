@@ -23,6 +23,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
+import src.graph as agent_factory
 from src.api.adapters import adapt_stream
 from src.api.schemas import (
     Attachment,
@@ -33,7 +34,6 @@ from src.api.schemas import (
     StreamChatRequest,
     ToolSchema,
 )
-from src.services import agent_factory
 
 logger = logging.getLogger(__name__)
 
@@ -136,14 +136,14 @@ def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Lazy graph loader — delegado para agent_factory
+# Lazy graph loader — delegado para src.graph
 # ---------------------------------------------------------------------------
 
 
 async def aclose_graph() -> None:
     """Fecha o grafo + checkpointer SQLite. Idempotente.
 
-    Delegado para ``agent_factory.aclose()`` — estado de lifecycle mantido lá.
+    Delegado para ``src.graph.aclose()`` — estado de lifecycle mantido lá.
     """
     await agent_factory.aclose()
 
@@ -151,7 +151,7 @@ async def aclose_graph() -> None:
 async def awarm_graph() -> None:
     """Inicializa o grafo eagerly no startup (opt-in).
 
-    Delegado para ``agent_factory.awarm()``.
+    Delegado para ``src.graph.awarm()``.
     """
     await agent_factory.awarm()
 
