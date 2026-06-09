@@ -33,6 +33,10 @@ import os
 import socket
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from rich.console import Console
 
 
 def _find_free_port(preferred: int | None = None) -> int:
@@ -334,15 +338,20 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
-    # storage — schema migrations e diagnóstico de storage
+    # storage — schema migrations, diagnóstico e backup (F11)
     storage_p = sub.add_parser(
         "storage",
-        help="Gerenciar schema migrations do banco SQLite",
+        help="Gerenciar storage: migrations, diagnóstico, backup/restore, wizard BaaS",
         description=(
             "Comandos de storage:\n"
+            "  info               — status de saúde de todos os backends\n"
+            "  test <DSN>         — testa conectividade a um banco (Postgres/SQLite)\n"
+            "  wizard             — configura o backend interativamente (BaaS)\n"
             "  migrate status     — lista migrations e estado (aplicada/pendente/drift)\n"
             "  migrate upgrade    — aplica todas as migrations pendentes\n"
-            "  migrate downgrade  — reverte até a versão indicada\n\n"
+            "  migrate downgrade  — reverte até a versão indicada\n"
+            "  backup             — exporta o banco SQLite para arquivo comprimido\n"
+            "  restore <arquivo>  — restaura banco de um backup\n\n"
             "O banco padrão é ~/.vectora/data/vectora.db (settings.db_dsn)."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -350,16 +359,18 @@ def _build_parser() -> argparse.ArgumentParser:
     storage_p.add_argument(
         "action",
         nargs="?",
-        choices=["migrate"],
-        default="migrate",
-        help="Ação de storage (default: migrate)",
+        choices=["info", "test", "wizard", "migrate", "backup", "restore"],
+        default="info",
+        help="Ação de storage (default: info)",
     )
     storage_p.add_argument(
         "subaction",
         nargs="?",
-        choices=["status", "upgrade", "downgrade"],
-        default="status",
-        help="Sub-ação da migration (default: status)",
+        default=None,
+        help=(
+            "Sub-ação ou argumento: status/upgrade/downgrade (migrate), "
+            "DSN (test), arquivo (restore)"
+        ),
     )
     storage_p.add_argument(
         "version",
@@ -372,6 +383,12 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         default=None,
         help="Caminho do banco SQLite (default: settings.db_dsn)",
+    )
+    storage_p.add_argument(
+        "--output",
+        metavar="FILE",
+        default=None,
+        help="Arquivo de saída para backup (default: auto-gerado)",
     )
 
     # auth — autenticação (login, logout, whoami, etc.)
@@ -670,12 +687,8 @@ async def _run_sessions_async() -> None:
 
 
 async def _run_storage_async(args: argparse.Namespace) -> None:
-    """storage migrate subcommand — schema versioning via MigrationRunner."""
-    import aiosqlite
+    """Dispatcher de subcomandos `vectora storage *` (F11)."""
     from rich.console import Console
-    from rich.table import Table
-
-    from src.storage.migrations.runner import MigrationRunner
 
     console = Console()
 
@@ -693,62 +706,310 @@ async def _run_storage_async(args: argparse.Namespace) -> None:
 
         db_path = str(_Path.home() / ".vectora" / "data" / "vectora.db")
 
-    subaction = getattr(args, "subaction", "status") or "status"
+    action = getattr(args, "action", "info") or "info"
+    subaction = getattr(args, "subaction", None)
     version = getattr(args, "version", None)
 
     try:
-        async with aiosqlite.connect(db_path) as conn:
-            conn.row_factory = aiosqlite.Row
-            runner = MigrationRunner(conn)
+        if action == "info":
+            await _storage_info(console)
 
-            if subaction == "status":
-                statuses = await runner.status()
-                if not statuses:
-                    console.print("[dim]Nenhuma migration encontrada.[/dim]")
-                    return
-                table = Table(title="Schema Migrations", show_lines=False)
-                table.add_column("Versão", style="cyan bold", width=8)
-                table.add_column("Nome", width=20)
-                table.add_column("Estado", width=12)
-                table.add_column("Aplicada em", style="dim", width=22)
-                for s in statuses:
-                    if not s.applied:
-                        state = "[yellow]pendente[/yellow]"
-                        ts = "—"
-                    elif s.drift:
-                        state = "[red]drift![/red]"
-                        ts = (s.applied_at or "")[:19].replace("T", " ")
-                    else:
-                        state = "[green]ok[/green]"
-                        ts = (s.applied_at or "")[:19].replace("T", " ")
-                    table.add_row(s.version, s.name, state, ts)
-                console.print(table)
+        elif action == "test":
+            dsn = subaction or ""
+            if not dsn:
+                console.print("[red]❌ Informe o DSN: vectora storage test <DSN>[/red]")
+                sys.exit(1)
+            await _storage_test(console, dsn)
 
-            elif subaction == "upgrade":
-                applied = await runner.upgrade(target=version)
-                if applied:
-                    console.print(f"[green]✓ Aplicadas:[/green] {', '.join(applied)}")
-                else:
-                    console.print(
-                        "[green]✓ Banco já atualizado — nada a fazer.[/green]"
-                    )
+        elif action == "wizard":
+            await _storage_wizard(console)
 
-            elif subaction == "downgrade":
-                if not version:
-                    console.print(
-                        "[red]❌ Informe a versão alvo: vectora storage migrate downgrade <VERSÃO>[/red]"
-                    )
-                    sys.exit(1)
-                reverted = await runner.downgrade(version)
-                if reverted:
-                    console.print(
-                        f"[yellow]↩ Revertidas:[/yellow] {', '.join(reverted)}"
-                    )
-                else:
-                    console.print("[dim]Nenhuma migration revertida.[/dim]")
+        elif action == "backup":
+            output = getattr(args, "output", None)
+            await _storage_backup(console, db_path, output)
+
+        elif action == "restore":
+            archive = subaction or ""
+            if not archive:
+                console.print(
+                    "[red]❌ Informe o arquivo: vectora storage restore <arquivo>[/red]"
+                )
+                sys.exit(1)
+            await _storage_restore(console, archive, db_path)
+
+        elif action == "migrate":
+            await _storage_migrate(console, db_path, subaction or "status", version)
+
+        else:
+            console.print(f"[red]Ação desconhecida: {action!r}[/red]")
+            sys.exit(1)
 
     except Exception as exc:
         console.print(f"[red]❌ Erro:[/red] {exc}")
+        sys.exit(1)
+
+
+async def _storage_info(console: Console) -> None:
+    """vectora storage info — status de todos os backends."""
+    from rich.table import Table
+
+    from src.storage.factory import storage_health
+
+    console.print("[bold]Storage Health Check[/bold]")
+    health = await storage_health()
+    table = Table(show_lines=False)
+    table.add_column("Backend", style="cyan", width=22)
+    table.add_column("Status", width=10)
+    table.add_column("Detalhe", style="dim")
+
+    for key, val in health.items():
+        if val.get("ok") is True:
+            status = "[green]✓ ok[/green]"
+            detail = ""
+            if "tables" in val:
+                detail = f"{len(val['tables'])} tabelas"
+        elif val.get("ok") is False:
+            status = "[red]✗ erro[/red]"
+            detail = str(val.get("error", ""))[:60]
+        else:
+            status = "[dim]n/a[/dim]"
+            detail = str(val.get("error", ""))[:60]
+        table.add_row(key, status, detail)
+    console.print(table)
+
+
+async def _storage_test(console: Console, dsn: str) -> None:
+    """vectora storage test <DSN> — smoke test de conectividade."""
+    import time
+
+    console.print(f"Testando [cyan]{dsn[:40]}…[/cyan]")
+    t0 = time.monotonic()
+    try:
+        if dsn.startswith("postgresql"):
+            import asyncpg
+
+            normalized = dsn.replace("postgresql+asyncpg://", "postgresql://")
+            conn = await asyncpg.connect(normalized)
+            await conn.execute("SELECT 1")
+            await conn.close()
+        elif dsn.startswith("https://") or dsn.startswith("http://"):
+            # Qdrant
+            from qdrant_client import QdrantClient
+
+            client = QdrantClient(url=dsn)
+            client.get_collections()
+        else:
+            import aiosqlite
+
+            async with aiosqlite.connect(dsn) as conn:
+                await conn.execute("SELECT 1")
+
+        ms = round((time.monotonic() - t0) * 1000, 1)
+        console.print(f"[green]✓ Conexão OK[/green] ({ms}ms)")
+    except Exception as exc:
+        console.print(f"[red]✗ Falha:[/red] {exc}")
+        sys.exit(1)
+
+
+async def _storage_wizard(console: Console) -> None:
+    """vectora storage wizard — configuração interativa de backend BaaS."""
+    console.print("[bold]Vectora Storage Wizard[/bold]")
+    console.print(
+        "Provedores disponíveis:\n"
+        "  [cyan]1[/cyan] Supabase  (Postgres + pgvector gerenciado)\n"
+        "  [cyan]2[/cyan] Neon      (Postgres serverless)\n"
+        "  [cyan]3[/cyan] Qdrant Cloud (VectorStore gerenciado)\n"
+        "  [cyan]4[/cyan] Self-hosted Postgres\n"
+        "  [cyan]0[/cyan] Cancelar\n"
+    )
+    choice = input("Selecione [0-4]: ").strip()
+
+    if choice == "0":
+        console.print("[dim]Cancelado.[/dim]")
+        return
+
+    if choice == "1":
+        host = input("Hostname Supabase (ex: db.xxxx.supabase.co): ").strip()
+        password = input("Senha Postgres: ").strip()
+        from src.storage.recipes.supabase import build_dsn
+
+        dsn = build_dsn(host=host, password=password, pooler=True)
+        console.print(f"DSN gerado: [cyan]{dsn[:50]}…[/cyan]")
+        await _storage_test(console, dsn)
+        _save_dsn_to_settings(dsn)
+
+    elif choice == "2":
+        host = input("Hostname Neon (ex: ep-xxx.us-east-2.aws.neon.tech): ").strip()
+        user = input("Usuário Postgres: ").strip()
+        password = input("Senha Postgres: ").strip()
+        database = input("Banco [neondb]: ").strip() or "neondb"
+        from src.storage.recipes.neon import build_dsn
+
+        dsn = build_dsn(host=host, user=user, password=password, database=database)
+        console.print(f"DSN gerado: [cyan]{dsn[:50]}…[/cyan]")
+        await _storage_test(console, dsn)
+        _save_dsn_to_settings(dsn)
+
+    elif choice == "3":
+        url = input("URL Qdrant Cloud (ex: https://xxx.cloud.qdrant.io): ").strip()
+        api_key = input("API Key: ").strip()
+        from src.storage.recipes.qdrant_cloud import healthcheck
+
+        result = await healthcheck(url=url, api_key=api_key)
+        if result["ok"]:
+            console.print(
+                f"[green]✓ Qdrant conectado[/green] — {len(result.get('collections', []))} collections"
+            )
+            _save_qdrant_to_settings(url, api_key)
+        else:
+            console.print(f"[red]✗ Falha:[/red] {result.get('error')}")
+            sys.exit(1)
+
+    elif choice == "4":
+        dsn = input("DSN Postgres (postgresql://...): ").strip()
+        await _storage_test(console, dsn)
+        _save_dsn_to_settings(dsn)
+
+    else:
+        console.print("[red]Opção inválida.[/red]")
+        sys.exit(1)
+
+
+def _save_dsn_to_settings(dsn: str) -> None:
+    """Persiste postgres_dsn e storage_mode=complete nas settings."""
+    try:
+        from src.settings import settings as _s
+
+        _s.postgres_dsn = dsn
+        _s.storage_mode = "complete"  # type: ignore[assignment]
+    except Exception:
+        pass
+
+
+def _save_qdrant_to_settings(url: str, api_key: str) -> None:
+    """Persiste qdrant_url, qdrant_api_key e storage_mode=complete nas settings."""
+    try:
+        from src.settings import settings as _s
+
+        _s.qdrant_url = url
+        _s.qdrant_api_key = api_key
+        _s.storage_mode = "complete"  # type: ignore[assignment]
+    except Exception:
+        pass
+
+
+async def _storage_backup(
+    console: Console,
+    db_path: str,
+    output: str | None,
+) -> None:
+    """vectora storage backup — exporta SQLite comprimido."""
+    import gzip
+    import shutil
+    from datetime import UTC, datetime
+    from pathlib import Path as _Path
+
+    src = _Path(db_path)
+    if not src.is_file():
+        console.print(f"[red]Banco não encontrado: {db_path}[/red]")
+        sys.exit(1)
+
+    if not output:
+        ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+        output = str(src.with_suffix(f".backup.{ts}.db.gz"))
+
+    with src.open("rb") as f_in, gzip.open(output, "wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
+
+    size_mb = _Path(output).stat().st_size / 1024 / 1024
+    console.print(f"[green]✓ Backup criado:[/green] {output} ({size_mb:.2f} MiB)")
+
+
+async def _storage_restore(
+    console: Console,
+    archive: str,
+    db_path: str,
+) -> None:
+    """vectora storage restore <arquivo> — restaura SQLite de backup."""
+    import gzip
+    import shutil
+    from pathlib import Path as _Path
+
+    arc = _Path(archive)
+    if not arc.is_file():
+        console.print(f"[red]Arquivo não encontrado: {archive}[/red]")
+        sys.exit(1)
+
+    dest = _Path(db_path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    with gzip.open(str(arc), "rb") as f_in, dest.open("wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
+
+    console.print(f"[green]✓ Restaurado:[/green] {db_path}")
+
+
+async def _storage_migrate(
+    console: Console,
+    db_path: str,
+    subaction: str,
+    version: str | None,
+) -> None:
+    """vectora storage migrate — schema versioning via MigrationRunner."""
+    import aiosqlite
+    from rich.table import Table
+
+    from src.storage.migrations.runner import MigrationRunner
+
+    async with aiosqlite.connect(db_path) as conn:
+        conn.row_factory = aiosqlite.Row
+        runner = MigrationRunner(conn)
+
+        if subaction == "status":
+            statuses = await runner.status()
+            if not statuses:
+                console.print("[dim]Nenhuma migration encontrada.[/dim]")
+                return
+            table = Table(title="Schema Migrations", show_lines=False)
+            table.add_column("Versão", style="cyan bold", width=8)
+            table.add_column("Nome", width=20)
+            table.add_column("Estado", width=12)
+            table.add_column("Aplicada em", style="dim", width=22)
+            for s in statuses:
+                if not s.applied:
+                    state = "[yellow]pendente[/yellow]"
+                    ts = "—"
+                elif s.drift:
+                    state = "[red]drift![/red]"
+                    ts = (s.applied_at or "")[:19].replace("T", " ")
+                else:
+                    state = "[green]ok[/green]"
+                    ts = (s.applied_at or "")[:19].replace("T", " ")
+                table.add_row(s.version, s.name, state, ts)
+            console.print(table)
+
+        elif subaction == "upgrade":
+            applied = await runner.upgrade(target=version)
+            if applied:
+                console.print(f"[green]✓ Aplicadas:[/green] {', '.join(applied)}")
+            else:
+                console.print("[green]✓ Banco já atualizado — nada a fazer.[/green]")
+
+        elif subaction == "downgrade":
+            if not version:
+                console.print(
+                    "[red]❌ Informe a versão alvo: vectora storage migrate downgrade <VERSÃO>[/red]"
+                )
+                sys.exit(1)
+            reverted = await runner.downgrade(version)
+            if reverted:
+                console.print(f"[yellow]↩ Revertidas:[/yellow] {', '.join(reverted)}")
+            else:
+                console.print("[dim]Nenhuma migration revertida.[/dim]")
+
+        else:
+            console.print(f"[red]Sub-ação desconhecida: {subaction!r}[/red]")
+            sys.exit(1)
         logger.debug("storage migrate: erro", exc_info=True)
         sys.exit(1)
 
