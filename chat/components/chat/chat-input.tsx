@@ -337,7 +337,7 @@ export function ChatInput({
                     value={agentConfig.model}
                     onValueChange={handleModelChange}
                   >
-                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:text-foreground px-2 gap-1 w-auto shadow-none focus:ring-0 focus-visible:ring-0 text-muted-foreground [&_svg]:opacity-70">
+                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent dark:bg-transparent hover:bg-transparent dark:hover:bg-transparent hover:text-foreground px-2 gap-1 w-auto shadow-none focus:ring-0 focus-visible:ring-0 text-muted-foreground [&_svg]:opacity-70">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
