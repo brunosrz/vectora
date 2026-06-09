@@ -13,6 +13,7 @@
 "use client";
 
 import { memo } from "react";
+import { Loader2 } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import type { ToolCall, RenderHint } from "@/lib/types";
@@ -398,7 +399,8 @@ export const ToolCallRenderer = memo(function ToolCallRenderer({
           </span>
         )}
         {isStreaming && !tool.output && (
-          <span className="ml-auto text-[10px] text-muted-foreground animate-pulse">
+          <span className="ml-auto flex items-center gap-1 text-[10px] text-primary/70 font-medium">
+            <Loader2 className="w-2.5 h-2.5 animate-spin" />
             executando…
           </span>
         )}

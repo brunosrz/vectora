@@ -581,6 +581,17 @@ export const MessageItem = memo(
           .prose > * {
             transition: opacity 0.1s ease-out;
           }
+
+          /* Cursor piscante pré-1º token */
+          @keyframes blink {
+            0%,
+            100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0;
+            }
+          }
         `}</style>
         <div className="flex gap-3 sm:gap-4 items-start group/message">
           <div
@@ -816,6 +827,13 @@ export const MessageItem = memo(
                       >
                         {stripMarkdownEnvelope(message.content)}
                       </ReactMarkdown>
+                    ) : message.isThinking ? (
+                      /* Cursor piscante pré-1º token — indica que o modelo está gerando */
+                      <span
+                        className="inline-block w-[2px] h-[1em] bg-primary align-middle"
+                        aria-hidden="true"
+                        style={{ animation: "blink 1s step-end infinite" }}
+                      />
                     ) : null}
                   </div>
 
