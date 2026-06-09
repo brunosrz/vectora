@@ -33,7 +33,7 @@ import os
 import socket
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -955,12 +955,30 @@ async def _storage_migrate(
     subaction: str,
     version: str | None,
 ) -> None:
-    """vectora storage migrate — schema versioning via MigrationRunner."""
+    """vectora storage migrate — schema versioning e migração de dados.
+
+    Subcomandos de schema (MigrationRunner):
+        status       lista migrations e estado
+        upgrade      aplica todas as pendentes (ou até --version)
+        downgrade    reverte até <version>
+
+    Subcomandos de dados (DataMigration):
+        to-postgres           SQLite → Postgres via asyncpg
+        to-qdrant             LanceDB → Qdrant em batches
+        to-pgvector           LanceDB → Postgres pgvector
+        memory-to-langgraph   store antigo → LangGraph BaseStore
+    """
     import aiosqlite
     from rich.table import Table
 
     from src.storage.migrations.runner import MigrationRunner
 
+    # ── Migrações de dados ────────────────────────────────────────────────────
+    if subaction in ("to-postgres", "to-qdrant", "to-pgvector", "memory-to-langgraph"):
+        await _storage_data_migrate(console, db_path, subaction, version)
+        return
+
+    # ── Schema migrations via MigrationRunner ─────────────────────────────────
     async with aiosqlite.connect(db_path) as conn:
         conn.row_factory = aiosqlite.Row
         runner = MigrationRunner(conn)
@@ -1008,10 +1026,113 @@ async def _storage_migrate(
                 console.print("[dim]Nenhuma migration revertida.[/dim]")
 
         else:
-            console.print(f"[red]Sub-ação desconhecida: {subaction!r}[/red]")
+            console.print(
+                f"[red]Sub-ação desconhecida: {subaction!r}[/red]\n"
+                "Opções: status | upgrade | downgrade | "
+                "to-postgres | to-qdrant | to-pgvector | memory-to-langgraph"
+            )
             sys.exit(1)
-        logger.debug("storage migrate: erro", exc_info=True)
-        sys.exit(1)
+
+
+async def _storage_data_migrate(
+    console: Console,
+    db_path: str,
+    subaction: str,
+    extra: str | None,
+) -> None:
+    """Executa migrações de dados (to-postgres, to-qdrant, to-pgvector, memory-to-langgraph)."""
+    from src.storage.migrations.data_migration import (
+        migrate_memory_to_langgraph,
+        migrate_to_pgvector,
+        migrate_to_postgres,
+        migrate_to_qdrant,
+    )
+
+    _s: Any = None
+    try:
+        from src.settings import settings as _s
+    except Exception:
+        pass
+
+    dry_run = False  # futuro: flag --dry-run via args
+
+    if subaction == "to-postgres":
+        postgres_dsn = str((_s and _s.postgres_dsn) or "")
+        if not postgres_dsn:
+            console.print(
+                "[red]❌ postgres_dsn não configurado. Use POSTGRES_DSN ou vectora storage wizard.[/red]"
+            )
+            sys.exit(1)
+        console.print(f"[bold]Migrando SQLite → Postgres[/bold] (dry_run={dry_run})")
+        result = await migrate_to_postgres(
+            sqlite_path=db_path,
+            postgres_dsn=postgres_dsn,
+            dry_run=dry_run,
+            console=console,
+        )
+        console.print(f"[green]Total:[/green] {result['total_rows']} registros")
+
+    elif subaction == "to-qdrant":
+        qdrant_url = str((_s and _s.qdrant_url) or "")
+        qdrant_api_key_raw = _s and getattr(_s, "qdrant_api_key", None)
+        qdrant_api_key: str | None = (
+            str(qdrant_api_key_raw) if qdrant_api_key_raw else None
+        )
+        if not qdrant_url:
+            console.print(
+                "[red]❌ qdrant_url não configurado. Use QDRANT_URL ou vectora storage wizard.[/red]"
+            )
+            sys.exit(1)
+        lancedb_path = (
+            db_path.replace(".db", "_lancedb") if db_path.endswith(".db") else db_path
+        )
+        collection = extra or "articles"
+        console.print(
+            f"[bold]Migrando LanceDB → Qdrant[/bold] collection={collection} (dry_run={dry_run})"
+        )
+        result = await migrate_to_qdrant(
+            lancedb_path=lancedb_path,
+            qdrant_url=qdrant_url,
+            qdrant_api_key=qdrant_api_key,
+            collection=collection,
+            dry_run=dry_run,
+            console=console,
+        )
+        console.print(f"[green]Total:[/green] {result['upserted']} vetores")
+
+    elif subaction == "to-pgvector":
+        postgres_dsn = str((_s and _s.postgres_dsn) or "")
+        if not postgres_dsn:
+            console.print(
+                "[red]❌ postgres_dsn não configurado. Use POSTGRES_DSN ou vectora storage wizard.[/red]"
+            )
+            sys.exit(1)
+        lancedb_path = (
+            db_path.replace(".db", "_lancedb") if db_path.endswith(".db") else db_path
+        )
+        collection = extra or "articles"
+        console.print(
+            f"[bold]Migrando LanceDB → pgvector[/bold] collection={collection} (dry_run={dry_run})"
+        )
+        result = await migrate_to_pgvector(
+            lancedb_path=lancedb_path,
+            postgres_dsn=postgres_dsn,
+            collection=collection,
+            dry_run=dry_run,
+            console=console,
+        )
+        console.print(f"[green]Total:[/green] {result['upserted']} vetores")
+
+    elif subaction == "memory-to-langgraph":
+        console.print(
+            f"[bold]Migrando memórias → LangGraph BaseStore[/bold] (dry_run={dry_run})"
+        )
+        result = await migrate_memory_to_langgraph(
+            sqlite_path=db_path,
+            dry_run=dry_run,
+            console=console,
+        )
+        console.print(f"[green]Total:[/green] {result['migrated']} memórias migradas")
 
 
 def _run_config(args: argparse.Namespace) -> None:
