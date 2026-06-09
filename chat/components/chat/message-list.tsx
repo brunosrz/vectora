@@ -22,7 +22,7 @@ import { ArrowDown } from "lucide-react";
 const VIRTUALIZE_THRESHOLD = 50;
 
 // Estimativa de altura por mensagem (será refinada via measureElement).
-const ESTIMATE_SIZE_PX = 180;
+const ESTIMATE_SIZE_PX = 200;
 
 interface MessageListProps {
   messages: Message[];
