@@ -17,7 +17,8 @@ export type AdminSubTab =
   | "tools"
   | "system"
   | "config"
-  | "safe-roots";
+  | "safe-roots"
+  | "storage";
 
 interface AdminDialogState {
   open: boolean;

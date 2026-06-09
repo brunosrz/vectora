@@ -593,3 +593,145 @@ async def delete_safe_root(request: Request, root_id: str) -> dict:
         raise HTTPException(status_code=500, detail="Falha ao remover")
     logger.info("admin: safe-root removido por user_id=%s path=%s", user.id, root.path)
     return {"status": "deleted"}
+
+
+# ---------------------------------------------------------------------------
+# F10 — Storage endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/storage")
+async def get_storage_status(request: Request) -> dict:
+    """Retorna o status de saúde de todos os backends de storage.
+
+    Inclui checkpointer, store (BaseStore), LanceDB e Postgres (se configurado).
+    Usado pela aba "Storage" do painel Admin.
+
+    Returns:
+        ``{"checkpointer": {...}, "store": {...}, "lancedb": {...}, "postgres": {...}}``
+    """
+    user = _get_user(request)
+    require_admin(user)
+
+    from src.storage.factory import storage_health
+
+    return await storage_health()
+
+
+@router.post("/storage/test")
+async def test_storage_connection(request: Request) -> dict:
+    """Testa a conexão ao backend de storage especificado no body.
+
+    Body (JSON):
+        ``{"backend": "postgres", "dsn": "postgresql://..."}``
+        ou ``{"backend": "qdrant", "url": "https://...", "api_key": "..."}``
+        ou ``{"backend": "sqlite", "path": "/caminho/para/db.sqlite"}``
+
+    Returns:
+        ``{"ok": true, "latency_ms": 12}`` ou ``{"ok": false, "error": "..."}``
+    """
+    user = _get_user(request)
+    require_admin(user)
+
+    import time
+
+    body = await request.json()
+    backend = body.get("backend", "sqlite")
+    t0 = time.monotonic()
+
+    try:
+        if backend == "postgres":
+            import asyncpg
+
+            dsn = body.get("dsn") or ""
+            if not dsn:
+                return {"ok": False, "error": "DSN não fornecido"}
+            dsn_norm = dsn.replace("postgresql+asyncpg://", "postgresql://")
+            conn = await asyncpg.connect(dsn_norm)
+            await conn.execute("SELECT 1")
+            await conn.close()
+
+        elif backend == "qdrant":
+            from qdrant_client import QdrantClient
+
+            url = body.get("url") or ""
+            api_key = body.get("api_key")
+            if not url:
+                return {"ok": False, "error": "URL não fornecida"}
+            client = QdrantClient(url=url, api_key=api_key)
+            client.get_collections()
+
+        elif backend == "sqlite":
+            import aiosqlite
+
+            path = body.get("path") or ""
+            if not path:
+                return {"ok": False, "error": "Path não fornecido"}
+            async with aiosqlite.connect(path) as conn:
+                await conn.execute("SELECT 1")
+
+        else:
+            return {"ok": False, "error": f"Backend desconhecido: {backend!r}"}
+
+        latency_ms = round((time.monotonic() - t0) * 1000, 1)
+        return {"ok": True, "latency_ms": latency_ms}
+
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+@router.patch("/storage")
+async def update_storage_config(request: Request) -> dict:
+    """Atualiza configurações de storage em runtime.
+
+    Body (JSON) — campos opcionais:
+        ``storage_mode``: ``"lite"`` | ``"complete"``
+        ``postgres_dsn``: DSN asyncpg
+        ``qdrant_url``:   URL do cluster Qdrant
+        ``qdrant_api_key``: API key Qdrant
+
+    Nota: alterações são aplicadas ao runtime_settings; persistem via
+    ``~/.vectora/settings.json`` se o ``RuntimeSettings`` suportar save.
+
+    Returns:
+        ``{"status": "updated", "storage_mode": "complete"}``
+    """
+    user = _get_user(request)
+    require_admin(user)
+
+    body = await request.json()
+
+    from src.services.runtime_settings import runtime_settings
+
+    updated: dict[str, object] = {}
+
+    if "storage_mode" in body:
+        mode = body["storage_mode"]
+        if mode not in ("lite", "complete"):
+            raise HTTPException(
+                status_code=422,
+                detail="storage_mode deve ser 'lite' ou 'complete'",
+            )
+        runtime_settings.storage_mode = mode  # ty: ignore[unresolved-attribute]
+        updated["storage_mode"] = mode
+
+    if "postgres_dsn" in body:
+        from src.settings import settings as _s
+
+        _s.postgres_dsn = body["postgres_dsn"]
+        updated["postgres_dsn"] = "***"  # não expõe DSN no response
+
+    if "qdrant_url" in body:
+        from src.settings import settings as _s
+
+        _s.qdrant_url = body["qdrant_url"]
+        updated["qdrant_url"] = body["qdrant_url"]
+
+    if "qdrant_api_key" in body:
+        from src.settings import settings as _s
+
+        _s.qdrant_api_key = body["qdrant_api_key"]
+        updated["qdrant_api_key"] = "***"
+
+    logger.info("admin: storage config atualizado por %s: %s", user.id, list(updated))
+    return {"status": "updated", **updated}

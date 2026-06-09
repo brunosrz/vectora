@@ -12,17 +12,21 @@
 
 import {
   Check,
+  CheckCircle2,
   Copy,
   Cpu,
+  Database,
   FolderLock,
   Loader2,
   Pencil,
+  RefreshCw,
   Settings2,
   Shield,
   Trash2,
   UserPlus,
   Users,
   Wrench,
+  XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -1062,6 +1066,194 @@ function SafeRootsPanel() {
 }
 
 // ---------------------------------------------------------------------------
+// StoragePanel (F10)
+// ---------------------------------------------------------------------------
+
+interface StorageBackendStatus {
+  ok: boolean | null;
+  error?: string | null;
+  tables?: string[];
+  latency_ms?: number;
+}
+
+interface StorageHealth {
+  checkpointer?: StorageBackendStatus;
+  store?: StorageBackendStatus;
+  lancedb?: StorageBackendStatus;
+  postgres?: StorageBackendStatus;
+}
+
+function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
+  if (status.ok === null || status.ok === undefined) {
+    return (
+      <span className="text-xs text-muted-foreground">não configurado</span>
+    );
+  }
+  if (status.ok) {
+    return (
+      <span className="flex items-center gap-1 text-xs text-green-600">
+        <CheckCircle2 className="w-3.5 h-3.5" />
+        OK
+        {status.latency_ms !== undefined && (
+          <span className="text-muted-foreground">({status.latency_ms}ms)</span>
+        )}
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-center gap-1 text-xs text-destructive">
+      <XCircle className="w-3.5 h-3.5" />
+      {status.error ?? "erro"}
+    </span>
+  );
+}
+
+function StoragePanel() {
+  const [health, setHealth] = useState<StorageHealth | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [testDsn, setTestDsn] = useState("");
+  const [testResult, setTestResult] = useState<{
+    ok: boolean;
+    error?: string;
+    latency_ms?: number;
+  } | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  const fetchHealth = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/admin/storage", { credentials: "include" });
+      if (res.ok) setHealth(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHealth();
+  }, []);
+
+  const handleTest = async () => {
+    if (!testDsn.trim()) return;
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const backend = testDsn.startsWith("postgresql") ? "postgres" : "sqlite";
+      const body: Record<string, string> = { backend };
+      if (backend === "postgres") body.dsn = testDsn;
+      else body.path = testDsn;
+      const res = await fetch("/admin/storage/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      setTestResult(await res.json());
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const backends: { key: keyof StorageHealth; label: string }[] = [
+    { key: "checkpointer", label: "Checkpointer (SQLite)" },
+    { key: "store", label: "BaseStore (AsyncSqliteStore)" },
+    { key: "lancedb", label: "LanceDB (VectorStore)" },
+    { key: "postgres", label: "Postgres (modo complete)" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Header com refresh */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">
+          Status dos backends de storage
+        </span>
+        <button
+          onClick={fetchHealth}
+          disabled={loading}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
+          Atualizar
+        </button>
+      </div>
+
+      {/* Cards de status */}
+      <div className="grid grid-cols-1 gap-2">
+        {backends.map(({ key, label }) => (
+          <div
+            key={key}
+            className="flex items-center justify-between rounded border px-3 py-2"
+          >
+            <div className="flex items-center gap-2">
+              <Database className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs">{label}</span>
+            </div>
+            {loading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+            ) : health?.[key] ? (
+              <StorageStatusBadge status={health[key]!} />
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Teste de conexão */}
+      <div className="space-y-2 pt-2 border-t">
+        <span className="text-xs font-medium text-muted-foreground">
+          Testar conexão
+        </span>
+        <div className="flex gap-2">
+          <Input
+            value={testDsn}
+            onChange={(e) => setTestDsn(e.target.value)}
+            placeholder="postgresql://user:pass@host/db  ou  /path/to/db.sqlite"
+            className="h-7 text-xs font-mono"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleTest}
+            disabled={testing || !testDsn.trim()}
+            className="h-7 text-xs shrink-0"
+          >
+            {testing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              "Testar"
+            )}
+          </Button>
+        </div>
+        {testResult && (
+          <div
+            className={`text-xs flex items-center gap-1 ${testResult.ok ? "text-green-600" : "text-destructive"}`}
+          >
+            {testResult.ok ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Conexão OK
+                {testResult.latency_ms !== undefined && (
+                  <span className="text-muted-foreground">
+                    ({testResult.latency_ms}ms)
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                <XCircle className="w-3.5 h-3.5" />
+                {testResult.error ?? "Falha na conexão"}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Componente principal
 // ---------------------------------------------------------------------------
 
@@ -1086,6 +1278,11 @@ const SUB_TABS: { id: AdminSubTab; label: string; icon: React.ReactNode }[] = [
     id: "config",
     label: "Config",
     icon: <Settings2 className="w-3.5 h-3.5" />,
+  },
+  {
+    id: "storage",
+    label: "Storage",
+    icon: <Database className="w-3.5 h-3.5" />,
   },
 ];
 
@@ -1136,6 +1333,7 @@ export function AdminTab() {
         {active === "safe-roots" && <SafeRootsPanel />}
         {active === "system" && <SystemPanel />}
         {active === "config" && <ConfigPanel />}
+        {active === "storage" && <StoragePanel />}
       </div>
     </div>
   );
