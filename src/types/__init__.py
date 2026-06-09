@@ -11,6 +11,7 @@ from src.types.agents import (
     SubTask,
     UIMetrics,
 )
+from src.types.context import VectoraContext, ctx_from_config
 from src.types.curation import CurationDecision, WebResultVerdict
 from src.types.documents import ArtifactMetadata, Document
 from src.types.safe_root import SafeRoot
@@ -31,6 +32,8 @@ __all__ = [
     "SessionMetadata",
     "SubTask",
     "UIMetrics",
+    "VectoraContext",
     "WebResultVerdict",
     "Workspace",
+    "ctx_from_config",
 ]

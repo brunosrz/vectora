@@ -309,6 +309,8 @@ async def _build_graph_async() -> Any:
 
     middleware = build_middleware_stack(permission_mode="ask", llm=llm)
 
+    from src.types.context import VectoraContext
+
     _graph = create_deep_agent(
         llm,
         tools=ALL_TOOLS,
@@ -316,6 +318,7 @@ async def _build_graph_async() -> Any:
         subagents=subagents,
         middleware=middleware,
         checkpointer=checkpointer,
+        context_schema=VectoraContext,
         name="vectora",
     )
 
