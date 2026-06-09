@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useT } from "@/lib/i18n";
+import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import {
   useWorkbenchStore,
@@ -216,6 +217,9 @@ export function WorkbenchPanel({
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
   const setActiveTab = useWorkbenchStore((s) => s.setActiveTab);
   const setPanelOpen = useWorkbenchStore((s) => s.setPanelOpen);
+
+  // A.17 — file watcher SSE: dispara markPending quando arquivos mudam
+  useWorkspaceWatcher(wsId || undefined);
 
   return (
     <div className="h-full flex flex-col bg-background border-l border-border/60">

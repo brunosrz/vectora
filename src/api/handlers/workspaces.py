@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Request, Response
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -2221,3 +2222,97 @@ async def search_workspace_files(
     # Fallback: Python puro.
     py_hits, py_truncated = _python_text_search(cwd_root, q)
     return SearchResponse(hits=py_hits, truncated=py_truncated)
+
+
+# ---------------------------------------------------------------------------
+# A.17 — File watcher SSE
+# ---------------------------------------------------------------------------
+
+_WATCHER_DEBOUNCE_S = 0.3  # 300ms
+_WATCHER_CAP = 100  # máx paths por evento
+
+
+@view_router.get("/{workspace_id}/events")
+async def workspace_events(workspace_id: str, request: Request) -> StreamingResponse:
+    """Emite eventos SSE ``fs_changed`` quando arquivos do workspace mudam.
+
+    Usa ``watchdog`` para monitorar o diretório em thread separada e debounce
+    de 300ms para não inundar o cliente com eventos individuais.
+    Máximo de 100 paths por evento (os demais são descartados — client
+    deve fazer diff completo).
+    """
+    import asyncio
+    import json as _json
+    import time
+    from pathlib import Path
+
+    from watchdog.events import FileSystemEvent, FileSystemEventHandler
+    from watchdog.observers import Observer
+
+    from src.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+
+        async def _not_found() -> Any:
+            yield 'data: {"type": "error", "message": "Workspace não encontrado."}\n\n'
+
+        return StreamingResponse(_not_found(), media_type="text/event-stream")
+
+    cwd = str(Path(ws.cwd).resolve())
+
+    loop = asyncio.get_event_loop()
+    queue: asyncio.Queue[list[str]] = asyncio.Queue(maxsize=50)
+
+    # Debounce: acumula paths alterados e envia em lote a cada 300ms
+    _pending: list[str] = []
+    _last_flush: float = 0.0
+
+    class _Handler(FileSystemEventHandler):
+        def on_any_event(self, event: FileSystemEvent) -> None:
+            nonlocal _pending, _last_flush
+            src = getattr(event, "src_path", "")
+            # Ignora diretórios e arquivos ocultos de controle
+            if not src or event.is_directory:  # type: ignore[attr-defined]
+                return
+            try:
+                rel = str(Path(src).relative_to(cwd)).replace("\\", "/")
+            except ValueError:
+                rel = src
+            _pending.append(rel)
+            now = time.monotonic()
+            if now - _last_flush >= _WATCHER_DEBOUNCE_S:
+                _last_flush = now
+                paths = _pending[:_WATCHER_CAP]
+                _pending.clear()
+                asyncio.run_coroutine_threadsafe(queue.put(paths), loop)
+
+    observer = Observer()
+    observer.schedule(_Handler(), cwd, recursive=True)
+    observer.start()
+
+    async def _stream() -> Any:
+        try:
+            # keepalive heartbeat + event loop
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    paths = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    payload = _json.dumps({"type": "fs_changed", "paths": paths})
+                    yield f"data: {payload}\n\n"
+                except TimeoutError:
+                    # heartbeat
+                    yield ": keepalive\n\n"
+        finally:
+            observer.stop()
+            observer.join(timeout=5)
+
+    return StreamingResponse(
+        _stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
