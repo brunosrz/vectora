@@ -17,6 +17,7 @@ import {
   ChevronRight,
   File,
   FilePlus,
+  Filter,
   FolderClosed,
   FolderPlus,
   History,
@@ -1231,6 +1232,56 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     [wsId, openPath, invalidateFiles, setOpenFile],
   );
 
+  // ── Gerenciador de .gitignore (A.10) ─────────────────────────────────────
+  const [gitignoreOpen, setGitignoreOpen] = useState(false);
+  const [gitignoreDraft, setGitignoreDraft] = useState<string>("");
+  const [gitignoreSaving, setGitignoreSaving] = useState(false);
+  const [gitignorePreview, setGitignorePreview] = useState<string[]>([]);
+  const [previewPattern, setPreviewPattern] = useState("");
+
+  const handleOpenGitignore = useCallback(async () => {
+    if (!wsId) return;
+    setGitignoreOpen(true);
+    const res = await fetch(
+      `/workspaces/${encodeURIComponent(wsId)}/fs/gitignore`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      setGitignoreDraft((data.content as string) ?? "");
+    }
+  }, [wsId]);
+
+  const handleSaveGitignore = useCallback(async () => {
+    if (!wsId) return;
+    setGitignoreSaving(true);
+    const lines = gitignoreDraft.split("\n");
+    await fetch(`/workspaces/${encodeURIComponent(wsId)}/fs/gitignore`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lines }),
+    });
+    setGitignoreSaving(false);
+    setGitignoreOpen(false);
+  }, [wsId, gitignoreDraft]);
+
+  useEffect(() => {
+    if (!previewPattern.trim() || !wsId || !gitignoreOpen) {
+      setGitignorePreview([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const qs = new URLSearchParams({ pattern: previewPattern.trim() });
+      const res = await fetch(
+        `/workspaces/${encodeURIComponent(wsId)}/fs/gitignore-preview?${qs}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setGitignorePreview((data.matched as string[]) ?? []);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [previewPattern, wsId, gitignoreOpen]);
+
   // Ctrl+N → novo arquivo na raiz; Ctrl+Shift+N → nova pasta na raiz
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1304,6 +1355,17 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
         >
           <RefreshCw className="w-3.5 h-3.5" />
         </button>
+        {/* .gitignore manager (A.10) */}
+        {workspace.is_git_repo && (
+          <button
+            onClick={handleOpenGitignore}
+            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            title={t("workbench.files.gitignore_manage")}
+            aria-label={t("workbench.files.gitignore_manage")}
+          >
+            <Filter className="w-3.5 h-3.5" />
+          </button>
+        )}
         {/* Toggle de busca em conteúdo (A.5) */}
         <button
           onClick={() => {
@@ -1669,6 +1731,76 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             </Button>
             <Button variant="destructive" onClick={handleConfirmDiscardNav}>
               {t("workbench.files.discard")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog .gitignore (A.10) */}
+      <Dialog
+        open={gitignoreOpen}
+        onOpenChange={(o) => {
+          if (!o) setGitignoreOpen(false);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("workbench.files.gitignore_title")}</DialogTitle>
+            <DialogDescription>
+              {t("workbench.files.gitignore_desc")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <textarea
+              className="font-mono text-xs bg-muted/30 border border-border/60 rounded p-2 h-48 resize-none outline-none focus:border-primary"
+              value={gitignoreDraft}
+              onChange={(e) => setGitignoreDraft(e.target.value)}
+              spellCheck={false}
+            />
+            <div className="flex gap-2 items-center">
+              <input
+                className="flex-1 text-xs bg-background border border-border/60 rounded px-2 py-1 outline-none focus:border-primary"
+                placeholder={t("workbench.files.gitignore_preview_placeholder")}
+                value={previewPattern}
+                onChange={(e) => setPreviewPattern(e.target.value)}
+              />
+            </div>
+            {gitignorePreview.length > 0 && (
+              <div className="border border-border/40 rounded p-2 max-h-28 overflow-y-auto">
+                <p className="text-[10px] text-muted-foreground mb-1">
+                  {t("workbench.files.gitignore_preview_matches", {
+                    n: gitignorePreview.length,
+                  })}
+                </p>
+                {gitignorePreview.map((f) => (
+                  <p
+                    key={f}
+                    className="text-[10px] font-mono text-foreground/80"
+                  >
+                    {f}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setGitignoreOpen(false)}
+            >
+              {t("workbench.files.cancel")}
+            </Button>
+            <Button
+              size="sm"
+              disabled={gitignoreSaving}
+              onClick={handleSaveGitignore}
+            >
+              {gitignoreSaving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                t("workbench.files.save")
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

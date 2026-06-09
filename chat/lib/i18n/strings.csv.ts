@@ -547,6 +547,11 @@ workbench.files.add_context,Add to context,Agregar al contexto,Adicionar ao cont
 workbench.files.creating_file,File name…,Nombre del archivo…,Nome do arquivo…
 workbench.files.creating_folder,Folder name…,Nombre de la carpeta…,Nome da pasta…
 workbench.files.collapse,Collapse all,Colapsar todo,Recolher tudo
+workbench.files.gitignore_manage,Manage .gitignore,Gestionar .gitignore,Gerenciar .gitignore
+workbench.files.gitignore_title,.gitignore Editor,.gitignore Editor,Editor de .gitignore
+workbench.files.gitignore_desc,Edit patterns to ignore. One per line.,Editar patrones a ignorar. Uno por línea.,Editar padrões para ignorar. Um por linha.
+workbench.files.gitignore_preview_placeholder,Preview pattern (e.g. *.log),Vista previa de patrón (ej: *.log),Visualizar padrão (ex: *.log)
+workbench.files.gitignore_preview_matches,"{n} files matched","{n} archivos coinciden","{n} arquivos encontrados"
 at.title,Workspace files,Archivos del workspace,Arquivos do workspace
 workbench.diff.clean_hint,"Run ""git log"" to inspect recent commits.","Ejecuta ""git log"" para ver commits recientes.","Rode ""git log"" para inspecionar commits recentes."
 workbench.diff.group_staged,Staged,Preparados,Staged

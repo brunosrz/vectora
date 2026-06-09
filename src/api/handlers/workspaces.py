@@ -1347,6 +1347,110 @@ async def git_commit_diff(
 
 
 # ---------------------------------------------------------------------------
+# A.10 — Gerenciador de .gitignore
+# ---------------------------------------------------------------------------
+
+
+class GitignorePreviewResponse(BaseModel):
+    pattern: str
+    matched: list[str]  # caminhos relativos afetados
+    total: int
+
+
+class GitignoreUpdateRequest(BaseModel):
+    lines: list[str]  # conteúdo completo do .gitignore
+
+
+@view_router.get(
+    "/{workspace_id}/fs/gitignore-preview",
+    response_model=GitignorePreviewResponse,
+)
+async def gitignore_preview(
+    workspace_id: str,
+    pattern: Annotated[str, Query(min_length=1)],
+) -> GitignorePreviewResponse:
+    """Previsualiza quais arquivos um padrão .gitignore afetaria."""
+    import pathspec
+
+    from src.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return GitignorePreviewResponse(pattern=pattern, matched=[], total=0)
+
+    cwd = Path(ws.cwd)
+    spec = pathspec.PathSpec.from_lines("gitwildmatch", [pattern])
+
+    matched: list[str] = []
+    exclude = frozenset({".git", "node_modules", "__pycache__", ".venv", "venv"})
+    stack = [cwd]
+    while stack and len(matched) < 200:
+        current = stack.pop()
+        try:
+            entries = list(current.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if entry.is_dir():
+                if entry.name not in exclude:
+                    stack.append(entry)
+            elif entry.is_file():
+                try:
+                    rel = str(entry.relative_to(cwd)).replace("\\", "/")
+                except ValueError:
+                    continue
+                if spec.match_file(rel):
+                    matched.append(rel)
+                    if len(matched) >= 200:
+                        break
+
+    return GitignorePreviewResponse(
+        pattern=pattern, matched=matched[:200], total=len(matched)
+    )
+
+
+@view_router.get("/{workspace_id}/fs/gitignore")
+async def get_gitignore(workspace_id: str) -> dict:
+    """Lê o conteúdo do .gitignore raiz do workspace."""
+    from src.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return {"content": "", "exists": False}
+
+    gitignore = Path(ws.cwd) / ".gitignore"
+    if not gitignore.is_file():
+        return {"content": "", "exists": False}
+
+    return {
+        "content": gitignore.read_text(encoding="utf-8", errors="replace"),
+        "exists": True,
+    }
+
+
+@view_router.put("/{workspace_id}/fs/gitignore", response_model=StatusResponse)
+async def update_gitignore(
+    workspace_id: str, body: GitignoreUpdateRequest
+) -> StatusResponse:
+    """Sobrescreve o .gitignore raiz do workspace."""
+    from src.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return StatusResponse(status="error", message="Workspace não encontrado.")
+
+    gitignore = Path(ws.cwd) / ".gitignore"
+    try:
+        content = "\n".join(body.lines)
+        if content and not content.endswith("\n"):
+            content += "\n"
+        gitignore.write_text(content, encoding="utf-8")
+        return StatusResponse(status="ok", message=".gitignore atualizado.")
+    except OSError as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+# ---------------------------------------------------------------------------
 # A.9 — Resolução de conflitos
 # ---------------------------------------------------------------------------
 
