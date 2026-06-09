@@ -24,6 +24,9 @@ import {
 } from "@/lib/stores/workspaces-store";
 import { SidebarFolders } from "./sidebar-folders";
 import { ThreadListSkeleton } from "./thread-list-skeleton";
+import { queryClient } from "../../src/router";
+import { getHistory, listThreads } from "@/lib/api/vectora-client";
+import { threadsQueryKey } from "@/lib/queries/threads";
 
 type TFunc = (key: string, params?: Record<string, string | number>) => string;
 
@@ -264,6 +267,20 @@ export const Sidebar = memo(function Sidebar({
           key={thread.thread_id}
           className={`group flex items-center gap-3 px-3 py-2.5 text-sm w-full rounded-lg transition-all duration-200 cursor-pointer shadow-depth-xs ${thread.thread_id === currentThreadId ? "bg-[#7FC8FF]/15 text-sidebar-foreground shadow-depth-sm border border-[#7FC8FF]/40" : "text-sidebar-foreground"}`}
           onClick={() => handleSelectThread(thread.thread_id)}
+          onMouseEnter={() => {
+            // Prefetch do histórico de mensagens antes do clique —
+            // espelha o que o route loader faz, mas disparado no hover.
+            void queryClient.prefetchQuery({
+              queryKey: ["thread-history", thread.thread_id],
+              queryFn: () => getHistory(thread.thread_id),
+              staleTime: 30_000,
+            });
+            void queryClient.prefetchQuery({
+              queryKey: threadsQueryKey,
+              queryFn: () => listThreads(50),
+              staleTime: 30_000,
+            });
+          }}
         >
           <div className="flex-1 min-w-0">
             <div className="truncate font-medium">{title}</div>

@@ -17,7 +17,12 @@ import { EmptyStateHeader } from "./features/empty-state-header";
 import { ChatInput } from "./chat-input";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { VECTORA_API_URL } from "@/lib/constants/api";
-import { getHistory, getThread } from "@/lib/api/vectora-client";
+import {
+  getHistory,
+  getThread,
+  type HistoryMessage,
+} from "@/lib/api/vectora-client";
+import { queryClient } from "@/src/router";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
@@ -430,18 +435,22 @@ export function ChatInterface({
 
       try {
         console.log("Loading thread history for:", currentThreadId);
-        const { messages: historyMessages } = await getHistory(
-          currentThreadId,
-        ).catch((err) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          if (msg.includes("404")) {
-            console.log("Thread not found (404)");
-            onThreadNotFound?.();
-          } else {
-            console.error("Error fetching thread history:", err);
-          }
-          return { messages: [] };
-        });
+        // Consume prefetch do route loader (evita segunda viagem ao servidor).
+        const prefetched = queryClient.getQueryData<{
+          messages: HistoryMessage[];
+        }>(["thread-history", currentThreadId]);
+        const { messages: historyMessages } = prefetched
+          ? prefetched
+          : await getHistory(currentThreadId).catch((err) => {
+              const msg = err instanceof Error ? err.message : String(err);
+              if (msg.includes("404")) {
+                console.log("Thread not found (404)");
+                onThreadNotFound?.();
+              } else {
+                console.error("Error fetching thread history:", err);
+              }
+              return { messages: [] as HistoryMessage[] };
+            });
 
         if (historyMessages.length === 0) {
           setMessages([]);

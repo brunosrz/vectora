@@ -22,7 +22,7 @@ import {
   useUpdateThread,
   threadsQueryKey,
 } from "@/lib/queries/threads";
-import { listThreads } from "@/lib/api/vectora-client";
+import { listThreads, getHistory } from "@/lib/api/vectora-client";
 import { queryClient } from "../../router";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getDefaultModel } from "@/lib/config/deployment-config";
@@ -37,14 +37,22 @@ import {
 import { useGlobalShortcuts } from "@/lib/hooks/use-global-shortcuts";
 
 export const Route = createFileRoute("/session/$threadId")({
-  // Garante que a lista de threads está em cache antes do componente montar
-  // (sidebar aparece preenchida sem flash de "carregando").
-  loader: () =>
-    queryClient.ensureQueryData({
-      queryKey: threadsQueryKey,
-      queryFn: () => listThreads(50),
-      staleTime: 30_000,
-    }),
+  // Prefetch em paralelo: lista de threads (sidebar) + histórico da thread ativa.
+  // O histórico fica em cache no queryClient com chave ['thread-history', id]
+  // e é consumido por chat-interface.tsx sem segunda viagem ao servidor.
+  loader: ({ params }) =>
+    Promise.all([
+      queryClient.ensureQueryData({
+        queryKey: threadsQueryKey,
+        queryFn: () => listThreads(50),
+        staleTime: 30_000,
+      }),
+      queryClient.prefetchQuery({
+        queryKey: ["thread-history", params.threadId],
+        queryFn: () => getHistory(params.threadId),
+        staleTime: 30_000,
+      }),
+    ]),
   component: SessionPage,
 });
 
