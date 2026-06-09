@@ -172,3 +172,14 @@ tui.model_picker.title,Select model,Seleccionar modelo,Selecionar modelo
 tui.model_picker.search_placeholder,Search models...,Buscar modelos...,Buscar modelos...
 tui.model_picker.hint,Enter to select · Esc to close,Enter para seleccionar · Esc para cerrar,Enter para selecionar · Esc para fechar
 tui.model_picker.cancel,Cancel,Cancelar,Cancelar
+
+# ---------------------------------------------------------------------------
+# UsageScreen (src/ui/screens/usage_screen.py)
+# ---------------------------------------------------------------------------
+tui.usage.title,Request Usage,Consumo de solicitudes,Consumo de requisições
+tui.usage.close,Close,Cerrar,Fechar
+tui.usage.unavailable,Usage data unavailable.,Datos de uso no disponibles.,Dados de consumo indisponíveis.
+tui.usage.window_short,Short window,Ventana corta,Janela curta
+tui.usage.window_5h,5-hour window,Ventana de 5h,Janela de 5h
+tui.usage.window_weekly,Weekly,Semanal,Semanal
+tui.usage.remaining,{n} remaining,{n} restantes,{n} restantes
