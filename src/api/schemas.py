@@ -170,6 +170,9 @@ class HITLEvent(BaseModel):
     tool_name: str
     args_json: str
     interrupt_id: str
+    reasoning: str = ""
+    affected_paths: list[str] = []
+    diff_preview: str = ""
 
 
 class ErrorEvent(BaseModel):

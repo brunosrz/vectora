@@ -130,6 +130,7 @@ tui.stream.resume_error,Error resuming: {error},Error al reanudar: {error},Erro 
 # ---------------------------------------------------------------------------
 tui.hitl.approval_needed,Approval needed:,Aprobación necesaria:,Aprovação necessária:
 tui.hitl.approve,Approve,Aprobar,Aprovar
+tui.hitl.skip,Skip,Omitir,Pular
 tui.hitl.reject,Reject,Rechazar,Rejeitar
 
 # ---------------------------------------------------------------------------
