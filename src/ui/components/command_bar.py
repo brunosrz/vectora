@@ -21,6 +21,37 @@ from textual.widgets import Button, Static
 
 from src.services.runtime_settings import runtime_settings
 
+# ---------------------------------------------------------------------------
+# Helpers (definidos antes da classe para resolução de forward references)
+# ---------------------------------------------------------------------------
+
+
+def _user_initials(user_id: str) -> str:
+    """Extrai iniciais do user_id para exibição compacta na status bar."""
+    if not user_id or user_id == "local":
+        return "local"
+    name_part = user_id.split("@")[0]
+    parts = name_part.replace(".", " ").replace("_", " ").split()
+    if len(parts) >= 2:
+        return (parts[0][0] + parts[-1][0]).upper()
+    return name_part[:4].upper()
+
+
+def _current_branch(cwd: Path) -> str:
+    """Lê o branch git atual; string vazia fora de um repo ou sem git."""
+    try:
+        result = subprocess.run(  # noqa: S603 # nosec B603 B607
+            ["git", "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            check=False,
+            cwd=str(cwd),
+            timeout=2,
+        )
+        return result.stdout.strip()
+    except Exception:  # noqa: BLE001
+        return ""
+
 
 class CommandBar(Widget):
     """Barra horizontal com chips clicáveis de contexto."""
@@ -67,6 +98,7 @@ class CommandBar(Widget):
     def __init__(
         self,
         permission_mode: str = "ask",
+        user_id: str = "local",
         *,
         name: str | None = None,
         id: str | None = None,  # noqa: A002
@@ -75,14 +107,17 @@ class CommandBar(Widget):
     ) -> None:
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
         self._permission_mode = permission_mode
+        self._user_id = user_id
 
     def compose(self) -> ComposeResult:
         branch = _current_branch(Path.cwd())
         model = runtime_settings.active_model or "–"
         mode = self._permission_mode
+        user_initials = _user_initials(self._user_id)
 
         with Horizontal():
-            yield Static("◈ Vectora", id="chip-logo")
+            yield Static(f"◈ [bold #60a5fa]Vectora[/bold #60a5fa]", id="chip-logo")
+            yield Static(f"[dim]{user_initials}[/dim]", id="chip-user")
             if branch:
                 yield Button(f"🌿 {branch}", id="chip-branch", variant="default")
             yield Button(model, id="chip-model", variant="default")
@@ -93,24 +128,3 @@ class CommandBar(Widget):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         event.stop()
         self.post_message(self.ChipPressed(event.button.id or ""))
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _current_branch(cwd: Path) -> str:
-    """Lê o branch git atual; string vazia fora de um repo ou sem git."""
-    try:
-        result = subprocess.run(  # noqa: S603 # nosec B603 B607
-            ["git", "branch", "--show-current"],
-            capture_output=True,
-            text=True,
-            check=False,
-            cwd=str(cwd),
-            timeout=2,
-        )
-        return result.stdout.strip()
-    except Exception:  # noqa: BLE001
-        return ""

@@ -91,7 +91,11 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
             with Horizontal(id="input-row"):
                 yield Static(">", id="input-prompt")
                 yield Input(placeholder=t("tui.input.placeholder"), id="chat-input")
-            yield CommandBar(permission_mode=self._permission_mode, id="cmd-bar")
+            yield CommandBar(
+                permission_mode=self._permission_mode,
+                user_id=self._user_id,
+                id="cmd-bar",
+            )
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
