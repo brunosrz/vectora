@@ -23,6 +23,10 @@ import {
 } from "@/lib/api/vectora-client";
 import type { Thread } from "@/lib/hooks/threads";
 import { THREAD_FETCH_LIMIT } from "@/lib/constants/features";
+import {
+  broadcastEvent,
+  BROADCAST_THREADS,
+} from "@/lib/hooks/use-broadcast-sync";
 
 // Chave estável para o cache — toda query de threads usa esta lista.
 export const threadsQueryKey = ["threads"] as const;
@@ -71,7 +75,10 @@ export function useCreateThread(): UseMutationResult<
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (workspaceId?: string | null) => createThread(workspaceId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: threadsQueryKey }),
+    onSuccess: (thread) => {
+      void qc.invalidateQueries({ queryKey: threadsQueryKey });
+      broadcastEvent(BROADCAST_THREADS, { type: "created", id: thread.id });
+    },
   });
 }
 
@@ -97,7 +104,10 @@ export function useDeleteThread(): UseMutationResult<
     onError: (_err, _id, ctx) => {
       if (ctx?.prev) qc.setQueryData(threadsQueryKey, ctx.prev);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: threadsQueryKey }),
+    onSettled: (_data, _err, threadId) => {
+      void qc.invalidateQueries({ queryKey: threadsQueryKey });
+      broadcastEvent(BROADCAST_THREADS, { type: "deleted", id: threadId });
+    },
   });
 }
 
@@ -110,6 +120,13 @@ export function useUpdateThread(): UseMutationResult<
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, updates }) => updateThread(id, updates),
-    onSuccess: () => qc.invalidateQueries({ queryKey: threadsQueryKey }),
+    onSuccess: (thread) => {
+      void qc.invalidateQueries({ queryKey: threadsQueryKey });
+      broadcastEvent(BROADCAST_THREADS, {
+        type: "renamed",
+        id: thread.id,
+        title: thread.title ?? "",
+      });
+    },
   });
 }

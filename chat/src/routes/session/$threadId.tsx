@@ -29,6 +29,11 @@ import { getDefaultModel } from "@/lib/config/deployment-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { markAsNew, isNew, clearNew } from "@/lib/stores/new-thread-registry";
+import {
+  useBroadcastSync,
+  BROADCAST_THREADS,
+  BROADCAST_WORKSPACES,
+} from "@/lib/hooks/use-broadcast-sync";
 
 export const Route = createFileRoute("/session/$threadId")({
   // Garante que a lista de threads está em cache antes do componente montar
@@ -92,10 +97,19 @@ function SessionPage() {
   );
 
   // ── Queries e mutations (TanStack Query) ──────────────────────────────────
-  const { data: threads = [], isLoading } = useThreadsQuery(userId);
+  const {
+    data: threads = [],
+    isLoading,
+    refetch: refetchThreads,
+  } = useThreadsQuery(userId);
   const createThreadMutation = useCreateThread();
   const deleteThreadMutation = useDeleteThread();
   const updateThreadMutation = useUpdateThread();
+
+  // Sincronização multi-aba: quando outra aba cria/deleta/renomeia uma thread
+  // ou altera workspaces, revalida o cache desta aba silenciosamente.
+  useBroadcastSync(BROADCAST_THREADS, () => void refetchThreads(), !!userId);
+  useBroadcastSync(BROADCAST_WORKSPACES, () => void refetchThreads(), !!userId);
 
   // ── UI state local ────────────────────────────────────────────────────────
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
