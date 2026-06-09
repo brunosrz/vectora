@@ -48,6 +48,8 @@ from src.api.handlers.skills import router as skills_router
 from src.api.handlers.terminal import router as terminal_router
 from src.api.handlers.threads import router as thread_router
 from src.api.handlers.tools import router as tools_router
+from src.api.handlers.v1.classify import router as v1_classify_router
+from src.api.handlers.v1.extract import router as v1_extract_router
 from src.api.handlers.workspaces import router as workspace_router
 from src.api.handlers.workspaces import view_router as workspace_view_router
 
@@ -266,6 +268,9 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(license_router)
     app.include_router(tools_router)
     app.include_router(terminal_router)
+    # REST API v1 — structured output endpoints (E.B-7)
+    app.include_router(v1_extract_router)
+    app.include_router(v1_classify_router)
 
     # ── Health + Metrics ──────────────────────────────────────────────────────
 
