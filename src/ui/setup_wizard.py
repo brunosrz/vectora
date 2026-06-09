@@ -125,9 +125,10 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
         return ChatGoogleGenerativeAI(api_key=api_key, model=model)
 
     if provider_id == "openai":
-        from langchain_openai import ChatOpenAI  # ty: ignore[unresolved-import]
+        from langchain_openai import ChatOpenAI
+        from pydantic import SecretStr
 
-        return ChatOpenAI(api_key=api_key, model=model)
+        return ChatOpenAI(api_key=SecretStr(api_key) if api_key else None, model=model)
 
     if provider_id == "anthropic":
         from langchain_anthropic import ChatAnthropic

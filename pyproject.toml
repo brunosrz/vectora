@@ -78,6 +78,15 @@ dependencies = [
     "nuitka[all]>=4.1.2",
     "scons>=4.10.1",
     "send2trash>=2.1.0",
+    "redis[hiredis]>=5.0",
+    "asyncpg>=0.29",
+    "langchain-redis>=0.2",
+    "langchain-qdrant>=0.2",
+    "qdrant-client[fastembed]>=1.12",
+    "langchain-openai>=0.3",
+    "langchain-anthropic>=0.3",
+    "langchain-google-genai>=2.0",
+    "fakeredis>=2.26",
 ]
 
 [project.scripts]

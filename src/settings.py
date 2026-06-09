@@ -106,7 +106,19 @@ class Settings(BaseSettings):
     """Sensitive credentials (~/.vectora/keys/)."""
 
     # ============================================================================
-    # DATABASE CONNECTIONS
+    # STORAGE MODE
+    # ============================================================================
+
+    storage_mode: Literal["lite", "complete"] = "lite"
+    """Modo de armazenamento.
+
+    lite     — SQLite + LanceDB (padrão, zero dependências externas).
+    complete — PostgreSQL + Qdrant + Redis (Pro; requer POSTGRES_DSN,
+               QDRANT_URL e REDIS_URL configurados).
+    """
+
+    # ============================================================================
+    # DATABASE CONNECTIONS — SQLite (lite)
     # ============================================================================
 
     db_file: Path | None = None
@@ -124,6 +136,42 @@ class Settings(BaseSettings):
 
     embedding_queue_dsn: str | None = None
     """Embedding queue connection string."""
+
+    # ============================================================================
+    # DATABASE CONNECTIONS — PostgreSQL (complete)
+    # ============================================================================
+
+    postgres_dsn: str | None = None
+    """AsyncPG connection string.
+
+    Exemplo: postgresql+asyncpg://vectora:senha@localhost:5432/vectora
+    Usado por checkpointer, store, auth, sessions, queue e audit no modo complete.
+    """
+
+    # ============================================================================
+    # REDIS (complete)
+    # ============================================================================
+
+    redis_url: str | None = None
+    """URL de conexão Redis.
+
+    Exemplo: redis://localhost:6379/0
+    Usado por KVCache, rate-limit, invalidação pub/sub e langchain-redis.
+    """
+
+    # ============================================================================
+    # QDRANT (complete)
+    # ============================================================================
+
+    qdrant_url: str | None = None
+    """Endpoint REST do Qdrant.
+
+    Exemplo: http://localhost:6333
+    Usado como VectorStore alternativo ao LanceDB no modo complete.
+    """
+
+    qdrant_api_key: str | None = None
+    """API key para Qdrant Cloud. Opcional para instância local."""
 
     # ============================================================================
     # FILE PATHS
