@@ -1347,6 +1347,126 @@ async def git_commit_diff(
 
 
 # ---------------------------------------------------------------------------
+# A.14 — Worktree manager (view_router)
+# ---------------------------------------------------------------------------
+
+
+@view_router.get("/{workspace_id}/worktrees", response_model=ListWorktreesResponse)
+async def list_workspace_worktrees(workspace_id: str) -> ListWorktreesResponse:
+    """Lista as worktrees do workspace (via view_router)."""
+    from src.tools.git import _git_worktree_impl, _open_repo
+
+    repo, err = _open_repo(workspace_id, None)
+    if err:
+        return ListWorktreesResponse(worktrees=[])
+    result = _git_worktree_impl(repo, workspace_id, action="list")
+    items = result.get("worktrees", []) if result.get("status") == "ok" else []
+    return ListWorktreesResponse(
+        worktrees=[
+            WorktreeInfo(
+                path=w.get("path", ""),
+                branch=w.get("branch"),
+                head=w.get("head"),
+            )
+            for w in items
+        ]
+    )
+
+
+@view_router.post("/{workspace_id}/worktrees", response_model=StatusResponse)
+async def create_workspace_worktree(
+    workspace_id: str, body: CreateWorktreeRequest
+) -> StatusResponse:
+    """Cria uma worktree no workspace."""
+    from src.tools.git import _git_worktree_impl, _open_repo
+
+    repo, err = _open_repo(workspace_id, None)
+    if err:
+        return StatusResponse(
+            status="error", message=json.loads(err).get("message", "")
+        )
+    result = _git_worktree_impl(
+        repo, workspace_id, action="add", name=body.name, branch=body.branch
+    )
+    return StatusResponse(
+        status=result.get("status", "error"), message=result.get("message", "")
+    )
+
+
+# ---------------------------------------------------------------------------
+# A.12 — Comparar refs
+# ---------------------------------------------------------------------------
+
+_MAX_COMPARE_BYTES = 256 * 1024
+
+
+class CompareRefsResponse(BaseModel):
+    base: str
+    head: str
+    diff: str
+    truncated: bool = False
+
+
+@view_router.get("/{workspace_id}/git/compare", response_model=CompareRefsResponse)
+async def git_compare_refs(
+    workspace_id: str,
+    base: Annotated[str, Query(min_length=1)],
+    head: Annotated[str, Query(min_length=1)],
+) -> CompareRefsResponse:
+    """Diff entre dois refs (branch, tag, SHA)."""
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return CompareRefsResponse(base=base, head=head, diff="")
+
+    try:
+        diff_text = repo.git.diff(f"{base}...{head}", "--stat", "--unified=3")
+    except Exception:
+        try:
+            diff_text = repo.git.diff(base, head)
+        except Exception as exc:
+            return CompareRefsResponse(base=base, head=head, diff=str(exc))
+
+    truncated = len(diff_text) > _MAX_COMPARE_BYTES
+    return CompareRefsResponse(
+        base=base,
+        head=head,
+        diff=diff_text[:_MAX_COMPARE_BYTES],
+        truncated=truncated,
+    )
+
+
+# ---------------------------------------------------------------------------
+# A.13 — Reverter commit
+# ---------------------------------------------------------------------------
+
+
+class RevertCommitRequest(BaseModel):
+    sha: str
+    no_commit: bool = True  # True = aplica as mudanças sem commitar
+
+
+@view_router.post("/{workspace_id}/git/revert", response_model=StatusResponse)
+async def git_revert_commit(
+    workspace_id: str, body: RevertCommitRequest
+) -> StatusResponse:
+    """Aplica o reverso de um commit no worktree (HITL — não commitado por padrão)."""
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+
+    try:
+        args = ["revert", "--no-edit"]
+        if body.no_commit:
+            args.append("--no-commit")
+        args.append(body.sha)
+        repo.git.execute(args)
+        msg = f"Revert de {body.sha[:7]} aplicado ao worktree. Revise as mudanças e faça commit."
+        return StatusResponse(status="ok", message=msg)
+    except Exception as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+# ---------------------------------------------------------------------------
 # A.11 — Abrir no VS Code
 # ---------------------------------------------------------------------------
 

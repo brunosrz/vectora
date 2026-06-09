@@ -73,6 +73,35 @@ async function fetchCommitDiff(
   return (data.diff as string) ?? null;
 }
 
+async function apiRevertCommit(
+  workspaceId: string,
+  sha: string,
+): Promise<{ status: string; message: string }> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/revert`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sha, no_commit: true }),
+    },
+  );
+  const data = await res.json().catch(() => ({ status: "error", message: "" }));
+  return data as { status: string; message: string };
+}
+
+async function apiCompareRefs(
+  workspaceId: string,
+  base: string,
+  head: string,
+): Promise<{ diff: string; truncated: boolean } | null> {
+  const qs = new URLSearchParams({ base, head });
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/compare?${qs}`,
+  );
+  if (!res.ok) return null;
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 
 async function fetchDiff(workspaceId: string): Promise<DiffSummary | null> {
@@ -273,18 +302,33 @@ function CommitRow({
             {commit.author.split("<")[0].trim()}
           </p>
         </div>
-        {/* Ação: copiar SHA */}
-        <button
-          onClick={handleCopy}
-          className="p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
-          title="Copiar SHA"
-        >
-          {copied ? (
-            <GitCommit className="w-3 h-3 text-green-500" />
-          ) : (
-            <Copy className="w-3 h-3" />
-          )}
-        </button>
+        {/* Ações: copiar SHA + revert */}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <button
+            onClick={handleCopy}
+            className="p-0.5 text-muted-foreground hover:text-foreground"
+            title="Copiar SHA"
+          >
+            {copied ? (
+              <GitCommit className="w-3 h-3 text-green-500" />
+            ) : (
+              <Copy className="w-3 h-3" />
+            )}
+          </button>
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              const r = await apiRevertCommit(workspaceId, commit.sha);
+              if (r.status !== "ok") {
+                // silently ignore — toast seria ideal mas está fora do scope aqui
+              }
+            }}
+            className="p-0.5 text-muted-foreground hover:text-amber-500"
+            title="Reverter commit"
+          >
+            <ChevronDown className="w-3 h-3 rotate-180" />
+          </button>
+        </div>
       </button>
       {open && (
         <div className="px-3 pb-2">
@@ -363,7 +407,7 @@ export function DiffTab(_props: DiffTabProps) {
   const setDiffSummary = useWorkbenchStore((s) => s.setDiffSummary);
   const clearPending = useWorkbenchStore((s) => s.clearPending);
   const [logView, setLogView] = useState<
-    "changes" | "log" | "stash" | "conflicts"
+    "changes" | "log" | "stash" | "conflicts" | "compare" | "worktrees"
   >("changes");
 
   // Abrir/revalidar a aba consome a pendência de atualização.
@@ -461,6 +505,28 @@ export function DiffTab(_props: DiffTabProps) {
         >
           {t("workbench.diff.tab_conflicts")}
         </button>
+        <button
+          onClick={() => setLogView("compare")}
+          aria-pressed={logView === "compare"}
+          className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+            logView === "compare"
+              ? "border-b-2 border-primary text-foreground -mb-px"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("workbench.diff.tab_compare")}
+        </button>
+        <button
+          onClick={() => setLogView("worktrees")}
+          aria-pressed={logView === "worktrees"}
+          className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+            logView === "worktrees"
+              ? "border-b-2 border-primary text-foreground -mb-px"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("workbench.diff.tab_worktrees")}
+        </button>
       </div>
       {/* Conteúdo */}
       <div className="flex-1 min-h-0">
@@ -470,6 +536,10 @@ export function DiffTab(_props: DiffTabProps) {
           <StashView workspaceId={wsId} />
         ) : logView === "conflicts" ? (
           <ConflictView workspaceId={wsId} />
+        ) : logView === "compare" ? (
+          <CompareView workspaceId={wsId} />
+        ) : logView === "worktrees" ? (
+          <WorktreeView workspaceId={wsId} />
         ) : summary.files.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
             <p className="text-xs text-muted-foreground">
@@ -488,6 +558,211 @@ export function DiffTab(_props: DiffTabProps) {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// A.14 — WorktreeView: lista worktrees e cria nova
+// ---------------------------------------------------------------------------
+
+interface WorktreeEntry {
+  path: string;
+  branch?: string;
+  head?: string;
+}
+
+async function apiFetchWorktrees(
+  workspaceId: string,
+): Promise<WorktreeEntry[]> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/worktrees`,
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.worktrees as WorktreeEntry[]) ?? [];
+}
+
+async function apiCreateWorktree(
+  workspaceId: string,
+  name: string,
+  branch?: string,
+): Promise<boolean> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/worktrees`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace_id: workspaceId, name, branch }),
+    },
+  );
+  return res.ok;
+}
+
+function WorktreeView({ workspaceId }: { workspaceId: string }) {
+  const t = useT();
+  const [entries, setEntries] = useState<WorktreeEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newBranch, setNewBranch] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const r = await apiFetchWorktrees(workspaceId);
+    setLoading(false);
+    setEntries(r);
+  }, [workspaceId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const handleCreate = useCallback(async () => {
+    if (!newName.trim()) return;
+    await apiCreateWorktree(
+      workspaceId,
+      newName.trim(),
+      newBranch.trim() || undefined,
+    );
+    setNewName("");
+    setNewBranch("");
+    void load();
+  }, [workspaceId, newName, newBranch, load]);
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="px-2 py-1.5 border-b border-border/60 bg-muted/10 flex flex-col gap-1">
+        <div className="flex items-center gap-1.5">
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder={t("workbench.diff.worktree_name_placeholder")}
+            className="flex-1 text-xs bg-background border border-border/60 rounded px-1.5 py-0.5 outline-none focus:border-primary min-w-0"
+          />
+          <input
+            value={newBranch}
+            onChange={(e) => setNewBranch(e.target.value)}
+            placeholder={t("workbench.diff.worktree_branch_placeholder")}
+            className="flex-1 text-xs bg-background border border-border/60 rounded px-1.5 py-0.5 outline-none focus:border-primary min-w-0 font-mono"
+          />
+          <button
+            onClick={handleCreate}
+            className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 shrink-0"
+          >
+            {t("workbench.diff.worktree_create")}
+          </button>
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : entries.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-8 px-4">
+            {t("workbench.diff.worktree_empty")}
+          </p>
+        ) : (
+          entries.map((w, i) => (
+            <div
+              key={i}
+              className="px-3 py-2 border-b border-border/40 last:border-0"
+            >
+              <p
+                className="text-xs font-mono text-foreground truncate"
+                title={w.path}
+              >
+                {w.path.split(/[\\/]/).pop()}
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {w.path}
+              </p>
+              {w.branch && (
+                <p className="text-[10px] text-primary font-mono mt-0.5">
+                  {w.branch}
+                </p>
+              )}
+              {w.head && (
+                <p className="text-[10px] text-muted-foreground font-mono">
+                  {w.head}
+                </p>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// A.12 — CompareView: diff entre dois refs
+// ---------------------------------------------------------------------------
+
+function CompareView({ workspaceId }: { workspaceId: string }) {
+  const t = useT();
+  const [base, setBase] = useState("HEAD~1");
+  const [head, setHead] = useState("HEAD");
+  const [diff, setDiff] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [truncated, setTruncated] = useState(false);
+
+  const handleCompare = useCallback(async () => {
+    if (!base.trim() || !head.trim()) return;
+    setLoading(true);
+    const r = await apiCompareRefs(workspaceId, base.trim(), head.trim());
+    setLoading(false);
+    if (r) {
+      setDiff(r.diff);
+      setTruncated(r.truncated);
+    }
+  }, [workspaceId, base, head]);
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="px-2 py-1.5 border-b border-border/60 flex items-center gap-1.5 bg-muted/10">
+        <input
+          value={base}
+          onChange={(e) => setBase(e.target.value)}
+          placeholder="base (e.g. HEAD~1)"
+          className="flex-1 text-xs bg-background border border-border/60 rounded px-1.5 py-0.5 outline-none focus:border-primary min-w-0 font-mono"
+        />
+        <span className="text-[10px] text-muted-foreground">…</span>
+        <input
+          value={head}
+          onChange={(e) => setHead(e.target.value)}
+          placeholder="head (e.g. HEAD)"
+          className="flex-1 text-xs bg-background border border-border/60 rounded px-1.5 py-0.5 outline-none focus:border-primary min-w-0 font-mono"
+        />
+        <button
+          onClick={handleCompare}
+          className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 shrink-0"
+        >
+          {t("workbench.diff.compare_run")}
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : diff === null ? (
+          <p className="text-xs text-muted-foreground text-center py-8 px-4">
+            {t("workbench.diff.compare_hint")}
+          </p>
+        ) : (
+          <>
+            {truncated && (
+              <p className="text-[10px] text-amber-500 px-3 pt-1.5">
+                {t("workbench.diff.compare_truncated")}
+              </p>
+            )}
+            <pre className="text-[10px] font-mono whitespace-pre-wrap break-all bg-muted/20 m-2 rounded p-2 overflow-x-auto">
+              {diff || t("workbench.diff.compare_no_diff")}
+            </pre>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // A.9 — ConflictView: lista arquivos conflitantes com resolução ours/theirs
 // ---------------------------------------------------------------------------
 

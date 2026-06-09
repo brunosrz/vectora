@@ -571,6 +571,16 @@ workbench.diff.tab_conflicts,Conflicts,Conflictos,Conflitos
 workbench.diff.conflicts_none,No merge conflicts.,Sin conflictos de merge.,Sem conflitos de merge.
 workbench.diff.conflicts_ours,Keep ours,Mantener nuestro,Manter o nosso
 workbench.diff.conflicts_theirs,Keep theirs,Mantener el suyo,Manter o deles
+workbench.diff.tab_compare,Compare,Comparar,Comparar
+workbench.diff.compare_run,Compare,Comparar,Comparar
+workbench.diff.compare_hint,Enter two refs and click Compare.,Ingrese dos refs y haga clic en Comparar.,Digite dois refs e clique em Comparar.
+workbench.diff.compare_truncated,Diff truncated — showing first 256 KiB.,Diff truncado — mostrando los primeros 256 KiB.,Diff truncado — exibindo os primeiros 256 KiB.
+workbench.diff.compare_no_diff,No differences.,Sin diferencias.,Sem diferenças.
+workbench.diff.tab_worktrees,Worktrees,Worktrees,Worktrees
+workbench.diff.worktree_empty,No worktrees.,Sin worktrees.,Nenhuma worktree.
+workbench.diff.worktree_create,Add,Agregar,Adicionar
+workbench.diff.worktree_name_placeholder,Name (e.g. feature),Nombre (ej: feature),Nome (ex: feature)
+workbench.diff.worktree_branch_placeholder,Branch (optional),Branch (opcional),Branch (opcional)
 workbench.tab.pending,Pending updates,Actualizaciones pendientes,Atualizações pendentes
 chat.rewind,Rewind to here,Rebobinar hasta aquí,Retroceder até aqui
 chat.rewind_title,Rewind to this point?,¿Rebobinar hasta aquí?,Retroceder até este ponto?
