@@ -310,7 +310,14 @@ async def _build_graph_async() -> Any:
     middleware = build_middleware_stack(permission_mode="ask", llm=llm)
 
     from src.services.backends import build_backend_lazy
+    from src.services.skills import list_skill_paths
     from src.types.context import VectoraContext
+
+    # Skills instaladas pelo usuário local (singleton compartilhado).
+    # Paths absolutos — harness lê SKILL.md frontmatter on-demand.
+    # TODO E.B-10: quando o grafo puder ser compilado por usuário (E.B-11+),
+    # passar list_skill_paths(user_id) para incluir skills do usuário autenticado.
+    skill_paths = [str(p) for p in list_skill_paths("local")]
 
     _graph = create_deep_agent(
         llm,
@@ -321,6 +328,7 @@ async def _build_graph_async() -> Any:
         backend=build_backend_lazy(),
         checkpointer=checkpointer,
         context_schema=VectoraContext,
+        skills=skill_paths,
         name="vectora",
     )
 
