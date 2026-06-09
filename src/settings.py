@@ -344,6 +344,23 @@ class Settings(BaseSettings):
     """MCP request timeout in seconds."""
 
     # ============================================================================
+    # OBSERVABILIDADE EXTERNA (LANGSMITH)
+    # ============================================================================
+
+    langsmith_tracing: bool = False
+    """Ativa o LangSmith tracing (LANGCHAIN_TRACING_V2).
+    Opt-in explícito — requer ``langsmith_api_key``."""
+
+    langsmith_api_key: str | None = None
+    """API key do LangSmith. Lida de LANGSMITH_API_KEY ou LANGCHAIN_API_KEY."""
+
+    langsmith_project: str = "vectora"
+    """Nome do projeto no LangSmith (LANGCHAIN_PROJECT)."""
+
+    langsmith_endpoint: str | None = None
+    """Endpoint alternativo (ex: self-hosted). Default usa api.smith.langchain.com."""
+
+    # ============================================================================
     # PYDANTIC CONFIGURATION
     # ============================================================================
 

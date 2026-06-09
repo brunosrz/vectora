@@ -132,6 +132,14 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     """
     logger.info("api/server: startup")
 
+    # E.B-13 — LangSmith tracing opt-in (ativado se langsmith_tracing=true + api_key).
+    try:
+        from src.services.tracer import enable_langsmith_tracing
+
+        enable_langsmith_tracing()
+    except Exception as exc:
+        logger.warning("api/server: falha ao configurar LangSmith tracing: %s", exc)
+
     # C14 — Setup wizard: avisa o operador se ainda não há usuários cadastrados
     try:
         from src.services.auth import has_users as _has_users

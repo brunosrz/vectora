@@ -350,6 +350,71 @@ class VectoraTracer:
 
 
 # ---------------------------------------------------------------------------
+# LangSmith tracing opt-in (E.B-13)
+# ---------------------------------------------------------------------------
+
+
+def enable_langsmith_tracing() -> bool:
+    """Ativa o LangSmith tracing via variáveis de ambiente se configurado.
+
+    LangChain/LangGraph detectam automaticamente as vars ``LANGCHAIN_TRACING_V2``,
+    ``LANGCHAIN_API_KEY`` e ``LANGCHAIN_PROJECT`` no ambiente. Esta função lê os
+    campos de ``Settings`` e os injeta no ``os.environ`` para que qualquer chamada
+    downstream ao LangChain seja rastreada.
+
+    Idempotente — pode ser chamado múltiplas vezes sem efeitos colaterais.
+
+    Returns:
+        True se o tracing foi ativado; False se desabilitado ou sem API key.
+    """
+    import os
+
+    from src.settings import settings
+
+    if not settings.langsmith_tracing:
+        return False
+
+    api_key = (
+        settings.langsmith_api_key
+        or os.environ.get("LANGCHAIN_API_KEY")
+        or os.environ.get("LANGSMITH_API_KEY")
+    )
+    if not api_key:
+        logger.warning(
+            "tracer: LangSmith tracing habilitado mas sem API key "
+            "(set LANGSMITH_API_KEY ou langsmith_api_key nas settings)"
+        )
+        return False
+
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_API_KEY"] = api_key
+    os.environ["LANGCHAIN_PROJECT"] = settings.langsmith_project
+
+    if settings.langsmith_endpoint:
+        os.environ["LANGCHAIN_ENDPOINT"] = settings.langsmith_endpoint
+
+    logger.info(
+        "tracer: LangSmith tracing ativado (projeto=%s)",
+        settings.langsmith_project,
+    )
+    return True
+
+
+def disable_langsmith_tracing() -> None:
+    """Desativa o LangSmith tracing removendo as vars de ambiente."""
+    import os
+
+    for var in (
+        "LANGCHAIN_TRACING_V2",
+        "LANGCHAIN_API_KEY",
+        "LANGCHAIN_PROJECT",
+        "LANGCHAIN_ENDPOINT",
+    ):
+        os.environ.pop(var, None)
+    logger.info("tracer: LangSmith tracing desativado")
+
+
+# ---------------------------------------------------------------------------
 # Singleton
 # ---------------------------------------------------------------------------
 
@@ -357,4 +422,10 @@ class VectoraTracer:
 #: ``from vectora.services.tracer import tracer``
 tracer = VectoraTracer()
 
-__all__ = ["VectoraTracer", "_SpanCtx", "tracer"]
+__all__ = [
+    "VectoraTracer",
+    "_SpanCtx",
+    "disable_langsmith_tracing",
+    "enable_langsmith_tracing",
+    "tracer",
+]
