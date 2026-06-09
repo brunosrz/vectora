@@ -143,17 +143,43 @@ class FsRule:
     description: str = ""
 
     def matches(self, path: str, op: FsOp) -> bool:
-        """True se esta regra cobre o path + operação dados."""
+        """True se esta regra cobre o path + operação dados.
+
+        Lógica de matching (em ordem, primeira que bate vence):
+        1. ``fnmatch`` contra o path completo normalizado.
+        2. ``fnmatch`` contra o basename do path (ex: ``.env`` bate ``**/.env``).
+        3. ``fnmatch`` do basename contra o basename do padrão (ex: ``.env``
+           bate ``**/.env`` extraindo ``.env`` do padrão).
+
+        O ``fnmatch`` não trata ``**`` como globstar real — para padrões
+        como ``"**/.env"``, o passo 3 extrai ``".env"`` do padrão e verifica
+        contra o basename do path. Isso cobre tanto ``".env"`` nu quanto
+        ``"dir/sub/.env"``.
+        """
         if self.ops and op not in self.ops:
             return False
         # Normaliza para forward-slashes para compatibilidade cross-platform
         norm = path.replace("\\", "/")
-        # Suporte a globs simples via fnmatch; também aceita prefixo de diretório
+        # Passo 1: match completo
         if fnmatch.fnmatch(norm, self.pattern):
             return True
-        # Tenta match com apenas o basename para padrões como "*.env"
+        # Passo 2: basename do path contra o padrão completo
         basename = norm.rsplit("/", 1)[-1]
-        return fnmatch.fnmatch(basename, self.pattern)
+        if fnmatch.fnmatch(basename, self.pattern):
+            return True
+        # Passo 3: basename do path contra o basename do padrão.
+        # Trata padrões como ``**/.env`` → ``.env``, ``**/id_rsa`` → ``id_rsa``.
+        # Exclui basenames puramente wildcard (``*``, ``**``, ``*.*``) para
+        # evitar que regras como ``/etc/*`` batam em todo arquivo.
+        pattern_basename = self.pattern.rsplit("/", 1)[-1]
+        _pure_wildcard = {"*", "**", "*.*"}
+        if (
+            pattern_basename != self.pattern  # padrão tem componente de dir
+            and pattern_basename not in _pure_wildcard
+            and pattern_basename  # não-vazio
+        ):
+            return fnmatch.fnmatch(basename, pattern_basename)
+        return False
 
 
 @dataclass
