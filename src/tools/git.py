@@ -439,6 +439,85 @@ def _git_worktree_impl(
 
 
 # ---------------------------------------------------------------------------
+# A.15 — Stage / unstage / restore por caminho
+# ---------------------------------------------------------------------------
+
+
+def _git_stage_impl(repo: git.Repo, path: str) -> dict:
+    """Stageia um arquivo específico (`git add <path>`)."""
+    try:
+        repo.git.add("--", path)
+        return {"status": "ok", "path": path, "action": "stage"}
+    except git.GitCommandError as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+def _git_unstage_impl(repo: git.Repo, path: str) -> dict:
+    """Remove um arquivo do stage (`git reset HEAD <path>`)."""
+    try:
+        repo.git.reset("HEAD", "--", path)
+        return {"status": "ok", "path": path, "action": "unstage"}
+    except git.GitCommandError as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+def _git_restore_impl(repo: git.Repo, path: str) -> dict:
+    """Descarta mudanças não staged (`git restore -- <path>`).
+
+    Atenção: operação destrutiva — as mudanças no worktree são perdidas.
+    """
+    try:
+        repo.git.restore("--", path)
+        return {"status": "ok", "path": path, "action": "restore"}
+    except git.GitCommandError as exc:
+        # fallback: checkout antigo
+        try:
+            repo.git.checkout("--", path)
+            return {"status": "ok", "path": path, "action": "restore"}
+        except git.GitCommandError:
+            return {"status": "error", "message": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# A.16 — pre-commit dry-run
+# ---------------------------------------------------------------------------
+
+
+def _run_pre_commit_hooks(repo: git.Repo) -> dict:
+    """Executa os hooks pre-commit sem criar um commit.
+
+    Retorna ``{"passed": True}`` se todos os hooks passaram, ou
+    ``{"passed": False, "output": "<stdout+stderr>"}`` em caso de falha.
+    Quando não há hook configurado, considera como passado.
+    """
+    import os
+    import subprocess  # nosec B404
+    from pathlib import Path
+
+    hook_path = Path(repo.git_dir) / "hooks" / "pre-commit"
+    if not hook_path.is_file() or not os.access(hook_path, os.X_OK):
+        return {"passed": True, "output": ""}
+
+    try:
+        result = subprocess.run(  # noqa: S603 # nosec B603
+            [str(hook_path)],
+            cwd=repo.working_dir,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        output = (result.stdout + result.stderr).strip()
+        if result.returncode == 0:
+            return {"passed": True, "output": output}
+        return {"passed": False, "output": output}
+    except subprocess.TimeoutExpired:
+        return {"passed": False, "output": "pre-commit hook timed out (60s)"}
+    except OSError as exc:
+        return {"passed": False, "output": str(exc)}
+
+
+# ---------------------------------------------------------------------------
 # @tool wrappers (G3)
 # ---------------------------------------------------------------------------
 

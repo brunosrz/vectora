@@ -133,13 +133,14 @@ async function apiGitAction(
 async function apiGitCommitInline(
   workspaceId: string,
   message: string,
+  dryRunHooks = false,
 ): Promise<{ status: string; message: string }> {
   const res = await fetch(
     `/workspaces/${encodeURIComponent(workspaceId)}/git/commit`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, dry_run_hooks: dryRunHooks }),
     },
   );
   const data = await res.json().catch(() => ({ status: "error", message: "" }));
@@ -1138,14 +1139,38 @@ function DiffGroups({
   const invalidateDiff = useWorkbenchStore((s) => s.invalidateDiff);
   const [commitMsg, setCommitMsg] = useState("");
   const [committing, setCommitting] = useState(false);
+  const [hookResult, setHookResult] = useState<{
+    status: "ok" | "fail" | null;
+    output: string;
+  }>({ status: null, output: "" });
 
   const handleRefresh = useCallback(() => {
     invalidateDiff(workspaceId);
   }, [workspaceId, invalidateDiff]);
 
+  const handleCheckHooks = useCallback(async () => {
+    setCommitting(true);
+    setHookResult({ status: null, output: "" });
+    try {
+      const result = await apiGitCommitInline(
+        workspaceId,
+        commitMsg.trim() || " ",
+        true,
+      );
+      if (result.status === "hooks_ok") {
+        setHookResult({ status: "ok", output: result.message ?? "" });
+      } else {
+        setHookResult({ status: "fail", output: result.message ?? "" });
+      }
+    } finally {
+      setCommitting(false);
+    }
+  }, [workspaceId, commitMsg]);
+
   const handleCommit = useCallback(async () => {
     if (!commitMsg.trim()) return;
     setCommitting(true);
+    setHookResult({ status: null, output: "" });
     try {
       const result = await apiGitCommitInline(workspaceId, commitMsg.trim());
       if (result.status === "ok") {
@@ -1194,7 +1219,7 @@ function DiffGroups({
           onRefresh={handleRefresh}
         />
       </div>
-      {/* Painel de commit A.15 */}
+      {/* Painel de commit A.15 + A.16 */}
       <div className="border-t border-border/60 p-2 flex flex-col gap-1.5 bg-muted/10 shrink-0">
         <textarea
           value={commitMsg}
@@ -1208,18 +1233,48 @@ function DiffGroups({
             }
           }}
         />
-        <button
-          onClick={() => void handleCommit()}
-          disabled={!commitMsg.trim() || committing}
-          className="flex items-center justify-center gap-1.5 w-full py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {committing ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <GitCommit className="w-3 h-3" />
-          )}
-          {t("workbench.diff.commit_button")}
-        </button>
+        {/* Resultado dos hooks A.16 */}
+        {hookResult.status !== null && (
+          <div
+            className={`rounded-md px-2 py-1 text-[10px] font-mono whitespace-pre-wrap break-all ${
+              hookResult.status === "ok"
+                ? "bg-green-500/10 text-green-500"
+                : "bg-destructive/10 text-destructive"
+            }`}
+          >
+            {hookResult.status === "ok"
+              ? t("workbench.diff.hooks_ok")
+              : t("workbench.diff.hooks_failed")}
+            {hookResult.output ? `\n${hookResult.output}` : ""}
+          </div>
+        )}
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => void handleCheckHooks()}
+            disabled={committing}
+            className="flex items-center justify-center gap-1 py-1 px-2 text-xs rounded-md border border-border/60 hover:bg-muted/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title={t("workbench.diff.check_hooks")}
+          >
+            {committing ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <span className="text-[10px]">⚙</span>
+            )}
+            {t("workbench.diff.check_hooks")}
+          </button>
+          <button
+            onClick={() => void handleCommit()}
+            disabled={!commitMsg.trim() || committing}
+            className="flex flex-1 items-center justify-center gap-1.5 py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {committing ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <GitCommit className="w-3 h-3" />
+            )}
+            {t("workbench.diff.commit_button")}
+          </button>
+        </div>
       </div>
     </div>
   );

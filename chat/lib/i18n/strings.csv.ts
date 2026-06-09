@@ -560,6 +560,9 @@ workbench.diff.group_staged,Staged,Preparados,Staged
 workbench.diff.group_unstaged,Modified / Untracked,Modificados / Sin seguimiento,Modificados / Não rastreados
 workbench.diff.commit_placeholder,Commit message (Ctrl+Enter),Mensaje de commit (Ctrl+Enter),Mensagem do commit (Ctrl+Enter)
 workbench.diff.commit_button,Commit,Commit,Fazer commit
+workbench.diff.check_hooks,Check hooks,Verificar hooks,Verificar hooks
+workbench.diff.hooks_ok,✓ Hooks passed,✓ Hooks pasaron,✓ Hooks passaram
+workbench.diff.hooks_failed,✗ Hooks failed,✗ Hooks fallaron,✗ Hooks falharam
 workbench.diff.files_badge,"{n} files","{n} archivos","{n} arquivos"
 workbench.diff.tab_changes,Changes,Cambios,Mudanças
 workbench.diff.tab_log,Log,Log,Log

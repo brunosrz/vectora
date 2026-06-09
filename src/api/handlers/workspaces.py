@@ -1347,6 +1347,85 @@ async def git_commit_diff(
 
 
 # ---------------------------------------------------------------------------
+# A.15 — Stage / unstage / commit / discard inline
+# ---------------------------------------------------------------------------
+
+
+class GitPathRequest(BaseModel):
+    path: str
+
+
+class GitCommitRequest(BaseModel):
+    message: str
+    all: bool = False
+    dry_run_hooks: bool = False
+
+
+@view_router.post("/{workspace_id}/git/stage", response_model=StatusResponse)
+async def git_stage(workspace_id: str, body: GitPathRequest) -> StatusResponse:
+    """Stageia um arquivo (`git add <path>`)."""
+    from src.tools.git import _git_stage_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    result = _git_stage_impl(repo, body.path)
+    return StatusResponse(status=result["status"], message=result.get("message", ""))
+
+
+@view_router.post("/{workspace_id}/git/unstage", response_model=StatusResponse)
+async def git_unstage(workspace_id: str, body: GitPathRequest) -> StatusResponse:
+    """Remove um arquivo do stage (`git reset HEAD <path>`)."""
+    from src.tools.git import _git_unstage_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    result = _git_unstage_impl(repo, body.path)
+    return StatusResponse(status=result["status"], message=result.get("message", ""))
+
+
+@view_router.post("/{workspace_id}/git/discard", response_model=StatusResponse)
+async def git_discard(workspace_id: str, body: GitPathRequest) -> StatusResponse:
+    """Descarta mudanças não staged (`git restore -- <path>`)."""
+    from src.tools.git import _git_restore_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    result = _git_restore_impl(repo, body.path)
+    return StatusResponse(status=result["status"], message=result.get("message", ""))
+
+
+@view_router.post("/{workspace_id}/git/commit", response_model=StatusResponse)
+async def git_commit_inline(
+    workspace_id: str, body: GitCommitRequest
+) -> StatusResponse:
+    """Cria um commit com os arquivos staged.
+
+    Quando ``dry_run_hooks=True`` executa os pre-commit hooks sem efetivar o
+    commit e devolve ``{"status": "hooks_ok"}`` ou ``{"status": "hooks_failed",
+    "message": "<saída dos hooks>"}``.
+    """
+    from src.tools.git import _git_commit_impl, _run_pre_commit_hooks
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    if body.dry_run_hooks:
+        hook_result = _run_pre_commit_hooks(repo)
+        if hook_result["passed"]:
+            return StatusResponse(
+                status="hooks_ok", message=hook_result.get("output", "")
+            )
+        return StatusResponse(
+            status="hooks_failed", message=hook_result.get("output", "")
+        )
+    result = _git_commit_impl(repo, body.message, body.all)
+    return StatusResponse(status=result["status"], message=result.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
 # A.14 — Worktree manager (view_router)
 # ---------------------------------------------------------------------------
 
