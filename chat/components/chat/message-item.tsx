@@ -32,6 +32,7 @@ import { HITLPanel } from "./features/hitl-panel";
 import type { RagCitation } from "./features/rag-citation-popover";
 import type { Message } from "@/lib/types";
 import { stripMarkdownEnvelope } from "@/lib/utils/string";
+import { estimateCost, formatCost } from "@/lib/config/model-prices";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
 import Image from "next/image";
 import { useT } from "@/lib/i18n";
@@ -391,6 +392,8 @@ interface MessageItemProps {
    * Mapeia diretamente ao índice na lista de checkpoints (DESC).
    */
   humanMessageIndex?: number;
+  /** C.29 — modelo ativo da sessão, para cálculo do badge de custo. */
+  modelId?: string;
 }
 
 export const MessageItem = memo(
@@ -416,6 +419,7 @@ export const MessageItem = memo(
     onRetry,
     workspaceId,
     humanMessageIndex,
+    modelId,
   }: MessageItemProps) {
     const t = useT();
     const [isEditing, setIsEditing] = useState(false);
@@ -908,7 +912,7 @@ export const MessageItem = memo(
                     <RagCitationList citations={message.ragCitations} />
                   )}
 
-                  {/* Metadata — duração total e tokens */}
+                  {/* Metadata — duração total, tokens e custo estimado */}
                   {!message.isThinking && message.thinkingDuration != null && (
                     <div className="flex items-center justify-end gap-2 mt-1 text-xs text-muted-foreground font-mono">
                       <span>
@@ -925,6 +929,25 @@ export const MessageItem = memo(
                           </span>
                         </>
                       )}
+                      {modelId &&
+                        message.usageMetadata?.input_tokens != null &&
+                        message.usageMetadata?.output_tokens != null && (
+                          <>
+                            <span>•</span>
+                            <span
+                              className="text-muted-foreground/70"
+                              title={`Custo estimado: ${formatCost(estimateCost(modelId, message.usageMetadata.input_tokens, message.usageMetadata.output_tokens ?? 0))}`}
+                            >
+                              {formatCost(
+                                estimateCost(
+                                  modelId,
+                                  message.usageMetadata.input_tokens,
+                                  message.usageMetadata.output_tokens ?? 0,
+                                ),
+                              )}
+                            </span>
+                          </>
+                        )}
                     </div>
                   )}
                 </div>

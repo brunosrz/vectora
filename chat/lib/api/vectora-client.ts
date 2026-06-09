@@ -319,6 +319,32 @@ export const getHistory = (
   postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
 
 // ============================================================================
+// Auth usage — quota consumption
+// ============================================================================
+
+export interface UsageWindowStats {
+  used: number;
+  limit: number;
+  remaining: number;
+  window_seconds: number;
+  reset_in_seconds: number;
+}
+
+export interface AuthUsage extends UsageWindowStats {
+  five_hour: UsageWindowStats;
+  weekly: UsageWindowStats;
+}
+
+export async function getAuthUsage(): Promise<AuthUsage> {
+  const res = await fetch("/auth/usage", {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json() as Promise<AuthUsage>;
+}
+
+// ============================================================================
 // Thread activity — files touched + turn count
 // ============================================================================
 

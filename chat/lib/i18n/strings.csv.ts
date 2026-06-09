@@ -661,6 +661,8 @@ workbench.files.search_in_files,Search in files,Buscar en archivos,Buscar nos ar
 workbench.files.search_placeholder,Search in files…,Buscar en archivos…,Buscar nos arquivos…
 workbench.files.search_no_results,No results.,Sin resultados.,Sem resultados.
 workbench.files.search_truncated,Showing first 200 results — refine your query to narrow down.,Mostrando los primeros 200 resultados — refine su consulta.,Mostrando os primeiros 200 resultados — refine sua busca.
+quota.five_hour,5-hour usage,Uso en 5 horas,Uso em 5 horas
+quota.weekly,Weekly usage,Uso semanal,Uso semanal
 `;
 
 export default CSV;
