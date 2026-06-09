@@ -2326,6 +2326,134 @@ source_path, source_url, excerpt}` no SSE; LLM gera `[1][2]` no
   "você estava aqui no Mac há 2 min" via `last_active_at` por
   `(user, device_fingerprint, thread)`.
 
+### SX-UX — Itens adicionais implementados (C.32..C.42)
+
+> Estes itens não constavam no SX original (`docs/ux.md`) mas foram
+> implementados durante a execução do bloco. Todos ✅.
+
+#### C.32 — ✅ Painéis laterais redimensionáveis
+
+`<HorizontalSplit>` controlado por `splitSize`/`setSplitSize` no
+`workbench-store`; sidebar com handle de resize próprio (`sidebarWidth`).
+Drag no divisor chat↔workbench reposiciona os painéis em tempo real;
+posição persistida em `workbench-store` (localStorage).
+
+**Arquivos**: `chat/components/workbench/horizontal-split.tsx`;
+`chat/lib/stores/workbench-store.ts`.
+
+#### C.33 — ✅ Terminal funcional
+
+`pywinpty` reinstalado via `uv sync`; `xterm-view.tsx` lê o campo
+`message` real do evento `{type:"error"}` do backend (via i18n `terminal.*`)
+em vez de texto genérico. Erro real chega ao usuário em vez de
+"terminal unavailable".
+
+**Arquivos**: `chat/components/workbench/tabs/terminal-tab.tsx` /
+`xterm-view.tsx`; `chat/lib/i18n/strings.csv.ts` (`terminal.*`);
+`pyproject.toml` (`pywinpty`).
+
+#### C.34 — ✅ Sidebar: pasta = workspace, sessões aninhadas
+
+`workspace_id` preservado em `Thread`/`toThread()`/`toSidebarThread()`;
+`groupThreadsByWorkspace()` agrupa threads por workspace físico (pasta
+expansível, ordenadas por `updated_at`); threads sem workspace caem em
+"Outras conversas" ordenadas por tempo.
+
+**Arquivos**: `chat/components/layout/sidebar.tsx`;
+`chat/lib/stores/threads-store.ts`; `src/api/schemas.py` (`workspace_id`
+no modelo `Thread`).
+
+#### C.35 — ✅ Administração como painel separado
+
+`AdminDialog` próprio (espelha a casca do `SettingsDialog`, renderiza
+`AdminTab`) + `admin-dialog-store` com `openAdmin()`/`closeAdmin()`;
+`user-menu.tsx` abre via `openAdmin()` quando `isAdmin`; removida a
+aba/gate "admin" do `SettingsDialog`.
+
+**Arquivos**: `chat/components/layout/admin-dialog.tsx`;
+`chat/lib/stores/admin-dialog-store.ts`;
+`chat/components/layout/user-menu.tsx`;
+`chat/components/layout/settings-dialog/index.tsx`.
+
+#### C.36 — ✅ Seletor de workspace no rodapé do composer
+
+`<WorkspaceSelector compact />` no rodapé do `chat-input.tsx`, mesma
+escala de `PermissionModeMenu` (`text-xs h-7 px-2`), separador vertical
+antes do seletor de modelo. Removido do header — contexto de "qual
+workspace esta mensagem vai usar" pertence ao composer.
+
+**Arquivos**: `chat/components/chat/chat-input.tsx`;
+`chat/components/layout/header.tsx` (remoção).
+
+#### C.37 — ✅ Remover fundo do seletor de modelo no tema escuro
+
+`SelectTrigger` base (`components/ui/select.tsx`) definia
+`dark:bg-input/30 dark:hover:bg-input/50` que prevalecia sobre o
+`bg-transparent` passado inline no composer. Adicionado
+`dark:bg-transparent dark:hover:bg-transparent` no trigger do composer
+para ficar visualmente consistente com os demais botões do rodapé.
+
+**Arquivos**: `chat/components/chat/chat-input.tsx` (trigger do Select
+de modelo).
+
+#### C.38 — ✅ Implementar tema claro de fato
+
+`chat/src/styles.css` só tinha tokens OkLCH em `@theme` (sem bloco
+`:root`/`.light`/`.dark`) — `color-scheme: dark` fixo. Reestruturado:
+tokens em custom properties em `:root`/`.dark`, referenciados via
+`@theme inline`, + bloco `.light { ... }` com paleta clara equivalente.
+`next-themes` aplica classe `.light` que agora muda as variáveis.
+
+**Arquivos**: `chat/src/styles.css`.
+
+#### C.39 — ✅ Rebalancear paleta: cinza-neutro com azul só em destaques
+
+Superfícies (`--color-muted`, `--color-card`, `--color-popover`,
+`--color-secondary`, `--color-accent`, `--color-border`, `--color-input`)
+tinham chroma `~0.02 260` (azul-marinho), deixando a UI "toda azul".
+Reduzido para `chroma ~0.005` (neutro com leve temperatura); azul
+saturado (`oklch(0.65 0.18 255)`) reservado exclusivamente para
+`--color-primary`/`--color-ring` (CTAs, seleção ativa, foco, links).
+Aplicado também no bloco `.light` (C.38).
+
+**Arquivos**: `chat/src/styles.css`.
+
+#### C.40 — ✅ ChatParamsMenu: parâmetros de geração no compositor
+
+Verbosidade, Esforço de raciocínio e Modo-rápido movidos de
+`AgentSettings` para um novo componente `ChatParamsMenu` (ícone
+`SlidersHorizontal`, popover `bottom-9`) no rodapé do `chat-input.tsx`,
+ao lado do `PermissionModeMenu`. `AgentSettings` mantém apenas
+Tema/Idioma/ShowToolCalls (preferências persistentes).
+
+**Arquivos**: `chat/components/chat/features/chat-params-menu.tsx`
+(novo); `chat/components/chat/chat-input.tsx`; `chat/components/layout/
+agent-settings.tsx`; `chat/lib/i18n/strings.csv.ts` (`chat_params.*`).
+
+#### C.41 — ✅ Não criar pasta de workspace antes do primeiro uso
+
+`get_or_create_session_workspace` não chama `base.mkdir()` ao registrar
+o workspace — a pasta só é materializada quando a primeira ferramenta
+de fs/git escrever nela (`path.parent.mkdir(parents=True, exist_ok=True)`
+já presente em `src/tools/fs.py:186,252`). Evita pastas órfãs em
+conversas que não usam o sistema de arquivos.
+
+**Arquivos**: `src/services/workspace.py` (removida chamada
+`base.mkdir()`); `tests/unit/test_workspace_q.py` (teste atualizado
+para verificar que a pasta NÃO é criada).
+
+#### C.42 — ✅ Remover lista de pastas redundante da sidebar
+
+`<SidebarFolders>` (seção "PASTAS", lista achatada de workspaces)
+removido de `sidebar.tsx` — o agrupamento por workspace já é feito
+pelo `groupThreadsByWorkspace` (C.34), tornando "PASTAS" uma duplicação
+do nó de pasta aninhado. Sidebar fica com uma única árvore ao estilo
+Codex.
+
+**Arquivos**: `chat/components/layout/sidebar.tsx` (remoção do import
+e JSX); `chat/components/layout/sidebar-folders.tsx` (arquivo mantido
+mas não referenciado).
+
 #### Priorização e sprints SX-UX
 
 ```
@@ -2588,15 +2716,36 @@ Equivalente terminal do UX-49.
   TUI-10  rewind (depende de SX-FS-3)
 ```
 
-**Itens adicionais implementados além do SX-TUI-1..11:**
+#### SX-TUI-12 — ✅ Header customizado (sem expansão indevida)
 
-- **B.12 ✅** — Header customizado: `VectoraHeader(Header)` desliga toggle `tall`
-  ao clique (override `_on_click`/`tall`). Não expande para 3 linhas sem clock.
-- **B.13 ✅** — Logo ASCII + indicador de usuário (iniciais/nome) na status bar.
-  Espelha o papel do `UserMenu` do chat sem depender de imagens.
-- **B.14 ✅** — `/theme {dark|light|system}`: handler em `slash_handlers.py`
-  persiste em `runtime_settings` e chama `app.refresh_css()` para trocar
-  `VECTORA_LIGHT`/`VECTORA_DARK`/`VECTORA_SYSTEM` em runtime sem reiniciar.
+`Header()` do Textual alterna o reactive `tall` ao clique, expandindo
+para 3 linhas mesmo sem clock/subtítulo. Criado `VectoraHeader(Header)`
+que desliga esse toggle (override de `_on_click`/`tall`), já que a TUI
+não usa subtítulo nem relógio expandido.
+
+**Arquivos**: `src/ui/components/header.py` (novo `VectoraHeader`);
+`src/ui/app.py` (usa `VectoraHeader` em vez de `Header`).
+
+#### SX-TUI-13 — ✅ Logo ASCII + indicador de usuário
+
+Terminal não renderiza imagens; implementado logo em ASCII/Rich-markup
+estilizado (espelho do `/vectora.svg` do header do chat) e indicador
+textual do usuário logado (iniciais ou nome) na status bar — espelho do
+papel do `UserMenu` do chat.
+
+**Arquivos**: `src/ui/components/status_bar.py`;
+`src/ui/i18n/strings.csv` (strings do indicador).
+
+#### SX-TUI-14 — ✅ Comando `/theme`
+
+`VECTORA_LIGHT`/`VECTORA_DARK`/`VECTORA_SYSTEM` já existiam em
+`theme.py` mas não havia slash command para troca em runtime. Adicionado
+handler `/theme {dark|light|system}` em `slash_handlers.py` que persiste
+em `runtime_settings` e chama `app.refresh_css()` para reaplicar o CSS
+sem reiniciar.
+
+**Arquivos**: `src/ui/slash_handlers.py` (novo case `/theme`);
+`src/ui/runtime_settings.py` (campo `theme`).
 
 ### Dependências (SX-TUI)
 
