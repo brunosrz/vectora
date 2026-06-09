@@ -143,3 +143,24 @@ tui.settings.theme_system,System,Sistema,Sistema
 tui.settings.language,Language,Idioma,Idioma
 tui.settings.save,Save,Guardar,Salvar
 tui.settings.cancel,Cancel,Cancelar,Cancelar
+
+# ---------------------------------------------------------------------------
+# WorkbenchScreen (src/ui/screens/workbench_screen.py)
+# ---------------------------------------------------------------------------
+tui.workbench.title,Workbench,Workbench,Workbench
+tui.workbench.tab_terminal,Terminal,Terminal,Terminal
+tui.workbench.tab_files,Files,Archivos,Arquivos
+tui.workbench.tab_diff,Diff,Diff,Diff
+tui.workbench.tab_plan,Plan,Plan,Plano
+tui.workbench.hint,Esc to close,Esc para cerrar,Esc para fechar
+tui.workbench.files_root,Workspace,Workspace,Workspace
+tui.workbench.files_no_workspace,No workspace active,Sin workspace activo,Nenhum workspace ativo
+tui.workbench.terminal_empty,No log file found.,No se encontró archivo de log.,Nenhum arquivo de log encontrado.
+tui.workbench.terminal_unavailable,Could not read log.,No se pudo leer el log.,Não foi possível ler o log.
+tui.workbench.diff_col_status,Status,Estado,Estado
+tui.workbench.diff_col_file,File,Archivo,Arquivo
+tui.workbench.diff_unavailable,Git not available,Git no disponible,Git não disponível
+tui.workbench.plan_title,Artifacts:,Artefactos:,Artefatos:
+tui.workbench.plan_empty,No artifacts found.,Sin artefactos.,Nenhum artefato encontrado.
+tui.workbench.plan_no_workspace,No workspace active,Sin workspace activo,Nenhum workspace ativo
+tui.workbench.plan_unavailable,Could not read artifacts.,No se pudo leer artefactos.,Não foi possível ler artefatos.
