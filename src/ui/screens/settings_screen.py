@@ -63,9 +63,16 @@ class SettingsScreen(ModalScreen[None]):
         self.dismiss()
 
     def _apply(self) -> None:
+        from src.ui.app import VectoraChatApp
+        from src.ui.theme import get_theme_css
+
         theme_sel = self.query_one("#select-theme", Select)
         lang_sel = self.query_one("#select-language", Select)
         if theme_sel.value and theme_sel.value is not Select.BLANK:
-            runtime_settings.set_theme(str(theme_sel.value))
+            new_theme = str(theme_sel.value)
+            runtime_settings.set_theme(new_theme)
+            # Troca o CSS em runtime — Textual 8.x suporta refresh_css()
+            VectoraChatApp.DEFAULT_CSS = get_theme_css(new_theme)
+            self.app.refresh_css()
         if lang_sel.value and lang_sel.value is not Select.BLANK:
             runtime_settings.set_language(str(lang_sel.value))
