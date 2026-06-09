@@ -101,7 +101,20 @@ export type StreamEvent =
       rag_misses?: number;
       tool_calls?: Record<string, number>;
     }
-  | { type: "hitl"; tool_name: string; args_json: string; interrupt_id: string }
+  | {
+      type: "hitl";
+      tool_name: string;
+      args_json: string;
+      interrupt_id: string;
+      /** Razão pela qual o modelo pediu aprovação (opcional). */
+      reasoning?: string;
+      /** Preview do diff antes/depois, formato unified (opcional). */
+      diff_preview?: string;
+      /** Caminhos de arquivo afetados (opcional). */
+      affected_paths?: string[];
+      /** Modo de permissão ativo (default/yolo/etc.) (opcional). */
+      permission_mode?: string;
+    }
   | { type: "error"; message: string; code?: string }
   | { type: "done"; thread_id: string; run_id?: string };
 

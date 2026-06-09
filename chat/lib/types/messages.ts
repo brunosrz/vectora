@@ -69,5 +69,13 @@ export interface Message {
     toolName: string;
     argsJson: string;
     interruptId: string;
+    /** Razão para a ação (exibida no painel). */
+    reasoning?: string;
+    /** Preview diff unified para file_write/file_edit. */
+    diffPreview?: string;
+    /** Caminhos de arquivo afetados. */
+    affectedPaths?: string[];
+    /** Modo de permissão ativo (default/yolo/…). */
+    permissionMode?: string;
   };
 }

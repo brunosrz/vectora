@@ -594,6 +594,10 @@ async function handleEvent(
             toolName: event.tool_name,
             argsJson: event.args_json,
             interruptId: event.interrupt_id,
+            reasoning: event.reasoning,
+            diffPreview: event.diff_preview,
+            affectedPaths: event.affected_paths,
+            permissionMode: event.permission_mode,
           },
         })),
       );
