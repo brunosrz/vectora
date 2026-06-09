@@ -590,11 +590,36 @@ export function ChatInterface({
 
       try {
         const assistantMessageId = generateMessageId();
+        const streamStart = Date.now();
         const { assistantContent } = await processStream(
           content,
           assistantMessageId,
           files,
         );
+
+        // C.22 — Notificação OS quando resposta chega com aba oculta e >15s
+        const streamDuration = Date.now() - streamStart;
+        if (
+          streamDuration > 15_000 &&
+          document.visibilityState === "hidden" &&
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted" &&
+          assistantContent
+        ) {
+          void new Notification("Vectora", {
+            body: "Resposta pronta — clique para ver.",
+            icon: "/vectora.svg",
+          });
+        }
+        // Badge de título: (1) quando aba oculta
+        if (document.visibilityState === "hidden" && assistantContent) {
+          document.title = "(1) Vectora";
+          const restoreTitle = () => {
+            document.title = "Vectora";
+            document.removeEventListener("visibilitychange", restoreTitle);
+          };
+          document.addEventListener("visibilitychange", restoreTitle);
+        }
 
         if (onThreadUpdate && assistantContent) {
           const firstUserMsg =
@@ -864,6 +889,14 @@ export function ChatInterface({
 
     if (!userId) {
       return;
+    }
+
+    // C.22 — Solicita permissão de notificação na primeira mensagem enviada.
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "default"
+    ) {
+      void Notification.requestPermission();
     }
 
     // Slash command? Executa localmente e não envia ao agente.
