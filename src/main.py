@@ -334,6 +334,46 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    # storage — schema migrations e diagnóstico de storage
+    storage_p = sub.add_parser(
+        "storage",
+        help="Gerenciar schema migrations do banco SQLite",
+        description=(
+            "Comandos de storage:\n"
+            "  migrate status     — lista migrations e estado (aplicada/pendente/drift)\n"
+            "  migrate upgrade    — aplica todas as migrations pendentes\n"
+            "  migrate downgrade  — reverte até a versão indicada\n\n"
+            "O banco padrão é ~/.vectora/data/vectora.db (settings.db_dsn)."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    storage_p.add_argument(
+        "action",
+        nargs="?",
+        choices=["migrate"],
+        default="migrate",
+        help="Ação de storage (default: migrate)",
+    )
+    storage_p.add_argument(
+        "subaction",
+        nargs="?",
+        choices=["status", "upgrade", "downgrade"],
+        default="status",
+        help="Sub-ação da migration (default: status)",
+    )
+    storage_p.add_argument(
+        "version",
+        nargs="?",
+        default=None,
+        help="Versão alvo para downgrade (ex: 0002)",
+    )
+    storage_p.add_argument(
+        "--db",
+        metavar="PATH",
+        default=None,
+        help="Caminho do banco SQLite (default: settings.db_dsn)",
+    )
+
     # auth — autenticação (login, logout, whoami, etc.)
     auth_p = sub.add_parser(
         "auth",
@@ -629,6 +669,90 @@ async def _run_sessions_async() -> None:
     console.print(table)
 
 
+async def _run_storage_async(args: argparse.Namespace) -> None:
+    """storage migrate subcommand — schema versioning via MigrationRunner."""
+    import aiosqlite
+    from rich.console import Console
+    from rich.table import Table
+
+    from src.storage.migrations.runner import MigrationRunner
+
+    console = Console()
+
+    # Resolve o banco — args.db tem prioridade, depois settings.db_dsn
+    db_path: str | None = getattr(args, "db", None)
+    if not db_path:
+        try:
+            from src.settings import settings as _s
+
+            db_path = _s.db_dsn
+        except Exception:
+            pass
+    if not db_path:
+        from pathlib import Path as _Path
+
+        db_path = str(_Path.home() / ".vectora" / "data" / "vectora.db")
+
+    subaction = getattr(args, "subaction", "status") or "status"
+    version = getattr(args, "version", None)
+
+    try:
+        async with aiosqlite.connect(db_path) as conn:
+            conn.row_factory = aiosqlite.Row
+            runner = MigrationRunner(conn)
+
+            if subaction == "status":
+                statuses = await runner.status()
+                if not statuses:
+                    console.print("[dim]Nenhuma migration encontrada.[/dim]")
+                    return
+                table = Table(title="Schema Migrations", show_lines=False)
+                table.add_column("Versão", style="cyan bold", width=8)
+                table.add_column("Nome", width=20)
+                table.add_column("Estado", width=12)
+                table.add_column("Aplicada em", style="dim", width=22)
+                for s in statuses:
+                    if not s.applied:
+                        state = "[yellow]pendente[/yellow]"
+                        ts = "—"
+                    elif s.drift:
+                        state = "[red]drift![/red]"
+                        ts = (s.applied_at or "")[:19].replace("T", " ")
+                    else:
+                        state = "[green]ok[/green]"
+                        ts = (s.applied_at or "")[:19].replace("T", " ")
+                    table.add_row(s.version, s.name, state, ts)
+                console.print(table)
+
+            elif subaction == "upgrade":
+                applied = await runner.upgrade(target=version)
+                if applied:
+                    console.print(f"[green]✓ Aplicadas:[/green] {', '.join(applied)}")
+                else:
+                    console.print(
+                        "[green]✓ Banco já atualizado — nada a fazer.[/green]"
+                    )
+
+            elif subaction == "downgrade":
+                if not version:
+                    console.print(
+                        "[red]❌ Informe a versão alvo: vectora storage migrate downgrade <VERSÃO>[/red]"
+                    )
+                    sys.exit(1)
+                reverted = await runner.downgrade(version)
+                if reverted:
+                    console.print(
+                        f"[yellow]↩ Revertidas:[/yellow] {', '.join(reverted)}"
+                    )
+                else:
+                    console.print("[dim]Nenhuma migration revertida.[/dim]")
+
+    except Exception as exc:
+        console.print(f"[red]❌ Erro:[/red] {exc}")
+        logger.debug("storage migrate: erro", exc_info=True)
+        sys.exit(1)
+
+
 def _run_config(args: argparse.Namespace) -> None:
     """config subcommand — show or edit settings.json."""
     from rich.console import Console
@@ -781,6 +905,12 @@ def run() -> None:
     # ── config ────────────────────────────────────────────────────────────────
     if command == "config":
         _run_config(args)
+        return
+
+    # ── storage ───────────────────────────────────────────────────────────────
+    if command == "storage":
+        with contextlib.suppress(KeyboardInterrupt):
+            asyncio.run(_run_storage_async(args))
         return
 
     # ── auth ──────────────────────────────────────────────────────────────────

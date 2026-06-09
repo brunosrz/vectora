@@ -1,0 +1,41 @@
+-- Migration 0002: tabelas de sessões, checkpoints e compartilhamento
+-- Extrai CREATE TABLE de src/api/handlers/threads.py e share.py
+
+-- up
+CREATE TABLE IF NOT EXISTS vectora_sessions (
+    thread_id     TEXT    PRIMARY KEY,
+    user_type     TEXT    NOT NULL DEFAULT 'human',
+    created_at    TEXT    NOT NULL,
+    last_activity TEXT    NOT NULL,
+    message_count INTEGER NOT NULL DEFAULT 0,
+    extra         TEXT    NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS vectora_checkpoint_artifacts (
+    id              TEXT PRIMARY KEY,
+    thread_id       TEXT NOT NULL,
+    checkpoint_id   TEXT NOT NULL,
+    strategy        TEXT NOT NULL DEFAULT 'git',
+    git_sha         TEXT,
+    snapshot_path   TEXT,
+    files_touched   TEXT NOT NULL DEFAULT '[]',
+    created_at      TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS shared_threads (
+    token       TEXT PRIMARY KEY,
+    thread_id   TEXT NOT NULL,
+    created_by  TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL,
+    expires_at  TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_activity ON vectora_sessions(last_activity DESC);
+CREATE INDEX IF NOT EXISTS idx_artifacts_thread  ON vectora_checkpoint_artifacts(thread_id);
+CREATE INDEX IF NOT EXISTS idx_shares_thread     ON shared_threads(thread_id);
+CREATE INDEX IF NOT EXISTS idx_shares_expires    ON shared_threads(expires_at);
+
+-- down
+DROP TABLE IF EXISTS shared_threads;
+DROP TABLE IF EXISTS vectora_checkpoint_artifacts;
+DROP TABLE IF EXISTS vectora_sessions;
