@@ -54,6 +54,7 @@ _HELP_ENTRIES: list[tuple[str, str]] = [
     ("/rag", "tui.help.cmd.rag"),
     ("/traces", "tui.help.cmd.traces"),
     ("/workspaces", "tui.help.cmd.workspaces"),
+    ("/theme <dark|light|system>", "tui.help.cmd.theme"),
     ("/quit", "tui.help.cmd.quit"),
 ]
 
@@ -127,6 +128,9 @@ class SlashCommandsMixin:
 
         elif cmd in ("workspaces", "workspace"):
             await self._cmd_workspaces()
+
+        elif cmd == "theme":
+            await self._cmd_theme(args)
 
         else:
             self.append_line(
@@ -297,3 +301,26 @@ class SlashCommandsMixin:
             self.append_line(
                 f"[yellow]{t('tui.workspaces.unavailable', error=exc)}[/yellow]"
             )
+
+    async def _cmd_theme(self, args: str) -> None:
+        from src.services.runtime_settings import runtime_settings
+        from src.ui.app import VectoraChatApp
+        from src.ui.theme import get_theme_css
+
+        valid = ("dark", "light", "system")
+        theme = args.strip().lower()
+        if theme not in valid:
+            self.append_line(
+                f"[yellow]{t('tui.theme.invalid', valid=', '.join(valid))}[/yellow]"
+            )
+            return
+        runtime_settings.set_theme(theme)
+        VectoraChatApp.DEFAULT_CSS = get_theme_css(theme)
+        # Tenta refresh_css() no app pai se disponível
+        try:
+            app = getattr(self, "app", None)
+            if app is not None and hasattr(app, "refresh_css"):
+                app.refresh_css()
+        except Exception:  # noqa: BLE001
+            pass
+        self.append_line(f"[green]{t('tui.theme.changed', theme=theme)}[/green]")

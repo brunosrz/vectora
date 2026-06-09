@@ -118,6 +118,7 @@ tui.workspaces.empty,No workspaces registered.,No hay workspaces registrados.,Ne
 tui.workspaces.trusted,trusted,confiable,confiável
 tui.workspaces.untrusted,untrusted,no confiable,não confiável
 tui.workspaces.unavailable,Workspaces unavailable: {error},Workspaces no disponibles: {error},Workspaces indisponíveis: {error}
+tui.help.cmd.theme,Change TUI theme (dark/light/system),Cambiar tema (dark/light/system),Trocar tema TUI (dark/light/system)
 
 # ---------------------------------------------------------------------------
 # Streaming (src/ui/streaming.py)
@@ -157,6 +158,12 @@ tui.rewind.unavailable,Could not load checkpoints.,No se pudieron cargar los che
 tui.rewind.no_workspace,No active workspace for rewind.,Sin workspace activo para rebobinar.,Nenhum workspace ativo para rewind.
 tui.rewind.done,Session rewound. History cleared.,Sesión rebobinada. Historial borrado.,Sessão retrocedida. Histórico limpo.
 tui.rewind.error,Rewind failed: {error},Error al rebobinar: {error},Falha no rewind: {error}
+
+# ---------------------------------------------------------------------------
+# /theme
+# ---------------------------------------------------------------------------
+tui.theme.invalid,Invalid theme. Use: {valid},Tema inválido. Use: {valid},Tema inválido. Use: {valid}
+tui.theme.changed,✓ Theme changed to: {theme},✓ Tema cambiado a: {theme},✓ Tema alterado para: {theme}
 
 # ---------------------------------------------------------------------------
 # SettingsScreen (src/ui/screens/settings_screen.py)
