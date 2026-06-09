@@ -100,28 +100,67 @@ def build_backend(
     return backend
 
 
-def build_store(embedding_model: str | None = None) -> Any:
-    """Constrói o ``InMemoryStore`` canônico com embeddings Cohere opcionais.
+async def build_store(embedding_model: str | None = None) -> Any:
+    """Constrói o ``AsyncSqliteStore`` (F5) persistente com embeddings Cohere opcionais.
+
+    Abre uma conexão ``aiosqlite`` dedicada (isolation_level=None + WAL) e cria
+    ``AsyncSqliteStore(conn, index=index)``. A conexão fica armazenada em
+    ``store.conn`` — enquanto o store estiver vivo, a conexão permanece aberta.
+    Chama ``await store.setup()`` para criar as tabelas LangGraph na primeira vez.
 
     Usado como ``store=`` em ``create_deep_agent`` e disponível às tools via
-    ``langgraph.config.get_store()`` dentro do grafo.
-
-    O store é in-process (lite mode). A migração para ``AsyncSqliteStore``
-    (modo completo) acontecerá em F5 quando o pool SQLite estiver disponível.
+    ``langgraph.config.get_store()`` dentro do grafo. O store persiste memórias
+    do agente em SQLite (lite mode).
 
     Args:
         embedding_model: Nome do modelo de embedding para busca semântica.
-            Se None, tenta `settings.embedding_model`; se não configurado,
+            Se None, tenta ``settings.embedding_model``; se não configurado,
             o store funciona sem indexação vetorial (busca por chave apenas).
 
     Returns:
-        ``InMemoryStore`` pronto para ser passado a ``create_deep_agent``.
+        ``AsyncSqliteStore`` pronto para ser passado a ``create_deep_agent``.
+
+    Nota:
+        Usa uma conexão própria (não o pool F1) porque ``AsyncSqliteStore``
+        mantém o ``conn`` aberto pelo ciclo de vida do processo. O pool F1
+        é reservado para o checkpointer (acesso transacional curto).
     """
-    from langgraph.store.memory import InMemoryStore
+    import aiosqlite
+    from langgraph.store.sqlite.aio import AsyncSqliteStore
 
     index = _build_index(embedding_model)
-    store = InMemoryStore(index=index)
-    logger.debug("backends: InMemoryStore criado index=%s", index)
+
+    try:
+        from src.settings import settings as _settings
+
+        db_path = _settings.db_dsn or ""
+    except Exception:
+        db_path = ""
+
+    if not db_path:
+        import tempfile
+
+        db_path = str(Path(tempfile.gettempdir()) / "vectora_store.db")
+        logger.debug("backends: store db_path fallback para %s", db_path)
+
+    # Garante que o diretório existe
+    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Abre conexão persistente com WAL para suportar leituras concorrentes
+    # com o checkpointer no mesmo arquivo SQLite.
+    conn = await aiosqlite.connect(db_path, isolation_level=None)
+    await conn.execute("PRAGMA journal_mode=WAL;")
+    await conn.execute("PRAGMA synchronous=NORMAL;")
+    await conn.execute("PRAGMA foreign_keys=ON;")
+
+    store = AsyncSqliteStore(conn, index=index)
+    await store.setup()
+
+    logger.debug(
+        "backends: AsyncSqliteStore criado path=%s index=%s",
+        db_path,
+        "Cohere" if index else "none",
+    )
     return store
 
 

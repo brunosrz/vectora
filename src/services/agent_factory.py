@@ -334,9 +334,9 @@ async def _build_graph_async() -> Any:
     # Paths absolutos — harness lê SKILL.md frontmatter on-demand.
     skill_paths = [str(p) for p in list_skill_paths("local")]
 
-    # BaseStore (InMemoryStore lite) — usado pelas memory tools via get_store().
-    # Migração para AsyncSqliteStore/AsyncPostgresStore em F5.
-    _store = build_store()
+    # BaseStore (AsyncSqliteStore lite via F5) — persistente via aiosqlite dedicado.
+    # Disponível às tools via langgraph.config.get_store() dentro do grafo.
+    _store = await build_store()
 
     # AGENTS.md paths para o MemoryMiddleware — injetado no system prompt.
     memory_paths = _agents_md_paths()

@@ -16,7 +16,7 @@ Uso:
         # cp é AsyncSqliteSaver ou AsyncPostgresSaver
         ...
 
-    store = get_store()   # InMemoryStore ou PostgresStore
+    store = await get_store()   # AsyncSqliteStore ou PostgresStore
 """
 
 from __future__ import annotations
@@ -63,20 +63,21 @@ def get_checkpointer(db_dsn: str | None = None) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def get_store(embedding_model: str | None = None) -> Any:
+async def get_store(embedding_model: str | None = None) -> Any:
     """Retorna (ou cria) o BaseStore singleton.
 
     Wrap fino sobre ``src.services.backends.build_store()``.
-    F5 substituirá pelo SqliteStore ou PostgresStore.
+    F5: usa ``AsyncSqliteStore`` (lite) persistente via aiosqlite dedicado.
 
     Returns:
-        ``InMemoryStore`` (lite) com índice Cohere opcional.
+        ``AsyncSqliteStore`` (lite) com índice Cohere opcional,
+        já inicializado (``setup()`` chamado).
     """
     global _store
     if _store is None:
         from src.services.backends import build_store
 
-        _store = build_store(embedding_model)
+        _store = await build_store(embedding_model)
         logger.debug("storage/factory: store criado (%s)", type(_store).__name__)
     return _store
 
@@ -152,9 +153,9 @@ async def storage_health() -> dict[str, Any]:
     except Exception as exc:
         result["checkpointer"] = {"ok": False, "error": str(exc)}
 
-    # Store — só verifica se foi criado (InMemoryStore não tem I/O)
+    # Store — verifica se o AsyncSqliteStore foi criado e a conexão está ativa
     try:
-        store = get_store()
+        store = await get_store()
         result["store"] = {"ok": store is not None, "error": None}
     except Exception as exc:
         result["store"] = {"ok": False, "error": str(exc)}
