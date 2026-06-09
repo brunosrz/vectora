@@ -5,6 +5,7 @@
  * Re-exports types from domain-specific modules.
  */
 
+export type { ActionResult } from "./async-state";
 export type { Message } from "./messages";
 export type {
   ToolCall,

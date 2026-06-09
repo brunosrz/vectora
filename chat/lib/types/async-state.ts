@@ -50,6 +50,29 @@ export function hasLoaded(fetchedAt: number | null): boolean {
 /** Mensagem de erro padrão quando a causa real não pôde ser determinada. */
 export const UNKNOWN_ASYNC_ERROR = "Falha inesperada. Tente novamente.";
 
+/**
+ * ActionResult<T> — resultado padronizado de ações assíncronas em stores.
+ *
+ * Substitui `Promise<T | null>` (que não carrega o motivo da falha) por uma
+ * discriminated union explícita:
+ *
+ *   ok: true  → dado disponível em `.data`
+ *   ok: false → mensagem de erro em `.error`; campo opcional `.field`
+ *               indica qual campo de formulário está associado ao erro.
+ *
+ * Uso no store:
+ *   async create(...): Promise<ActionResult<WorkspaceInfo>> { ... }
+ *     return { ok: true, data: workspace };
+ *     return { ok: false, error: message };
+ *
+ * Uso no componente:
+ *   const result = await store.create(...);
+ *   if (!result.ok) showFieldError(result.field, result.error);
+ */
+export type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string; field?: string };
+
 export function toErrorMessage(
   err: unknown,
   fallback = UNKNOWN_ASYNC_ERROR,

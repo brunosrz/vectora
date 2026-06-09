@@ -135,15 +135,5 @@ export const useToastStore = create<ToastState>()((set, get) => ({
   clear: () => set({ toasts: [] }),
 }));
 
-/**
- * Resultado tipado de uma ação de store: `{ ok: true, data }` em sucesso
- * ou `{ ok: false, error, field? }` em falha. `field` aponta o campo de
- * formulário associado ao erro, quando aplicável.
- *
- * @example
- *   const result = await store.trustWorkspace(id);
- *   if (!result.ok) showInlineError(result.error);
- */
-export type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; field?: string };
+// ActionResult moved to lib/types/async-state.ts — reexport for compatibility.
+export type { ActionResult } from "@/lib/types/async-state";

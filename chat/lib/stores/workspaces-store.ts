@@ -30,6 +30,7 @@ import {
   hasLoaded as computeHasLoaded,
   toErrorMessage,
   type AsyncStatus,
+  type ActionResult,
 } from "@/lib/types/async-state";
 
 export type WorkspaceTransport = "local" | "ssh" | "codespace";
@@ -135,9 +136,9 @@ interface WorkspacesState {
   create: (
     path: string,
     opts?: { trust?: boolean; git_init?: boolean },
-  ) => Promise<WorkspaceInfo | null>;
-  trust: (id: string) => Promise<WorkspaceInfo | null>;
-  gitInit: (id: string) => Promise<WorkspaceInfo | null>;
+  ) => Promise<ActionResult<WorkspaceInfo>>;
+  trust: (id: string) => Promise<ActionResult<WorkspaceInfo>>;
+  gitInit: (id: string) => Promise<ActionResult<WorkspaceInfo>>;
   browse: (path?: string) => Promise<BrowseResult | null>;
   /** Carrega safe-roots visíveis para o usuário atual (F.3.5). */
   loadSafeRoots: () => Promise<void>;
@@ -323,13 +324,13 @@ export const useWorkspacesStore = create<WorkspacesState>()(
           }
           await get().hydrate();
           set({ active_id: data.workspace.id });
-          return data.workspace as WorkspaceInfo;
+          return { ok: true, data: data.workspace as WorkspaceInfo };
         } catch (err) {
           const message = toErrorMessage(err);
           useToastStore.getState().error(t("workspaces.error.create"), {
             description: message,
           });
-          return null;
+          return { ok: false, error: message };
         } finally {
           setPending(set, "create", false);
         }
@@ -357,13 +358,13 @@ export const useWorkspacesStore = create<WorkspacesState>()(
               w.id === id ? data.workspace : w,
             ),
           }));
-          return data.workspace as WorkspaceInfo;
+          return { ok: true, data: data.workspace as WorkspaceInfo };
         } catch (err) {
           const message = toErrorMessage(err);
           useToastStore.getState().error(t("workspaces.error.trust"), {
             description: message,
           });
-          return null;
+          return { ok: false, error: message };
         } finally {
           setPending(set, "trust", false);
         }
@@ -391,13 +392,13 @@ export const useWorkspacesStore = create<WorkspacesState>()(
               w.id === id ? data.workspace : w,
             ),
           }));
-          return data.workspace as WorkspaceInfo;
+          return { ok: true, data: data.workspace as WorkspaceInfo };
         } catch (err) {
           const message = toErrorMessage(err);
           useToastStore.getState().error(t("workspaces.error.git_init"), {
             description: message,
           });
-          return null;
+          return { ok: false, error: message };
         } finally {
           setPending(set, "gitInit", false);
         }

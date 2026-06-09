@@ -244,9 +244,12 @@ export function WorkspaceTrustDialog({
       return;
     }
     setSubmitting(true);
-    const ws = await create(listing.path, { trust: true, git_init: gitInit });
+    const result = await create(listing.path, {
+      trust: true,
+      git_init: gitInit,
+    });
     setSubmitting(false);
-    if (ws) onOpenChange(false);
+    if (result.ok) onOpenChange(false);
   };
 
   return (
