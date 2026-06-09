@@ -643,7 +643,7 @@ workbench.diff.worktree_branch_placeholder,Branch (optional),Branch (opcional),B
 workbench.tab.pending,Pending updates,Actualizaciones pendientes,Atualizações pendentes
 chat.rewind,Rewind to here,Rebobinar hasta aquí,Retroceder até aqui
 chat.rewind_title,Rewind to this point?,¿Rebobinar hasta aquí?,Retroceder até este ponto?
-"chat.rewind_desc","Undo all changes made after this message — the workspace files will be restored to their state at this point.","Deshacer todos los cambios realizados después de este mensaje — los archivos del workspace se restaurarán a su estado en este punto.","Desfazer todas as alterações feitas após esta mensagem — os arquivos do workspace serão restaurados para o estado neste ponto."
+chat.rewind_desc,"Undo all changes made after this message — the workspace files will be restored to their state at this point.","Deshacer todos los cambios realizados después de este mensaje — los archivos del workspace se restaurarán a su estado en este punto.","Desfazer todas as alterações feitas após esta mensagem — os arquivos do workspace serão restaurados para o estado neste ponto."
 chat.rewind_confirm,Rewind,Rebobinar,Retroceder
 chat.rewind_ok,Workspace rewound successfully.,Workspace rebobinado con éxito.,Workspace revertido com sucesso.
 chat.rewind_busy,The workspace is busy — try again in a moment.,El workspace está ocupado — inténtelo de nuevo en un momento.,O workspace está ocupado — tente novamente em instantes.

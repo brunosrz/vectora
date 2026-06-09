@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint:oxc": "oxlint",
+    "lint:i18n": "node scripts/lint-i18n.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
