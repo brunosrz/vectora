@@ -35,6 +35,7 @@ import { useT } from "@/lib/i18n";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -863,6 +864,7 @@ function SafeRootsPanel() {
   const [newLabel, setNewLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null);
 
   const reload = async () => {
     setLoading(true);
@@ -921,11 +923,14 @@ function SafeRootsPanel() {
     await reload();
   };
 
-  const handleRemove = async (id: string) => {
-    const ok = window.confirm(
-      "Remover esta pasta segura? Workspaces existentes não são afetados.",
-    );
-    if (!ok) return;
+  const handleRemove = (id: string) => {
+    setRemoveConfirmId(id);
+  };
+
+  const handleRemoveConfirmed = async () => {
+    if (!removeConfirmId) return;
+    const id = removeConfirmId;
+    setRemoveConfirmId(null);
     await fetch(`/admin/safe-roots/${id}`, { method: "DELETE" });
     await reload();
   };
@@ -1041,6 +1046,17 @@ function SafeRootsPanel() {
           ))}
         </div>
       )}
+
+      {/* Confirmação de remoção de safe-root (Radix Dialog — C.12) */}
+      <ConfirmDialog
+        open={removeConfirmId !== null}
+        title="Remover pasta segura?"
+        description="Workspaces existentes não são afetados."
+        confirmLabel="Remover"
+        variant="destructive"
+        onConfirm={handleRemoveConfirmed}
+        onCancel={() => setRemoveConfirmId(null)}
+      />
     </div>
   );
 }

@@ -55,6 +55,7 @@ import {
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { FileTreeSkeleton } from "./file-tree-skeleton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // ---------------------------------------------------------------------------
 // Badge de status git — derivado do diff porcelain por join client-side.
@@ -998,6 +999,13 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   // Estado de criação inline
   const [creating, setCreating] = useState<CreatingState | null>(null);
 
+  // ── Confirmação de delete (C.12: Radix Dialog, não window.confirm) ───────
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    path: string;
+    name: string;
+    permanent: boolean;
+  } | null>(null);
+
   // ── Editor inline (A.1): rascunho local + dirty-tracking ────────────────
   const [draft, setDraft] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -1214,23 +1222,25 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     [wsId, historyPath],
   );
 
-  // Deletar arquivo/pasta com confirmação; permanent=true vai para o lixo permanente
+  // Deletar arquivo/pasta com confirmação via ConfirmDialog (Radix — C.12).
   const handleDelete = useCallback(
-    async (path: string, name: string, permanent = false) => {
+    (path: string, name: string, permanent = false) => {
       if (!wsId) return;
-      const label = permanent
-        ? `Deletar permanentemente "${name}"? Esta ação não pode ser desfeita.`
-        : `Mover "${name}" para a Lixeira?`;
-      // eslint-disable-next-line no-alert
-      if (!window.confirm(label)) return;
-      const ok = await apiFsDelete(wsId, path, permanent);
-      if (ok) {
-        invalidateFiles(wsId);
-        if (openPath === path) setOpenFile(wsId, null);
-      }
+      setDeleteConfirm({ path, name, permanent });
     },
-    [wsId, openPath, invalidateFiles, setOpenFile],
+    [wsId],
   );
+
+  const handleDeleteConfirmed = useCallback(async () => {
+    if (!wsId || !deleteConfirm) return;
+    const { path, permanent } = deleteConfirm;
+    setDeleteConfirm(null);
+    const ok = await apiFsDelete(wsId, path, permanent);
+    if (ok) {
+      invalidateFiles(wsId);
+      if (openPath === path) setOpenFile(wsId, null);
+    }
+  }, [wsId, deleteConfirm, openPath, invalidateFiles, setOpenFile]);
 
   // ── Gerenciador de .gitignore (A.10) ─────────────────────────────────────
   const [gitignoreOpen, setGitignoreOpen] = useState(false);
@@ -1805,6 +1815,25 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação de delete (Radix Dialog — acessível) */}
+      <ConfirmDialog
+        open={deleteConfirm !== null}
+        title={
+          deleteConfirm?.permanent
+            ? `Deletar permanentemente "${deleteConfirm.name}"?`
+            : `Mover "${deleteConfirm?.name}" para a Lixeira?`
+        }
+        description={
+          deleteConfirm?.permanent
+            ? "Esta ação não pode ser desfeita."
+            : undefined
+        }
+        confirmLabel={deleteConfirm?.permanent ? "Deletar" : "Mover"}
+        variant={deleteConfirm?.permanent ? "destructive" : "default"}
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }
