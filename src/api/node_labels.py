@@ -8,6 +8,11 @@ Usado pelo frontend para mostrar progresso semântico durante o streaming:
 from __future__ import annotations
 
 NODE_LABELS: dict[str, str] = {
+    # Nós deepagents (E.B-1+)
+    "model": "Analisando...",
+    "tools": "Executando ferramentas…",
+    "vectora": "Processando…",
+    # Nós legacy (src/graph.py — mantidos até E5 cleanup)
     "orchestrator": "Analisando...",
     "invoke_llm": "Gerando resposta…",
     "search_agent": "Pesquisando na web…",

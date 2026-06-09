@@ -23,7 +23,6 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-import src.graph as agent_factory
 from src.api.adapters import adapt_stream
 from src.api.schemas import (
     Attachment,
@@ -34,6 +33,7 @@ from src.api.schemas import (
     StreamChatRequest,
     ToolSchema,
 )
+from src.services import agent_factory
 
 logger = logging.getLogger(__name__)
 

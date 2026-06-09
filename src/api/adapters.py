@@ -24,11 +24,9 @@ from src.api.schemas import (
     RagCitation,
     RagCitationEvent,
     StreamChatEventPayload,
-    ThinkingEvent,
     TokenEvent,
     ToolCallEvent,
     ToolResultEvent,
-    UIMetricsEvent,
     encode_event,
 )
 
@@ -66,89 +64,20 @@ def _get_tool_meta(tool_name: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Nós que emitem tokens user-facing (sub-grafos podem ter nomes diferentes)
-# ---------------------------------------------------------------------------
-_STREAMING_NODES = {
-    "invoke_llm",
-    "search_agent",
-    "coder_agent",
-    "rag_agent",
-}
-
-# Nós cuja saída do LLM é JSON estruturado (Pydantic) — não é prosa pro usuário.
-# Os tokens emitidos durante a decisão estruturada são filtrados; o conteúdo final
-# (campo `response` da decisão "respond") é emitido como TokenEvent único no
-# `on_chain_end` do nó orchestrator (ver adapt_stream).
-_STRUCTURED_OUTPUT_NODES = {"orchestrator"}
-
-
-def _extract_orchestrator_response(event: dict[str, Any]) -> str | None:
-    """Extrai o texto da resposta direta do orchestrator (action="respond").
-
-    O orchestrator retorna ``Command(goto=END, update={"messages": [AIMessage(content=...)]})``.
-    No evento ``on_chain_end`` do nó, o ``data.output`` contém esse update.
-    Quando o orchestrator delega (não responde direto), não há AIMessage com
-    conteúdo de texto — retorna None.
-    """
-    data = event.get("data", {}) or {}
-    output = data.get("output", None)
-    if output is None:
-        return None
-
-    # output pode ser Command, dict, ou objeto com atributo .update
-    messages: list | None = None
-    if isinstance(output, dict):
-        # Estado dict — `messages` em raiz, ou em "update"
-        messages = output.get("messages")
-        if messages is None and isinstance(output.get("update"), dict):
-            messages = output["update"].get("messages")
-    elif hasattr(output, "update"):
-        upd = getattr(output, "update", None)
-        if isinstance(upd, dict):
-            messages = upd.get("messages")
-
-    if not messages:
-        return None
-
-    last = messages[-1]
-    content = getattr(last, "content", None)
-    if content is None and isinstance(last, dict):
-        content = last.get("content")
-    if not content or not isinstance(content, str):
-        return None
-    return content
+# Nós cuja saída do LLM é JSON estruturado (Pydantic) — não user-facing.
+# Com deepagents (E.B-1), o agente principal ("model") faz streaming natural;
+# nenhum nó usa structured output no caminho do usuário.
+# Mantido vazio para eventuais nós de síntese adicionados em E.B+.
+_STRUCTURED_OUTPUT_NODES: set[str] = set()
 
 
 def _extract_orchestrator_thinking(event: dict[str, Any]) -> dict[str, Any] | None:
-    """Extrai dados de raciocínio do orchestrator do evento on_chain_end.
+    """Stub preservado para compatibilidade com testes legados (E.B-5 remove).
 
-    O nó orchestrator grava um dict `thinking` no state update com:
-      reason, action, delegate_to, task_query
-
-    Retorna None se não for evento do orchestrator ou se não houver thinking.
+    Com deepagents (E.B-1), o orchestrator não usa mais structured output;
+    thinking events serão emitidos via streaming v3 em E.B-6.
+    Sempre retorna None nesta versão.
     """
-    if event.get("name") != "orchestrator":
-        return None
-    data = event.get("data", {}) or {}
-    output = data.get("output")
-    if output is None:
-        return None
-
-    # output pode ser dict (estado direto) ou Command(update={...})
-    candidate: dict | None = None
-    if isinstance(output, dict):
-        candidate = output
-    elif hasattr(output, "update") and isinstance(
-        getattr(output, "update", None), dict
-    ):
-        candidate = output.update  # type: ignore[union-attr]
-
-    if candidate is None:
-        return None
-
-    thinking = candidate.get("thinking")
-    if isinstance(thinking, dict) and "reason" in thinking:
-        return thinking
     return None
 
 
@@ -387,15 +316,9 @@ def adapt_stream(
                         # e chamará ResumeChat para continuar.
                         return
 
-                # Caso especial: orchestrator decidiu "respond" — extrai a
-                # `response` do AIMessage emitido pelo Command e envia como
-                # TokenEvent único (já que os tokens do LLM foram filtrados
-                # acima por serem JSON estruturado).
                 # Emite RagCitationEvent quando o nó rag_inject conclui —
                 # extrai a lista de docs do output para expor as fontes ao frontend.
                 if kind == "on_chain_end" and name == "rag_inject":
-                    output = event.get("data", {}).get("output", {}) or {}
-                    msgs = output.get("messages") or []
                     rag_docs = event.get("data", {}).get("input", {}) or {}
                     rag_docs = rag_docs.get("rag_docs") or []
                     if rag_docs:
@@ -412,23 +335,14 @@ def adapt_stream(
                         ]
                         yield encode_event(RagCitationEvent(citations=citations))
 
-                if kind == "on_chain_end" and name == "orchestrator":
-                    thinking = _extract_orchestrator_thinking(event)
-                    if thinking:
-                        yield encode_event(
-                            ThinkingEvent(
-                                reason=thinking["reason"],
-                                action=thinking.get("action", "respond"),
-                                delegate_to=thinking.get("delegate_to"),
-                                task_query=thinking.get("task_query"),
-                            )
-                        )
-                    response_text = _extract_orchestrator_response(event)
-                    if response_text:
-                        yield encode_event(
-                            TokenEvent(content=response_text, node="orchestrator")
-                        )
-                    # Grava um checkpoint de rewind ao final de cada turno
+                # Com deepagents (E.B-1), o agente principal é o nó "model".
+                # O orchestrator antigo (structured output) foi removido.
+                # Thinking events: E.B-6 adiciona suporte via streaming v3.
+                # Checkpoint de rewind: disparado no on_chain_end do grafo raiz.
+                # O grafo raiz tem name="" ou "LangGraph" — usamos o nome do
+                # grafo configurado em create_deep_agent("name='vectora'").
+                if kind == "on_chain_end" and name == "vectora":
+                    # Grava checkpoint de rewind ao final de cada turno completo.
                     # (best-effort — falha silenciosa para não cortar o stream).
                     if workspace_id:
                         await _record_turn_checkpoint(workspace_id, thread_id, event)
