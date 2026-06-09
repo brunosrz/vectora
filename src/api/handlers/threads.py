@@ -564,3 +564,55 @@ async def rewind_thread(
         )
 
     return RewindResponse(status="ok")
+
+
+# ---------------------------------------------------------------------------
+# C.27 — Activity endpoint: arquivos tocados + resumo de tool calls
+# ---------------------------------------------------------------------------
+
+
+class ActivityResponse(BaseModel):
+    files_touched: list[str]
+    tool_call_counts: dict[str, int]
+    turn_count: int
+
+
+@router.get("/threads/{thread_id}/activity", response_model=ActivityResponse)
+async def thread_activity(thread_id: str) -> ActivityResponse:
+    """Retorna um resumo da atividade da thread: arquivos modificados e
+    contagem de tool calls agrupados por nome.
+
+    Consolida ``files_touched`` de todos os checkpoints de turno da thread.
+    """
+    db = await _get_db()
+
+    # Coleta files_touched de todos os checkpoints da thread
+    async with db.execute(
+        "SELECT files_touched FROM vectora_checkpoint_artifacts WHERE thread_id = ?",
+        (thread_id,),
+    ) as cur:
+        ft_rows = await cur.fetchall()
+
+    all_files: list[str] = []
+    for (ft_json,) in ft_rows:
+        try:
+            all_files.extend(json.loads(ft_json or "[]"))
+        except Exception:
+            pass
+    unique_files = sorted(set(all_files))
+
+    # Contagem de turnos (número de checkpoints)
+    async with db.execute(
+        "SELECT COUNT(*) FROM vectora_checkpoint_artifacts WHERE thread_id = ?",
+        (thread_id,),
+    ) as cur:
+        turn_count_row = await cur.fetchone()
+    turn_count: int = turn_count_row[0] if turn_count_row else 0
+
+    # tool_call_counts: derivado de files_touched por convenção (sem acesso ao
+    # grafo LangGraph aqui). Expandir em iterações futuras via VectoraTracer.
+    return ActivityResponse(
+        files_touched=unique_files,
+        tool_call_counts={},
+        turn_count=turn_count,
+    )

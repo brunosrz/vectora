@@ -591,6 +591,7 @@ workbench.diff.summary,"{n} modified files","{n} archivos modificados","{n} arqu
 workbench.plan.empty,No plans yet — ask Vectora to draft one.,Sin planes — pídele uno a Vectora.,Sem planos — peça um ao Vectora.
 workbench.plan.ask_cta,Ask Vectora for a plan,Pedir un plan a Vectora,Pedir um plano ao Vectora
 workbench.plan.ask_prompt,"Crie um plano de implementação para…","Crea un plan de implementación para…","Crie um plano de implementação para…"
+workbench.plan.files_touched,Files touched,Archivos tocados,Arquivos tocados
 workbench.files.pin,Pin to top,Fijar arriba,Fixar no topo
 workbench.files.unpin,Unpin,Desfijar,Desafixar
 workbench.files.pinned,Pinned,Fijados,Fixados

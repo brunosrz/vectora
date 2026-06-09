@@ -315,6 +315,27 @@ export const getHistory = (
   postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
 
 // ============================================================================
+// Thread activity — files touched + turn count
+// ============================================================================
+
+export interface ThreadActivity {
+  files_touched: string[];
+  tool_call_counts: Record<string, number>;
+  turn_count: number;
+}
+
+export async function getThreadActivity(
+  threadId: string,
+): Promise<ThreadActivity> {
+  const res = await fetch(`/threads/${encodeURIComponent(threadId)}/activity`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok)
+    return { files_touched: [], tool_call_counts: {}, turn_count: 0 };
+  return res.json() as Promise<ThreadActivity>;
+}
+
+// ============================================================================
 // Stack hint — detects project type for contextual suggestions
 // ============================================================================
 

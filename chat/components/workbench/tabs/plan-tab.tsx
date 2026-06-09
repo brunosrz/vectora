@@ -9,13 +9,22 @@
  * SWR via `useWorkbenchSWR`.
  */
 
-import { FileText, Loader2, Sparkles } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import { useCallback } from "react";
 
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
+import { getThreadActivity } from "@/lib/api/vectora-client";
 import {
   WORKBENCH_STALE_MS,
   useWorkbenchStore,
@@ -48,6 +57,47 @@ function fileSlug(path: string): string {
 
 interface PlanTabProps {
   threadId: string;
+}
+
+function FilesTouchedSection({ threadId }: { threadId: string }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const { data } = useQuery({
+    queryKey: ["thread-activity", threadId],
+    queryFn: () => getThreadActivity(threadId),
+    staleTime: 60_000,
+  });
+  const files = data?.files_touched ?? [];
+  if (files.length === 0) return null;
+  return (
+    <div className="border-t border-border/40">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {open ? (
+          <ChevronDown className="w-3 h-3 shrink-0" />
+        ) : (
+          <ChevronRight className="w-3 h-3 shrink-0" />
+        )}
+        <span className="font-medium flex-1 text-left">
+          {t("workbench.plan.files_touched")} ({files.length})
+        </span>
+      </button>
+      {open && (
+        <div className="px-2 pb-2 space-y-0.5">
+          {files.map((f) => (
+            <p
+              key={f}
+              className="text-[10px] font-mono text-muted-foreground truncate pl-4"
+            >
+              {f}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function PlanTab({ threadId }: PlanTabProps) {
@@ -161,6 +211,8 @@ export function PlanTab({ threadId }: PlanTabProps) {
           );
         })}
       </div>
+
+      <FilesTouchedSection threadId={threadId} />
 
       {openSlug && (
         <div className="border-t border-border/60 max-h-[55%] flex flex-col">
