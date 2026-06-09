@@ -28,6 +28,7 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { getDefaultModel } from "@/lib/config/deployment-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
+import { markAsNew, isNew, clearNew } from "@/lib/stores/new-thread-registry";
 
 export const Route = createFileRoute("/session/$threadId")({
   // Garante que a lista de threads está em cache antes do componente montar
@@ -132,6 +133,7 @@ function SessionPage() {
   const handleConfirmNewChat = useCallback(
     async (workspaceId: string | null) => {
       const thread = await createThreadMutation.mutateAsync(workspaceId);
+      markAsNew(thread.id);
       goTo(thread.id);
       setIsMobileSidebarOpen(false);
     },
@@ -148,6 +150,8 @@ function SessionPage() {
 
   const handleThreadUpdate = useCallback(
     (id: string, title: string) => {
+      // Primeira persistência da thread no backend: remove do registry de novas.
+      if (isNew(id)) clearNew(id);
       void updateThreadMutation.mutate({ id, updates: { title } });
     },
     [updateThreadMutation],
@@ -233,6 +237,7 @@ function SessionPage() {
                 onThreadUpdate={handleThreadUpdate}
                 onThreadNotFound={() => void navigate({ to: "/" })}
                 inputLocked={inputLocked}
+                isNewThread={isNew(threadId)}
               />
             }
             right={

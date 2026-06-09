@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { queryClient } from "../router";
 import { threadsQueryKey } from "@/lib/queries/threads";
 import { listThreads, createThread } from "@/lib/api/vectora-client";
+import { markAsNew } from "@/lib/stores/new-thread-registry";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/")({
 
     // Nenhuma thread — cria uma nova e redireciona.
     const thread = await createThread();
+    markAsNew(thread.id);
     await queryClient.invalidateQueries({ queryKey: threadsQueryKey });
     throw redirect({
       to: "/session/$threadId",
