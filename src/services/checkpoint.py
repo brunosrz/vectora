@@ -37,32 +37,43 @@ logger = logging.getLogger(__name__)
 async def Checkpointer(
     db_dsn: str | None = None,
 ) -> AsyncGenerator[AsyncSqliteSaver]:
-    """Constrói checkpointer SQLite assíncrono para persistência local de conversas.
+    """Constrói checkpointer SQLite assíncrono via ``AsyncConnectionPool`` (F1).
 
-    Usa aiosqlite via AsyncSqliteSaver do LangGraph. O arquivo SQLite é criado
-    automaticamente no diretório `data/` na raiz do projeto.
+    Usa a pool de F1 para abrir a conexão com todos os PRAGMAs de hardening
+    (WAL, busy_timeout=30s, synchronous=NORMAL, temp_store=MEMORY, mmap,
+    foreign_keys), em vez de `from_conn_string` que aplicava apenas 2 PRAGMAs.
 
-    **Concorrência:** WAL mode habilitado automaticamente para permitir
-    leituras simultâneas enquanto o BackgroundWorker escreve embeddings.
+    A pool reutiliza conexões entre chamadas consecutivas ao Checkpointer,
+    reduzindo o overhead de abertura em workloads de alta frequência.
 
     Args:
-        db_dsn: Caminho para o arquivo SQLite. Se None, usa o padrão de `settings.db_dsn`.
+        db_dsn: Caminho para o arquivo SQLite. Se None, usa `settings.db_dsn`.
     """
+    from src.storage.sqlite.pool import AsyncConnectionPool
+
     conn_string = db_dsn or settings.db_dsn
     if conn_string is None:
         msg = "db_dsn not configured"
         raise RuntimeError(msg)
-    async with AsyncSqliteSaver.from_conn_string(conn_string) as checkpointer:
-        # Enable WAL mode for concurrent reads + writes
-        # Critical: Chat reads/writes messages while BackgroundWorker accesses queue
-        try:
-            await checkpointer.conn.execute("PRAGMA journal_mode=WAL;")
-            await checkpointer.conn.execute("PRAGMA synchronous=NORMAL;")
-            logger.info("Checkpointer: WAL mode enabled for concurrent access")
-        except Exception as e:
-            logger.warning("Could not enable WAL mode", extra={"error": str(e)})
 
+    async with _get_checkpoint_pool(conn_string).acquire() as conn:
+        checkpointer = AsyncSqliteSaver(conn)
+        await checkpointer.setup()
+        logger.debug("Checkpointer: pool connection adquirida para %s", conn_string)
         yield checkpointer
+
+
+# Pool singleton por db_dsn — reutilizado entre chamadas ao Checkpointer.
+_checkpoint_pools: dict[str, Any] = {}
+
+
+def _get_checkpoint_pool(db_dsn: str) -> Any:
+    """Retorna (ou cria) o pool de conexões para o banco de checkpoints."""
+    from src.storage.sqlite.pool import AsyncConnectionPool
+
+    if db_dsn not in _checkpoint_pools:
+        _checkpoint_pools[db_dsn] = AsyncConnectionPool(db_dsn, min_size=1, max_size=4)
+    return _checkpoint_pools[db_dsn]
 
 
 # ---------------------------------------------------------------------------

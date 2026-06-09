@@ -39,14 +39,19 @@ _vector_stores: dict[str, Any] = {}  # name → VectorStore
 # ---------------------------------------------------------------------------
 
 
-async def get_checkpointer(db_dsn: str | None = None) -> Any:
-    """Retorna o context manager do checkpointer.
+def get_checkpointer(db_dsn: str | None = None) -> Any:
+    """Retorna o context manager do checkpointer (F4: via AsyncConnectionPool).
 
-    Wrap fino sobre ``src.services.checkpoint.Checkpointer``.
-    F4 substituirá isso pelo pool F1 + AsyncSqliteSaver/AsyncPostgresSaver.
+    Usa o pool de conexões SQLite de F1 para criar o checkpointer com todos
+    os PRAGMAs de hardening (WAL, busy_timeout, synchronous=NORMAL, etc.).
 
     Returns:
-        Context manager que, ao entrar, produz um checkpointer LangGraph.
+        Context manager (``async with``) que produz ``AsyncSqliteSaver``.
+
+    Example::
+
+        async with get_checkpointer() as cp:
+            state = await cp.aget(config, ...)
     """
     from src.services.checkpoint import Checkpointer
 
