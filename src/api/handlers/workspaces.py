@@ -1347,6 +1347,94 @@ async def git_commit_diff(
 
 
 # ---------------------------------------------------------------------------
+# A.9 — Resolução de conflitos
+# ---------------------------------------------------------------------------
+
+
+class ConflictFile(BaseModel):
+    path: str
+    conflict_markers: bool = True
+
+
+class ConflictListResponse(BaseModel):
+    files: list[ConflictFile]
+
+
+class ResolveConflictRequest(BaseModel):
+    path: str
+    resolution: str  # "ours" | "theirs" | "content"
+    content: str | None = None  # usado quando resolution=="content"
+
+
+@view_router.get("/{workspace_id}/git/conflicts", response_model=ConflictListResponse)
+async def list_conflicts(workspace_id: str) -> ConflictListResponse:
+    """Lista arquivos com marcadores de conflito (diff-filter=U)."""
+    from src.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return ConflictListResponse(files=[])
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return ConflictListResponse(files=[])
+
+    conflict_files: list[ConflictFile] = []
+    try:
+        raw = repo.git.diff("--name-only", "--diff-filter=U")
+        for line in raw.splitlines():
+            stripped = line.strip()
+            if stripped:
+                conflict_files.append(ConflictFile(path=stripped))
+    except Exception:
+        pass
+
+    return ConflictListResponse(files=conflict_files)
+
+
+@view_router.post("/{workspace_id}/git/resolve-conflict", response_model=StatusResponse)
+async def resolve_conflict(  # noqa: PLR0911
+    workspace_id: str, body: ResolveConflictRequest
+) -> StatusResponse:
+    """Resolve conflito de merge: ours/theirs ou conteúdo manual."""
+    from pathlib import Path
+
+    from src.services.security import resolve_within_workspace
+    from src.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return StatusResponse(status="error", message="Workspace não encontrado.")
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+
+    full_path = resolve_within_workspace(ws.cwd, body.path)
+    if full_path is None:
+        return StatusResponse(status="error", message="Caminho fora do workspace.")
+
+    try:
+        if body.resolution in ("ours", "theirs"):
+            repo.git.checkout(f"--{body.resolution}", "--", body.path)
+        elif body.resolution == "content":
+            if body.content is None:
+                return StatusResponse(
+                    status="error",
+                    message="Conteúdo obrigatório para resolution=content.",
+                )
+            Path(full_path).write_text(body.content, encoding="utf-8")
+        else:
+            return StatusResponse(
+                status="error", message=f"Resolução inválida: {body.resolution}"
+            )
+        repo.git.add("--", body.path)
+        return StatusResponse(status="ok", message=f"Conflito resolvido: {body.path}")
+    except Exception as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+# ---------------------------------------------------------------------------
 # A.8 — Stash Manager
 # ---------------------------------------------------------------------------
 

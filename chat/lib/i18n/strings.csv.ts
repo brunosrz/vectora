@@ -560,6 +560,10 @@ workbench.diff.stash_push,Push stash,Guardar en stash,Salvar no stash
 workbench.diff.stash_pop,Pop,Recuperar,Recuperar
 workbench.diff.stash_drop,Drop,Eliminar,Descartar
 workbench.diff.stash_name_placeholder,Stash name (optional),Nombre del stash (opcional),Nome do stash (opcional)
+workbench.diff.tab_conflicts,Conflicts,Conflictos,Conflitos
+workbench.diff.conflicts_none,No merge conflicts.,Sin conflictos de merge.,Sem conflitos de merge.
+workbench.diff.conflicts_ours,Keep ours,Mantener nuestro,Manter o nosso
+workbench.diff.conflicts_theirs,Keep theirs,Mantener el suyo,Manter o deles
 workbench.tab.pending,Pending updates,Actualizaciones pendientes,Atualizações pendentes
 chat.rewind,Rewind to here,Rebobinar hasta aquí,Retroceder até aqui
 chat.rewind_title,Rewind to this point?,¿Rebobinar hasta aquí?,Retroceder até este ponto?

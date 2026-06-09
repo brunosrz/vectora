@@ -362,9 +362,9 @@ export function DiffTab(_props: DiffTabProps) {
   const fetchedAt = useWorkbenchStore((s) => s.getDiff(wsId).summaryFetchedAt);
   const setDiffSummary = useWorkbenchStore((s) => s.setDiffSummary);
   const clearPending = useWorkbenchStore((s) => s.clearPending);
-  const [logView, setLogView] = useState<"changes" | "log" | "stash">(
-    "changes",
-  );
+  const [logView, setLogView] = useState<
+    "changes" | "log" | "stash" | "conflicts"
+  >("changes");
 
   // Abrir/revalidar a aba consome a pendência de atualização.
   useEffect(() => {
@@ -450,6 +450,17 @@ export function DiffTab(_props: DiffTabProps) {
         >
           {t("workbench.diff.tab_stash")}
         </button>
+        <button
+          onClick={() => setLogView("conflicts")}
+          aria-pressed={logView === "conflicts"}
+          className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+            logView === "conflicts"
+              ? "border-b-2 border-primary text-foreground -mb-px"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t("workbench.diff.tab_conflicts")}
+        </button>
       </div>
       {/* Conteúdo */}
       <div className="flex-1 min-h-0">
@@ -457,6 +468,8 @@ export function DiffTab(_props: DiffTabProps) {
           <GitLogView workspaceId={wsId} />
         ) : logView === "stash" ? (
           <StashView workspaceId={wsId} />
+        ) : logView === "conflicts" ? (
+          <ConflictView workspaceId={wsId} />
         ) : summary.files.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
             <p className="text-xs text-muted-foreground">
@@ -470,6 +483,113 @@ export function DiffTab(_props: DiffTabProps) {
           <DiffGroups workspaceId={wsId} summary={summary} t={t} />
         )}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// A.9 — ConflictView: lista arquivos conflitantes com resolução ours/theirs
+// ---------------------------------------------------------------------------
+
+interface ConflictFile {
+  path: string;
+}
+
+async function apiListConflicts(workspaceId: string): Promise<ConflictFile[]> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/conflicts`,
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.files as ConflictFile[]) ?? [];
+}
+
+async function apiResolveConflict(
+  workspaceId: string,
+  path: string,
+  resolution: "ours" | "theirs" | "content",
+  content?: string,
+): Promise<boolean> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/resolve-conflict`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path, resolution, content }),
+    },
+  );
+  return res.ok;
+}
+
+function ConflictView({ workspaceId }: { workspaceId: string }) {
+  const t = useT();
+  const [files, setFiles] = useState<ConflictFile[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const f = await apiListConflicts(workspaceId);
+    setLoading(false);
+    setFiles(f);
+  }, [workspaceId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const resolve = useCallback(
+    async (path: string, resolution: "ours" | "theirs") => {
+      await apiResolveConflict(workspaceId, path, resolution);
+      void load();
+    },
+    [workspaceId, load],
+  );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (files.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground text-center py-8 px-4">
+        {t("workbench.diff.conflicts_none")}
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto">
+      {files.map((f) => (
+        <div
+          key={f.path}
+          className="border-b border-border/40 last:border-0 px-3 py-2"
+        >
+          <p
+            className="text-xs font-mono text-amber-500 truncate mb-1.5"
+            title={f.path}
+          >
+            {f.path}
+          </p>
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => void resolve(f.path, "ours")}
+              className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
+            >
+              {t("workbench.diff.conflicts_ours")}
+            </button>
+            <button
+              onClick={() => void resolve(f.path, "theirs")}
+              className="text-[10px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
+            >
+              {t("workbench.diff.conflicts_theirs")}
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
