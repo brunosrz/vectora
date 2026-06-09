@@ -126,12 +126,15 @@ def build_store(embedding_model: str | None = None) -> Any:
 
 
 def _build_index(embedding_model: str | None) -> Any:
-    """Constrói IndexConfig com função async Cohere se disponível.
+    """Constrói IndexConfig com ``CohereEmbeddings`` (langchain-cohere) se disponível.
 
-    Usa uma função async simples em vez de ``CohereEmbeddings`` para evitar
-    dependências de tipo nos stubs do langchain_cohere.
+    Usa ``CohereEmbeddings.aembed_documents()`` via langchain-cohere em vez de
+    ``cohere.AsyncClient`` direto, alinhando com o SDK oficial (F15).
+    Retorna None se a chave Cohere ou o modelo não estiverem configurados.
     """
     try:
+        from langchain_cohere import CohereEmbeddings
+
         from src.settings import settings as _settings
 
         model = embedding_model or _settings.embedding_model
@@ -139,28 +142,33 @@ def _build_index(embedding_model: str | None) -> Any:
         if not cohere_key or not model:
             return None
 
-        # Captura por valor (não por referência ao escopo externo)
+        # Captura por valor para evitar referência ao escopo externo
         _model = model
         _key = cohere_key
 
-        async def _embed(texts: list[str]) -> list[list[float]]:
-            import cohere as _cohere
+        # Instância CohereEmbeddings com o SDK oficial langchain-cohere.
+        # NOTE: NÃO usar SecretStr — a lib chama str() internamente, resultando
+        # em "**********" como API key. Passar a string diretamente.
+        # ty: ignore: CohereEmbeddings stubs exigem client/async_client que são
+        # opcionais em runtime. Mesmo padrão de src/services/background.py.
+        _embeddings = CohereEmbeddings(  # ty: ignore[missing-argument]
+            cohere_api_key=_key,  # ty: ignore[invalid-argument-type]
+            model=_model,
+        )
 
-            client = _cohere.AsyncClient(api_key=_key)
-            resp = await client.embed(
-                texts=texts,
-                model=_model,
-                input_type="search_document",
-            )
-            rows = resp.embeddings
-            if isinstance(rows, list):
-                return [list(r) if not isinstance(r, list) else r for r in rows]
-            return []
+        async def _embed(texts: list[str]) -> list[list[float]]:
+            return await _embeddings.aembed_documents(texts)
 
         return {"dims": 1024, "embed": _embed, "fields": ["content"]}
+    except ImportError:
+        logger.debug(
+            "backends: langchain-cohere não instalado — InMemoryStore sem índice vetorial"
+        )
+        return None
     except Exception:
         logger.debug(
-            "backends: Cohere indisponível — InMemoryStore sem índice vetorial"
+            "backends: Cohere indisponível — InMemoryStore sem índice vetorial",
+            exc_info=True,
         )
         return None
 
