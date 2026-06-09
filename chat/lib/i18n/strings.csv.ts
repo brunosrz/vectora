@@ -417,6 +417,27 @@ onboarding.done_body,"You're all set — start a conversation and Vectora will g
 onboarding.skip,Skip,Omitir,Pular
 onboarding.next,Next,Siguiente,Próximo
 onboarding.finish,Start chatting,Empezar a chatear,Começar a conversar
+# =============================================================================
+# Stack-specific empty-state suggestions (C.24)
+# =============================================================================
+stack.nodejs.1,Review package.json dependencies and suggest upgrades,Revisa las dependencias de package.json y sugiere actualizaciones,Revise as dependências do package.json e sugira atualizações
+stack.nodejs.2,Find performance bottlenecks in the Node.js code,Busca cuellos de botella de rendimiento en el código Node.js,Encontre gargalos de desempenho no código Node.js
+stack.nodejs.3,Add TypeScript types to the main entry points,Agrega tipos TypeScript a los puntos de entrada principales,Adicione tipos TypeScript nos pontos de entrada principais
+stack.python.1,Run the tests and fix any failures,Ejecuta las pruebas y corrige los fallos,Execute os testes e corrija as falhas
+stack.python.2,Check for unused imports and dead code,Busca importaciones no usadas y código muerto,Verifique importações não usadas e código morto
+stack.python.3,Add type hints to the main functions,Agrega anotaciones de tipo a las funciones principales,Adicione type hints nas funções principais
+stack.go.1,Run go vet and fix any issues,Ejecuta go vet y corrige los problemas,Execute go vet e corrija os problemas
+stack.go.2,Identify any goroutine leaks or race conditions,Identifica fugas de goroutine o condiciones de carrera,Identifique vazamentos de goroutine ou condições de corrida
+stack.go.3,Improve error handling across the codebase,Mejora el manejo de errores en el código,Melhore o tratamento de erros na base de código
+stack.rust.1,Run cargo clippy and fix the warnings,Ejecuta cargo clippy y corrige las advertencias,Execute cargo clippy e corrija os avisos
+stack.rust.2,Add documentation comments to public items,Agrega comentarios de documentación a los ítems públicos,Adicione comentários de documentação nos itens públicos
+stack.rust.3,Look for opportunities to reduce heap allocations,Busca oportunidades para reducir allocations en el heap,Procure oportunidades de reduzir alocações no heap
+stack.java.1,Run static analysis and fix critical findings,Ejecuta análisis estático y corrige los hallazgos críticos,Execute análise estática e corrija os problemas críticos
+stack.java.2,Add unit tests for the core business logic,Agrega tests unitarios para la lógica de negocio,Adicione testes unitários para a lógica de negócio principal
+stack.java.3,Identify any thread-safety issues,Identifica problemas de thread-safety,Identifique problemas de thread-safety
+stack.unknown.1,Explain the project structure and key files,Explica la estructura del proyecto y los archivos clave,Explique a estrutura do projeto e os arquivos principais
+stack.unknown.2,Find and fix any bugs or issues in the codebase,Encuentra y corrige errores en el código,Encontre e corrija bugs ou problemas no código
+stack.unknown.3,Write tests for the most critical functions,Escribe tests para las funciones más críticas,Escreva testes para as funções mais críticas
 
 # Administração — painel próprio (P4), separado do SettingsDialog
 admin.dialog_title,Administration,Administración,Administração

@@ -1193,7 +1193,10 @@ export function ChatInterface({
       <style>{scrollbarStyles}</style>
       <main className="h-full flex flex-col overflow-hidden relative">
         {isNewChat ? (
-          <EmptyStateHeader onSelect={(prompt) => setInput(prompt)} />
+          <EmptyStateHeader
+            onSelect={(prompt) => setInput(prompt)}
+            workspaceId={activeWorkspaceId}
+          />
         ) : (
           <MessageList
             messages={messages}

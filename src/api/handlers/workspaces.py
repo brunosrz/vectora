@@ -2225,6 +2225,57 @@ async def search_workspace_files(
 
 
 # ---------------------------------------------------------------------------
+# C.24 — Stack hint (detects project type for contextual empty-state prompts)
+# ---------------------------------------------------------------------------
+
+_STACK_MARKERS: list[tuple[str, str]] = [
+    # (filename, stack_key)
+    ("package.json", "nodejs"),
+    ("pyproject.toml", "python"),
+    ("setup.py", "python"),
+    ("requirements.txt", "python"),
+    ("go.mod", "go"),
+    ("Cargo.toml", "rust"),
+    ("pom.xml", "java"),
+    ("build.gradle", "java"),
+    ("build.gradle.kts", "java"),
+    ("composer.json", "php"),
+    ("Gemfile", "ruby"),
+    ("mix.exs", "elixir"),
+    ("pubspec.yaml", "dart"),
+    ("CMakeLists.txt", "cpp"),
+    ("Makefile", "make"),
+]
+
+
+class StackHintResponse(BaseModel):
+    stack: str  # e.g. "nodejs", "python", "go", "rust", "unknown"
+
+
+@view_router.get("/{workspace_id}/stack-hint", response_model=StackHintResponse)
+async def stack_hint(workspace_id: str) -> StackHintResponse:
+    """Detects the primary technology stack of the workspace by inspecting
+    well-known marker files in the root directory.
+
+    Returns ``stack="unknown"`` when no marker is found.
+    """
+    from fastapi import HTTPException
+
+    from src.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    root = Path(ws.cwd)
+    for filename, stack_key in _STACK_MARKERS:
+        if (root / filename).exists():
+            return StackHintResponse(stack=stack_key)
+
+    return StackHintResponse(stack="unknown")
+
+
+# ---------------------------------------------------------------------------
 # A.17 — File watcher SSE
 # ---------------------------------------------------------------------------
 

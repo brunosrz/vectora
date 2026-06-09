@@ -315,6 +315,21 @@ export const getHistory = (
   postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
 
 // ============================================================================
+// Stack hint — detects project type for contextual suggestions
+// ============================================================================
+
+export async function getStackHint(
+  workspaceId: string,
+): Promise<{ stack: string }> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/stack-hint`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!res.ok) return { stack: "unknown" };
+  return res.json() as Promise<{ stack: string }>;
+}
+
+// ============================================================================
 // Share (read-only, rota pública — sem auth necessária)
 // ============================================================================
 

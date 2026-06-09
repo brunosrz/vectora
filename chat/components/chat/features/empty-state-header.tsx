@@ -1,25 +1,54 @@
 "use client";
 
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@/lib/i18n";
+import { getStackHint } from "@/lib/api/vectora-client";
 
 interface EmptyStateHeaderProps {
   /** Chamado quando o usuário clica em uma sugestão — popula o input do chat. */
   onSelect?: (prompt: string) => void;
+  /** Workspace ativo, se houver — usado para detectar a stack e adaptar as sugestões. */
+  workspaceId?: string;
+}
+
+/** Stacks conhecidas com 3 sugestões cada. "unknown" é o fallback. */
+const KNOWN_STACKS = ["nodejs", "python", "go", "rust", "java"] as const;
+type KnownStack = (typeof KNOWN_STACKS)[number] | "unknown";
+
+function isKnownStack(s: string): s is KnownStack {
+  return (KNOWN_STACKS as readonly string[]).includes(s) || s === "unknown";
 }
 
 /**
  * Cabeçalho exibido acima da lista de mensagens quando a thread ainda
  * está vazia. Mostra logo, título e 3 sugestões clicáveis (CTAs) que
  * populam o input ao ser selecionadas.
+ *
+ * Quando um workspace está ativo, busca `GET /workspaces/{id}/stack-hint`
+ * e usa sugestões específicas da stack detectada.
  */
-export function EmptyStateHeader({ onSelect }: EmptyStateHeaderProps) {
+export function EmptyStateHeader({
+  onSelect,
+  workspaceId,
+}: EmptyStateHeaderProps) {
   const t = useT();
 
+  // Busca o stack hint apenas quando há workspace ativo.
+  const { data: hintData } = useQuery({
+    queryKey: ["stack-hint", workspaceId],
+    queryFn: () => getStackHint(workspaceId!),
+    enabled: !!workspaceId,
+    staleTime: 5 * 60_000,
+  });
+
+  const stack: KnownStack =
+    hintData && isKnownStack(hintData.stack) ? hintData.stack : "unknown";
+
   const suggestions = [
-    t("welcome.suggestion_1"),
-    t("welcome.suggestion_2"),
-    t("welcome.suggestion_3"),
+    t(`stack.${stack}.1`),
+    t(`stack.${stack}.2`),
+    t(`stack.${stack}.3`),
   ];
 
   return (
