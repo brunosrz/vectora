@@ -473,6 +473,8 @@ permission.desc.bypass,Full auto — no confirmations,Totalmente automático —
 # =============================================================================
 effort.title,Effort,Esfuerzo,Esforço
 effort.low,Low,Baja,Baixa
+# chat_params.title — label do menu de parâmetros de geração no rodapé do composer
+chat_params.title,Generation params,Parámetros de generación,Parâmetros de geração
 effort.medium,Medium,Media,Média
 effort.high,High,Alta,Alto
 effort.max,Max,Máx,Max

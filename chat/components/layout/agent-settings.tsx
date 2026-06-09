@@ -2,10 +2,11 @@
 
 /**
  * AgentSettings — dialog "Chat Settings" acessível via ⚙️ no header.
- * Escopo: sessão/chat atual.
+ * Escopo: preferências persistentes do usuário.
  *
- * Controles: seletor de modelo, verbosidade, tema, idioma,
- * toggles de tool calls e confirmação de ações destrutivas, atalhos de teclado.
+ * Controles: seletor de modelo, tema, idioma, toggle de tool calls,
+ * atalhos de teclado. Parâmetros de geração (verbosidade/esforço/modo-rápido)
+ * foram movidos para o ChatParamsMenu no rodapé do composer.
  */
 
 import { useEffect, useState } from "react";
@@ -45,10 +46,8 @@ import {
 import {
   useSettingsStore,
   SUPPORTED_LANGS,
-  type Verbosity,
   type Theme,
   type Lang,
-  type ReasoningEffort,
 } from "@/lib/stores/settings-store";
 import { useT } from "@/lib/i18n";
 
@@ -75,9 +74,7 @@ interface AgentSettingsProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const VERBOSITY_VALUES: Verbosity[] = ["concise", "normal", "detailed"];
 const THEME_VALUES: Theme[] = ["system", "light", "dark"];
-const EFFORT_VALUES: ReasoningEffort[] = ["low", "medium", "high", "max"];
 
 export function AgentSettings({
   config,
@@ -93,17 +90,11 @@ export function AgentSettings({
 
   const {
     showToolCalls,
-    verbosity,
     theme,
     language,
-    reasoningEffort,
-    fastMode,
     setShowToolCalls,
-    setVerbosity,
     setTheme,
     setLanguage,
-    setReasoningEffort,
-    setFastMode,
   } = useSettingsStore();
 
   const allowedModels = getAllowedModels();
@@ -181,65 +172,6 @@ export function AgentSettings({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Verbosidade */}
-            <div className="grid gap-2">
-              <Label htmlFor="verbosity">{t("settings.chat.verbosity")}</Label>
-              <Select
-                value={verbosity}
-                onValueChange={(v) => setVerbosity(v as Verbosity)}
-              >
-                <SelectTrigger id="verbosity">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {VERBOSITY_VALUES.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {t(`settings.chat.verbosity.${value}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Esforço de raciocínio (R4) */}
-            <div className="grid gap-2">
-              <Label htmlFor="effort">{t("effort.title")}</Label>
-              <Select
-                value={reasoningEffort}
-                onValueChange={(v) => setReasoningEffort(v as ReasoningEffort)}
-                disabled={fastMode}
-              >
-                <SelectTrigger id="effort">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EFFORT_VALUES.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {t(`effort.${value}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center justify-between gap-4 pt-1">
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="fast-mode"
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {t("effort.fast_mode")}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {t("effort.fast_mode_desc")}
-                  </p>
-                </div>
-                <Switch
-                  id="fast-mode"
-                  checked={fastMode}
-                  onCheckedChange={setFastMode}
-                />
-              </div>
             </div>
 
             {/* Tema */}
