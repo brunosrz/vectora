@@ -558,6 +558,8 @@ at.title,Workspace files,Archivos del workspace,Arquivos do workspace
 workbench.diff.clean_hint,"Run ""git log"" to inspect recent commits.","Ejecuta ""git log"" para ver commits recientes.","Rode ""git log"" para inspecionar commits recentes."
 workbench.diff.group_staged,Staged,Preparados,Staged
 workbench.diff.group_unstaged,Modified / Untracked,Modificados / Sin seguimiento,Modificados / Não rastreados
+workbench.diff.commit_placeholder,Commit message (Ctrl+Enter),Mensaje de commit (Ctrl+Enter),Mensagem do commit (Ctrl+Enter)
+workbench.diff.commit_button,Commit,Commit,Fazer commit
 workbench.diff.files_badge,"{n} files","{n} archivos","{n} arquivos"
 workbench.diff.tab_changes,Changes,Cambios,Mudanças
 workbench.diff.tab_log,Log,Log,Log

@@ -20,6 +20,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
@@ -103,6 +111,42 @@ async function apiCompareRefs(
 }
 
 // ---------------------------------------------------------------------------
+// A.15 — Stage / unstage / discard / commit inline
+// ---------------------------------------------------------------------------
+
+async function apiGitAction(
+  workspaceId: string,
+  action: "stage" | "unstage" | "discard",
+  path: string,
+): Promise<boolean> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/${action}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
+    },
+  );
+  return res.ok;
+}
+
+async function apiGitCommitInline(
+  workspaceId: string,
+  message: string,
+): Promise<{ status: string; message: string }> {
+  const res = await fetch(
+    `/workspaces/${encodeURIComponent(workspaceId)}/git/commit`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    },
+  );
+  const data = await res.json().catch(() => ({ status: "error", message: "" }));
+  return data as { status: string; message: string };
+}
+
+// ---------------------------------------------------------------------------
 
 async function fetchDiff(workspaceId: string): Promise<DiffSummary | null> {
   const res = await fetch(
@@ -158,9 +202,11 @@ function HunkView({ hunk }: { hunk: DiffHunk }) {
 function FileRow({
   workspaceId,
   file,
+  onRefresh,
 }: {
   workspaceId: string;
   file: DiffFile;
+  onRefresh?: () => void;
 }) {
   const open = useWorkbenchStore((s) =>
     s.getDiff(workspaceId).openFiles.includes(file.path),
@@ -187,37 +233,118 @@ function FileRow({
     skip: !open,
   });
 
+  const [discardOpen, setDiscardOpen] = useState(false);
+
+  const handleAction = useCallback(
+    async (action: "stage" | "unstage" | "discard") => {
+      if (action === "discard") {
+        setDiscardOpen(true);
+        return;
+      }
+      await apiGitAction(workspaceId, action, file.path);
+      onRefresh?.();
+    },
+    [workspaceId, file.path, onRefresh],
+  );
+
+  const handleConfirmDiscard = useCallback(async () => {
+    setDiscardOpen(false);
+    await apiGitAction(workspaceId, "discard", file.path);
+    onRefresh?.();
+  }, [workspaceId, file.path, onRefresh]);
+
   return (
-    <div className="border-b border-border/40 last:border-0">
-      <button
-        onClick={() => setDiffOpenFile(workspaceId, file.path, !open)}
-        className="w-full flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-muted/30 text-left"
-      >
-        {open ? (
-          <ChevronDown className="w-3 h-3 shrink-0 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />
-        )}
-        <span
-          className={`w-4 text-center font-bold shrink-0 ${STATUS_TONE[file.status]}`}
-        >
-          {file.status}
-        </span>
-        <span className="flex-1 truncate font-mono">{file.path}</span>
-        <span className="text-green-500 shrink-0">+{file.additions}</span>
-        <span className="text-destructive shrink-0">−{file.deletions}</span>
-      </button>
-      {open && (
-        <div className="px-3 pb-2 space-y-1">
-          {!hunks && (
-            <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-          )}
-          {hunks?.map((h, i) => (
-            <HunkView key={i} hunk={h} />
-          ))}
+    <>
+      {/* Dialog de confirmação de discard (Radix, não window.confirm) */}
+      <Dialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Descartar alterações?</DialogTitle>
+            <DialogDescription>
+              As alterações em{" "}
+              <span className="font-mono text-foreground">{file.path}</span>{" "}
+              serão perdidas permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              onClick={() => setDiscardOpen(false)}
+              className="px-3 py-1.5 text-xs rounded-md border border-border/60 hover:bg-muted/40"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => void handleConfirmDiscard()}
+              className="px-3 py-1.5 text-xs rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Descartar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <div className="border-b border-border/40 last:border-0 group">
+        <div className="flex items-center">
+          <button
+            onClick={() => setDiffOpenFile(workspaceId, file.path, !open)}
+            className="flex-1 flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-muted/30 text-left min-w-0"
+          >
+            {open ? (
+              <ChevronDown className="w-3 h-3 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />
+            )}
+            <span
+              className={`w-4 text-center font-bold shrink-0 ${STATUS_TONE[file.status]}`}
+            >
+              {file.status}
+            </span>
+            <span className="flex-1 truncate font-mono">{file.path}</span>
+            <span className="text-green-500 shrink-0">+{file.additions}</span>
+            <span className="text-destructive shrink-0">−{file.deletions}</span>
+          </button>
+          {/* Botões inline A.15: +stage / −unstage / ↩discard */}
+          <div className="flex items-center gap-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            {file.unstaged_change || file.untracked ? (
+              <button
+                onClick={() => void handleAction("stage")}
+                title="Stage"
+                className="p-0.5 text-green-500 hover:text-green-400 text-[10px] font-bold"
+              >
+                +
+              </button>
+            ) : null}
+            {file.staged_change ? (
+              <button
+                onClick={() => void handleAction("unstage")}
+                title="Unstage"
+                className="p-0.5 text-amber-500 hover:text-amber-400 text-[10px] font-bold"
+              >
+                −
+              </button>
+            ) : null}
+            {file.unstaged_change && !file.untracked ? (
+              <button
+                onClick={() => void handleAction("discard")}
+                title="Descartar alterações"
+                className="p-0.5 text-destructive hover:text-red-400 text-[10px]"
+              >
+                ↩
+              </button>
+            ) : null}
+          </div>
         </div>
-      )}
-    </div>
+        {open && (
+          <div className="px-3 pb-2 space-y-1">
+            {!hunks && (
+              <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+            )}
+            {hunks?.map((h, i) => (
+              <HunkView key={i} hunk={h} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -1008,6 +1135,28 @@ function DiffGroups({
   summary: DiffSummary;
   t: ReturnType<typeof useT>;
 }) {
+  const invalidateDiff = useWorkbenchStore((s) => s.invalidateDiff);
+  const [commitMsg, setCommitMsg] = useState("");
+  const [committing, setCommitting] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    invalidateDiff(workspaceId);
+  }, [workspaceId, invalidateDiff]);
+
+  const handleCommit = useCallback(async () => {
+    if (!commitMsg.trim()) return;
+    setCommitting(true);
+    try {
+      const result = await apiGitCommitInline(workspaceId, commitMsg.trim());
+      if (result.status === "ok") {
+        setCommitMsg("");
+        handleRefresh();
+      }
+    } finally {
+      setCommitting(false);
+    }
+  }, [workspaceId, commitMsg, handleRefresh]);
+
   const { staged, unstaged } = useMemo(() => {
     const stagedFiles: DiffFile[] = [];
     const unstagedFiles: DiffFile[] = [];
@@ -1029,19 +1178,48 @@ function DiffGroups({
           <span className="text-destructive">−{summary.total_deletions}</span>
         </span>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <DiffGroup
           label={t("workbench.diff.group_staged")}
           tone="text-green-500"
           workspaceId={workspaceId}
           files={staged}
+          onRefresh={handleRefresh}
         />
         <DiffGroup
           label={t("workbench.diff.group_unstaged")}
           tone="text-amber-500"
           workspaceId={workspaceId}
           files={unstaged}
+          onRefresh={handleRefresh}
         />
+      </div>
+      {/* Painel de commit A.15 */}
+      <div className="border-t border-border/60 p-2 flex flex-col gap-1.5 bg-muted/10 shrink-0">
+        <textarea
+          value={commitMsg}
+          onChange={(e) => setCommitMsg(e.target.value)}
+          placeholder={t("workbench.diff.commit_placeholder")}
+          rows={2}
+          className="w-full resize-none rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+              void handleCommit();
+            }
+          }}
+        />
+        <button
+          onClick={() => void handleCommit()}
+          disabled={!commitMsg.trim() || committing}
+          className="flex items-center justify-center gap-1.5 w-full py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {committing ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <GitCommit className="w-3 h-3" />
+          )}
+          {t("workbench.diff.commit_button")}
+        </button>
       </div>
     </div>
   );
@@ -1052,11 +1230,13 @@ function DiffGroup({
   tone,
   workspaceId,
   files,
+  onRefresh,
 }: {
   label: string;
   tone: string;
   workspaceId: string;
   files: DiffFile[];
+  onRefresh?: () => void;
 }) {
   const [open, setOpen] = useState(true);
 
@@ -1078,7 +1258,12 @@ function DiffGroup({
       </button>
       {open &&
         files.map((f) => (
-          <FileRow key={f.path} workspaceId={workspaceId} file={f} />
+          <FileRow
+            key={f.path}
+            workspaceId={workspaceId}
+            file={f}
+            onRefresh={onRefresh}
+          />
         ))}
     </div>
   );
