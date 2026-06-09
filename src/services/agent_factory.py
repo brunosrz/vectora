@@ -296,6 +296,12 @@ async def _build_graph_async() -> Any:
 
     system_prompt = _build_session_system_prompt()
 
+    # Registra perfis de harness por provider (Anthropic/Gemini/Ollama).
+    # Idempotente — safe chamar múltiplas vezes.
+    from src.services.profiles import _register_profiles
+
+    _register_profiles()
+
     # Middleware stack: SummarizationMiddleware (compressão de contexto) +
     # HumanInTheLoopMiddleware com mode="ask" para o singleton compartilhado.
     # E.B-5 (context_schema=VectoraContext) permitirá modo dinâmico por usuário.
