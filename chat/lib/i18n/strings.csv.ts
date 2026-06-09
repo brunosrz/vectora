@@ -399,6 +399,24 @@ invite.expires,Expires,Expira,Expira
 invite.context,Invite for role: {role},Invitación para función: {role},Convite para função: {role}
 invite.invalid,Invalid or expired invite.,Invitación inválida o expirada.,Convite inválido ou expirado.
 invite.error_create,Error generating invite,Error al generar invitación,Erro ao gerar convite
+# =============================================================================
+# Onboarding wizard (primeiro acesso)
+# =============================================================================
+onboarding.step1_title,Welcome to Vectora,Bienvenido a Vectora,Bem-vindo ao Vectora
+onboarding.step2_title,Language & Theme,Idioma y tema,Idioma e tema
+onboarding.step3_title,Workspaces,Espacios de trabajo,Workspaces
+onboarding.step4_title,All set!,¡Todo listo!,Tudo pronto!
+onboarding.welcome_body,"Vectora is your AI coding assistant — it can read, write and run code inside your trusted folders.","Vectora es tu asistente de código IA — puede leer, escribir y ejecutar código en tus carpetas de confianza.","O Vectora é seu assistente de código com IA — ele pode ler, escrever e executar código nas suas pastas confiáveis."
+onboarding.language_label,Language,Idioma,Idioma
+onboarding.theme_label,Theme,Tema,Tema
+onboarding.workspace_body,Workspaces are folders on your machine that Vectora can access when you grant trust.,Los espacios de trabajo son carpetas en tu máquina a las que Vectora puede acceder cuando les das confianza.,Workspaces são pastas no seu computador que o Vectora pode acessar quando você concede confiança.
+onboarding.workspace_bullet_1,Add a folder in the Workspace selector in the chat composer.,Agrega una carpeta en el selector de workspace del compositor.,Adicione uma pasta no seletor de workspace no composer do chat.
+onboarding.workspace_bullet_2,Vectora can read and write files only inside trusted folders.,Vectora solo puede leer y escribir archivos dentro de carpetas de confianza.,O Vectora só lê e escreve dentro de pastas confiáveis.
+onboarding.workspace_bullet_3,Each conversation remembers its workspace.,Cada conversación recuerda su espacio de trabajo.,Cada conversa lembra o seu workspace.
+onboarding.done_body,"You're all set — start a conversation and Vectora will get to work!","¡Ya estás listo — inicia una conversación y Vectora se pondrá a trabajar!","Você está pronto — inicie uma conversa e o Vectora começa a trabalhar!"
+onboarding.skip,Skip,Omitir,Pular
+onboarding.next,Next,Siguiente,Próximo
+onboarding.finish,Start chatting,Empezar a chatear,Começar a conversar
 
 # Administração — painel próprio (P4), separado do SettingsDialog
 admin.dialog_title,Administration,Administración,Administração
