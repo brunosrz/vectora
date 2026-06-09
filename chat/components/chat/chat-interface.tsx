@@ -1160,7 +1160,7 @@ export function ChatInterface({
       <style>{scrollbarStyles}</style>
       <main className="h-full flex flex-col overflow-hidden relative">
         {isNewChat ? (
-          <EmptyStateHeader />
+          <EmptyStateHeader onSelect={(prompt) => setInput(prompt)} />
         ) : (
           <MessageList
             messages={messages}

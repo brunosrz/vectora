@@ -81,6 +81,9 @@ time.months_ago,{n} months ago,hace {n} meses,há {n} meses
 # =============================================================================
 welcome.title,What can I help with?,¿En qué puedo ayudarte?,O que posso fazer por você?
 welcome.drop_files,Drop files here,Suelta archivos aquí,Solte arquivos aqui
+welcome.suggestion_1,Explain the project structure and key files,Explica la estructura del proyecto y los archivos clave,Explique a estrutura do projeto e os arquivos principais
+welcome.suggestion_2,Find and fix any bugs or issues in the codebase,Encuentra y corrige errores en el código,Encontre e corrija bugs ou problemas no código
+welcome.suggestion_3,Write tests for the most critical functions,Escribe tests para las funciones más críticas,Escreva testes para as funções mais críticas
 # =============================================================================
 # Chat input
 # =============================================================================
