@@ -100,6 +100,71 @@ def build_backend(
     return backend
 
 
+def build_store(embedding_model: str | None = None) -> Any:
+    """Constrói o ``InMemoryStore`` canônico com embeddings Cohere opcionais.
+
+    Usado como ``store=`` em ``create_deep_agent`` e disponível às tools via
+    ``langgraph.config.get_store()`` dentro do grafo.
+
+    O store é in-process (lite mode). A migração para ``AsyncSqliteStore``
+    (modo completo) acontecerá em F5 quando o pool SQLite estiver disponível.
+
+    Args:
+        embedding_model: Nome do modelo de embedding para busca semântica.
+            Se None, tenta `settings.embedding_model`; se não configurado,
+            o store funciona sem indexação vetorial (busca por chave apenas).
+
+    Returns:
+        ``InMemoryStore`` pronto para ser passado a ``create_deep_agent``.
+    """
+    from langgraph.store.memory import InMemoryStore
+
+    index = _build_index(embedding_model)
+    store = InMemoryStore(index=index)
+    logger.debug("backends: InMemoryStore criado index=%s", index)
+    return store
+
+
+def _build_index(embedding_model: str | None) -> Any:
+    """Constrói IndexConfig com função async Cohere se disponível.
+
+    Usa uma função async simples em vez de ``CohereEmbeddings`` para evitar
+    dependências de tipo nos stubs do langchain_cohere.
+    """
+    try:
+        from src.settings import settings as _settings
+
+        model = embedding_model or _settings.embedding_model
+        cohere_key = _settings.get_cohere_api_key()
+        if not cohere_key or not model:
+            return None
+
+        # Captura por valor (não por referência ao escopo externo)
+        _model = model
+        _key = cohere_key
+
+        async def _embed(texts: list[str]) -> list[list[float]]:
+            import cohere as _cohere
+
+            client = _cohere.AsyncClient(api_key=_key)
+            resp = await client.embed(
+                texts=texts,
+                model=_model,
+                input_type="search_document",
+            )
+            rows = resp.embeddings
+            if isinstance(rows, list):
+                return [list(r) if not isinstance(r, list) else r for r in rows]
+            return []
+
+        return {"dims": 1024, "embed": _embed, "fields": ["content"]}
+    except Exception:
+        logger.debug(
+            "backends: Cohere indisponível — InMemoryStore sem índice vetorial"
+        )
+        return None
+
+
 def build_backend_lazy() -> Any:
     """Retorna uma factory de backend (callable) para injeção lazy no grafo.
 

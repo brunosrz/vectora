@@ -1,12 +1,18 @@
-"""Gerenciador de memórias persistentes em SQLite.
+"""Gerenciador de memórias persistentes em SQLite — DEPRECATED (E.B-11).
 
-Armazena memórias globais do usuário que transcendem sessões individuais.
+.. deprecated::
+    Este módulo está depreciado. As memory tools (``src/tools/memory.py``) foram
+    migradas para ``langgraph.config.get_store()`` + LangGraph BaseStore (E.B-11).
+
+    Mantido temporariamente para:
+    - ``src/api/handlers/memory.py`` (HTTP API de memórias)
+    - ``src/nodes/base.py`` (injeção legada de memórias no system prompt)
+
+    Remoção planejada em F5 quando a HTTP API de memórias for migrada para
+    o BaseStore e ``src/nodes/base.py`` for atualizado.
+
 Cada memória tem: chave, conteúdo, TTL (opcional), metadados e embedding.
-
-C4 — Semantic Memory: embeddings Cohere armazenados junto às memórias para
-busca semântica via `search_semantic()`. Quando `memory_semantic_enabled`,
-`save_with_embedding` persiste o vetor; `search_semantic` faz cosine similarity
-em Python puro (sem deps externas além do já declarado `cohere`).
+Embeddings Cohere para busca semântica via ``search_semantic()``.
 """
 
 import contextlib

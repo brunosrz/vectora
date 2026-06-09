@@ -263,6 +263,7 @@ def _build_session_system_prompt(
 
 _graph: Any = None
 _checkpointer_ctx: Any = None
+_store: Any = None
 _lock = asyncio.Lock()
 
 # Rastreia (tools_version, policy_version, skills_version) por usuário.
@@ -270,9 +271,25 @@ _lock = asyncio.Lock()
 _version_tracker: dict[str, tuple[int, int, int]] = {}
 
 
+def _agents_md_paths() -> list[str] | None:
+    """Retorna os paths de AGENTS.md que o MemoryMiddleware deve carregar.
+
+    Carrega (em ordem) o AGENTS.md global do Vectora e o AGENTS.md do
+    workspace ativo, se existir. O harness lê e injeta o conteúdo no
+    system prompt antes de cada turno.
+
+    Retorna None se nenhum arquivo existir (desativa MemoryMiddleware).
+    """
+    paths: list[str] = []
+    global_agents_md = Path.home() / ".vectora" / "AGENTS.md"
+    if global_agents_md.is_file():
+        paths.append(str(global_agents_md))
+    return paths if paths else None
+
+
 async def _build_graph_async() -> Any:
     """Compila o grafo deepagents e abre o checkpointer SQLite."""
-    global _graph, _checkpointer_ctx
+    global _graph, _checkpointer_ctx, _store
 
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
@@ -309,15 +326,20 @@ async def _build_graph_async() -> Any:
 
     middleware = build_middleware_stack(permission_mode="ask", llm=llm)
 
-    from src.services.backends import build_backend_lazy
+    from src.services.backends import build_backend_lazy, build_store
     from src.services.skills import list_skill_paths
     from src.types.context import VectoraContext
 
     # Skills instaladas pelo usuário local (singleton compartilhado).
     # Paths absolutos — harness lê SKILL.md frontmatter on-demand.
-    # TODO E.B-10: quando o grafo puder ser compilado por usuário (E.B-11+),
-    # passar list_skill_paths(user_id) para incluir skills do usuário autenticado.
     skill_paths = [str(p) for p in list_skill_paths("local")]
+
+    # BaseStore (InMemoryStore lite) — usado pelas memory tools via get_store().
+    # Migração para AsyncSqliteStore/AsyncPostgresStore em F5.
+    _store = build_store()
+
+    # AGENTS.md paths para o MemoryMiddleware — injetado no system prompt.
+    memory_paths = _agents_md_paths()
 
     _graph = create_deep_agent(
         llm,
@@ -329,6 +351,8 @@ async def _build_graph_async() -> Any:
         checkpointer=checkpointer,
         context_schema=VectoraContext,
         skills=skill_paths,
+        store=_store,
+        memory=memory_paths,
         name="vectora",
     )
 
