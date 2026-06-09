@@ -1347,6 +1347,66 @@ async def git_commit_diff(
 
 
 # ---------------------------------------------------------------------------
+# A.8 — Stash Manager
+# ---------------------------------------------------------------------------
+
+
+class StashRequest(BaseModel):
+    action: str  # push | pop | drop | list
+    name: str | None = None
+    index: int | None = None  # para drop de entrada específica
+
+
+class StashEntry(BaseModel):
+    index: int
+    label: str  # ex: "stash@{0}: On main: minha mensagem"
+
+
+class StashResponse(BaseModel):
+    action: str
+    entries: list[StashEntry] = []
+    message: str = ""
+
+
+@view_router.post("/{workspace_id}/git/stash", response_model=StashResponse)
+async def git_stash(workspace_id: str, body: StashRequest) -> StashResponse:
+    """Gerencia stash: push / pop / drop / list."""
+    from src.tools.git import _git_stash_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StashResponse(
+            action=body.action, message="Workspace sem repositório git."
+        )
+
+    if body.action == "drop" and body.index is not None:
+        # drop de entrada específica
+        try:
+            repo.git.stash("drop", f"stash@{{{body.index}}}")
+            result: dict = {"status": "ok", "action": "drop"}
+        except Exception as exc:
+            result = {"status": "error", "message": str(exc)}
+    else:
+        result = _git_stash_impl(repo, body.action, body.name)
+
+    if result.get("status") == "error":
+        return StashResponse(action=body.action, message=result.get("message", ""))
+
+    # Se list, parseia as entradas.
+    if body.action == "list":
+        raw_entries: list[str] = result.get("entries", [])
+        entries = []
+        for i, label in enumerate(raw_entries):
+            entries.append(StashEntry(index=i, label=label))
+        return StashResponse(action="list", entries=entries)
+
+    return StashResponse(
+        action=body.action,
+        message=result.get("message", ""),
+    )
+
+
+# ---------------------------------------------------------------------------
 # File system CRUD — criação e deleção de arquivos/pastas
 # ---------------------------------------------------------------------------
 

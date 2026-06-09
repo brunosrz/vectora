@@ -554,6 +554,12 @@ workbench.diff.group_unstaged,Modified / Untracked,Modificados / Sin seguimiento
 workbench.diff.files_badge,"{n} files","{n} archivos","{n} arquivos"
 workbench.diff.tab_changes,Changes,Cambios,Mudanças
 workbench.diff.tab_log,Log,Log,Log
+workbench.diff.tab_stash,Stash,Stash,Stash
+workbench.diff.stash_empty,No stashes.,Sin stashes.,Nenhum stash.
+workbench.diff.stash_push,Push stash,Guardar en stash,Salvar no stash
+workbench.diff.stash_pop,Pop,Recuperar,Recuperar
+workbench.diff.stash_drop,Drop,Eliminar,Descartar
+workbench.diff.stash_name_placeholder,Stash name (optional),Nombre del stash (opcional),Nome do stash (opcional)
 workbench.tab.pending,Pending updates,Actualizaciones pendientes,Atualizações pendentes
 chat.rewind,Rewind to here,Rebobinar hasta aquí,Retroceder até aqui
 chat.rewind_title,Rewind to this point?,¿Rebobinar hasta aquí?,Retroceder até este ponto?
