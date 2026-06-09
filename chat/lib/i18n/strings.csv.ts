@@ -663,6 +663,36 @@ workbench.files.search_no_results,No results.,Sin resultados.,Sem resultados.
 workbench.files.search_truncated,Showing first 200 results — refine your query to narrow down.,Mostrando los primeros 200 resultados — refine su consulta.,Mostrando os primeiros 200 resultados — refine sua busca.
 quota.five_hour,5-hour usage,Uso en 5 horas,Uso em 5 horas
 quota.weekly,Weekly usage,Uso semanal,Uso semanal
+palette.title,Command Palette,Paleta de comandos,Paleta de comandos
+palette.description,Search and run commands,Buscar y ejecutar comandos,Buscar e executar comandos
+palette.placeholder,Search commands…,Buscar comandos…,Buscar comandos…
+palette.clear,Clear,Limpiar,Limpar
+palette.no_results,No commands found.,No se encontraron comandos.,Nenhum comando encontrado.
+palette.hint_navigate,navigate,navegar,navegar
+palette.hint_run,run,ejecutar,executar
+palette.hint_close,close,cerrar,fechar
+palette.cmd.new_chat,New chat,Nuevo chat,Nova conversa
+palette.cmd.settings,Settings,Configuración,Configurações
+palette.cmd.toggle_workbench,Toggle workbench,Alternar workbench,Alternar workbench
+palette.cmd.keyboard_shortcuts,Keyboard shortcuts,Atajos de teclado,Atalhos de teclado
+palette.cmd.clear_messages,Clear messages,Limpiar mensajes,Limpar mensagens
+palette.cmd.focus_input,Focus message input,Enfocar entrada de mensaje,Focar entrada de mensagem
+palette.cmd.scroll_bottom,Scroll to bottom,Ir al final,Ir ao fim
+palette.cat.navigation,Navigation,Navegación,Navegação
+palette.cat.chat,Chat,Chat,Chat
+palette.cat.workbench,Workbench,Workbench,Workbench
+shortcuts.title,Keyboard Shortcuts,Atajos de teclado,Atalhos de teclado
+shortcuts.cat_navigation,Navigation,Navegación,Navegação
+shortcuts.cat_chat,Chat,Chat,Chat
+shortcuts.cat_workbench,Workbench,Workbench,Workbench
+shortcuts.new_chat,New chat,Nuevo chat,Nova conversa
+shortcuts.clear_messages,Clear messages,Limpiar mensajes,Limpar mensagens
+shortcuts.toggle_workbench,Toggle workbench,Alternar workbench,Alternar workbench
+shortcuts.open_settings,Open settings,Abrir configuración,Abrir configurações
+shortcuts.command_palette,Command palette,Paleta de comandos,Paleta de comandos
+shortcuts.keyboard_shortcuts,Keyboard shortcuts,Atalhos de teclado,Atalhos de teclado
+shortcuts.focus_input,Focus message input,Enfocar entrada,Focar entrada de mensagem
+shortcuts.scroll_bottom,Scroll to bottom,Ir al final,Ir ao fim
 `;
 
 export default CSV;

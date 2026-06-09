@@ -9,11 +9,16 @@ import { HorizontalSplit } from "@/components/layout/horizontal-split";
 import { LicenseBanner } from "@/components/layout/license-banner";
 import { SettingsDialog } from "@/components/layout/settings-dialog";
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog";
+import {
+  CommandPalette,
+  type PaletteCommand,
+} from "@/components/layout/command-palette";
 import { NewChatDialog } from "@/components/layout/new-chat-dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
 
 import {
   useThreadsQuery,
@@ -39,6 +44,7 @@ import {
   SetupWizard,
   isOnboardingDone,
 } from "@/components/onboarding/setup-wizard";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/session/$threadId")({
   // Prefetch em paralelo: lista de threads (sidebar) + histórico da thread ativa.
@@ -63,6 +69,7 @@ export const Route = createFileRoute("/session/$threadId")({
 function SessionPage() {
   const { threadId } = Route.useParams() as { threadId: string };
   const navigate = useNavigate();
+  const t = useT();
 
   const userId = useAuthStore((s) => s.user?.id);
   const pushMention = useChatInputStore((s) => s.pushMention);
@@ -124,7 +131,7 @@ function SessionPage() {
   useBroadcastSync(BROADCAST_THREADS, () => void refetchThreads(), !!userId);
   useBroadcastSync(BROADCAST_WORKSPACES, () => void refetchThreads(), !!userId);
 
-  // Registry central de atalhos globais (C.11).
+  // Registry central de atalhos globais (C.11) + command palette / cheatsheet (C.30).
   useGlobalShortcuts({
     "ctrl+t": () => {
       void handleConfirmNewChat(null);
@@ -136,6 +143,14 @@ function SessionPage() {
       return true;
     },
     "ctrl+,": () => {
+      useSettingsDialogStore.getState().openAt("conta");
+      return true;
+    },
+    "ctrl+k": () => {
+      setShowCommandPalette(true);
+      return true;
+    },
+    "ctrl+?": () => {
       setShowShortcutsDialog(true);
       return true;
     },
@@ -146,6 +161,7 @@ function SessionPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [showToolCalls, setShowToolCalls] = useState(false);
   const [showShortcutsDialog, setShowShortcutsDialog] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(
     () => !!userId && !isOnboardingDone(userId),
@@ -202,6 +218,52 @@ function SessionPage() {
       void updateThreadMutation.mutate({ id, updates: { title } });
     },
     [updateThreadMutation],
+  );
+
+  // ── Command palette — lista de ações navegáveis (C.30) ───────────────────
+  const paletteCommands = useMemo<PaletteCommand[]>(
+    () => [
+      {
+        id: "new-chat",
+        label: t("palette.cmd.new_chat"),
+        category: t("palette.cat.navigation"),
+        shortcut: "Ctrl+T",
+        run: () => void handleConfirmNewChat(null),
+      },
+      {
+        id: "settings",
+        label: t("palette.cmd.settings"),
+        category: t("palette.cat.navigation"),
+        shortcut: "Ctrl+,",
+        run: () => useSettingsDialogStore.getState().openAt("conta"),
+      },
+      {
+        id: "keyboard-shortcuts",
+        label: t("palette.cmd.keyboard_shortcuts"),
+        category: t("palette.cat.navigation"),
+        shortcut: "Ctrl+?",
+        run: () => setShowShortcutsDialog(true),
+      },
+      {
+        id: "toggle-workbench",
+        label: t("palette.cmd.toggle_workbench"),
+        category: t("palette.cat.workbench"),
+        shortcut: "Ctrl+\\",
+        run: () => useWorkbenchStore.getState().togglePanel(threadId),
+      },
+      {
+        id: "clear-messages",
+        label: t("palette.cmd.clear_messages"),
+        category: t("palette.cat.chat"),
+        shortcut: "Ctrl+L",
+        run: () => {
+          // Disparado pelo atalho Ctrl+L — o chat-interface escuta esse evento.
+          document.dispatchEvent(new CustomEvent("vectora:clear-messages"));
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, threadId],
   );
 
   // ── Sidebar (instância única reutilizada em desktop e mobile Sheet) ───────
@@ -310,6 +372,11 @@ function SessionPage() {
       <KeyboardShortcutsDialog
         open={showShortcutsDialog}
         onOpenChange={setShowShortcutsDialog}
+      />
+      <CommandPalette
+        open={showCommandPalette}
+        onOpenChange={setShowCommandPalette}
+        commands={paletteCommands}
       />
       <NewChatDialog
         open={showNewChatDialog}
