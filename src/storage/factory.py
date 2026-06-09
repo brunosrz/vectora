@@ -32,7 +32,10 @@ logger = logging.getLogger(__name__)
 
 _checkpointer_cm: Any = None  # context manager (AsyncSqliteSaver etc.)
 _store: Any = None  # BaseStore
-_vector_stores: dict[str, Any] = {}  # name → VectorStore
+_vector_stores: dict[str, Any] = {}  # collection → lancedb.AsyncTable (raw)
+_lc_vector_stores: dict[
+    str, Any
+] = {}  # "mode::path::collection" → LangChain VectorStore
 
 # ---------------------------------------------------------------------------
 # Checkpointer (F4 stub — wrap do Checkpointer existente)
@@ -83,7 +86,7 @@ async def get_store(embedding_model: str | None = None) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# VectorStore (F6 stub — wrap do LanceDB existente)
+# VectorStore raw (lancedb.AsyncTable — compatibilidade com código existente)
 # ---------------------------------------------------------------------------
 
 
@@ -92,17 +95,18 @@ async def get_vector_store(
     *,
     path: str | None = None,
 ) -> Any:
-    """Retorna (ou cria) o VectorStore para ``collection``.
+    """Retorna (ou cria) o ``lancedb.AsyncTable`` para ``collection``.
 
-    Wrap fino sobre a conexão LanceDB via ``src.storage.lancedb.get_lancedb()``.
-    F6 substituirá pelo ``LangChain VectorStore`` completo.
+    Usado pelo background worker e pelos nós de RAG que operam na API baixo nível
+    do LanceDB (escrita batch, índices IVF, FTS).  Para uso em chains LangChain,
+    prefira ``get_langchain_vector_store()``.
 
     Args:
         collection: Nome da tabela/coleção LanceDB. Default ``"articles"``.
         path:       Diretório LanceDB. None = ``settings.lancedb_dir``.
 
     Returns:
-        ``lancedb.AsyncTable``
+        ``lancedb.AsyncTable`` ou None se a tabela não existir.
     """
     cache_key = f"{path or ''}::{collection}"
     if cache_key in _vector_stores:
@@ -119,6 +123,173 @@ async def get_vector_store(
 
     _vector_stores[cache_key] = table
     return table
+
+
+# ---------------------------------------------------------------------------
+# VectorStore LangChain (F6) — LanceDB lite · Qdrant HYBRID complete
+# ---------------------------------------------------------------------------
+
+
+async def get_langchain_vector_store(
+    collection: str = "articles",
+    *,
+    mode: str | None = None,
+    path: str | None = None,
+) -> Any:
+    """Retorna (ou cria) o LangChain ``VectorStore`` para ``collection``.
+
+    Escolhe a implementação de acordo com ``mode`` (ou ``settings.storage_mode``):
+
+    * **lite** — ``langchain_community.vectorstores.LanceDB`` apontando para
+      o diretório LanceDB local. Integra com ``CohereEmbeddings`` e com os
+      índices IVF/FTS criados pelo F1.
+
+    * **complete** — ``langchain_qdrant.QdrantVectorStore`` com
+      ``RetrievalMode.HYBRID`` (dense Cohere + sparse BM25). Requer
+      ``settings.qdrant_url`` configurado.
+
+    Collections padrão preservadas: ``articles``, ``web_cache``, ``search``.
+
+    Args:
+        collection: Nome da coleção / tabela. Default ``"articles"``.
+        mode:       ``"lite"`` ou ``"complete"``. None = ``settings.storage_mode``.
+        path:       Diretório LanceDB (lite only). None = ``settings.lancedb_dir``.
+
+    Returns:
+        ``langchain_core.vectorstores.VectorStore`` pronto para uso em chains.
+    """
+    from src.settings import settings as _s
+
+    effective_mode = mode or _s.storage_mode
+    cache_key = f"{effective_mode}::{path or ''}::{collection}"
+
+    if cache_key in _lc_vector_stores:
+        return _lc_vector_stores[cache_key]
+
+    # Embeddings compartilhados (Cohere quando disponível, ou None para lite)
+    embeddings = _build_lc_embeddings()
+
+    if effective_mode == "lite":
+        vs = _build_lancedb_vs(
+            collection=collection,
+            path=path or _s.lancedb_dir,
+            embeddings=embeddings,
+        )
+    else:
+        vs = _build_qdrant_vs(
+            collection=collection,
+            settings=_s,
+            embeddings=embeddings,
+        )
+
+    _lc_vector_stores[cache_key] = vs
+    logger.debug(
+        "storage/factory: LangChain VectorStore criado mode=%s collection=%s",
+        effective_mode,
+        collection,
+    )
+    return vs
+
+
+def _build_lc_embeddings() -> Any:
+    """Retorna ``CohereEmbeddings`` se disponível, ou None (modo sem embeddings)."""
+    try:
+        from langchain_cohere import CohereEmbeddings
+
+        from src.settings import settings as _s
+
+        key = _s.get_cohere_api_key()
+        model = _s.embedding_model
+        if not key or not model:
+            return None
+
+        return CohereEmbeddings(  # ty: ignore[missing-argument]
+            cohere_api_key=key,  # ty: ignore[invalid-argument-type]
+            model=model,
+        )
+    except Exception:
+        return None
+
+
+def _build_lancedb_vs(
+    collection: str,
+    path: str | None,
+    embeddings: Any,
+) -> Any:
+    """Constrói ``langchain_community.vectorstores.LanceDB``.
+
+    Usa ``uri=`` (diretório LanceDB) e ``table_name=collection``. O mode de
+    escrita é ``"append"`` para preservar documentos indexados anteriormente
+    via background worker. Não requer que a tabela exista previamente — o
+    LangChain VectorStore a criará na primeira operação de escrita.
+    """
+    import warnings
+
+    from src.settings import settings as _s
+
+    db_path = path or _s.lancedb_dir or ""
+    if not db_path:
+        import tempfile
+        from pathlib import Path as _Path
+
+        db_path = str(_Path(tempfile.gettempdir()) / "vectora_lancedb")
+        logger.debug("storage/factory: lancedb_dir fallback para %s", db_path)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        from langchain_community.vectorstores import LanceDB
+
+    vs = LanceDB(
+        uri=db_path,
+        embedding=embeddings,
+        table_name=collection,
+        mode="append",  # preserva docs existentes
+    )
+    return vs
+
+
+def _build_qdrant_vs(
+    collection: str,
+    settings: Any,
+    embeddings: Any,
+) -> Any:
+    """Constrói ``langchain_qdrant.QdrantVectorStore`` com modo HYBRID.
+
+    Dense: ``CohereEmbeddings``. Sparse: BM25 automático via ``FastEmbedSparse``.
+    Modo HYBRID: combina dense + sparse para recall máximo.
+
+    Requer ``settings.qdrant_url`` configurado. Cria a coleção se não existir.
+    """
+    from langchain_qdrant import QdrantVectorStore, RetrievalMode
+    from qdrant_client import QdrantClient
+
+    client = QdrantClient(
+        url=settings.qdrant_url or "http://localhost:6333",
+        api_key=settings.qdrant_api_key,
+    )
+
+    sparse_embeddings = _build_sparse_embeddings()
+
+    vs = QdrantVectorStore(
+        client=client,
+        collection_name=collection,
+        embedding=embeddings,
+        retrieval_mode=RetrievalMode.HYBRID
+        if sparse_embeddings
+        else RetrievalMode.DENSE,
+        sparse_embedding=sparse_embeddings,
+    )
+    return vs
+
+
+def _build_sparse_embeddings() -> Any:
+    """Retorna ``FastEmbedSparse`` se disponível (para modo HYBRID no Qdrant)."""
+    try:
+        from langchain_qdrant import FastEmbedSparse
+
+        return FastEmbedSparse(model_name="Qdrant/bm25")
+    except Exception:
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -184,3 +355,4 @@ def _reset_singletons() -> None:
     _store = None
     _checkpointer_cm = None
     _vector_stores.clear()
+    _lc_vector_stores.clear()
