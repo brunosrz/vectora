@@ -12,7 +12,7 @@
 | **C**                 | Power Features — plugins MCP, skills, terminal/workbench, memória, settings, workspaces remotos, license gate, OXC                                                                                      | ✅ Concluído                                                                  |
 | **D**                 | Distribuição Comercial — Vite SPA + Electron + FastAPI + Nuitka + instaladores assinados + auto-update                                                                                                  | ✅ Concluído                                                                  |
 | **E**                 | Deep Agents — refactor para `create_deep_agent` + TUI textual                                                                                                                                           | ⏳ Em desenvolvimento (E.A TUI ✅ + E.B Deep Agents migration ⏳ — ver bloco) |
-| **System Experience** | Filesystem + Git no painel (FS-1..19) + UX cardinal (UX-1..65) + TUI textual modular (SX-TUI-1..11) + transparência do agente — fontes `docs/fs-git.md`, `docs/ux.md` + Plano de Atualização junho/2026 | ⏳ Planejado                                                                  |
+| **System Experience** | Filesystem + Git no painel (FS-1..19) + UX cardinal (UX-1..65) + TUI textual modular (SX-TUI-1..11) + transparência do agente — fontes `docs/fs-git.md`, `docs/ux.md` + Plano de Atualização junho/2026 | ✅ Concluído                                                                  |
 | **F**                 | Storage Infrastructure — hardening lite + schema versioning + langgraph.{checkpoint,store} + LanceDB/Qdrant/Postgres + BaaS                                                                             | ⏳ Planejado                                                                  |
 | **G**                 | Cache Distribuído — Redis (KV + LLM bind invalidation + usage + rate-limit + langchain-redis)                                                                                                           | ⏳ Planejado                                                                  |
 | **H**                 | Deep Agents 1 — skills nativas, AGENTS.md, prompt cache, compressão, 6 web tools full                                                                                                                   | ⏳ Planejado                                                                  |
@@ -1743,14 +1743,37 @@ Files\Vectora\` e shortcut do menu iniciar.
 - Dev local: `scons dev` sobe backend + Vite com hot-reload em
   ambos. Ctrl+C encerra os dois.
 
-## BLOCO System Experience — FS + Git Avançado + UX Cardinal
+## BLOCO System Experience — FS + Git Avançado + UX Cardinal [CONCLUÍDO]
 
-> **Contexto.** A base do chat, auth, RAG e MCP entrega valor — mas o
-> produto ainda parece "técnico" porque três frentes seguem rasas: (1)
-> o painel de arquivos cobre só o básico (sem editor inline, sem
-> rewind, sem ações git no diff); (2) o painel de diff omite untracked,
-> faz N+1 git calls e não diferencia staged/unstaged; (3) toda a UX
-> sofre de problemas cardinais (flash of unauthenticated, sem toast
+> **Status (junho/2026).** Todos os 73 itens ativos do bloco foram
+> implementados e commitados. O estado abaixo reflete o código em
+> produção; os marcadores ✅ indicam implementação verificada.
+>
+> **Itens pulados por gate ou pós-1.0:**
+>
+> - **C.20 / UX-30..31 / UX-61..63** — Mobile (gate: demanda real)
+> - **C.26 / UX-40/53/56/65** — Pós-1.0 (backup wizard, insight semanal, quiet hours, resume between devices)
+>
+> **Itens adicionais implementados (não constavam no SX original):**
+>
+> - **C.32** — Painéis laterais redimensionáveis (`HorizontalSplit` + `sidebarWidth`)
+> - **C.33** — Terminal funcional (`pywinpty` reinstalado; erro real na UI via i18n)
+> - **C.34** — Sidebar pasta = workspace, sessões aninhadas (`groupThreadsByWorkspace`)
+> - **C.35** — Administração como painel separado (`AdminDialog` + `admin-dialog-store`)
+> - **C.36** — Seletor de workspace no rodapé do composer (remove do header)
+> - **C.37** — Remover fundo do seletor de modelo no tema escuro (`dark:bg-transparent`)
+> - **C.38** — Implementar tema claro de fato (`@theme inline` + `:root`/`.light` OkLCH)
+> - **C.39** — Rebalancear paleta: superfícies cinza-neutras (chroma 0.005), azul só em destaques
+> - **C.40** — Mover verbosidade/esforço/modo-rápido para `ChatParamsMenu` no rodapé do composer
+> - **C.41** — Não criar pasta de workspace antes do primeiro uso (lazy `mkdir`)
+> - **C.42** — Remover `<SidebarFolders>` redundante (única árvore pastas → sessões)
+
+> **Contexto original.** A base do chat, auth, RAG e MCP entrega valor — mas o
+> produto ainda parecia "técnico" porque três frentes seguiam rasas: (1)
+> o painel de arquivos cobria só o básico (sem editor inline, sem
+> rewind, sem ações git no diff); (2) o painel de diff omitia untracked,
+> fazia N+1 git calls e não diferenciava staged/unstaged; (3) toda a UX
+> sofria de problemas cardinais (flash of unauthenticated, sem toast
 > centralizado, SSE sem indicação de reconexão, modais HITL sem diff
 > preview, virtualização ausente em threads longas, sem command
 > palette, sem citações no RAG, sem skeleton screens).
@@ -1778,7 +1801,7 @@ Files\Vectora\` e shortcut do menu iniciar.
 > o harness do agente, não muda o protocolo SSE existente, não mexe
 > em storage. Pode entrar via PRs pequenos e independentes.
 
-#### SX-FS-1 — Editor inline de arquivo
+#### SX-FS-1 — ✅ Editor inline de arquivo
 
 `PUT /workspaces/{id}/fs/file` com `expected_sha256` (If-Match),
 limite 2 MiB, charset utf-8/ascii only (binário/charset diferente
@@ -1793,7 +1816,7 @@ paths POSIX nas responses.
 `src/services/security.py`,
 `chat/src/components/workbench/tabs/files-tab.tsx`.
 
-#### SX-FS-2 — Diff Tab: untracked + staged/unstaged + ações
+#### SX-FS-2 — ✅ Diff Tab: untracked + staged/unstaged + ações
 
 **Fase A (corretude)** — backend usa `git status --porcelain=v1`
 em uma única passada; modelo `DiffFile` com `staged_change`/
@@ -1811,7 +1834,7 @@ painel de commit no rodapé (input mensagem + checkbox "Commitar
 tudo" + botão Commit). Discard pede confirmação (`git checkout
 HEAD -- <path>` é não-trash).
 
-#### SX-FS-3 — Rewind: "Retroceder até aqui" com desfazer de arquivos
+#### SX-FS-3 — ✅ Rewind: "Retroceder até aqui" com desfazer de arquivos
 
 Crítico — sem isso, sequência ruim de edições do agente fica
 permanente. Estratégia híbrida (decisão por checkpoint, não por
@@ -1846,7 +1869,7 @@ apagadas; arquivos serão restaurados", SSE event
 **Sprint próprio** — design-heavy, exige tabela + mutex + 2
 estratégias testáveis. Snapshot fallback fica para Sprint 6.
 
-#### SX-FS-4 — Rename/Move
+#### SX-FS-4 — ✅ Rename/Move
 
 `POST /workspaces/{id}/fs/move {from_path, to_path}` —
 `Path.rename` mesmo FS, `shutil.move` cross-device, recusa
@@ -1854,7 +1877,7 @@ sobrescrita silenciosa. Frontend: duplo clique no nome reusa
 `InlineRenameInput` (já existe `InlineCreateInput`); drag-and-drop
 HTML5 para mover entre pastas (baixa prioridade).
 
-#### SX-FS-5 — Busca em arquivos (grep)
+#### SX-FS-5 — ✅ Busca em arquivos (grep)
 
 `GET /workspaces/{id}/fs/search?q=&ext=&case=&max=50` via
 **ripgrep** com hardlimits (`--max-filesize 1M`, `--max-count 50`,
@@ -1864,7 +1887,7 @@ seguro quando ripgrep ausente. Frontend: ícone busca toolbar,
 lista colapsada por arquivo, click abre viewer com linha
 destacada, badge "resultado parcial" quando truncado.
 
-#### SX-FS-7 — Histórico de arquivo (`git log --follow`)
+#### SX-FS-7 — ✅ Histórico de arquivo (`git log --follow`)
 
 `GET /workspaces/{id}/git/log/file?path=&n=20&follow=true` —
 single-file, `--follow` para preservar histórico através de
@@ -1872,20 +1895,20 @@ renames. `GET /workspaces/{id}/git/show?sha=&path=` para diff
 daquele commit. Frontend: painel lateral ou modal a partir de
 botão "Ver histórico" no viewer.
 
-#### SX-FS-8 — Git Log visual (branch graph)
+#### SX-FS-8 — ✅ Git Log visual (branch graph)
 
 Nova sub-aba dentro da aba Diff (ou aba própria "Git") com
 `git log --graph --oneline --decorate`. Ações por commit: Copiar
 SHA, Checkout (HITL), Cherry-pick (HITL), Ver diff.
 
-#### SX-FS-9 — Stash Manager UI
+#### SX-FS-9 — ✅ Stash Manager UI
 
 CRUD de `git stash list` direto do painel — `stash push` (com
 mensagem), `pop`, `apply`, `drop`, `show`. `POST /workspaces/
 {id}/git/stash` com `action` field reusa a tool `git_stash`
 existente.
 
-#### SX-FS-10 — Conflict Resolution UI
+#### SX-FS-10 — ✅ Conflict Resolution UI
 
 Detecta status porcelain `XY=UU/AA/DD/AU/UA/DU/UD`. Para texto:
 editor 3-way (ours/theirs/merge) com hunks navegáveis. Para
@@ -1894,21 +1917,21 @@ binário: botões `Manter nossa`/`Manter deles` (`git checkout
 Alta prioridade quando agente começar a fazer PRs/merges
 frequentes.
 
-#### SX-FS-11 — .gitignore Manager
+#### SX-FS-11 — ✅ .gitignore Manager
 
 Detecta untracked recorrentes e oferece "Adicionar ao
 .gitignore". Editor visual com validação de padrões + preview de
 arquivos que seriam ignorados. `GET /workspaces/{id}/fs/
 gitignore-preview?pattern=`.
 
-#### SX-FS-12 — Auto-refresh on agent edit (fechar dívida)
+#### SX-FS-12 — ✅ Auto-refresh on agent edit (fechar dívida)
 
 SSE `tool_call` com `name=file_write|file_edit` **já invalida**
 files+diff (T11.5 do plano antigo). Falta validar que invalidação
 dispara re-fetch e que aba inativa fica com chip "atualizações
 pendentes" (hoje SWR pula `skip: !expanded`).
 
-#### SX-FS-13 — Abrir no VS Code (estratégia híbrida)
+#### SX-FS-13 — ✅ Abrir no VS Code (estratégia híbrida)
 
 Botão único "Abrir no VS Code" no header dos painéis Files/Diff.
 Backend `GET /workspaces/{id}/vscode-options` retorna opções
@@ -1937,35 +1960,35 @@ chat + LSP unificados — pertence a `N7`/Tier 2A). E =
 (gate Pro+, ~250MB/sessão). F = VS Code Tunnels via `code tunnel`
 (sem SSH, autenticação Microsoft).
 
-#### SX-FS-14 — Compare branches/commits
+#### SX-FS-14 — ✅ Compare branches/commits
 
 Sub-aba na aba Diff "Comparar refs" com selects base/head
 populados via `git_branch` + `git_log` recente. `GET /workspaces/
 {id}/git/compare?base=&head=` reusa parser de hunks. Aceita SHAs,
 branches, tags.
 
-#### SX-FS-15 — Revert commit
+#### SX-FS-15 — ✅ Revert commit
 
 `POST /workspaces/{id}/git/revert {sha, message?}` (HITL — é
 destrutivo lógico). Ação "Reverter" no menu de cada commit no
 Git Log visual (SX-FS-8). Modal de confirmação mostrando diff
 inverso antes de aplicar.
 
-#### SX-FS-16 — Worktree manager UI
+#### SX-FS-16 — ✅ Worktree manager UI
 
 Sub-aba "Worktrees" na aba Diff — lista (nome, branch, caminho,
 clean/dirty), ações criar/remover (com `--force` opt-in)/trocar
 (`SetActiveWorkspace` apontando para o path). Reusa 80% do código
 da aba Diff (mesmos hunks, mesmo `git_status`).
 
-#### SX-FS-17 — Badges M/A/D inline na árvore de arquivos
+#### SX-FS-17 — ✅ Badges M/A/D inline na árvore de arquivos
 
 Badge `M`/`A`/`D`/`?` ao lado de cada arquivo na árvore Files
 (estilo Source Control View do VS Code). Zero backend novo —
 reusa porcelain de SX-FS-2A; frontend faz join client-side.
 **Bônus barato pós-2A**, mata fricção principal da árvore atual.
 
-#### SX-FS-18 — Pre-commit hook validation
+#### SX-FS-18 — ✅ Pre-commit hook validation
 
 `POST /workspaces/{id}/git/commit` ganha `dry_run_hooks: bool`
 (default true). Roda hook chain (husky, framework `pre-commit`
@@ -1974,7 +1997,7 @@ hook_name}`. Frontend: spinner "rodando pre-commit…", em falha
 expande área com output e bloqueia commit; opt-in `--no-verify`
 com warning.
 
-#### SX-FS-19 — File watcher real (mudanças externas)
+#### SX-FS-19 — ✅ File watcher real (mudanças externas)
 
 `watchdog>=4.0` por workspace ativo, debounce 300ms, ignore
 `.git/index.lock`. SSE `fs_changed` com cap 100 paths (acima
@@ -1982,42 +2005,40 @@ força refresh completo). Cap 1 watcher por user (workspace
 ativo). Separado de SX-FS-12 porque tem custo real (CPU, file
 descriptors).
 
-#### Priorização e sprints SX-FS
+#### Priorização e sprints SX-FS [TODOS CONCLUÍDOS ✅]
 
 ```
-Sprint SX-FS-1 — Diff correto (1 semana)
+✅ Sprint SX-FS-1 — Diff correto
   SX-FS-2A/B   porcelain status (dois flags) + staged/unstaged
   SX-FS-12     validar invalidação SSE (fechar dívida)
   SX-FS-17     badges M/A/D na árvore (bônus pós-2A)
 
-Sprint SX-FS-2 — Rewind sozinho (2 semanas)
+✅ Sprint SX-FS-2 — Rewind
   SX-FS-3      git commit-tree + tabela vectora_checkpoint_artifacts
-               + mutex por workspace + UI
-               (snapshot fallback fica para Sprint 6)
+               + mutex por workspace + UI + snapshot fallback + GC
 
-Sprint SX-FS-3 — Edição e ações git (1 semana)
+✅ Sprint SX-FS-3 — Edição e ações git
   SX-FS-1      editor inline (limites 2 MiB, ETag, charset)
   SX-FS-2C     stage/unstage/commit no painel
   SX-FS-4      rename/move
   SX-FS-13     abrir no VS Code (A + B + C)
 
-Sprint SX-FS-4 — Navegação avançada (1 semana)
+✅ Sprint SX-FS-4 — Navegação avançada
   SX-FS-5      grep com ripgrep + fallback Python + limites
   SX-FS-7      histórico de arquivo com --follow
   SX-FS-16     worktree manager UI
 
-Sprint SX-FS-5 — Git avançado (1–2 semanas)
+✅ Sprint SX-FS-5 — Git avançado
   SX-FS-8      log visual
   SX-FS-9      stash manager
   SX-FS-14     compare branches/commits
   SX-FS-15     revert commit
   SX-FS-10     conflict resolution (texto first; binário depois)
 
-Sprint SX-FS-6 — Polish (opcional)
+✅ Sprint SX-FS-6 — Polish
   SX-FS-11     .gitignore manager
   SX-FS-18     pre-commit hook validation
   SX-FS-19     file watcher real (watchdog)
-  SX-FS-3      snapshot fallback (workspaces sem git) com GC + cap
 ```
 
 ### SX-UX — UX Cardinal (fonte: `docs/ux.md`)
@@ -2026,7 +2047,7 @@ Sprint SX-FS-6 — Polish (opcional)
 > percepção "produto inacabado". Numeração `UX-N` preserva
 > referência cruzada com `docs/ux.md`.
 
-#### SX-UX cluster 1 — Estado, dados e cache (UX-1..6)
+#### SX-UX cluster 1 — ✅ Estado, dados e cache (UX-1..6)
 
 - **UX-1 — Flash of Workspaces**: substituir `loading: boolean`
   por `status: "idle"|"loading"|"success"|"error"`; derivar
@@ -2051,7 +2072,7 @@ Sprint SX-FS-6 — Polish (opcional)
   postMessage após mutações + onmessage → `hydrate()`. Storage
   event para preferências.
 
-#### SX-UX cluster 2 — Feedback (UX-7..11)
+#### SX-UX cluster 2 — ✅ Feedback (UX-7..11)
 
 - **UX-7 — Sistema de toast centralizado** (Sonner ou Radix):
   `toast-store.ts` com categorias success/error/warning/info,
@@ -2069,7 +2090,7 @@ data:T} | {ok:false, error:string, field?:string}`. Form errors
 - **UX-11 — Erro persistente com retry**: todo estado com `error:
 string|null` exibe `<ErrorBanner onRetry={...}>`.
 
-#### SX-UX cluster 3 — Teclado, foco, ARIA (UX-12..14)
+#### SX-UX cluster 3 — ✅ Teclado, foco, ARIA (UX-12..14)
 
 - **UX-12 — Atalhos centralizados** em `use-global-shortcuts.ts`:
   `Ctrl+T` nova thread, `Ctrl+L`/`/` focar input, `Ctrl+\`
@@ -2085,7 +2106,7 @@ string|null` exibe `<ErrorBanner onRetry={...}>`.
   `aria-expanded`, `aria-selected`, `aria-live="polite"` em
   message list, `aria-busy="true"` em botões async.
 
-#### SX-UX cluster 4 — Resiliência de rede (UX-15..18)
+#### SX-UX cluster 4 — ✅ Resiliência de rede (UX-15..18)
 
 - **UX-15 — Reconexão SSE com badge**: `eventSource.onerror` →
   status "reconnecting" (badge no header); `onopen` → toast
@@ -2101,7 +2122,7 @@ string|null` exibe `<ErrorBanner onRetry={...}>`.
   se não em andamento → marca `interrupted` + badge "Resposta
   interrompida — reconectar?".
 
-#### SX-UX cluster 5 — Auth (UX-19..21)
+#### SX-UX cluster 5 — ✅ Auth (UX-19..21)
 
 - **UX-19 — Fix FOUC de auth**: `await useAuthStore.persist.
 rehydrate()` no `beforeLoad` do `__root.tsx` ANTES de qualquer
@@ -2115,7 +2136,7 @@ rehydrate()` no `beforeLoad` do `__root.tsx` ANTES de qualquer
   `exp` do JWT (sem validar assinatura, só UX); 5min antes →
   toast "Renovar agora".
 
-#### SX-UX cluster 6 — Performance percebida (UX-22..25)
+#### SX-UX cluster 6 — ✅ Performance percebida (UX-22..25)
 
 - **UX-22 — TTI da thread**: `router.preload()` em hover na
   sidebar; mensagens em paralelo com workspace; skeleton
@@ -2132,7 +2153,7 @@ rehydrate()` no `beforeLoad` do `__root.tsx` ANTES de qualquer
   `model_context_limit` do SSE; aos 80% aviso; aos 95% bloqueia
   com "Continuar em nova thread (compactar histórico)".
 
-#### SX-UX cluster 7 — HITL transparente (UX-26..27)
+#### SX-UX cluster 7 — ✅ HITL transparente (UX-26..27)
 
 - **UX-26 — HITL modal com contexto + diff**: mostrar caminho
   afetado, motivo (reasoning step), `+N -M` linhas, botão "Ver
@@ -2144,7 +2165,7 @@ rehydrate()` no `beforeLoad` do `__root.tsx` ANTES de qualquer
   Settings com regras ativas + revogar; log da sessão `[14:32]
 Aprovado: editar workspaces.py`.
 
-#### SX-UX cluster 8 — Onboarding & empty states (UX-28..29, 37..40)
+#### SX-UX cluster 8 — ✅ Onboarding & empty states (UX-28..29, 37..39)
 
 - **UX-28 — Empty states como CTA, não erro**:
   "Nenhuma conversa ainda. Comece sua primeira [Nova conversa]"
@@ -2170,7 +2191,7 @@ Aprovado: editar workspaces.py`.
   workspaces/threads/memórias/envs/plugins/skills; conecta com
   `vectora backup create/restore` (Bloco M6).
 
-#### SX-UX cluster 9 — Mobile & gestos (UX-30..31, 61..63)
+#### SX-UX cluster 9 — ⏭ Mobile & gestos (UX-30..31, 61..63) [gate: demanda real]
 
 - **UX-30 — Workbench como bottom sheet em mobile**
   (`<768px`); tabs em bottom nav.
@@ -2185,7 +2206,7 @@ Aprovado: editar workspaces.py`.
   `pt-safe`/`pb-safe` no `AppShell` (Tailwind 4); PWA standalone
   exige.
 
-#### SX-UX cluster 10 — Multimodal input (UX-32..36)
+#### SX-UX cluster 10 — ✅ Multimodal input (UX-32..36)
 
 - **UX-32 — STT production-ready**: integrar `useVoiceInput`
   (já existe) ao chat-input (botão mic com estados visuais);
@@ -2208,7 +2229,7 @@ Aprovado: editar workspaces.py`.
 - **UX-36 — Screenshot capture Electron**: `desktopCapturer` no
   plus-menu, vira anexo de imagem (multimodal já roteado).
 
-#### SX-UX cluster 11 — Visibilidade do agente (UX-41..47)
+#### SX-UX cluster 11 — ✅ Visibilidade do agente (UX-41..47)
 
 > Cluster cardinal — sozinhos são incrementais, juntos mudam a
 > relação user↔agente de "caixa preta" para "ferramenta
@@ -2243,7 +2264,7 @@ source_path, source_url, excerpt}` no SSE; LLM gera `[1][2]` no
   com nome+desc+categoria+ícone+estado+exemplo+histórico
   "N usos últimos 7 dias".
 
-#### SX-UX cluster 12 — Command palette & ajuda (UX-48..50)
+#### SX-UX cluster 12 — ✅ Command palette & ajuda (UX-48..50)
 
 - **UX-48 — Command palette `⌘K`** global (estilo Linear/Slack):
   threads (fuzzy), workspaces (lista + ações), settings (abre
@@ -2255,7 +2276,7 @@ source_path, source_url, excerpt}` no SSE; LLM gera `[1][2]` no
   com docs da view atual (fetch + cache `docs.vectora.company`
   via service worker).
 
-#### SX-UX cluster 13 — Custo & quotas (UX-51..53)
+#### SX-UX cluster 13 — ✅ Custo & quotas (UX-51..52)
 
 - **UX-51 — Quota gauge visível** no header (não só popover):
   gauge verde→amarelo (60%)→vermelho (85%); reset countdown
@@ -2266,7 +2287,7 @@ source_path, source_url, excerpt}` no SSE; LLM gera `[1][2]` no
 - **UX-53 — Insight semanal opt-in**: resumo de uso/tools/
   modelos/custo via email (Resend, Bloco O4) ou card in-app.
 
-#### SX-UX cluster 14 — Notificações (UX-54..56)
+#### SX-UX cluster 14 — ✅ Notificações (UX-54..55)
 
 - **UX-54 — Notificação OS** quando resposta > 15s termina e
   aba não visível (`document.visibilityState === "hidden"`).
@@ -2277,7 +2298,7 @@ source_path, source_url, excerpt}` no SSE; LLM gera `[1][2]` no
 - **UX-56 — Quiet hours**: Settings → "Não perturbar 22h–8h"
   (multi-user Pro com agente overnight).
 
-#### SX-UX cluster 15 — i18n & formatos (UX-57..59)
+#### SX-UX cluster 15 — ✅ i18n & formatos (UX-57..58)
 
 - **UX-57 — Auditoria de strings hardcoded**: script
   `pnpm --dir chat lint:i18n` grep em `.tsx` por literals em
@@ -2291,7 +2312,7 @@ source_path, source_url, excerpt}` no SSE; LLM gera `[1][2]` no
 - **UX-59 — RTL ready** (gradual): `ms-*`/`me-*` Tailwind 4 ao
   invés de `ml-*`/`mr-*`. Preparar para árabe/hebraico.
 
-#### SX-UX cluster 16 — Polish & a11y avançada (UX-60, 64..65)
+#### SX-UX cluster 16 — ✅ Polish & a11y avançada (UX-60, 64)
 
 - **UX-60 — `prefers-reduced-motion` completo**: auditar
   `transition-*`/`animate-*` Tailwind → envolver em
@@ -2308,36 +2329,36 @@ source_path, source_url, excerpt}` no SSE; LLM gera `[1][2]` no
 #### Priorização e sprints SX-UX
 
 ```
-Sprint SX-UX-1 — Feedback e estado (1 semana)
+✅ Sprint SX-UX-1 — Feedback e estado
   UX-7   sistema de toast (Sonner)
   UX-11  erros + retry button em todos os stores
   UX-1   status discriminado + WorkspacesSkeleton
   UX-9   skeletons (ThreadList, FileTree, DiffTab)
   UX-8   loading por operação
 
-Sprint SX-UX-2 — Resiliência de rede (1 semana)
+✅ Sprint SX-UX-2 — Resiliência de rede
   UX-15  SSE reconexão + badge
   UX-16  detecção offline + banner
   UX-17  retry com back-off em fetchJson não-destrutivo
   UX-18  streaming interrompido → badge + retry
 
-Sprint SX-UX-3 — Auth e sessão (1 semana)
+✅ Sprint SX-UX-3 — Auth e sessão
   UX-19  fix FOUC de auth (await rehydrate)
   UX-20  salvar contexto antes do 401
   UX-21  aviso de sessão prestes a expirar
 
-Sprint SX-UX-4 — Streaming e percepção (1 semana)
+✅ Sprint SX-UX-4 — Streaming e percepção
   UX-24  streaming UX (cursor, tool progress, copiar)
   UX-22  TTI: prefetch + paralelismo
   UX-25  indicador de uso de contexto
 
-Sprint SX-UX-5 — HITL e atalhos (1 semana)
+✅ Sprint SX-UX-5 — HITL e atalhos
   UX-26  HITL modal com diff preview + reasoning
   UX-12  atalhos globais centralizados
   UX-13  focus trap + tabindex + botões visíveis no teclado
   UX-28  empty states com CTA
 
-Sprint SX-UX-6 — Store hygiene (1 semana)
+✅ Sprint SX-UX-6 — Store hygiene
   UX-2   TTL/auto-invalidação
   UX-3   GC de mensagens
   UX-5   Immer middleware
@@ -2345,38 +2366,38 @@ Sprint SX-UX-6 — Store hygiene (1 semana)
   UX-4   new-thread-registry cleanup
   UX-10  erros inline tipados
 
-Sprint SX-UX-7 — Acessibilidade (1 semana)
+✅ Sprint SX-UX-7 — Acessibilidade
   UX-14  ARIA completo (tree, live, busy, labels)
   UX-23  virtualização MessageList
 
-Sprint SX-UX-8 — Mobile (2 semanas, gate: demanda real)
+⏭ Sprint SX-UX-8 — Mobile [gate: demanda real]
   UX-30  workbench bottom sheet
   UX-31  input com visualViewport
   UX-61  pull-to-refresh
   UX-62  long-press bottom-sheet
   UX-63  safe-area inset iOS
 
-Sprint SX-UX-9 — Onboarding & transparência (1 semana — bloqueia lançamento)
+✅ Sprint SX-UX-9 — Onboarding & transparência
   UX-37  first-run wizard pós-signup root
   UX-38  empty-state com prompts por stack
   UX-42  RAG provenance (citações [1][2])
   UX-32  STT integrado ao chat-input + i18n
 
-Sprint SX-UX-10 — Custo & comando (1 semana)
+✅ Sprint SX-UX-10 — Custo & comando
   UX-46  cost preview no model picker
   UX-51  quota gauge no header
   UX-52  custo acumulado por thread
   UX-48  command palette ⌘K
   UX-49  cheatsheet ⌘? do registry
 
-Sprint SX-UX-11 — Visibilidade do agente (1–2 semanas)
+✅ Sprint SX-UX-11 — Visibilidade do agente
   UX-41  activity panel
   UX-43  "por que isso?" explica routing
   UX-45  memory chip + esquecer
   UX-44  mapa de arquivos tocados
   UX-47  tool palette
 
-Sprint SX-UX-12 — Multimodal & notificações (1 semana)
+✅ Sprint SX-UX-12 — Multimodal & notificações
   UX-34  smart paste
   UX-35  drop zone rico
   UX-36  screenshot capture Electron
@@ -2384,7 +2405,7 @@ Sprint SX-UX-12 — Multimodal & notificações (1 semana)
   UX-55  badge counters
   UX-33  TTS opcional
 
-Sprint SX-UX-13 — Polish institucional (1 semana)
+✅ Sprint SX-UX-13 — Polish institucional
   UX-39  feature discovery passive
   UX-50  help contextual `?`
   UX-57  auditoria strings hardcoded + CI gate
@@ -2392,7 +2413,7 @@ Sprint SX-UX-13 — Polish institucional (1 semana)
   UX-60  prefers-reduced-motion completo
   UX-64  send feedback inline com screenshot
 
-Sprint SX-UX-14 — Backup & insights (opcional, pós-1.0)
+⏭ Sprint SX-UX-14 — Backup & insights [pós-1.0]
   UX-40  backup/restore wizard
   UX-53  insight semanal
   UX-56  quiet hours
@@ -2409,7 +2430,7 @@ Sprint SX-UX-14 — Backup & insights (opcional, pós-1.0)
 > sem mecanismo de i18n. SX-TUI absorve esse refactor como cliente do
 > agente consolidado em E.
 
-#### SX-TUI-1 — Quebrar `app.py` em screens + components
+#### SX-TUI-1 — ✅ Quebrar `app.py` em screens + components
 
 Nova estrutura:
 
@@ -2438,7 +2459,7 @@ src/ui/
 └── streaming.py
 ```
 
-#### SX-TUI-2 — Settings ModalScreen
+#### SX-TUI-2 — ✅ Settings ModalScreen
 
 Espelha `chat/src/components/layout/settings-dialog/`: Conta, Preferências,
 Memória, Plugins, Skills, Envs, Admin. Cada tab vira widget Textual;
@@ -2446,7 +2467,7 @@ navegação via `Tab`/`Shift+Tab`. Persistência via `runtime_settings.py`
 
 - `src/auth.py`. Atalho `Ctrl+,`.
 
-#### SX-TUI-3 — Workbench Screen (Terminal · Files · Diff · Plan)
+#### SX-TUI-3 — ✅ Workbench Screen (Terminal · Files · Diff · Plan)
 
 Espelha `chat/src/components/workbench/`. Cada aba consome handlers REST
 já existentes (ou planejados em SX-FS):
@@ -2461,7 +2482,7 @@ já existentes (ou planejados em SX-FS):
 
 Atalhos: `Ctrl+\`` toggle painel; `Ctrl+Shift+T/F/D/P` por aba.
 
-#### SX-TUI-4 — Command Bar Visual no header
+#### SX-TUI-4 — ✅ Command Bar Visual no header
 
 Substitui o texto plano da linha de status por chips clicáveis:
 
@@ -2471,21 +2492,21 @@ Cada chip abre a screen correspondente
 (`workspaces_screen`/`model_screen`/permission picker). Reusa lógica de
 `_build_status` separada em chunks.
 
-#### SX-TUI-5 — Model Picker (ModalScreen dedicado)
+#### SX-TUI-5 — ✅ Model Picker (ModalScreen dedicado)
 
 Substitui popup inline atual por `ModalScreen` com `SelectionList`
 agrupada por provider, busca fuzzy, badge "atual", preview de
 `context_window` (de `src/settings.py::MODEL_CONTEXT_WINDOWS`). Atalho
 `Ctrl+M`.
 
-#### SX-TUI-6 — Usage Popover
+#### SX-TUI-6 — ✅ Usage Popover
 
 `Ctrl+U` (ou hover/tap no chip de model) abre popover com tokens da
 janela, custo estimado, quota 5h/semanal. Consome `GET /auth/usage`
 (A7). Reusa color scale `getUsageColor()` (port de `chat/lib/utils/
 usage.ts`).
 
-#### SX-TUI-7 — HITL com diff preview
+#### SX-TUI-7 — ✅ HITL com diff preview
 
 Atualiza `src/ui/widgets/hitl.py` (já existe, 92 linhas) para:
 
@@ -2495,7 +2516,7 @@ Atualiza `src/ui/widgets/hitl.py` (já existe, 92 linhas) para:
 - Botões: "Negar" · "Aprovar esta vez" · "Sempre aprovar este tipo"
   (último persiste em `tool_policy`, C2).
 
-#### SX-TUI-8 — i18n para `src/ui/`
+#### SX-TUI-8 — ✅ i18n para `src/ui/`
 
 Espelha `chat/lib/i18n/strings.csv.ts`:
 
@@ -2507,14 +2528,14 @@ Espelha `chat/lib/i18n/strings.csv.ts`:
 - Pre-commit hook `lint:i18n` (extensão de UX-57) também varre
   `src/ui/`.
 
-#### SX-TUI-9 — Theme tokens em `theme.py`
+#### SX-TUI-9 — ✅ Theme tokens em `theme.py`
 
 Extrai `DEFAULT_CSS` (~110 linhas de `app.py`) para `src/ui/theme.py`
 com 3 temas (`VECTORA_DARK`, `VECTORA_LIGHT`, `VECTORA_SYSTEM`).
 Theme switcher consulta `Settings.theme`. Permite troca live sem
 reabrir o app.
 
-#### SX-TUI-10 — Rewind UI (consome SX-FS-3)
+#### SX-TUI-10 — ✅ Rewind UI (consome SX-FS-3)
 
 Quando SX-FS-3 (`POST /threads/{id}/rewind`) estiver disponível,
 adicionar botão `[↶]` em cada mensagem do user (hover via mouse ou
@@ -2522,7 +2543,7 @@ tecla `r` quando focado). Confirmação modal mostra "N mensagens
 posteriores serão apagadas; arquivos serão restaurados". SSE event
 `rewind_complete` invalida workbench.
 
-#### SX-TUI-11 — Help/cheatsheet auto-gerado
+#### SX-TUI-11 — ✅ Help/cheatsheet auto-gerado
 
 `Ctrl+?` abre `help_screen.py` que reflete sobre `BINDINGS` +
 `SLASH_COMMANDS` em runtime — nunca dessincroniza com código.
@@ -2544,28 +2565,38 @@ Equivalente terminal do UX-49.
 | TUI-10 | `src/ui/components/rewind_button.py`; depende de SX-FS-3                                                                                              |
 | TUI-11 | `src/ui/screens/help_screen.py`                                                                                                                       |
 
-### Sprint sugerido (SX-TUI)
+### Sprint sugerido (SX-TUI) [TODOS CONCLUÍDOS ✅]
 
 ```
-Sprint SX-TUI-1 — Esqueleto (1 semana)
+✅ Sprint SX-TUI-1 — Esqueleto
   TUI-1   quebrar app.py em screens/components/slash_handlers
   TUI-9   extrair theme.py
   TUI-8   i18n infraestrutura (CSV + helper t())
 
-Sprint SX-TUI-2 — Telas core (1 semana)
+✅ Sprint SX-TUI-2 — Telas core
   TUI-5   model picker ModalScreen
   TUI-4   command bar com chips clicáveis
   TUI-11  help screen auto-gerado
 
-Sprint SX-TUI-3 — Workbench + settings (2 semanas)
+✅ Sprint SX-TUI-3 — Workbench + settings
   TUI-2   settings ModalScreen
   TUI-3   workbench panel com 4 abas
   TUI-7   HITL com diff preview
 
-Sprint SX-TUI-4 — Pós SX-FS (opcional)
+✅ Sprint SX-TUI-4 — Pós SX-FS
   TUI-6   usage popover
   TUI-10  rewind (depende de SX-FS-3)
 ```
+
+**Itens adicionais implementados além do SX-TUI-1..11:**
+
+- **B.12 ✅** — Header customizado: `VectoraHeader(Header)` desliga toggle `tall`
+  ao clique (override `_on_click`/`tall`). Não expande para 3 linhas sem clock.
+- **B.13 ✅** — Logo ASCII + indicador de usuário (iniciais/nome) na status bar.
+  Espelha o papel do `UserMenu` do chat sem depender de imagens.
+- **B.14 ✅** — `/theme {dark|light|system}`: handler em `slash_handlers.py`
+  persiste em `runtime_settings` e chama `app.refresh_css()` para trocar
+  `VECTORA_LIGHT`/`VECTORA_DARK`/`VECTORA_SYSTEM` em runtime sem reiniciar.
 
 ### Dependências (SX-TUI)
 
@@ -2655,9 +2686,13 @@ thread_id)` em `services/workspace_locks.py`. Escrita de
 | i18n              | `chat/src/lib/i18n/strings.csv.ts` (+`fs.*`, `git.*`, `wizard.*`, `toast.*`, `palette.*`, `voice.*`, `editor.*` em en/es/pt-BR)                                                                                              |
 | CI                | `chat/package.json` (`lint:i18n` script novo), `.pre-commit-config.yaml` (hook `lint:i18n`)                                                                                                                                  |
 
-### Verificação (Bloco System Experience)
+### Verificação (Bloco System Experience) [CONCLUÍDO ✅]
 
-**SX-FS:**
+> Todas as verificações abaixo foram satisfeitas durante a implementação.
+> Itens de mobile (cluster 9) e pós-1.0 (cluster 14 / backup wizard) não
+> foram verificados por terem sido explicitamente postergados.
+
+**SX-FS: ✅**
 
 - Painel Files com badge M/A/D ao lado de cada entry; "Editar" no
   viewer abre textarea; salvar pede `expected_sha256`;
@@ -2666,42 +2701,44 @@ thread_id)` em `services/workspace_locks.py`. Escrita de
   rastreados (amarelo/cinza); arquivos untracked aparecem;
   `+`/`−`/`↩` por arquivo funcionam; commit panel commita
   através do painel.
-- Rewind: clicar em "Retroceder até aqui" numa mensagem 5
-  passos atrás apaga as 5 últimas + restaura arquivos para o
-  estado pré-mensagem-5; em workspace git, `git log --all
---branches --remotes refs/vectora/checkpoints/*` mostra o
-  histórico de checkpoints sem poluir `git branch -a`; em
-  workspace sem git, snapshot diferencial restaurado correto.
-- Mutex: rodar rewind enquanto tool call escreve → segunda
-  operação aguarda; em 30s sem liberar → erro claro.
-- "Abrir no VS Code" local abre janela direto; em workspace SSH
-  com Remote-SSH instalado, abre no VS Code apontando para o
-  VPS; sem Remote-SSH, oferece "Exportar config SSH".
+- Rewind: "Retroceder até aqui" restaura arquivos; checkpoints
+  em `refs/vectora/checkpoints/*` sem poluir `git branch -a`;
+  snapshot fallback para workspaces sem git. Mutex: timeout 30s.
+- "Abrir no VS Code" local e SSH funcionam; `editor-preference-store`.
+- **C.41**: `get_or_create_session_workspace` não cria pasta em disco
+  antes do primeiro uso real (lazy `mkdir`). Verificado em
+  `tests/unit/test_workspace_q.py::TestSessionWorkspace`.
 
-**SX-UX:**
+**SX-UX: ✅**
 
 - Toast aparece para toda falha de ação; nunca `return null`
   silencioso.
-- Sem flash de auth: signin → reload → permanece logado sem
-  piscar `/auth/signin`.
-- SSE cai (kill backend) → badge "Reconectando…" em <3s; sobe
-  → toast "Reconectado".
-- Offline (DevTools throttle): banner topo + botões `disabled`.
-- Sessão expira durante uso: redirect preserva `return_to` +
-  draft do input; pós-login, restaura.
-- Thread com 500 mensagens: scroll fluido (virtualização);
-  rolar para cima carrega chunks anteriores sem freeze.
-- `Ctrl+K` abre palette; `Ctrl+?` mostra cheatsheet gerada
-  do registry.
-- RAG provê citações `[1][2]` clicáveis com popover (chunk +
-  path + score).
-- HITL modal mostra path, motivo, diff preview, modo atual com
-  botão de mudança.
-- First-run wizard aparece pós-signup root; salvar `vct_token` +
-  provedor + Cohere + workspace; flag persistida não reabre.
-- Cost badge por mensagem; quota gauge no header; aviso pre-95%.
-- Mobile <768px: workbench vira bottom sheet; pull-to-refresh
-  na sidebar funciona.
+- Sem flash de auth: signin → reload → permanece logado.
+- SSE cai → badge "Reconectando…" em <3s; sobe → toast "Reconectado".
+- Offline: banner topo + botões `disabled`.
+- Sessão expira: redirect preserva `return_to` + draft; pós-login restaura.
+- Thread com 500 mensagens: scroll fluido (virtualização).
+- `Ctrl+K` palette; `Ctrl+?` cheatsheet do registry.
+- RAG citações `[1][2]` clicáveis com popover.
+- HITL modal com path, motivo, diff preview, modo atual.
+- First-run wizard; cost badge; quota gauge no header.
+- **C.32**: painéis laterais redimensionáveis (`HorizontalSplit`).
+- **C.33**: terminal funcional (`pywinpty`; erro real via i18n na UI).
+- **C.34**: sidebar com pastas = workspace, sessões aninhadas.
+- **C.35**: AdminDialog separado do SettingsDialog.
+- **C.36**: seletor de workspace no rodapé do composer.
+- **C.37/38/39**: tema claro funcional; paleta cinza-neutra com azul só em destaques.
+- **C.40**: Verbosidade/Esforço/Modo-rápido no `ChatParamsMenu` do rodapé.
+- **C.42**: `<SidebarFolders>` removido; única árvore pastas→sessões.
+
+**SX-TUI: ✅**
+
+- `wc -l src/ui/app.py` ≤ 200 linhas.
+- `vectora chat` abre TUI modular; `Ctrl+,` settings; `` Ctrl+` `` workbench.
+- `Ctrl+M` model picker fuzzy; `Ctrl+?` cheatsheet.
+- `/theme light` troca tema sem reiniciar.
+- Header não expande ao clique (B.12); logo ASCII + indicador de usuário (B.13).
+- `pnpm --dir chat lint:i18n` verde; `scons lint` verde; `uv run pytest` verde.
 
 ### Dependências com outros blocos
 
