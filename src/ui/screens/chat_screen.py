@@ -52,6 +52,7 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
         Binding("ctrl+l", "clear_messages", "Limpar", show=False),
         Binding("ctrl+comma", "settings", "Config", show=False),
         Binding("ctrl+grave_accent", "workbench", "Workbench", show=False),
+        Binding("ctrl+m", "model_picker", "Modelo", show=False),
     ]
 
     SLASH_COMMANDS: list[tuple[str, str]] = [
@@ -189,6 +190,11 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
 
         await self.app.push_screen(WorkbenchScreen())
 
+    async def action_model_picker(self) -> None:
+        from src.ui.screens.model_picker_screen import ModelPickerScreen
+
+        await self.app.push_screen(ModelPickerScreen())
+
     async def action_new_session(self) -> None:
         self._chat_thread_id = str(uuid.uuid4())
         area = self.query_one("#messages", ScrollableContainer)
@@ -210,9 +216,11 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
     def on_command_bar_chip_pressed(self, event: CommandBar.ChipPressed) -> None:
         """Abre a tela correspondente ao chip clicado."""
         chip = event.chip_id
-        if chip in ("chip-mode",):
+        if chip == "chip-mode":
             self.run_worker(self.action_settings(), exclusive=False, thread=False)
-        elif chip in ("chip-branch", "chip-model"):
+        elif chip == "chip-model":
+            self.run_worker(self.action_model_picker(), exclusive=False, thread=False)
+        elif chip == "chip-branch":
             self.run_worker(self.action_workbench(), exclusive=False, thread=False)
 
     # ── Stream callbacks (chamados pelo StreamHandler) ────────────────────────

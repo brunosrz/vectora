@@ -164,3 +164,11 @@ tui.workbench.plan_title,Artifacts:,Artefactos:,Artefatos:
 tui.workbench.plan_empty,No artifacts found.,Sin artefactos.,Nenhum artefato encontrado.
 tui.workbench.plan_no_workspace,No workspace active,Sin workspace activo,Nenhum workspace ativo
 tui.workbench.plan_unavailable,Could not read artifacts.,No se pudo leer artefactos.,Não foi possível ler artefatos.
+
+# ---------------------------------------------------------------------------
+# ModelPickerScreen (src/ui/screens/model_picker_screen.py)
+# ---------------------------------------------------------------------------
+tui.model_picker.title,Select model,Seleccionar modelo,Selecionar modelo
+tui.model_picker.search_placeholder,Search models...,Buscar modelos...,Buscar modelos...
+tui.model_picker.hint,Enter to select · Esc to close,Enter para seleccionar · Esc para cerrar,Enter para selecionar · Esc para fechar
+tui.model_picker.cancel,Cancel,Cancelar,Cancelar
