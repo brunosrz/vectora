@@ -22,12 +22,16 @@ import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
 
 import {
   useThreadsQuery,
-  useCreateThread,
   useDeleteThread,
   useUpdateThread,
   threadsQueryKey,
 } from "@/lib/queries/threads";
-import { listThreads, getHistory } from "@/lib/api/vectora-client";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import {
+  listThreads,
+  getHistory,
+  type Thread as VectoraThread,
+} from "@/lib/api/vectora-client";
 import { queryClient } from "../../router";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { getDefaultModel } from "@/lib/config/deployment-config";
@@ -122,7 +126,6 @@ function SessionPage() {
     isLoading,
     refetch: refetchThreads,
   } = useThreadsQuery(userId);
-  const createThreadMutation = useCreateThread();
   const deleteThreadMutation = useDeleteThread();
   const updateThreadMutation = useUpdateThread();
 
@@ -202,13 +205,19 @@ function SessionPage() {
   }, []);
 
   const handleConfirmNewChat = useCallback(
-    async (workspaceId: string | null) => {
-      const thread = await createThreadMutation.mutateAsync(workspaceId);
-      markAsNew(thread.id);
-      goTo(thread.id);
+    (workspaceId: string | null) => {
+      // Não persiste a thread no backend ainda — isso evita acumular
+      // conversas vazias na sidebar. A thread só é criada (via StreamChat)
+      // quando a primeira mensagem é enviada.
+      if (workspaceId) {
+        void useWorkspacesStore.getState().setActive(workspaceId);
+      }
+      const id = crypto.randomUUID();
+      markAsNew(id);
+      goTo(id);
       setIsMobileSidebarOpen(false);
     },
-    [createThreadMutation, goTo],
+    [goTo],
   );
 
   const handleDeleteThread = useCallback(
@@ -220,7 +229,29 @@ function SessionPage() {
   );
 
   const handleThreadUpdate = useCallback(
-    (id: string, title: string) => {
+    (id: string, title: string, lastMessage?: string) => {
+      // Chamada otimista do envio da 1ª mensagem (lastMessage vazio): a thread
+      // ainda não existe no backend (StreamChat ainda não rodou), então só
+      // refletimos na sidebar localmente — sem chamar UpdateThread (404).
+      if (isNew(id) && !lastMessage) {
+        queryClient.setQueryData<{ threads: VectoraThread[] }>(
+          threadsQueryKey,
+          (old) => {
+            const threads = old?.threads ?? [];
+            if (threads.some((th) => th.id === id)) return old;
+            const now = new Date().toISOString();
+            const optimistic: VectoraThread = {
+              id,
+              created_at: now,
+              updated_at: now,
+              title,
+              workspace_id: useWorkspacesStore.getState().active_id ?? "",
+            };
+            return { threads: [optimistic, ...threads] };
+          },
+        );
+        return;
+      }
       // Primeira persistência da thread no backend: remove do registry de novas.
       if (isNew(id)) clearNew(id);
       void updateThreadMutation.mutate({ id, updates: { title } });

@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { queryClient } from "../router";
 import { threadsQueryKey } from "@/lib/queries/threads";
-import { listThreads, createThread } from "@/lib/api/vectora-client";
+import { listThreads } from "@/lib/api/vectora-client";
 import { markAsNew } from "@/lib/stores/new-thread-registry";
 
 export const Route = createFileRoute("/")({
@@ -26,13 +26,13 @@ export const Route = createFileRoute("/")({
       } as unknown as Parameters<typeof redirect>[0]);
     }
 
-    // Nenhuma thread — cria uma nova e redireciona.
-    const thread = await createThread();
-    markAsNew(thread.id);
-    await queryClient.invalidateQueries({ queryKey: threadsQueryKey });
+    // Nenhuma thread — gera um id local e redireciona, sem persistir no
+    // backend ainda (só na primeira mensagem enviada, via StreamChat).
+    const id = crypto.randomUUID();
+    markAsNew(id);
     throw redirect({
       to: "/session/$threadId",
-      params: { threadId: thread.id },
+      params: { threadId: id },
     } as unknown as Parameters<typeof redirect>[0]);
   },
   component: () => (

@@ -16,7 +16,6 @@ import {
 } from "@tanstack/react-query";
 import {
   listThreads,
-  createThread,
   deleteThread,
   updateThread,
   type Thread as VectoraThread,
@@ -65,22 +64,6 @@ export function useThreadsQuery(
 // ---------------------------------------------------------------------------
 // Mutations
 // ---------------------------------------------------------------------------
-
-/** Cria uma nova thread (opcionalmente associada a um workspace) e invalida o cache. */
-export function useCreateThread(): UseMutationResult<
-  VectoraThread,
-  Error,
-  string | null | undefined
-> {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (workspaceId?: string | null) => createThread(workspaceId),
-    onSuccess: (thread) => {
-      void qc.invalidateQueries({ queryKey: threadsQueryKey });
-      broadcastEvent(BROADCAST_THREADS, { type: "created", id: thread.id });
-    },
-  });
-}
 
 /** Deleta uma thread com update otimista + rollback em erro. */
 export function useDeleteThread(): UseMutationResult<
