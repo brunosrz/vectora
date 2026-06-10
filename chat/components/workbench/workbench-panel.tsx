@@ -26,7 +26,7 @@ import {
   type WorkbenchTab,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
-import { TerminalPanel } from "@/components/terminal/terminal-panel";
+import { TerminalPanel } from "@/components/workbench/terminal/terminal-panel";
 import { FilesTab } from "./tabs/files-tab";
 import { DiffTab } from "./tabs/diff-tab";
 import { PlanTab } from "./tabs/plan-tab";

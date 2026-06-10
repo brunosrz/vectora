@@ -34,7 +34,6 @@ if TYPE_CHECKING:
     from langchain.agents.middleware.human_in_the_loop import (
         DecisionType,  # type: ignore[import-untyped]
     )
-    from langchain_core.language_models.chat_models import BaseChatModel
 
 # ---------------------------------------------------------------------------
 # HITL: mapeamento permission_mode → interrupt_on
@@ -115,52 +114,17 @@ def _hitl_middleware(permission_mode: str) -> Any | None:
 # ---------------------------------------------------------------------------
 
 
-def _summarization_middleware(llm: BaseChatModel | None = None) -> Any | None:
-    """Constrói ``SummarizationMiddleware`` com padrões Vectora.
-
-    Usa o LLM ativo do factory para comprimir o contexto quando o histórico
-    de mensagens excede 80 mensagens ou ~75% da janela de contexto.
-
-    Retorna ``None`` se ``llm`` não for fornecido (requer compilação lazy).
-    """
-    if llm is None:
-        return None
-
-    try:
-        from deepagents.backends.state import StateBackend  # type: ignore[attr-defined]
-        from deepagents.middleware.summarization import (
-            SummarizationMiddleware,  # type: ignore[attr-defined]
-        )
-
-        # StateBackend persiste o histórico comprimido no próprio estado do grafo;
-        # sem dependência externa (não precisa de Redis ou Postgres em modo lite).
-        return SummarizationMiddleware(
-            model=llm,
-            backend=StateBackend(),
-            keep=("messages", 20),  # mantém últimas 20 mensagens após compressão
-        )
-    except Exception as exc:
-        logger.warning("middleware: falha ao criar SummarizationMiddleware: %s", exc)
-        return None
-
-
 # ---------------------------------------------------------------------------
 # Stack completo
 # ---------------------------------------------------------------------------
 
 
-def build_middleware_stack(
-    permission_mode: str = "ask",
-    llm: BaseChatModel | None = None,
-) -> list[Any]:
+def build_middleware_stack(permission_mode: str = "ask") -> list[Any]:
     """Monta o stack de middleware para ``create_deep_agent(middleware=...)``.
-
-    Ordem: summarization primeiro (comprime contexto), depois HITL (pausa tools).
 
     Args:
         permission_mode: Modo de permissão da sessão ("ask", "accept_edits",
             "auto", "bypass", "plan"). Determina o HITL behavior.
-        llm: LLM para sumarização. Quando None, ``SummarizationMiddleware`` é omitido.
 
     Returns:
         Lista de ``AgentMiddleware`` prontos para passar ao ``create_deep_agent``.
@@ -171,12 +135,10 @@ def build_middleware_stack(
     """
     stack: list[Any] = []
 
-    # 1. Sumarização (comprime contexto quando próximo do limite)
-    summ = _summarization_middleware(llm)
-    if summ is not None:
-        stack.append(summ)
-
-    # 2. HITL (pausa ferramentas destrutivas para aprovação humana)
+    # HITL (pausa ferramentas destrutivas para aprovação humana). Note que
+    # ``create_deep_agent`` já adiciona um ``SummarizationMiddleware`` ao
+    # stack base incondicionalmente — adicionar outro aqui causa
+    # ``AssertionError: Please remove duplicate middleware instances``.
     hitl = _hitl_middleware(permission_mode)
     if hitl is not None:
         stack.append(hitl)

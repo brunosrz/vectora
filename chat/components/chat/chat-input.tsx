@@ -17,7 +17,7 @@ import { PlusMenu } from "./features/plus-menu";
 import { UsagePopover } from "./features/usage-popover";
 import { SlashCommandMenu } from "./features/slash-command-menu";
 import { AtMentionMenu } from "./features/at-mention-menu";
-import { WorkspaceSelector } from "@/components/layout/workspace-selector";
+import { WorkspaceSelector } from "@/components/sidebar/workspace-selector";
 import { ModelSelector } from "./model-selector";
 import { VscodeIcon } from "@/components/icons/vscode-icon";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";

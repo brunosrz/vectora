@@ -45,7 +45,7 @@ import {
   parseSlashCommand,
   isKnownCommand,
 } from "@/lib/constants/slash-commands";
-import { detectAtMention } from "@/components/appbar/features/at-mention-menu";
+import { detectAtMention } from "@/components/chat/features/at-mention-menu";
 
 /** Idioma da UI → código BCP-47 do reconhecimento de voz. */
 const VOICE_LANG: Record<Lang, string> = {

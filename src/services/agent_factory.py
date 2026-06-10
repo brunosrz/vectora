@@ -319,12 +319,13 @@ async def _build_graph_async() -> Any:
 
     _register_profiles()
 
-    # Middleware stack: SummarizationMiddleware (compressão de contexto) +
-    # HumanInTheLoopMiddleware com mode="ask" para o singleton compartilhado.
+    # Middleware stack: HumanInTheLoopMiddleware com mode="ask" para o
+    # singleton compartilhado. create_deep_agent já adiciona
+    # SummarizationMiddleware ao stack base incondicionalmente.
     # E.B-5 (context_schema=VectoraContext) permitirá modo dinâmico por usuário.
     from src.services.middleware import build_middleware_stack
 
-    middleware = build_middleware_stack(permission_mode="ask", llm=llm)
+    middleware = build_middleware_stack(permission_mode="ask")
 
     from src.services.backends import build_backend_lazy, build_store
     from src.services.skills import list_skill_paths

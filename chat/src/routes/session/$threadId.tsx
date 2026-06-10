@@ -1,19 +1,19 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { Sidebar } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
-import { ChatInterface } from "@/components/appbar/chat-interface";
+import { Sidebar } from "@/components/sidebar/sidebar";
+import { Header } from "@/components/header/header";
+import { ChatInterface } from "@/components/chat/chat-interface";
 import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
 import { HorizontalSplit } from "@/components/layout/horizontal-split";
 import { LicenseBanner } from "@/components/layout/license-banner";
-import { SettingsDialog } from "@/components/layout/settings-dialog";
+import { SettingsDialog } from "@/components/settings/user";
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog";
 import {
   CommandPalette,
   type PaletteCommand,
 } from "@/components/layout/command-palette";
-import { NewChatDialog } from "@/components/layout/new-chat-dialog";
+import { NewChatDialog } from "@/components/sidebar/new-chat-dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";

@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
-import { WorkspaceTrustDialog } from "@/components/layout/workspace-trust-dialog";
+import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
 
 interface PlusMenuProps {
   disabled?: boolean;

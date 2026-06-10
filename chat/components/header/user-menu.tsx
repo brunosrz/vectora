@@ -8,8 +8,8 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
 import { useAdminDialogStore } from "@/lib/stores/admin-dialog-store";
 import { ROLE_COLORS, ROLE_LABELS } from "@/lib/types/auth";
-import { SettingsDialog } from "./settings-dialog";
-import { AdminDialog } from "./admin-dialog";
+import { SettingsDialog } from "@/components/settings/user";
+import { AdminDialog } from "@/components/settings/admin";
 
 export function UserMenu() {
   const router = useRouter();

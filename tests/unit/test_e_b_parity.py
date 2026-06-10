@@ -87,21 +87,21 @@ class TestMiddlewareStack:
         """Mode bypass retorna stack sem HITL."""
         from src.services.middleware import build_middleware_stack
 
-        stack = build_middleware_stack(permission_mode="bypass", llm=None)
+        stack = build_middleware_stack(permission_mode="bypass")
         assert all("HumanInTheLoop" not in type(m).__name__ for m in stack)
 
     def test_auto_mode_no_hitl(self):
         """Mode auto retorna stack sem HITL."""
         from src.services.middleware import build_middleware_stack
 
-        stack = build_middleware_stack(permission_mode="auto", llm=None)
+        stack = build_middleware_stack(permission_mode="auto")
         assert all("HumanInTheLoop" not in type(m).__name__ for m in stack)
 
     def test_ask_mode_has_hitl(self):
         """Mode ask deve incluir HumanInTheLoopMiddleware."""
         from src.services.middleware import build_middleware_stack
 
-        stack = build_middleware_stack(permission_mode="ask", llm=None)
+        stack = build_middleware_stack(permission_mode="ask")
         names = [type(m).__name__ for m in stack]
         assert "HumanInTheLoopMiddleware" in names
 
@@ -109,7 +109,7 @@ class TestMiddlewareStack:
         """Mode plan deve incluir HumanInTheLoopMiddleware."""
         from src.services.middleware import build_middleware_stack
 
-        stack = build_middleware_stack(permission_mode="plan", llm=None)
+        stack = build_middleware_stack(permission_mode="plan")
         names = [type(m).__name__ for m in stack]
         assert "HumanInTheLoopMiddleware" in names
 
@@ -117,32 +117,19 @@ class TestMiddlewareStack:
         """Mode accept_edits inclui HITL para terminal (não para file_write)."""
         from src.services.middleware import build_middleware_stack
 
-        stack = build_middleware_stack(permission_mode="accept_edits", llm=None)
+        stack = build_middleware_stack(permission_mode="accept_edits")
         names = [type(m).__name__ for m in stack]
         assert "HumanInTheLoopMiddleware" in names
 
-    def test_summarization_with_llm(self):
-        """Com LLM fornecido, SummarizationMiddleware é adicionado."""
+    def test_no_duplicate_summarization_middleware(self):
+        """build_middleware_stack não adiciona SummarizationMiddleware —
+        create_deep_agent já o inclui incondicionalmente no stack base, e
+        adicionar outro causa AssertionError de middleware duplicado."""
         from src.services.middleware import build_middleware_stack
 
-        fake_llm = MagicMock()
-        stack = build_middleware_stack(permission_mode="bypass", llm=fake_llm)
+        stack = build_middleware_stack(permission_mode="ask")
         names = [type(m).__name__ for m in stack]
-        # deepagents wraps the class — verifica pela substring
-        assert any("ummariz" in n for n in names)
-
-    def test_summarization_before_hitl(self):
-        """Summarization precede HITL na stack (ordem importa)."""
-        from src.services.middleware import build_middleware_stack
-
-        fake_llm = MagicMock()
-        stack = build_middleware_stack(permission_mode="ask", llm=fake_llm)
-        names = [type(m).__name__ for m in stack]
-        summ_idx = next((i for i, n in enumerate(names) if "ummariz" in n), None)
-        hitl_idx = next((i for i, n in enumerate(names) if "HumanInTheLoop" in n), None)
-        assert summ_idx is not None
-        assert hitl_idx is not None
-        assert summ_idx < hitl_idx
+        assert not any("ummariz" in n for n in names)
 
 
 # ---------------------------------------------------------------------------
