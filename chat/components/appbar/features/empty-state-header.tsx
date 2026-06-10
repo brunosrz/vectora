@@ -71,7 +71,7 @@ export function EmptyStateHeader({
           </span>
         </div>
         <h2
-          className="text-2xl sm:text-4xl font-semibold text-white mb-8"
+          className="text-2xl sm:text-4xl font-semibold text-foreground mb-8"
           style={{ fontFamily: "var(--font-aeonik-mono)" }}
         >
           {t("welcome.title")}

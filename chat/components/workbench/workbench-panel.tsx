@@ -112,7 +112,7 @@ function TabButton({
   return (
     <button
       onClick={onSelect}
-      className={`flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs select-none transition-colors w-full ${
+      className={`flex items-center justify-start gap-1.5 px-2 py-1 rounded-md text-xs select-none transition-colors w-full ${
         active
           ? "bg-background text-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"

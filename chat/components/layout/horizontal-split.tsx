@@ -90,7 +90,10 @@ export function HorizontalSplit({
 
   return (
     <div ref={containerRef} className={`flex h-full ${className ?? ""}`}>
-      <div className="flex-1 min-w-0 overflow-hidden">{left}</div>
+      {/* overflow-visible: dropdowns do appbar (Header) não podem ser
+          recortados por este container — o conteúdo rolável (ChatInterface)
+          já tem seu próprio overflow-hidden interno. */}
+      <div className="flex-1 min-w-0 overflow-visible">{left}</div>
       {showRight && (
         <>
           <div

@@ -7,7 +7,7 @@
  * composer, ao lado do seletor de modelo e do PermissionModeMenu. Esses
  * controles definem "como a próxima resposta será gerada" e pertencem
  * ao fluxo de composição, não às preferências persistentes do usuário
- * (Tema/Idioma), que continuam em AgentSettings.
+ * (Tema/Idioma), que ficam no Settings completo (Settings → Preferências).
  */
 
 import { useEffect, useRef, useState } from "react";

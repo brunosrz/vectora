@@ -134,22 +134,12 @@ thinking.coding,Writing code,Escribiendo código,Escrevendo código
 tool.executing,executing…,ejecutando…,executando…
 scroll.back_to_bottom,Back to bottom,Volver al final,Voltar ao fim
 # =============================================================================
-# Chat settings (agent-settings.tsx)
+# Settings (header gear + preferencias-tab.tsx)
 # =============================================================================
-settings.chat.tooltip,Chat settings,Configuración del chat,Configurações do chat
-settings.chat.title,Chat Settings,Configuración del chat,Configurações do Chat
-settings.chat.description,"Customizes the behavior of this chat session.","Personaliza el comportamiento de esta sesión de chat.","Personaliza o comportamento desta sessão de chat."
-settings.chat.model,Model,Modelo,Modelo
-settings.chat.model_placeholder,Select model,Seleccionar modelo,Selecionar modelo
-settings.chat.verbosity,Response verbosity,Verbosidad de las respuestas,Verbosidade das respostas
-settings.chat.verbosity.concise,Concise,Concisa,Concisa
-settings.chat.verbosity.normal,Normal,Normal,Normal
-settings.chat.verbosity.detailed,Detailed,Detallada,Detalhada
+settings.chat.tooltip,Settings,Configuración,Configurações
 settings.chat.tools_section,Tools,Herramientas,Ferramentas
 settings.chat.show_tool_calls,Show tool calls in chat,Mostrar llamadas de herramientas,Mostrar tool calls no chat
 settings.chat.show_tool_calls_hint,Shows tool calls during the response.,Muestra las llamadas de herramientas durante la respuesta.,Exibe as chamadas de ferramentas durante a resposta.
-settings.chat.confirm_destructive,Confirm destructive actions,Confirmar acciones destructivas,Confirmar ações destrutivas
-settings.chat.confirm_destructive_hint,"Asks for confirmation before running irreversible tools (file write, terminal, etc).","Pide confirmación antes de ejecutar herramientas irreversibles (escritura de archivo, terminal, etc).","Pede confirmação antes de executar ferramentas irreversíveis (escrita de arquivo, terminal, etc)."
 settings.chat.keyboard_shortcuts,View keyboard shortcuts,Ver atajos de teclado,Ver atalhos de teclado
 # =============================================================================
 # Settings dialog

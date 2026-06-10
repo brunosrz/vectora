@@ -5,7 +5,7 @@
  * Includes file upload, drag & drop, and paste support.
  */
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,11 +19,75 @@ import { SlashCommandMenu } from "./features/slash-command-menu";
 import { AtMentionMenu } from "./features/at-mention-menu";
 import { WorkspaceSelector } from "@/components/layout/workspace-selector";
 import { ModelSelector } from "./model-selector";
+import { VscodeIcon } from "@/components/icons/vscode-icon";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import type { ImageAttachment } from "@/lib/types";
 import { useT } from "@/lib/i18n";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
+
+interface VscodeOption {
+  strategy: string;
+  label: string;
+  url: string;
+}
+
+/** Botão "Abrir no VS Code" — opções dependem do workspace ativo. */
+function VscodeMenu({ workspaceId }: { workspaceId: string }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [options, setOptions] = useState<VscodeOption[]>([]);
+
+  const handleOpen = useCallback(async () => {
+    if (!workspaceId) return;
+    const res = await fetch(
+      `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      setOptions((data.options as VscodeOption[]) ?? []);
+    }
+    setOpen((v) => !v);
+  }, [workspaceId]);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={handleOpen}
+        className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
+        title={t("workbench.open_vscode")}
+        aria-label={t("workbench.open_vscode")}
+      >
+        <VscodeIcon className="w-4 h-4" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 bottom-full mb-1 z-20 bg-popover border border-border/60 rounded-md shadow-lg py-1 min-w-[200px]">
+            {options.length === 0 ? (
+              <p className="px-3 py-1.5 text-xs text-muted-foreground">
+                {t("workbench.open_vscode_unavailable")}
+              </p>
+            ) : (
+              options.map((opt) => (
+                <a
+                  key={opt.strategy}
+                  href={opt.url}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-muted/40 transition-colors"
+                >
+                  <VscodeIcon className="w-3 h-3 text-muted-foreground shrink-0" />
+                  {opt.label}
+                </a>
+              ))
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface ChatInputProps {
   input: string;
@@ -114,6 +178,7 @@ export function ChatInput({
   onAtMentionSelect,
 }: ChatInputProps) {
   const t = useT();
+  const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
@@ -314,27 +379,26 @@ export function ChatInput({
 
           {/* Rodapé do input — "meio-termo" entre o estilo Claude Code
               (dois grupos minimalistas) e a chip row do Codex (contexto →
-              configuração). Grupo esquerdo: workspace (onde) → modelo (como);
-              direita: modo de permissão e medidor de uso. Sem barra de
+              configuração). Grupo esquerdo: workspace (onde) → modo de
+              permissão; direita: modelo e medidor de uso. Sem barra de
               contexto acima do input (poluição visual desnecessária). */}
           <div className="flex items-center justify-between gap-2 mt-1 px-1 flex-wrap">
             <div className="flex items-center gap-1 min-w-0">
               <WorkspaceSelector compact />
-              {agentConfig && onAgentConfigChange && (
-                <>
-                  <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
-                  <ModelSelector
-                    value={agentConfig.model}
-                    onChange={handleModelChange}
-                    compact
-                  />
-                </>
-              )}
+              {wsId && <VscodeMenu workspaceId={wsId} />}
+              <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
+              <PermissionModeMenu />
             </div>
 
             <div className="flex items-center gap-1 flex-wrap justify-end">
               <ChatParamsMenu />
-              <PermissionModeMenu />
+              {agentConfig && onAgentConfigChange && (
+                <ModelSelector
+                  value={agentConfig.model}
+                  onChange={handleModelChange}
+                  compact
+                />
+              )}
               {modelId && (
                 <UsagePopover tokensUsed={tokensUsed ?? 0} modelId={modelId} />
               )}

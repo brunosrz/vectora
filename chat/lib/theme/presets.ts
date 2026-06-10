@@ -126,6 +126,58 @@ export const THEME_PRESETS: ThemePresetDef[] = [
       muted: "#f6f8fa",
     },
   },
+  {
+    id: "github-dark",
+    label: "GitHub Dark",
+    colors: {
+      background: "#0d1117",
+      foreground: "#c9d1d9",
+      card: "#161b22",
+      border: "#30363d",
+      primary: "#58a6ff",
+      accent: "#bc8cff",
+      muted: "#161b22",
+    },
+  },
+  {
+    id: "min-dark",
+    label: "Min Dark",
+    colors: {
+      background: "#1e1e1e",
+      foreground: "#d4d4d4",
+      card: "#252526",
+      border: "#2d2d2d",
+      primary: "#569cd6",
+      accent: "#4ec9b0",
+      muted: "#2a2a2a",
+    },
+  },
+  {
+    id: "min-light",
+    label: "Min Light",
+    colors: {
+      background: "#ffffff",
+      foreground: "#3b3b3b",
+      card: "#f5f5f5",
+      border: "#e5e5e5",
+      primary: "#1a73e8",
+      accent: "#6f42c1",
+      muted: "#f0f0f0",
+    },
+  },
+  {
+    id: "solarized-dark",
+    label: "Solarized Dark",
+    colors: {
+      background: "#002b36",
+      foreground: "#839496",
+      card: "#073642",
+      border: "#586e75",
+      primary: "#268bd2",
+      accent: "#2aa198",
+      muted: "#073642",
+    },
+  },
 ];
 
 /** Cor de fallback para customização — espelha o tema escuro padrão. */

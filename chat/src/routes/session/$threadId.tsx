@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Sidebar } from "@/components/layout/sidebar";
@@ -171,6 +171,14 @@ function SessionPage() {
     model: getDefaultModel(),
   }));
 
+  // Botão "Ver atalhos de teclado" do Settings → Preferências dispara este
+  // evento para abrir o dialog de atalhos sem acoplar o Settings ao state local.
+  useEffect(() => {
+    const handler = () => setShowShortcutsDialog(true);
+    window.addEventListener("open-shortcuts", handler);
+    return () => window.removeEventListener("open-shortcuts", handler);
+  }, []);
+
   // ── Navegação ─────────────────────────────────────────────────────────────
   const goTo = useCallback(
     (id: string) =>
@@ -288,7 +296,7 @@ function SessionPage() {
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       <LicenseBanner fullWidth onBlockingChange={setInputLocked} />
 
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-visible">
         {/* Sidebar desktop — oculto em mobile. Largura arrastável quando
             expandida; colapsada usa a largura própria (w-16) do componente. */}
         <div
@@ -330,10 +338,8 @@ function SessionPage() {
           rightSize={splitSize}
           onResize={setSplitSize}
           left={
-            <div className="flex flex-col h-full min-w-0 overflow-hidden">
+            <div className="flex flex-col h-full min-w-0 overflow-visible">
               <Header
-                agentConfig={agentConfig}
-                onAgentConfigChange={setAgentConfig}
                 showToolCalls={showToolCalls}
                 onToggleToolCalls={() => setShowToolCalls((v) => !v)}
                 onShowShortcuts={() => setShowShortcutsDialog(true)}

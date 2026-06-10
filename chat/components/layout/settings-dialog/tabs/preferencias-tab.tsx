@@ -9,6 +9,7 @@
  * - System prompt personalizado
  */
 
+import { Keyboard } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,6 +20,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import {
   useSettingsStore,
   SUPPORTED_LANGS,
@@ -54,12 +57,14 @@ export function PreferenciasTab() {
     language,
     historyLimit,
     customSystemPrompt,
+    showToolCalls,
     setTheme,
     setThemePreset,
     setCustomThemeColors,
     setLanguage,
     setHistoryLimit,
     setCustomSystemPrompt,
+    setShowToolCalls,
   } = useSettingsStore();
 
   const activeCustomColors = customThemeColors ?? DEFAULT_CUSTOM_COLORS;
@@ -195,6 +200,44 @@ export function PreferenciasTab() {
         <p className="text-xs text-muted-foreground">
           {t("prefs.custom_prompt_help")}
         </p>
+      </div>
+
+      {/* Ferramentas */}
+      <div className="space-y-3">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {t("settings.chat.tools_section")}
+        </p>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <Label
+              htmlFor="show-tool-calls"
+              className="text-sm font-normal cursor-pointer"
+            >
+              {t("settings.chat.show_tool_calls")}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.chat.show_tool_calls_hint")}
+            </p>
+          </div>
+          <Switch
+            id="show-tool-calls"
+            checked={showToolCalls}
+            onCheckedChange={setShowToolCalls}
+          />
+        </div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent("open-shortcuts"))
+          }
+        >
+          <Keyboard className="w-4 h-4" />
+          {t("settings.chat.keyboard_shortcuts")}
+        </Button>
       </div>
     </div>
   );

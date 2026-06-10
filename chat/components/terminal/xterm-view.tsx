@@ -11,6 +11,24 @@ import { useEffect, useRef } from "react";
 import { VECTORA_API_URL } from "@/lib/constants/api";
 import { useT } from "@/lib/i18n";
 
+/** Lê os tokens de cor ativos (`.dark`/`.light`) e monta o tema do xterm. */
+function readXtermTheme(): Record<string, string> {
+  if (typeof document === "undefined") {
+    return { background: "#0a0a0a", foreground: "#e4e4e7" };
+  }
+  const styles = getComputedStyle(document.documentElement);
+  const get = (name: string) => styles.getPropertyValue(name).trim();
+  const background = get("--background") || "#0a0a0a";
+  const foreground = get("--foreground") || "#e4e4e7";
+  const primary = get("--primary") || "#7FC8FF";
+  return {
+    background,
+    foreground,
+    cursor: primary,
+    selectionBackground: `color-mix(in srgb, ${primary} 30%, transparent)`,
+  };
+}
+
 interface XtermViewProps {
   terminalId: string;
   threadId: string;
@@ -30,6 +48,7 @@ export function XtermView({
   const wsRef = useRef<WebSocket | null>(null);
   const fitRef = useRef<any | null>(null);
   const resizeObsRef = useRef<ResizeObserver | null>(null);
+  const themeObsRef = useRef<MutationObserver | null>(null);
 
   // O callback e o tradutor mudam de identidade a cada render do pai; mantê-los
   // fora das dependências do efeito evita reconectar (e derrubar) o WebSocket a
@@ -60,12 +79,7 @@ export function XtermView({
         fontFamily: '"JetBrains Mono", ui-monospace, monospace',
         fontSize: 13,
         cursorBlink: true,
-        theme: {
-          background: "#0a0a0a",
-          foreground: "#e4e4e7",
-          cursor: "#7FC8FF",
-          selectionBackground: "#7FC8FF44",
-        },
+        theme: readXtermTheme(),
         scrollback: 5000,
         convertEol: true,
       });
@@ -165,10 +179,25 @@ export function XtermView({
       const obs = new ResizeObserver(() => sendResize());
       obs.observe(host);
       resizeObsRef.current = obs;
+
+      // Observa troca de tema (.dark/.light) e atualiza as cores do terminal
+      const themeObs = new MutationObserver(() => {
+        term.options.theme = readXtermTheme();
+      });
+      themeObs.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+      themeObsRef.current = themeObs;
     })();
 
     return () => {
       cancelled = true;
+      try {
+        themeObsRef.current?.disconnect();
+      } catch {
+        // ignora
+      }
       try {
         resizeObsRef.current?.disconnect();
       } catch {
@@ -188,8 +217,9 @@ export function XtermView({
       termRef.current = null;
       fitRef.current = null;
       resizeObsRef.current = null;
+      themeObsRef.current = null;
     };
   }, [terminalId, threadId, workspaceId]);
 
-  return <div ref={containerRef} className="h-full w-full bg-[#0a0a0a]" />;
+  return <div ref={containerRef} className="h-full w-full bg-background" />;
 }
