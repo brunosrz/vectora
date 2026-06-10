@@ -15,7 +15,6 @@
 import {
   AtSign,
   ChevronRight,
-  File,
   FilePlus,
   Filter,
   FolderClosed,
@@ -32,6 +31,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { FileIcon } from "@/components/icons/file-icon";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -362,7 +362,7 @@ function FileItem({
       }}
     >
       <span className="w-3" />
-      <File className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+      <FileIcon name={entry.name} />
       {renaming ? (
         <input
           autoFocus

@@ -180,15 +180,15 @@ export const THEME_PRESETS: ThemePresetDef[] = [
   },
 ];
 
-/** Cor de fallback para customização — espelha o tema escuro padrão. */
+/** Cor de fallback para customização — espelha o tema escuro padrão (Min Dark). */
 export const DEFAULT_CUSTOM_COLORS: BaseThemeColors = {
-  background: "#252a3a",
-  foreground: "#fafafa",
-  card: "#2b303f",
-  border: "#454b5c",
-  primary: "#5b9dff",
-  accent: "#3a4055",
-  muted: "#333949",
+  background: "#1f1f1f",
+  foreground: "#d4d4d4",
+  card: "#1a1a1a",
+  border: "#2a2a2a",
+  primary: "#79b8ff",
+  accent: "#2a2a2a",
+  muted: "#262626",
 };
 
 /** Luminância relativa aproximada (sRGB) — usada para escolher fg de contraste. */

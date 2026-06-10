@@ -170,7 +170,7 @@ prefs.theme.system,"System (automatic)","Sistema (automático)","Sistema (autom�
 prefs.theme.light,Light,Claro,Claro
 prefs.theme.dark,Dark,Oscuro,Escuro
 prefs.theme_palette,Color palette,Paleta de colores,Paleta de cores
-prefs.theme_palette.default,"Vectora default","Vectora predeterminado","Vectora padrão"
+prefs.theme_palette.default,"Min (default)","Min (predeterminado)","Min (padrão)"
 prefs.theme_palette.custom,Custom,Personalizada,Personalizada
 prefs.theme_palette_help,"Choose a ready-made palette or build your own custom colors below.","Elige una paleta lista o crea tus propios colores personalizados abajo.","Escolha uma paleta pronta ou monte suas próprias cores personalizadas abaixo."
 prefs.custom_color.background,Background,Fondo,Fundo

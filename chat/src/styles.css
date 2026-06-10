@@ -12,73 +12,71 @@
      @theme inline → publica os vars como tokens Tailwind reativos
    ============================================================================= */
 
-/* ── Tema escuro (padrão) ─────────────────────────────────────────────────── */
+/* ── Tema escuro (padrão) — paleta "Min Dark" (miguelsolorio.min-theme) ────── */
 :root {
-  /* Superfícies — cinza com temperatura fria mínima (chroma 0.005). */
-  --background: oklch(0.145 0.005 260);
-  --foreground: oklch(0.985 0 0);
+  --background: #1f1f1f;
+  --foreground: #d4d4d4;
 
-  --muted: oklch(0.2 0.005 260);
-  --muted-foreground: oklch(0.7 0.005 260);
+  --muted: #262626;
+  --muted-foreground: #9e9e9e;
 
-  --card: oklch(0.17 0.005 260);
-  --card-foreground: oklch(0.985 0 0);
+  --card: #1a1a1a;
+  --card-foreground: #d4d4d4;
 
-  --popover: oklch(0.17 0.005 260);
-  --popover-foreground: oklch(0.985 0 0);
+  --popover: #1a1a1a;
+  --popover-foreground: #d4d4d4;
 
-  --secondary: oklch(0.22 0.005 260);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: #2a2a2a;
+  --secondary-foreground: #d4d4d4;
 
-  --accent: oklch(0.22 0.005 260);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: #2a2a2a;
+  --accent-foreground: #d4d4d4;
 
-  --border: oklch(0.27 0.005 260);
-  --input: oklch(0.27 0.005 260);
+  --border: #2a2a2a;
+  --input: #2a2a2a;
 
-  /* Destaque — azul saturado exclusivo para CTAs, seleção ativa, foco. */
-  --primary: oklch(0.65 0.18 255);
-  --primary-foreground: oklch(0.985 0 0);
-  --ring: oklch(0.65 0.18 255);
+  /* Destaque — azul do Min Dark, exclusivo para CTAs, seleção ativa, foco. */
+  --primary: #79b8ff;
+  --primary-foreground: #0a0a0a;
+  --ring: #79b8ff;
 
   /* Erro / destrutivo. */
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.985 0 0);
+  --destructive: #f97583;
+  --destructive-foreground: #1a1a1a;
 
   color-scheme: dark;
 }
 
-/* ── Tema claro ───────────────────────────────────────────────────────────── */
+/* ── Tema claro — paleta "Min Light" (miguelsolorio.min-theme) ─────────────── */
 .light {
-  /* Superfícies claras — fundo branco, cinza quase neutro. */
-  --background: oklch(0.98 0.003 260);
-  --foreground: oklch(0.15 0.01 260);
+  --background: #ffffff;
+  --foreground: #424242;
 
-  --muted: oklch(0.93 0.003 260);
-  --muted-foreground: oklch(0.45 0.005 260);
+  --muted: #f0f0f0;
+  --muted-foreground: #757575;
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.01 260);
+  --card: #f6f6f6;
+  --card-foreground: #424242;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.01 260);
+  --popover: #ffffff;
+  --popover-foreground: #424242;
 
-  --secondary: oklch(0.92 0.003 260);
-  --secondary-foreground: oklch(0.15 0.01 260);
+  --secondary: #eeeeee;
+  --secondary-foreground: #424242;
 
-  --accent: oklch(0.92 0.003 260);
-  --accent-foreground: oklch(0.15 0.01 260);
+  --accent: #eeeeee;
+  --accent-foreground: #424242;
 
-  --border: oklch(0.87 0.003 260);
-  --input: oklch(0.87 0.003 260);
+  --border: #e9e9e9;
+  --input: #e9e9e9;
 
-  /* Azul ligeiramente mais escuro para contraste sobre fundo claro. */
-  --primary: oklch(0.55 0.18 255);
-  --primary-foreground: oklch(0.985 0 0);
-  --ring: oklch(0.55 0.18 255);
+  /* Azul do Min Light para contraste sobre fundo claro. */
+  --primary: #1976d2;
+  --primary-foreground: #ffffff;
+  --ring: #1976d2;
 
-  --destructive: oklch(0.55 0.2 25);
-  --destructive-foreground: oklch(0.985 0 0);
+  --destructive: #d32f2f;
+  --destructive-foreground: #ffffff;
 
   color-scheme: light;
 }
