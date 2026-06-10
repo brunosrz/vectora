@@ -112,7 +112,7 @@ function TabButton({
   return (
     <button
       onClick={onSelect}
-      className={`flex items-center gap-1.5 px-2 @xs:px-2.5 py-1 rounded-md text-xs select-none transition-colors shrink-0 ${
+      className={`flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs select-none transition-colors w-full ${
         active
           ? "bg-background text-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -120,7 +120,7 @@ function TabButton({
       title={label}
     >
       <Icon className="w-3.5 h-3.5 shrink-0" />
-      <span className="hidden @xs:inline">{label}</span>
+      <span className="truncate">{label}</span>
       {showPending && (
         <span
           className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
@@ -167,11 +167,11 @@ export function WorkbenchPanel({
 
   return (
     <div className="h-full flex flex-col bg-background border-l border-border/60">
-      {/* Barra de abas — wrap em grid quando o painel é estreito demais
-          para a linha única. Botão fechar fica sempre no canto superior
-          direito alinhado às abas. */}
+      {/* Barra de abas — grid 2x2 por padrão; vira 1 linha (4 colunas) quando
+          o painel é largo o suficiente. Nunca fica "3 em cima + 1 sozinho".
+          Botão fechar fica sempre no canto superior direito alinhado às abas. */}
       <div className="@container flex items-start gap-0.5 px-1.5 py-1 border-b border-border/60 bg-muted/20">
-        <div className="flex flex-wrap items-center gap-0.5 flex-1 min-w-0">
+        <div className="grid grid-cols-2 @lg:grid-cols-4 gap-0.5 flex-1 min-w-0">
           {WORKBENCH_TABS.map((tab) => (
             <TabButton
               key={tab}

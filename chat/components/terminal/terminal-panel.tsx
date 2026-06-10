@@ -78,37 +78,35 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
   return (
     <div className="h-full flex flex-col bg-[#0a0a0a]">
       {/* Tabs + ações */}
-      <div className="flex items-center gap-1 bg-background border-b border-border/60 px-2 py-1">
-        <div className="flex items-center gap-1 flex-1 overflow-x-auto">
-          {terminals.map((term) => (
-            <button
-              key={term.id}
-              onClick={() => setActive(threadId, term.id)}
-              className={`group flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md text-xs select-none transition-colors ${
-                term.id === active?.id
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
+      <div className="flex items-center gap-1 bg-background border-b border-border/60 px-2 py-1 overflow-x-auto">
+        {terminals.map((term) => (
+          <button
+            key={term.id}
+            onClick={() => setActive(threadId, term.id)}
+            className={`group flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md text-xs select-none transition-colors shrink-0 ${
+              term.id === active?.id
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            }`}
+          >
+            <TerminalSquare className="w-3.5 h-3.5" />
+            <span className="truncate max-w-[120px]">{term.title}</span>
+            <span
+              role="button"
+              tabIndex={0}
+              className="opacity-0 group-hover:opacity-100 hover:bg-muted-foreground/20 rounded-sm p-0.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                close(threadId, term.id);
+              }}
             >
-              <TerminalSquare className="w-3.5 h-3.5" />
-              <span className="truncate max-w-[120px]">{term.title}</span>
-              <span
-                role="button"
-                tabIndex={0}
-                className="opacity-0 group-hover:opacity-100 hover:bg-muted-foreground/20 rounded-sm p-0.5"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  close(threadId, term.id);
-                }}
-              >
-                <X className="w-3 h-3" />
-              </span>
-            </button>
-          ))}
-        </div>
+              <X className="w-3 h-3" />
+            </span>
+          </button>
+        ))}
         <button
           onClick={handleNew}
-          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
           title={t("terminal.new")}
         >
           <Plus className="w-3.5 h-3.5" />
