@@ -15,14 +15,9 @@
  * evitar divergência SSR/cliente.
  */
 
-import {
-  FileText,
-  FolderTree,
-  GitCompare,
-  TerminalSquare,
-  X,
-} from "lucide-react";
+import { FileText, FolderTree, GitCompare, TerminalSquare } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { WorkbenchToggle } from "@/components/workbench/workbench-toggle";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import {
@@ -160,7 +155,6 @@ export function WorkbenchPanel({
   const wsId = workspace?.id ?? "";
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
   const setActiveTab = useWorkbenchStore((s) => s.setActiveTab);
-  const setPanelOpen = useWorkbenchStore((s) => s.setPanelOpen);
 
   // A.17 — file watcher SSE: dispara markPending quando arquivos mudam
   useWorkspaceWatcher(wsId || undefined);
@@ -185,14 +179,9 @@ export function WorkbenchPanel({
             />
           ))}
         </div>
-        <button
-          onClick={() => setPanelOpen(threadId, false)}
-          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
-          title={t("workbench.close")}
-          aria-label={t("workbench.close")}
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+        <div className="shrink-0">
+          <WorkbenchToggle />
+        </div>
       </div>
 
       {/* Body — só monta a aba ativa (poupa recurso) */}

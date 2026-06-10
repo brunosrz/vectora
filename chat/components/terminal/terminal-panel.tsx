@@ -76,7 +76,7 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#0a0a0a]">
+    <div className="h-full flex flex-col bg-background">
       {/* Tabs + ações */}
       <div className="flex items-center gap-1 bg-background border-b border-border/60 px-2 py-1 overflow-x-auto">
         {terminals.map((term) => (
@@ -114,7 +114,7 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
       </div>
 
       {/* Aviso de "sem sandbox" — recolhível, baixa fricção */}
-      <div className="px-3 py-1.5 text-[10px] text-amber-500/80 bg-amber-500/5 border-b border-amber-500/10">
+      <div className="px-3 py-1.5 text-[10px] text-amber-700 dark:text-amber-300 bg-amber-500/10 border-b border-amber-500/20">
         {t("terminal.no_sandbox_warning")}
       </div>
 

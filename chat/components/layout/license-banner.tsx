@@ -74,14 +74,14 @@ export function LicenseBanner({
   }
 
   const Icon = spec.icon;
-  const colorClass = SEVERITY_COLORS[spec.severity];
+  const { bg, icon } = SEVERITY_COLORS[spec.severity];
 
   return (
     <div
       role="status"
-      className={`${colorClass} ${fullWidth ? "w-full" : ""} px-4 py-2 text-xs flex items-center gap-2 border-b`}
+      className={`${bg} text-foreground ${fullWidth ? "w-full" : ""} px-4 py-2 text-xs flex items-center gap-2 border-b`}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0" />
+      <Icon className={`${icon} w-3.5 h-3.5 shrink-0`} />
       <span className="flex-1 min-w-0">{spec.message}</span>
       {spec.cta && (
         <button
@@ -111,12 +111,24 @@ export function LicenseBanner({
   );
 }
 
-const SEVERITY_COLORS: Record<Exclude<Severity, null>, string> = {
-  warning:
-    "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
-  danger:
-    "bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30",
-  critical: "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30",
+// Texto sempre usa a cor principal do tema (foreground) para garantir
+// contraste em claro e escuro; só o fundo/borda/ícone variam por severidade.
+const SEVERITY_COLORS: Record<
+  Exclude<Severity, null>,
+  { bg: string; icon: string }
+> = {
+  warning: {
+    bg: "bg-amber-500/15 border-amber-500/30",
+    icon: "text-amber-600 dark:text-amber-300",
+  },
+  danger: {
+    bg: "bg-orange-500/15 border-orange-500/30",
+    icon: "text-orange-600 dark:text-orange-300",
+  },
+  critical: {
+    bg: "bg-red-500/15 border-red-500/30",
+    icon: "text-red-600 dark:text-red-300",
+  },
 };
 
 function openUrl(url: string): Promise<void> {
