@@ -155,9 +155,34 @@ export function WorkbenchPanel({
   const wsId = workspace?.id ?? "";
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
   const setActiveTab = useWorkbenchStore((s) => s.setActiveTab);
+  const isOpen = useWorkbenchStore((s) => s.isOpen(threadId));
 
   // A.17 — file watcher SSE: dispara markPending quando arquivos mudam
   useWorkspaceWatcher(wsId || undefined);
+
+  // Colapsado: faixa estreita (mesmo tratamento da sidebar esquerda) com a
+  // borda divisória, o botão de abrir e os ícones de cada aba na vertical.
+  if (!isOpen) {
+    return (
+      <div className="h-full flex flex-col items-center gap-1 bg-background py-2">
+        <WorkbenchToggle />
+        <div className="w-6 border-t border-border/60 my-1" />
+        {WORKBENCH_TABS.map((tab) => {
+          const Icon = TAB_ICON[tab];
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(threadId, tab)}
+              title={t(`workbench.tab.${tab}`)}
+              className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Icon className="w-4 h-4" />
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-background border-l border-border/60">

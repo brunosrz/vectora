@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useAdminDialogStore } from "@/lib/stores/admin-dialog-store";
+import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
 import { useT } from "@/lib/i18n";
 
 const AdminTab = lazy(() =>
@@ -39,8 +39,8 @@ function AdminFallback() {
 
 export function AdminDialog() {
   const t = useT();
-  const open = useAdminDialogStore((s) => s.open);
-  const setOpen = useAdminDialogStore((s) => s.setOpen);
+  const open = useAdministracaoDialogStore((s) => s.open);
+  const setOpen = useAdministracaoDialogStore((s) => s.setOpen);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

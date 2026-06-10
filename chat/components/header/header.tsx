@@ -1,14 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { Menu, Settings } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { ContextualHelp } from "./contextual-help";
 import { GitStatusBadge } from "./git-status-badge";
-import { UserMenu } from "./user-menu";
-import { WorkbenchToggle } from "@/components/workbench/workbench-toggle";
-import { Button } from "@/components/ui/button";
-import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
+import { SettingsMenu } from "./settings-menu";
 import { useT } from "@/lib/i18n";
 
 interface HeaderProps {
@@ -54,20 +51,7 @@ export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
         <div className="flex items-center gap-3">
           <GitStatusBadge />
           <ContextualHelp onShowShortcuts={onShowShortcuts} />
-          <UserMenu />
-          <WorkbenchToggle />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hover:bg-muted/70 hover:text-foreground"
-            aria-label={t("settings.chat.tooltip")}
-            title={t("settings.chat.tooltip")}
-            onClick={() =>
-              useSettingsDialogStore.getState().openAt("preferencias")
-            }
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
+          <SettingsMenu />
         </div>
       </div>
     </header>

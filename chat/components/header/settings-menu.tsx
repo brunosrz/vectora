@@ -2,20 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Settings, Shield } from "lucide-react";
+import { LogOut, Settings, SlidersHorizontal, Shield } from "lucide-react";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
-import { useAdminDialogStore } from "@/lib/stores/admin-dialog-store";
+import { usePreferenciasDialogStore } from "@/lib/stores/preferencias-dialog-store";
+import { useAmbienteDialogStore } from "@/lib/stores/ambiente-dialog-store";
+import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
 import { ROLE_COLORS, ROLE_LABELS } from "@/lib/types/auth";
-import { SettingsDialog } from "@/components/settings/user";
-import { AdminDialog } from "@/components/settings/admin";
+import { PreferenciasDialog } from "@/components/settings/preferencias";
+import { AmbienteDialog } from "@/components/settings/ambiente";
+import { AdminDialog } from "@/components/settings/administracao";
 
-export function UserMenu() {
+export function SettingsMenu() {
   const router = useRouter();
   const { user, isAuthenticated, clearUser } = useAuthStore();
-  const openSettings = useSettingsDialogStore((s) => s.openAt);
-  const openAdmin = useAdminDialogStore((s) => s.openAt);
+  const openPreferencias = usePreferenciasDialogStore((s) => s.openAt);
+  const openAmbiente = useAmbienteDialogStore((s) => s.openAt);
+  const openAdmin = useAdministracaoDialogStore((s) => s.openAt);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -49,8 +52,7 @@ export function UserMenu() {
     return null;
   }
 
-  // Nome tem prioridade quando existe; fallback para o e-mail. Inicial usa
-  // a primeira letra "visível" (suporta acentos via codepoints).
+  // Nome tem prioridade quando existe; fallback para o e-mail.
   const displayName = user.name?.trim() || user.email;
   const initial = Array.from(displayName)[0]?.toUpperCase() ?? "?";
   const roleLabel = ROLE_LABELS[user.role] ?? user.role;
@@ -59,15 +61,15 @@ export function UserMenu() {
   return (
     <>
       <div className="relative" ref={menuRef}>
-        {/* Avatar circular com inicial do e-mail */}
+        {/* Botão de configurações (engrenagem) */}
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 hover:bg-primary/30 text-primary font-semibold text-sm transition-colors select-none"
+          className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors select-none"
           title={displayName}
-          aria-label="Menu do usuário"
+          aria-label="Configurações"
           aria-expanded={open}
         >
-          {initial}
+          <Settings className="w-4 h-4" />
         </button>
 
         {/* Dropdown */}
@@ -101,11 +103,22 @@ export function UserMenu() {
                 className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
                 onClick={() => {
                   setOpen(false);
-                  openSettings("conta");
+                  openPreferencias("preferencias");
                 }}
               >
                 <Settings className="w-4 h-4 shrink-0 text-muted-foreground" />
-                Configurações
+                Preferências
+              </button>
+
+              <button
+                className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+                onClick={() => {
+                  setOpen(false);
+                  openAmbiente("envs");
+                }}
+              >
+                <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
+                Ambiente
               </button>
 
               {(user.role === "root" || user.role === "admin") && (
@@ -133,9 +146,8 @@ export function UserMenu() {
         )}
       </div>
 
-      {/* Settings Dialog — Bloco L2 (estado no settings-dialog-store) */}
-      <SettingsDialog />
-      {/* Admin Dialog — painel próprio, separado do Settings (P4) */}
+      <PreferenciasDialog />
+      <AmbienteDialog />
       <AdminDialog />
     </>
   );

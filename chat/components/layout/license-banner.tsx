@@ -18,7 +18,7 @@ import { AlertTriangle, Clock, ShieldAlert, X } from "lucide-react";
 
 import { useT } from "@/lib/i18n";
 import { useLicenseStatus } from "@/lib/hooks/use-license-status";
-import { useAdminDialogStore } from "@/lib/stores/admin-dialog-store";
+import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
 
 interface LicenseBannerProps {
   /** Se true, banner ocupa toda a largura abaixo do header. */
@@ -44,7 +44,7 @@ export function LicenseBanner({
 }: LicenseBannerProps) {
   const t = useT();
   const { status } = useLicenseStatus();
-  const openAdmin = useAdminDialogStore((s) => s.openAt);
+  const openAdmin = useAdministracaoDialogStore((s) => s.openAt);
   const [dismissed, setDismissed] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 

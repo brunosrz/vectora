@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
-import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
+import { useAmbienteDialogStore } from "@/lib/stores/ambiente-dialog-store";
 import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
 
 interface PlusMenuProps {
@@ -39,7 +39,7 @@ export function PlusMenu({
   onSlashCommands,
 }: PlusMenuProps) {
   const t = useT();
-  const openSettings = useSettingsDialogStore((s) => s.openAt);
+  const openAmbiente = useAmbienteDialogStore((s) => s.openAt);
   const pushDraft = useChatInputStore((s) => s.pushDraft);
   const [open, setOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
@@ -127,7 +127,7 @@ export function PlusMenu({
             className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
             onClick={() => {
               setOpen(false);
-              openSettings("integracoes");
+              openAmbiente("integracoes");
             }}
           >
             <Share2 className="w-4 h-4 shrink-0 text-muted-foreground" />
@@ -138,7 +138,7 @@ export function PlusMenu({
             className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
             onClick={() => {
               setOpen(false);
-              openSettings("plugins");
+              openAmbiente("plugins");
             }}
           >
             <Plug className="w-4 h-4 shrink-0 text-muted-foreground" />

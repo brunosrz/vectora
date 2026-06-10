@@ -14,6 +14,9 @@
  * - Painel direito (`right`): largura controlada por `rightSize` em %,
  *   só renderizado quando `showRight=true`. Quando oculto, layout = 100%
  *   esquerda; sem painel residual sobrando 20px e estragando a janela.
+ * - `rightCollapsed`: trata o painel direito como a sidebar esquerda
+ *   colapsada — mantém uma faixa estreita de largura fixa com borda
+ *   divisória, sem handle de resize (nada para arrastar).
  * - Handle: 4px de largura, cursor `col-resize`, arrasta para ajustar
  *   `rightSize` entre `minRight` e `maxRight` (default 20–80).
  * - Imune a SSR: o `right` só é montado após o cliente decidir mostrá-lo;
@@ -32,6 +35,10 @@ interface HorizontalSplitProps {
   minRight?: number;
   maxRight?: number;
   className?: string;
+  /** Quando true, `right` vira uma faixa estreita de largura fixa (sem resize). */
+  rightCollapsed?: boolean;
+  /** Largura em px da faixa colapsada. Default: 48 (w-12). */
+  collapsedWidth?: number;
 }
 
 export function HorizontalSplit({
@@ -43,6 +50,8 @@ export function HorizontalSplit({
   minRight = 20,
   maxRight = 80,
   className,
+  rightCollapsed = false,
+  collapsedWidth = 48,
 }: HorizontalSplitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
@@ -94,7 +103,15 @@ export function HorizontalSplit({
           recortados por este container — o conteúdo rolável (ChatInterface)
           já tem seu próprio overflow-hidden interno. */}
       <div className="flex-1 min-w-0 overflow-visible">{left}</div>
-      {showRight && (
+      {showRight && rightCollapsed && (
+        <div
+          style={{ width: collapsedWidth }}
+          className="shrink-0 overflow-hidden border-l border-border/60"
+        >
+          {right}
+        </div>
+      )}
+      {showRight && !rightCollapsed && (
         <>
           <div
             role="separator"

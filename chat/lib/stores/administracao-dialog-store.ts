@@ -1,12 +1,13 @@
 /**
- * admin-dialog-store — controla a abertura do painel de Administração e
- * a sub-aba ativa (Usuários/Ferramentas/Pastas Seguras/Sistema/Config).
+ * administracao-dialog-store — controla a abertura do painel de
+ * Administração e a sub-aba ativa (Usuários/Ferramentas/Pastas
+ * Seguras/Sistema/Config).
  *
- * Administração deixou de ser uma aba do `SettingsDialog` (P4) e passou a
- * ser um dialog próprio (`AdminDialog`), já que o `AdminTab` tem múltiplos
- * sub-painéis e merece navegação independente. Permite deep-link a partir
- * de qualquer lugar (ex.: banner de licença → Administração → Config) sem
- * prop drilling, no mesmo padrão de `settings-dialog-store`.
+ * Administração é um dos 3 painéis de configurações (Preferências,
+ * Ambiente, Administração), com dialog e store próprios já que o
+ * `AdminTab` tem múltiplos sub-painéis e merece navegação independente.
+ * Permite deep-link a partir de qualquer lugar (ex.: banner de licença →
+ * Administração → Config) sem prop drilling.
  */
 
 import { create } from "zustand";
@@ -33,7 +34,7 @@ interface AdminDialogState {
   setSubTab: (subTab?: AdminSubTab) => void;
 }
 
-export const useAdminDialogStore = create<AdminDialogState>((set) => ({
+export const useAdministracaoDialogStore = create<AdminDialogState>((set) => ({
   open: false,
   subTab: undefined,
   openAt: (subTab) => set({ open: true, subTab }),

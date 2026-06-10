@@ -29,7 +29,7 @@ export const CONFIG_STORAGE = {
 // Model Registry
 // =============================================================================
 
-interface ModelConfig {
+export interface ModelConfig {
   id: string;
   name: string;
   provider: "google-genai" | "openai" | "anthropic" | "cohere";
@@ -308,11 +308,6 @@ export function isModelAllowed(modelId: ModelOption): boolean {
 export function getModelDisplayName(modelId: ModelOption): string {
   const model = Object.values(MODELS).find((m) => m.id === modelId);
   return model?.name ?? modelId;
-}
-
-export function getModelDescription(modelId: ModelOption): string {
-  const model = Object.values(MODELS).find((m) => m.id === modelId);
-  return model?.description ?? "";
 }
 
 export function getModelProvider(

@@ -7,7 +7,6 @@ import { ChatInterface } from "@/components/chat/chat-interface";
 import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
 import { HorizontalSplit } from "@/components/layout/horizontal-split";
 import { LicenseBanner } from "@/components/layout/license-banner";
-import { SettingsDialog } from "@/components/settings/user";
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog";
 import {
   CommandPalette,
@@ -18,7 +17,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
-import { useSettingsDialogStore } from "@/lib/stores/settings-dialog-store";
+import { usePreferenciasDialogStore } from "@/lib/stores/preferencias-dialog-store";
 
 import {
   useThreadsQuery,
@@ -146,7 +145,7 @@ function SessionPage() {
       return true;
     },
     "ctrl+,": () => {
-      useSettingsDialogStore.getState().openAt("conta");
+      usePreferenciasDialogStore.getState().openAt("conta");
       return true;
     },
     "ctrl+k": () => {
@@ -274,7 +273,7 @@ function SessionPage() {
         label: t("palette.cmd.settings"),
         category: t("palette.cat.navigation"),
         shortcut: "Ctrl+,",
-        run: () => useSettingsDialogStore.getState().openAt("conta"),
+        run: () => usePreferenciasDialogStore.getState().openAt("conta"),
       },
       {
         id: "keyboard-shortcuts",
@@ -365,7 +364,8 @@ function SessionPage() {
             fica restrito à coluna do chat (left). */}
         <HorizontalSplit
           className="flex-1 min-w-0"
-          showRight={hydrated && workbenchOpen}
+          showRight={hydrated}
+          rightCollapsed={!workbenchOpen}
           rightSize={splitSize}
           onResize={setSplitSize}
           left={
@@ -405,7 +405,6 @@ function SessionPage() {
       )}
 
       {/* Dialogs globais */}
-      <SettingsDialog />
       <KeyboardShortcutsDialog
         open={showShortcutsDialog}
         onOpenChange={setShowShortcutsDialog}

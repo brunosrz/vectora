@@ -31,9 +31,9 @@ import {
 import { useEffect, useState } from "react";
 
 import {
-  useAdminDialogStore,
+  useAdministracaoDialogStore,
   type AdminSubTab,
-} from "@/lib/stores/admin-dialog-store";
+} from "@/lib/stores/administracao-dialog-store";
 
 import { useT } from "@/lib/i18n";
 
@@ -1475,11 +1475,11 @@ export function AdminTab() {
   const [active, setActive] = useState<AdminSubTab>("users");
 
   // Deep-link: outros lugares (license-banner, etc.) usam
-  // `useAdminDialogStore.openAt("config")`. Quando o store recebe `subTab`,
+  // `useAdministracaoDialogStore.openAt("config")`. Quando o store recebe `subTab`,
   // sincronizamos com o `active` local e limpamos o slot para que
   // re-aberturas do dialog não voltem para a mesma sub-aba.
-  const subTab = useAdminDialogStore((s) => s.subTab);
-  const setSubTab = useAdminDialogStore((s) => s.setSubTab);
+  const subTab = useAdministracaoDialogStore((s) => s.subTab);
+  const setSubTab = useAdministracaoDialogStore((s) => s.setSubTab);
   useEffect(() => {
     if (subTab) {
       setActive(subTab);

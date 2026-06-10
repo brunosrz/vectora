@@ -12,13 +12,14 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Cpu } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 import { useT } from "@/lib/i18n";
+import { ProviderIcon } from "@/components/icons/provider-icons";
 import {
   getAllowedModels,
-  getModelDescription,
   getModelDisplayName,
+  getModelProvider,
   type ModelOption,
 } from "@/lib/config/deployment-config";
 
@@ -61,7 +62,8 @@ export function ModelSelector({
         title={t("model.select_title")}
         aria-expanded={open}
       >
-        <Cpu
+        <ProviderIcon
+          provider={getModelProvider(value as ModelOption)}
           className={`shrink-0 text-muted-foreground ${compact ? "w-3.5 h-3.5" : "w-4 h-4"}`}
         />
         <span className="truncate font-medium">{activeLabel}</span>
@@ -91,14 +93,14 @@ export function ModelSelector({
                 {model === value ? (
                   <Check className="w-4 h-4 shrink-0 text-primary" />
                 ) : (
-                  <Cpu className="w-4 h-4 shrink-0 text-muted-foreground" />
+                  <ProviderIcon
+                    provider={getModelProvider(model)}
+                    className="w-4 h-4 shrink-0 text-muted-foreground"
+                  />
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium text-foreground">
                     {getModelDisplayName(model)}
-                  </span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {getModelDescription(model)}
                   </span>
                 </span>
               </button>
