@@ -9,13 +9,6 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { FilePreviewGrid } from "./features/file-preview-grid";
 import { VoiceInputButton } from "./features/voice-input-button";
 import { PermissionModeMenu } from "./features/permission-mode-menu";
@@ -25,13 +18,9 @@ import { UsagePopover } from "./features/usage-popover";
 import { SlashCommandMenu } from "./features/slash-command-menu";
 import { AtMentionMenu } from "./features/at-mention-menu";
 import { WorkspaceSelector } from "@/components/layout/workspace-selector";
+import { ModelSelector } from "./model-selector";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { AgentConfig } from "@/components/layout/agent-settings";
-import {
-  getAllowedModels,
-  getModelDisplayName,
-  type ModelOption,
-} from "@/lib/config/deployment-config";
 import type { ImageAttachment } from "@/lib/types";
 import { useT } from "@/lib/i18n";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
@@ -129,7 +118,6 @@ export function ChatInput({
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
   const { offline } = useNetworkStatus();
-  const allowedModels = getAllowedModels();
   const handleModelChange = (model: string) => {
     if (agentConfig && onAgentConfigChange) {
       onAgentConfigChange({ ...agentConfig, model });
@@ -216,12 +204,13 @@ export function ChatInput({
 
             {/* Multi-layered input container */}
             <div className="relative">
-              {/* High-contrast glow layer for visibility */}
-              <div className="absolute -inset-1 bg-primary/8 rounded-2xl opacity-70 group-hover:opacity-90 group-focus-within:opacity-100 transition-opacity duration-300 shadow-2xl" />
+              {/* Glow de contraste — sem `shadow-*`: o Vectora não usa sombras
+                  projetadas (vazavam para a appbar no tema claro). */}
+              <div className="absolute -inset-1 bg-primary/8 rounded-2xl opacity-70 group-hover:opacity-90 group-focus-within:opacity-100 transition-opacity duration-300" />
 
               {/* Main input container with enhanced contrast */}
               <div
-                className={`relative backdrop-blur-sm border-2 rounded-xl shadow-2xl transition-all duration-300 group-hover:shadow-3xl group-focus-within:shadow-3xl group-focus-within:ring-2 group-focus-within:ring-primary/20 ${isDragging ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border/50 group-hover:border-primary/60 group-focus-within:border-primary/70"}`}
+                className={`relative backdrop-blur-sm border-2 rounded-xl transition-all duration-300 group-focus-within:ring-2 group-focus-within:ring-primary/20 ${isDragging ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border/50 group-hover:border-primary/60 group-focus-within:border-primary/70"}`}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
@@ -334,21 +323,11 @@ export function ChatInput({
               {agentConfig && onAgentConfigChange && (
                 <>
                   <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
-                  <Select
+                  <ModelSelector
                     value={agentConfig.model}
-                    onValueChange={handleModelChange}
-                  >
-                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent dark:bg-transparent hover:bg-transparent dark:hover:bg-transparent hover:text-foreground px-2 gap-1 w-auto shadow-none focus:ring-0 focus-visible:ring-0 text-muted-foreground [&_svg]:opacity-70">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allowedModels.map((model) => (
-                        <SelectItem key={model} value={model}>
-                          {getModelDisplayName(model as ModelOption)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={handleModelChange}
+                    compact
+                  />
                 </>
               )}
             </div>

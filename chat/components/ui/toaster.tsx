@@ -32,22 +32,27 @@ const ICONS: Record<ToastLevel, typeof CheckCircle2> = {
   info: Info,
 };
 
+// Texto escuro no tema claro / claro no tema escuro — texto fixo claro
+// (ex.: `text-emerald-100`) ficava ilegível sobre o fundo claro de `.light`.
 const LEVEL_STYLES: Record<ToastLevel, { wrapper: string; icon: string }> = {
   success: {
-    wrapper: "border-emerald-500/30 bg-emerald-500/10 text-emerald-100",
-    icon: "text-emerald-400",
+    wrapper:
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-100",
+    icon: "text-emerald-600 dark:text-emerald-400",
   },
   warning: {
-    wrapper: "border-amber-500/30 bg-amber-500/10 text-amber-100",
-    icon: "text-amber-400",
+    wrapper:
+      "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-100",
+    icon: "text-amber-600 dark:text-amber-400",
   },
   error: {
-    wrapper: "border-red-500/40 bg-red-500/10 text-red-100",
-    icon: "text-red-400",
+    wrapper: "border-red-500/40 bg-red-500/10 text-red-900 dark:text-red-100",
+    icon: "text-red-600 dark:text-red-400",
   },
   info: {
-    wrapper: "border-blue-500/30 bg-blue-500/10 text-blue-100",
-    icon: "text-blue-400",
+    wrapper:
+      "border-blue-500/30 bg-blue-500/10 text-blue-900 dark:text-blue-100",
+    icon: "text-blue-600 dark:text-blue-400",
   },
 };
 

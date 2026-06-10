@@ -285,6 +285,7 @@ workspace.no_workspaces,No folders yet,Aún no hay carpetas,Nenhuma pasta ainda
 workspace.trusted,Trusted,Confiable,Confiável
 workspace.untrusted,Read-only,Solo lectura,Somente leitura
 workspace.select_title,Workspace,Espacio de trabajo,Workspace
+model.select_title,Model,Modelo,Modelo
 workspace.trust_title,Trust this folder?,¿Confiar en esta carpeta?,Confiar nesta pasta?
 workspace.trust_desc,"Vectora can only read, write and run commands inside trusted folders. Outside this folder nothing is accessible.","Vectora solo puede leer, escribir y ejecutar comandos dentro de carpetas confiables. Fuera de esta carpeta nada es accesible.","O Vectora só pode ler, escrever e rodar comandos dentro de pastas confiáveis. Fora dela nada é acessível."
 workspace.browse_title,Choose a folder,Elige una carpeta,Escolha uma pasta
