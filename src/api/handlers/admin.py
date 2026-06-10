@@ -670,6 +670,18 @@ async def test_storage_connection(request: Request) -> dict:
             async with aiosqlite.connect(path) as conn:
                 await conn.execute("SELECT 1")
 
+        elif backend == "redis":
+            import redis.asyncio as aredis
+
+            url = body.get("url") or ""
+            if not url:
+                return {"ok": False, "error": "URL não fornecida"}
+            client = aredis.from_url(url)
+            try:
+                await client.ping()  # ty: ignore[invalid-await]
+            finally:
+                await client.aclose()
+
         else:
             return {"ok": False, "error": f"Backend desconhecido: {backend!r}"}
 
@@ -687,6 +699,7 @@ async def update_storage_config(request: Request) -> dict:
     Body (JSON) — campos opcionais:
         ``storage_mode``: ``"lite"`` | ``"complete"``
         ``postgres_dsn``: DSN asyncpg
+        ``redis_url``:    URL de conexão Redis
         ``qdrant_url``:   URL do cluster Qdrant
         ``qdrant_api_key``: API key Qdrant
 
@@ -712,7 +725,11 @@ async def update_storage_config(request: Request) -> dict:
                 status_code=422,
                 detail="storage_mode deve ser 'lite' ou 'complete'",
             )
-        runtime_settings.storage_mode = mode  # ty: ignore[unresolved-attribute]
+        runtime_settings.storage_mode = mode
+
+        from src.settings import settings as _s
+
+        _s.storage_mode = mode  # type: ignore[assignment]
         updated["storage_mode"] = mode
 
     if "postgres_dsn" in body:
@@ -732,6 +749,12 @@ async def update_storage_config(request: Request) -> dict:
 
         _s.qdrant_api_key = body["qdrant_api_key"]
         updated["qdrant_api_key"] = "***"
+
+    if "redis_url" in body:
+        from src.settings import settings as _s
+
+        _s.redis_url = body["redis_url"]
+        updated["redis_url"] = "***"
 
     logger.info("admin: storage config atualizado por %s: %s", user.id, list(updated))
     return {"status": "updated", **updated}

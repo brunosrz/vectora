@@ -412,6 +412,35 @@ async def storage_health() -> dict[str, Any]:
     except Exception as exc:
         result["postgres"] = {"ok": False, "error": str(exc)}
 
+    # Redis — testado apenas no modo complete
+    try:
+        from src.settings import settings as _s
+
+        if _s.storage_mode == "complete" and _s.redis_url:
+            import redis.asyncio as aredis
+
+            client = aredis.from_url(_s.redis_url)
+            try:
+                await client.ping()  # ty: ignore[invalid-await]
+                result["redis"] = {"ok": True, "error": None}
+            finally:
+                await client.aclose()
+        else:
+            result["redis"] = {"ok": None, "error": "não configurado (modo lite)"}
+    except Exception as exc:
+        result["redis"] = {"ok": False, "error": str(exc)}
+
+    # Config — resumo do modo de armazenamento e backends configurados
+    # (sem expor segredos: apenas booleanos de "configurado").
+    from src.settings import settings as _s
+
+    result["config"] = {
+        "storage_mode": _s.storage_mode,
+        "postgres_configured": bool(_s.postgres_dsn),
+        "redis_configured": bool(_s.redis_url),
+        "qdrant_configured": bool(_s.qdrant_url),
+    }
+
     return result
 
 

@@ -1076,11 +1076,20 @@ interface StorageBackendStatus {
   latency_ms?: number;
 }
 
+interface StorageConfigSummary {
+  storage_mode: "lite" | "complete";
+  postgres_configured: boolean;
+  redis_configured: boolean;
+  qdrant_configured: boolean;
+}
+
 interface StorageHealth {
   checkpointer?: StorageBackendStatus;
   store?: StorageBackendStatus;
   lancedb?: StorageBackendStatus;
   postgres?: StorageBackendStatus;
+  redis?: StorageBackendStatus;
+  config?: StorageConfigSummary;
 }
 
 function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
@@ -1108,16 +1117,158 @@ function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
   );
 }
 
+/** Resultado de `POST /admin/storage/test`. */
+interface StorageTestResult {
+  ok: boolean;
+  error?: string;
+  latency_ms?: number;
+}
+
+function StorageTestResultLine({ result }: { result: StorageTestResult }) {
+  return (
+    <div
+      className={`text-xs flex items-center gap-1 ${result.ok ? "text-green-600" : "text-destructive"}`}
+    >
+      {result.ok ? (
+        <>
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Conexão OK
+          {result.latency_ms !== undefined && (
+            <span className="text-muted-foreground">
+              ({result.latency_ms}ms)
+            </span>
+          )}
+        </>
+      ) : (
+        <>
+          <XCircle className="w-3.5 h-3.5" />
+          {result.error ?? "Falha na conexão"}
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Card de configuração de um backend "completo" (Postgres/Redis/Qdrant):
+ * inputs para os campos da PATCH, botão "Testar" (POST /admin/storage/test)
+ * e botão "Salvar" (PATCH /admin/storage). Off por padrão — só relevante no
+ * modo "complete".
+ */
+function BackendConfigCard({
+  title,
+  status,
+  fields,
+  testBackend,
+  onSave,
+}: {
+  title: string;
+  status?: StorageBackendStatus;
+  fields: {
+    key: string;
+    testKey: string;
+    placeholder: string;
+    type?: string;
+  }[];
+  testBackend: string;
+  onSave: (values: Record<string, string>) => Promise<void>;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [testResult, setTestResult] = useState<StorageTestResult | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const hasInput = fields.some((f) => values[f.key]?.trim());
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const body: Record<string, string> = { backend: testBackend };
+      for (const f of fields) {
+        const v = values[f.key]?.trim();
+        if (v) body[f.testKey] = v;
+      }
+      const res = await fetch("/admin/storage/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      setTestResult(await res.json());
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(values);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2 rounded border px-3 py-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Database className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium">{title}</span>
+        </div>
+        {status ? (
+          <StorageStatusBadge status={status} />
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        {fields.map((f) => (
+          <Input
+            key={f.key}
+            type={f.type ?? "text"}
+            value={values[f.key] ?? ""}
+            onChange={(e) =>
+              setValues((v) => ({ ...v, [f.key]: e.target.value }))
+            }
+            placeholder={f.placeholder}
+            className="h-7 text-xs font-mono"
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleTest}
+          disabled={testing || !hasInput}
+          className="h-7 text-xs"
+        >
+          {testing ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            "Testar"
+          )}
+        </Button>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={saving || !hasInput}
+          className="h-7 text-xs"
+        >
+          {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Salvar"}
+        </Button>
+      </div>
+      {testResult && <StorageTestResultLine result={testResult} />}
+    </div>
+  );
+}
+
 function StoragePanel() {
   const [health, setHealth] = useState<StorageHealth | null>(null);
   const [loading, setLoading] = useState(false);
-  const [testDsn, setTestDsn] = useState("");
-  const [testResult, setTestResult] = useState<{
-    ok: boolean;
-    error?: string;
-    latency_ms?: number;
-  } | null>(null);
-  const [testing, setTesting] = useState(false);
+  const [savingMode, setSavingMode] = useState(false);
 
   const fetchHealth = async () => {
     setLoading(true);
@@ -1133,32 +1284,34 @@ function StoragePanel() {
     fetchHealth();
   }, []);
 
-  const handleTest = async () => {
-    if (!testDsn.trim()) return;
-    setTesting(true);
-    setTestResult(null);
+  const patchStorage = async (body: Record<string, string>) => {
+    await fetch("/admin/storage", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(body),
+    });
+    await fetchHealth();
+  };
+
+  const storageMode = health?.config?.storage_mode ?? "lite";
+
+  const handleModeChange = async (mode: string) => {
+    setSavingMode(true);
     try {
-      const backend = testDsn.startsWith("postgresql") ? "postgres" : "sqlite";
-      const body: Record<string, string> = { backend };
-      if (backend === "postgres") body.dsn = testDsn;
-      else body.path = testDsn;
-      const res = await fetch("/admin/storage/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body),
-      });
-      setTestResult(await res.json());
+      await patchStorage({ storage_mode: mode });
     } finally {
-      setTesting(false);
+      setSavingMode(false);
     }
   };
 
-  const backends: { key: keyof StorageHealth; label: string }[] = [
+  const liteBackends: {
+    key: "checkpointer" | "store" | "lancedb";
+    label: string;
+  }[] = [
     { key: "checkpointer", label: "Checkpointer (SQLite)" },
     { key: "store", label: "BaseStore (AsyncSqliteStore)" },
     { key: "lancedb", label: "LanceDB (VectorStore)" },
-    { key: "postgres", label: "Postgres (modo complete)" },
   ];
 
   return (
@@ -1178,9 +1331,37 @@ function StoragePanel() {
         </button>
       </div>
 
-      {/* Cards de status */}
+      {/* Modo de armazenamento */}
+      <div className="space-y-1.5 rounded border px-3 py-2">
+        <span className="text-xs font-medium">Modo de armazenamento</span>
+        <p className="text-xs text-muted-foreground">
+          "Lite" usa SQLite + LanceDB local — funciona sem nenhuma infra externa
+          e é o padrão. "Completo" liga Postgres, Redis e Qdrant — exige
+          configurar as conexões abaixo antes de ativar.
+        </p>
+        <div className="flex items-center gap-2">
+          <Select
+            value={storageMode}
+            onValueChange={handleModeChange}
+            disabled={loading || savingMode}
+          >
+            <SelectTrigger className="h-7 text-xs w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="lite">Lite (padrão)</SelectItem>
+              <SelectItem value="complete">Completo</SelectItem>
+            </SelectContent>
+          </Select>
+          {savingMode && (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+          )}
+        </div>
+      </div>
+
+      {/* Cards de status — backends lite (sempre ativos) */}
       <div className="grid grid-cols-1 gap-2">
-        {backends.map(({ key, label }) => (
+        {liteBackends.map(({ key, label }) => (
           <div
             key={key}
             className="flex items-center justify-between rounded border px-3 py-2"
@@ -1200,54 +1381,58 @@ function StoragePanel() {
         ))}
       </div>
 
-      {/* Teste de conexão */}
+      {/* Backends do modo "completo" — desligados por padrão */}
       <div className="space-y-2 pt-2 border-t">
         <span className="text-xs font-medium text-muted-foreground">
-          Testar conexão
+          Backends do modo completo (opcional)
         </span>
-        <div className="flex gap-2">
-          <Input
-            value={testDsn}
-            onChange={(e) => setTestDsn(e.target.value)}
-            placeholder="postgresql://user:pass@host/db  ou  /path/to/db.sqlite"
-            className="h-7 text-xs font-mono"
+        <div className="grid grid-cols-1 gap-2">
+          <BackendConfigCard
+            title="Postgres"
+            status={health?.postgres}
+            testBackend="postgres"
+            fields={[
+              {
+                key: "postgres_dsn",
+                testKey: "dsn",
+                placeholder: "postgresql+asyncpg://user:pass@host:5432/vectora",
+              },
+            ]}
+            onSave={(v) => patchStorage(v)}
           />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleTest}
-            disabled={testing || !testDsn.trim()}
-            className="h-7 text-xs shrink-0"
-          >
-            {testing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              "Testar"
-            )}
-          </Button>
+          <BackendConfigCard
+            title="Redis"
+            status={health?.redis}
+            testBackend="redis"
+            fields={[
+              {
+                key: "redis_url",
+                testKey: "url",
+                placeholder: "redis://localhost:6379/0",
+              },
+            ]}
+            onSave={(v) => patchStorage(v)}
+          />
+          <BackendConfigCard
+            title="Qdrant"
+            status={undefined}
+            testBackend="qdrant"
+            fields={[
+              {
+                key: "qdrant_url",
+                testKey: "url",
+                placeholder: "http://localhost:6333",
+              },
+              {
+                key: "qdrant_api_key",
+                testKey: "api_key",
+                placeholder: "API key (opcional)",
+                type: "password",
+              },
+            ]}
+            onSave={(v) => patchStorage(v)}
+          />
         </div>
-        {testResult && (
-          <div
-            className={`text-xs flex items-center gap-1 ${testResult.ok ? "text-green-600" : "text-destructive"}`}
-          >
-            {testResult.ok ? (
-              <>
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Conexão OK
-                {testResult.latency_ms !== undefined && (
-                  <span className="text-muted-foreground">
-                    ({testResult.latency_ms}ms)
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <XCircle className="w-3.5 h-3.5" />
-                {testResult.error ?? "Falha na conexão"}
-              </>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

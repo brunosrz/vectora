@@ -140,6 +140,20 @@ class RuntimeSettings:
 
     # ─── Métodos de negócio ───────────────────────────────────────────────────
 
+    @property
+    def storage_mode(self) -> str:
+        """Modo de storage ativo: 'lite' (SQLite+LanceDB) | 'complete' (Postgres+Qdrant+Redis).
+
+        Sobrepõe `Settings.storage_mode` em runtime (alterado via
+        `PATCH /admin/storage`, ver `src/api/handlers/admin.py`).
+        """
+        raw = str(self.get("storage_mode", "lite"))
+        return raw if raw in ("lite", "complete") else "lite"
+
+    @storage_mode.setter
+    def storage_mode(self, value: str) -> None:
+        self.set("storage_mode", value if value in ("lite", "complete") else "lite")
+
     def set_active_model(self, provider: str, model: str) -> None:
         """Troca provider + model ativos e persiste (thread-safe)."""
         with self._lock:
