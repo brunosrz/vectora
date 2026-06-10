@@ -9,7 +9,6 @@
  * - System prompt personalizado
  */
 
-import { useTheme } from "next-themes";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,27 +25,50 @@ import {
   type Theme,
   type Lang,
 } from "@/lib/stores/settings-store";
+import {
+  THEME_PRESETS,
+  DEFAULT_CUSTOM_COLORS,
+  type BaseThemeColors,
+} from "@/lib/theme/presets";
 import { useT } from "@/lib/i18n";
 
 const THEME_VALUES: Theme[] = ["system", "light", "dark"];
 
+const CUSTOM_COLOR_FIELDS: { key: keyof BaseThemeColors; labelKey: string }[] =
+  [
+    { key: "background", labelKey: "prefs.custom_color.background" },
+    { key: "foreground", labelKey: "prefs.custom_color.foreground" },
+    { key: "card", labelKey: "prefs.custom_color.card" },
+    { key: "border", labelKey: "prefs.custom_color.border" },
+    { key: "primary", labelKey: "prefs.custom_color.primary" },
+    { key: "accent", labelKey: "prefs.custom_color.accent" },
+    { key: "muted", labelKey: "prefs.custom_color.muted" },
+  ];
+
 export function PreferenciasTab() {
   const t = useT();
-  const { setTheme: setNextTheme } = useTheme();
   const {
     theme,
+    themePreset,
+    customThemeColors,
     language,
     historyLimit,
     customSystemPrompt,
     setTheme,
+    setThemePreset,
+    setCustomThemeColors,
     setLanguage,
     setHistoryLimit,
     setCustomSystemPrompt,
   } = useSettingsStore();
 
-  const handleThemeChange = (value: Theme) => {
-    setTheme(value);
-    setNextTheme(value);
+  const activeCustomColors = customThemeColors ?? DEFAULT_CUSTOM_COLORS;
+
+  const handleCustomColorChange = (
+    key: keyof BaseThemeColors,
+    value: string,
+  ) => {
+    setCustomThemeColors({ ...activeCustomColors, [key]: value });
   };
 
   return (
@@ -54,7 +76,7 @@ export function PreferenciasTab() {
       {/* Tema */}
       <div className="space-y-2">
         <Label htmlFor="theme">{t("prefs.theme")}</Label>
-        <Select value={theme} onValueChange={handleThemeChange}>
+        <Select value={theme} onValueChange={(v) => setTheme(v as Theme)}>
           <SelectTrigger id="theme">
             <SelectValue />
           </SelectTrigger>
@@ -66,6 +88,58 @@ export function PreferenciasTab() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Paleta de cores — presets inspirados em temas do VS Code + custom */}
+      <div className="space-y-2">
+        <Label htmlFor="theme-palette">{t("prefs.theme_palette")}</Label>
+        <Select value={themePreset} onValueChange={setThemePreset}>
+          <SelectTrigger id="theme-palette">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default">
+              {t("prefs.theme_palette.default")}
+            </SelectItem>
+            {THEME_PRESETS.map((preset) => (
+              <SelectItem key={preset.id} value={preset.id}>
+                {preset.label}
+              </SelectItem>
+            ))}
+            <SelectItem value="custom">
+              {t("prefs.theme_palette.custom")}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          {t("prefs.theme_palette_help")}
+        </p>
+
+        {themePreset === "custom" && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            {CUSTOM_COLOR_FIELDS.map(({ key, labelKey }) => (
+              <div key={key} className="space-y-1">
+                <Label htmlFor={`custom-color-${key}`} className="text-xs">
+                  {t(labelKey)}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id={`custom-color-${key}`}
+                    type="color"
+                    value={activeCustomColors[key]}
+                    onChange={(e) =>
+                      handleCustomColorChange(key, e.target.value)
+                    }
+                    className="h-8 w-8 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0.5"
+                  />
+                  <span className="text-[11px] font-mono text-muted-foreground truncate">
+                    {activeCustomColors[key]}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Idioma */}

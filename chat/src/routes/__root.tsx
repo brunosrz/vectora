@@ -9,6 +9,11 @@ import type { RouterContext } from "../router";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useSessionExpiry } from "@/lib/hooks/use-session-expiry";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
+import {
+  THEME_PRESETS,
+  buildThemeTokens,
+  applyThemeTokens,
+} from "@/lib/theme/presets";
 import { Toaster } from "@/components/ui/toaster";
 import { NetworkStatusBanner } from "@/components/layout/network-status-banner";
 
@@ -181,7 +186,13 @@ function RootComponent() {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
-    const apply = (dark: boolean) => root.classList.toggle("dark", dark);
+    // `:root` já é o tema escuro (default); `.light` sobrescreve as
+    // variáveis para o tema claro (ver styles.css). Por isso alternamos
+    // as duas classes — não basta remover `.dark`.
+    const apply = (dark: boolean) => {
+      root.classList.toggle("dark", dark);
+      root.classList.toggle("light", !dark);
+    };
 
     if (theme === "system") {
       const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -193,6 +204,27 @@ function RootComponent() {
 
     apply(theme === "dark");
   }, [theme]);
+
+  // UX-23 — paleta de cores (presets inspirados em temas do VS Code ou
+  // customização do usuário) sobrepõe os tokens de cor via CSS custom
+  // properties em :root, independente de claro/escuro/sistema acima.
+  const themePreset = useSettingsStore((s) => s.themePreset);
+  const customThemeColors = useSettingsStore((s) => s.customThemeColors);
+  useEffect(() => {
+    if (themePreset === "default") {
+      applyThemeTokens(null);
+      return;
+    }
+    if (themePreset === "custom") {
+      applyThemeTokens(
+        customThemeColors ? buildThemeTokens(customThemeColors) : null,
+      );
+      return;
+    }
+    const preset = THEME_PRESETS.find((p) => p.id === themePreset);
+    applyThemeTokens(preset ? buildThemeTokens(preset.colors) : null);
+  }, [themePreset, customThemeColors]);
+
   return (
     <div className="min-h-screen flex flex-col" data-route={location.pathname}>
       <NetworkStatusBanner />

@@ -35,6 +35,8 @@ sidebar.documentation_caption,GitHub · Vectora,GitHub · Vectora,GitHub · Vect
 sidebar.feedback,Feedback,Comentarios,Feedback
 sidebar.report_issue,Report an issue,Reportar problema,Reportar problema
 sidebar.open,Open sessions,Abrir sesiones,Abrir sessões
+sidebar.expand,Expand sidebar,Expandir barra lateral,Expandir barra lateral
+sidebar.untitled_chat,Untitled chat,Chat sin título,Conversa sem título
 sidebar.folders,Folders,Carpetas,Pastas
 sidebar.folders_empty,No folders yet. Ask the admin to add one.,Aún no hay carpetas. Pide al admin que agregue una.,Nenhuma pasta ainda. Peça ao admin para adicionar uma.
 sidebar.group.other_conversations,Other conversations,Otras conversaciones,Outras conversas
@@ -177,6 +179,17 @@ prefs.theme,Interface theme,Tema de interfaz,Tema da interface
 prefs.theme.system,"System (automatic)","Sistema (automático)","Sistema (automático)"
 prefs.theme.light,Light,Claro,Claro
 prefs.theme.dark,Dark,Oscuro,Escuro
+prefs.theme_palette,Color palette,Paleta de colores,Paleta de cores
+prefs.theme_palette.default,"Vectora default","Vectora predeterminado","Vectora padrão"
+prefs.theme_palette.custom,Custom,Personalizada,Personalizada
+prefs.theme_palette_help,"Choose a ready-made palette or build your own custom colors below.","Elige una paleta lista o crea tus propios colores personalizados abajo.","Escolha uma paleta pronta ou monte suas próprias cores personalizadas abaixo."
+prefs.custom_color.background,Background,Fondo,Fundo
+prefs.custom_color.foreground,Text,Texto,Texto
+prefs.custom_color.card,Card,Tarjeta,Cartão
+prefs.custom_color.border,Border,Borde,Borda
+prefs.custom_color.primary,Primary,Primario,Primária
+prefs.custom_color.accent,Accent,Acento,Destaque
+prefs.custom_color.muted,Muted,Atenuado,Suave
 prefs.history_limit,History limit,Límite de historial,Limite do histórico
 prefs.history_limit_unit,messages,mensajes,mensagens
 prefs.history_limit_help,"Maximum number of messages displayed per thread (default: 50).","Número máximo de mensajes por conversación (predeterminado: 50).","Número máximo de mensagens exibidas por thread (padrão: 50)."

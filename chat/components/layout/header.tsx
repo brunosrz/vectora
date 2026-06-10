@@ -7,7 +7,6 @@ import { useCallback, useState } from "react";
 import { AgentSettings, type AgentConfig } from "./agent-settings";
 import { ContextualHelp } from "./contextual-help";
 import { GitStatusBadge } from "./git-status-badge";
-import { QuotaGauge } from "./quota-gauge";
 import { UserMenu } from "./user-menu";
 import { WorkbenchToggle } from "@/components/workbench/workbench-toggle";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -131,7 +130,6 @@ export function Header({
 
         <div className="flex items-center gap-3">
           <GitStatusBadge />
-          <QuotaGauge />
           <ContextualHelp onShowShortcuts={onShowShortcuts} />
           <UserMenu />
           {wsId && <VscodeMenu workspaceId={wsId} />}

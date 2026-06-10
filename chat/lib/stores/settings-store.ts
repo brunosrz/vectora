@@ -8,6 +8,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import type { BaseThemeColors } from "@/lib/theme/presets";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -15,6 +16,9 @@ import { persist, createJSONStorage } from "zustand/middleware";
 
 export type Verbosity = "concise" | "normal" | "detailed";
 export type Theme = "light" | "dark" | "system";
+/** "default" = paleta padrão do Vectora; "custom" = `customThemeColors`;
+ *  qualquer outro valor é o `id` de um item em `THEME_PRESETS`. */
+export type ThemePreset = "default" | "custom" | (string & {});
 export type Lang = "en" | "es" | "pt";
 /** Modos de permissão (R2) — espelham o permission_mode do backend. */
 export type PermissionMode =
@@ -70,8 +74,12 @@ export interface SettingsState {
   requireHitl: boolean;
   /** Nível de detalhe das respostas */
   verbosity: Verbosity;
-  /** Tema da interface */
+  /** Tema da interface (claro/escuro/sistema) */
   theme: Theme;
+  /** Paleta de cores aplicada por cima do tema (presets ou customizada) */
+  themePreset: ThemePreset;
+  /** Cores base da paleta customizada (quando themePreset === "custom") */
+  customThemeColors: BaseThemeColors | null;
   /** Limite de mensagens exibidas no histórico */
   historyLimit: number;
   /** Instrução personalizada prefixada ao system prompt */
@@ -92,6 +100,8 @@ export interface SettingsState {
   setRequireHitl: (v: boolean) => void;
   setVerbosity: (v: Verbosity) => void;
   setTheme: (v: Theme) => void;
+  setThemePreset: (v: ThemePreset) => void;
+  setCustomThemeColors: (v: BaseThemeColors | null) => void;
   setHistoryLimit: (v: number) => void;
   setCustomSystemPrompt: (v: string) => void;
   setLanguage: (v: Lang) => void;
@@ -115,6 +125,8 @@ const DEFAULTS = {
   requireHitl: true,
   verbosity: "normal" as Verbosity,
   theme: "system" as Theme,
+  themePreset: "default" as ThemePreset,
+  customThemeColors: null as BaseThemeColors | null,
   historyLimit: 50,
   customSystemPrompt: "",
   language: "en" as Lang, // Sobrescrito pelo detectLanguage() no create()
@@ -152,6 +164,8 @@ export const useSettingsStore = create<SettingsState>()(
       setRequireHitl: (v) => set({ requireHitl: v }),
       setVerbosity: (v) => set({ verbosity: v }),
       setTheme: (v) => set({ theme: v }),
+      setThemePreset: (v) => set({ themePreset: v }),
+      setCustomThemeColors: (v) => set({ customThemeColors: v }),
       setHistoryLimit: (v) => set({ historyLimit: v }),
       setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
       setLanguage: (v) => set({ language: v }),
@@ -183,6 +197,8 @@ export const useSettingsStore = create<SettingsState>()(
         requireHitl: state.requireHitl,
         verbosity: state.verbosity,
         theme: state.theme,
+        themePreset: state.themePreset,
+        customThemeColors: state.customThemeColors,
         historyLimit: state.historyLimit,
         customSystemPrompt: state.customSystemPrompt,
         language: state.language,
