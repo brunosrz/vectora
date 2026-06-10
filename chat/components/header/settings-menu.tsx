@@ -6,18 +6,18 @@ import { LogOut, Settings, SlidersHorizontal, Shield } from "lucide-react";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { usePreferenciasDialogStore } from "@/lib/stores/preferencias-dialog-store";
-import { useAmbienteDialogStore } from "@/lib/stores/ambiente-dialog-store";
+import { useEnvironmentDialogStore } from "@/lib/stores/environment-dialog-store";
 import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
 import { ROLE_COLORS, ROLE_LABELS } from "@/lib/types/auth";
 import { PreferenciasDialog } from "@/components/settings/preferencias";
-import { AmbienteDialog } from "@/components/settings/ambiente";
+import { EnvironmentDialog } from "@/components/settings/environment";
 import { AdminDialog } from "@/components/settings/administracao";
 
 export function SettingsMenu() {
   const router = useRouter();
   const { user, isAuthenticated, clearUser } = useAuthStore();
   const openPreferencias = usePreferenciasDialogStore((s) => s.openAt);
-  const openAmbiente = useAmbienteDialogStore((s) => s.openAt);
+  const openEnvironment = useEnvironmentDialogStore((s) => s.openAt);
   const openAdmin = useAdministracaoDialogStore((s) => s.openAt);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -114,7 +114,7 @@ export function SettingsMenu() {
                 className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
                 onClick={() => {
                   setOpen(false);
-                  openAmbiente("envs");
+                  openEnvironment("envs");
                 }}
               >
                 <SlidersHorizontal className="w-4 h-4 shrink-0 text-muted-foreground" />
@@ -147,7 +147,7 @@ export function SettingsMenu() {
       </div>
 
       <PreferenciasDialog />
-      <AmbienteDialog />
+      <EnvironmentDialog />
       <AdminDialog />
     </>
   );

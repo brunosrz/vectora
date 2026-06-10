@@ -1,5 +1,5 @@
 /**
- * ambiente-dialog-store — controla a abertura do painel "Ambiente"
+ * environment-dialog-store — controla a abertura do painel "Ambiente"
  * (Envs, Skills, Plugins e Integrações) e a aba ativa.
  *
  * Permite deep-link a partir de qualquer lugar (ex.: o menu "+" abrindo
@@ -13,20 +13,22 @@
 
 import { create } from "zustand";
 
-export type AmbienteTab = "envs" | "skills" | "plugins" | "integracoes";
+export type EnvironmentTab = "envs" | "skills" | "plugins" | "integracoes";
 
-interface AmbienteDialogState {
+interface EnvironmentDialogState {
   open: boolean;
-  tab: AmbienteTab;
-  openAt: (tab?: AmbienteTab) => void;
+  tab: EnvironmentTab;
+  openAt: (tab?: EnvironmentTab) => void;
   setOpen: (v: boolean) => void;
-  setTab: (tab: AmbienteTab) => void;
+  setTab: (tab: EnvironmentTab) => void;
 }
 
-export const useAmbienteDialogStore = create<AmbienteDialogState>((set) => ({
-  open: false,
-  tab: "envs",
-  openAt: (tab = "envs") => set({ open: true, tab }),
-  setOpen: (v) => set({ open: v }),
-  setTab: (tab) => set({ tab }),
-}));
+export const useEnvironmentDialogStore = create<EnvironmentDialogState>(
+  (set) => ({
+    open: false,
+    tab: "envs",
+    openAt: (tab = "envs") => set({ open: true, tab }),
+    setOpen: (v) => set({ open: v }),
+    setTab: (tab) => set({ tab }),
+  }),
+);

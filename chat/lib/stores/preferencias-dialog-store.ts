@@ -6,7 +6,7 @@
  * é renderizado uma única vez (no SettingsMenu) e lê seu estado daqui.
  *
  * "Ambiente" (Envs/Skills/Plugins/Integrações) e "Administração" (root/admin)
- * são painéis próprios — ver `ambiente-dialog-store` e
+ * são painéis próprios — ver `environment-dialog-store` e
  * `administracao-dialog-store`.
  */
 

@@ -13,7 +13,7 @@ import { GitBranch, Monitor, Plug } from "lucide-react";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
-import { useAmbienteDialogStore } from "@/lib/stores/ambiente-dialog-store";
+import { useEnvironmentDialogStore } from "@/lib/stores/environment-dialog-store";
 import { useT } from "@/lib/i18n";
 import { VECTORA_API_URL } from "@/lib/constants/api";
 import { PermissionModeMenu } from "./permission-mode-menu";
@@ -93,7 +93,7 @@ function WorktreeChip() {
 }
 
 function PluginsChip() {
-  const openAmbiente = useAmbienteDialogStore((s) => s.openAt);
+  const openEnvironment = useEnvironmentDialogStore((s) => s.openAt);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -116,7 +116,7 @@ function PluginsChip() {
   return (
     <button
       className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors select-none"
-      onClick={() => openAmbiente("plugins")}
+      onClick={() => openEnvironment("plugins")}
       title="MCP"
     >
       <Plug className="w-3.5 h-3.5 shrink-0" />

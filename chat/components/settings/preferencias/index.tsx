@@ -11,7 +11,7 @@
  *   - Memória      — memórias salvas pelo agente
  *
  * "Ambiente" (Envs/Skills/Plugins/Integrações) e "Administração" (root/admin)
- * são dialogs próprios — ver `AmbienteDialog` e `AdminDialog`.
+ * são dialogs próprios — ver `EnvironmentDialog` e `AdminDialog`.
  *
  * Cada tab é code-split via `lazy()` — o bundle inicial do app não paga
  * o custo de uma feature secundária. O dialog em si carrega imediato

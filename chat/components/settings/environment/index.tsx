@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AmbienteDialog
+ * EnvironmentDialog
  *
  * Dialog do painel "Ambiente". Acessível via Avatar → "Ambiente".
  *
@@ -28,9 +28,9 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  useAmbienteDialogStore,
-  type AmbienteTab,
-} from "@/lib/stores/ambiente-dialog-store";
+  useEnvironmentDialogStore,
+  type EnvironmentTab,
+} from "@/lib/stores/environment-dialog-store";
 
 const EnvsTab = lazy(() =>
   import("./tabs/envs-tab").then((m) => ({ default: m.EnvsTab })),
@@ -55,11 +55,11 @@ function TabFallback() {
   );
 }
 
-export function AmbienteDialog() {
-  const open = useAmbienteDialogStore((s) => s.open);
-  const setOpen = useAmbienteDialogStore((s) => s.setOpen);
-  const tab = useAmbienteDialogStore((s) => s.tab);
-  const setTab = useAmbienteDialogStore((s) => s.setTab);
+export function EnvironmentDialog() {
+  const open = useEnvironmentDialogStore((s) => s.open);
+  const setOpen = useEnvironmentDialogStore((s) => s.setOpen);
+  const tab = useEnvironmentDialogStore((s) => s.tab);
+  const setTab = useEnvironmentDialogStore((s) => s.setTab);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -73,7 +73,7 @@ export function AmbienteDialog() {
 
         <Tabs
           value={tab}
-          onValueChange={(v) => setTab(v as AmbienteTab)}
+          onValueChange={(v) => setTab(v as EnvironmentTab)}
           className="flex-1 overflow-hidden flex flex-col"
         >
           <TabsList className="flex-wrap h-auto gap-1 justify-start bg-transparent p-0 border-b rounded-none pb-2">
