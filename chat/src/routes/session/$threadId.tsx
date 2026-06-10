@@ -321,42 +321,42 @@ function SessionPage() {
           </SheetContent>
         </Sheet>
 
-        {/* Área principal */}
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <Header
-            agentConfig={agentConfig}
-            onAgentConfigChange={setAgentConfig}
-            showToolCalls={showToolCalls}
-            onToggleToolCalls={() => setShowToolCalls((v) => !v)}
-            onShowShortcuts={() => setShowShortcutsDialog(true)}
-            onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-          />
-
-          <HorizontalSplit
-            className="flex-1 min-h-0"
-            showRight={hydrated && workbenchOpen}
-            rightSize={splitSize}
-            onResize={setSplitSize}
-            left={
-              <ChatInterface
-                threadId={threadId}
-                showToolCalls={showToolCalls}
+        {/* Área principal — split ocupa altura total para que o painel do
+            workbench (right) vá do topo ao rodapé, como a sidebar; o Header
+            fica restrito à coluna do chat (left). */}
+        <HorizontalSplit
+          className="flex-1 min-w-0"
+          showRight={hydrated && workbenchOpen}
+          rightSize={splitSize}
+          onResize={setSplitSize}
+          left={
+            <div className="flex flex-col h-full min-w-0 overflow-hidden">
+              <Header
                 agentConfig={agentConfig}
                 onAgentConfigChange={setAgentConfig}
-                onThreadUpdate={handleThreadUpdate}
-                onThreadNotFound={() => void navigate({ to: "/" })}
-                inputLocked={inputLocked}
-                isNewThread={isNew(threadId)}
+                showToolCalls={showToolCalls}
+                onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+                onShowShortcuts={() => setShowShortcutsDialog(true)}
+                onOpenSidebar={() => setIsMobileSidebarOpen(true)}
               />
-            }
-            right={
-              <WorkbenchPanel
-                threadId={threadId}
-                onAddToContext={pushMention}
-              />
-            }
-          />
-        </div>
+              <div className="flex-1 min-h-0">
+                <ChatInterface
+                  threadId={threadId}
+                  showToolCalls={showToolCalls}
+                  agentConfig={agentConfig}
+                  onAgentConfigChange={setAgentConfig}
+                  onThreadUpdate={handleThreadUpdate}
+                  onThreadNotFound={() => void navigate({ to: "/" })}
+                  inputLocked={inputLocked}
+                  isNewThread={isNew(threadId)}
+                />
+              </div>
+            </div>
+          }
+          right={
+            <WorkbenchPanel threadId={threadId} onAddToContext={pushMention} />
+          }
+        />
       </div>
 
       {/* Wizard de primeiro acesso — aparece uma vez por usuário */}

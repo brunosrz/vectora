@@ -16,14 +16,12 @@
  */
 
 import {
-  ExternalLink,
   FileText,
   FolderTree,
   GitCompare,
   TerminalSquare,
   X,
 } from "lucide-react";
-import { useCallback, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
@@ -114,15 +112,15 @@ function TabButton({
   return (
     <button
       onClick={onSelect}
-      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs select-none transition-colors ${
+      className={`flex items-center gap-1.5 px-2 @xs:px-2.5 py-1 rounded-md text-xs select-none transition-colors shrink-0 ${
         active
           ? "bg-background text-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
       }`}
       title={label}
     >
-      <Icon className="w-3.5 h-3.5" />
-      <span>{label}</span>
+      <Icon className="w-3.5 h-3.5 shrink-0" />
+      <span className="hidden @xs:inline">{label}</span>
       {showPending && (
         <span
           className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
@@ -130,79 +128,25 @@ function TabButton({
           title={t("workbench.tab.pending")}
         />
       )}
-      {badge && (
-        <span
-          className={`ml-0.5 inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full text-[10px] font-mono leading-none ${
-            tab === "diff"
-              ? "bg-amber-500/15 text-amber-500"
-              : "bg-primary/15 text-primary"
-          }`}
-        >
-          {badge}
-        </span>
-      )}
+      {badge &&
+        (tab === "terminal" ? (
+          // Contagem de PTYs — texto pequeno sem fundo/padding para não
+          // competir visualmente com o label da aba.
+          <span className="text-[10px] text-muted-foreground/70 leading-none tabular-nums">
+            {badge}
+          </span>
+        ) : (
+          <span
+            className={`ml-0.5 inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full text-[10px] font-mono leading-none ${
+              tab === "diff"
+                ? "bg-amber-500/15 text-amber-500"
+                : "bg-primary/15 text-primary"
+            }`}
+          >
+            {badge}
+          </span>
+        ))}
     </button>
-  );
-}
-
-interface VscodeOption {
-  strategy: string;
-  label: string;
-  url: string;
-}
-
-function VscodeMenu({ workspaceId }: { workspaceId: string }) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-  const [options, setOptions] = useState<VscodeOption[]>([]);
-
-  const handleOpen = useCallback(async () => {
-    if (!workspaceId) return;
-    const res = await fetch(
-      `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
-    );
-    if (res.ok) {
-      const data = await res.json();
-      setOptions((data.options as VscodeOption[]) ?? []);
-    }
-    setOpen((v) => !v);
-  }, [workspaceId]);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={handleOpen}
-        className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
-        title={t("workbench.open_vscode")}
-        aria-label={t("workbench.open_vscode")}
-      >
-        <ExternalLink className="w-3.5 h-3.5" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-20 bg-popover border border-border/60 rounded-md shadow-lg py-1 min-w-[200px]">
-            {options.length === 0 ? (
-              <p className="px-3 py-1.5 text-xs text-muted-foreground">
-                {t("workbench.open_vscode_unavailable")}
-              </p>
-            ) : (
-              options.map((opt) => (
-                <a
-                  key={opt.strategy}
-                  href={opt.url}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-muted/40 transition-colors"
-                >
-                  <ExternalLink className="w-3 h-3 text-muted-foreground shrink-0" />
-                  {opt.label}
-                </a>
-              ))
-            )}
-          </div>
-        </>
-      )}
-    </div>
   );
 }
 
@@ -226,7 +170,7 @@ export function WorkbenchPanel({
       {/* Barra de abas — wrap em grid quando o painel é estreito demais
           para a linha única. Botão fechar fica sempre no canto superior
           direito alinhado às abas. */}
-      <div className="flex items-start gap-0.5 px-1.5 py-1 border-b border-border/60 bg-muted/20">
+      <div className="@container flex items-start gap-0.5 px-1.5 py-1 border-b border-border/60 bg-muted/20">
         <div className="flex flex-wrap items-center gap-0.5 flex-1 min-w-0">
           {WORKBENCH_TABS.map((tab) => (
             <TabButton
@@ -241,7 +185,6 @@ export function WorkbenchPanel({
             />
           ))}
         </div>
-        {wsId && <VscodeMenu workspaceId={wsId} />}
         <button
           onClick={() => setPanelOpen(threadId, false)}
           className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
