@@ -164,6 +164,37 @@ const STEP_TITLE_KEYS = [
 ] as const;
 
 // ===========================================================================
+// Step indicator — bolinhas de progresso conectadas por "ganchos"
+// ===========================================================================
+
+function StepIndicator({ step, total }: { step: number; total: number }) {
+  return (
+    <div className="flex items-center justify-center gap-1.5 py-1">
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} className="flex items-center">
+          <div
+            className={`h-2 rounded-full transition-all duration-300 ${
+              i === step
+                ? "w-5 bg-primary"
+                : i < step
+                  ? "w-2 bg-primary/50"
+                  : "w-2 bg-border"
+            }`}
+          />
+          {i < total - 1 && (
+            <div
+              className={`h-px w-5 transition-colors duration-300 ${
+                i < step ? "bg-primary/50" : "bg-border"
+              }`}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ===========================================================================
 // Wizard
 // ===========================================================================
 
@@ -180,12 +211,17 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
     }
   }, [step, userId, onComplete]);
 
+  const handleBack = useCallback(() => {
+    setStep((s) => Math.max(0, s - 1));
+  }, []);
+
   const handleSkip = useCallback(() => {
     markOnboardingDone(userId);
     onComplete();
   }, [userId, onComplete]);
 
   const StepContent = STEP_COMPONENTS[step]!;
+  const isFirstStep = step === 0;
   const isLastStep = step === TOTAL_STEPS - 1;
 
   return (
@@ -196,27 +232,41 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
       >
         <DialogHeader>
           <DialogTitle>{t(STEP_TITLE_KEYS[step]!)}</DialogTitle>
-          <DialogDescription className="text-[11px] text-muted-foreground">
+          <DialogDescription className="sr-only">
             {step + 1} / {TOTAL_STEPS}
           </DialogDescription>
         </DialogHeader>
 
         <StepContent />
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          {!isLastStep && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSkip}
-              className="text-xs"
-            >
-              {t("onboarding.skip")}
-            </Button>
-          )}
-          <Button size="sm" onClick={handleNext} autoFocus>
-            {isLastStep ? t("onboarding.finish") : t("onboarding.next")}
+        <StepIndicator step={step} total={TOTAL_STEPS} />
+
+        <DialogFooter className="flex-row items-center justify-between gap-2 sm:justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            disabled={isFirstStep}
+            className={`text-xs ${isFirstStep ? "invisible" : ""}`}
+          >
+            {t("onboarding.back")}
           </Button>
+
+          <div className="flex items-center gap-2">
+            {!isLastStep && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSkip}
+                className="text-xs"
+              >
+                {t("onboarding.skip")}
+              </Button>
+            )}
+            <Button size="sm" onClick={handleNext} autoFocus>
+              {isLastStep ? t("onboarding.finish") : t("onboarding.next")}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

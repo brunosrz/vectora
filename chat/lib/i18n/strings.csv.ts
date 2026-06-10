@@ -414,6 +414,7 @@ onboarding.workspace_bullet_1,Add a folder in the Workspace selector in the chat
 onboarding.workspace_bullet_2,Vectora can read and write files only inside trusted folders.,Vectora solo puede leer y escribir archivos dentro de carpetas de confianza.,O Vectora só lê e escreve dentro de pastas confiáveis.
 onboarding.workspace_bullet_3,Each conversation remembers its workspace.,Cada conversación recuerda su espacio de trabajo.,Cada conversa lembra o seu workspace.
 onboarding.done_body,"You're all set — start a conversation and Vectora will get to work!","¡Ya estás listo — inicia una conversación y Vectora se pondrá a trabajar!","Você está pronto — inicie uma conversa e o Vectora começa a trabalhar!"
+onboarding.back,Back,Atrás,Voltar
 onboarding.skip,Skip,Omitir,Pular
 onboarding.next,Next,Siguiente,Próximo
 onboarding.finish,Start chatting,Empezar a chatear,Começar a conversar

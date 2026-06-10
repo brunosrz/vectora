@@ -166,6 +166,10 @@ function RootComponent() {
   // UX-19 — `lang` refletia "pt-BR" hardcoded; agora segue a preferência
   // persistida em settings-store (idioma de fato escolhido pelo usuário).
   const language = useSettingsStore((s) => s.language);
+  // UX-22 — `class="dark"` vinha hardcoded no index.html; agora segue a
+  // preferência persistida em settings-store (light/dark/system), com
+  // reatividade imediata como já ocorre para o idioma acima.
+  const theme = useSettingsStore((s) => s.theme);
   // UX-21 — agenda o aviso "sessão expira em breve" perto da raiz, uma
   // única vez por árvore (não por tela).
   useSessionExpiry();
@@ -174,6 +178,21 @@ function RootComponent() {
       document.documentElement.lang = HTML_LANG_BY_SETTING[language] ?? "en";
     }
   }, [language]);
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    const apply = (dark: boolean) => root.classList.toggle("dark", dark);
+
+    if (theme === "system") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      apply(mq.matches);
+      const handler = (e: MediaQueryListEvent) => apply(e.matches);
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
+    }
+
+    apply(theme === "dark");
+  }, [theme]);
   return (
     <div className="min-h-screen flex flex-col" data-route={location.pathname}>
       <NetworkStatusBanner />
