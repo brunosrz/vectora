@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
-import { ChatInterface } from "@/components/chat/chat-interface";
+import { ChatInterface } from "@/components/appbar/chat-interface";
 import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
 import { HorizontalSplit } from "@/components/layout/horizontal-split";
 import { LicenseBanner } from "@/components/layout/license-banner";
