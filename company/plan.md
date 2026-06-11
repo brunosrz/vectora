@@ -766,6 +766,127 @@ loader: getSession() → se logado → redirect /dashboard
   Erros do Supabase Auth mapeados para chaves Paraglide — nunca string crua
 ```
 
+### P3.1 — Auth avançada: TOTP, Passkeys e OAuth social (Google/GitHub)
+
+> Camada por cima do Supabase Auth. Ordem de entrega: TOTP → OAuth social →
+> escopos estendidos → Passkeys (a mais complexa, sem suporte nativo Supabase).
+
+#### TOTP — Authenticator app (MFA)
+
+Usa o MFA nativo do Supabase (`supabase.auth.mfa.*`):
+
+```
+Dashboard → Conta → Segurança → "Ativar autenticação em duas etapas"
+  1. enroll({ factorType: 'totp' }) → QR code + secret em texto (fonte mono)
+  2. usuário escaneia no authenticator (Google Authenticator, Aegis, 1Password…)
+  3. challenge() + verify({ code }) → fator ativado
+  4. gerar 10 recovery codes (hash em tabela `mfa_recovery_codes`, show-once)
+
+Login com fator ativo:
+  signInWithPassword → AAL1 → tela "Digite o código do app" →
+  mfa.challenge + verify → AAL2 → session completa
+  link "Usar recovery code" → consome 1 código (marca used_at)
+
+Enforcement:
+  - RLS nas tabelas sensíveis exige aal2 quando o usuário tem fator ativo
+    (claim `aal` no JWT)
+  - server fns de token/billing/api-keys checam aal2 se MFA ativo
+Desativar MFA: exige código TOTP válido + senha.
+```
+
+#### OAuth social — Login com Google e GitHub
+
+Providers OAuth do Supabase (`signInWithOAuth`). Botões em `/login` e
+`/signup` ("Continuar com Google" / "Continuar com GitHub") com `redirectTo`
+de volta ao dashboard. Conta social vincula-se à conta email existente pelo
+mesmo email verificado (identity linking do Supabase).
+
+```
+Login básico (sem escopos extras):
+  google: scopes 'openid email profile'
+  github: scopes 'read:user user:email'
+  → trigger on-signup roda igual (profile + token + subscription trialing)
+```
+
+#### Escopos estendidos — Google Drive/Calendar e GitHub repos
+
+Princípio: **consentimento incremental**. O login pede o mínimo; os escopos
+extras são solicitados depois, quando o usuário conecta a integração em
+Dashboard → Conta → Integrações (e refletido no Vectora Agent via
+`/admin/oauth` já existente no backend).
+
+```
+Google (incremental consent):
+  card "Google Drive & Calendar" → botão "Conectar"
+  → signInWithOAuth({ provider: 'google', scopes:
+      'https://www.googleapis.com/auth/drive.readonly
+       https://www.googleapis.com/auth/calendar.events',
+      queryParams: { access_type: 'offline', prompt: 'consent',
+                     include_granted_scopes: 'true' } })
+  → provider_refresh_token retornado pelo Supabase é persistido CRIPTOGRAFADO
+    em `oauth_connections` (service-role only; nunca exposto ao browser)
+  → o Vectora Agent obtém access tokens de curta duração via endpoint
+    `POST /functions/v1/oauth-token` autenticado pelo VECTORA_TOKEN
+    (refresh feito server-side; o agente nunca vê o refresh token)
+  usos no agente: RAG sobre Drive (read-only) e tools de agenda (Calendar)
+
+GitHub (commits e PRs em repositórios SELECIONADOS):
+  OAuth scopes clássicos ('repo') dão acesso a TODOS os repos — inaceitável.
+  Usar **GitHub App** "Vectora" em vez de OAuth app:
+    1. card "GitHub — repositórios" → "Instalar o Vectora App"
+    2. fluxo de instalação do GitHub mostra a tela nativa
+       "Repository access: Only select repositories" → usuário escolhe os repos
+    3. permissões do App: contents: write (commits/branches),
+       pull_requests: write, issues: write, metadata: read
+    4. webhook installation.created/deleted → upsert em `oauth_connections`
+       (installation_id por usuário)
+    5. agente pede token via `POST /functions/v1/oauth-token` →
+       edge function gera installation access token (JWT do App, TTL 1h)
+       restrito aos repos instalados
+  Revogação: desinstalar o App no GitHub OU botão "Desconectar" no dashboard.
+
+-- tabela nova (migration):
+oauth_connections (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid REFERENCES profiles,
+  provider      text NOT NULL,             -- 'google' | 'github-app'
+  scopes        text[] DEFAULT '{}',
+  refresh_token text,                      -- criptografado (pgsodium) — google
+  installation_id bigint,                  -- github app
+  created_at    timestamptz DEFAULT now(),
+  updated_at    timestamptz DEFAULT now()
+)  -- RLS: deny all; service-role only
+```
+
+#### Passkeys (WebAuthn)
+
+Supabase Auth ainda não tem passkeys nativas — implementar com
+`@simplewebauthn/server` (server fns) + `@simplewebauthn/browser`:
+
+```
+Registro (Dashboard → Conta → Segurança → "Adicionar passkey"):
+  server fn generateRegistrationOptions(rpID='vectora.company')
+  → navigator.credentials.create() → verifyRegistrationResponse
+  → INSERT passkey_credentials(user_id, credential_id, public_key,
+      counter, transports, device_name)
+
+Login (/login → botão "Entrar com passkey"):
+  generateAuthenticationOptions (discoverable credentials / conditional UI)
+  → navigator.credentials.get() → verifyAuthenticationResponse
+  → sessão emitida via adminClient (generateLink/signInWithIdToken bridge)
+  fallback: senha + TOTP
+
+Regras: máx 5 passkeys por conta; remover exige aal2; counter
+anti-replay validado a cada login.
+```
+
+**Verificação (P3.1)**: TOTP ativa/valida/recovery code funciona; login Google
+e GitHub criam conta com trial; conectar Drive pede tela de consent do Google
+com escopos extras; instalar o GitHub App mostra seleção de repositórios e o
+agente consegue commitar APENAS nos repos selecionados; passkey registra e
+loga sem senha em Chrome/Safari/Android; refresh tokens nunca aparecem em
+resposta de rede do browser.
+
 ### P4 — Dashboard
 
 #### `dashboard/route.tsx` — layout compartilhado

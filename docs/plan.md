@@ -6344,7 +6344,17 @@ mês por caixa).
 - WhatsApp Business com perfil completo + auto-resposta
   configurada.
 
-## BLOCO P — Vectora Company: Site `vectora.company` [CONCLUÍDO — rotas, dashboard, edge functions, emails e tema Min entregues]
+## BLOCO P — Vectora Company: Site `vectora.company` [CONCLUÍDO — rotas, dashboard, edge functions, emails e tema Min entregues; novo: P3.1 Auth avançada PENDENTE]
+
+> **P3.1 — Auth avançada (planejado, spec completa em `company/plan.md` § P3.1)**:
+> TOTP via authenticator app (MFA nativo Supabase + recovery codes),
+> Passkeys/WebAuthn (`@simplewebauthn`), login social Google e GitHub com
+> **consentimento incremental** — escopos extras de Google Drive (read-only)
+> e Calendar conectáveis no dashboard, e GitHub App "Vectora" com seleção de
+> repositórios (contents/pull_requests: write) para o agente commitar apenas
+> nos repos autorizados. Tokens de provider criptografados server-side em
+> `oauth_connections`; o agente obtém access tokens curtos via edge function
+> `oauth-token` autenticada pelo VECTORA_TOKEN.
 
 > **Stack:** Next.js 16 + Tailwind + shadcn/ui + Supabase Auth SSR
 >
