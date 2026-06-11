@@ -191,6 +191,12 @@ def iter_files(
 
     Substitui ``Path.rglob()`` puro em contextos que precisam de filtragem.
 
+    A varredura usa ``os.walk`` com **poda de diretórios durante o walk** —
+    ``rglob`` puro entra em ``node_modules``/``.venv`` inteiros antes de
+    filtrar, o que em repositórios JS/Python grandes leva minutos (era a
+    causa da suite de testes "travar": cada teste do orchestrator varria a
+    árvore completa do repo 3×).
+
     Args:
         base_dir: Diretório raiz da varredura.
         glob_pattern: Padrão glob (ex: ``**/*.md``, ``**/*.py``).
@@ -200,13 +206,32 @@ def iter_files(
     Returns:
         Lista de Paths de arquivos que passaram em todos os filtros.
     """
-    # Remove leading "**/" prefix so rglob receives a plain pattern (e.g. "*.md")
+    import fnmatch
+    import os
+
+    # Remove leading "**/" prefix so the filename match receives a plain
+    # pattern (e.g. "*.md")
     stripped = glob_pattern
     while stripped.startswith("**/"):
         stripped = stripped[3:]
 
-    return [
-        path
-        for path in sorted(base_dir.rglob(stripped))
-        if path.is_file() and not is_ignored(path, base_dir, spec)
-    ]
+    results: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(base_dir):
+        # Poda in-place: os.walk não desce em dirs removidos daqui.
+        dirnames[:] = [d for d in dirnames if d not in ALWAYS_SKIP_DIRS]
+        if spec is not None:
+            current = Path(dirpath)
+            kept: list[str] = []
+            for d in dirnames:
+                rel = (current / d).relative_to(base_dir)
+                # Diretório ignorado pelo gitignore → não desce nele.
+                if not spec.match_file(str(rel).replace("\\", "/") + "/"):
+                    kept.append(d)
+            dirnames[:] = kept
+        for filename in filenames:
+            if not fnmatch.fnmatch(filename, stripped):
+                continue
+            path = Path(dirpath) / filename
+            if not is_ignored(path, base_dir, spec):
+                results.append(path)
+    return sorted(results)

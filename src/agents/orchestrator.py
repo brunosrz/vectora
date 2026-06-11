@@ -554,16 +554,24 @@ def _select_context_messages(all_messages: list) -> list:
 def _load_project_docs() -> str | None:
     """Escaneia cwd recursivamente por AGENTS.md, CLAUDE.md, GEMINI.md.
 
+    Usa ``iter_files`` (varredura com poda de node_modules/.venv/etc. e
+    respeito ao .gitignore) em vez de ``rglob`` puro — em repositórios JS
+    grandes o rglob varria centenas de milhares de entradas e congelava o
+    primeiro turno do agente (e a suite de testes) por minutos.
+
     Retorna conteúdo concatenado com cabeçalho por arquivo, ou None se não
-    encontrar nada.
-    Limita cada arquivo a 4000 chars para não inflar o contexto.
+    encontrar nada. Limita cada arquivo a 4000 chars e a busca a 10 arquivos
+    por nome para não inflar o contexto.
     """
+    from src.services.ignore import iter_files, load_ignore_spec
+
     targets = ["AGENTS.md", "CLAUDE.md", "GEMINI.md"]
     cwd = Path.cwd()
+    spec = load_ignore_spec(cwd)
     sections: list[str] = []
 
     for name in targets:
-        for found in sorted(cwd.rglob(name)):
+        for found in iter_files(cwd, name, spec)[:10]:
             try:
                 text = found.read_text(encoding="utf-8", errors="ignore").strip()
                 if text:
