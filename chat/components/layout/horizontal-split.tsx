@@ -11,14 +11,15 @@
  *
  * Características:
  * - Painel esquerdo (`left`): ocupa o espaço restante via `flex: 1`.
- * - Painel direito (`right`): largura controlada por `rightSize` em %,
- *   só renderizado quando `showRight=true`. Quando oculto, layout = 100%
- *   esquerda; sem painel residual sobrando 20px e estragando a janela.
+ * - Painel direito (`right`): largura controlada por `rightSize` em px
+ *   (mesma unidade da sidebar esquerda), só renderizado quando
+ *   `showRight=true`. Quando oculto, layout = 100% esquerda; sem painel
+ *   residual sobrando 20px e estragando a janela.
  * - `rightCollapsed`: trata o painel direito como a sidebar esquerda
  *   colapsada — mantém uma faixa estreita de largura fixa com borda
  *   divisória, sem handle de resize (nada para arrastar).
  * - Handle: 4px de largura, cursor `col-resize`, arrasta para ajustar
- *   `rightSize` entre `minRight` e `maxRight` (default 20–80).
+ *   `rightSize` (px) entre `minRight` e `maxRight`.
  * - Imune a SSR: o `right` só é montado após o cliente decidir mostrá-lo;
  *   o tree estável (sempre 1 ou 3 filhos) não precisa de chave de remount.
  */
@@ -29,10 +30,12 @@ interface HorizontalSplitProps {
   left: ReactNode;
   right: ReactNode | null;
   showRight: boolean;
-  /** Largura do painel direito em % (0–100). Atualizado durante o drag. */
+  /** Largura do painel direito em px. Atualizada durante o drag. */
   rightSize: number;
   onResize: (size: number) => void;
+  /** Largura mínima do painel direito em px. */
   minRight?: number;
+  /** Largura máxima do painel direito em px. */
   maxRight?: number;
   className?: string;
   /** Quando true, `right` vira uma faixa estreita de largura fixa (sem resize). */
@@ -47,8 +50,8 @@ export function HorizontalSplit({
   showRight,
   rightSize,
   onResize,
-  minRight = 20,
-  maxRight = 80,
+  minRight = 180,
+  maxRight = 720,
   className,
   rightCollapsed = false,
   collapsedWidth = 48,
@@ -70,8 +73,7 @@ export function HorizontalSplit({
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
       const distFromRight = rect.right - e.clientX;
-      const pct = (distFromRight / rect.width) * 100;
-      const clamped = Math.max(minRight, Math.min(maxRight, pct));
+      const clamped = Math.max(minRight, Math.min(maxRight, distFromRight));
       onResize(clamped);
     },
     [maxRight, minRight, onResize],
@@ -123,7 +125,7 @@ export function HorizontalSplit({
             className="w-1 bg-border/40 hover:bg-border transition-colors cursor-col-resize shrink-0"
           />
           <div
-            style={{ width: `${rightWidth}%` }}
+            style={{ width: rightWidth }}
             className="shrink-0 overflow-hidden"
           >
             {right}

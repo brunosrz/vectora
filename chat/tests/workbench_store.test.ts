@@ -24,7 +24,7 @@ function reset() {
     activeByThread: {},
     panelOpen: {},
     activeTabByThread: {},
-    splitSize: 40,
+    splitSize: 224,
     pinnedFiles: {},
     files: {},
     diff: {},
@@ -40,7 +40,7 @@ beforeEach(reset);
 
 describe("WORKBENCH_TABS", () => {
   it("expõe as 4 abas na ordem da UI", () => {
-    expect(WORKBENCH_TABS).toEqual(["terminal", "files", "diff", "plan"]);
+    expect(WORKBENCH_TABS).toEqual(["files", "diff", "plan", "terminal"]);
   });
 });
 
@@ -113,10 +113,22 @@ describe("workbench-store: shell extra", () => {
     expect(s.isOpen("th")).toBe(true);
   });
 
-  it("getActiveTab() default é 'terminal'", () => {
+  it("getActiveTab() default é 'files' sem plano ativo", () => {
     expect(useWorkbenchStore.getState().getActiveTab("never-seen")).toBe(
-      "terminal",
+      "files",
     );
+  });
+
+  it("getActiveTab() default é 'plan' quando há itens de plano", () => {
+    useWorkbenchStore.getState().setPlanItems("th-plan", [
+      {
+        title: "Plano X",
+        path: "plans/x.md",
+        session_id: "th-plan",
+        created_at: "2026-01-01T00:00:00Z",
+      },
+    ]);
+    expect(useWorkbenchStore.getState().getActiveTab("th-plan")).toBe("plan");
   });
 
   it("setSplitSize() persiste tamanho do painel", () => {

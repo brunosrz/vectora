@@ -164,22 +164,25 @@ export function WorkbenchPanel({
   // borda divisória, o botão de abrir e os ícones de cada aba na vertical.
   if (!isOpen) {
     return (
-      <div className="h-full flex flex-col items-center gap-1 bg-background py-2">
-        <WorkbenchToggle />
-        <div className="w-6 border-t border-border/60 my-1" />
-        {WORKBENCH_TABS.map((tab) => {
-          const Icon = TAB_ICON[tab];
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(threadId, tab)}
-              title={t(`workbench.tab.${tab}`)}
-              className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <Icon className="w-4 h-4" />
-            </button>
-          );
-        })}
+      <div className="h-full flex flex-col items-center bg-background border-l border-border/60">
+        <div className="h-16 w-full flex items-center justify-center border-b border-border/60">
+          <WorkbenchToggle />
+        </div>
+        <div className="flex flex-col items-center gap-1 py-2">
+          {WORKBENCH_TABS.map((tab) => {
+            const Icon = TAB_ICON[tab];
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(threadId, tab)}
+                title={t(`workbench.tab.${tab}`)}
+                className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -188,8 +191,8 @@ export function WorkbenchPanel({
     <div className="h-full flex flex-col bg-background border-l border-border/60">
       {/* Barra de abas — grid 2x2 por padrão; vira 1 linha (4 colunas) quando
           o painel é largo o suficiente. Nunca fica "3 em cima + 1 sozinho".
-          Botão fechar fica sempre no canto superior direito alinhado às abas. */}
-      <div className="@container flex items-start gap-0.5 px-1.5 py-1 border-b border-border/60 bg-muted/20">
+          Altura h-16 alinha esta barra com o header do chat e a sidebar. */}
+      <div className="@container flex h-16 items-center gap-0.5 px-1.5 border-b border-border/60 bg-muted/20">
         <div className="grid grid-cols-2 @lg:grid-cols-4 gap-0.5 flex-1 min-w-0">
           {WORKBENCH_TABS.map((tab) => (
             <TabButton

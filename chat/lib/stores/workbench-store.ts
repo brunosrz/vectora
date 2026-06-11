@@ -40,10 +40,10 @@ export interface TerminalInstance {
 export type WorkbenchTab = "terminal" | "files" | "diff" | "plan";
 
 export const WORKBENCH_TABS: WorkbenchTab[] = [
-  "terminal",
   "files",
   "diff",
   "plan",
+  "terminal",
 ];
 
 // ── Files cache ────────────────────────────────────────────────────────────
@@ -142,7 +142,7 @@ interface WorkbenchState {
   activeByThread: Record<string, string | null>;
   panelOpen: Record<string, boolean>;
   activeTabByThread: Record<string, WorkbenchTab>;
-  /** Tamanho do painel direito como % (default 40). */
+  /** Largura do painel direito em px (default = largura da sidebar esquerda). */
   splitSize: number;
   /** Arquivos fixados por sessão. */
   pinnedFiles: Record<string, string[]>;
@@ -249,7 +249,8 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         activeByThread: {},
         panelOpen: {},
         activeTabByThread: {},
-        splitSize: 40,
+        // Mesma largura default da sidebar esquerda (lib/stores/settings-store.ts).
+        splitSize: 224,
         pinnedFiles: {},
         pending: {},
 
@@ -321,8 +322,15 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         setPanelOpen: (threadId, open) =>
           set((s) => ({ panelOpen: { ...s.panelOpen, [threadId]: open } })),
 
-        getActiveTab: (threadId) =>
-          get().activeTabByThread[threadId] ?? "terminal",
+        getActiveTab: (threadId) => {
+          const stored = get().activeTabByThread[threadId];
+          if (stored) return stored;
+          // Sem preferência salva: plano ativo vira o painel principal,
+          // senão o default é Arquivos.
+          const plan = get().plan[threadId];
+          if (plan && plan.items.length > 0) return "plan";
+          return "files";
+        },
         setActiveTab: (threadId, tab) =>
           set((s) => ({
             activeTabByThread: { ...s.activeTabByThread, [threadId]: tab },
@@ -514,6 +522,21 @@ export const useWorkbenchStore = create<WorkbenchState>()(
       }),
       {
         name: "vectora-workbench",
+        version: 1,
+        // v0 guardava splitSize como % (default 40); v1 passa a usar px
+        // (default = largura da sidebar). Valores antigos ficariam
+        // minúsculos demais como largura — descarta e usa o novo default.
+        migrate: (persisted, version) => {
+          const state = persisted as Partial<WorkbenchState>;
+          if (
+            version < 1 &&
+            typeof state?.splitSize === "number" &&
+            state.splitSize <= 100
+          ) {
+            return { ...state, splitSize: 224 };
+          }
+          return state;
+        },
         storage: createJSONStorage(() =>
           typeof window !== "undefined"
             ? localStorage
