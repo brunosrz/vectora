@@ -1524,19 +1524,11 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               onAddToContext={onAddToContext}
             />
 
-            {/* Input de criação na raiz */}
-            {creating && creating.parentDir === "" && (
-              <InlineCreateInput
-                placeholder={
-                  creating.type === "file"
-                    ? t("workbench.files.creating_file")
-                    : t("workbench.files.creating_folder")
-                }
-                onConfirm={handleInlineCreate}
-                onCancel={handleCancelCreate}
-                depth={0}
-              />
-            )}
+            {/* O input de criação na raiz é renderizado pelo DirNode raiz
+                (path="", sempre expandido). Renderizar um segundo input aqui
+                fazia os dois montarem com autoFocus: o segundo roubava o foco,
+                o onBlur do primeiro disparava onCancel e ambos sumiam — era o
+                bug dos botões "novo arquivo"/"nova pasta" não funcionarem. */}
 
             <DirNode
               threadId={threadId}

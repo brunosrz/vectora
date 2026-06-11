@@ -26,6 +26,7 @@ import type { AgentConfig } from "@/components/layout/agent-settings";
 import type { ImageAttachment } from "@/lib/types";
 import { useT } from "@/lib/i18n";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
+import { useToastStore } from "@/lib/stores/toast-store";
 
 interface VscodeOption {
   strategy: string;
@@ -33,59 +34,40 @@ interface VscodeOption {
   url: string;
 }
 
-/** Botão "Abrir no VS Code" — opções dependem do workspace ativo. */
+/**
+ * Botão "Abrir no VS Code" — lança o VS Code direto, sem popup intermediário.
+ * Prefere a estratégia "local" (vscode://file/...) e cai para a primeira
+ * opção disponível (ssh/devcontainer) quando o workspace não é local.
+ */
 function VscodeMenu({ workspaceId }: { workspaceId: string }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
-  const [options, setOptions] = useState<VscodeOption[]>([]);
 
-  const handleOpen = useCallback(async () => {
+  const handleLaunch = useCallback(async () => {
     if (!workspaceId) return;
     const res = await fetch(
       `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
     );
-    if (res.ok) {
-      const data = await res.json();
-      setOptions((data.options as VscodeOption[]) ?? []);
+    const options: VscodeOption[] = res.ok
+      ? ((await res.json()).options ?? [])
+      : [];
+    const opt =
+      options.find((o) => o.strategy === "local") ?? options[0] ?? null;
+    if (!opt) {
+      useToastStore.getState().error(t("workbench.open_vscode_unavailable"));
+      return;
     }
-    setOpen((v) => !v);
-  }, [workspaceId]);
+    window.location.href = opt.url;
+  }, [workspaceId, t]);
 
   return (
-    <div className="relative">
-      <button
-        onClick={handleOpen}
-        className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
-        title={t("workbench.open_vscode")}
-        aria-label={t("workbench.open_vscode")}
-      >
-        <VscodeIcon className="w-4 h-4" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 bottom-full mb-1 z-20 bg-popover border border-border/60 rounded-md shadow-lg py-1 min-w-[200px]">
-            {options.length === 0 ? (
-              <p className="px-3 py-1.5 text-xs text-muted-foreground">
-                {t("workbench.open_vscode_unavailable")}
-              </p>
-            ) : (
-              options.map((opt) => (
-                <a
-                  key={opt.strategy}
-                  href={opt.url}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-muted/40 transition-colors"
-                >
-                  <VscodeIcon className="w-3 h-3 text-muted-foreground shrink-0" />
-                  {opt.label}
-                </a>
-              ))
-            )}
-          </div>
-        </>
-      )}
-    </div>
+    <button
+      onClick={handleLaunch}
+      className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
+      title={t("workbench.open_vscode")}
+      aria-label={t("workbench.open_vscode")}
+    >
+      <VscodeIcon className="w-4 h-4" />
+    </button>
   );
 }
 

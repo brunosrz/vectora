@@ -69,8 +69,8 @@ function useTabBadge(
   // aba no return e gateamos por `hydrated` para evitar mismatch SSR (T11).
   const terminals = useWorkbenchStore((s) => s.list(threadId));
   const pinned = useWorkbenchStore((s) => s.pinnedFiles[threadId]?.length ?? 0);
-  const diffSummary = useWorkbenchStore((s) => s.getDiff(workspaceId).summary);
   const planItems = useWorkbenchStore((s) => s.getPlan(threadId).items.length);
+  void workspaceId;
 
   if (!hydrated) return null;
   switch (tab) {
@@ -79,9 +79,9 @@ function useTabBadge(
     case "files":
       return pinned > 0 ? String(pinned) : null;
     case "diff":
-      if (!diffSummary || !diffSummary.is_git_repo) return null;
-      if (diffSummary.files.length === 0) return null;
-      return `+${diffSummary.total_additions} −${diffSummary.total_deletions}`;
+      // Sem chip de +N −M: o contador de diff poluía mais do que ajudava;
+      // o ponto âmbar de "pending" continua sinalizando mudanças.
+      return null;
     case "plan":
       return planItems > 0 ? String(planItems) : null;
   }
@@ -133,13 +133,7 @@ function NavTabButton({
         />
       )}
       {badge && (
-        <span
-          className={`absolute -bottom-1 -right-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-mono leading-none ${
-            tab === "diff"
-              ? "bg-amber-500/15 text-amber-500"
-              : "bg-primary/15 text-primary"
-          }`}
-        >
+        <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-mono leading-none bg-primary/15 text-primary">
           {badge}
         </span>
       )}
@@ -161,7 +155,10 @@ export function WorkbenchNavBar({ threadId }: { threadId: string }) {
 
   return (
     <div className="h-full w-12 shrink-0 flex flex-col items-center bg-background border-l border-border/60">
-      <div className="flex flex-col items-center gap-1 py-2">
+      {/* Zona do header (h-16 + border-b): continua a linha do Header e da
+          sidebar esquerda — os botões começam abaixo dela, alinhados. */}
+      <div className="h-16 w-full shrink-0 border-b border-border/60" />
+      <div className="flex flex-col items-center gap-1 pt-2">
         {WORKBENCH_TABS.map((tab) => (
           <NavTabButton
             key={tab}
@@ -192,6 +189,7 @@ export function WorkbenchContent({
   const wsId = workspace?.id ?? "";
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
   const setPanelOpen = useWorkbenchStore((s) => s.setPanelOpen);
+  const ActiveIcon = TAB_ICON[activeTab];
 
   // A.17 — file watcher SSE: dispara markPending quando arquivos mudam
   useWorkspaceWatcher(wsId || undefined);
@@ -199,7 +197,8 @@ export function WorkbenchContent({
   return (
     <div className="h-full flex flex-col bg-background border-l border-border/60">
       <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-muted/20">
-        <span className="text-sm font-medium">
+        <span className="flex items-center gap-2 text-sm font-medium">
+          <ActiveIcon className="w-4 h-4 text-muted-foreground" />
           {t(`workbench.tab.${activeTab}`)}
         </span>
         <button
