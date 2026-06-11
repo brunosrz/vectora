@@ -1,0 +1,51 @@
+---
+id: introduction
+title: What is Vectora?
+sidebar_position: 0
+---
+
+# What is Vectora?
+
+**Vectora** is a self-hosted AI agent platform with multi-user web chat, RAG (Retrieval-Augmented Generation), MCP integrations, and a REST API. Your data never leaves your server.
+
+## Why self-hosted?
+
+| | SaaS AI tools | Vectora (self-hosted) |
+|---|---|---|
+| **Data privacy** | Data sent to third-party servers | Data stays on your server |
+| **Cost** | Per-seat + per-token pricing | Fixed license + your own LLM costs |
+| **Customization** | Limited | Full control over models, prompts, chunking |
+| **Compliance** | Depends on vendor | LGPD / GDPR ready by design |
+| **Offline** | No | Yes — works without internet |
+
+## Core features
+
+- **Multi-user web chat** — Team members connect via browser; no client install needed.
+- **RAG pipeline** — Index PDFs, Markdown, code, spreadsheets. Hybrid search (dense + BM25) with Cohere reranking.
+- **Deep Agents** — Orchestrator routes tasks to specialized sub-agents (Coder, Search, RAG). Supports parallel execution via `asyncio.gather`.
+- **MCP integrations** — Connect any MCP server (GitHub, Notion, Jira, custom).
+- **REST API v1** — Authenticate with an API key, query your workspace programmatically.
+- **License gate** — Your `VECTORA_TOKEN` links the running instance to your subscription. Validated every 6 hours.
+
+## Architecture overview
+
+```
+Browser ──HTTP──► Vectora Web Server
+                        │
+              ┌─────────┴──────────┐
+              │  Orchestrator LLM  │
+              └────┬──────┬────────┘
+                   │      │
+           Coder Agent  Search Agent
+                         │
+                    RAG Subgraph
+                    (LanceDB + Cohere)
+```
+
+All components run in a single Docker Compose stack on your VPS.
+
+## What's next?
+
+- **[Installation →](./installation)** — Get Vectora running in 5 minutes.
+- **[Quick start →](./quick-start)** — Your first conversation in 10 minutes.
+- **[Vectora token →](./vectora-token)** — Understand how licensing works.

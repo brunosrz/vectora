@@ -1,0 +1,63 @@
+---
+id: vectora-token
+title: VECTORA_TOKEN
+sidebar_position: 3
+---
+
+# VECTORA_TOKEN
+
+The `VECTORA_TOKEN` is the secret that authenticates your Vectora instance with your license. Without a valid token, Vectora runs in **restricted mode** (no AI responses, no RAG).
+
+## Getting your token
+
+1. Sign in at [vectora.company/dashboard](https://vectora.company/dashboard)
+2. Navigate to **Dashboard → Token**
+3. Click **"Click to reveal"**
+4. Copy the token immediately — it is shown **once only**
+
+:::danger One-time reveal
+The raw token is stored only temporarily during the reveal. After you copy it, only a SHA-256 hash is retained in our database. If you lose it, rotate it.
+:::
+
+## Token format
+
+```
+vct_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+- `vct_live_` prefix — production token (validates against your live subscription)
+- `vct_test_` prefix — for development/testing (planned)
+
+## Using the token
+
+Set it as an environment variable in your deployment:
+
+```bash title=".env"
+VECTORA_TOKEN=vct_live_xxxx...
+```
+
+Vectora reads it at startup and calls `https://vectora.company/validate-license` every 24 hours.
+
+## Rotating the token
+
+If your token is compromised or you lose it:
+
+1. Go to **Dashboard → Token**
+2. Click **"Rotate token"** — this immediately invalidates the old token
+3. Reveal and copy the new token
+4. Update `VECTORA_TOKEN` in your deployment and restart
+
+:::warning Downtime during rotation
+Between rotating and restarting your server, Vectora will be in restricted mode. Plan rotations during maintenance windows.
+:::
+
+## License validation
+
+Vectora validates the token by calling the `validate-license` Edge Function. The check:
+
+1. Hashes the incoming token with SHA-256
+2. Looks up the hash in the `tokens` table
+3. Verifies the subscription status (`trialing`, `active`)
+4. Records the check in `license_checks` with your server's masked IP and Vectora version
+
+The validation result is cached locally for 24 hours to avoid unnecessary network calls.

@@ -1,0 +1,46 @@
+name: Documentation
+description: Report missing, incorrect, or unclear documentation
+labels: ["documentation", "needs-triage"]
+assignees: ["brunosoares"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve the Vectora docs at docs.vectora.company.
+
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+      description: Link to the docs page with the issue
+      placeholder: "https://docs.vectora.company/guides/vps-deploy"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of issue
+      options:
+        - Missing documentation
+        - Incorrect / outdated content
+        - Unclear explanation
+        - Broken code example
+        - Missing translation (PT/EN)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What's wrong and what should it say instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: Paste the corrected text or describe what to add

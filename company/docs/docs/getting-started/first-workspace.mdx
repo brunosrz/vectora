@@ -1,0 +1,80 @@
+---
+id: first-workspace
+title: First Workspace
+sidebar_position: 4
+---
+
+# Setting Up Your First Workspace
+
+A Vectora workspace contains users, projects, and a shared knowledge base. This guide walks through the initial configuration after installation.
+
+## Workspace vs. Project
+
+| | Workspace | Project |
+|---|---|---|
+| **Scope** | Global to your Vectora instance | Isolated environment within the workspace |
+| **Users** | All users belong to the workspace | Per-project permission control |
+| **Knowledge base** | Shared (global documents) | Project-scoped documents |
+| **Settings** | LLM provider, API keys, branding | System prompt, RAG settings |
+
+## Root account
+
+The first account created on a fresh Vectora instance is the **root** (administrator) account. It has full access to:
+
+- User management (invite, suspend, delete)
+- Global settings (LLM provider, embedding model, webhook configuration)
+- All projects (including private projects)
+- Billing and license management
+
+## Inviting team members
+
+```
+Settings → Team → Invite user
+```
+
+Roles:
+| Role | Can do |
+|---|---|
+| **Admin** | Everything the root can do except delete the workspace |
+| **Editor** | Create/edit projects, upload documents, use chat |
+| **Viewer** | Read-only access to projects they're added to |
+
+## Global settings
+
+Configure once, applies to all projects:
+
+```toml title="vectora.toml (or via UI Settings → General)"
+[llm]
+provider = "google-genai"          # google-genai | openai | anthropic | ollama
+model = "gemini-2.0-flash"
+temperature = 0.3
+max_tokens = 4096
+
+[embedding]
+provider = "cohere"
+model = "embed-v4.0"
+dimensions = 1024
+
+[rag]
+chunk_size = 800
+chunk_overlap = 100
+top_k = 8
+rerank = true
+```
+
+## Storage
+
+By default, Vectora stores everything locally under `/app/data` (mapped to a Docker volume). For team deployments we recommend:
+
+- **S3-compatible storage** (AWS S3, Cloudflare R2, MinIO) for documents
+- **Local SSD** for LanceDB (it's embedded and does not support remote storage)
+
+Configure in `Settings → Storage`:
+
+```bash
+STORAGE_BACKEND=s3
+S3_BUCKET=my-vectora-docs
+S3_REGION=us-east-1
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+```

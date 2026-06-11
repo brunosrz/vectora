@@ -1,0 +1,110 @@
+---
+id: vps-deploy
+title: Deploy on a VPS
+sidebar_position: 0
+---
+
+# Deploy on a VPS
+
+This guide walks through deploying Vectora on a fresh Ubuntu 24.04 VPS. The same steps apply to any Linux server (Debian 12+, Rocky Linux 9+).
+
+## Recommended providers
+
+| Provider | Cheapest suitable plan | Notes |
+|---|---|---|
+| Hetzner Cloud | CX22 (~€4/mo) | Best price/performance in EU |
+| DigitalOcean | Droplet 2vCPU/4GB (~$24/mo) | Simple UX, good docs |
+| AWS Lightsail | $12/mo | Easy billing, limited regions |
+| GCP e2-medium | ~$13/mo | Good if already in GCP |
+
+Minimum: **2 vCPU, 4 GB RAM, 20 GB SSD**. Recommended: 4 vCPU / 8 GB for teams > 5.
+
+## 1. Provision the server
+
+```bash
+# Ubuntu 24.04 LTS recommended
+# Add SSH key during provisioning
+```
+
+## 2. Install Docker
+
+```bash
+# Install Docker (official script)
+curl -fsSL https://get.docker.com | sh
+
+# Add your user to docker group
+sudo usermod -aG docker $USER && newgrp docker
+
+# Verify
+docker --version
+docker compose version
+```
+
+## 3. Open firewall ports
+
+```bash
+sudo ufw allow 22/tcp    # SSH
+sudo ufw allow 80/tcp    # HTTP (Nginx redirect)
+sudo ufw allow 443/tcp   # HTTPS
+sudo ufw enable
+```
+
+## 4. Download docker-compose.yml
+
+```bash
+mkdir -p ~/vectora && cd ~/vectora
+curl -fsSL https://vectora.company/install/docker-compose.yml -o docker-compose.yml
+```
+
+## 5. Configure environment
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Set at minimum:
+
+```env
+VECTORA_TOKEN=your_token_here
+VECTORA_DOMAIN=your-domain.com
+POSTGRES_PASSWORD=change_me_strong_password
+```
+
+## 6. Start the stack
+
+```bash
+docker compose up -d
+
+# Follow logs
+docker compose logs -f vectora
+```
+
+Vectora is ready when you see:
+
+```
+vectora  | ✓ Server listening on http://0.0.0.0:8000
+```
+
+## 7. Set up Nginx + SSL
+
+See the [Nginx / Traefik guide](./nginx) for HTTPS configuration.
+
+## 8. First login
+
+1. Open `https://your-domain.com` in a browser.
+2. Create the root account (first signup auto-elevates to admin).
+3. Invite team members from **Settings → Members**.
+
+## Maintenance
+
+```bash
+# Update to latest version
+docker compose pull && docker compose up -d
+
+# View resource usage
+docker stats
+
+# Backup database
+docker compose exec postgres pg_dump -U vectora vectora > backup-$(date +%Y%m%d).sql
+```

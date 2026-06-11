@@ -1,0 +1,106 @@
+---
+id: n8n-workflows
+title: n8n Workflows
+sidebar_position: 11
+---
+
+# n8n Workflows
+
+Connect Vectora to n8n to build no-code automations: Slack → agent → Notion, webhook → RAG query → email reply, and more.
+
+## Prerequisites
+
+- n8n running (self-hosted or n8n Cloud).
+- Vectora API key from **Dashboard → API Keys**.
+
+## HTTP Request node setup
+
+Since there is no dedicated n8n node yet, use the **HTTP Request** node to call the Vectora REST API:
+
+1. Add an **HTTP Request** node.
+2. Set method to `POST`.
+3. URL: `https://your-vectora-domain.com/v1/chat`
+4. Authentication: **Header Auth** — Header name: `Authorization`, Value: `Bearer vk_live_...`
+5. Body (JSON):
+
+```json
+{
+  "project_id": "proj_abc123",
+  "message": "{{ $json.text }}"
+}
+```
+
+## Example: Slack → Vectora → Slack reply
+
+```
+Slack Trigger (slash command /ask)
+  → HTTP Request (Vectora chat)
+  → Slack (reply in thread)
+```
+
+Node configuration:
+
+```
+[Slack Trigger]
+  Trigger: Slash command
+  Command: /ask
+
+[HTTP Request — Vectora]
+  Method: POST
+  URL: https://your-vectora.com/v1/chat
+  Body: { "project_id": "proj_abc123", "message": "{{ $('Slack Trigger').item.json.text }}" }
+
+[Slack — Reply]
+  Resource: Message
+  Operation: Reply
+  Channel: {{ $('Slack Trigger').item.json.channel_id }}
+  Thread: {{ $('Slack Trigger').item.json.thread_ts }}
+  Text: {{ $json.content }}
+```
+
+## Example: New email → RAG search → auto-draft reply
+
+```
+Email Trigger (IMAP)
+  → HTTP Request (Vectora chat with RAG)
+  → Gmail (create draft reply)
+```
+
+Vectora message:
+
+```
+You are a support agent. Based on the documentation, draft a reply to this email:
+
+{{ $json.body }}
+```
+
+## Example: Notion page created → index into Vectora
+
+```
+Notion Trigger (new page in database)
+  → HTTP Request (get page content)
+  → HTTP Request (Vectora document upload)
+```
+
+Document upload node:
+
+```
+Method: POST
+URL: https://your-vectora.com/v1/documents
+Body (form-data):
+  project_id: proj_abc123
+  file: {{ $binary.data }}
+  filename: {{ $json.title }}.md
+```
+
+## Polling vs webhooks
+
+For real-time triggers, use Vectora webhooks (Pro plan) rather than polling:
+
+```
+Webhook Trigger (POST /webhooks/n8n)
+  → Filter (event type == "agent.completed")
+  → Slack / Email / Notion
+```
+
+Set the webhook URL in **Dashboard → Webhooks → Add webhook → URL**: your n8n webhook URL.

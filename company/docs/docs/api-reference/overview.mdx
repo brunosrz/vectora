@@ -1,0 +1,124 @@
+---
+id: overview
+title: API Overview
+sidebar_position: 1
+---
+
+# REST API Overview
+
+Vectora exposes a REST API at `/v1/` for programmatic access to all AI and workspace features.
+
+## Base URL
+
+```
+https://your-vectora-instance.com/v1
+```
+
+For local development:
+```
+http://localhost:8080/v1
+```
+
+## Authentication
+
+All API requests require an API key in the `Authorization` header:
+
+```http
+Authorization: Bearer vct_key_xxxxxxxxxxxx
+```
+
+API keys are created in the dashboard at **Settings → API Keys**. Each key has one or more **scopes**:
+
+| Scope | Access |
+|---|---|
+| `read` | Read-only — list projects, retrieve messages, search documents |
+| `write` | Read + write — send messages, upload documents, create projects |
+| `admin` | Full access — manage users, rotate tokens, delete data |
+
+:::tip
+Use the most restrictive scope for each integration. A CI pipeline that only retrieves responses needs only `read`. An n8n workflow that uploads documents needs `write`.
+:::
+
+## Response format
+
+All endpoints return JSON. Successful responses use HTTP `2xx`:
+
+```json
+{
+  "data": { ... },
+  "meta": {
+    "request_id": "req_01jxxxxxxxxxx",
+    "version": "1.0.0"
+  }
+}
+```
+
+Errors use HTTP `4xx` / `5xx`:
+
+```json
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Invalid or expired API key",
+    "request_id": "req_01jxxxxxxxxxx"
+  }
+}
+```
+
+## Rate limits
+
+| Plan | Requests / minute |
+|---|---|
+| Trial | 30 rpm |
+| Plus | 120 rpm |
+| Pro | 600 rpm |
+
+Rate limit headers are included in every response:
+
+```http
+X-RateLimit-Limit: 120
+X-RateLimit-Remaining: 118
+X-RateLimit-Reset: 1735689600
+```
+
+## Pagination
+
+List endpoints support cursor-based pagination:
+
+```bash
+GET /v1/documents?project_id=proj_xxx&limit=20&after=doc_yyy
+```
+
+Response includes:
+```json
+{
+  "data": [...],
+  "meta": {
+    "has_more": true,
+    "next_cursor": "doc_zzz"
+  }
+}
+```
+
+## Endpoints at a glance
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/v1/chat` | Send a message and get an AI response |
+| `GET` | `/v1/chat/history` | Retrieve conversation history |
+| `POST` | `/v1/documents` | Upload a document to the knowledge base |
+| `GET` | `/v1/documents` | List documents in a project |
+| `DELETE` | `/v1/documents/:id` | Delete a document |
+| `POST` | `/v1/search` | Semantic search over indexed documents |
+| `GET` | `/v1/projects` | List projects |
+| `POST` | `/v1/projects` | Create a project |
+| `GET` | `/v1/health` | Health check (no auth required) |
+| `POST` | `/v1/webhooks` | Register a webhook endpoint |
+
+## SDKs
+
+| Language | Status | Install |
+|---|---|---|
+| Python | 🚧 In development | `pip install vectora` (coming soon) |
+| TypeScript | 🚧 In development | `npm install @vectora/sdk` (coming soon) |
+| REST | ✓ Available | Use any HTTP client |

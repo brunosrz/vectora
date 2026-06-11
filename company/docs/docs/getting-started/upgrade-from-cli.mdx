@@ -1,0 +1,85 @@
+---
+id: upgrade-from-cli
+title: Upgrade from CLI
+sidebar_position: 5
+---
+
+# Upgrade from CLI
+
+Vectora ships updates via its built-in auto-update mechanism. You can also upgrade manually if auto-update is disabled.
+
+## Auto-update (default)
+
+By default, Vectora checks `updates.vectora.company` every 6 hours and downloads new releases in the background. The next server restart applies the update.
+
+To check the current version and pending update:
+
+```bash
+vectora version
+```
+
+```
+Vectora 1.2.0 (latest: 1.3.0 — restart to apply)
+```
+
+To restart and apply the pending update:
+
+```bash
+docker compose restart vectora
+```
+
+Or if using pm2:
+
+```bash
+pm2 restart vectora
+```
+
+## Manual upgrade
+
+### Docker Compose
+
+```bash
+# Pull the latest image
+docker compose pull vectora
+
+# Recreate the container with the new image
+docker compose up -d vectora
+
+# Verify
+docker compose exec vectora vectora version
+```
+
+### Check release notes
+
+Before upgrading, review the [Changelog](/changelog) for breaking changes. Migrations run automatically on startup — no manual SQL needed.
+
+## Downgrade
+
+Rolling back requires restoring both the Docker image and the database:
+
+```bash
+# Stop current instance
+docker compose stop vectora
+
+# Restore DB snapshot (taken before upgrade)
+docker compose exec postgres psql -U vectora -d vectora < backup-pre-upgrade.sql
+
+# Run previous image version
+docker compose run --rm vectora docker.io/vectora/vectora:1.2.0
+```
+
+:::warning
+Downgrades are only safe if no breaking migrations ran. Check the changelog for migration markers before attempting.
+:::
+
+## Pinning a version
+
+To disable auto-update and pin to a specific version, set in `docker-compose.yml`:
+
+```yaml
+services:
+  vectora:
+    image: vectora/vectora:1.2.0   # pin exact version
+    environment:
+      VECTORA_AUTO_UPDATE: "false"
+```

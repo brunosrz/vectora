@@ -1,0 +1,91 @@
+---
+id: webhooks
+title: Webhooks
+sidebar_position: 6
+---
+
+# Webhooks
+
+Vectora (Pro plan) can send HTTP POST requests to your endpoints when specific events occur.
+
+## Supported events
+
+| Event | Payload |
+|---|---|
+| `message.created` | New chat message from a user or agent |
+| `agent.started` | Agent task began execution |
+| `agent.completed` | Agent task completed (includes output) |
+| `agent.failed` | Agent task failed (includes error) |
+| `document.indexed` | Document successfully indexed into RAG |
+| `license.validated` | License check result |
+| `license.expired` | License expired or payment failed |
+
+## Creating a webhook
+
+1. Dashboard → **API Keys** → **Webhooks** tab → **Add webhook**.
+2. Enter your endpoint URL and select events.
+3. Vectora generates a signing secret — save it securely.
+
+## Verifying signatures
+
+Every request includes an `X-Vectora-Signature` header. Verify it before processing:
+
+```typescript
+import { createHmac } from "crypto";
+
+function verifyWebhook(
+  payload: string,
+  signature: string,
+  secret: string,
+): boolean {
+  const expected = createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+  return `sha256=${expected}` === signature;
+}
+
+// Express example
+app.post("/webhooks/vectora", express.text({ type: "*/*" }), (req, res) => {
+  const sig = req.headers["x-vectora-signature"] as string;
+  if (!verifyWebhook(req.body, sig, process.env.VECTORA_WEBHOOK_SECRET!)) {
+    return res.status(401).send("Invalid signature");
+  }
+  const event = JSON.parse(req.body);
+  // handle event...
+  res.json({ ok: true });
+});
+```
+
+## Payload shape
+
+```json
+{
+  "id": "evt_01j8...",
+  "type": "agent.completed",
+  "created_at": "2025-03-15T14:23:00Z",
+  "workspace_id": "ws_abc123",
+  "data": {
+    "task_id": "task_xyz",
+    "duration_ms": 4200,
+    "output": "Here is the implementation..."
+  }
+}
+```
+
+## Retry policy
+
+Vectora retries failed webhooks with exponential backoff:
+
+| Attempt | Delay |
+|---|---|
+| 1 | Immediate |
+| 2 | 30 seconds |
+| 3 | 5 minutes |
+| 4 | 1 hour |
+| 5 | 6 hours |
+
+After 5 failures, the webhook is disabled and you receive an email notification.
+
+## Testing
+
+Use [webhook.site](https://webhook.site) or [Smee.io](https://smee.io) during development to inspect incoming payloads without running a server.

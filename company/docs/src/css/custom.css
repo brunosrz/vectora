@@ -1,0 +1,244 @@
+/* Vectora palette — mirrors the main site's Tailwind config */
+
+:root {
+  --brand-950: #0a0f1e;
+  --brand-900: #0f172a;
+  --brand-800: #1e293b;
+  --brand-700: #2d3f55;
+  --brand-600: #3a5068;
+  --brand-500: #3b82f6;
+  --brand-400: #60a5fa;
+  --brand-300: #93c5fd;
+
+  /* Docusaurus primary colour — Vectora blue */
+  --ifm-color-primary: #3b82f6;
+  --ifm-color-primary-dark: #2563eb;
+  --ifm-color-primary-darker: #1d4ed8;
+  --ifm-color-primary-darkest: #1e40af;
+  --ifm-color-primary-light: #60a5fa;
+  --ifm-color-primary-lighter: #93c5fd;
+  --ifm-color-primary-lightest: #bfdbfe;
+
+  /* Background */
+  --ifm-background-color: var(--brand-900);
+  --ifm-background-surface-color: var(--brand-800);
+
+  /* Navbar */
+  --ifm-navbar-background-color: var(--brand-950);
+  --ifm-navbar-shadow: 0 1px 0 0 rgba(45, 63, 85, 0.6);
+  --ifm-navbar-height: 60px;
+
+  /* Footer */
+  --ifm-footer-background-color: var(--brand-950);
+
+  /* Sidebar */
+  --ifm-sidebar-width: 260px;
+
+  /* Typography */
+  --ifm-font-family-base: "Inter", "Segoe UI", system-ui, sans-serif;
+  --ifm-font-family-monospace:
+    "Aeonik Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --ifm-code-font-size: 90%;
+
+  /* Code blocks */
+  --docusaurus-highlighted-code-line-bg: rgba(59, 130, 246, 0.12);
+
+  /* TOC */
+  --ifm-toc-border-color: var(--brand-700);
+
+  /* Borders */
+  --ifm-table-border-color: var(--brand-700);
+  --ifm-hr-border-color: var(--brand-700);
+  --ifm-color-emphasis-300: var(--brand-700);
+
+  /* Text */
+  --ifm-font-color-base: #e2e8f0;
+  --ifm-color-content: #e2e8f0;
+  --ifm-color-content-secondary: #94a3b8;
+
+  --ifm-heading-color: #f8fafc;
+  --ifm-link-color: var(--brand-400);
+  --ifm-link-hover-color: var(--brand-300);
+
+  /* Cards / admonitions */
+  --ifm-alert-background-color-highlight: rgba(59, 130, 246, 0.08);
+}
+
+/* Aeonik Mono — self-hosted, same path as main site */
+@font-face {
+  font-family: "Aeonik Mono";
+  src: url("/fonts/aeonikmono-regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Navbar ───────────────────────────────────────────────── */
+
+.navbar {
+  border-bottom: 1px solid rgba(45, 63, 85, 0.6);
+}
+
+.navbar__title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+}
+
+.navbar-cta {
+  background: var(--brand-500);
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 6px 14px !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.navbar-cta:hover {
+  background: var(--brand-400) !important;
+  color: #fff !important;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+
+.menu {
+  background: var(--brand-950);
+}
+
+.menu__link--active {
+  color: var(--brand-400) !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.menu__link:hover {
+  color: var(--brand-300);
+  background: rgba(59, 130, 246, 0.06);
+}
+
+/* ── Code blocks ──────────────────────────────────────────── */
+
+code {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid var(--brand-700);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.88em;
+}
+
+pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.prism-code {
+  background: #0d1117 !important;
+  border: 1px solid var(--brand-700);
+  border-radius: 10px;
+}
+
+/* ── Tables ───────────────────────────────────────────────── */
+
+table thead tr {
+  background: var(--brand-800);
+}
+
+table tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.4);
+}
+
+/* ── Admonitions ──────────────────────────────────────────── */
+
+.alert--info {
+  --ifm-alert-background-color: rgba(59, 130, 246, 0.08);
+  --ifm-alert-border-color: var(--brand-500);
+  color: var(--brand-300);
+}
+
+.alert--warning {
+  --ifm-alert-background-color: rgba(251, 191, 36, 0.08);
+  --ifm-alert-border-color: #f59e0b;
+  color: #fcd34d;
+}
+
+.alert--danger {
+  --ifm-alert-background-color: rgba(239, 68, 68, 0.08);
+  --ifm-alert-border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.alert--success {
+  --ifm-alert-background-color: rgba(16, 185, 129, 0.08);
+  --ifm-alert-border-color: #10b981;
+  color: #6ee7b7;
+}
+
+/* ── Search ───────────────────────────────────────────────── */
+
+.navbar__search-input {
+  background: var(--brand-800);
+  border: 1px solid var(--brand-700);
+  border-radius: 8px;
+  color: var(--ifm-font-color-base);
+}
+
+.navbar__search-input::placeholder {
+  color: var(--ifm-color-content-secondary);
+}
+
+/* ── Breadcrumbs ──────────────────────────────────────────── */
+
+.breadcrumbs__item--active .breadcrumbs__link {
+  color: var(--brand-400);
+}
+
+/* ── TOC ──────────────────────────────────────────────────── */
+
+.table-of-contents__link:hover,
+.table-of-contents__link--active {
+  color: var(--brand-400);
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+
+.footer {
+  border-top: 1px solid var(--brand-700);
+}
+
+.footer__title {
+  color: #f8fafc;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.footer__link-item {
+  color: var(--ifm-color-content-secondary);
+}
+
+.footer__link-item:hover {
+  color: var(--brand-400);
+}
+
+/* ── Headings ─────────────────────────────────────────────── */
+
+.markdown h1:first-child {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #f8fafc;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Hero callout (used on intro page) ───────────────────── */
+
+.hero-callout {
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.06);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}

@@ -1,0 +1,117 @@
+---
+id: data-migration
+title: Data Migration
+sidebar_position: 12
+---
+
+# Data Migration
+
+This guide covers migrating data into Vectora: bulk document import, moving between Vectora instances, and exporting data.
+
+## Bulk document import
+
+### From a directory
+
+Use the CLI to index an entire folder:
+
+```bash
+vectora index ./docs --project proj_abc123 --recursive
+```
+
+Supported formats: `.pdf`, `.docx`, `.md`, `.txt`, `.csv`, `.xlsx`, `.py`, `.ts`, `.js`, and any plain-text file.
+
+### Via the REST API
+
+```bash
+# Upload a single document
+curl -X POST https://your-vectora.com/v1/documents \
+  -H "Authorization: Bearer vk_live_..." \
+  -F "project_id=proj_abc123" \
+  -F "file=@/path/to/report.pdf"
+```
+
+```python
+# Bulk upload with Python SDK
+from vectora import Vectora
+from pathlib import Path
+
+client = Vectora()
+
+for path in Path("./docs").rglob("*.md"):
+    with open(path, "rb") as f:
+        doc = client.documents.upload(
+            project_id="proj_abc123",
+            file=f,
+            filename=path.name,
+        )
+    print(f"✓ {path.name} ({doc.id})")
+```
+
+## Moving between Vectora instances
+
+### Export from source instance
+
+```bash
+# Export all projects and documents
+vectora export --output ./vectora-backup.tar.gz
+
+# Or export a specific project
+vectora export --project proj_abc123 --output ./project-backup.tar.gz
+```
+
+The archive contains:
+- Document metadata (not re-indexed embeddings — those are re-generated on import)
+- Conversation history
+- Project settings
+
+### Import into target instance
+
+```bash
+vectora import --input ./vectora-backup.tar.gz
+```
+
+:::note
+Embeddings are re-generated during import. Import time depends on the number of documents and your embedding provider's rate limits.
+:::
+
+## Migrating from other AI tools
+
+### From Notion AI / Confluence
+
+1. Export pages as Markdown from Notion/Confluence.
+2. Use bulk import to index Markdown files.
+
+### From ChatGPT (conversations)
+
+ChatGPT conversations are not structured data — they can't be imported directly. You can export conversations from ChatGPT as JSON and index them as context documents.
+
+### From a custom vector DB
+
+If you have embeddings in Pinecone, Weaviate, or another vector DB, Vectora does not import raw embeddings. Export your source documents and re-index them in Vectora.
+
+## GDPR data export
+
+Users can export their own account data from **Dashboard → Account → Export my data**. The download is a JSON file containing:
+
+- Profile information
+- Subscription history
+- License check log
+- API keys metadata (no secret keys)
+
+The export link expires after 5 minutes.
+
+## Database backup (self-hosted)
+
+```bash
+# Manual backup
+docker compose exec postgres pg_dump -U vectora vectora > backup-$(date +%Y%m%d).sql
+
+# Restore
+docker compose exec -T postgres psql -U vectora -d vectora < backup-20250315.sql
+```
+
+Schedule automated backups with cron:
+
+```cron
+0 3 * * * cd /home/ubuntu/vectora && docker compose exec -T postgres pg_dump -U vectora vectora > backups/$(date +\%Y\%m\%d).sql
+```
