@@ -40,6 +40,7 @@ import { getDefaultModel } from "@/lib/config/deployment-config";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { markAsNew, isNew, clearNew } from "@/lib/stores/new-thread-registry";
+import { safeRandomUUID } from "@/lib/utils/uuid";
 import {
   useBroadcastSync,
   BROADCAST_THREADS,
@@ -206,7 +207,7 @@ function SessionPage() {
       if (workspaceId) {
         void useWorkspacesStore.getState().setActive(workspaceId);
       }
-      const id = crypto.randomUUID();
+      const id = safeRandomUUID();
       markAsNew(id);
       goTo(id);
       setIsMobileSidebarOpen(false);

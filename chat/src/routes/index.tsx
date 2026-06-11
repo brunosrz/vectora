@@ -3,6 +3,7 @@ import { queryClient } from "../router";
 import { threadsQueryKey } from "@/lib/queries/threads";
 import { listThreads } from "@/lib/api/vectora-client";
 import { markAsNew } from "@/lib/stores/new-thread-registry";
+import { safeRandomUUID } from "@/lib/utils/uuid";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/")({
 
     // Nenhuma thread — gera um id local e redireciona, sem persistir no
     // backend ainda (só na primeira mensagem enviada, via StreamChat).
-    const id = crypto.randomUUID();
+    const id = safeRandomUUID();
     markAsNew(id);
     throw redirect({
       to: "/session/$threadId",
