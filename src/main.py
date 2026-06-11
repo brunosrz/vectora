@@ -280,6 +280,22 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Porta (mcp sse=8000, web/headless=8080)",
     )
+    server_p.add_argument(
+        "--ssl-certfile",
+        metavar="PEM",
+        default=None,
+        help=(
+            "[web/headless] Certificado TLS (PEM fullchain) — sobe o servidor em "
+            "https://. Ex.: gere com `tailscale cert <maquina>.<tailnet>.ts.net` "
+            "ou mkcert. Também via env SSL_CERTFILE."
+        ),
+    )
+    server_p.add_argument(
+        "--ssl-keyfile",
+        metavar="PEM",
+        default=None,
+        help="[web/headless] Chave privada TLS correspondente. Também via env SSL_KEYFILE.",
+    )
 
     # traces
     traces_p = sub.add_parser(
@@ -1246,10 +1262,33 @@ def run() -> None:
             port = args.port or 8080
             uvicorn_log_level = os.environ.get("VECTORA_UVICORN_LOG_LEVEL", "warning")
 
+            # TLS opcional — CLI tem prioridade; settings (env SSL_CERTFILE/
+            # SSL_KEYFILE ou ~/.vectora/.env) é o fallback. Com cert+key o
+            # uvicorn serve https:// — necessário para Secure Context
+            # (crypto.randomUUID etc.) ao acessar via IP de LAN/Tailscale.
+            ssl_certfile = getattr(args, "ssl_certfile", None)
+            ssl_keyfile = getattr(args, "ssl_keyfile", None)
+            if not ssl_certfile or not ssl_keyfile:
+                try:
+                    from src.settings import settings as _settings
+
+                    ssl_certfile = ssl_certfile or _settings.ssl_certfile
+                    ssl_keyfile = ssl_keyfile or _settings.ssl_keyfile
+                except Exception:
+                    pass
+            if bool(ssl_certfile) != bool(ssl_keyfile):
+                print(
+                    "❌ TLS requer certificado E chave: informe --ssl-certfile e "
+                    "--ssl-keyfile (ou SSL_CERTFILE/SSL_KEYFILE)."
+                )
+                sys.exit(1)
+            use_tls = bool(ssl_certfile and ssl_keyfile)
+
             app = create_app()
             logger.info(
-                "Iniciando Vectora %s server em http://%s:%d",
+                "Iniciando Vectora %s server em %s://%s:%d",
                 mode,
+                "https" if use_tls else "http",
                 args.host,
                 port,
             )
@@ -1262,6 +1301,8 @@ def run() -> None:
                 port=port,
                 log_level=uvicorn_log_level,
                 access_log=False,  # access logs já são filtrados via log_setup
+                ssl_certfile=ssl_certfile,
+                ssl_keyfile=ssl_keyfile,
             )
             # uvicorn.run() retorna após o lifespan completar o shutdown.
             # No Windows, threads não-daemon de libs externas (langsmith,

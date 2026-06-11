@@ -155,6 +155,29 @@ class Settings(BaseSettings):
     """
 
     # ============================================================================
+    # HTTPS / TLS — servidor web (opcional)
+    # ============================================================================
+
+    ssl_certfile: str | None = None
+    """Caminho do certificado TLS (PEM, fullchain) para servir o web server
+    em HTTPS.
+
+    `crypto.randomUUID`, clipboard, service worker e outras APIs do browser
+    exigem Secure Context — acessando o Vectora por IP de LAN/Tailscale via
+    http:// elas não existem. Com cert + key configurados, o uvicorn sobe
+    direto em https://.
+
+    Fontes de certificado comuns:
+      - Tailscale: ``tailscale cert <maquina>.<tailnet>.ts.net`` (Let's
+        Encrypt automático para o nome da tailnet, sem expor porta).
+      - mkcert: certificado local de desenvolvimento confiado na máquina.
+      - Let's Encrypt/certbot: para domínio público com porta 80/443.
+    """
+
+    ssl_keyfile: str | None = None
+    """Caminho da chave privada TLS (PEM) correspondente a ``ssl_certfile``."""
+
+    # ============================================================================
     # REDIS (complete)
     # ============================================================================
 
