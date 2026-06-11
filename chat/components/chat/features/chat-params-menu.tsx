@@ -21,6 +21,7 @@ import {
 import { useT } from "@/lib/i18n";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -38,9 +39,13 @@ export function ChatParamsMenu() {
     verbosity,
     reasoningEffort,
     fastMode,
+    historyLimit,
+    showToolCalls,
     setVerbosity,
     setReasoningEffort,
     setFastMode,
+    setHistoryLimit,
+    setShowToolCalls,
   } = useSettingsStore();
 
   const [open, setOpen] = useState(false);
@@ -136,6 +141,42 @@ export function ChatParamsMenu() {
               id="cp-fast-mode"
               checked={fastMode}
               onCheckedChange={setFastMode}
+            />
+          </div>
+
+          {/* Limite do histórico */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="cp-history-limit" className="text-xs">
+                {t("prefs.history_limit")}
+              </Label>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {historyLimit} {t("prefs.history_limit_unit")}
+              </span>
+            </div>
+            <Slider
+              id="cp-history-limit"
+              min={10}
+              max={200}
+              step={10}
+              value={[historyLimit]}
+              onValueChange={([v]) => setHistoryLimit(v)}
+              className="w-full"
+            />
+          </div>
+
+          {/* Mostrar tool calls */}
+          <div className="flex items-center justify-between gap-3">
+            <Label
+              htmlFor="cp-show-tool-calls"
+              className="text-xs font-normal cursor-pointer"
+            >
+              {t("settings.chat.show_tool_calls")}
+            </Label>
+            <Switch
+              id="cp-show-tool-calls"
+              checked={showToolCalls}
+              onCheckedChange={setShowToolCalls}
             />
           </div>
         </div>

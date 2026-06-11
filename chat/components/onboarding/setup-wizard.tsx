@@ -53,11 +53,16 @@ interface SetupWizardProps {
   onComplete: () => void;
 }
 
+/** Props comuns a todos os passos — apenas StepMode usa `onValidityChange`. */
+interface StepProps {
+  onValidityChange?: (valid: boolean) => void;
+}
+
 // ===========================================================================
 // Step components
 // ===========================================================================
 
-function StepWelcome() {
+function StepWelcome(_props: StepProps) {
   const t = useT();
   return (
     <div className="flex flex-col items-center gap-4 py-4">
@@ -81,7 +86,7 @@ const LANGUAGES: { code: Lang; label: string }[] = [
   { code: "pt", label: "Português (BR)" },
 ];
 
-function StepLanguage() {
+function StepLanguage(_props: StepProps) {
   const t = useT();
   const lang = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
@@ -143,7 +148,7 @@ interface ConfigSummary {
   vectora_token_masked: string;
 }
 
-function StepToken() {
+function StepToken(_props: StepProps) {
   const t = useT();
   const [config, setConfig] = useState<ConfigSummary | null>(null);
   const [tokenInput, setTokenInput] = useState("");
@@ -282,7 +287,13 @@ const SERVICE_FIELDS: ServiceFieldConfig[] = [
   },
 ];
 
-function ServiceConnectionCard({ config }: { config: ServiceFieldConfig }) {
+function ServiceConnectionCard({
+  config,
+  onConnectedChange,
+}: {
+  config: ServiceFieldConfig;
+  onConnectedChange?: (service: string, ok: boolean) => void;
+}) {
   const t = useT();
   const [value, setValue] = useState("");
   const [selfHosted, setSelfHosted] = useState(false);
@@ -297,6 +308,7 @@ function ServiceConnectionCard({ config }: { config: ServiceFieldConfig }) {
     if (!v) return;
     setTesting(true);
     setTestResult(null);
+    onConnectedChange?.(config.service, false);
     try {
       const body: Record<string, unknown> = {
         backend: config.service,
@@ -312,7 +324,9 @@ function ServiceConnectionCard({ config }: { config: ServiceFieldConfig }) {
         credentials: "include",
         body: JSON.stringify(body),
       });
-      setTestResult(await res.json());
+      const result = (await res.json()) as StorageTestResult;
+      setTestResult(result);
+      onConnectedChange?.(config.service, result.ok);
     } finally {
       setTesting(false);
     }
@@ -422,19 +436,45 @@ function ServiceConnectionCard({ config }: { config: ServiceFieldConfig }) {
   );
 }
 
-function StepMode() {
+function StepMode({ onValidityChange }: StepProps) {
   const t = useT();
   const [mode, setMode] = useState<"lite" | "complete">("lite");
   const [saving, setSaving] = useState(false);
+  const [connected, setConnected] = useState<Record<string, boolean>>({});
+  // Serviços já configurados via env (ex: docker-compose com Postgres/Redis/
+  // Qdrant embutidos) — o wizard não pede para configurá-los novamente.
+  const [preconfigured, setPreconfigured] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  const handleConnectedChange = useCallback((service: string, ok: boolean) => {
+    setConnected((prev) => ({ ...prev, [service]: ok }));
+  }, []);
+
+  useEffect(() => {
+    if (mode === "lite") {
+      onValidityChange?.(true);
+      return;
+    }
+    onValidityChange?.(
+      SERVICE_FIELDS.every(
+        (f) => preconfigured[f.service] || connected[f.service],
+      ),
+    );
+  }, [mode, connected, preconfigured, onValidityChange]);
 
   useEffect(() => {
     fetch("/admin/storage", { credentials: "include" })
       .then((r) => r.json())
-      .then((data) =>
-        setMode(
-          data?.config?.storage_mode === "complete" ? "complete" : "lite",
-        ),
-      )
+      .then((data) => {
+        const cfg = data?.config ?? {};
+        setMode(cfg.storage_mode === "complete" ? "complete" : "lite");
+        setPreconfigured({
+          postgres: !!cfg.postgres_configured,
+          redis: !!cfg.redis_configured,
+          qdrant: !!cfg.qdrant_configured,
+        });
+      })
       .catch(() => void 0);
   }, []);
 
@@ -493,16 +533,41 @@ function StepMode() {
       )}
       {mode === "complete" && (
         <div className="space-y-2 pt-2 border-t max-h-64 overflow-y-auto pr-1">
-          {SERVICE_FIELDS.map((cfg) => (
-            <ServiceConnectionCard key={cfg.service} config={cfg} />
-          ))}
+          {SERVICE_FIELDS.map((cfg) =>
+            preconfigured[cfg.service] ? (
+              <div
+                key={cfg.service}
+                className="flex items-center justify-between gap-2 rounded border px-2.5 py-2"
+              >
+                <p className="text-xs font-medium">{cfg.title}</p>
+                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {t("onboarding.mode_already_configured")}
+                </span>
+              </div>
+            ) : (
+              <ServiceConnectionCard
+                key={cfg.service}
+                config={cfg}
+                onConnectedChange={handleConnectedChange}
+              />
+            ),
+          )}
         </div>
       )}
+      {mode === "complete" &&
+        !SERVICE_FIELDS.every(
+          (f) => preconfigured[f.service] || connected[f.service],
+        ) && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            {t("onboarding.mode_validation_warning")}
+          </p>
+        )}
     </div>
   );
 }
 
-function StepWorkspace() {
+function StepWorkspace(_props: StepProps) {
   const t = useT();
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
@@ -516,7 +581,7 @@ function StepWorkspace() {
   );
 }
 
-function StepRag() {
+function StepRag(_props: StepProps) {
   const t = useT();
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
@@ -525,7 +590,7 @@ function StepRag() {
   );
 }
 
-function StepDone() {
+function StepDone(_props: StepProps) {
   const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center">
@@ -595,6 +660,11 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
 export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
   const t = useT();
   const [step, setStep] = useState(0);
+  const [valid, setValid] = useState(true);
+
+  useEffect(() => {
+    setValid(true);
+  }, [step]);
 
   const handleNext = useCallback(() => {
     if (step < TOTAL_STEPS - 1) {
@@ -631,7 +701,7 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <StepContent />
+        <StepContent onValidityChange={setValid} />
 
         <StepIndicator step={step} total={TOTAL_STEPS} />
 
@@ -657,7 +727,7 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
                 {t("onboarding.skip")}
               </Button>
             )}
-            <Button size="sm" onClick={handleNext} autoFocus>
+            <Button size="sm" onClick={handleNext} disabled={!valid} autoFocus>
               {isLastStep ? t("onboarding.finish") : t("onboarding.next")}
             </Button>
           </div>

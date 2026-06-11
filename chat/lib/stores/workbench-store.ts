@@ -159,6 +159,9 @@ interface WorkbenchState {
 
   getActiveTab: (threadId: string) => WorkbenchTab;
   setActiveTab: (threadId: string, tab: WorkbenchTab) => void;
+  /** Clique na nav-bar: troca para `tab` e abre; se `tab` já é a ativa e o
+   * painel está aberto, fecha (colapsa) o painel. */
+  selectTab: (threadId: string, tab: WorkbenchTab) => void;
 
   setSplitSize: (size: number) => void;
 
@@ -336,6 +339,19 @@ export const useWorkbenchStore = create<WorkbenchState>()(
             activeTabByThread: { ...s.activeTabByThread, [threadId]: tab },
             panelOpen: { ...s.panelOpen, [threadId]: true },
           })),
+
+        selectTab: (threadId, tab) =>
+          set((s) => {
+            const isOpen = Boolean(s.panelOpen[threadId]);
+            const current = get().getActiveTab(threadId);
+            if (isOpen && current === tab) {
+              return { panelOpen: { ...s.panelOpen, [threadId]: false } };
+            }
+            return {
+              activeTabByThread: { ...s.activeTabByThread, [threadId]: tab },
+              panelOpen: { ...s.panelOpen, [threadId]: true },
+            };
+          }),
 
         setSplitSize: (size) => set({ splitSize: size }),
 

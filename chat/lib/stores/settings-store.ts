@@ -84,6 +84,8 @@ export interface SettingsState {
   historyLimit: number;
   /** Instrução personalizada prefixada ao system prompt */
   customSystemPrompt: string;
+  /** Blocos de instrução de treinamento adicionais (um item por bloco) */
+  trainingInstructions: string[];
   /** Idioma da interface */
   language: Lang;
   /** Modo de permissão para ações destrutivas (R2) */
@@ -104,6 +106,7 @@ export interface SettingsState {
   setCustomThemeColors: (v: BaseThemeColors | null) => void;
   setHistoryLimit: (v: number) => void;
   setCustomSystemPrompt: (v: string) => void;
+  setTrainingInstructions: (v: string[]) => void;
   setLanguage: (v: Lang) => void;
   setPermissionMode: (v: PermissionMode) => void;
   setReasoningEffort: (v: ReasoningEffort) => void;
@@ -129,6 +132,7 @@ const DEFAULTS = {
   customThemeColors: null as BaseThemeColors | null,
   historyLimit: 50,
   customSystemPrompt: "",
+  trainingInstructions: [] as string[],
   language: "en" as Lang, // Sobrescrito pelo detectLanguage() no create()
   permissionMode: "ask" as PermissionMode,
   reasoningEffort: "medium" as ReasoningEffort,
@@ -168,6 +172,7 @@ export const useSettingsStore = create<SettingsState>()(
       setCustomThemeColors: (v) => set({ customThemeColors: v }),
       setHistoryLimit: (v) => set({ historyLimit: v }),
       setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
+      setTrainingInstructions: (v) => set({ trainingInstructions: v }),
       setLanguage: (v) => set({ language: v }),
       setPermissionMode: (v) => set({ permissionMode: v }),
       setReasoningEffort: (v) => set({ reasoningEffort: v }),
@@ -201,6 +206,7 @@ export const useSettingsStore = create<SettingsState>()(
         customThemeColors: state.customThemeColors,
         historyLimit: state.historyLimit,
         customSystemPrompt: state.customSystemPrompt,
+        trainingInstructions: state.trainingInstructions,
         language: state.language,
         permissionMode: state.permissionMode,
         reasoningEffort: state.reasoningEffort,

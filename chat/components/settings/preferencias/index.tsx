@@ -5,10 +5,10 @@
  *
  * Dialog de preferências do usuário. Acessível via Avatar → "Preferências".
  *
- * Abas:
- *   - Conta        — email, role, alterar senha
- *   - Preferências — tema, histórico, system prompt
- *   - Memória      — memórias salvas pelo agente
+ * Abas (nessa ordem):
+ *   - Geral   — tema, idioma, system prompt e treinamento
+ *   - Memória — memórias salvas pelo agente
+ *   - Conta   — email, role, alterar senha
  *
  * "Ambiente" (Envs/Skills/Plugins/Integrações) e "Administração" (root/admin)
  * são dialogs próprios — ver `EnvironmentDialog` e `AdminDialog`.
@@ -76,13 +76,13 @@ export function PreferenciasDialog() {
         >
           <TabsList className="flex-wrap h-auto gap-1 justify-start bg-transparent p-0 border-b rounded-none pb-2">
             <TabsTrigger value="preferencias" className="rounded-md text-xs">
-              Preferências
-            </TabsTrigger>
-            <TabsTrigger value="conta" className="rounded-md text-xs">
-              Conta
+              Geral
             </TabsTrigger>
             <TabsTrigger value="memoria" className="rounded-md text-xs">
               Memória
+            </TabsTrigger>
+            <TabsTrigger value="conta" className="rounded-md text-xs">
+              Conta
             </TabsTrigger>
           </TabsList>
 
@@ -91,11 +91,11 @@ export function PreferenciasDialog() {
               <TabsContent value="preferencias" className="mt-0">
                 <PreferenciasTab />
               </TabsContent>
-              <TabsContent value="conta" className="mt-0">
-                <ContaTab />
-              </TabsContent>
               <TabsContent value="memoria" className="mt-0">
                 <MemoriaTab />
+              </TabsContent>
+              <TabsContent value="conta" className="mt-0">
+                <ContaTab />
               </TabsContent>
             </Suspense>
           </div>

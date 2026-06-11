@@ -3,13 +3,12 @@
 /**
  * PreferenciasTab — preferências do usuário no Settings Dialog.
  *
- * - Tema: dark / light / system (next-themes + settings-store)
+ * - Tema: seletor unificado (sistema / claro / escuro / presets / customizada)
  * - Idioma: en / es / pt (settings-store + i18n)
- * - Limite de histórico de mensagens
- * - System prompt personalizado
+ * - System prompt personalizado + blocos de treinamento
  */
 
-import { Keyboard } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,8 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import {
   useSettingsStore,
@@ -35,7 +32,10 @@ import {
 } from "@/lib/theme/presets";
 import { useT } from "@/lib/i18n";
 
-const THEME_VALUES: Theme[] = ["system", "light", "dark"];
+/** Deriva o `Theme` (claro/escuro) a partir do id de um preset. */
+function themeForPreset(id: string): Theme {
+  return id.endsWith("-light") ? "light" : "dark";
+}
 
 const CUSTOM_COLOR_FIELDS: { key: keyof BaseThemeColors; labelKey: string }[] =
   [
@@ -55,16 +55,14 @@ export function PreferenciasTab() {
     themePreset,
     customThemeColors,
     language,
-    historyLimit,
     customSystemPrompt,
-    showToolCalls,
+    trainingInstructions,
     setTheme,
     setThemePreset,
     setCustomThemeColors,
     setLanguage,
-    setHistoryLimit,
     setCustomSystemPrompt,
-    setShowToolCalls,
+    setTrainingInstructions,
   } = useSettingsStore();
 
   const activeCustomColors = customThemeColors ?? DEFAULT_CUSTOM_COLORS;
@@ -76,36 +74,54 @@ export function PreferenciasTab() {
     setCustomThemeColors({ ...activeCustomColors, [key]: value });
   };
 
+  // Seletor unificado de tema: "system" | "custom" | id de THEME_PRESETS.
+  // "default" (sentinela de "sem preset, usa o tema base") é tratado como "system".
+  const selectedTheme =
+    themePreset === "custom"
+      ? "custom"
+      : themePreset === "default"
+        ? "system"
+        : themePreset;
+
+  const handleThemeChange = (value: string) => {
+    if (value === "custom") {
+      setThemePreset("custom");
+      return;
+    }
+    if (value === "system") {
+      setTheme("system");
+      setThemePreset("default");
+      return;
+    }
+    setTheme(themeForPreset(value));
+    setThemePreset(value);
+  };
+
+  const handleAddTrainingBlock = () => {
+    setTrainingInstructions([...trainingInstructions, ""]);
+  };
+
+  const handleTrainingBlockChange = (index: number, value: string) => {
+    setTrainingInstructions(
+      trainingInstructions.map((block, i) => (i === index ? value : block)),
+    );
+  };
+
+  const handleRemoveTrainingBlock = (index: number) => {
+    setTrainingInstructions(trainingInstructions.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="space-y-6">
-      {/* Tema */}
+      {/* Tema — seletor unificado (sistema, presets claros/escuros, custom) */}
       <div className="space-y-2">
         <Label htmlFor="theme">{t("prefs.theme")}</Label>
-        <Select value={theme} onValueChange={(v) => setTheme(v as Theme)}>
+        <Select value={selectedTheme} onValueChange={handleThemeChange}>
           <SelectTrigger id="theme">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {THEME_VALUES.map((value) => (
-              <SelectItem key={value} value={value}>
-                {t(`prefs.theme.${value}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Paleta de cores — presets inspirados em temas do VS Code + custom */}
-      <div className="space-y-2">
-        <Label htmlFor="theme-palette">{t("prefs.theme_palette")}</Label>
-        <Select value={themePreset} onValueChange={setThemePreset}>
-          <SelectTrigger id="theme-palette">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">
-              {t("prefs.theme_palette.default")}
-            </SelectItem>
+            <SelectItem value="system">{t("prefs.theme.system")}</SelectItem>
             {THEME_PRESETS.map((preset) => (
               <SelectItem key={preset.id} value={preset.id}>
                 {preset.label}
@@ -164,28 +180,6 @@ export function PreferenciasTab() {
         </Select>
       </div>
 
-      {/* Limite de histórico */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="history-limit">{t("prefs.history_limit")}</Label>
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {historyLimit} {t("prefs.history_limit_unit")}
-          </span>
-        </div>
-        <Slider
-          id="history-limit"
-          min={10}
-          max={200}
-          step={10}
-          value={[historyLimit]}
-          onValueChange={([v]) => setHistoryLimit(v)}
-          className="w-full"
-        />
-        <p className="text-xs text-muted-foreground">
-          {t("prefs.history_limit_help")}
-        </p>
-      </div>
-
       {/* System prompt personalizado */}
       <div className="space-y-2">
         <Label htmlFor="custom-prompt">{t("prefs.custom_prompt")}</Label>
@@ -202,42 +196,44 @@ export function PreferenciasTab() {
         </p>
       </div>
 
-      {/* Ferramentas */}
-      <div className="space-y-3">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {t("settings.chat.tools_section")}
-        </p>
-
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <Label
-              htmlFor="show-tool-calls"
-              className="text-sm font-normal cursor-pointer"
-            >
-              {t("settings.chat.show_tool_calls")}
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              {t("settings.chat.show_tool_calls_hint")}
-            </p>
-          </div>
-          <Switch
-            id="show-tool-calls"
-            checked={showToolCalls}
-            onCheckedChange={setShowToolCalls}
-          />
+      {/* Treinamento — blocos de instrução adicionais */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>{t("prefs.training")}</Label>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            onClick={handleAddTrainingBlock}
+          >
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            {t("prefs.training.add")}
+          </Button>
         </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-          onClick={() =>
-            window.dispatchEvent(new CustomEvent("open-shortcuts"))
-          }
-        >
-          <Keyboard className="w-4 h-4" />
-          {t("settings.chat.keyboard_shortcuts")}
-        </Button>
+        <p className="text-xs text-muted-foreground">
+          {t("prefs.training_help")}
+        </p>
+        {trainingInstructions.map((block, index) => (
+          <div key={index} className="flex items-start gap-2">
+            <Textarea
+              placeholder={t("prefs.training.placeholder")}
+              value={block}
+              onChange={(e) => handleTrainingBlockChange(index, e.target.value)}
+              rows={3}
+              className="resize-none text-sm"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-muted-foreground hover:text-destructive shrink-0"
+              onClick={() => handleRemoveTrainingBlock(index)}
+              title={t("prefs.training.remove")}
+              aria-label={t("prefs.training.remove")}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        ))}
       </div>
     </div>
   );

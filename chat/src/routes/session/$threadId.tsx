@@ -1,10 +1,13 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Header } from "@/components/header/header";
 import { ChatInterface } from "@/components/chat/chat-interface";
-import { WorkbenchPanel } from "@/components/workbench/workbench-panel";
+import {
+  WorkbenchContent,
+  WorkbenchNavBar,
+} from "@/components/workbench/workbench-panel";
 import { HorizontalSplit } from "@/components/layout/horizontal-split";
 import { LicenseBanner } from "@/components/layout/license-banner";
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog";
@@ -172,14 +175,6 @@ function SessionPage() {
   const [agentConfig, setAgentConfig] = useState<AgentConfig>(() => ({
     model: getDefaultModel(),
   }));
-
-  // Botão "Ver atalhos de teclado" do Settings → Preferências dispara este
-  // evento para abrir o dialog de atalhos sem acoplar o Settings ao state local.
-  useEffect(() => {
-    const handler = () => setShowShortcutsDialog(true);
-    window.addEventListener("open-shortcuts", handler);
-    return () => window.removeEventListener("open-shortcuts", handler);
-  }, []);
 
   // ── Navegação ─────────────────────────────────────────────────────────────
   const goTo = useCallback(
@@ -361,39 +356,46 @@ function SessionPage() {
 
         {/* Área principal — split ocupa altura total para que o painel do
             workbench (right) vá do topo ao rodapé, como a sidebar; o Header
-            fica restrito à coluna do chat (left). */}
-        <HorizontalSplit
-          className="flex-1 min-w-0"
-          showRight={hydrated}
-          rightCollapsed={!workbenchOpen}
-          rightSize={splitSize}
-          onResize={setSplitSize}
-          left={
-            <div className="flex flex-col h-full min-w-0 overflow-visible">
-              <Header
-                showToolCalls={showToolCalls}
-                onToggleToolCalls={() => setShowToolCalls((v) => !v)}
-                onShowShortcuts={() => setShowShortcutsDialog(true)}
-                onOpenSidebar={() => setIsMobileSidebarOpen(true)}
-              />
-              <div className="flex-1 min-h-0">
-                <ChatInterface
-                  threadId={threadId}
+            fica restrito à coluna do chat (left). A nav-bar do workbench
+            (faixa de 48px, sempre visível) fica fora do split, à direita —
+            não é redimensionável; só o painel de conteúdo é. */}
+        <div className="flex-1 min-w-0 flex h-full">
+          <HorizontalSplit
+            className="flex-1 min-w-0"
+            showRight={hydrated && workbenchOpen}
+            rightSize={splitSize}
+            onResize={setSplitSize}
+            left={
+              <div className="flex flex-col h-full min-w-0 overflow-visible">
+                <Header
                   showToolCalls={showToolCalls}
-                  agentConfig={agentConfig}
-                  onAgentConfigChange={setAgentConfig}
-                  onThreadUpdate={handleThreadUpdate}
-                  onThreadNotFound={() => void navigate({ to: "/" })}
-                  inputLocked={inputLocked}
-                  isNewThread={isNew(threadId)}
+                  onToggleToolCalls={() => setShowToolCalls((v) => !v)}
+                  onShowShortcuts={() => setShowShortcutsDialog(true)}
+                  onOpenSidebar={() => setIsMobileSidebarOpen(true)}
                 />
+                <div className="flex-1 min-h-0">
+                  <ChatInterface
+                    threadId={threadId}
+                    showToolCalls={showToolCalls}
+                    agentConfig={agentConfig}
+                    onAgentConfigChange={setAgentConfig}
+                    onThreadUpdate={handleThreadUpdate}
+                    onThreadNotFound={() => void navigate({ to: "/" })}
+                    inputLocked={inputLocked}
+                    isNewThread={isNew(threadId)}
+                  />
+                </div>
               </div>
-            </div>
-          }
-          right={
-            <WorkbenchPanel threadId={threadId} onAddToContext={pushMention} />
-          }
-        />
+            }
+            right={
+              <WorkbenchContent
+                threadId={threadId}
+                onAddToContext={pushMention}
+              />
+            }
+          />
+          <WorkbenchNavBar threadId={threadId} />
+        </div>
       </div>
 
       {/* Wizard de primeiro acesso — aparece uma vez por usuário */}

@@ -186,6 +186,11 @@ prefs.history_limit_help,"Maximum number of messages displayed per thread (defau
 prefs.custom_prompt,Custom instruction,Instrucción personalizada,Instrução personalizada
 prefs.custom_prompt_placeholder,"E.g.: Always respond in bullet points. Be concise.","Ej: Responde siempre con viñetas. Sé conciso.","Ex: Responda sempre em bullet points. Seja conciso."
 prefs.custom_prompt_help,"Text prefixed to the agent's system prompt in all conversations. Leave blank to use default behavior.","Texto prefijado al prompt del sistema. Déjelo en blanco para usar el comportamiento predeterminado.","Texto prefixado ao system prompt do agente. Deixe em branco para usar o comportamento padrão."
+prefs.training,Training,Entrenamiento,Treinamento
+prefs.training_help,"Add separate instruction blocks to further customize the agent's behavior, like additional memories.","Agregue bloques de instrucciones separados para personalizar aún más el comportamiento del agente, como memorias adicionales.","Adicione blocos de instruções separados para personalizar ainda mais o comportamento do agente, como memórias adicionais."
+prefs.training.add,Add block,Agregar bloque,Adicionar bloco
+prefs.training.placeholder,"E.g.: When writing SQL, always use lowercase keywords.","Ej: Al escribir SQL, usa siempre palabras clave en minúsculas.","Ex: Ao escrever SQL, use sempre palavras-chave em minúsculas."
+prefs.training.remove,Remove block,Quitar bloque,Remover bloco
 prefs.language,Language,Idioma,Idioma
 prefs.language.en,English,English,English
 prefs.language.es,Español,Español,Español
@@ -432,6 +437,8 @@ onboarding.mode_self_hosted,Self-hosted (allow Vectora to start this service),Au
 onboarding.mode_start_command_placeholder,Start command (e.g. docker compose up -d postgres),Comando de inicio (ej: docker compose up -d postgres),Comando de start (ex: docker compose up -d postgres)
 onboarding.mode_test,Test connection,Probar conexión,Testar conexão
 onboarding.mode_save,Save,Guardar,Salvar
+onboarding.mode_validation_warning,"Test the connection for PostgreSQL, Redis and Qdrant successfully before continuing.","Prueba la conexión de PostgreSQL, Redis y Qdrant con éxito antes de continuar.","Teste a conexão de PostgreSQL, Redis e Qdrant com sucesso antes de continuar."
+onboarding.mode_already_configured,Already configured,Ya configurado,Já configurado
 onboarding.workspace_body,Workspaces are folders on your machine that Vectora can access when you grant trust.,Los espacios de trabajo son carpetas en tu máquina a las que Vectora puede acceder cuando les das confianza.,Workspaces são pastas no seu computador que o Vectora pode acessar quando você concede confiança.
 onboarding.workspace_bullet_1,Add a folder in the Workspace selector in the chat composer.,Agrega una carpeta en el selector de workspace del compositor.,Adicione uma pasta no seletor de workspace no composer do chat.
 onboarding.workspace_bullet_2,Vectora can read and write files only inside trusted folders.,Vectora solo puede leer y escribir archivos dentro de carpetas de confianza.,O Vectora só lê e escreve dentro de pastas confiáveis.
@@ -505,6 +512,11 @@ effort.high,High,Alta,Alto
 effort.max,Max,Máx,Max
 effort.fast_mode,Fast mode,Modo rápido,Modo rápido
 effort.fast_mode_desc,Disable reasoning for minimum latency,Desactiva el razonamiento para mínima latencia,Desliga o raciocínio para latência mínima
+# settings.chat.verbosity — seletor de verbosidade no menu de parâmetros de geração
+settings.chat.verbosity,Verbosity,Verbosidad,Verbosidade
+settings.chat.verbosity.concise,Concise,Conciso,Conciso
+settings.chat.verbosity.normal,Normal,Normal,Normal
+settings.chat.verbosity.detailed,Detailed,Detallado,Detalhado
 # =============================================================================
 # Command bar (R1)
 # =============================================================================

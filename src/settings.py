@@ -780,6 +780,8 @@ AVAILABLE_MODELS: dict[str, list[str]] = {
         "o4-mini",
     ],
     "anthropic": [
+        # Geração mais recente
+        "claude-fable-5",
         # Claude 4 — geração atual
         "claude-opus-4-7",
         "claude-sonnet-4-6",
@@ -819,7 +821,8 @@ MODEL_CONTEXT_WINDOWS: dict[str, int] = {
     "gpt-4.1": 1_000_000,
     "o3": 200_000,
     "o4-mini": 200_000,
-    # Anthropic Claude 4 — todos 200k
+    # Anthropic — Claude Fable 5 e família Claude 4, todos 200k
+    "claude-fable-5": 200_000,
     "claude-opus-4-7": 200_000,
     "claude-sonnet-4-6": 200_000,
     "claude-haiku-4-5": 200_000,

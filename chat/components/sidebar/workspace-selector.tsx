@@ -19,11 +19,18 @@ import {
   Check,
   ChevronDown,
   Cloud,
+  Download,
+  FileText,
   FolderGit2,
   FolderOpen,
+  Image as ImageIcon,
+  Monitor,
+  Music,
   Plus,
   Server,
   ShieldCheck,
+  Video,
+  type LucideIcon,
 } from "lucide-react";
 
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -34,6 +41,55 @@ import { WorkspaceTrustDialog } from "./workspace-trust-dialog";
 
 interface WorkspaceSelectorProps {
   compact?: boolean;
+}
+
+/**
+ * Pastas especiais do sistema (Windows/macOS/Linux, en/pt-BR) com ícones e
+ * cores que lembram o gerenciador de arquivos do SO — facilita reconhecer
+ * "Área de Trabalho", "Downloads", "Imagens" etc. de relance.
+ */
+const SPECIAL_FOLDER_ICONS: Record<
+  string,
+  { icon: LucideIcon; className: string }
+> = {
+  desktop: { icon: Monitor, className: "text-sky-500" },
+  "área de trabalho": { icon: Monitor, className: "text-sky-500" },
+  "area de trabalho": { icon: Monitor, className: "text-sky-500" },
+  documents: { icon: FileText, className: "text-blue-500" },
+  documentos: { icon: FileText, className: "text-blue-500" },
+  downloads: { icon: Download, className: "text-emerald-500" },
+  pictures: { icon: ImageIcon, className: "text-pink-500" },
+  imagens: { icon: ImageIcon, className: "text-pink-500" },
+  fotos: { icon: ImageIcon, className: "text-pink-500" },
+  videos: { icon: Video, className: "text-red-500" },
+  vídeos: { icon: Video, className: "text-red-500" },
+  music: { icon: Music, className: "text-orange-500" },
+  música: { icon: Music, className: "text-orange-500" },
+  músicas: { icon: Music, className: "text-orange-500" },
+  musicas: { icon: Music, className: "text-orange-500" },
+};
+
+function getSpecialFolderIcon(name: string) {
+  return SPECIAL_FOLDER_ICONS[name.trim().toLowerCase()];
+}
+
+/** Ícone do workspace: pasta especial do SO > repositório git > pasta genérica. */
+function WorkspaceFolderIcon({
+  workspace,
+  className,
+}: {
+  workspace: { name: string; is_git_repo: boolean };
+  className: string;
+}) {
+  const special = getSpecialFolderIcon(workspace.name);
+  if (special) {
+    const Icon = special.icon;
+    return <Icon className={`${className} ${special.className}`} />;
+  }
+  if (workspace.is_git_repo) {
+    return <FolderGit2 className={`${className} text-primary`} />;
+  }
+  return <FolderOpen className={`${className} text-muted-foreground`} />;
 }
 
 export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
@@ -84,9 +140,10 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
           title={active?.cwd ?? t("workspace.select_title")}
           aria-expanded={open}
         >
-          {active?.is_git_repo ? (
-            <FolderGit2
-              className={`shrink-0 text-primary ${compact ? "w-3.5 h-3.5" : "w-4 h-4"}`}
+          {active ? (
+            <WorkspaceFolderIcon
+              workspace={active}
+              className={`shrink-0 ${compact ? "w-3.5 h-3.5" : "w-4 h-4"}`}
             />
           ) : (
             <FolderOpen
@@ -153,10 +210,11 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
                     <Server className="w-4 h-4 shrink-0 text-sky-500" />
                   ) : w.transport === "codespace" ? (
                     <Cloud className="w-4 h-4 shrink-0 text-violet-500" />
-                  ) : w.is_git_repo ? (
-                    <FolderGit2 className="w-4 h-4 shrink-0 text-muted-foreground" />
                   ) : (
-                    <FolderOpen className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    <WorkspaceFolderIcon
+                      workspace={w}
+                      className="w-4 h-4 shrink-0"
+                    />
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium text-foreground">

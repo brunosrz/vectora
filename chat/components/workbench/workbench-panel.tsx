@@ -1,8 +1,14 @@
 "use client";
 
 /**
- * WorkbenchPanel — container do painel lateral direito multi-aba. O terminal
- * é uma das abas, junto a Arquivos, Diff e Plano.
+ * Painel lateral direito do workbench, dividido em 2 partes (estilo VS Code):
+ *
+ * - `WorkbenchNavBar` — faixa estreita (48px) sempre visível, com os ícones
+ *   das abas (Arquivos, Diff, Plano, Terminal). Não é redimensionável.
+ *   Clicar numa aba já ativa com o painel aberto colapsa o painel; clicar em
+ *   outra aba (ou com o painel fechado) troca/abre.
+ * - `WorkbenchContent` — painel de conteúdo da aba ativa, redimensionável,
+ *   só renderizado quando o painel está aberto (`isOpen`).
  *
  * Cada aba mostra um chip de contagem lido do cache do workbench-store (não
  * dispara fetch só para contar):
@@ -15,9 +21,14 @@
  * evitar divergência SSR/cliente.
  */
 
-import { FileText, FolderTree, GitCompare, TerminalSquare } from "lucide-react";
+import {
+  FileText,
+  FolderTree,
+  GitCompare,
+  TerminalSquare,
+  X,
+} from "lucide-react";
 import { useT } from "@/lib/i18n";
-import { WorkbenchToggle } from "@/components/workbench/workbench-toggle";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import {
@@ -76,14 +87,13 @@ function useTabBadge(
   }
 }
 
-function TabButton({
+function NavTabButton({
   tab,
   active,
   threadId,
   workspaceId,
   hydrated,
   onSelect,
-  label,
 }: {
   tab: WorkbenchTab;
   active: boolean;
@@ -91,7 +101,6 @@ function TabButton({
   workspaceId: string;
   hydrated: boolean;
   onSelect: () => void;
-  label: string;
 }) {
   const t = useT();
   const badge = useTabBadge(threadId, workspaceId, tab, hydrated);
@@ -104,112 +113,103 @@ function TabButton({
   );
   const showPending = hydrated && pending && !active;
   const Icon = TAB_ICON[tab];
+  const label = t(`workbench.tab.${tab}`);
   return (
     <button
       onClick={onSelect}
-      className={`flex items-center justify-start gap-1.5 px-2 py-1 rounded-md text-xs select-none transition-colors w-full ${
+      title={badge ? `${label} (${badge})` : label}
+      className={`relative flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
         active
-          ? "bg-background text-foreground shadow-sm"
+          ? "bg-muted text-foreground"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
       }`}
-      title={label}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0" />
-      <span className="truncate">{label}</span>
+      <Icon className="w-4 h-4" />
       {showPending && (
         <span
-          className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+          className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
           aria-label={t("workbench.tab.pending")}
           title={t("workbench.tab.pending")}
         />
       )}
-      {badge &&
-        (tab === "terminal" ? (
-          // Contagem de PTYs — texto pequeno sem fundo/padding para não
-          // competir visualmente com o label da aba.
-          <span className="text-[10px] text-muted-foreground/70 leading-none tabular-nums">
-            {badge}
-          </span>
-        ) : (
-          <span
-            className={`ml-0.5 inline-flex items-center justify-center min-w-[1.25rem] h-4 px-1 rounded-full text-[10px] font-mono leading-none ${
-              tab === "diff"
-                ? "bg-amber-500/15 text-amber-500"
-                : "bg-primary/15 text-primary"
-            }`}
-          >
-            {badge}
-          </span>
-        ))}
+      {badge && (
+        <span
+          className={`absolute -bottom-1 -right-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-mono leading-none ${
+            tab === "diff"
+              ? "bg-amber-500/15 text-amber-500"
+              : "bg-primary/15 text-primary"
+          }`}
+        >
+          {badge}
+        </span>
+      )}
     </button>
   );
 }
 
-export function WorkbenchPanel({
-  threadId,
-  onAddToContext,
-}: WorkbenchPanelProps) {
-  const t = useT();
+/**
+ * Faixa estreita (48px), sempre visível, com os ícones de cada aba —
+ * equivalente à Activity Bar do VS Code. Não é redimensionável.
+ */
+export function WorkbenchNavBar({ threadId }: { threadId: string }) {
   const hydrated = useHydrated();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
-  const setActiveTab = useWorkbenchStore((s) => s.setActiveTab);
   const isOpen = useWorkbenchStore((s) => s.isOpen(threadId));
+  const selectTab = useWorkbenchStore((s) => s.selectTab);
+
+  return (
+    <div className="h-full w-12 shrink-0 flex flex-col items-center bg-background border-l border-border/60">
+      <div className="flex flex-col items-center gap-1 py-2">
+        {WORKBENCH_TABS.map((tab) => (
+          <NavTabButton
+            key={tab}
+            tab={tab}
+            active={hydrated && isOpen && tab === activeTab}
+            threadId={threadId}
+            workspaceId={wsId}
+            hydrated={hydrated}
+            onSelect={() => selectTab(threadId, tab)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Conteúdo da aba ativa — redimensionável, montado apenas quando o painel
+ * está aberto (`isOpen`). Vive ao lado (à esquerda, na ordem visual) da
+ * `WorkbenchNavBar`.
+ */
+export function WorkbenchContent({
+  threadId,
+  onAddToContext,
+}: WorkbenchPanelProps) {
+  const t = useT();
+  const workspace = useWorkspacesStore((s) => s.getActive());
+  const wsId = workspace?.id ?? "";
+  const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
+  const setPanelOpen = useWorkbenchStore((s) => s.setPanelOpen);
 
   // A.17 — file watcher SSE: dispara markPending quando arquivos mudam
   useWorkspaceWatcher(wsId || undefined);
 
-  // Colapsado: faixa estreita (mesmo tratamento da sidebar esquerda) com a
-  // borda divisória, o botão de abrir e os ícones de cada aba na vertical.
-  if (!isOpen) {
-    return (
-      <div className="h-full flex flex-col items-center bg-background border-l border-border/60">
-        <div className="h-16 w-full flex items-center justify-center border-b border-border/60">
-          <WorkbenchToggle />
-        </div>
-        <div className="flex flex-col items-center gap-1 py-2">
-          {WORKBENCH_TABS.map((tab) => {
-            const Icon = TAB_ICON[tab];
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(threadId, tab)}
-                title={t(`workbench.tab.${tab}`)}
-                className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              >
-                <Icon className="w-4 h-4" />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full flex flex-col bg-background border-l border-border/60">
-      {/* Barra de abas — grid 2x2 por padrão; vira 1 linha (4 colunas) quando
-          o painel é largo o suficiente. Nunca fica "3 em cima + 1 sozinho".
-          Altura h-16 alinha esta barra com o header do chat e a sidebar. */}
-      <div className="@container flex h-16 items-center gap-0.5 px-1.5 border-b border-border/60 bg-muted/20">
-        <div className="grid grid-cols-2 @lg:grid-cols-4 gap-0.5 flex-1 min-w-0">
-          {WORKBENCH_TABS.map((tab) => (
-            <TabButton
-              key={tab}
-              tab={tab}
-              active={tab === activeTab}
-              threadId={threadId}
-              workspaceId={wsId}
-              hydrated={hydrated}
-              onSelect={() => setActiveTab(threadId, tab)}
-              label={t(`workbench.tab.${tab}`)}
-            />
-          ))}
-        </div>
-        <div className="shrink-0">
-          <WorkbenchToggle />
-        </div>
+      <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-muted/20">
+        <span className="text-sm font-medium">
+          {t(`workbench.tab.${activeTab}`)}
+        </span>
+        <button
+          onClick={() => setPanelOpen(threadId, false)}
+          title={t("workbench.toggle")}
+          aria-label={t("workbench.toggle")}
+          className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Body — só monta a aba ativa (poupa recurso) */}
