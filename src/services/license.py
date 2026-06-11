@@ -101,6 +101,13 @@ def _write_cache(info: LicenseStatusInfo) -> None:
     CACHE_PATH.write_text(json.dumps(info.to_dict(), indent=2), encoding="utf-8")
 
 
+def clear_license_cache() -> None:
+    """Remove o cache local — chamado ao trocar o token para que o status
+    antigo não mascare a validação do token novo."""
+    with contextlib.suppress(OSError):
+        CACHE_PATH.unlink(missing_ok=True)
+
+
 def _cache_is_fresh(payload: dict, ttl: timedelta) -> bool:
     try:
         validated_at = datetime.fromisoformat(payload["validated_at"])
@@ -114,9 +121,37 @@ def _cache_is_fresh(payload: dict, ttl: timedelta) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def load_token_from_config() -> str | None:
+    """Lê o token persistido em ``~/.vectora/config.toml`` (``[license].token``).
+
+    Fonte de verdade quando a env var não está setada — permite que o token
+    salvo pela UI (setup wizard / admin) sobreviva a reinícios sem exigir
+    export manual de ``VECTORA_TOKEN``.
+    """
+    if not CONFIG_PATH.is_file():
+        return None
+    try:
+        import tomllib
+
+        data = tomllib.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        logger.warning("license: config.toml ilegível — ignorando")
+        return None
+    token = str(data.get("license", {}).get("token", "")).strip()
+    return token or None
+
+
 def _get_token() -> str | None:
     token = os.getenv("VECTORA_TOKEN", "").strip()
-    return token or None
+    if token:
+        return token
+    token = load_token_from_config()
+    if token:
+        # Espelha no environ para que consumidores existentes (ex: /license/portal)
+        # continuem lendo de VECTORA_TOKEN.
+        os.environ["VECTORA_TOKEN"] = token
+        return token
+    return None
 
 
 def _get_license_url() -> str:
@@ -149,11 +184,31 @@ async def _validate_remote(token: str) -> LicenseStatusInfo:
             )
         resp.raise_for_status()
         data = resp.json()
+
+    # A edge function `validate-license` responde 200 com
+    # ``{valid: bool, reason, tier, status?, days_remaining?, expires_at?}``.
+    # ``valid: false`` é falha de licença mesmo com HTTP 200 — sem este check
+    # um token inexistente passava como "active" (bug do parsing antigo).
+    if "valid" in data and not data["valid"]:
+        reason = str(data.get("reason", "invalid"))
+        if reason in ("not_found", "invalid"):
+            raise LicenseError(
+                "Token Vectora inválido. Verifique em "
+                "https://vectora.company/dashboard."
+            )
+        raise LicenseError(
+            "Licença expirada ou cancelada. Renove em https://vectora.company/pricing."
+        )
+
+    status = data.get("status")
+    if status is None:
+        # Compat com a resposta enxuta {valid, reason, tier}.
+        status = "trial" if data.get("reason") == "trialing" else "active"
     return LicenseStatusInfo(
-        tier=data.get("tier", "plus"),
-        status=data.get("status", "active"),
+        tier=data.get("tier") or "plus",
+        status=status,
         days_remaining=int(data.get("days_remaining", 0)),
-        expires_at=data.get("expires_at", ""),
+        expires_at=data.get("expires_at", "") or "",
         validated_at=datetime.now(UTC).isoformat(),
         cached=False,
     )
@@ -164,7 +219,7 @@ async def _validate_remote(token: str) -> LicenseStatusInfo:
 # ---------------------------------------------------------------------------
 
 
-async def validate_license_async() -> LicenseStatusInfo:
+async def validate_license_async(*, force: bool = False) -> LicenseStatusInfo:
     """Valida a licença e devolve o status atual.
 
     Política de cache:
@@ -173,6 +228,9 @@ async def validate_license_async() -> LicenseStatusInfo:
       por network, devolve o cache (modo offline graceful, até 48h).
     - Se nada respondeu desde o boot e o cache é >48h, levanta
       ``LicenseError``.
+
+    ``force=True`` ignora o cache fresco e revalida no servidor — usado ao
+    salvar um token novo (setup wizard) e pelo loop periódico de 6h.
 
     ``VECTORA_LICENSE_BYPASS=1`` pula a validação inteira (modo dev).
     """
@@ -195,7 +253,9 @@ async def validate_license_async() -> LicenseStatusInfo:
         )
 
     cache = _read_cache()
-    cache_fresh = cache is not None and _cache_is_fresh(cache, CACHE_TTL_ONLINE)
+    cache_fresh = (
+        not force and cache is not None and _cache_is_fresh(cache, CACHE_TTL_ONLINE)
+    )
 
     if cache_fresh and cache is not None:
         return LicenseStatusInfo(

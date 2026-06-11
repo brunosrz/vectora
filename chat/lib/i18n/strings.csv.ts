@@ -428,6 +428,12 @@ onboarding.token_hide,Hide,Ocultar,Ocultar
 onboarding.token_save,Save token,Guardar token,Salvar token
 onboarding.token_saved,Saved!,¡Guardado!,Salvo!
 onboarding.token_hint,Get your token at,Obtén tu token en,Obtenha seu token em
+onboarding.token_mode_token,I have a token,Tengo un token,Tenho um token
+onboarding.token_mode_login,Sign in with account,Entrar con la cuenta,Entrar com a conta
+onboarding.token_login_hint,"Sign in with your vectora.company account — your license token is fetched and activated automatically.","Inicia sesión con tu cuenta de vectora.company — tu token de licencia se obtiene y activa automáticamente.","Entre com sua conta vectora.company — seu token de licença é obtido e ativado automaticamente."
+onboarding.token_connect,Sign in and connect,Iniciar sesión y conectar,Entrar e conectar
+onboarding.token_valid,License valid,Licencia válida,Licença válida
+onboarding.token_invalid,Invalid token or license.,Token o licencia inválidos.,Token ou licença inválidos.
 onboarding.mode_body,"Choose how Vectora stores its data. ""Lite"" uses local SQLite + LanceDB and works out of the box. ""Complete"" uses PostgreSQL + Qdrant + Redis — for self-hosted or third-party services (Supabase, Upstash, Qdrant Cloud, etc).","Elige cómo Vectora almacena sus datos. ""Lite"" usa SQLite + LanceDB local y funciona sin configuración. ""Completo"" usa PostgreSQL + Qdrant + Redis — para servicios autoalojados o de terceros (Supabase, Upstash, Qdrant Cloud, etc).","Escolha como o Vectora armazena seus dados. ""Lite"" usa SQLite + LanceDB local e funciona sem configuração. ""Completo"" usa PostgreSQL + Qdrant + Redis — para serviços self-hosted ou terceirizados (Supabase, Upstash, Qdrant Cloud etc)."
 onboarding.mode_lite_title,Lite (recommended),Lite (recomendado),Lite (recomendado)
 onboarding.mode_lite_desc,SQLite + LanceDB — local and ready to use.,SQLite + LanceDB — local y listo para usar.,SQLite + LanceDB — local e pronto para usar.

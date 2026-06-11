@@ -56,17 +56,36 @@ Deno.serve(async (req) => {
     .single();
 
   let result: "valid" | "invalid" | "expired" | "not_found" = "invalid";
+  // Campos extras consumidos pelo agente (banner de trial, countdown).
+  let status: "active" | "trial" | "expired" | "revoked" | "unknown" =
+    "unknown";
+  let expiresAt = "";
+  let daysRemaining = 0;
 
   if (sub) {
     const now = new Date();
     if (sub.status === "active") {
       result = "valid";
+      status = "active";
+      expiresAt = sub.current_period_end ?? "";
     } else if (sub.status === "trialing") {
-      result = new Date(sub.trial_ends_at) > now ? "valid" : "expired";
+      const trialEnd = new Date(sub.trial_ends_at);
+      result = trialEnd > now ? "valid" : "expired";
+      status = result === "valid" ? "trial" : "expired";
+      expiresAt = sub.trial_ends_at ?? "";
     } else if (sub.status === "past_due") {
       result = "valid"; // grace period
+      status = "active";
+      expiresAt = sub.current_period_end ?? "";
     } else {
       result = "expired";
+      status = "expired";
+    }
+    if (expiresAt) {
+      daysRemaining = Math.max(
+        0,
+        Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / 86_400_000),
+      );
     }
   }
 
@@ -84,6 +103,9 @@ Deno.serve(async (req) => {
       valid: result === "valid",
       reason: result,
       tier: sub?.tier ?? null,
+      status,
+      days_remaining: daysRemaining,
+      expires_at: expiresAt,
     }),
     { headers: { "Content-Type": "application/json" } },
   );

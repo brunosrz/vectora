@@ -117,6 +117,34 @@ async def _stop_background_worker() -> None:
         logger.warning("api/server: erro ao parar background worker: %s", exc)
 
 
+_LICENSE_REVALIDATE_INTERVAL_S = 6 * 60 * 60  # 6h — espelha o TTL do cache
+
+
+async def _license_revalidation_loop() -> None:
+    """Valida a licença no boot e revalida a cada 6h.
+
+    Nunca derruba o servidor: falha vira warning no log e o estado fica
+    visível no banner do chat via ``GET /license/status`` (que lê o cache).
+    """
+    from src.services.license import LicenseError, validate_license_async
+
+    while True:
+        try:
+            info = await validate_license_async()
+            logger.info(
+                "license: tier=%s status=%s days_remaining=%d cached=%s",
+                info.tier,
+                info.status,
+                info.days_remaining,
+                info.cached,
+            )
+        except LicenseError as exc:
+            logger.warning("license: %s", exc)
+        except Exception as exc:
+            logger.warning("license: falha inesperada na validação — %s", exc)
+        await asyncio.sleep(_LICENSE_REVALIDATE_INTERVAL_S)
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     """Startup / shutdown da aplicação.
@@ -170,10 +198,17 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
 
         await awarm_graph()
 
+    # Validação de licença: uma no boot (não-bloqueante) + revalidação a cada
+    # 6h (TTL do cache). O launcher CLI valida antes do uvicorn, mas deploys
+    # via docker/uvicorn direto não passam pelo launcher — sem este loop o
+    # servidor nunca validava o VECTORA_TOKEN.
+    license_task = asyncio.create_task(_license_revalidation_loop())
+
     try:
         yield
     finally:
         logger.info("api/server: shutdown — fechando recursos")
+        license_task.cancel()
         from src.api.handlers.chat import aclose_graph
         from src.services.pty_registry import pty_registry
 

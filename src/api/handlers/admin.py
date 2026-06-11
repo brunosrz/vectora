@@ -502,9 +502,15 @@ async def patch_server_config(request: Request, body: PatchConfigBody) -> dict:
             # Persiste em ~/.vectora/config.toml na seção [license] para
             # que o próximo boot do binário aplique sem o operador
             # precisar exportar a env var manualmente.
-            from src.services.license import write_token_to_config
+            from src.services.license import (
+                clear_license_cache,
+                write_token_to_config,
+            )
 
             write_token_to_config(token)
+            # Cache antigo refletia o token anterior — descarta para a
+            # próxima validação (POST /license/validate) partir do zero.
+            clear_license_cache()
             updated["vectora_token_configured"] = bool(token)
 
         logger.info("admin: config patched by root user_id=%s: %s", user.id, updated)

@@ -148,13 +148,61 @@ interface ConfigSummary {
   vectora_token_masked: string;
 }
 
+/** Resultado de POST /license/validate ou /license/connect. */
+interface LicenseResult {
+  valid: boolean;
+  tier?: string;
+  status?: string;
+  days_remaining?: number;
+  error?: string;
+}
+
+/** Classe do botão segmentado Token | Login do StepToken. */
+const segmentClass = (active: boolean) =>
+  `flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+    active
+      ? "bg-primary/10 text-primary border border-primary"
+      : "border border-border text-muted-foreground hover:text-foreground"
+  }`;
+
+/** Badge compacto com o resultado da validação da licença. */
+function LicenseResultBadge({ result }: { result: LicenseResult }) {
+  const t = useT();
+  if (result.valid) {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+        {t("onboarding.token_valid")}
+        {result.tier ? ` — ${result.tier}` : ""}
+        {result.status === "trial" && result.days_remaining
+          ? ` (trial, ${result.days_remaining}d)`
+          : ""}
+      </p>
+    );
+  }
+  return (
+    <p className="flex items-center gap-1.5 text-xs text-destructive">
+      <XCircle className="w-3.5 h-3.5 shrink-0" />
+      {result.error || t("onboarding.token_invalid")}
+    </p>
+  );
+}
+
 function StepToken(_props: StepProps) {
   const t = useT();
+  const [mode, setMode] = useState<"token" | "login">("token");
   const [config, setConfig] = useState<ConfigSummary | null>(null);
+  const [result, setResult] = useState<LicenseResult | null>(null);
+
+  // Modo token
   const [tokenInput, setTokenInput] = useState("");
   const [showToken, setShowToken] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+
+  // Modo login (conta vectora.company)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
     fetch("/admin/config", { credentials: "include" })
@@ -167,6 +215,7 @@ function StepToken(_props: StepProps) {
     const value = tokenInput.trim();
     if (!value) return;
     setSaving(true);
+    setResult(null);
     try {
       await fetch("/admin/config", {
         method: "PATCH",
@@ -179,10 +228,48 @@ function StepToken(_props: StepProps) {
       }).then((r) => r.json());
       setConfig(fresh);
       setTokenInput("");
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      // Valida imediatamente — antes o token era salvo sem nenhum feedback.
+      const validation = (await fetch("/license/validate", {
+        method: "POST",
+        credentials: "include",
+      }).then((r) => r.json())) as LicenseResult;
+      setResult(validation);
+    } catch {
+      setResult({ valid: false, error: t("onboarding.token_invalid") });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleConnect = async () => {
+    if (!email.includes("@") || !password) return;
+    setConnecting(true);
+    setResult(null);
+    try {
+      const resp = await fetch("/license/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        setResult({
+          valid: false,
+          error: data?.detail || t("onboarding.token_invalid"),
+        });
+        return;
+      }
+      setResult(data as LicenseResult);
+      setPassword("");
+      const fresh = await fetch("/admin/config", {
+        credentials: "include",
+      }).then((r) => r.json());
+      setConfig(fresh);
+    } catch {
+      setResult({ valid: false, error: t("onboarding.token_invalid") });
+    } finally {
+      setConnecting(false);
     }
   };
 
@@ -191,54 +278,118 @@ function StepToken(_props: StepProps) {
       <p className="text-sm text-muted-foreground">
         {t("onboarding.token_body")}
       </p>
+
+      {/* Seletor: colar token OU entrar com a conta vectora.company */}
+      <div className="flex gap-1.5">
+        <button
+          type="button"
+          className={segmentClass(mode === "token")}
+          onClick={() => setMode("token")}
+        >
+          {t("onboarding.token_mode_token")}
+        </button>
+        <button
+          type="button"
+          className={segmentClass(mode === "login")}
+          onClick={() => setMode("login")}
+        >
+          {t("onboarding.token_mode_login")}
+        </button>
+      </div>
+
       {config?.vectora_token_configured && (
         <p className="text-xs text-muted-foreground font-mono">
           {t("onboarding.token_configured")}: {config.vectora_token_masked}
         </p>
       )}
-      <div className="flex gap-1.5">
-        <Input
-          type={showToken ? "text" : "password"}
-          value={tokenInput}
-          onChange={(e) => setTokenInput(e.target.value)}
-          placeholder="vct_…"
-          className="h-8 text-xs font-mono flex-1"
-          autoComplete="off"
-        />
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-8 px-2"
-          onClick={() => setShowToken((v) => !v)}
-        >
-          {showToken ? t("onboarding.token_hide") : t("onboarding.token_show")}
-        </Button>
-      </div>
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleSave}
-          disabled={saving || !tokenInput.trim()}
-        >
-          {saving ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-          ) : null}
-          {saved ? t("onboarding.token_saved") : t("onboarding.token_save")}
-        </Button>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {t("onboarding.token_hint")}{" "}
-        <a
-          href="https://vectora.company/dashboard"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
-          vectora.company/dashboard
-        </a>
-      </p>
+
+      {mode === "token" ? (
+        <>
+          <div className="flex gap-1.5">
+            <Input
+              type={showToken ? "text" : "password"}
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              placeholder="vct_…"
+              className="h-8 text-xs font-mono flex-1"
+              autoComplete="off"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 px-2"
+              onClick={() => setShowToken((v) => !v)}
+            >
+              {showToken
+                ? t("onboarding.token_hide")
+                : t("onboarding.token_show")}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSave}
+              disabled={saving || !tokenInput.trim()}
+            >
+              {saving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              ) : null}
+              {t("onboarding.token_save")}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("onboarding.token_hint")}{" "}
+            <a
+              href="https://vectora.company/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              vectora.company/dashboard
+            </a>
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="text-xs text-muted-foreground">
+            {t("onboarding.token_login_hint")}
+          </p>
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("auth.email_ph")}
+            className="h-8 text-xs"
+            autoComplete="email"
+          />
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={t("auth.signin.password_ph")}
+            className="h-8 text-xs"
+            autoComplete="current-password"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleConnect();
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleConnect}
+            disabled={connecting || !email.includes("@") || !password}
+          >
+            {connecting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+            ) : null}
+            {t("onboarding.token_connect")}
+          </Button>
+        </>
+      )}
+
+      {result && <LicenseResultBadge result={result} />}
     </div>
   );
 }
