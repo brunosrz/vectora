@@ -99,21 +99,23 @@ function SignInPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="flex flex-col items-center gap-3">
-          <img src="/vectora.svg" alt="Vectora" width={48} height={48} />
-          <h1
-            className="text-2xl font-semibold tracking-tight text-foreground"
-            style={{ fontFamily: "var(--font-aeonik-mono)" }}
-          >
-            Vectora
-          </h1>
+      <div className="w-full max-w-sm space-y-6">
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <img src="/vectora.svg" alt="Vectora" width={36} height={36} />
+            <h1
+              className="text-2xl font-semibold tracking-tight text-foreground"
+              style={{ fontFamily: "var(--font-aeonik-mono)" }}
+            >
+              Vectora
+            </h1>
+          </div>
           <p className="text-sm text-muted-foreground">
             {t("auth.signin.tagline")}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1">
             <label
               className="text-sm font-medium text-foreground"
