@@ -44,6 +44,28 @@ def tools_version(user_id: str) -> int:
 
 def _bump_version(user_id: str) -> None:
     _versions[user_id] = _versions.get(user_id, 0) + 1
+    # Avisa as demais réplicas (Bloco G) — no modo lite é um no-op local.
+    import json
+
+    from src.services.kv import publish_soon
+
+    publish_soon(
+        "vectora:tools",
+        json.dumps({"user_id": user_id, "version": _versions[user_id]}),
+    )
+
+
+def apply_remote_version(user_id: str, version: int) -> None:
+    """Aplica um bump de versão vindo de outra réplica (via cache_sync).
+
+    Avança a versão local e descarta o cache de tools do usuário — o LLM
+    bindado (``llm_tools._bound_cache``) é invalidado por consequência, pois
+    sua chave inclui esta versão.
+    """
+    if version <= _versions.get(user_id, 0):
+        return
+    _versions[user_id] = version
+    _mcp_tools_cache.pop(user_id, None)
 
 
 # ---------------------------------------------------------------------------

@@ -5,28 +5,28 @@
 
 ## Sumário (TOC)
 
-| Bloco                 | Tema                                                                                                                                                                                                    | Status                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **A**                 | UX & Chat Foundation — base do chat, polish, reasoning/HITL, file handling, i18n, mobile                                                                                                                | ✅ Concluído                                                                  |
-| **B**                 | Security & Workflow — auth/RBAC, workspaces+git, slash commands, conversation, admin, OAuth                                                                                                             | ✅ Concluído                                                                  |
-| **C**                 | Power Features — plugins MCP, skills, terminal/workbench, memória, settings, workspaces remotos, license gate, OXC                                                                                      | ✅ Concluído                                                                  |
-| **D**                 | Distribuição Comercial — Vite SPA + Electron + FastAPI + Nuitka + instaladores assinados + auto-update                                                                                                  | ✅ Concluído                                                                  |
-| **E**                 | Deep Agents — refactor para `create_deep_agent` + TUI textual                                                                                                                                           | ⏳ Em desenvolvimento (E.A TUI ✅ + E.B Deep Agents migration ⏳ — ver bloco) |
-| **System Experience** | Filesystem + Git no painel (FS-1..19) + UX cardinal (UX-1..65) + TUI textual modular (SX-TUI-1..11) + transparência do agente — fontes `docs/fs-git.md`, `docs/ux.md` + Plano de Atualização junho/2026 | ✅ Concluído                                                                  |
-| **F**                 | Storage Infrastructure — hardening lite + schema versioning + langgraph.{checkpoint,store} + LanceDB/Qdrant/Postgres + BaaS                                                                             | ⏳ Planejado                                                                  |
-| **G**                 | Cache Distribuído — Redis (KV + LLM bind invalidation + usage + rate-limit + langchain-redis)                                                                                                           | ⏳ Planejado                                                                  |
-| **H**                 | Deep Agents 1 — skills nativas, AGENTS.md, prompt cache, compressão, 6 web tools full                                                                                                                   | ⏳ Planejado                                                                  |
-| **I**                 | Deep Agents 2 — sandbox + worktree, interpreters, async subagents, ACP, remote backends                                                                                                                 | ⏳ Planejado                                                                  |
-| **J**                 | REST API v1 + Segurança Hardening — OAuth2 + OpenAI-compat + ACP + SQLCipher at-rest + Ed25519 JWKS + TOTP MFA + audit imutável + GDPR                                                                  | ⏳ Planejado                                                                  |
-| **K**                 | Billing & License Infra — Supabase + Stripe + Asaas (PIX/boleto) + tier enforcement + banners                                                                                                           | ⏳ Planejado                                                                  |
-| **L**                 | SDKs & API Ecosystem — Python/TS SDKs, webhooks, GitHub Actions, OpenAPI polish                                                                                                                         | ⏳ Planejado                                                                  |
-| **M**                 | Observability & Reliability — OpenTelemetry, Sentry, health probes, SLOs, backup/DR                                                                                                                     | ⏳ Planejado                                                                  |
-| **N**                 | Distribution Hardening & IDE Integrations — signing pipeline, auto-update, Docker, distros, VS Code/JetBrains/Zed/Neovim, n8n                                                                           | ⏳ Planejado                                                                  |
-| **O**                 | Vectora Company: Identidade & Legal — CNPJ/MEI, marca, domínios, termos, emails                                                                                                                         | ⏳ Planejado                                                                  |
-| **P**                 | Vectora Company: Site `vectora.company` — landing, signup, dashboard, pricing, FAQ                                                                                                                      | ⏳ Planejado                                                                  |
-| **Q**                 | Vectora Company: Docs `docs.vectora.company` — guides, reference, self-hosting, changelog                                                                                                               | ⏳ Planejado                                                                  |
-| **R**                 | Vectora Company: Suporte & Comunidade — WhatsApp, email, GitHub Issues, status page, beta                                                                                                               | ⏳ Planejado                                                                  |
-| **S**                 | Vectora Company: Marketing & Lançamento — PyPI 1.0 + Docker oficial + kit influencers + canais + cronograma                                                                                             | ⏳ Planejado                                                                  |
+| Bloco                 | Tema                                                                                                                                                                                                    | Status                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **A**                 | UX & Chat Foundation — base do chat, polish, reasoning/HITL, file handling, i18n, mobile                                                                                                                | ✅ Concluído                                       |
+| **B**                 | Security & Workflow — auth/RBAC, workspaces+git, slash commands, conversation, admin, OAuth                                                                                                             | ✅ Concluído                                       |
+| **C**                 | Power Features — plugins MCP, skills, terminal/workbench, memória, settings, workspaces remotos, license gate, OXC                                                                                      | ✅ Concluído                                       |
+| **D**                 | Distribuição Comercial — Vite SPA + Electron + FastAPI + Nuitka + instaladores assinados + auto-update                                                                                                  | ✅ Concluído                                       |
+| **E**                 | Deep Agents — refactor para `create_deep_agent` + TUI textual                                                                                                                                           | ✅ Concluído (pendência: E.B-3 HITL)               |
+| **System Experience** | Filesystem + Git no painel (FS-1..19) + UX cardinal (UX-1..65) + TUI textual modular (SX-TUI-1..11) + transparência do agente — fontes `docs/fs-git.md`, `docs/ux.md` + Plano de Atualização junho/2026 | ✅ Concluído                                       |
+| **F**                 | Storage Infrastructure — hardening lite + schema versioning + langgraph.{checkpoint,store} + LanceDB/Qdrant/Postgres + BaaS                                                                             | 🟡 Parcial (Lite OK; Postgres/Qdrant pendentes)    |
+| **G**                 | Cache Distribuído — Redis (KV + LLM bind invalidation + usage + rate-limit + langchain-redis)                                                                                                           | 🟡 Parcial (deps OK; caches in-memory)             |
+| **H**                 | Deep Agents 1 — skills nativas, AGENTS.md, prompt cache, compressão, 6 web tools full                                                                                                                   | ✅ Concluído (pendências: H3 prompt cache, Tavily) |
+| **I**                 | Deep Agents 2 — sandbox + worktree, interpreters, async subagents, ACP, remote backends                                                                                                                 | ❌ Não iniciado                                    |
+| **J**                 | REST API v1 + Segurança Hardening — OAuth2 + OpenAI-compat + ACP + SQLCipher at-rest + Ed25519 JWKS + TOTP MFA + audit imutável + GDPR                                                                  | 🟡 Parcial (só /v1/classify e /v1/extract)         |
+| **K**                 | Billing & License Infra — Supabase + Stripe + Asaas (PIX/boleto) + tier enforcement + banners                                                                                                           | ✅ Concluído (licença + edge functions)            |
+| **L**                 | SDKs & API Ecosystem — Python/TS SDKs, webhooks, GitHub Actions, OpenAPI polish                                                                                                                         | ❌ Não iniciado (depende de J)                     |
+| **M**                 | Observability & Reliability — OpenTelemetry, Sentry, health probes, SLOs, backup/DR                                                                                                                     | 🟡 Parcial (logging OK; OTel/Sentry pendentes)     |
+| **N**                 | Distribution Hardening & IDE Integrations — signing pipeline, auto-update, Docker, distros, VS Code/JetBrains/Zed/Neovim, n8n                                                                           | 🟡 Parcial (N3/N4 OK; N5–N9 pendentes)             |
+| **O**                 | Vectora Company: Identidade & Legal — CNPJ/MEI, marca, domínios, termos, emails                                                                                                                         | ✅ Concluído (ops externas à parte)                |
+| **P**                 | Vectora Company: Site `vectora.company` — landing, signup, dashboard, pricing, FAQ                                                                                                                      | ✅ Concluído                                       |
+| **Q**                 | Vectora Company: Docs `docs.vectora.company` — guides, reference, self-hosting, changelog                                                                                                               | ✅ Concluído (i18n/Algolia no deploy)              |
+| **R**                 | Vectora Company: Suporte & Comunidade — WhatsApp, email, GitHub Issues, status page, beta                                                                                                               | 🟡 Parcial (ops externas pendentes)                |
+| **S**                 | Vectora Company: Marketing & Lançamento — PyPI 1.0 + Docker oficial + kit influencers + canais + cronograma                                                                                             | 🟡 Parcial (pipelines OK; launch pendente)         |
 
 ## Padrões de Engenharia (vinculantes)
 
@@ -2915,7 +2915,7 @@ thread_id)` em `services/workspace_locks.py`. Escrita de
 > divergir, **este bloco vence** (os pseudo-planos são fonte
 > de design, este é fonte de execução).
 
-## BLOCO E — Deep Agents: Refactor do Harness + TUI Textual [EM DESENVOLVIMENTO]
+## BLOCO E — Deep Agents: Refactor do Harness + TUI Textual [CONCLUÍDO — pendência: E.B-3 HITL interrupt_on]
 
 > **Status real (auditoria junho/2026 — correção do marcador prematuro)**:
 >
@@ -3841,7 +3841,7 @@ Diferenças bloqueantes: ordem de tool calls, texto da resposta final
   (paridade), mas internamente usando `create_deep_agent`.
 - `scons lint` + `scons tests` verde.
 
-## BLOCO F — Storage Infrastructure: Lite Hardening + Postgres/Qdrant + BaaS
+## BLOCO F — Storage Infrastructure: Lite Hardening + Postgres/Qdrant + BaaS [PARCIAL — Lite/protocols/migrations OK; checkpointer Postgres (F4) e Qdrant (F6) pendentes]
 
 > **Contexto.** Antes de adicionar backends (Postgres/Qdrant),
 > **fortalecemos** o que já existe (SQLite + LanceDB) e construímos uma
@@ -4191,7 +4191,7 @@ legados, e `tools/memory.py` usa `cohere.AsyncClient` direto
   sem mover. Sem `--dry-run` move e zero rows perdem; `--force`
   sobrescreve.
 
-## BLOCO G — Cache Distribuído: Redis + `langchain-redis`
+## BLOCO G — Cache Distribuído: Redis + `langchain-redis` [PARCIAL — deps e healthcheck OK; caches ainda in-memory (llm_tools/plugins/workspace), sem pub/sub nem rate-limit Redis]
 
 > **Contexto.** O backend tem 7 caches em memória que travam o Vectora
 > em single-process: `llm_tools._bound_cache` (C2), `plugins.
@@ -4320,7 +4320,7 @@ _mcp_tools_cache` + `_versions` (C2), `services/usage.usage_tracker`
 - Rate limit 60/min compartilhado entre instâncias.
 - Cache de embedding: 2ª requisição idêntica não chama Cohere.
 
-## BLOCO H — Deep Agents 1: Skills, AGENTS.md, Prompt Cache, Compressão, Web Tools
+## BLOCO H — Deep Agents 1: Skills, AGENTS.md, Prompt Cache, Compressão, Web Tools [CONCLUÍDO — pendências: H3 prompt cache não ativado, Tavily não substitui web.py]
 
 > **Contexto.** Depende do **Bloco E** consolidado. Aqui ficam features
 > que a arquitetura DeepAgent destrava sem rewrites: skills nativas,
@@ -4474,7 +4474,7 @@ desnecessário) e quando não há critério mensurável.
   resultado em TableViewer. Idem `web_crawl` em "indexe docs de
   https://example.com até 3 níveis".
 
-## BLOCO I — Deep Agents 2: Sandbox + Worktree, Interpreters, Async, ACP, Remote
+## BLOCO I — Deep Agents 2: Sandbox + Worktree, Interpreters, Async, ACP, Remote [NÃO INICIADO]
 
 > **Contexto.** Depende de E (Deep Agents refactor) e H (skills + web).
 
@@ -4608,7 +4608,7 @@ habilita features prontas:
 | I6  | `src/main.py` (subcomando `chat --dcode`); `pyproject.toml` (+`deepagents-code`)                                                                                                                                                                                                             |
 | I7  | `chat/package.json` (+`@langchain/langgraph-sdk`, `@langchain/react`); `chat/src/lib/api/` (deletar `vectora-client.ts`, criar wrappers tipados); `chat/src/lib/hooks/use-stream-handler.ts` (deletar); `chat/src/components/chat/` (refactor para usar `useStream` + `useStream.subagents`) |
 
-## BLOCO J — REST API v1 + Segurança Hardening
+## BLOCO J — REST API v1 + Segurança Hardening [PARCIAL — só /v1/classify e /v1/extract; sem OAuth2 client_credentials, rate-limit por API key, nem hardening J9–J23]
 
 > **Contexto produto.** Vectora já fala 4 modos: CLI, Chat (Connect-RPC
 >
@@ -5360,7 +5360,7 @@ stream=True)` e recebe streaming compatível.
   Sem identity/passphrase, `tar -xzf` falha. Com `vectora backup
 restore`, restaura corretamente.
 
-## BLOCO K — Billing & License Infra: Supabase + Stripe + Asaas + Tier Enforcement
+## BLOCO K — Billing & License Infra: Supabase + Stripe + Asaas + Tier Enforcement [CONCLUÍDO — validação/conexão de licença + edge functions no company; tier enforcement básico]
 
 > **Contexto.** O license gate (C7) valida `VECTORA_TOKEN` contra uma
 > edge function. Falta construir a infra completa que emite tokens,
@@ -5654,7 +5654,7 @@ status:"trialing", days_remaining:30}`.
 - Trial banner muda cor conforme dias; expirado bloqueia input.
 - Onboarding wizard aparece no 1º login root, não reabre depois.
 
-## BLOCO L — SDKs & API Ecosystem
+## BLOCO L — SDKs & API Ecosystem [NÃO INICIADO — depende do Bloco J completo]
 
 > **Contexto.** Bloco J entrega a REST `/v1`. Para tração com
 > integradores, precisamos de SDKs oficiais (Python + TypeScript),
@@ -5824,7 +5824,7 @@ Action complementar `vectora/chat-action` para rodar prompt
 - Postman collection: importar → Auth helper popula token → POST
   `/v1/threads` cria.
 
-## BLOCO M — Observability & Reliability Production-Grade
+## BLOCO M — Observability & Reliability Production-Grade [PARCIAL — logging estruturado OK; sem OTel, Sentry backend, probes live/ready]
 
 > **Contexto.** Hoje `VectoraTracer` SQLite + `/metrics` (A1) é base
 > básica. Em produção self-hosted ou em vendas para empresas
@@ -5965,7 +5965,7 @@ Documentar em `docs/k8s-deploy.md` com `livenessProbe`/
 - `vectora backup create` → tar.gz contendo todos os dados;
   `vectora backup restore` em VM nova reconstrói operacional.
 
-## BLOCO N — Distribution Hardening & IDE Integrations
+## BLOCO N — Distribution Hardening & IDE Integrations [PARCIAL — desktop Electron + auto-update server + Docker OK (N3/N4); N5–N9 pendentes]
 
 > **Contexto.** Bloco D entregou pipeline base de Vite + Nuitka +
 > Electron. Bloco N expande para canais nativos por OS, multi-arch,
@@ -6141,7 +6141,7 @@ mcp`, descrição, ícone, link para docs.
 - Claude Desktop: Browse Registry → vê Vectora, instala com 1
   clique.
 
-## BLOCO O — Vectora Company: Identidade & Legal
+## BLOCO O — Vectora Company: Identidade & Legal [CONCLUÍDO — artefatos de repo; passos cartoriais/DNS são ops externas]
 
 > **Contexto.** Antes de vender qualquer coisa, a empresa precisa de
 > identidade clara (nome, marca, domínio), termos legais válidos e uma
@@ -6344,7 +6344,7 @@ mês por caixa).
 - WhatsApp Business com perfil completo + auto-resposta
   configurada.
 
-## BLOCO P — Vectora Company: Site `vectora.company`
+## BLOCO P — Vectora Company: Site `vectora.company` [CONCLUÍDO — rotas, dashboard, edge functions, emails e tema Min entregues]
 
 > **Stack:** Next.js 16 + Tailwind + shadcn/ui + Supabase Auth SSR
 >
@@ -6673,7 +6673,7 @@ vectora-company/site/
 - Deletar conta → confirmação por email + soft delete + hard
   delete em 30d.
 
-## BLOCO Q — Vectora Company: Documentação `docs.vectora.company`
+## BLOCO Q — Vectora Company: Documentação `docs.vectora.company` [CONCLUÍDO — Docusaurus 3 com 43 páginas; i18n/Algolia a configurar no deploy]
 
 > **Stack:** Docusaurus 3 (recomendado) ou Mintlify. Subdomínio
 > `docs.vectora.company`. Repo público: `vectora-company/docs`.
@@ -6804,7 +6804,7 @@ Página `/changelog` com:
 - Trocar idioma PT-BR ↔ EN preserva a página atual.
 - Changelog RSS válido (passa W3C feed validator).
 
-## BLOCO R — Vectora Company: Suporte & Comunidade
+## BLOCO R — Vectora Company: Suporte & Comunidade [PARCIAL — roadmap/issues no site OK; status page, ticketing e comunidade são ops externas]
 
 ### R1 — WhatsApp Business
 
@@ -6925,7 +6925,7 @@ Antes da campanha de influenciadores (S):
   incidente teste documentado.
 - Runbook de "DB down" testado em staging (RTO atingido).
 
-## BLOCO S — Vectora Company: Marketing & Lançamento
+## BLOCO S — Vectora Company: Marketing & Lançamento [PARCIAL — pipelines de release (PyPI/Docker/CI) prontos; conteúdo e cronograma de launch pendentes]
 
 > **Pré-requisito**: blocos O–R prontos + produto estável (D–N
 > entregues + smoke tests passando) + 10+ beta testers com

@@ -204,11 +204,26 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     # servidor nunca validava o VECTORA_TOKEN.
     license_task = asyncio.create_task(_license_revalidation_loop())
 
+    # Bloco G — sincronização de caches entre réplicas (pub/sub via Redis
+    # quando REDIS_URL configurado; no modo lite é local e inofensivo).
+    try:
+        from src.services.cache_sync import start_cache_sync
+
+        await start_cache_sync()
+    except Exception as exc:
+        logger.warning("api/server: cache_sync indisponível: %s", exc)
+
     try:
         yield
     finally:
         logger.info("api/server: shutdown — fechando recursos")
         license_task.cancel()
+        try:
+            from src.services.cache_sync import stop_cache_sync
+
+            await stop_cache_sync()
+        except Exception:
+            logger.debug("api/server: erro ao encerrar cache_sync")
         from src.api.handlers.chat import aclose_graph
         from src.services.pty_registry import pty_registry
 

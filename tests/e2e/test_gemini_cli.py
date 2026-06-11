@@ -461,8 +461,10 @@ class TestVectoraMcpServerDirectly:
         )
 
         if venv_python:
+            # O wheel empacota o código como `src` (pyproject packages=["src"]),
+            # então o módulo real é src.mcp.server — não vectora.mcp.server.
             result = subprocess.run(
-                [venv_python, "-c", "from vectora.mcp.server import mcp; print('OK')"],
+                [venv_python, "-c", "from src.mcp.server import mcp; print('OK')"],
                 capture_output=True,
                 text=True,
                 timeout=20,

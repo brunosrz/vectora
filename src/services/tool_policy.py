@@ -54,6 +54,23 @@ def set_disabled(user_id: str, names: list[str]) -> None:
     payload = {"disabled": sorted(set(names))}
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     _versions[user_id] = _versions.get(user_id, 0) + 1
+    # Avisa as demais réplicas (Bloco G) — no modo lite é um no-op local.
+    from src.services.kv import publish_soon
+
+    publish_soon(
+        "vectora:policy",
+        json.dumps({"user_id": user_id, "version": _versions[user_id]}),
+    )
+
+
+def apply_remote_version(user_id: str, version: int) -> None:
+    """Aplica um bump de versão vindo de outra réplica (via cache_sync).
+
+    A política em si vive em arquivo (relido a cada request); avançar a
+    versão local basta para invalidar o LLM bindado, cuja chave a inclui.
+    """
+    if version > _versions.get(user_id, 0):
+        _versions[user_id] = version
 
 
 def is_allowed(user_id: str, tool_name: str) -> bool:

@@ -336,7 +336,26 @@ class WorkspaceRegistry:
             return False
         self._active[user_id or "local"] = workspace_id
         self._save()
+        # Avisa as demais réplicas (Bloco G) — no modo lite é um no-op local.
+        import json as _json
+
+        from src.services.kv import publish_soon
+
+        publish_soon(
+            "vectora:ws-active",
+            _json.dumps({"user_id": user_id or "local", "workspace_id": workspace_id}),
+        )
         return True
+
+    def apply_remote_active(self, workspace_id: str, user_id: str) -> None:
+        """Aplica troca de workspace ativo vinda de outra réplica.
+
+        Atualiza só o estado local (sem ``_save`` nem re-publish — a réplica
+        de origem já persistiu; salvar aqui causaria eco e corrida no JSON).
+        """
+        self._load()
+        if workspace_id in self._workspaces:
+            self._active[user_id] = workspace_id
 
     def get_active(self, user_id: str | None = None) -> Workspace | None:
         """Retorna o workspace ativo do usuário, ou None se não houver."""

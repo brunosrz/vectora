@@ -36,12 +36,20 @@ def attach_limiter(app: FastAPI) -> None:
         from slowapi.errors import RateLimitExceeded
         from slowapi.util import get_remote_address
 
-        limiter = Limiter(key_func=get_remote_address)
+        # Bloco G — storage distribuído: com REDIS_URL os contadores vivem no
+        # Redis e valem para todas as réplicas; sem ele, memória local.
+        from src.settings import settings
+
+        storage_uri = (settings.redis_url or "").strip() or "memory://"
+        limiter = Limiter(key_func=get_remote_address, storage_uri=storage_uri)
         app.state.limiter = limiter
         app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
         # Decoramos os endpoints via state — os handlers usam app.state.limiter
-        logger.info("rate_limit: slowapi configurado")
+        logger.info(
+            "rate_limit: slowapi configurado (storage=%s)",
+            "redis" if storage_uri.startswith("redis") else "memory",
+        )
     except Exception as exc:
         logger.warning("rate_limit: slowapi não disponível: %s", exc)
 
