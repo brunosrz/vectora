@@ -17,6 +17,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 export function initAuthListener() {
   const supabase = getSupabaseBrowserClient();
 
+  if (!supabase) {
+    useAuthStore.getState().setSession(null);
+    return () => {};
+  }
+
   supabase.auth.getUser().then(({ data }) => {
     useAuthStore.getState().setSession(data.user ?? null);
   });

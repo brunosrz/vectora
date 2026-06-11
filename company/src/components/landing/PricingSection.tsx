@@ -8,53 +8,68 @@ import { track } from "#/lib/analytics/plausible";
 
 type Currency = "BRL" | "USD";
 
+// Tudo que é texto humano vem dos messages (paraglide) — nada hardcoded.
 const PLUS = {
   brl: "R$20",
   usd: "$7",
-  period: "/mês",
-  badge: "Para times pequenos",
+  badge: m.pricing_plus_badge,
   features: [
-    { text: "1 workspace", ok: true },
-    { text: "Até 5 membros", ok: true },
-    { text: "RAG ilimitado", ok: true },
-    { text: "MCP integrations", ok: true },
-    { text: "REST API /v1 — 60 req/min", ok: true },
-    { text: "SDKs Python/TS", ok: true },
-    { text: "Suporte por email (48h)", ok: true },
-    { text: "Priority support", ok: false },
-    { text: "SSO / SAML", ok: false },
+    { text: m.pricing_feat_workspace1, ok: true },
+    { text: m.pricing_feat_members5, ok: true },
+    { text: m.pricing_feat_rag_unlimited, ok: true },
+    { text: m.pricing_feat_mcp, ok: true },
+    { text: m.pricing_feat_api60, ok: true },
+    { text: m.pricing_feat_sdks, ok: true },
+    { text: m.pricing_feat_email_support, ok: true },
+    { text: m.pricing_feat_priority_support, ok: false },
+    { text: m.pricing_feat_sso, ok: false },
   ],
 };
 
 const PRO = {
   brl: "R$55",
   usd: "$20",
-  period: "/mês",
-  badge: "Para empresas",
+  badge: m.pricing_pro_badge,
   features: [
-    { text: "Workspaces ilimitados", ok: true },
-    { text: "Membros ilimitados", ok: true },
-    { text: "RAG ilimitado", ok: true },
-    { text: "MCP integrations", ok: true },
-    { text: "REST API /v1 — 600 req/min", ok: true },
-    { text: "SDKs Python/TS", ok: true },
-    { text: "Webhooks", ok: true },
-    { text: "ACP server", ok: true },
-    { text: "Priority support (SLA 24h)", ok: true },
-    { text: "SSO / SAML (em breve)", ok: true },
+    { text: m.pricing_feat_workspaces_unlimited, ok: true },
+    { text: m.pricing_feat_members_unlimited, ok: true },
+    { text: m.pricing_feat_rag_unlimited, ok: true },
+    { text: m.pricing_feat_mcp, ok: true },
+    { text: m.pricing_feat_api600, ok: true },
+    { text: m.pricing_feat_sdks, ok: true },
+    { text: m.pricing_feat_webhooks, ok: true },
+    { text: m.pricing_feat_acp, ok: true },
+    { text: m.pricing_feat_priority_sla, ok: true },
+    { text: m.pricing_feat_sso_soon, ok: true },
   ],
 };
 
 const COMPARISON_ROWS = [
-  { label: "Storage", plus: "10 GB", pro: "Ilimitado" },
-  { label: "Projetos", plus: "5", pro: "Ilimitados" },
-  { label: "API Keys", plus: "3", pro: "Ilimitadas" },
-  { label: "Webhooks", plus: "—", pro: "✓" },
-  { label: "Audit log", plus: "7 dias", pro: "90 dias" },
-  { label: "SLA", plus: "48h", pro: "24h" },
+  {
+    label: m.pricing_cmp_storage,
+    plus: () => "10 GB",
+    pro: m.pricing_cmp_unlimited,
+  },
+  {
+    label: m.pricing_cmp_projects,
+    plus: () => "5",
+    pro: m.pricing_cmp_unlimited,
+  },
+  {
+    label: m.pricing_cmp_api_keys,
+    plus: () => "3",
+    pro: m.pricing_cmp_unlimited,
+  },
+  { label: m.pricing_feat_webhooks, plus: () => "—", pro: () => "✓" },
+  {
+    label: m.pricing_cmp_audit,
+    plus: m.pricing_cmp_days7,
+    pro: m.pricing_cmp_days90,
+  },
+  { label: m.pricing_cmp_sla, plus: () => "48h", pro: () => "24h" },
 ];
 
-function FeatureRow({ text, ok }: { text: string; ok: boolean }) {
+function FeatureRow({ text, ok }: { text: () => string; ok: boolean }) {
   return (
     <li className="flex items-center gap-2 text-sm">
       {ok ? (
@@ -63,7 +78,7 @@ function FeatureRow({ text, ok }: { text: string; ok: boolean }) {
         <Minus className="h-4 w-4 shrink-0 text-muted-foreground/80" />
       )}
       <span className={ok ? "text-foreground/90" : "text-muted-foreground/80"}>
-        {text}
+        {text()}
       </span>
     </li>
   );
@@ -82,7 +97,7 @@ export default function PricingSection() {
   return (
     <section
       id="pricing"
-      className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8"
+      className="px-4 py-10 sm:px-6 sm:py-14 lg:px-8"
       onFocus={handlePricing}
     >
       <div className="mx-auto max-w-5xl">
@@ -104,7 +119,9 @@ export default function PricingSection() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {c === "BRL" ? "🇧🇷 BRL" : "🌍 USD"}
+                {c === "BRL"
+                  ? `🇧🇷 ${m.pricing_toggle_brl()}`
+                  : `🌍 ${m.pricing_toggle_usd()}`}
               </button>
             ))}
           </div>
@@ -115,17 +132,19 @@ export default function PricingSection() {
           {/* Plus */}
           <div className="rounded-2xl border border-border bg-card/30 p-7">
             <div className="mb-1 text-xs font-medium text-muted-foreground">
-              {PLUS.badge}
+              {PLUS.badge()}
             </div>
             <div className="mb-6">
               <span className="text-3xl font-bold text-foreground">
                 {currency === "BRL" ? PLUS.brl : PLUS.usd}
               </span>
-              <span className="text-muted-foreground">{PLUS.period}</span>
+              <span className="text-muted-foreground">
+                {m.pricing_per_month()}
+              </span>
             </div>
             <ul className="mb-8 space-y-2.5">
               {PLUS.features.map((f) => (
-                <FeatureRow key={f.text} {...f} />
+                <FeatureRow key={f.text()} {...f} />
               ))}
             </ul>
             <Link
@@ -141,17 +160,19 @@ export default function PricingSection() {
           <div className="rounded-2xl border-2 border-primary bg-primary/5 p-7 shadow-lg shadow-primary/10">
             <div className="mb-1 inline-flex items-center gap-1.5 text-xs font-medium text-primary">
               <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              {PRO.badge}
+              {PRO.badge()}
             </div>
             <div className="mb-6">
               <span className="text-3xl font-bold text-foreground">
                 {currency === "BRL" ? PRO.brl : PRO.usd}
               </span>
-              <span className="text-muted-foreground">{PRO.period}</span>
+              <span className="text-muted-foreground">
+                {m.pricing_per_month()}
+              </span>
             </div>
             <ul className="mb-8 space-y-2.5">
               {PRO.features.map((f) => (
-                <FeatureRow key={f.text} {...f} />
+                <FeatureRow key={f.text()} {...f} />
               ))}
             </ul>
             <Link
@@ -182,7 +203,7 @@ export default function PricingSection() {
                 <thead>
                   <tr className="border-b border-border bg-card/50">
                     <th className="px-5 py-3 text-left font-medium text-muted-foreground">
-                      Feature
+                      {m.pricing_cmp_feature()}
                     </th>
                     <th className="px-5 py-3 text-center font-medium text-foreground/90">
                       Plus
@@ -195,17 +216,17 @@ export default function PricingSection() {
                 <tbody>
                   {COMPARISON_ROWS.map((row, i) => (
                     <tr
-                      key={row.label}
+                      key={row.label()}
                       className={`border-b border-border ${i % 2 === 0 ? "bg-background/30" : ""}`}
                     >
                       <td className="px-5 py-3 text-muted-foreground">
-                        {row.label}
+                        {row.label()}
                       </td>
                       <td className="px-5 py-3 text-center text-muted-foreground">
-                        {row.plus}
+                        {row.plus()}
                       </td>
                       <td className="px-5 py-3 text-center text-primary font-medium">
-                        {row.pro}
+                        {row.pro()}
                       </td>
                     </tr>
                   ))}

@@ -107,7 +107,7 @@ const COMPAT_ICONS = ["PostgreSQL", "Redis", "Docker"];
 
 export default function TeamSetupSection() {
   return (
-    <section className="bg-background/50 px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+    <section className="bg-background/50 px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-14 text-center">
           <h2 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">

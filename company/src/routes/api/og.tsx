@@ -1,7 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import satori from "satori";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 
 const BRAND = {
   bg: "#0a0e1a",
@@ -12,6 +9,14 @@ const BRAND = {
 };
 
 async function buildOgSvg(title: string, desc: string): Promise<string> {
+  // Imports dinâmicos: node:fs/node:path no top-level entram no bundle do
+  // client via route tree e quebram a hidratação da página inteira.
+  const [{ readFile }, { join }, { default: satori }] = await Promise.all([
+    import("node:fs/promises"),
+    import("node:path"),
+    import("satori"),
+  ]);
+
   const fontPath = join(process.cwd(), "public/fonts/aeonikmono-regular.otf");
   const buf = await readFile(fontPath);
   const fontData: ArrayBuffer = buf.buffer.slice(

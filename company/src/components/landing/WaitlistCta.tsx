@@ -46,7 +46,7 @@ export default function WaitlistCta() {
   if (!isVisible) return null;
 
   return (
-    <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+    <section className="px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
         {/* Gradient background blob */}
         <div

@@ -32,7 +32,7 @@ export default function ThemeToggle() {
       onClick={toggle}
       aria-label={mode === "dark" ? m.theme_light() : m.theme_dark()}
       title={mode === "dark" ? m.theme_light() : m.theme_dark()}
-      className="rounded-lg border border-border bg-card p-2 text-muted-foreground transition-colors hover:text-foreground"
+      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
     >
       {mode === "light" ? (
         <Moon className="h-4 w-4" />

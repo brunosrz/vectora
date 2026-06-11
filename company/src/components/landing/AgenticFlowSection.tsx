@@ -1,263 +1,105 @@
 import { m } from "#/paraglide/messages";
 
+interface AgentBoxProps {
+  title: string;
+  sub: string;
+  colorVar: string;
+}
+
+/** Caixa flexível do diagrama — cresce com o texto, nada vaza. */
+function AgentBox({ title, sub, colorVar }: AgentBoxProps) {
+  return (
+    <div
+      className="flex min-w-0 flex-col items-center justify-center rounded-lg border px-3 py-2 text-center"
+      style={{
+        borderColor: `var(${colorVar})`,
+        background: `color-mix(in srgb, var(${colorVar}) 14%, var(--card))`,
+        color: `var(${colorVar})`,
+      }}
+    >
+      <span className="text-sm font-semibold">{title}</span>
+      <span className="text-[11px] opacity-90">{sub}</span>
+    </div>
+  );
+}
+
 function AgenticDiagram() {
   return (
-    <div className="rounded-xl border border-border bg-card/40 p-6">
-      <svg
-        viewBox="0 0 420 320"
-        className="w-full"
-        aria-hidden
-        style={{ fontFamily: "inherit" }}
-      >
-        {/* Orchestrator — center */}
-        <rect
-          x="140"
-          y="120"
-          width="140"
-          height="48"
-          rx="10"
-          fill="var(--muted)"
-          stroke="var(--primary)"
-          strokeWidth="2"
-        />
-        <text
-          x="210"
-          y="138"
-          textAnchor="middle"
-          fill="var(--primary)"
-          fontSize="11"
-          fontWeight="600"
-        >
-          Orchestrator
-        </text>
-        <text
-          x="210"
-          y="155"
-          textAnchor="middle"
-          fill="var(--primary)"
-          fontSize="9"
-        >
-          decide · delega · paraleliza
-        </text>
+    <div className="rounded-xl border border-border bg-card/40 p-6" aria-hidden>
+      <div className="flex flex-col items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">Resposta</span>
+        <span className="text-sm leading-none text-muted-foreground">↑</span>
 
-        {/* User */}
-        <rect
-          x="157"
-          y="28"
-          width="106"
-          height="38"
-          rx="8"
-          fill="var(--card)"
-          stroke="var(--border)"
-          strokeWidth="1.5"
-        />
-        <text
-          x="210"
-          y="51"
-          textAnchor="middle"
-          fill="var(--muted-foreground)"
-          fontSize="11"
-        >
+        <div className="rounded-lg border border-border bg-card px-5 py-2 text-sm text-muted-foreground">
           Usuário
-        </text>
+        </div>
 
-        {/* Arrow down user→orch */}
-        <line
-          x1="210"
-          y1="66"
-          x2="210"
-          y2="120"
-          stroke="var(--border)"
-          strokeWidth="1.5"
-          markerEnd="url(#arr)"
-        />
+        <span className="text-sm leading-none text-muted-foreground">↓</span>
 
-        {/* Coder Agent */}
-        <rect
-          x="16"
-          y="214"
-          width="110"
-          height="40"
-          rx="8"
-          fill="var(--muted)"
-          stroke="var(--primary)"
-          strokeWidth="1.5"
-        />
-        <text
-          x="71"
-          y="232"
-          textAnchor="middle"
-          fill="var(--primary)"
-          fontSize="10"
-          fontWeight="600"
+        <div
+          className="flex flex-col items-center rounded-lg border-2 px-6 py-2 text-center"
+          style={{
+            borderColor: "var(--primary)",
+            background: "var(--muted)",
+            color: "var(--primary)",
+          }}
         >
-          Coder Agent
-        </text>
-        <text
-          x="71"
-          y="246"
-          textAnchor="middle"
-          fill="var(--primary)"
-          fontSize="8"
-        >
-          fs · terminal · git
-        </text>
+          <span className="text-sm font-semibold">Orchestrator</span>
+          <span className="text-[11px] opacity-90">
+            decide · delega · paraleliza
+          </span>
+        </div>
 
-        {/* Search Agent */}
-        <rect
-          x="155"
-          y="214"
-          width="110"
-          height="40"
-          rx="8"
-          fill="color-mix(in srgb, var(--accent-purple) 18%, var(--card))"
-          stroke="var(--accent-purple)"
-          strokeWidth="1.5"
-        />
-        <text
-          x="210"
-          y="232"
-          textAnchor="middle"
-          fill="var(--accent-purple)"
-          fontSize="10"
-          fontWeight="600"
+        {/* Conector orchestrator → agentes (escala com a largura) */}
+        <svg
+          className="h-8 w-full"
+          viewBox="0 0 300 32"
+          preserveAspectRatio="none"
         >
-          Search Agent
-        </text>
-        <text
-          x="210"
-          y="246"
-          textAnchor="middle"
-          fill="var(--accent-purple)"
-          fontSize="8"
-        >
-          web · RAG · curadoria
-        </text>
+          <line
+            x1="150"
+            y1="2"
+            x2="50"
+            y2="30"
+            stroke="var(--primary)"
+            strokeWidth="1.5"
+          />
+          <line
+            x1="150"
+            y1="2"
+            x2="150"
+            y2="30"
+            stroke="var(--accent-purple)"
+            strokeWidth="1.5"
+          />
+          <line
+            x1="150"
+            y1="2"
+            x2="250"
+            y2="30"
+            stroke="var(--accent-green)"
+            strokeWidth="1.5"
+          />
+        </svg>
 
-        {/* RAG Subgraph */}
-        <rect
-          x="294"
-          y="214"
-          width="110"
-          height="40"
-          rx="8"
-          fill="color-mix(in srgb, var(--accent-green) 18%, var(--card))"
-          stroke="var(--accent-green)"
-          strokeWidth="1.5"
-        />
-        <text
-          x="349"
-          y="232"
-          textAnchor="middle"
-          fill="var(--accent-green)"
-          fontSize="10"
-          fontWeight="600"
-        >
-          RAG Subgraph
-        </text>
-        <text
-          x="349"
-          y="246"
-          textAnchor="middle"
-          fill="var(--accent-green)"
-          fontSize="8"
-        >
-          expand · rerank · inject
-        </text>
-
-        {/* Lines orch → agents */}
-        <line
-          x1="175"
-          y1="168"
-          x2="71"
-          y2="214"
-          stroke="var(--primary)"
-          strokeWidth="1.5"
-          markerEnd="url(#arrb)"
-        />
-        <line
-          x1="210"
-          y1="168"
-          x2="210"
-          y2="214"
-          stroke="var(--accent-purple)"
-          strokeWidth="1.5"
-          markerEnd="url(#arrp)"
-        />
-        <line
-          x1="245"
-          y1="168"
-          x2="349"
-          y2="214"
-          stroke="var(--accent-green)"
-          strokeWidth="1.5"
-          markerEnd="url(#arrg)"
-        />
-
-        {/* Response arrow up */}
-        <line
-          x1="210"
-          y1="26"
-          x2="210"
-          y2="8"
-          stroke="var(--border)"
-          strokeWidth="1.5"
-          markerEnd="url(#arr)"
-        />
-        <text
-          x="210"
-          y="6"
-          textAnchor="middle"
-          fill="var(--muted-foreground)"
-          fontSize="9"
-        >
-          Resposta
-        </text>
-
-        {/* Arrow markers */}
-        <defs>
-          <marker
-            id="arr"
-            markerWidth="8"
-            markerHeight="8"
-            refX="4"
-            refY="4"
-            orient="auto"
-          >
-            <path d="M0,0 L0,8 L8,4 z" fill="var(--border)" />
-          </marker>
-          <marker
-            id="arrb"
-            markerWidth="8"
-            markerHeight="8"
-            refX="4"
-            refY="4"
-            orient="auto"
-          >
-            <path d="M0,0 L0,8 L8,4 z" fill="var(--primary)" />
-          </marker>
-          <marker
-            id="arrp"
-            markerWidth="8"
-            markerHeight="8"
-            refX="4"
-            refY="4"
-            orient="auto"
-          >
-            <path d="M0,0 L0,8 L8,4 z" fill="var(--accent-purple)" />
-          </marker>
-          <marker
-            id="arrg"
-            markerWidth="8"
-            markerHeight="8"
-            refX="4"
-            refY="4"
-            orient="auto"
-          >
-            <path d="M0,0 L0,8 L8,4 z" fill="var(--accent-green)" />
-          </marker>
-        </defs>
-      </svg>
+        <div className="grid w-full grid-cols-3 gap-3">
+          <AgentBox
+            title="Coder Agent"
+            sub="fs · terminal · git"
+            colorVar="--primary"
+          />
+          <AgentBox
+            title="Search Agent"
+            sub="web · RAG · curadoria"
+            colorVar="--accent-purple"
+          />
+          <AgentBox
+            title="RAG Subgraph"
+            sub="expand · rerank · inject"
+            colorVar="--accent-green"
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -272,9 +114,9 @@ const BULLETS = [
 
 export default function AgenticFlowSection() {
   return (
-    <section className="bg-background/50 px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+    <section className="bg-background/50 px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
           <AgenticDiagram />
 
           <div>

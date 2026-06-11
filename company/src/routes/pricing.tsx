@@ -4,32 +4,13 @@ import PricingSection from "#/components/landing/PricingSection";
 import FaqAccordion from "#/components/shared/FaqAccordion";
 import WaitlistCta from "#/components/landing/WaitlistCta";
 
-const PRICING_FAQS = [
-  {
-    question: "O trial de 30 dias exige cartão de crédito?",
-    answer:
-      "Não. O trial começa imediatamente após criar sua conta, sem necessidade de cartão.",
-  },
-  {
-    question: "Posso trocar de plano durante o trial?",
-    answer:
-      "Sim. Você pode fazer upgrade ou downgrade a qualquer momento antes do trial terminar.",
-  },
-  {
-    question: "Quais formas de pagamento são aceitas?",
-    answer:
-      "Brasil: PIX, Boleto e Cartão via Asaas. Internacional: Cartão via Stripe.",
-  },
-  {
-    question: "O que acontece quando o trial termina?",
-    answer:
-      "Sua conta entra em modo inativo. Os dados são preservados por 30 dias para que você possa assinar.",
-  },
-  {
-    question: "Posso cancelar a qualquer momento?",
-    answer:
-      "Sim. Não há fidelidade mínima. Cancele pelo painel e o acesso continua até o fim do período pago.",
-  },
+// Mensagens i18n (paraglide) — avaliadas na renderização para refletir o locale.
+const PRICING_FAQS = () => [
+  { question: m.pricing_faq_q1(), answer: m.pricing_faq_a1() },
+  { question: m.pricing_faq_q2(), answer: m.pricing_faq_a2() },
+  { question: m.pricing_faq_q3(), answer: m.pricing_faq_a3() },
+  { question: m.pricing_faq_q4(), answer: m.pricing_faq_a4() },
+  { question: m.pricing_faq_q5(), answer: m.pricing_faq_a5() },
 ];
 
 export const Route = createFileRoute("/pricing")({
@@ -76,11 +57,11 @@ function PricingPage() {
   return (
     <>
       <PricingSection />
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         <h2 className="mb-8 text-center text-2xl font-semibold text-foreground">
-          Perguntas frequentes
+          {m.pricing_faq_heading()}
         </h2>
-        <FaqAccordion items={PRICING_FAQS} />
+        <FaqAccordion items={PRICING_FAQS()} />
       </div>
       <WaitlistCta />
     </>

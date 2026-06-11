@@ -4,7 +4,7 @@ import Logo from "#/components/shared/Logo";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden px-4 pb-14 pt-16 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8">
+    <section className="relative overflow-hidden px-4 pb-10 pt-12 sm:px-6 sm:pb-12 sm:pt-16 lg:px-8">
       {/* Background gradient mesh */}
       <div
         aria-hidden
@@ -68,7 +68,7 @@ export default function Hero() {
         </div>
 
         {/* GIF hero */}
-        <div className="mx-auto mt-12 max-w-[860px] sm:mt-16">
+        <div className="mx-auto mt-10 max-w-[860px] sm:mt-12">
           <div
             className="overflow-hidden rounded-2xl border border-border glow-brand-lg"
             style={{ aspectRatio: "16/10" }}

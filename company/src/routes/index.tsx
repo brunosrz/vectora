@@ -25,12 +25,14 @@ export const Route = createFileRoute("/")({
         property: "og:image",
         content: `${APP_URL}/api/og?title=${encodeURIComponent(m.page_home_title())}&desc=${encodeURIComponent(m.page_home_desc())}`,
       },
+    ],
+    links: [
       ...HREFLANG_LOCALES.map((lang) => ({
         rel: "alternate",
-        hreflang: lang,
+        hrefLang: lang,
         href: lang === "pt" ? APP_URL : `${APP_URL}/${lang}`,
       })),
-      { rel: "alternate", hreflang: "x-default", href: APP_URL },
+      { rel: "alternate", hrefLang: "x-default", href: APP_URL },
     ],
     scripts: [
       {

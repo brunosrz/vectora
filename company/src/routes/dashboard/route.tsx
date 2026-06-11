@@ -27,6 +27,7 @@ function DashboardLayout() {
   useEffect(() => {
     if (!uid) return;
     const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
 
     const channel = supabase
       .channel("license_status")

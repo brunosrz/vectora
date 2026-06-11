@@ -310,9 +310,9 @@ function RagDiagram() {
 
 export default function RagFlowSection() {
   return (
-    <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+    <section className="px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
           <div>
             <h2 className="mb-6 text-2xl font-semibold text-foreground sm:text-3xl">
               {m.rag_heading()}

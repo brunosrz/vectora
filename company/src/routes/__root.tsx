@@ -101,7 +101,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const isDashboard = location.pathname.startsWith("/dashboard");
 
   return (
-    <html lang={getLocale()}>
+    // suppressHydrationWarning: a classe do tema (dark/light) é aplicada por
+    // script inline antes da hidratação e nunca bate com o HTML do SSR.
+    <html lang={getLocale()} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

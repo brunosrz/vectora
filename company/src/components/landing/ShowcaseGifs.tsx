@@ -70,9 +70,10 @@ export default function ShowcaseGifs() {
   ];
 
   return (
-    <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="mb-12 text-center text-2xl font-semibold text-foreground sm:text-3xl">
+    <section className="px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+      {/* 80% do max-w-6xl original (72rem → 58rem): cards ~20% menores */}
+      <div className="mx-auto max-w-[58rem]">
+        <h2 className="mb-8 text-center text-2xl font-semibold text-foreground sm:text-3xl">
           {m.showcase_title()}
         </h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
