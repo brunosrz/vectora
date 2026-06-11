@@ -19,6 +19,7 @@ import logging
 import os
 import threading
 from pathlib import Path
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +154,41 @@ class RuntimeSettings:
     @storage_mode.setter
     def storage_mode(self, value: str) -> None:
         self.set("storage_mode", value if value in ("lite", "complete") else "lite")
+
+    def get_service_startup(self, service: str) -> dict:
+        """Configuração de auto-start para um serviço self-hosted do modo
+        "complete" (``postgres`` | ``redis`` | ``qdrant``).
+
+        Retorna ``{"self_hosted": bool, "start_command": str | None}``. Usado
+        por ``POST /admin/storage/test`` (Setup Wizard) para tentar subir o
+        serviço localmente quando a conexão falha. Não se aplica a serviços
+        terceirizados (Supabase, Upstash, Qdrant Cloud etc.).
+        """
+        services = self.get("storage_services", {})
+        if not isinstance(services, dict):
+            return {"self_hosted": False, "start_command": None}
+        cfg = cast("dict[str, Any]", services).get(service)
+        if not isinstance(cfg, dict):
+            return {"self_hosted": False, "start_command": None}
+        return {
+            "self_hosted": bool(cfg.get("self_hosted", False)),
+            "start_command": cfg.get("start_command") or None,
+        }
+
+    def set_service_startup(
+        self, service: str, *, self_hosted: bool, start_command: str | None
+    ) -> None:
+        """Persiste a configuração de auto-start de um serviço self-hosted."""
+        with self._lock:
+            services = self._data.get("storage_services", {})
+            if not isinstance(services, dict):
+                services = {}
+            services[service] = {
+                "self_hosted": self_hosted,
+                "start_command": start_command,
+            }
+            self._data["storage_services"] = services
+            self._save()
 
     def set_active_model(self, provider: str, model: str) -> None:
         """Troca provider + model ativos e persiste (thread-safe)."""

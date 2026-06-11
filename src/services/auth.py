@@ -190,7 +190,15 @@ _db_conn: Any = None
 
 
 async def _get_db() -> Any:
-    """Retorna conexão aiosqlite compartilhada com os schemas de auth."""
+    """Retorna conexão aiosqlite compartilhada com os schemas de auth.
+
+    Garantia de produto: usuários, sessões/refresh tokens, audit e invites
+    SEMPRE residem em SQLite (~/.vectora/checkpoints.db), independente de
+    ``settings.storage_mode``. Mesmo no modo "complete" (Postgres + Qdrant +
+    Redis), este SQLite continua sendo a fonte de verdade — funciona como
+    fallback garantido. Não trocar esta função para retornar um pool Postgres;
+    ver ``PostgresAuthDB`` abaixo para o motivo de não estar em uso.
+    """
     global _db_conn
     if _db_conn is not None:
         return _db_conn
@@ -818,12 +826,19 @@ async def get_db_for_audit() -> Any:
 
 
 # ---------------------------------------------------------------------------
-# Backend Postgres — AuthDB protocol (F7 — complete mode)
+# Backend Postgres — AuthDB protocol (F7 — NÃO USADO)
 # ---------------------------------------------------------------------------
 
 
 class PostgresAuthDB:
-    """Implementação Postgres do protocolo ``AuthDB``.
+    """Implementação Postgres do protocolo ``AuthDB`` — mantida apenas para
+    referência/experimentos, **não conectada** a nenhum endpoint.
+
+    ATENÇÃO: dados de usuários/auth são uma garantia de produto em SQLite
+    (sempre disponível como fallback, mesmo no modo "complete" — ver
+    ``_get_db()`` acima). Não trocar `_get_db()`/handlers para usar esta
+    classe — isso violaria a garantia de "SQLite/JSON sempre, Postgres nunca"
+    para users/auth/settings.
 
     Usa o pool asyncpg de ``storage.factory.get_pg_pool()`` para todas as
     operações. O schema deve ter sido criado via ``vectora storage migrate``

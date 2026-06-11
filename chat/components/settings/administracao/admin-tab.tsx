@@ -20,7 +20,6 @@ import {
   Loader2,
   Pencil,
   RefreshCw,
-  Settings2,
   Shield,
   Trash2,
   UserPlus,
@@ -668,15 +667,20 @@ function SystemPanel() {
           </div>
         ))}
       </div>
+
+      <div className="pt-3 border-t space-y-3">
+        <p className="text-xs font-medium">Configurações</p>
+        <ConfigSection />
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Sub-aba: Configuração
+// Seção: Configuração (renderizada dentro de SystemPanel)
 // ---------------------------------------------------------------------------
 
-function ConfigPanel() {
+function ConfigSection() {
   const [config, setConfig] = useState<ServerConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1460,11 +1464,6 @@ const SUB_TABS: { id: AdminSubTab; label: string; icon: React.ReactNode }[] = [
     icon: <Cpu className="w-3.5 h-3.5" />,
   },
   {
-    id: "config",
-    label: "Config",
-    icon: <Settings2 className="w-3.5 h-3.5" />,
-  },
-  {
     id: "storage",
     label: "Storage",
     icon: <Database className="w-3.5 h-3.5" />,
@@ -1475,7 +1474,7 @@ export function AdminTab() {
   const [active, setActive] = useState<AdminSubTab>("users");
 
   // Deep-link: outros lugares (license-banner, etc.) usam
-  // `useAdministracaoDialogStore.openAt("config")`. Quando o store recebe `subTab`,
+  // `useAdministracaoDialogStore.openAt("system")`. Quando o store recebe `subTab`,
   // sincronizamos com o `active` local e limpamos o slot para que
   // re-aberturas do dialog não voltem para a mesma sub-aba.
   const subTab = useAdministracaoDialogStore((s) => s.subTab);
@@ -1517,7 +1516,6 @@ export function AdminTab() {
         {active === "tools" && <ToolsPanel />}
         {active === "safe-roots" && <SafeRootsPanel />}
         {active === "system" && <SystemPanel />}
-        {active === "config" && <ConfigPanel />}
         {active === "storage" && <StoragePanel />}
       </div>
     </div>

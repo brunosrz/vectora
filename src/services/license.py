@@ -237,15 +237,26 @@ def validate_license_sync() -> LicenseStatusInfo:
     return asyncio.run(validate_license_async())
 
 
-def write_token_to_config(token: str) -> None:
-    """Persiste ``VECTORA_TOKEN`` em ``~/.vectora/config.toml`` (seção
-    ``[license]``).
+def _toml_value(value: str | int | bool) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    return f'"{value}"'
 
-    O arquivo é lido em todo boot pelo launcher antes da validação remota;
-    isto é, o operador pode trocar o token via UI sem precisar exportar
-    a env var manualmente. Outras seções do TOML são preservadas.
 
-    Token vazio remove a chave (sem deletar a seção inteira).
+def write_config_section(
+    section: str, values: dict[str, str | int | bool | None]
+) -> None:
+    """Persiste pares chave/valor em ``~/.vectora/config.toml`` (seção
+    ``[<section>]``), preservando demais seções e chaves.
+
+    Usado para ``[license]`` (token) e ``[server]`` (config admin) — todo
+    estado de configuração do Vectora vive em SQLite/JSON/TOML, **nunca** em
+    Postgres, mesmo no modo de armazenamento "complete" (ver
+    ``src/storage/factory.py``).
+
+    Valor ``None`` remove a chave (sem deletar a seção inteira).
     """
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -254,36 +265,51 @@ def write_token_to_config(token: str) -> None:
         raw = CONFIG_PATH.read_text(encoding="utf-8")
 
     lines = raw.splitlines()
-    in_license = False
-    found_token = False
+    in_target = False
+    found_keys: set[str] = set()
     new_lines: list[str] = []
 
     for line in lines:
         stripped = line.strip()
         if stripped.startswith("[") and stripped.endswith("]"):
-            in_license = stripped == "[license]"
+            in_target = stripped == f"[{section}]"
             new_lines.append(line)
             continue
-        if in_license and stripped.startswith("token"):
-            found_token = True
-            if token:
-                new_lines.append(f'token = "{token}"')
-            # Token vazio → linha removida.
-            continue
+        if in_target:
+            key = stripped.split("=", 1)[0].strip()
+            if key in values:
+                found_keys.add(key)
+                value = values[key]
+                if value is not None:
+                    new_lines.append(f"{key} = {_toml_value(value)}")
+                # Valor None → linha removida.
+                continue
         new_lines.append(line)
 
-    if not found_token:
-        if not any(line.strip() == "[license]" for line in new_lines):
+    pending = {k: v for k, v in values.items() if k not in found_keys and v is not None}
+    if pending:
+        if not any(line.strip() == f"[{section}]" for line in new_lines):
             if new_lines and new_lines[-1] != "":
                 new_lines.append("")
-            new_lines.append("[license]")
-        if token:
-            new_lines.append(f'token = "{token}"')
+            new_lines.append(f"[{section}]")
+        for key, value in pending.items():
+            new_lines.append(f"{key} = {_toml_value(value)}")
 
     CONFIG_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
     # Permissão restritiva (apenas o owner lê) em Unix; no-op em Windows.
     with contextlib.suppress(OSError):
         CONFIG_PATH.chmod(0o600)
+
+
+def write_token_to_config(token: str) -> None:
+    """Persiste ``VECTORA_TOKEN`` em ``~/.vectora/config.toml`` (seção
+    ``[license]``).
+
+    O arquivo é lido em todo boot pelo launcher antes da validação remota;
+    isto é, o operador pode trocar o token via UI sem precisar exportar
+    a env var manualmente. Outras seções do TOML são preservadas.
+    """
+    write_config_section("license", {"token": token or None})
 
 
 def read_cached_status() -> LicenseStatusInfo | None:

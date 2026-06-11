@@ -1,13 +1,13 @@
 /**
  * administracao-dialog-store — controla a abertura do painel de
  * Administração e a sub-aba ativa (Usuários/Ferramentas/Pastas
- * Seguras/Sistema/Config).
+ * Seguras/Sistema/Storage).
  *
  * Administração é um dos 3 painéis de configurações (Preferências,
  * Ambiente, Administração), com dialog e store próprios já que o
  * `AdminTab` tem múltiplos sub-painéis e merece navegação independente.
  * Permite deep-link a partir de qualquer lugar (ex.: banner de licença →
- * Administração → Config) sem prop drilling.
+ * Administração → Sistema) sem prop drilling.
  */
 
 import { create } from "zustand";
@@ -17,7 +17,6 @@ export type AdminSubTab =
   | "users"
   | "tools"
   | "system"
-  | "config"
   | "safe-roots"
   | "storage";
 

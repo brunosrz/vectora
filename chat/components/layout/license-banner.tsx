@@ -88,7 +88,7 @@ export function LicenseBanner({
           type="button"
           onClick={
             spec.cta.action === "configure"
-              ? () => openAdmin("config")
+              ? () => openAdmin("system")
               : handlePortal
           }
           disabled={portalLoading}

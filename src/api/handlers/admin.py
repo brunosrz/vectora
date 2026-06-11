@@ -469,23 +469,32 @@ async def patch_server_config(request: Request, body: PatchConfigBody) -> dict:
     user = _get_user(request)
     require_root(user)
 
-    # Runtime-only patch — alterações não sobrevivem a restart sem config.toml
-    # TODO: persistir em ~/.vectora/config.toml
+    # Persiste em ~/.vectora/config.toml [server] — sobrevive a restart, sem
+    # depender de Postgres (ver write_config_section em src/services/license.py).
     updated: dict[str, Any] = {}
+    toml_values: dict[str, str | int | bool | None] = {}
     try:
         from src.settings import settings
 
         if body.allow_public_signup is not None:
-            settings.allow_public_signup = body.allow_public_signup  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+            settings.allow_public_signup = body.allow_public_signup  # type: ignore[attr-defined]
             updated["allow_public_signup"] = body.allow_public_signup
+            toml_values["allow_public_signup"] = body.allow_public_signup
 
         if body.default_model is not None:
-            settings.default_model = body.default_model  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+            settings.default_model = body.default_model  # type: ignore[attr-defined]
             updated["default_model"] = body.default_model
+            toml_values["default_model"] = body.default_model
 
         if body.max_recursion is not None:
-            settings.max_recursion = body.max_recursion  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+            settings.max_recursion = body.max_recursion  # type: ignore[attr-defined]
             updated["max_recursion"] = body.max_recursion
+            toml_values["max_recursion"] = body.max_recursion
+
+        if toml_values:
+            from src.services.license import write_config_section
+
+            write_config_section("server", toml_values)
 
         if body.vectora_token is not None:
             token = body.vectora_token.strip()
@@ -626,70 +635,104 @@ async def test_storage_connection(request: Request) -> dict:
         ``{"backend": "postgres", "dsn": "postgresql://..."}``
         ou ``{"backend": "qdrant", "url": "https://...", "api_key": "..."}``
         ou ``{"backend": "sqlite", "path": "/caminho/para/db.sqlite"}``
+        ou ``{"backend": "redis", "url": "redis://..."}``
+
+    Campos opcionais ``self_hosted`` (bool) e ``start_command`` (str): se a
+    primeira tentativa falhar e ambos estiverem presentes, executa
+    ``start_command`` (ex: ``docker compose up -d postgres``) e tenta
+    novamente uma vez. Aplica-se apenas a serviços self-hosted — não usar com
+    serviços terceirizados (Supabase, Upstash, Qdrant Cloud etc.).
 
     Returns:
-        ``{"ok": true, "latency_ms": 12}`` ou ``{"ok": false, "error": "..."}``
+        ``{"ok": true, "latency_ms": 12, "started": false}`` ou
+        ``{"ok": false, "error": "...", "started": bool}``
     """
     user = _get_user(request)
     require_admin(user)
 
+    import asyncio
     import time
 
     body = await request.json()
     backend = body.get("backend", "sqlite")
-    t0 = time.monotonic()
 
-    try:
-        if backend == "postgres":
-            import asyncpg
+    async def _attempt() -> dict:
+        t0 = time.monotonic()
+        try:
+            if backend == "postgres":
+                import asyncpg
 
-            dsn = body.get("dsn") or ""
-            if not dsn:
-                return {"ok": False, "error": "DSN não fornecido"}
-            dsn_norm = dsn.replace("postgresql+asyncpg://", "postgresql://")
-            conn = await asyncpg.connect(dsn_norm)
-            await conn.execute("SELECT 1")
-            await conn.close()
-
-        elif backend == "qdrant":
-            from qdrant_client import QdrantClient
-
-            url = body.get("url") or ""
-            api_key = body.get("api_key")
-            if not url:
-                return {"ok": False, "error": "URL não fornecida"}
-            client = QdrantClient(url=url, api_key=api_key)
-            client.get_collections()
-
-        elif backend == "sqlite":
-            import aiosqlite
-
-            path = body.get("path") or ""
-            if not path:
-                return {"ok": False, "error": "Path não fornecido"}
-            async with aiosqlite.connect(path) as conn:
+                dsn = body.get("dsn") or ""
+                if not dsn:
+                    return {"ok": False, "error": "DSN não fornecido"}
+                dsn_norm = dsn.replace("postgresql+asyncpg://", "postgresql://")
+                conn = await asyncpg.connect(dsn_norm)
                 await conn.execute("SELECT 1")
+                await conn.close()
 
-        elif backend == "redis":
-            import redis.asyncio as aredis
+            elif backend == "qdrant":
+                from qdrant_client import QdrantClient
 
-            url = body.get("url") or ""
-            if not url:
-                return {"ok": False, "error": "URL não fornecida"}
-            client = aredis.from_url(url)
-            try:
-                await client.ping()  # ty: ignore[invalid-await]
-            finally:
-                await client.aclose()
+                url = body.get("url") or ""
+                api_key = body.get("api_key")
+                if not url:
+                    return {"ok": False, "error": "URL não fornecida"}
+                client = QdrantClient(url=url, api_key=api_key)
+                client.get_collections()
 
-        else:
-            return {"ok": False, "error": f"Backend desconhecido: {backend!r}"}
+            elif backend == "sqlite":
+                import aiosqlite
 
-        latency_ms = round((time.monotonic() - t0) * 1000, 1)
-        return {"ok": True, "latency_ms": latency_ms}
+                path = body.get("path") or ""
+                if not path:
+                    return {"ok": False, "error": "Path não fornecido"}
+                async with aiosqlite.connect(path) as conn:
+                    await conn.execute("SELECT 1")
 
-    except Exception as exc:
-        return {"ok": False, "error": str(exc)}
+            elif backend == "redis":
+                import redis.asyncio as aredis
+
+                url = body.get("url") or ""
+                if not url:
+                    return {"ok": False, "error": "URL não fornecida"}
+                client = aredis.from_url(url)
+                try:
+                    await client.ping()  # ty: ignore[invalid-await]
+                finally:
+                    await client.aclose()
+
+            else:
+                return {"ok": False, "error": f"Backend desconhecido: {backend!r}"}
+
+            latency_ms = round((time.monotonic() - t0) * 1000, 1)
+            return {"ok": True, "latency_ms": latency_ms}
+
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    result = await _attempt()
+    result["started"] = False
+
+    if not result["ok"] and body.get("self_hosted") and body.get("start_command"):
+        import shlex
+        import subprocess  # nosec B404
+
+        try:
+            subprocess.Popen(  # noqa: S603  # nosec B603 — comando configurado pelo operador no Setup Wizard
+                shlex.split(body["start_command"]),
+                start_new_session=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            result["started"] = True
+            await asyncio.sleep(2)
+            retry = await _attempt()
+            retry["started"] = True
+            return retry
+        except Exception as exc:
+            result["error"] = f"{result.get('error')} (falha ao iniciar serviço: {exc})"
+
+    return result
 
 
 @router.patch("/storage")
@@ -702,6 +745,9 @@ async def update_storage_config(request: Request) -> dict:
         ``redis_url``:    URL de conexão Redis
         ``qdrant_url``:   URL do cluster Qdrant
         ``qdrant_api_key``: API key Qdrant
+        ``services``: ``{"postgres"|"redis"|"qdrant": {"self_hosted": bool,
+        "start_command": str | null}}`` — config de auto-start usada por
+        ``POST /admin/storage/test`` (apenas serviços self-hosted).
 
     Nota: alterações são aplicadas ao runtime_settings; persistem via
     ``~/.vectora/settings.json`` se o ``RuntimeSettings`` suportar save.
@@ -755,6 +801,19 @@ async def update_storage_config(request: Request) -> dict:
 
         _s.redis_url = body["redis_url"]
         updated["redis_url"] = "***"
+
+    if "services" in body and isinstance(body["services"], dict):
+        for service, cfg in body["services"].items():
+            if service not in ("postgres", "redis", "qdrant") or not isinstance(
+                cfg, dict
+            ):
+                continue
+            runtime_settings.set_service_startup(
+                service,
+                self_hosted=bool(cfg.get("self_hosted", False)),
+                start_command=cfg.get("start_command") or None,
+            )
+        updated["services"] = list(body["services"])
 
     logger.info("admin: storage config atualizado por %s: %s", user.id, list(updated))
     return {"status": "updated", **updated}

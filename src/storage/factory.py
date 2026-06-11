@@ -17,6 +17,14 @@ Uso:
         ...
 
     store = await get_store()   # AsyncSqliteStore ou PostgresStore
+
+Garantia de produto — usuários/auth/settings/config NUNCA em Postgres:
+``storage_mode`` ("lite"/"complete") afeta apenas checkpointer, BaseStore,
+vector store e cache. Usuários, sessões, audit, invites
+(``src/services/auth.py::_get_db``) e configurações (``runtime_settings``,
+``~/.vectora/config.toml``) sempre vivem em SQLite/JSON/TOML, mesmo com
+``storage_mode == "complete"`` — funcionam como fallback garantido
+independente do banco principal.
 """
 
 from __future__ import annotations

@@ -145,7 +145,13 @@ class Settings(BaseSettings):
     """AsyncPG connection string.
 
     Exemplo: postgresql+asyncpg://vectora:senha@localhost:5432/vectora
-    Usado por checkpointer, store, auth, sessions, queue e audit no modo complete.
+    Usado por checkpointer, store e vector store no modo complete.
+
+    NUNCA usado para usuários/auth/sessões/settings/config — esses dados
+    permanecem sempre em SQLite (~/.vectora/checkpoints.db) ou
+    JSON/TOML (~/.vectora/settings.json, ~/.vectora/config.toml),
+    independentemente de ``storage_mode``. Veja ``src/services/auth.py``
+    e ``src/storage/factory.py``.
     """
 
     # ============================================================================
@@ -172,6 +178,19 @@ class Settings(BaseSettings):
 
     qdrant_api_key: str | None = None
     """API key para Qdrant Cloud. Opcional para instância local."""
+
+    # ============================================================================
+    # CONFIG ADMIN — sempre persistido em ~/.vectora/config.toml [server]
+    # ============================================================================
+
+    allow_public_signup: bool = False
+    """Permite cadastro sem convite. Editável via Admin → Sistema."""
+
+    default_model: str = ""
+    """Modelo padrão sugerido a novos usuários. Editável via Admin → Sistema."""
+
+    max_recursion: int = 50
+    """Limite de recursão do agente. Editável via Admin → Sistema."""
 
     # ============================================================================
     # FILE PATHS
@@ -463,6 +482,32 @@ class Settings(BaseSettings):
                 logger.debug(f"Loaded runtime settings from {_settings_json}")
             except Exception as _e:
                 logger.debug(f"Could not load settings.json: {_e}")
+
+        # Level 3b: Load ~/.vectora/config.toml [server] (config admin persistida —
+        # allow_public_signup, default_model, max_recursion). Mesmo arquivo onde
+        # write_config_section() grava via PATCH /admin/config.
+        _config_toml = Path.home() / ".vectora" / "config.toml"
+        if _config_toml.exists():
+            try:
+                import tomllib as _tomllib
+
+                _cfg = _tomllib.loads(_config_toml.read_text(encoding="utf-8"))
+                _server_cfg = _cfg.get("server", {})
+                if "allow_public_signup" in _server_cfg:
+                    os.environ.setdefault(
+                        "ALLOW_PUBLIC_SIGNUP", str(_server_cfg["allow_public_signup"])
+                    )
+                if "default_model" in _server_cfg:
+                    os.environ.setdefault(
+                        "DEFAULT_MODEL", str(_server_cfg["default_model"])
+                    )
+                if "max_recursion" in _server_cfg:
+                    os.environ.setdefault(
+                        "MAX_RECURSION", str(_server_cfg["max_recursion"])
+                    )
+                logger.debug(f"Loaded server config from {_config_toml}")
+            except Exception as _e:
+                logger.debug(f"Could not load config.toml [server]: {_e}")
 
         # Level 2: Load user global ~/.vectora/.env (segredos pessoais, fallback)
         # override=False: apenas preenche variáveis ainda não definidas no OS env.

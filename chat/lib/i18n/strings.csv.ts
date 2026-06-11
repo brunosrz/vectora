@@ -408,15 +408,35 @@ invite.error_create,Error generating invite,Error al generar invitación,Erro ao
 # =============================================================================
 onboarding.step1_title,Welcome to Vectora,Bienvenido a Vectora,Bem-vindo ao Vectora
 onboarding.step2_title,Language & Theme,Idioma y tema,Idioma e tema
-onboarding.step3_title,Workspaces,Espacios de trabajo,Workspaces
-onboarding.step4_title,All set!,¡Todo listo!,Tudo pronto!
+onboarding.step3_title,License token,Token de licencia,Token de licença
+onboarding.step4_title,Storage mode,Modo de almacenamiento,Modo de armazenamento
+onboarding.step5_title,Workspaces,Espacios de trabajo,Workspaces
+onboarding.step6_title,What is RAG?,¿Qué es RAG?,O que é RAG?
+onboarding.step7_title,All set!,¡Todo listo!,Tudo pronto!
 onboarding.welcome_body,"Vectora is your AI coding assistant — it can read, write and run code inside your trusted folders.","Vectora es tu asistente de código IA — puede leer, escribir y ejecutar código en tus carpetas de confianza.","O Vectora é seu assistente de código com IA — ele pode ler, escrever e executar código nas suas pastas confiáveis."
 onboarding.language_label,Language,Idioma,Idioma
 onboarding.theme_label,Theme,Tema,Tema
+onboarding.token_body,"Enter your VECTORA_TOKEN to unlock your license features. You can skip this and add it later in Admin → System.","Ingresa tu VECTORA_TOKEN para desbloquear los recursos de tu licencia. Puedes omitir esto y agregarlo después en Admin → Sistema.","Informe seu VECTORA_TOKEN para liberar os recursos da sua licença. Você pode pular esta etapa e adicioná-lo depois em Admin → Sistema."
+onboarding.token_configured,Current,Actual,Atual
+onboarding.token_show,Show,Mostrar,Mostrar
+onboarding.token_hide,Hide,Ocultar,Ocultar
+onboarding.token_save,Save token,Guardar token,Salvar token
+onboarding.token_saved,Saved!,¡Guardado!,Salvo!
+onboarding.token_hint,Get your token at,Obtén tu token en,Obtenha seu token em
+onboarding.mode_body,"Choose how Vectora stores its data. ""Lite"" uses local SQLite + LanceDB and works out of the box. ""Complete"" uses PostgreSQL + Qdrant + Redis — for self-hosted or third-party services (Supabase, Upstash, Qdrant Cloud, etc).","Elige cómo Vectora almacena sus datos. ""Lite"" usa SQLite + LanceDB local y funciona sin configuración. ""Completo"" usa PostgreSQL + Qdrant + Redis — para servicios autoalojados o de terceros (Supabase, Upstash, Qdrant Cloud, etc).","Escolha como o Vectora armazena seus dados. ""Lite"" usa SQLite + LanceDB local e funciona sem configuração. ""Completo"" usa PostgreSQL + Qdrant + Redis — para serviços self-hosted ou terceirizados (Supabase, Upstash, Qdrant Cloud etc)."
+onboarding.mode_lite_title,Lite (recommended),Lite (recomendado),Lite (recomendado)
+onboarding.mode_lite_desc,SQLite + LanceDB — local and ready to use.,SQLite + LanceDB — local y listo para usar.,SQLite + LanceDB — local e pronto para usar.
+onboarding.mode_complete_title,Complete,Completo,Completo
+onboarding.mode_complete_desc,PostgreSQL + Qdrant + Redis — requires connection setup.,PostgreSQL + Qdrant + Redis — requiere configurar las conexiones.,PostgreSQL + Qdrant + Redis — requer configurar as conexões.
+onboarding.mode_self_hosted,Self-hosted (allow Vectora to start this service),Autoalojado (permitir que Vectora inicie este servicio),Self-hosted (permitir que o Vectora inicie esse serviço)
+onboarding.mode_start_command_placeholder,Start command (e.g. docker compose up -d postgres),Comando de inicio (ej: docker compose up -d postgres),Comando de start (ex: docker compose up -d postgres)
+onboarding.mode_test,Test connection,Probar conexión,Testar conexão
+onboarding.mode_save,Save,Guardar,Salvar
 onboarding.workspace_body,Workspaces are folders on your machine that Vectora can access when you grant trust.,Los espacios de trabajo son carpetas en tu máquina a las que Vectora puede acceder cuando les das confianza.,Workspaces são pastas no seu computador que o Vectora pode acessar quando você concede confiança.
 onboarding.workspace_bullet_1,Add a folder in the Workspace selector in the chat composer.,Agrega una carpeta en el selector de workspace del compositor.,Adicione uma pasta no seletor de workspace no composer do chat.
 onboarding.workspace_bullet_2,Vectora can read and write files only inside trusted folders.,Vectora solo puede leer y escribir archivos dentro de carpetas de confianza.,O Vectora só lê e escreve dentro de pastas confiáveis.
 onboarding.workspace_bullet_3,Each conversation remembers its workspace.,Cada conversación recuerda su espacio de trabajo.,Cada conversa lembra o seu workspace.
+onboarding.rag_body,"RAG (Retrieval-Augmented Generation) is a deep memory — it works as an extra training layer for Vectora. Before answering, it searches your documents and past conversations for relevant context, without ever needing to retrain the model.","RAG (Generación Aumentada por Recuperación) es una memoria profunda — funciona como una capa extra de entrenamiento para Vectora. Antes de responder, busca en tus documentos y conversaciones pasadas el contexto relevante, sin necesidad de reentrenar el modelo.","RAG (Geração Aumentada por Recuperação) é uma memória profunda — funciona como uma camada extra de treinamento do Vectora. Antes de responder, ele consulta seus documentos e conversas passadas em busca de contexto relevante, sem precisar re-treinar o modelo."
 onboarding.done_body,"You're all set — start a conversation and Vectora will get to work!","¡Ya estás listo — inicia una conversación y Vectora se pondrá a trabajar!","Você está pronto — inicie uma conversa e o Vectora começa a trabalhar!"
 onboarding.back,Back,Atrás,Voltar
 onboarding.skip,Skip,Omitir,Pular
