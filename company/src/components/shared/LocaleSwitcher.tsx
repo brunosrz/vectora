@@ -18,7 +18,7 @@ export default function LocaleSwitcher() {
       <select
         value={current}
         onChange={(e) => setLocale(e.target.value as (typeof locales)[number])}
-        className="cursor-pointer appearance-none rounded-md border border-brand-700 bg-brand-800 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+        className="cursor-pointer appearance-none rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/90 transition-colors hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
         aria-label="Select language"
       >
         {locales.map((locale) => (

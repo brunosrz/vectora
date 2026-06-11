@@ -52,7 +52,7 @@ function DashboardLayout() {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-brand-950 p-6 pb-24 lg:pb-6">
+      <main className="flex-1 overflow-y-auto bg-background p-6 pb-24 lg:pb-6">
         <Outlet />
       </main>
     </div>

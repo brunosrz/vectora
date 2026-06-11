@@ -13,23 +13,23 @@ type SubStatus = "trialing" | "active" | "past_due" | "canceled" | "expired";
 const STATUS_CONFIG: Record<SubStatus, { label: string; color: string }> = {
   trialing: {
     label: "Trial ativo",
-    color: "text-green-400 bg-green-500/10 border-green-500/30",
+    color: "text-accent-green bg-accent-green/10 border-accent-green/30",
   },
   active: {
     label: "Ativo",
-    color: "text-green-400 bg-green-500/10 border-green-500/30",
+    color: "text-accent-green bg-accent-green/10 border-accent-green/30",
   },
   past_due: {
     label: "Pagamento pendente",
-    color: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+    color: "text-accent-amber bg-accent-amber/10 border-accent-amber/30",
   },
   canceled: {
     label: "Cancelado",
-    color: "text-red-400 bg-red-500/10 border-red-500/30",
+    color: "text-accent-red bg-accent-red/10 border-accent-red/30",
   },
   expired: {
     label: "Expirado",
-    color: "text-slate-400 bg-slate-500/10 border-slate-500/30",
+    color: "text-muted-foreground bg-muted border-border",
   },
 };
 
@@ -69,7 +69,7 @@ export function LicenseStatus() {
   });
 
   if (isLoading) {
-    return <div className="h-32 rounded-xl bg-brand-800/30 animate-pulse" />;
+    return <div className="h-32 rounded-xl bg-card/30 animate-pulse" />;
   }
 
   if (!sub) return null;
@@ -84,11 +84,13 @@ export function LicenseStatus() {
 
   return (
     <div className="max-w-2xl space-y-5">
-      <div className="rounded-xl border border-brand-700 bg-brand-800/30 p-6">
+      <div className="rounded-xl border border-border bg-card/30 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-slate-500 mb-1">{m.license_plan()}</p>
-            <p className="text-xl font-semibold text-white capitalize">
+            <p className="text-sm text-muted-foreground mb-1">
+              {m.license_plan()}
+            </p>
+            <p className="text-xl font-semibold text-foreground capitalize">
               {sub.tier}
             </p>
           </div>
@@ -102,20 +104,22 @@ export function LicenseStatus() {
         {sub.current_period_start && (
           <div className="mt-4 flex flex-wrap gap-4 text-sm">
             <div>
-              <p className="text-xs text-slate-500">{m.license_started()}</p>
-              <p className="text-slate-300">
+              <p className="text-xs text-muted-foreground">
+                {m.license_started()}
+              </p>
+              <p className="text-foreground/90">
                 {new Date(sub.current_period_start).toLocaleDateString()}
               </p>
             </div>
             {sub.trial_ends_at && (
               <div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {m.license_trial_ends()}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-foreground/90">
                   {new Date(sub.trial_ends_at).toLocaleDateString()}
                   {days !== null && (
-                    <span className="ml-1.5 text-xs text-brand-400">
+                    <span className="ml-1.5 text-xs text-primary">
                       ({days}d restantes)
                     </span>
                   )}
@@ -134,7 +138,7 @@ export function LicenseStatus() {
               <button
                 onClick={() => checkoutMutation.mutate("plus")}
                 disabled={isCheckoutBusy}
-                className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-400 disabled:opacity-50 transition-all"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all"
               >
                 {m.license_cta_subscribe_plus()}
               </button>
@@ -143,7 +147,7 @@ export function LicenseStatus() {
             <button
               onClick={() => checkoutMutation.mutate("pro")}
               disabled={isCheckoutBusy}
-              className="rounded-xl border border-brand-500 px-4 py-2 text-sm font-semibold text-brand-300 hover:bg-brand-500/10 disabled:opacity-50 transition-all"
+              className="rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-50 transition-all"
             >
               {m.license_cta_upgrade_pro()}
             </button>
@@ -152,7 +156,7 @@ export function LicenseStatus() {
             <button
               onClick={() => portalMutation.mutate()}
               disabled={isPortalBusy}
-              className="rounded-xl border border-brand-700 px-4 py-2 text-sm font-medium text-slate-400 hover:border-brand-500 hover:text-white disabled:opacity-50 transition-all"
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:border-primary hover:text-foreground disabled:opacity-50 transition-all"
             >
               {isPortalBusy ? m.form_submitting() : m.license_cta_manage()}
             </button>
@@ -161,7 +165,7 @@ export function LicenseStatus() {
             <button
               onClick={() => portalMutation.mutate()}
               disabled={isPortalBusy}
-              className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-400 disabled:opacity-50"
+              className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-foreground hover:bg-amber-400 disabled:opacity-50"
             >
               {m.license_cta_update_payment()}
             </button>
@@ -180,31 +184,31 @@ export function LicenseHistory() {
   });
 
   if (isLoading)
-    return <div className="h-24 rounded-xl bg-brand-800/30 animate-pulse" />;
+    return <div className="h-24 rounded-xl bg-card/30 animate-pulse" />;
 
   if (!data?.length) {
     return (
-      <div className="rounded-xl border border-brand-700 bg-brand-800/10 p-6 text-center text-sm text-slate-500">
+      <div className="rounded-xl border border-border bg-card/10 p-6 text-center text-sm text-muted-foreground">
         {m.license_no_checks()}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-brand-700">
+    <div className="overflow-hidden rounded-xl border border-border">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-brand-700 bg-brand-800/50">
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">
+          <tr className="border-b border-border bg-card/50">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
               {m.license_col_date()}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
               {m.license_col_version()}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
               {m.license_col_result()}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
               IP
             </th>
           </tr>
@@ -223,26 +227,26 @@ export function LicenseHistory() {
             ) => (
               <tr
                 key={row.id}
-                className={`border-b border-brand-800 ${i % 2 === 0 ? "" : "bg-brand-900/20"}`}
+                className={`border-b border-border ${i % 2 === 0 ? "" : "bg-background/20"}`}
               >
-                <td className="px-4 py-2.5 text-slate-400">
+                <td className="px-4 py-2.5 text-muted-foreground">
                   {new Date(row.checked_at).toLocaleString()}
                 </td>
-                <td className="px-4 py-2.5 font-mono text-slate-400">
+                <td className="px-4 py-2.5 font-mono text-muted-foreground">
                   {row.vectora_version}
                 </td>
                 <td className="px-4 py-2.5">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       row.result === "valid"
-                        ? "bg-green-500/10 text-green-400"
-                        : "bg-red-500/10 text-red-400"
+                        ? "bg-accent-green/10 text-accent-green"
+                        : "bg-accent-red/10 text-accent-red"
                     }`}
                   >
                     {row.result}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 font-mono text-slate-500">
+                <td className="px-4 py-2.5 font-mono text-muted-foreground">
                   {maskIp(row.ip)}
                 </td>
               </tr>

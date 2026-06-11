@@ -9,7 +9,7 @@ export const Route = createFileRoute("/dashboard/billing")({
 function BillingPage() {
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold text-white">
+      <h1 className="mb-6 text-2xl font-semibold text-foreground">
         {m.nav_billing()}
       </h1>
       <BillingSection />

@@ -28,6 +28,9 @@ importers:
       "@radix-ui/react-separator":
         specifier: ^1.1.9
         version: 1.1.9(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      "@react-email/render":
+        specifier: ^2.0.8
+        version: 2.0.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       "@sentry/tanstackstart-react":
         specifier: ^10.42.0
         version: 10.56.0(react@19.2.7)
@@ -1853,6 +1856,16 @@ packages:
     resolution:
       {
         integrity: sha512-xOzaYkH3jLZKqN5MqrTXYnmqBYUnZSVbkxdb5PGGmDcK6sKDVMliaDiSwfXajRC9JtSHTcGc2tmGLHWuCgVpog==,
+      }
+    engines: { node: ">=20.0.0" }
+    peerDependencies:
+      react: ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^18.0 || ^19.0 || ^19.0.0-rc
+
+  "@react-email/render@2.0.8":
+    resolution:
+      {
+        integrity: sha512-5udvVr3U/WuGJZfLdLBOhkzrqRWd2Q5ZYmF7ppcy7FzWcwgshdqLMNqJOXcVzAXJXg/2bm7D+WGJzTtZOZMQnQ==,
       }
     engines: { node: ">=20.0.0" }
     peerDependencies:
@@ -7403,6 +7416,13 @@ snapshots:
       react-promise-suspense: 0.3.4
 
   "@react-email/render@2.0.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)":
+    dependencies:
+      html-to-text: 9.0.5
+      prettier: 3.8.3
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+
+  "@react-email/render@2.0.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7)":
     dependencies:
       html-to-text: 9.0.5
       prettier: 3.8.3

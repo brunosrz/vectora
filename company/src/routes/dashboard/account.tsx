@@ -9,7 +9,7 @@ export const Route = createFileRoute("/dashboard/account")({
 function AccountPage() {
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold text-white">
+      <h1 className="mb-6 text-2xl font-semibold text-foreground">
         {m.nav_account()}
       </h1>
       <AccountSection />

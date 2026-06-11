@@ -46,7 +46,7 @@ export default function WaitlistCta() {
   if (!isVisible) return null;
 
   return (
-    <section className="px-4 py-20 sm:px-6 lg:px-8">
+    <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
         {/* Gradient background blob */}
         <div
@@ -54,17 +54,17 @@ export default function WaitlistCta() {
           className="pointer-events-none absolute inset-0 -z-10 opacity-20"
           style={{
             background:
-              "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(59,130,246,0.4) 0%, transparent 70%)",
+              "radial-gradient(ellipse 60% 40% at 50% 50%, color-mix(in srgb, var(--primary) 35%, transparent) 0%, transparent 70%)",
           }}
         />
 
-        <h2 className="mb-3 text-3xl font-semibold text-white sm:text-4xl">
+        <h2 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
           {m.waitlist_heading()}
         </h2>
-        <p className="mb-8 text-slate-400">{m.waitlist_subtitle()}</p>
+        <p className="mb-8 text-muted-foreground">{m.waitlist_subtitle()}</p>
 
         {done ? (
-          <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-6 py-5 text-green-300">
+          <div className="rounded-xl border border-accent-green/30 bg-accent-green/10 px-6 py-5 text-green-300">
             ✓ {m.waitlist_success()}
           </div>
         ) : (
@@ -79,28 +79,32 @@ export default function WaitlistCta() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={m.waitlist_email_placeholder()}
-                className="w-full rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+                className="w-full rounded-xl border border-border bg-card/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
               />
             </div>
 
             <Turnstile onSuccess={setTurnstileToken} />
 
             {duplicate && (
-              <p className="text-sm text-amber-400">{m.waitlist_duplicate()}</p>
+              <p className="text-sm text-accent-amber">
+                {m.waitlist_duplicate()}
+              </p>
             )}
             {mutation.isError && !duplicate && (
-              <p className="text-sm text-red-400">{m.error_generic()}</p>
+              <p className="text-sm text-accent-red">{m.error_generic()}</p>
             )}
 
             <button
               type="submit"
               disabled={!canSubmit}
-              className="rounded-xl bg-brand-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {mutation.isPending ? m.form_submitting() : m.waitlist_cta()}
             </button>
 
-            <p className="text-xs text-slate-500">{m.waitlist_no_spam()}</p>
+            <p className="text-xs text-muted-foreground">
+              {m.waitlist_no_spam()}
+            </p>
           </form>
         )}
       </div>

@@ -255,5 +255,8 @@
   "page_roadmap_desc": "Ve lo que ya está lanzado, lo que se está construyendo y lo que viene a continuación.",
   "form_save": "Guardar",
   "account_language": "Idioma preferido",
-  "account_profile_saved": "Perfil actualizado."
+  "account_profile_saved": "Perfil actualizado.",
+  "theme_light": "Cambiar a tema claro",
+  "theme_dark": "Cambiar a tema oscuro",
+  "nav_menu": "Abrir menú"
 }

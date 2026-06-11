@@ -1,29 +1,32 @@
 import { Link } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
+import Logo from "./Logo";
 
 export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-brand-800 bg-brand-900">
+    <footer className="border-t border-border bg-background">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <img src="/vectora.svg" alt="Vectora" className="mb-4 h-7 w-auto" />
-            <p className="text-xs text-slate-500">{m.footer_made_in()}</p>
+            <Logo size="sm" className="mb-4" />
+            <p className="text-xs text-muted-foreground">
+              {m.footer_made_in()}
+            </p>
           </div>
 
           {/* Product */}
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {m.footer_product()}
             </p>
-            <ul className="space-y-2 text-sm text-slate-500">
+            <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
                   to="/pricing"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {m.nav_pricing()}
                 </Link>
@@ -33,20 +36,23 @@ export default function Footer() {
                   href="https://docs.vectora.company"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {m.footer_docs()}
                 </a>
               </li>
               <li>
-                <Link to="/faq" className="hover:text-white transition-colors">
+                <Link
+                  to="/faq"
+                  className="hover:text-foreground transition-colors"
+                >
                   {m.footer_faq()}
                 </Link>
               </li>
               <li>
                 <Link
                   to="/roadmap"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {m.footer_roadmap()}
                 </Link>
@@ -56,7 +62,7 @@ export default function Footer() {
                   href="https://status.vectora.company"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {m.footer_status()}
                 </a>
@@ -66,14 +72,14 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {m.footer_support()}
             </p>
-            <ul className="space-y-2 text-sm text-slate-500">
+            <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
                   to="/support"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {m.nav_support()}
                 </Link>
@@ -81,7 +87,7 @@ export default function Footer() {
               <li>
                 <Link
                   to="/issues"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   Issues
                 </Link>
@@ -91,7 +97,7 @@ export default function Footer() {
                   href="https://github.com/vectora-company"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   GitHub
                 </a>
@@ -101,14 +107,14 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {m.footer_legal()}
             </p>
-            <ul className="space-y-2 text-sm text-slate-500">
+            <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link
                   to="/privacy"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {m.footer_privacy()}
                 </Link>
@@ -116,7 +122,7 @@ export default function Footer() {
               <li>
                 <Link
                   to="/terms"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {m.footer_terms()}
                 </Link>
@@ -124,18 +130,24 @@ export default function Footer() {
               <li>
                 <Link
                   to="/cookies"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {m.footer_cookies()}
                 </Link>
               </li>
               <li>
-                <Link to="/sla" className="hover:text-white transition-colors">
+                <Link
+                  to="/sla"
+                  className="hover:text-foreground transition-colors"
+                >
                   {m.footer_sla()}
                 </Link>
               </li>
               <li>
-                <Link to="/dpa" className="hover:text-white transition-colors">
+                <Link
+                  to="/dpa"
+                  className="hover:text-foreground transition-colors"
+                >
                   {m.footer_dpa()}
                 </Link>
               </li>
@@ -144,7 +156,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-brand-800 pt-6 text-xs text-slate-600 sm:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground/80 sm:flex-row">
           <p>© {year} Vectora. All rights reserved.</p>
           <p>CNPJ a confirmar</p>
         </div>

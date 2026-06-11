@@ -56,38 +56,38 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
   return (
     <div className="max-w-2xl">
       {welcome && (
-        <div className="mb-6 rounded-xl border border-brand-700 bg-brand-800/30 p-5">
-          <p className="mb-3 font-semibold text-white">
+        <div className="mb-6 rounded-xl border border-border bg-card/30 p-5">
+          <p className="mb-3 font-semibold text-foreground">
             {m.token_quickstart_heading()}
           </p>
           <ol className="space-y-1.5">
             {QUICKSTART.map((step, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2.5 text-sm text-slate-400"
+                className="flex items-start gap-2.5 text-sm text-muted-foreground"
               >
-                <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xs font-bold">
+                <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
                   {i + 1}
                 </span>
-                <code className="font-mono text-slate-300">{step}</code>
+                <code className="font-mono text-foreground/90">{step}</code>
               </li>
             ))}
           </ol>
         </div>
       )}
 
-      <div className="rounded-xl border border-brand-700 bg-brand-800/30 p-6">
-        <h2 className="mb-1 text-lg font-semibold text-white">
+      <div className="rounded-xl border border-border bg-card/30 p-6">
+        <h2 className="mb-1 text-lg font-semibold text-foreground">
           {m.token_heading()}
         </h2>
-        <p className="mb-5 text-sm text-slate-400">{m.token_desc()}</p>
+        <p className="mb-5 text-sm text-muted-foreground">{m.token_desc()}</p>
 
         {/* State A: not yet revealed */}
         {!revealed && token === null && (
           <button
             onClick={() => revealMutation.mutate()}
             disabled={revealMutation.isPending}
-            className="flex items-center gap-2 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow shadow-brand-500/25 hover:bg-brand-400 disabled:opacity-50 transition-all"
+            className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 hover:bg-primary/90 disabled:opacity-50 transition-all"
           >
             <Eye className="h-4 w-4" />
             {revealMutation.isPending
@@ -99,21 +99,21 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
         {/* Token shown once */}
         {token !== null && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 rounded-xl border border-brand-500/30 bg-brand-950 px-4 py-3">
-              <code className="flex-1 break-all font-mono text-sm text-brand-300">
+            <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-background px-4 py-3">
+              <code className="flex-1 break-all font-mono text-sm text-primary">
                 {token}
               </code>
               <button
                 onClick={handleCopy}
-                className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-brand-800 hover:text-white transition-colors"
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
                 title={m.token_copy_cta()}
               >
                 <Copy className="h-4 w-4" />
               </button>
             </div>
             <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-              <p className="text-xs text-amber-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent-amber" />
+              <p className="text-xs text-accent-amber">
                 {m.token_show_once_warning()}
               </p>
             </div>
@@ -124,15 +124,15 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
         {revealed && token === null && (
           <div className="space-y-4">
             <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-              <p className="text-sm text-amber-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent-amber" />
+              <p className="text-sm text-accent-amber">
                 {m.token_already_revealed()}
               </p>
             </div>
             <button
               onClick={() => rotateMutation.mutate()}
               disabled={rotateMutation.isPending}
-              className="flex items-center gap-2 rounded-xl border border-brand-700 px-5 py-2.5 text-sm font-semibold text-slate-300 hover:border-brand-500 hover:text-white disabled:opacity-50 transition-all"
+              className="flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-foreground/90 hover:border-primary hover:text-foreground disabled:opacity-50 transition-all"
             >
               <RefreshCw
                 className={`h-4 w-4 ${rotateMutation.isPending ? "animate-spin" : ""}`}

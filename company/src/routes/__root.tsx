@@ -4,15 +4,14 @@ import {
   createRootRouteWithContext,
   useRouterState,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { TanStackDevtools } from "@tanstack/react-devtools";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
-import TanStackQueryDevtools from "#/integrations/tanstack-query/devtools";
+import Devtools from "#/components/shared/Devtools";
 import { getLocale } from "#/paraglide/runtime";
 import { m } from "#/paraglide/messages";
 import { GA4_ID } from "#/lib/analytics/ga4";
 import { initAuthListener } from "#/store/auth";
+import { THEME_INIT_SCRIPT } from "#/lib/theme";
 import Header from "#/components/shared/Header";
 import Footer from "#/components/shared/Footer";
 import appCss from "../styles.css?url";
@@ -67,6 +66,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         },
       ],
       scripts: [
+        // Anti-FOUC: aplica .dark/.light antes do primeiro paint.
+        { children: THEME_INIT_SCRIPT },
         {
           src: `https://plausible.io/js/script.js`,
           defer: true,
@@ -109,28 +110,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         {children}
         {!isDashboard && <Footer />}
         <Toaster
-          theme="dark"
           position="bottom-right"
           toastOptions={{
             style: {
-              background: "var(--color-brand-800)",
-              border: "1px solid var(--color-brand-700)",
-              color: "#f8fafc",
+              background: "var(--card)",
+              border: "1px solid var(--border)",
+              color: "var(--card-foreground)",
             },
           }}
         />
-        {import.meta.env.DEV && (
-          <TanStackDevtools
-            config={{ position: "bottom-right" }}
-            plugins={[
-              {
-                name: "Tanstack Router",
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        )}
+        <Devtools />
         <Scripts />
       </body>
     </html>

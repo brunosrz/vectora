@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { m } from "#/paraglide/messages";
+import Logo from "#/components/shared/Logo";
 import { getSession, signIn, sendMagicLink } from "#/server/fns/auth";
 import { toast } from "sonner";
 
@@ -53,10 +54,8 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <Link to="/" className="text-xl font-bold text-white">
-            Vectora
-          </Link>
-          <h1 className="mt-4 text-2xl font-semibold text-white">
+          <Logo size="md" className="justify-center" />
+          <h1 className="mt-4 text-2xl font-semibold text-foreground">
             {m.login_heading()}
           </h1>
         </div>
@@ -69,7 +68,7 @@ function LoginPage() {
           className="space-y-4"
         >
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground/90">
               {m.form_email()}
             </label>
             <input
@@ -78,20 +77,20 @@ function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
             />
           </div>
 
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-300">
+              <label className="text-sm font-medium text-foreground/90">
                 {m.form_password()}
               </label>
               <button
                 type="button"
                 disabled={!email.includes("@") || magicLinkMutation.isPending}
                 onClick={() => magicLinkMutation.mutate()}
-                className="text-xs text-brand-400 hover:text-brand-300 transition-colors disabled:opacity-40"
+                className="text-xs text-primary hover:text-primary transition-colors disabled:opacity-40"
               >
                 {m.login_forgot()}
               </button>
@@ -102,23 +101,23 @@ function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
             />
           </div>
 
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white shadow shadow-brand-500/25 transition-all hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 transition-all hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loginMutation.isPending ? m.form_submitting() : m.login_cta()}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           <Link
             to="/signup"
-            className="text-brand-400 hover:text-brand-300 transition-colors"
+            className="text-primary hover:text-primary transition-colors"
           >
             {m.login_no_account()}
           </Link>

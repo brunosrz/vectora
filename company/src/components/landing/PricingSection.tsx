@@ -58,11 +58,13 @@ function FeatureRow({ text, ok }: { text: string; ok: boolean }) {
   return (
     <li className="flex items-center gap-2 text-sm">
       {ok ? (
-        <Check className="h-4 w-4 shrink-0 text-brand-400" />
+        <Check className="h-4 w-4 shrink-0 text-primary" />
       ) : (
-        <Minus className="h-4 w-4 shrink-0 text-slate-600" />
+        <Minus className="h-4 w-4 shrink-0 text-muted-foreground/80" />
       )}
-      <span className={ok ? "text-slate-300" : "text-slate-600"}>{text}</span>
+      <span className={ok ? "text-foreground/90" : "text-muted-foreground/80"}>
+        {text}
+      </span>
     </li>
   );
 }
@@ -80,26 +82,26 @@ export default function PricingSection() {
   return (
     <section
       id="pricing"
-      className="px-4 py-20 sm:px-6 lg:px-8"
+      className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8"
       onFocus={handlePricing}
     >
       <div className="mx-auto max-w-5xl">
         <div className="mb-10 text-center">
-          <h2 className="mb-3 text-3xl font-semibold text-white sm:text-4xl">
+          <h2 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
             {m.pricing_heading()}
           </h2>
-          <p className="mb-6 text-slate-400">{m.pricing_trial()}</p>
+          <p className="mb-6 text-muted-foreground">{m.pricing_trial()}</p>
 
           {/* Currency toggle */}
-          <div className="inline-flex rounded-lg border border-brand-700 bg-brand-800/60 p-1">
+          <div className="inline-flex rounded-lg border border-border bg-card/60 p-1">
             {(["BRL", "USD"] as Currency[]).map((c) => (
               <button
                 key={c}
                 onClick={() => setCurrency(c)}
                 className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all ${
                   currency === c
-                    ? "bg-brand-500 text-white shadow"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {c === "BRL" ? "🇧🇷 BRL" : "🌍 USD"}
@@ -111,15 +113,15 @@ export default function PricingSection() {
         {/* Cards */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Plus */}
-          <div className="rounded-2xl border border-brand-700 bg-brand-800/30 p-7">
-            <div className="mb-1 text-xs font-medium text-slate-500">
+          <div className="rounded-2xl border border-border bg-card/30 p-7">
+            <div className="mb-1 text-xs font-medium text-muted-foreground">
               {PLUS.badge}
             </div>
             <div className="mb-6">
-              <span className="text-4xl font-bold text-white">
+              <span className="text-3xl font-bold text-foreground">
                 {currency === "BRL" ? PLUS.brl : PLUS.usd}
               </span>
-              <span className="text-slate-400">{PLUS.period}</span>
+              <span className="text-muted-foreground">{PLUS.period}</span>
             </div>
             <ul className="mb-8 space-y-2.5">
               {PLUS.features.map((f) => (
@@ -129,23 +131,23 @@ export default function PricingSection() {
             <Link
               to="/signup"
               search={{ plan: "plus" }}
-              className="block w-full rounded-xl border border-brand-500 py-3 text-center text-sm font-semibold text-brand-300 transition-all hover:bg-brand-500 hover:text-white"
+              className="block w-full rounded-xl border border-primary py-3 text-center text-sm font-semibold text-primary transition-all hover:bg-primary hover:text-primary-foreground"
             >
               {m.pricing_cta_trial()}
             </Link>
           </div>
 
           {/* Pro */}
-          <div className="rounded-2xl border-2 border-brand-500 bg-brand-500/5 p-7 shadow-lg shadow-brand-500/10">
-            <div className="mb-1 inline-flex items-center gap-1.5 text-xs font-medium text-brand-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+          <div className="rounded-2xl border-2 border-primary bg-primary/5 p-7 shadow-lg shadow-primary/10">
+            <div className="mb-1 inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               {PRO.badge}
             </div>
             <div className="mb-6">
-              <span className="text-4xl font-bold text-white">
+              <span className="text-3xl font-bold text-foreground">
                 {currency === "BRL" ? PRO.brl : PRO.usd}
               </span>
-              <span className="text-slate-400">{PRO.period}</span>
+              <span className="text-muted-foreground">{PRO.period}</span>
             </div>
             <ul className="mb-8 space-y-2.5">
               {PRO.features.map((f) => (
@@ -155,7 +157,7 @@ export default function PricingSection() {
             <Link
               to="/signup"
               search={{ plan: "pro" }}
-              className="block w-full rounded-xl bg-brand-500 py-3 text-center text-sm font-semibold text-white shadow shadow-brand-500/30 transition-all hover:bg-brand-400"
+              className="block w-full rounded-xl bg-primary py-3 text-center text-sm font-semibold text-primary-foreground shadow shadow-primary/30 transition-all hover:bg-primary/90"
             >
               {m.pricing_cta_trial()}
             </Link>
@@ -166,7 +168,7 @@ export default function PricingSection() {
         <div className="mt-8 text-center">
           <button
             onClick={() => setShowComparison((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             {m.pricing_compare()}
             <ChevronDown
@@ -175,17 +177,17 @@ export default function PricingSection() {
           </button>
 
           {showComparison && (
-            <div className="mt-6 overflow-hidden rounded-xl border border-brand-700 fade-up">
+            <div className="mt-6 overflow-hidden rounded-xl border border-border fade-up">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-brand-700 bg-brand-800/50">
-                    <th className="px-5 py-3 text-left font-medium text-slate-400">
+                  <tr className="border-b border-border bg-card/50">
+                    <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                       Feature
                     </th>
-                    <th className="px-5 py-3 text-center font-medium text-slate-300">
+                    <th className="px-5 py-3 text-center font-medium text-foreground/90">
                       Plus
                     </th>
-                    <th className="px-5 py-3 text-center font-medium text-brand-300">
+                    <th className="px-5 py-3 text-center font-medium text-primary">
                       Pro
                     </th>
                   </tr>
@@ -194,13 +196,15 @@ export default function PricingSection() {
                   {COMPARISON_ROWS.map((row, i) => (
                     <tr
                       key={row.label}
-                      className={`border-b border-brand-800 ${i % 2 === 0 ? "bg-brand-900/30" : ""}`}
+                      className={`border-b border-border ${i % 2 === 0 ? "bg-background/30" : ""}`}
                     >
-                      <td className="px-5 py-3 text-slate-400">{row.label}</td>
-                      <td className="px-5 py-3 text-center text-slate-400">
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {row.label}
+                      </td>
+                      <td className="px-5 py-3 text-center text-muted-foreground">
                         {row.plus}
                       </td>
-                      <td className="px-5 py-3 text-center text-brand-300 font-medium">
+                      <td className="px-5 py-3 text-center text-primary font-medium">
                         {row.pro}
                       </td>
                     </tr>

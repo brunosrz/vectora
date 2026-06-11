@@ -138,7 +138,7 @@ function FaqPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <div className="mb-10 text-center">
-        <h1 className="mb-3 text-3xl font-semibold text-white sm:text-4xl">
+        <h1 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
           {m.page_faq_title()}
         </h1>
         <input
@@ -146,14 +146,14 @@ function FaqPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar pergunta..."
-          className="mt-4 w-full max-w-sm rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+          className="mt-4 w-full max-w-sm rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
         />
       </div>
 
       <div className="space-y-10">
         {filtered.map(({ cat, items }) => (
           <div key={cat}>
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {cat}
             </h2>
             <FaqAccordion items={items} />

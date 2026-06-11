@@ -71,7 +71,7 @@ function IssueForm() {
       className="space-y-5"
     >
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-300">
+        <label className="mb-1.5 block text-sm font-medium text-foreground/90">
           {m.issues_title_label()}
         </label>
         <input
@@ -80,12 +80,12 @@ function IssueForm() {
           minLength={3}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+          className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
         />
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-300">
+        <label className="mb-1.5 block text-sm font-medium text-foreground/90">
           {m.issues_category_label()}
         </label>
         <div className="flex gap-2">
@@ -96,8 +96,8 @@ function IssueForm() {
               onClick={() => setCategory(c)}
               className={`rounded-lg border px-3 py-1.5 text-sm transition-all ${
                 category === c
-                  ? "border-brand-500 bg-brand-500/10 text-brand-300"
-                  : "border-brand-700 text-slate-500 hover:text-slate-300"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground/90"
               }`}
             >
               {CATEGORY_LABELS[c]}
@@ -107,7 +107,7 @@ function IssueForm() {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-300">
+        <label className="mb-1.5 block text-sm font-medium text-foreground/90">
           {m.issues_desc_label()}
         </label>
         <textarea
@@ -116,12 +116,12 @@ function IssueForm() {
           rows={5}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full resize-none rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+          className="w-full resize-none rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
         />
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-300">
+        <label className="mb-1.5 block text-sm font-medium text-foreground/90">
           {m.issues_email_label()}
         </label>
         <input
@@ -129,7 +129,7 @@ function IssueForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="opcional — para receber atualizações"
-          className="w-full rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+          className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
         />
       </div>
 
@@ -138,7 +138,7 @@ function IssueForm() {
       <button
         type="submit"
         disabled={!canSubmit}
-        className="rounded-xl bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white shadow shadow-brand-500/25 transition-all hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 transition-all hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {mutation.isPending ? m.form_submitting() : m.issues_submit()}
       </button>
@@ -150,10 +150,10 @@ function IssuesPage() {
   return (
     <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
       <div className="mb-10">
-        <h1 className="mb-2 text-3xl font-semibold text-white">
+        <h1 className="mb-2 text-3xl font-semibold text-foreground">
           {m.page_issues_title()}
         </h1>
-        <p className="text-slate-400">{m.issues_subtitle()}</p>
+        <p className="text-muted-foreground">{m.issues_subtitle()}</p>
       </div>
       <IssueForm />
     </div>

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { m } from "#/paraglide/messages";
+import Logo from "#/components/shared/Logo";
 import Turnstile from "#/components/shared/Turnstile";
 import { getSession, signUp } from "#/server/fns/auth";
 import { track } from "#/lib/analytics/plausible";
@@ -67,14 +68,12 @@ function SignupPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <Link to="/" className="text-xl font-bold text-white">
-            Vectora
-          </Link>
-          <h1 className="mt-4 text-2xl font-semibold text-white">
+          <Logo size="md" className="justify-center" />
+          <h1 className="mt-4 text-2xl font-semibold text-foreground">
             {m.signup_heading()}
           </h1>
           {plan && (
-            <p className="mt-1 text-sm text-brand-400">
+            <p className="mt-1 text-sm text-primary">
               Plano {plan === "pro" ? "Pro" : "Plus"} selecionado
             </p>
           )}
@@ -88,7 +87,7 @@ function SignupPage() {
           className="space-y-4"
         >
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground/90">
               {m.form_name()}
             </label>
             <input
@@ -98,12 +97,12 @@ function SignupPage() {
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground/90">
               {m.form_email()}
             </label>
             <input
@@ -112,12 +111,12 @@ function SignupPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground/90">
               {m.form_password()}
             </label>
             <input
@@ -127,12 +126,12 @@ function SignupPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-brand-700 bg-brand-800/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 outline-none focus:border-brand-500 transition-colors"
+              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-foreground/90">
               {m.form_country()}
             </label>
             <div className="flex gap-2">
@@ -143,8 +142,8 @@ function SignupPage() {
                   onClick={() => setCountry(c)}
                   className={`flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all ${
                     country === c
-                      ? "border-brand-500 bg-brand-500/10 text-brand-300"
-                      : "border-brand-700 text-slate-500 hover:text-slate-300"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground/90"
                   }`}
                 >
                   {c === "BR" ? "🇧🇷 Brasil" : "🌍 Internacional"}
@@ -158,19 +157,22 @@ function SignupPage() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white shadow shadow-brand-500/25 transition-all hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 transition-all hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {mutation.isPending ? m.form_submitting() : m.signup_cta()}
           </button>
         </form>
 
-        <div className="mt-6 flex justify-between text-sm text-slate-500">
-          <Link to="/login" className="hover:text-slate-300 transition-colors">
+        <div className="mt-6 flex justify-between text-sm text-muted-foreground">
+          <Link
+            to="/login"
+            className="hover:text-foreground/90 transition-colors"
+          >
             {m.signup_have_account()}
           </Link>
           <Link
             to="/pricing"
-            className="hover:text-slate-300 transition-colors"
+            className="hover:text-foreground/90 transition-colors"
           >
             {m.signup_see_pricing()}
           </Link>

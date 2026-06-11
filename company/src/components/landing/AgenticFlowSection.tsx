@@ -2,7 +2,7 @@ import { m } from "#/paraglide/messages";
 
 function AgenticDiagram() {
   return (
-    <div className="rounded-xl border border-brand-700 bg-brand-800/40 p-6">
+    <div className="rounded-xl border border-border bg-card/40 p-6">
       <svg
         viewBox="0 0 420 320"
         className="w-full"
@@ -16,21 +16,27 @@ function AgenticDiagram() {
           width="140"
           height="48"
           rx="10"
-          fill="#1e3a5f"
-          stroke="#3b82f6"
+          fill="var(--muted)"
+          stroke="var(--primary)"
           strokeWidth="2"
         />
         <text
           x="210"
           y="138"
           textAnchor="middle"
-          fill="#93c5fd"
+          fill="var(--primary)"
           fontSize="11"
           fontWeight="600"
         >
           Orchestrator
         </text>
-        <text x="210" y="155" textAnchor="middle" fill="#60a5fa" fontSize="9">
+        <text
+          x="210"
+          y="155"
+          textAnchor="middle"
+          fill="var(--primary)"
+          fontSize="9"
+        >
           decide · delega · paraleliza
         </text>
 
@@ -41,11 +47,17 @@ function AgenticDiagram() {
           width="106"
           height="38"
           rx="8"
-          fill="#0a0e1a"
-          stroke="#475569"
+          fill="var(--card)"
+          stroke="var(--border)"
           strokeWidth="1.5"
         />
-        <text x="210" y="51" textAnchor="middle" fill="#94a3b8" fontSize="11">
+        <text
+          x="210"
+          y="51"
+          textAnchor="middle"
+          fill="var(--muted-foreground)"
+          fontSize="11"
+        >
           Usuário
         </text>
 
@@ -55,7 +67,7 @@ function AgenticDiagram() {
           y1="66"
           x2="210"
           y2="120"
-          stroke="#475569"
+          stroke="var(--border)"
           strokeWidth="1.5"
           markerEnd="url(#arr)"
         />
@@ -67,21 +79,27 @@ function AgenticDiagram() {
           width="110"
           height="40"
           rx="8"
-          fill="#1e3a5f"
-          stroke="#2563eb"
+          fill="var(--muted)"
+          stroke="var(--primary)"
           strokeWidth="1.5"
         />
         <text
           x="71"
           y="232"
           textAnchor="middle"
-          fill="#93c5fd"
+          fill="var(--primary)"
           fontSize="10"
           fontWeight="600"
         >
           Coder Agent
         </text>
-        <text x="71" y="246" textAnchor="middle" fill="#60a5fa" fontSize="8">
+        <text
+          x="71"
+          y="246"
+          textAnchor="middle"
+          fill="var(--primary)"
+          fontSize="8"
+        >
           fs · terminal · git
         </text>
 
@@ -92,21 +110,27 @@ function AgenticDiagram() {
           width="110"
           height="40"
           rx="8"
-          fill="#2e1b5e"
-          stroke="#7c3aed"
+          fill="color-mix(in srgb, var(--accent-purple) 18%, var(--card))"
+          stroke="var(--accent-purple)"
           strokeWidth="1.5"
         />
         <text
           x="210"
           y="232"
           textAnchor="middle"
-          fill="#c4b5fd"
+          fill="var(--accent-purple)"
           fontSize="10"
           fontWeight="600"
         >
           Search Agent
         </text>
-        <text x="210" y="246" textAnchor="middle" fill="#a78bfa" fontSize="8">
+        <text
+          x="210"
+          y="246"
+          textAnchor="middle"
+          fill="var(--accent-purple)"
+          fontSize="8"
+        >
           web · RAG · curadoria
         </text>
 
@@ -117,21 +141,27 @@ function AgenticDiagram() {
           width="110"
           height="40"
           rx="8"
-          fill="#064e3b"
-          stroke="#059669"
+          fill="color-mix(in srgb, var(--accent-green) 18%, var(--card))"
+          stroke="var(--accent-green)"
           strokeWidth="1.5"
         />
         <text
           x="349"
           y="232"
           textAnchor="middle"
-          fill="#6ee7b7"
+          fill="var(--accent-green)"
           fontSize="10"
           fontWeight="600"
         >
           RAG Subgraph
         </text>
-        <text x="349" y="246" textAnchor="middle" fill="#34d399" fontSize="8">
+        <text
+          x="349"
+          y="246"
+          textAnchor="middle"
+          fill="var(--accent-green)"
+          fontSize="8"
+        >
           expand · rerank · inject
         </text>
 
@@ -141,7 +171,7 @@ function AgenticDiagram() {
           y1="168"
           x2="71"
           y2="214"
-          stroke="#2563eb"
+          stroke="var(--primary)"
           strokeWidth="1.5"
           markerEnd="url(#arrb)"
         />
@@ -150,7 +180,7 @@ function AgenticDiagram() {
           y1="168"
           x2="210"
           y2="214"
-          stroke="#7c3aed"
+          stroke="var(--accent-purple)"
           strokeWidth="1.5"
           markerEnd="url(#arrp)"
         />
@@ -159,7 +189,7 @@ function AgenticDiagram() {
           y1="168"
           x2="349"
           y2="214"
-          stroke="#059669"
+          stroke="var(--accent-green)"
           strokeWidth="1.5"
           markerEnd="url(#arrg)"
         />
@@ -170,11 +200,17 @@ function AgenticDiagram() {
           y1="26"
           x2="210"
           y2="8"
-          stroke="#475569"
+          stroke="var(--border)"
           strokeWidth="1.5"
           markerEnd="url(#arr)"
         />
-        <text x="210" y="6" textAnchor="middle" fill="#94a3b8" fontSize="9">
+        <text
+          x="210"
+          y="6"
+          textAnchor="middle"
+          fill="var(--muted-foreground)"
+          fontSize="9"
+        >
           Resposta
         </text>
 
@@ -188,7 +224,7 @@ function AgenticDiagram() {
             refY="4"
             orient="auto"
           >
-            <path d="M0,0 L0,8 L8,4 z" fill="#475569" />
+            <path d="M0,0 L0,8 L8,4 z" fill="var(--border)" />
           </marker>
           <marker
             id="arrb"
@@ -198,7 +234,7 @@ function AgenticDiagram() {
             refY="4"
             orient="auto"
           >
-            <path d="M0,0 L0,8 L8,4 z" fill="#2563eb" />
+            <path d="M0,0 L0,8 L8,4 z" fill="var(--primary)" />
           </marker>
           <marker
             id="arrp"
@@ -208,7 +244,7 @@ function AgenticDiagram() {
             refY="4"
             orient="auto"
           >
-            <path d="M0,0 L0,8 L8,4 z" fill="#7c3aed" />
+            <path d="M0,0 L0,8 L8,4 z" fill="var(--accent-purple)" />
           </marker>
           <marker
             id="arrg"
@@ -218,7 +254,7 @@ function AgenticDiagram() {
             refY="4"
             orient="auto"
           >
-            <path d="M0,0 L0,8 L8,4 z" fill="#059669" />
+            <path d="M0,0 L0,8 L8,4 z" fill="var(--accent-green)" />
           </marker>
         </defs>
       </svg>
@@ -236,22 +272,22 @@ const BULLETS = [
 
 export default function AgenticFlowSection() {
   return (
-    <section className="bg-brand-900/50 px-4 py-20 sm:px-6 lg:px-8">
+    <section className="bg-background/50 px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <AgenticDiagram />
 
           <div>
-            <h2 className="mb-6 text-3xl font-semibold text-white sm:text-4xl">
+            <h2 className="mb-6 text-2xl font-semibold text-foreground sm:text-3xl">
               {m.agentic_heading()}
             </h2>
             <ul className="mb-8 space-y-3">
               {BULLETS.map((fn, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-3 text-sm text-slate-400"
+                  className="flex items-start gap-3 text-sm text-muted-foreground"
                 >
-                  <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 text-xs font-bold">
+                  <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
                     {i + 1}
                   </span>
                   {fn()}
@@ -262,7 +298,7 @@ export default function AgenticFlowSection() {
               href="https://docs.vectora.company"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium text-brand-400 hover:text-brand-300 transition-colors"
+              className="text-sm font-medium text-primary hover:text-primary transition-colors"
             >
               {m.agentic_docs_link()}
             </a>

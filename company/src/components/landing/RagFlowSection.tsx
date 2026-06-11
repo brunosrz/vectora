@@ -2,7 +2,7 @@ import { m } from "#/paraglide/messages";
 
 function RagDiagram() {
   return (
-    <div className="rounded-xl border border-brand-700 bg-brand-800/40 p-6">
+    <div className="rounded-xl border border-border bg-card/40 p-6">
       <svg
         viewBox="0 0 400 280"
         className="w-full"
@@ -29,8 +29,8 @@ function RagDiagram() {
                   cy={item.y - 8}
                   rx="55"
                   ry="10"
-                  fill="#064e3b"
-                  stroke="#059669"
+                  fill="color-mix(in srgb, var(--accent-green) 18%, var(--card))"
+                  stroke="var(--accent-green)"
                   strokeWidth="1.5"
                 />
                 <rect
@@ -38,7 +38,7 @@ function RagDiagram() {
                   y={item.y - 8}
                   width="110"
                   height="32"
-                  fill="#064e3b"
+                  fill="color-mix(in srgb, var(--accent-green) 18%, var(--card))"
                   stroke="none"
                 />
                 <ellipse
@@ -46,15 +46,15 @@ function RagDiagram() {
                   cy={item.y + 24}
                   rx="55"
                   ry="10"
-                  fill="#064e3b"
-                  stroke="#059669"
+                  fill="color-mix(in srgb, var(--accent-green) 18%, var(--card))"
+                  stroke="var(--accent-green)"
                   strokeWidth="1.5"
                 />
                 <text
                   x="90"
                   y={item.y + 10}
                   textAnchor="middle"
-                  fill="#6ee7b7"
+                  fill="var(--accent-green)"
                   fontSize="11"
                   fontWeight="600"
                 >
@@ -64,7 +64,7 @@ function RagDiagram() {
                   x="90"
                   y={item.y + 23}
                   textAnchor="middle"
-                  fill="#34d399"
+                  fill="var(--accent-green)"
                   fontSize="8"
                 >
                   {item.sub}
@@ -78,15 +78,15 @@ function RagDiagram() {
                   width="110"
                   height="38"
                   rx="8"
-                  fill="#1e3a5f"
-                  stroke="#3b82f6"
+                  fill="var(--muted)"
+                  stroke="var(--primary)"
                   strokeWidth="1.5"
                 />
                 <text
                   x="90"
                   y={item.y - 2}
                   textAnchor="middle"
-                  fill="#93c5fd"
+                  fill="var(--primary)"
                   fontSize="11"
                   fontWeight="600"
                 >
@@ -96,7 +96,7 @@ function RagDiagram() {
                   x="90"
                   y={item.y + 11}
                   textAnchor="middle"
-                  fill="#60a5fa"
+                  fill="var(--primary)"
                   fontSize="9"
                 >
                   {item.sub}
@@ -112,7 +112,7 @@ function RagDiagram() {
           y1="50"
           x2="90"
           y2="82"
-          stroke="#3b82f6"
+          stroke="var(--primary)"
           strokeWidth="1.5"
           markerEnd="url(#ra)"
         />
@@ -121,7 +121,7 @@ function RagDiagram() {
           y1="120"
           x2="90"
           y2="152"
-          stroke="#3b82f6"
+          stroke="var(--primary)"
           strokeWidth="1.5"
           markerEnd="url(#ra)"
         />
@@ -133,24 +133,24 @@ function RagDiagram() {
             y: 30,
             label: "Query",
             sub: "multi-query expand",
-            color: "#7c3aed",
-            stroke: "#a78bfa",
+            color: "var(--accent-purple)",
+            stroke: "var(--accent-purple)",
           },
           {
             x: 240,
             y: 100,
             label: "Hybrid Search",
             sub: "dense + BM25 + RRF",
-            color: "#1e3a5f",
-            stroke: "#3b82f6",
+            color: "var(--muted)",
+            stroke: "var(--primary)",
           },
           {
             x: 240,
             y: 170,
             label: "Reranker",
             sub: "Cohere rerank",
-            color: "#854d0e",
-            stroke: "#fbbf24",
+            color: "color-mix(in srgb, var(--accent-amber) 18%, var(--card))",
+            stroke: "var(--accent-amber)",
           },
         ].map((item) => (
           <g key={item.label}>
@@ -168,7 +168,7 @@ function RagDiagram() {
               x="245"
               y={item.y - 2}
               textAnchor="middle"
-              fill="#f1f5f9"
+              fill="var(--foreground)"
               fontSize="11"
               fontWeight="600"
             >
@@ -178,7 +178,7 @@ function RagDiagram() {
               x="245"
               y={item.y + 11}
               textAnchor="middle"
-              fill="#cbd5e1"
+              fill="var(--foreground)"
               fontSize="9"
             >
               {item.sub}
@@ -192,7 +192,7 @@ function RagDiagram() {
           y1="50"
           x2="245"
           y2="82"
-          stroke="#7c3aed"
+          stroke="var(--accent-purple)"
           strokeWidth="1.5"
           markerEnd="url(#rap)"
         />
@@ -201,7 +201,7 @@ function RagDiagram() {
           y1="120"
           x2="245"
           y2="152"
-          stroke="#3b82f6"
+          stroke="var(--primary)"
           strokeWidth="1.5"
           markerEnd="url(#ra)"
         />
@@ -212,7 +212,7 @@ function RagDiagram() {
           y1="165"
           x2="185"
           y2="112"
-          stroke="#059669"
+          stroke="var(--accent-green)"
           strokeWidth="1"
           strokeDasharray="4,3"
           markerEnd="url(#rag)"
@@ -225,21 +225,27 @@ function RagDiagram() {
           width="120"
           height="40"
           rx="8"
-          fill="#1e3a5f"
-          stroke="#3b82f6"
+          fill="var(--muted)"
+          stroke="var(--primary)"
           strokeWidth="2"
         />
         <text
           x="200"
           y="238"
           textAnchor="middle"
-          fill="#93c5fd"
+          fill="var(--primary)"
           fontSize="11"
           fontWeight="700"
         >
           LLM
         </text>
-        <text x="200" y="252" textAnchor="middle" fill="#60a5fa" fontSize="9">
+        <text
+          x="200"
+          y="252"
+          textAnchor="middle"
+          fill="var(--primary)"
+          fontSize="9"
+        >
           contexto + resposta
         </text>
 
@@ -249,7 +255,7 @@ function RagDiagram() {
           y1="190"
           x2="240"
           y2="220"
-          stroke="#fbbf24"
+          stroke="var(--accent-amber)"
           strokeWidth="1.5"
           markerEnd="url(#ray)"
         />
@@ -264,7 +270,7 @@ function RagDiagram() {
             refY="3.5"
             orient="auto"
           >
-            <path d="M0,0 L0,7 L7,3.5 z" fill="#3b82f6" />
+            <path d="M0,0 L0,7 L7,3.5 z" fill="var(--primary)" />
           </marker>
           <marker
             id="rap"
@@ -274,7 +280,7 @@ function RagDiagram() {
             refY="3.5"
             orient="auto"
           >
-            <path d="M0,0 L0,7 L7,3.5 z" fill="#7c3aed" />
+            <path d="M0,0 L0,7 L7,3.5 z" fill="var(--accent-purple)" />
           </marker>
           <marker
             id="rag"
@@ -284,7 +290,7 @@ function RagDiagram() {
             refY="3.5"
             orient="auto"
           >
-            <path d="M0,0 L0,7 L7,3.5 z" fill="#059669" />
+            <path d="M0,0 L0,7 L7,3.5 z" fill="var(--accent-green)" />
           </marker>
           <marker
             id="ray"
@@ -294,7 +300,7 @@ function RagDiagram() {
             refY="3.5"
             orient="auto"
           >
-            <path d="M0,0 L0,7 L7,3.5 z" fill="#fbbf24" />
+            <path d="M0,0 L0,7 L7,3.5 z" fill="var(--accent-amber)" />
           </marker>
         </defs>
       </svg>
@@ -304,11 +310,11 @@ function RagDiagram() {
 
 export default function RagFlowSection() {
   return (
-    <section className="px-4 py-20 sm:px-6 lg:px-8">
+    <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <div>
-            <h2 className="mb-6 text-3xl font-semibold text-white sm:text-4xl">
+            <h2 className="mb-6 text-2xl font-semibold text-foreground sm:text-3xl">
               {m.rag_heading()}
             </h2>
             <ul className="space-y-2.5">
@@ -323,9 +329,9 @@ export default function RagFlowSection() {
               ].map((item, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 text-sm text-slate-400"
+                  className="flex items-start gap-2.5 text-sm text-muted-foreground"
                 >
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   {item}
                 </li>
               ))}

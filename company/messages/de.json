@@ -255,5 +255,8 @@
   "page_roadmap_desc": "Sieh, was bereits veröffentlicht wurde, was in Entwicklung ist und was als nächstes kommt.",
   "form_save": "Speichern",
   "account_language": "Bevorzugte Sprache",
-  "account_profile_saved": "Profil aktualisiert."
+  "account_profile_saved": "Profil aktualisiert.",
+  "theme_light": "Zum hellen Design wechseln",
+  "theme_dark": "Zum dunklen Design wechseln",
+  "nav_menu": "Menü öffnen"
 }

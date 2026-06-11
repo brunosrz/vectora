@@ -1,25 +1,20 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-
   "language_label": "Idioma",
   "current_locale": "Idioma atual: {locale}",
-
   "site_title": "Vectora",
   "site_description": "Self-hosted AI agent com RAG, MCP e chat web multi-usuário. Seus dados nunca saem do seu servidor.",
-
   "nav_pricing": "Preços",
   "nav_docs": "Docs",
   "nav_faq": "FAQ",
   "nav_login": "Entrar",
   "nav_signup": "Começar grátis",
   "nav_support": "Suporte",
-
   "hero_eyebrow": "Self-hosted · Privacy-first · Open core",
   "hero_tagline": "Your AI. Your Data. Your Server.",
   "hero_subtitle": "Self-hosted AI agent com RAG, MCP e chat web multi-usuário. Seus dados nunca saem do seu servidor.",
   "hero_cta_trial": "Começar trial — 30 dias grátis",
   "hero_cta_pricing": "Ver preços",
-
   "showcase_title": "Veja o Vectora em ação",
   "showcase_chat_title": "Conversação com contexto",
   "showcase_chat_desc": "Pergunte em linguagem natural — sobre código, documentos, planilhas ou qualquer arquivo do seu servidor.",
@@ -29,7 +24,6 @@
   "showcase_code_desc": "Do planejamento ao código. O Vectora escreve, refatora e explica usando o contexto do seu repositório.",
   "showcase_plan_title": "Raciocínio estruturado",
   "showcase_plan_desc": "Tarefas complexas divididas automaticamente. Veja cada passo do raciocínio em tempo real.",
-
   "agentic_heading": "Como o Vectora pensa",
   "agentic_docs_link": "Documentação técnica →",
   "agentic_bullet_orchestrator": "Orquestrador decide em tempo real: responder, delegar ou paralelizar",
@@ -37,9 +31,7 @@
   "agentic_bullet_search": "Search Agent: web em tempo real, RAG, curadoria da base de conhecimento",
   "agentic_bullet_rag": "RAG Subgraph: query expansion, reranking, web fallback",
   "agentic_bullet_parallel": "Modo paralelo: múltiplas tarefas em asyncio.gather",
-
   "rag_heading": "Seus documentos, acessíveis de qualquer lugar",
-
   "team_heading": "Do zero ao time rodando em minutos",
   "team_step1_title": "Deploy da stack",
   "team_step1_desc": "Um único arquivo. Sem dependências externas.",
@@ -50,7 +42,6 @@
   "team_step4_title": "Inicializar projetos",
   "team_step4_desc": "Cada projeto tem sua própria base de conhecimento e histórico.",
   "team_compat": "Compatível com qualquer VPS Linux — AWS, GCP, Hetzner, DigitalOcean",
-
   "why_heading": "Por que self-hosted?",
   "why_privacy_title": "Privacidade",
   "why_privacy_desc": "Nenhuma conversa, documento ou código é enviado a terceiros. Conformidade com LGPD, GDPR e políticas internas.",
@@ -60,7 +51,6 @@
   "why_custom_desc": "Configure providers de LLM, modelos de embedding, tamanho de chunk, prompts de sistema e muito mais.",
   "why_sovereign_title": "Soberania",
   "why_sovereign_desc": "Sem lock-in. Sem dependência de cloud. Rode offline se precisar. Seu servidor, suas regras.",
-
   "pricing_heading": "Planos simples e transparentes",
   "pricing_subtitle": "30 dias de trial grátis. Sem cartão de crédito.",
   "pricing_plus_badge": "Para times pequenos",
@@ -70,7 +60,6 @@
   "pricing_toggle_brl": "BRL",
   "pricing_toggle_usd": "USD",
   "pricing_per_month": "/mês",
-
   "waitlist_heading": "Seja um dos primeiros",
   "waitlist_subtitle": "Trial grátis de 30 dias para quem entrar na lista agora.",
   "waitlist_email_placeholder": "seu@email.com",
@@ -78,7 +67,6 @@
   "waitlist_success": "✓ Você está na lista! Verifique seu email.",
   "waitlist_duplicate": "Esse email já está na lista.",
   "waitlist_footer": "Sem spam. Apenas o aviso de lançamento.",
-
   "footer_made_in": "Feito com ❤ no Brasil",
   "footer_product": "Produto",
   "footer_legal": "Legal",
@@ -91,17 +79,14 @@
   "footer_docs": "Documentação",
   "footer_faq": "FAQ",
   "footer_status": "Status",
-
   "signup_title": "Criar conta",
   "signup_subtitle": "30 dias de trial grátis, sem cartão de crédito.",
   "signup_already_have_account": "Já tenho conta",
   "signup_view_pricing": "Ver preços",
-
   "login_title": "Entrar",
   "login_no_account": "Criar conta",
   "login_forgot_password": "Esqueci a senha",
   "login_magic_link_sent": "Link enviado! Verifique seu email.",
-
   "form_full_name": "Nome completo",
   "form_email": "Email",
   "form_password": "Senha",
@@ -111,7 +96,6 @@
   "form_submit_signup": "Criar conta",
   "form_submit_login": "Entrar",
   "form_loading": "Aguarde...",
-
   "dashboard_token_title": "Seu VECTORA_TOKEN",
   "dashboard_token_reveal_btn": "Clique para revelar",
   "dashboard_token_copy_btn": "Copiar",
@@ -121,7 +105,6 @@
   "dashboard_token_rotate_btn": "Rotacionar token",
   "dashboard_token_rotate_confirm": "Gerar novo token? O token atual será invalidado.",
   "dashboard_quickstart_title": "Primeiros passos",
-
   "dashboard_license_title": "Licença",
   "dashboard_license_plan": "Plano",
   "dashboard_license_status": "Status",
@@ -133,7 +116,6 @@
   "dashboard_license_trial_ends": "Trial vence em",
   "dashboard_license_days_left": "{days} dias",
   "dashboard_license_history_title": "Histórico de validações",
-
   "dashboard_billing_title": "Pagamento",
   "dashboard_billing_subscribe_plus": "Assinar Plus",
   "dashboard_billing_subscribe_pro": "Assinar Pro",
@@ -141,7 +123,6 @@
   "dashboard_billing_manage": "Gerenciar assinatura",
   "dashboard_billing_update_payment": "Atualizar pagamento",
   "dashboard_billing_reactivate": "Reativar",
-
   "dashboard_apikeys_title": "API Keys",
   "dashboard_apikeys_create_btn": "Criar API key",
   "dashboard_apikeys_name": "Nome",
@@ -151,7 +132,6 @@
   "dashboard_apikeys_revoke": "Revogar",
   "dashboard_apikeys_secret_warning": "Copie a chave agora. Não será exibida novamente.",
   "dashboard_apikeys_revoke_confirm": "Revogar esta API key? Esta ação não pode ser desfeita.",
-
   "dashboard_account_title": "Conta",
   "dashboard_account_save": "Salvar",
   "dashboard_account_security_title": "Segurança",
@@ -160,14 +140,10 @@
   "dashboard_account_export": "Exportar meus dados",
   "dashboard_account_delete": "Deletar conta",
   "dashboard_account_delete_confirm": "Digite seu email para confirmar a exclusão",
-
   "pricing_page_title": "Preços — Vectora",
-
   "faq_page_title": "FAQ — Vectora",
   "faq_search_placeholder": "Buscar perguntas...",
-
   "support_page_title": "Suporte — Vectora",
-
   "issues_page_title": "Reportar problema — Vectora",
   "issues_title_label": "Título",
   "issues_category_label": "Categoria",
@@ -178,9 +154,7 @@
   "issues_email_label": "Email (opcional)",
   "issues_submit": "Enviar",
   "issues_success": "Relatório enviado. Obrigado!",
-
   "legal_last_updated": "Última atualização:",
-
   "error_generic": "Algo deu errado. Tente novamente.",
   "error_unauthorized": "Você precisa estar logado para acessar esta página.",
   "error_invalid_credentials": "Email ou senha incorretos.",
@@ -191,36 +165,28 @@
   "error_email_not_confirmed": "Email não confirmado. Verifique sua caixa de entrada.",
   "error_email_taken": "Esse email já possui uma conta.",
   "error_password_weak": "A senha deve ter pelo menos 8 caracteres.",
-
   "why_subtitle": "Self-hosting não é complicação. É vantagem competitiva.",
-
   "pricing_trial": "30 dias de trial grátis. Sem cartão de crédito.",
   "pricing_cta_trial": "Começar trial grátis",
   "pricing_compare": "Ver comparação completa",
-
   "waitlist_cta": "Entrar na lista",
   "waitlist_no_spam": "Sem spam. Apenas o aviso de lançamento.",
-
   "form_submitting": "Aguarde...",
   "form_cancel": "Cancelar",
   "form_name": "Nome completo",
-
   "signup_heading": "Criar conta",
   "signup_cta": "Criar conta",
   "signup_have_account": "Já tenho conta",
   "signup_see_pricing": "Ver preços",
-
   "login_heading": "Entrar na sua conta",
   "login_forgot": "Esqueci a senha",
   "login_magic_sent": "Link enviado! Verifique seu email.",
   "login_cta": "Entrar",
-
   "nav_token": "Token",
   "nav_license": "Licença",
   "nav_billing": "Pagamento",
   "nav_api_keys": "API Keys",
   "nav_account": "Conta",
-
   "page_home_title": "Vectora — Self-hosted AI agent",
   "page_home_desc": "Self-hosted AI agent com RAG, MCP e chat web multi-usuário. Seus dados nunca saem do seu servidor.",
   "page_pricing_title": "Preços — Vectora",
@@ -231,12 +197,9 @@
   "page_login_title": "Entrar — Vectora",
   "page_signup_title": "Criar conta — Vectora",
   "page_issues_title": "Reportar problema — Vectora",
-
   "support_subtitle": "Escolha o canal mais adequado para sua dúvida ou problema.",
-
   "issues_subtitle": "Encontrou um bug, quer dar feedback ou sugerir uma feature? Nos conte.",
   "issues_desc_label": "Descrição",
-
   "token_heading": "Seu VECTORA_TOKEN",
   "token_desc": "Este token autentica sua instância Vectora com sua licença. Revele apenas uma vez e guarde em segurança.",
   "token_quickstart_heading": "Primeiros passos",
@@ -247,7 +210,6 @@
   "token_already_revealed": "Token já revelado. Rotacione abaixo se precisar de um novo.",
   "token_rotate_cta": "Rotacionar token",
   "token_rotated": "Novo token gerado com sucesso.",
-
   "license_plan": "Plano",
   "license_started": "Início",
   "license_trial_ends": "Trial vence",
@@ -260,12 +222,10 @@
   "license_col_version": "Versão",
   "license_col_result": "Resultado",
   "license_history_heading": "Histórico de validações",
-
   "billing_inactive_desc": "Seu trial terminou. Assine para continuar usando o Vectora.",
   "billing_upgrade_pro": "Upgrade para Pro",
   "billing_manage": "Gerenciar assinatura",
   "billing_footer": "Pagamentos processados com segurança via Stripe (INTL) e Asaas (BR).",
-
   "apikeys_modal_heading": "Nova API Key",
   "apikeys_modal_secret_heading": "Sua API Key foi criada",
   "apikeys_modal_done": "Feito",
@@ -279,7 +239,6 @@
   "apikeys_col_created": "Criado",
   "apikeys_col_last_used": "Último uso",
   "apikeys_subtitle": "Use API Keys para autenticar integrações com a REST API /v1.",
-
   "account_profile_heading": "Perfil",
   "account_security_heading": "Segurança",
   "account_password_desc": "Enviaremos um link de acesso para o seu email para redefinir a senha.",
@@ -291,12 +250,13 @@
   "account_delete_cta": "Deletar conta",
   "account_delete_confirm_desc": "Digite seu email para confirmar. Esta ação não pode ser desfeita.",
   "account_delete_confirm_cta": "Confirmar exclusão",
-
   "footer_roadmap": "Roadmap",
   "page_roadmap_title": "Roadmap — Vectora",
   "page_roadmap_desc": "Veja o que já foi lançado, o que está sendo construído e o que vem a seguir.",
-
   "form_save": "Salvar",
   "account_language": "Idioma preferido",
-  "account_profile_saved": "Perfil atualizado."
+  "account_profile_saved": "Perfil atualizado.",
+  "theme_light": "Mudar para tema claro",
+  "theme_dark": "Mudar para tema escuro",
+  "nav_menu": "Abrir menu"
 }

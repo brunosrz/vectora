@@ -79,18 +79,18 @@ const SECTIONS: Section[] = [
     id: "building",
     label: "Em desenvolvimento",
     icon: Construction,
-    iconClass: "text-amber-400",
+    iconClass: "text-accent-amber",
     borderClass: "border-amber-500/20",
-    badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+    badgeClass: "bg-accent-amber/10 text-accent-amber border-accent-amber/30",
     items: BUILDING,
   },
   {
     id: "planned",
     label: "Planejado",
     icon: MapPin,
-    iconClass: "text-brand-400",
-    borderClass: "border-brand-500/20",
-    badgeClass: "bg-brand-500/10 text-brand-400 border-brand-500/30",
+    iconClass: "text-primary",
+    borderClass: "border-primary/20",
+    badgeClass: "bg-primary/10 text-primary border-primary/30",
     items: PLANNED,
   },
 ];
@@ -99,10 +99,10 @@ function RoadmapPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
       <div className="mb-14 text-center">
-        <h1 className="mb-3 text-3xl font-semibold text-white sm:text-4xl">
+        <h1 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
           {m.page_roadmap_title()}
         </h1>
-        <p className="text-slate-400">{m.page_roadmap_desc()}</p>
+        <p className="text-muted-foreground">{m.page_roadmap_desc()}</p>
       </div>
 
       <div className="grid gap-8 md:grid-cols-3">
@@ -111,7 +111,7 @@ function RoadmapPage() {
           return (
             <div
               key={section.id}
-              className={`rounded-2xl border ${section.borderClass} bg-brand-900/40 p-5`}
+              className={`rounded-2xl border ${section.borderClass} bg-background/40 p-5`}
             >
               <div className="mb-5 flex items-center gap-2">
                 <Icon className={`h-5 w-5 ${section.iconClass}`} />
@@ -125,7 +125,7 @@ function RoadmapPage() {
                 {section.items.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-sm text-slate-300"
+                    className="flex items-start gap-2 text-sm text-foreground/90"
                   >
                     <span
                       className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${section.iconClass} bg-current opacity-60`}
@@ -139,7 +139,7 @@ function RoadmapPage() {
         })}
       </div>
 
-      <p className="mt-10 text-center text-xs text-slate-600">
+      <p className="mt-10 text-center text-xs text-muted-foreground/80">
         Última atualização: junho 2025 · Roadmap sujeito a alterações
       </p>
     </div>

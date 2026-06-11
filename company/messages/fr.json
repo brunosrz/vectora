@@ -255,5 +255,8 @@
   "page_roadmap_desc": "Découvrez ce qui est déjà disponible, ce qui est en cours et ce qui arrive bientôt.",
   "form_save": "Enregistrer",
   "account_language": "Langue préférée",
-  "account_profile_saved": "Profil mis à jour."
+  "account_profile_saved": "Profil mis à jour.",
+  "theme_light": "Passer au thème clair",
+  "theme_dark": "Passer au thème sombre",
+  "nav_menu": "Ouvrir le menu"
 }

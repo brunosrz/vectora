@@ -1,35 +1,41 @@
 import { Link } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
+import Logo from "#/components/shared/Logo";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden px-4 pb-14 pt-16 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8">
       {/* Background gradient mesh */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(ellipse 80% 60% at 50% -20%, rgba(59,130,246,0.18) 0%, transparent 70%)",
+            "radial-gradient(ellipse 80% 60% at 50% -20%, color-mix(in srgb, var(--primary) 16%, transparent) 0%, transparent 70%)",
         }}
       />
 
       <div className="mx-auto max-w-5xl text-center">
+        {/* Logo + Vectora — a logo nunca aparece sem o texto ao lado */}
+        <div className="mb-6 flex justify-center">
+          <Logo size="lg" asLink={false} />
+        </div>
+
         {/* Eyebrow */}
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-700 bg-brand-800/60 px-4 py-1.5 text-xs font-medium text-brand-300 backdrop-blur">
-          <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+        <div className="mb-6 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-[11px] font-medium text-primary backdrop-blur sm:text-xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           {m.hero_eyebrow()}
         </div>
 
         {/* H1 */}
-        <h1 className="mb-6 text-5xl font-semibold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
+        <h1 className="mb-5 text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
           {m
             .hero_tagline()
             .split(". ")
             .map((part, i, arr) => (
               <span key={i}>
                 {i === 0 ? (
-                  <span className="bg-gradient-to-r from-brand-400 to-brand-300 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                     {part}
                   </span>
                 ) : (
@@ -41,30 +47,30 @@ export default function Hero() {
         </h1>
 
         {/* Subtitle */}
-        <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-400 leading-relaxed">
+        <p className="mx-auto mb-8 max-w-2xl text-base text-muted-foreground leading-relaxed">
           {m.hero_subtitle()}
         </p>
 
         {/* CTAs */}
-        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
           <Link
             to="/signup"
-            className="rounded-xl bg-brand-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-400 hover:shadow-brand-400/30 active:scale-95"
+            className="w-full rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 hover:shadow-primary/30 active:scale-95 sm:w-auto"
           >
             {m.hero_cta_trial()}
           </Link>
           <Link
             to="/pricing"
-            className="rounded-xl border border-brand-700 bg-brand-800/50 px-8 py-3.5 text-sm font-semibold text-slate-300 transition-all hover:border-brand-500 hover:text-white active:scale-95"
+            className="w-full rounded-xl border border-border bg-card/50 px-8 py-3 text-sm font-semibold text-foreground/90 transition-all hover:border-primary hover:text-foreground active:scale-95 sm:w-auto"
           >
             {m.hero_cta_pricing()}
           </Link>
         </div>
 
         {/* GIF hero */}
-        <div className="mx-auto mt-16 max-w-[860px]">
+        <div className="mx-auto mt-12 max-w-[860px] sm:mt-16">
           <div
-            className="overflow-hidden rounded-2xl border border-brand-700 glow-brand-lg"
+            className="overflow-hidden rounded-2xl border border-border glow-brand-lg"
             style={{ aspectRatio: "16/10" }}
           >
             <img
@@ -77,7 +83,7 @@ export default function Hero() {
             />
             {/* Dev placeholder */}
             <noscript>
-              <div className="flex h-full w-full items-center justify-center bg-brand-800 text-sm text-slate-500">
+              <div className="flex h-full w-full items-center justify-center bg-card text-sm text-muted-foreground">
                 [GIF showcase-chat — placeholder during dev]
               </div>
             </noscript>

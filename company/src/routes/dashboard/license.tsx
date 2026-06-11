@@ -12,12 +12,12 @@ export const Route = createFileRoute("/dashboard/license")({
 function LicensePage() {
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold text-white">
+      <h1 className="mb-6 text-2xl font-semibold text-foreground">
         {m.nav_license()}
       </h1>
       <LicenseStatus />
       <div className="mt-8 max-w-3xl">
-        <h2 className="mb-4 text-base font-medium text-white">
+        <h2 className="mb-4 text-base font-medium text-foreground">
           {m.license_history_heading()}
         </h2>
         <LicenseHistory />

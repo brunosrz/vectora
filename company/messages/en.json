@@ -255,5 +255,8 @@
   "page_roadmap_desc": "See what's already shipped, what's being built, and what's coming next.",
   "form_save": "Save",
   "account_language": "Preferred language",
-  "account_profile_saved": "Profile updated."
+  "account_profile_saved": "Profile updated.",
+  "theme_light": "Switch to light theme",
+  "theme_dark": "Switch to dark theme",
+  "nav_menu": "Open menu"
 }
