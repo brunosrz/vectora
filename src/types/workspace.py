@@ -80,6 +80,14 @@ class Workspace(BaseModel):
         """Caminho do manifest de um bucket específico."""
         return self.manifest_dir() / "buckets" / f"{bucket}.md"
 
+    def local_config_path(self) -> Path:
+        """Caminho do ``vectora.toml`` na raiz do workspace."""
+        return Path(self.cwd) / "vectora.toml"
+
+    def local_dir(self) -> Path:
+        """Pasta ``.vectora/`` na raiz do workspace (planos locais etc.)."""
+        return Path(self.cwd) / ".vectora"
+
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
 

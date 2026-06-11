@@ -270,6 +270,25 @@ async def stream_chat(
     )
     request.config.workspace_id = workspace_id
 
+    # Cria vectora.toml e .vectora/ na pasta do workspace, se ainda não
+    # existirem (ex: workspace de sessão cuja pasta só foi materializada
+    # após uma operação de fs em turno anterior). Idempotente e degrada
+    # silenciosamente — nunca impede o início da sessão.
+    if workspace_id:
+        try:
+            from pathlib import Path
+
+            from src.services.workspace import workspace_registry
+
+            ws = workspace_registry.get(workspace_id)
+            if ws is not None and Path(ws.cwd).is_dir():
+                workspace_registry.ensure_local_files(ws)
+        except Exception:
+            logger.warning(
+                "api/chat: falha ao garantir arquivos do workspace %s",
+                workspace_id,
+            )
+
     # Registra thread em vectora_sessions para que ListThreads a inclua
     # mesmo após reinicialização do servidor (o checkpointer LangGraph persiste
     # separadamente e não é consultado pelo endpoint de listagem). Persiste o

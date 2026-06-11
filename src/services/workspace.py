@@ -136,7 +136,26 @@ class WorkspaceRegistry:
                 wid,
                 ws.is_git_repo,
             )
-        return self._workspaces[wid]
+        ws = self._workspaces[wid]
+        if Path(ws.cwd).is_dir():
+            self.ensure_local_files(ws)
+        return ws
+
+    def ensure_local_files(self, ws: Workspace) -> None:
+        """Cria ``vectora.toml`` e ``.vectora/`` na pasta do workspace.
+
+        Idempotente e nunca lança — falhas são apenas logadas.
+        """
+        try:
+            from src.services.workspace_config import ensure_workspace_files
+
+            ensure_workspace_files(ws.cwd, name=ws.name)
+        except Exception:
+            logger.warning(
+                "workspace: falha ao garantir arquivos locais de %s",
+                ws.id,
+                exc_info=True,
+            )
 
     def get(self, workspace_id: str) -> Workspace | None:
         """Retorna workspace por ID ou None se não existir."""
