@@ -19,11 +19,46 @@ import asyncio
 import contextlib
 import inspect
 import logging
+import socket
 import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Resultado do probe por URL — process-lifetime, igual aos singletons que o
+# consomem (get_kv/get_mq). Subir o Redis depois exige reiniciar o servidor.
+_reachable_cache: dict[str, bool] = {}
+
+
+def redis_reachable(url: str, timeout: float = 0.3) -> bool:
+    """Probe TCP barato: o Redis em ``url`` está aceitando conexões?
+
+    O ``redis_url`` agora vem preenchido por padrão (defaults.env espelha o
+    deploy/compose.dev.yml), então os consumidores (KV, MQ, rate-limit) só
+    podem ativar o backend Redis se o serviço estiver realmente de pé —
+    caso contrário cada operação falharia em runtime no modo lite.
+    """
+    if url in _reachable_cache:
+        return _reachable_cache[url]
+    from urllib.parse import urlparse
+
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or 6379
+        with socket.create_connection((host, port), timeout=timeout):
+            ok = True
+    except OSError:
+        ok = False
+    _reachable_cache[url] = ok
+    return ok
+
+
+def reset_reachable_cache() -> None:
+    """Limpa o cache do probe — usado em testes."""
+    _reachable_cache.clear()
+
 
 #: Callback de subscription — recebe o payload (str) publicado no canal.
 Subscriber = Callable[[str], None] | Callable[[str], Awaitable[None]]
@@ -150,7 +185,7 @@ def get_kv() -> KV:
         from src.settings import settings
 
         url = (settings.redis_url or "").strip()
-        if url:
+        if url and redis_reachable(url):
             try:
                 _kv = RedisKV(url)
                 logger.info("kv: backend Redis (%s)", url.split("@")[-1])
@@ -158,6 +193,8 @@ def get_kv() -> KV:
                 logger.warning("kv: Redis indisponível (%s) — usando memória", exc)
                 _kv = MemoryKV()
         else:
+            if url:
+                logger.info("kv: redis_url configurado mas inacessível — memória")
             _kv = MemoryKV()
     return _kv
 

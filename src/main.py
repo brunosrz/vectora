@@ -361,6 +361,10 @@ def _build_parser() -> argparse.ArgumentParser:
         description=(
             "Comandos de storage:\n"
             "  info               — status de saúde de todos os backends\n"
+            "  up                 — sobe Postgres+pgvector, Redis e Qdrant no Docker\n"
+            "                       (mesma config do deploy/compose.dev.yml; as URLs\n"
+            "                       de conexão já são o default do Vectora)\n"
+            "  down               — para os containers da infra local\n"
             "  test <DSN>         — testa conectividade a um banco (Postgres/SQLite)\n"
             "  wizard             — configura o backend interativamente (BaaS)\n"
             "  migrate status     — lista migrations e estado (aplicada/pendente/drift)\n"
@@ -375,7 +379,16 @@ def _build_parser() -> argparse.ArgumentParser:
     storage_p.add_argument(
         "action",
         nargs="?",
-        choices=["info", "test", "wizard", "migrate", "backup", "restore"],
+        choices=[
+            "info",
+            "up",
+            "down",
+            "test",
+            "wizard",
+            "migrate",
+            "backup",
+            "restore",
+        ],
         default="info",
         help="Ação de storage (default: info)",
     )
@@ -730,6 +743,9 @@ async def _run_storage_async(args: argparse.Namespace) -> None:
         if action == "info":
             await _storage_info(console)
 
+        elif action in ("up", "down"):
+            _storage_stack(console, action)
+
         elif action == "test":
             dsn = subaction or ""
             if not dsn:
@@ -763,6 +779,38 @@ async def _run_storage_async(args: argparse.Namespace) -> None:
     except Exception as exc:
         console.print(f"[red]❌ Erro:[/red] {exc}")
         sys.exit(1)
+
+
+def _storage_stack(console: Console, action: str) -> None:
+    """vectora storage up|down — infra local (Postgres, Redis, Qdrant) no Docker."""
+    from src.storage.dev_stack import connection_urls, stack_down, stack_up
+
+    if action == "up":
+        console.print("[bold]Subindo infra local (Postgres, Redis, Qdrant)…[/bold]")
+        result = stack_up()
+    else:
+        console.print("[bold]Parando infra local…[/bold]")
+        result = stack_down()
+
+    for msg in result.messages:
+        prefix = "[green]✓[/green]" if result.ok else "[yellow]•[/yellow]"
+        console.print(f"  {prefix} {msg}")
+
+    if not result.ok:
+        console.print("[red]✗ Houve falhas — veja as mensagens acima.[/red]")
+        sys.exit(1)
+
+    if action == "up":
+        console.print(
+            "\n[green]✓ Infra de desenvolvimento no ar.[/green] "
+            "As URLs abaixo já são o default do Vectora — nenhuma config extra:"
+        )
+        for key, value in connection_urls().items():
+            console.print(f"  [cyan]{key}[/cyan]={value}")
+        console.print(
+            "\nPara usar Postgres/Qdrant como storage primário: "
+            "[cyan]STORAGE_MODE=complete[/cyan] (Redis é detectado sozinho)."
+        )
 
 
 async def _storage_info(console: Console) -> None:

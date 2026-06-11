@@ -37,10 +37,14 @@ def attach_limiter(app: FastAPI) -> None:
         from slowapi.util import get_remote_address
 
         # Bloco G — storage distribuído: com REDIS_URL os contadores vivem no
-        # Redis e valem para todas as réplicas; sem ele, memória local.
+        # Redis e valem para todas as réplicas; sem ele (ou com o serviço
+        # fora do ar — redis_url tem default no defaults.env), memória local.
+        from src.services.kv import redis_reachable
         from src.settings import settings
 
         storage_uri = (settings.redis_url or "").strip() or "memory://"
+        if storage_uri.startswith("redis") and not redis_reachable(storage_uri):
+            storage_uri = "memory://"
         limiter = Limiter(key_func=get_remote_address, storage_uri=storage_uri)
         app.state.limiter = limiter
         app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]

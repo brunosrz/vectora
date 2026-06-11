@@ -164,10 +164,11 @@ def get_mq() -> MQ:
     """Singleton da message queue — Redis quando ``settings.redis_url`` setado."""
     global _mq
     if _mq is None:
+        from src.services.kv import redis_reachable
         from src.settings import settings
 
         url = (settings.redis_url or "").strip()
-        if url:
+        if url and redis_reachable(url):
             try:
                 _mq = RedisMQ(url)
                 logger.info("mq: backend Redis Streams")
@@ -175,6 +176,8 @@ def get_mq() -> MQ:
                 logger.warning("mq: Redis indisponível (%s) — usando memória", exc)
                 _mq = MemoryMQ()
         else:
+            if url:
+                logger.info("mq: redis_url configurado mas inacessível — memória")
             _mq = MemoryMQ()
     return _mq
 
