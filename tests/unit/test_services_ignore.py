@@ -169,3 +169,108 @@ class TestIsIgnoredWithCombinedSpec:
 
         node_modules_file = tmp_path / "node_modules" / "pkg" / "index.js"
         assert is_ignored(node_modules_file, tmp_path, None)
+
+
+class TestWalkFilesPruning:
+    """walk_files/iter_files: poda de diretórios DURANTE o os.walk.
+
+    Garante que node_modules/.venv/etc. e dirs do .gitignore nem são
+    varridos — não apenas filtrados a posteriori, que era a causa do
+    congelamento de grep/list_dir/ingest_docs em repositórios grandes.
+    """
+
+    def test_never_descends_into_always_skip_dirs(self, tmp_path, monkeypatch):
+        """os.walk nunca visita o interior de node_modules (poda real)."""
+        import os as os_module
+
+        deep = tmp_path / "node_modules" / "pkg" / "deep"
+        deep.mkdir(parents=True)
+        (deep / "index.js").write_text("x")
+        (tmp_path / "main.py").write_text("x")
+
+        visited: list[str] = []
+        original_walk = os_module.walk
+
+        def spy_walk(top, *args, **kwargs):
+            for dirpath, dirnames, filenames in original_walk(top, *args, **kwargs):
+                visited.append(str(dirpath))
+                # yield das MESMAS listas para a poda in-place propagar
+                yield dirpath, dirnames, filenames
+
+        monkeypatch.setattr("os.walk", spy_walk)
+
+        from src.services.ignore import iter_files
+
+        files = iter_files(tmp_path)
+        assert files == [tmp_path / "main.py"]
+        assert not any("node_modules" in v for v in visited), (
+            "walk desceu em node_modules — poda não está funcionando"
+        )
+
+    def test_never_descends_into_gitignored_dirs(self, tmp_path, monkeypatch):
+        """Dirs batidos pelo .gitignore também são podados, não só filtrados."""
+        import os as os_module
+
+        (tmp_path / ".gitignore").write_text("generated/\n")
+        gen = tmp_path / "generated" / "sub"
+        gen.mkdir(parents=True)
+        (gen / "out.md").write_text("x")
+        (tmp_path / "doc.md").write_text("x")
+
+        visited: list[str] = []
+        original_walk = os_module.walk
+
+        def spy_walk(top, *args, **kwargs):
+            for dirpath, dirnames, filenames in original_walk(top, *args, **kwargs):
+                visited.append(str(dirpath))
+                yield dirpath, dirnames, filenames
+
+        monkeypatch.setattr("os.walk", spy_walk)
+
+        from src.services.ignore import iter_files, load_ignore_spec
+
+        spec = load_ignore_spec(tmp_path)
+        files = iter_files(tmp_path, "**/*.md", spec)
+        assert files == [tmp_path / "doc.md"]
+        assert not any("generated" in v for v in visited), (
+            "walk desceu em dir do .gitignore — poda não está funcionando"
+        )
+
+    def test_skipped_count_includes_pruned_dirs_and_ignored_files(self, tmp_path):
+        """skipped_ignored = dirs podados (1 por subárvore) + arquivos do spec."""
+        from src.services.ignore import load_ignore_spec, walk_files
+
+        (tmp_path / ".gitignore").write_text("*.log\nvendor/\n")
+        (tmp_path / "node_modules").mkdir()  # podado → +1
+        (tmp_path / "vendor").mkdir()  # podado via gitignore → +1
+        (tmp_path / "error.log").write_text("x")  # ignorado pelo spec → +1
+        (tmp_path / "main.py").write_text("x")  # mantido
+
+        spec = load_ignore_spec(tmp_path)
+        files, skipped = walk_files(tmp_path, "**/*", spec)
+        # o próprio .gitignore não é ignorado e entra na listagem
+        assert set(files) == {tmp_path / ".gitignore", tmp_path / "main.py"}
+        assert skipped == 3
+
+    def test_include_dirs_lists_kept_directories(self, tmp_path):
+        """include_dirs=True retorna dirs não podados (uso do list_dir)."""
+        from src.services.ignore import walk_files
+
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "app.py").write_text("x")
+        (tmp_path / "node_modules").mkdir()
+
+        entries, _ = walk_files(tmp_path, "**/*", None, include_dirs=True)
+        assert tmp_path / "src" in entries
+        assert tmp_path / "src" / "app.py" in entries
+        assert tmp_path / "node_modules" not in entries
+
+    def test_glob_pattern_filters_files_only(self, tmp_path):
+        """O glob filtra por nome de arquivo (ex: **/*.py)."""
+        from src.services.ignore import walk_files
+
+        (tmp_path / "a.py").write_text("x")
+        (tmp_path / "b.md").write_text("x")
+
+        files, _ = walk_files(tmp_path, "**/*.py", None)
+        assert files == [tmp_path / "a.py"]

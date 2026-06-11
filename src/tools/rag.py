@@ -366,7 +366,7 @@ async def ingest_docs(
     """
     from pathlib import Path
 
-    from src.services.ignore import is_ignored, load_ignore_spec
+    from src.services.ignore import load_ignore_spec, walk_files
     from src.services.security import is_safe_file_path
 
     if not is_safe_file_path(directory_path):
@@ -379,28 +379,12 @@ async def ingest_docs(
     # Carrega specs combinadas (.gitignore + .vectoraignore) uma vez para todo o diretório
     spec = load_ignore_spec(path)
 
-    # Usa o glob_pattern diretamente no rglob para que o Python filtre por extensão
-    # de forma nativa — ex: "**/*.py" → rglob("*.py") retorna apenas arquivos .py,
-    # nunca .pyc nem qualquer outro sufixo.  Depois aplica is_ignored em TODOS os
-    # candidatos, garantindo que __pycache__, .venv e demais dirs hardcoded em
-    # ALWAYS_SKIP_DIRS sejam contabilizados corretamente em skipped_ignored.
-    stripped_glob = glob_pattern
-    while stripped_glob.startswith("**/"):
-        stripped_glob = stripped_glob[3:]
-
-    all_matching = sorted(f for f in path.rglob(stripped_glob) if f.is_file())
-    files_to_ingest: list[Path] = []
-    skipped_ignored = 0
-
-    for f in all_matching:
-        if is_ignored(f, path, spec):
-            skipped_ignored += 1
-            logger.debug(
-                "ingest_docs: arquivo ignorado por .gitignore/.vectoraignore/ALWAYS_SKIP",
-                extra={"file": str(f)},
-            )
-        else:
-            files_to_ingest.append(f)
+    # walk_files poda __pycache__/.venv/node_modules e dirs do gitignore
+    # DURANTE o walk — rglob puro varria essas árvores inteiras antes de
+    # filtrar, congelando a tool em repositórios grandes. Cada dir podado
+    # (subárvore inteira) e cada arquivo batido pelo glob mas ignorado pelo
+    # spec entram em skipped_ignored.
+    files_to_ingest, skipped_ignored = walk_files(path, glob_pattern, spec)
 
     if not files_to_ingest:
         return json.dumps(

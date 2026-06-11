@@ -280,12 +280,11 @@ class TestIngestDocs:
 
     @pytest.mark.asyncio
     async def test_always_skip_dirs_counted_in_ignored(self, tmp_path):
-        """Arquivos em __pycache__ são contados em skipped_ignored (não silenciados).
+        """Dirs em ALWAYS_SKIP_DIRS contam em skipped_ignored (não silenciados).
 
-        Garante que o fix de rglob(stripped_glob)+is_ignored funciona: antes,
-        __pycache__/*.py era filtrado pelo suffix_filter ANTES de is_ignored, por isso
-        o contador ficava 0. Agora rglob("*.py") encontra esses arquivos e is_ignored
-        os conta corretamente.
+        Com walk_files, __pycache__ é PODADO durante o os.walk (a subárvore
+        nem é varrida) e conta como 1 em skipped_ignored — antes do fix de
+        performance, rglob varria a árvore inteira e contava arquivo a arquivo.
         """
         from src.services.ignore import ALWAYS_SKIP_DIRS
         from src.tools.rag import ingest_docs

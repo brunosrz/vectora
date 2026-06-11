@@ -14,7 +14,9 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
 from src.services.ignore import is_ignored as _is_ignored
+from src.services.ignore import iter_files as _iter_files
 from src.services.ignore import load_ignore_spec as _load_ignore_spec
+from src.services.ignore import walk_files as _walk_files
 from src.services.security import (
     is_safe_regex_pattern,
     is_safe_shell_command,
@@ -299,7 +301,13 @@ def grep(
         base_dir = search_path if search_path.is_dir() else search_path.parent
         spec = _load_ignore_spec(base_dir)
 
-        files = [search_path] if search_path.is_file() else list(search_path.rglob("*"))
+        # iter_files poda node_modules/.venv/etc. durante o walk — rglob("*")
+        # puro varria essas árvores inteiras antes de filtrar.
+        files = (
+            [search_path]
+            if search_path.is_file()
+            else _iter_files(search_path, "**/*", spec)
+        )
 
         for file_path in files:
             if not file_path.is_file():
@@ -364,9 +372,10 @@ def list_dir(
         spec = _load_ignore_spec(dir_path)
         items = []
         if recursive:
-            for item in sorted(dir_path.rglob("*")):
-                if _is_ignored(item, dir_path, spec):
-                    continue
+            # walk_files poda node_modules/.venv/etc. durante o walk;
+            # include_dirs=True mantém os diretórios não podados na listagem.
+            entries, _ = _walk_files(dir_path, "**/*", spec, include_dirs=True)
+            for item in entries:
                 rel_path = item.relative_to(dir_path)
                 prefix = "[DIR]" if item.is_dir() else "[FILE]"
                 items.append(f"{prefix} {rel_path}")

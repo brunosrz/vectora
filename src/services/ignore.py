@@ -182,12 +182,14 @@ def is_ignored(path: Path, base_dir: Path, spec: pathspec.PathSpec | None) -> bo
     return False
 
 
-def iter_files(
+def walk_files(
     base_dir: Path,
     glob_pattern: str = "**/*",
     spec: pathspec.PathSpec | None = None,
-) -> list[Path]:
-    """Lista arquivos em ``base_dir`` respeitando .gitignore.
+    *,
+    include_dirs: bool = False,
+) -> tuple[list[Path], int]:
+    """Varre ``base_dir`` com poda de diretórios e retorna (entradas, ignorados).
 
     Substitui ``Path.rglob()`` puro em contextos que precisam de filtragem.
 
@@ -199,12 +201,18 @@ def iter_files(
 
     Args:
         base_dir: Diretório raiz da varredura.
-        glob_pattern: Padrão glob (ex: ``**/*.md``, ``**/*.py``).
+        glob_pattern: Padrão glob aplicado aos nomes de arquivo
+            (ex: ``**/*.md``, ``**/*.py``). Não se aplica a diretórios.
         spec: PathSpec do .gitignore (None → sem filtragem por gitignore,
               mas ALWAYS_SKIP ainda se aplica).
+        include_dirs: Se True, inclui também os diretórios não podados no
+            resultado (necessário para listagens recursivas tipo list_dir).
 
     Returns:
-        Lista de Paths de arquivos que passaram em todos os filtros.
+        Tupla (entradas ordenadas, skipped_ignored). O contador soma cada
+        diretório podado (ALWAYS_SKIP_DIRS ou gitignore — a subárvore inteira
+        conta como 1, já que não é varrida) e cada arquivo que bateu no glob
+        mas foi ignorado pelo spec.
     """
     import fnmatch
     import os
@@ -216,22 +224,54 @@ def iter_files(
         stripped = stripped[3:]
 
     results: list[Path] = []
+    skipped = 0
     for dirpath, dirnames, filenames in os.walk(base_dir):
-        # Poda in-place: os.walk não desce em dirs removidos daqui.
-        dirnames[:] = [d for d in dirnames if d not in ALWAYS_SKIP_DIRS]
-        if spec is not None:
-            current = Path(dirpath)
-            kept: list[str] = []
-            for d in dirnames:
+        current = Path(dirpath)
+        # Poda in-place: os.walk não desce em dirs removidos de dirnames.
+        kept: list[str] = []
+        for d in dirnames:
+            if d in ALWAYS_SKIP_DIRS:
+                skipped += 1
+                continue
+            if spec is not None:
                 rel = (current / d).relative_to(base_dir)
                 # Diretório ignorado pelo gitignore → não desce nele.
-                if not spec.match_file(str(rel).replace("\\", "/") + "/"):
-                    kept.append(d)
-            dirnames[:] = kept
+                if spec.match_file(str(rel).replace("\\", "/") + "/"):
+                    skipped += 1
+                    continue
+            kept.append(d)
+            if include_dirs:
+                results.append(current / d)
+        dirnames[:] = kept
         for filename in filenames:
             if not fnmatch.fnmatch(filename, stripped):
                 continue
-            path = Path(dirpath) / filename
-            if not is_ignored(path, base_dir, spec):
+            path = current / filename
+            if is_ignored(path, base_dir, spec):
+                skipped += 1
+            else:
                 results.append(path)
-    return sorted(results)
+    return sorted(results), skipped
+
+
+def iter_files(
+    base_dir: Path,
+    glob_pattern: str = "**/*",
+    spec: pathspec.PathSpec | None = None,
+) -> list[Path]:
+    """Lista arquivos em ``base_dir`` respeitando .gitignore.
+
+    Wrapper de conveniência sobre ``walk_files`` para quem só precisa dos
+    arquivos, sem o contador de ignorados nem diretórios.
+
+    Args:
+        base_dir: Diretório raiz da varredura.
+        glob_pattern: Padrão glob (ex: ``**/*.md``, ``**/*.py``).
+        spec: PathSpec do .gitignore (None → sem filtragem por gitignore,
+              mas ALWAYS_SKIP ainda se aplica).
+
+    Returns:
+        Lista de Paths de arquivos que passaram em todos os filtros.
+    """
+    files, _ = walk_files(base_dir, glob_pattern, spec)
+    return files
