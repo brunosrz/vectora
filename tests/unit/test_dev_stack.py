@@ -16,6 +16,7 @@ import pytest
 
 from src.storage.dev_stack import (
     DEFAULT_POSTGRES_DSN,
+    DEFAULT_QDRANT_API_KEY,
     DEFAULT_QDRANT_URL,
     DEFAULT_REDIS_URL,
     SERVICES,
@@ -36,11 +37,31 @@ def test_defaults_env_contem_urls_da_stack() -> None:
     assert f"POSTGRES_DSN={DEFAULT_POSTGRES_DSN}" in defaults
     assert f"REDIS_URL={DEFAULT_REDIS_URL}" in defaults
     assert f"QDRANT_URL={DEFAULT_QDRANT_URL}" in defaults
+    assert f"QDRANT_API_KEY={DEFAULT_QDRANT_API_KEY}" in defaults
+
+
+def test_nenhum_servico_sem_credencial() -> None:
+    """Auth em todos os serviços, mesmo em dev — Redis com senha na URL
+    (mesmo formato do Postgres) e Qdrant com API key."""
+    assert "redis://:" in DEFAULT_REDIS_URL  # senha embutida (redis://:senha@host)
+    assert DEFAULT_QDRANT_API_KEY
+    redis = next(s for s in SERVICES if s.name == "vectora-redis")
+    assert "--requirepass" in redis.command
+    qdrant = next(s for s in SERVICES if s.name == "vectora-qdrant")
+    assert any(e.startswith("QDRANT__SERVICE__API_KEY=") for e in qdrant.env)
+
+
+def test_portas_publicadas_apenas_em_localhost() -> None:
+    for spec in SERVICES:
+        for port in spec.ports:
+            assert port.startswith("127.0.0.1:"), (
+                f"{spec.name}: porta {port} exposta além de localhost"
+            )
 
 
 def test_settings_carregam_defaults_de_infra(monkeypatch: pytest.MonkeyPatch) -> None:
     # Sem env explícito, os defaults embarcados devem preencher os campos.
-    for key in ("POSTGRES_DSN", "REDIS_URL", "QDRANT_URL"):
+    for key in ("POSTGRES_DSN", "REDIS_URL", "QDRANT_URL", "QDRANT_API_KEY"):
         monkeypatch.delenv(key, raising=False)
     from src.settings import Settings
 
@@ -48,6 +69,7 @@ def test_settings_carregam_defaults_de_infra(monkeypatch: pytest.MonkeyPatch) ->
     assert s.postgres_dsn == DEFAULT_POSTGRES_DSN
     assert s.redis_url == DEFAULT_REDIS_URL
     assert s.qdrant_url == DEFAULT_QDRANT_URL
+    assert s.qdrant_api_key == DEFAULT_QDRANT_API_KEY
 
 
 def test_specs_espelham_compose_dev() -> None:
@@ -67,6 +89,7 @@ def test_connection_urls_mapeia_constantes() -> None:
         "POSTGRES_DSN": DEFAULT_POSTGRES_DSN,
         "REDIS_URL": DEFAULT_REDIS_URL,
         "QDRANT_URL": DEFAULT_QDRANT_URL,
+        "QDRANT_API_KEY": DEFAULT_QDRANT_API_KEY,
     }
 
 
@@ -80,7 +103,7 @@ def test_docker_run_cmd_postgres() -> None:
     cmd = docker_run_cmd(spec)
     assert cmd[:3] == ["docker", "run", "-d"]
     assert "--name" in cmd and "vectora-postgres" in cmd
-    assert "-p" in cmd and "5432:5432" in cmd
+    assert "-p" in cmd and "127.0.0.1:5432:5432" in cmd
     assert "POSTGRES_USER=vectora" in cmd
     assert cmd[-1] == "pgvector/pgvector:pg16"  # sem command extra
 
@@ -97,6 +120,8 @@ def test_docker_run_cmd_redis_inclui_command() -> None:
         "256mb",
         "--maxmemory-policy",
         "allkeys-lru",
+        "--requirepass",
+        "vectora",
     ]
 
 

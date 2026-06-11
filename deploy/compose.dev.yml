@@ -10,9 +10,13 @@
 #
 # Variáveis de ambiente consumidas pelo Vectora (adicionar ao .env):
 #   STORAGE_MODE=complete
-#   REDIS_URL=redis://localhost:6379/0
+#   REDIS_URL=redis://:vectora@localhost:6379/0
 #   POSTGRES_DSN=postgresql+asyncpg://vectora:vectora@localhost:5432/vectora
 #   QDRANT_URL=http://localhost:6333
+#   QDRANT_API_KEY=vectora
+#
+# Segurança (dev): todos os serviços exigem credencial (senha/API key) e as
+# portas são publicadas APENAS em 127.0.0.1 — nada exposto para a LAN.
 
 services:
   # ─────────────────────────────────────────────────────────────────────────────
@@ -26,7 +30,7 @@ services:
       POSTGRES_PASSWORD: vectora
       POSTGRES_DB: vectora
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - vectora-postgres:/var/lib/postgresql/data
       - ./initdb:/docker-entrypoint-initdb.d:ro
@@ -43,13 +47,13 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass vectora
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - vectora-redis:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "vectora", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -62,12 +66,13 @@ services:
     image: qdrant/qdrant:latest
     restart: unless-stopped
     ports:
-      - "6333:6333" # REST API
-      - "6334:6334" # gRPC
+      - "127.0.0.1:6333:6333" # REST API
+      - "127.0.0.1:6334:6334" # gRPC
     volumes:
       - vectora-qdrant:/qdrant/storage
     environment:
       QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__SERVICE__API_KEY: vectora
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:6333/healthz || exit 1"]
       interval: 15s

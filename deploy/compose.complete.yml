@@ -33,13 +33,13 @@ services:
     command: >
       redis-server
       --appendonly yes
-      --requirepass ${REDIS_PASSWORD:-}
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD obrigatório em produção}
       --maxmemory ${REDIS_MAXMEMORY:-512mb}
       --maxmemory-policy allkeys-lru
     volumes:
       - vectora-redis:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,7 +81,7 @@ services:
       - VECTORA_TOKEN=${VECTORA_TOKEN:-}
       # Storage (modo complete)
       - STORAGE_MODE=complete
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-}@redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - POSTGRES_DSN=postgresql+asyncpg://${POSTGRES_USER:-vectora}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vectora}
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
