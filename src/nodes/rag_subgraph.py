@@ -96,7 +96,7 @@ async def _list_collections() -> list[str]:
         return []
     try:
         db = await lancedb.connect_async(str(settings.lancedb_dir))
-        return list(await db.table_names())
+        return list((await db.list_tables()).tables)
     except Exception:
         logger.debug("_list_collections: falha ao listar tabelas", exc_info=True)
         return []

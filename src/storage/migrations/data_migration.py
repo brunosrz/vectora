@@ -168,7 +168,7 @@ async def migrate_to_qdrant(
     import lancedb
 
     db = await lancedb.connect_async(lancedb_path)
-    table_names = await db.table_names()
+    table_names = (await db.list_tables()).tables
 
     if collection not in table_names:
         return {
@@ -264,7 +264,7 @@ async def migrate_to_pgvector(
     import lancedb
 
     db = await lancedb.connect_async(lancedb_path)
-    table_names = await db.table_names()
+    table_names = (await db.list_tables()).tables
 
     if collection not in table_names:
         return {

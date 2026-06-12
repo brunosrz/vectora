@@ -880,7 +880,7 @@ async def list_vector_collections() -> str:
             )
 
         db = await lancedb.connect_async(str(settings.lancedb_dir))
-        table_names = await db.table_names()
+        table_names = (await db.list_tables()).tables
 
         collections = []
         for table_name in table_names:

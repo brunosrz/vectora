@@ -77,7 +77,7 @@ async def _cleanup_session_1212() -> None:
         from src.settings import settings as s
 
         db_lance = await lancedb.connect_async(str(s.lancedb_dir))
-        tables = await db_lance.table_names()
+        tables = (await db_lance.list_tables()).tables
         if TEST_COLLECTION in tables:
             await db_lance.drop_table(TEST_COLLECTION)
             logger.info(f"Coleção LanceDB '{TEST_COLLECTION}' removida")

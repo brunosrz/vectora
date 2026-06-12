@@ -399,7 +399,7 @@ async def storage_health() -> dict[str, Any]:
         from src.storage.lancedb.connection import get_lancedb
 
         db = await get_lancedb()
-        tables = await db.table_names()
+        tables = (await db.list_tables()).tables
         result["lancedb"] = {"ok": True, "error": None, "tables": list(tables)}
     except Exception as exc:
         result["lancedb"] = {"ok": False, "error": str(exc)}

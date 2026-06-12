@@ -191,6 +191,21 @@ filterwarnings = [
     # Suprimir até que as libs atualizem para inspect.iscoroutinefunction().
     "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:cohere",
     "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:langchain_core",
+    # ── Deprecações de libs externas que não controlamos ──────────────────────
+    # FastAPI/Starlette TestClient ainda usa httpx clássico (será httpx2).
+    "ignore:Using .httpx. with .starlette.testclient. is deprecated:Warning",
+    # google-genai herda de aiohttp.ClientSession (apenas "discouraged").
+    "ignore:Inheritance class AiohttpClientSession from ClientSession is discouraged:DeprecationWarning",
+    # deepagents <0.6 ainda avisa sobre virtual_mode default em chamadas internas.
+    "ignore:.*virtual_mode.* default will change:Warning",
+    # ── Ruído de teardown de testes (não é bug do produto) ────────────────────
+    # aiosqlite fecha sua thread worker após o event loop do teste encerrar;
+    # a exceção "Event loop is closed" é capturada pelo pytest como warning.
+    "ignore::pytest.PytestUnhandledThreadExceptionWarning",
+    # Conexões sqlite efêmeras coletadas pelo GC durante os testes (mocks/pydantic).
+    "ignore::ResourceWarning",
+    # Coroutines criadas dentro de mocks/streams de teste que não são aguardadas.
+    "ignore:coroutine .* was never awaited:RuntimeWarning",
 ]
 markers = [
     "e2e: testes end-to-end com APIs reais (requer env vars e gemini CLI)",

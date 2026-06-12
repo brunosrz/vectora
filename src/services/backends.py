@@ -64,7 +64,10 @@ def build_backend(
 
     # ── Workspace backend ─────────────────────────────────────────────────────
     workspace_root = _resolve_workspace_root(workspace_id)
-    fs_backend = FilesystemBackend(root_dir=workspace_root)
+    # virtual_mode explícito (o default do deepagents muda em 0.6.0): mantemos
+    # False = comportamento atual (paths reais sob root_dir). A proteção de
+    # path do Vectora vive em src/services/safe_roots.py + src/tools/fs.py.
+    fs_backend = FilesystemBackend(root_dir=workspace_root, virtual_mode=False)
 
     # ── State backend (default + large results) ───────────────────────────────
     state_backend = StateBackend()

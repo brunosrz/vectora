@@ -46,8 +46,14 @@ def detect_system_language() -> str:
     # repassar cru — então também aceitamos.
     try:
         import locale as _locale
+        import warnings as _warnings
 
-        loc, _enc = _locale.getdefaultlocale()
+        # getdefaultlocale é deprecated em 3.13 mas é o fallback que melhor
+        # devolve o locale padrão no Windows; suprimimos só esta deprecação
+        # (sem trocar o comportamento) — getlocale() abaixo é o próximo recurso.
+        with _warnings.catch_warnings():
+            _warnings.simplefilter("ignore", DeprecationWarning)
+            loc, _enc = _locale.getdefaultlocale()
         if loc:
             return loc
     except Exception:  # pragma: no cover — fallback resiliente

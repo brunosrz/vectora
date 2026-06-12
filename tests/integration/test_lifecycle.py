@@ -136,7 +136,7 @@ async def test_embed_known_doc():
     from src.settings import settings
 
     db = await lancedb.connect_async(str(settings.lancedb_dir))
-    tables = await db.table_names()
+    tables = (await db.list_tables()).tables
     assert TEST_COLLECTION in tables, f"Coleção '{TEST_COLLECTION}' não criada"
 
     table = await db.open_table(TEST_COLLECTION)
@@ -255,7 +255,7 @@ async def test_lancedb_doc_survives_restart():
 
     # Novo cliente LanceDB (simula restart)
     db = await lancedb.connect_async(str(settings.lancedb_dir))
-    tables = await db.table_names()
+    tables = (await db.list_tables()).tables
     assert TEST_COLLECTION in tables, (
         f"Coleção '{TEST_COLLECTION}' deve existir após restart"
     )

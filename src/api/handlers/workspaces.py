@@ -1640,7 +1640,7 @@ async def gitignore_preview(
         return GitignorePreviewResponse(pattern=pattern, matched=[], total=0)
 
     cwd = Path(ws.cwd)
-    spec = pathspec.PathSpec.from_lines("gitwildmatch", [pattern])
+    spec = pathspec.PathSpec.from_lines("gitignore", [pattern])
 
     matched: list[str] = []
     exclude = frozenset({".git", "node_modules", "__pycache__", ".venv", "venv"})

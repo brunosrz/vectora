@@ -67,9 +67,7 @@ def load_vectoraignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
         if vectoraignore.is_file():
             try:
                 patterns = vectoraignore.read_text(encoding="utf-8", errors="ignore")
-                return pathspec.PathSpec.from_lines(
-                    "gitwildmatch", patterns.splitlines()
-                )
+                return pathspec.PathSpec.from_lines("gitignore", patterns.splitlines())
             except Exception:
                 return None
     return None
@@ -107,7 +105,7 @@ def load_ignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
 
     if not all_lines:
         return None
-    return pathspec.PathSpec.from_lines("gitwildmatch", all_lines)
+    return pathspec.PathSpec.from_lines("gitignore", all_lines)
 
 
 def load_gitignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
@@ -128,9 +126,7 @@ def load_gitignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
         if gitignore.is_file():
             try:
                 patterns = gitignore.read_text(encoding="utf-8", errors="ignore")
-                return pathspec.PathSpec.from_lines(
-                    "gitwildmatch", patterns.splitlines()
-                )
+                return pathspec.PathSpec.from_lines("gitignore", patterns.splitlines())
             except Exception:
                 return None
     return None
