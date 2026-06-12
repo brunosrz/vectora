@@ -3,15 +3,11 @@ Vectora — SConstruct (SCons build file)
 
 Uso (PowerShell / cmd, sem Git bash):
     scons               → exibe ajuda
-    scons dev           → backend + Next.js dev (Ctrl+C encerra ambos)
     scons release       → build completo + instalador para o SO atual
     scons release-win   → instalador Windows (.msi + .exe NSIS)
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
-    scons build-chat    → Next.js export → chat/out/
-    scons build-nuitka  → Nuitka onefile → dist-nuitka/
-    scons build-desktop → TypeScript Electron → desktop/dist/
-    scons package       → electron-builder → desktop/dist-electron/
+    scons package       → build completo (chat + Nuitka + Electron) + instalador
     scons tests         → pytest (unit + stress + ...) com coverage + vitest do chat
     scons tests-full    → idem + tests/integration + tests/e2e (requer API keys)
     scons lint          → ruff + ty + tsc + oxlint
@@ -134,10 +130,6 @@ def _action_package(target, source, env, platform=""):
     _run(cmd)
 
 
-def _action_dev(target, source, env):
-    _run(["uv", "run", "python", "scripts/dev.py"])
-
-
 def _action_tests(target, source, env, *, include_external: bool = False):
     """Roda a suíte de testes Python (pytest + coverage) e a do chat (vitest).
 
@@ -195,16 +187,9 @@ def _action_help(target, source, env):
     scons release-mac      instalador macOS (.dmg universal)
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
 
-  Passos individuais
-    scons build-chat       Vite SPA build -> chat/dist/
-    scons build-nuitka     Nuitka onefile -> dist-nuitka/  (10-30 min)
-    scons build-desktop    TypeScript Electron -> desktop/dist/
-    scons package          electron-builder -> desktop/dist-electron/
-
-  Desenvolvimento
-    scons dev              backend (8080) + Vite dev (5173)
-    scons dev-backend      apenas backend
-    scons dev-chat         apenas Vite dev
+  Build
+    scons package          build completo (chat + Nuitka + Electron) +
+                           instalador para o SO atual
 
   Qualidade
     scons tests            pytest tests/ + coverage + vitest do chat
@@ -225,39 +210,44 @@ env = Environment(ENV=os.environ)
 env.Decider("timestamp-match")
 
 
-def _cmd(name: str, action, deps: list = []):
-    """Cria um target PHONY com dependências."""
-    t = env.Command(f"_{name}", deps, action)
+def _node(name: str, action, deps: list | None = None):
+    """Nó de build INTERNO (sem alias público) — usado só como dependência."""
+    t = env.Command(f"_{name}", deps or [], action)
+    env.AlwaysBuild(t)
+    return t
+
+
+def _cmd(name: str, action, deps: list | None = None):
+    """Cria um target PHONY público (chamável por `scons <name>`)."""
+    t = env.Command(f"_{name}", deps or [], action)
     env.AlwaysBuild(t)
     env.Alias(name, t)
     return t
 
 
-# Passos individuais
-_build_chat    = _cmd("build-chat",    _action_build_chat)
-_build_nuitka  = _cmd("build-nuitka",  _action_build_nuitka,  deps=[_build_chat])
-_inst_desktop  = _cmd("install-desktop", _action_install_desktop)
-_build_desktop = _cmd("build-desktop", _action_build_desktop,  deps=[_inst_desktop])
-_package       = _cmd("package",       lambda target, source, env: _action_package(target, source, env),
-                       deps=[_build_desktop])
+# Passos de build — internos, não aparecem no menu nem são chamáveis direto.
+# O usuário usa `scons package` (ou `scons release*`), que encadeia tudo.
+_build_chat    = _node("build-chat",    _action_build_chat)
+_build_nuitka  = _node("build-nuitka",  _action_build_nuitka,    deps=[_build_chat])
+_inst_desktop  = _node("install-desktop", _action_install_desktop)
+_build_desktop = _node("build-desktop", _action_build_desktop,   deps=[_inst_desktop])
+
+# Build completo do SO atual: chat (Vite) + Nuitka onefile + Electron TS +
+# electron-builder. `package` e `release` fazem o mesmo; releases por plataforma
+# passam o alvo (`win`/`mac`/`linux`) ao electron-builder.
+_FULL_DEPS = [_build_chat, _build_nuitka, _build_desktop]
+_package   = _cmd("package",       lambda target, source, env: _action_package(target, source, env),
+                  deps=_FULL_DEPS)
 
 # Releases por plataforma
 _rel_win   = _cmd("release-win",   lambda target, source, env: _action_package(target, source, env, "win"),
-                   deps=[_build_chat, _build_nuitka, _build_desktop])
+                   deps=_FULL_DEPS)
 _rel_mac   = _cmd("release-mac",   lambda target, source, env: _action_package(target, source, env, "mac"),
-                   deps=[_build_chat, _build_nuitka, _build_desktop])
+                   deps=_FULL_DEPS)
 _rel_linux = _cmd("release-linux", lambda target, source, env: _action_package(target, source, env, "linux"),
-                   deps=[_build_chat, _build_nuitka, _build_desktop])
+                   deps=_FULL_DEPS)
 _release   = _cmd("release",       lambda target, source, env: _action_package(target, source, env),
-                   deps=[_build_chat, _build_nuitka, _build_desktop])
-
-# Dev
-_cmd("dev",         _action_dev)
-_cmd("dev-backend", lambda target, source, env: _run(
-    ["uv", "run", "vectora", "server", "chat", "--port", "8080"],
-    env={"VECTORA_LICENSE_BYPASS": "1"},
-))
-_cmd("dev-chat",    lambda target, source, env: _run([PNPM, "--dir", "chat", "dev"]))
+                   deps=_FULL_DEPS)
 
 # Qualidade
 _cmd("tests",      _action_tests)
