@@ -87,6 +87,21 @@
     "**/build": true,
     "**/.next": true
   },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.venv/**": true,
+    "**/__pycache__/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/dist-electron/**": true,
+    "**/dist-nuitka/**": true,
+    "**/win-unpacked/**": true,
+    "**/desktop/dist/**": true,
+    "**/chat/dist/**": true,
+    "**/.output/**": true,
+    "**/htmlcov/**": true
+  },
   "editor.mouseWheelZoom": true,
   "editor.autoIndentOnPaste": true,
   "explorer.confirmDelete": false,

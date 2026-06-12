@@ -83,18 +83,38 @@ def _action_build_nuitka(target, source, env):
     via `__compiled__.containing_dir` ou `NUITKA_ONEFILE_PARENT` e
     serve via `StaticFiles`.
     """
-    _run(
-        [
-            "uv", "run", "nuitka",
-            "--mode=onefile",
-            "--include-data-dir=chat/dist=chat_static",
-            "--enable-plugin=multiprocessing",
-            "--enable-plugin=anti-bloat",
-            "--output-filename=vectora",
-            "--output-dir=dist-nuitka",
-            "src/launcher.py",
-        ]
-    )
+    # Ferramentas de DEV que estão em [project.dependencies] (mypy, pytest,
+    # ruff, ty, bandit, pyright, coverage…) acabam no grafo de imports e fazem
+    # o Nuitka compilar MILHARES de arquivos C inúteis (o build chegava a 6600+
+    # arquivos, ~10% em 30 min). Nada disso roda em produção — `--nofollow-import-to`
+    # poda esses módulos do binário e corta o tempo de compilação drasticamente.
+    NUITKA_SKIP = [
+        "mypy",
+        "pytest",
+        "_pytest",
+        "coverage",
+        "bandit",
+        "ty",
+        "ruff",
+        "pyright",
+        "IPython",
+        "black",
+        "isort",
+    ]
+    cpu = os.cpu_count() or 4
+    cmd = [
+        "uv", "run", "nuitka",
+        "--mode=onefile",
+        "--include-data-dir=chat/dist=chat_static",
+        "--enable-plugin=multiprocessing",
+        "--enable-plugin=anti-bloat",
+        f"--jobs={cpu}",
+        "--output-filename=vectora",
+        "--output-dir=dist-nuitka",
+    ]
+    cmd += [f"--nofollow-import-to={mod}" for mod in NUITKA_SKIP]
+    cmd.append("src/launcher.py")
+    _run(cmd)
 
 
 def _action_install_desktop(target, source, env):
