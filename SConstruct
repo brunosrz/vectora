@@ -98,12 +98,13 @@ def _action_build_nuitka(target, source, env):
         "isort",
     ]
     cpu = os.cpu_count() or 4
+    # NOTA sobre plugins: `multiprocessing` e `anti-bloat` são "always enabled"
+    # no Nuitka 4.1.x — passá-los explicitamente só gera WARNING ("no need to
+    # enable it"). Por isso NÃO são listados aqui; continuam ativos por padrão.
     cmd = [
         "uv", "run", "nuitka",
         "--mode=onefile",
         "--include-data-dir=chat/dist=chat_static",
-        "--enable-plugin=multiprocessing",
-        "--enable-plugin=anti-bloat",
         f"--jobs={cpu}",
         "--output-filename=vectora",
         "--output-dir=dist-nuitka",
@@ -121,7 +122,30 @@ def _action_build_desktop(target, source, env):
     _run([PNPM, "--dir", "desktop", "build"])
 
 
+def _free_desktop_dist() -> None:
+    """Previne o erro 'app.asar já está sendo usado por outro processo'.
+
+    No Windows, uma instância zumbi do Vectora (ou do sidecar Nuitka) mantém
+    `dist-electron/win-unpacked/resources/app.asar` travado, fazendo o
+    electron-builder falhar no FIM do build — depois das ~2h de Nuitka. Mata
+    processos órfãos e remove o win-unpacked antes de reempacotar.
+    """
+    if sys.platform != "win32":
+        return
+    subprocess.run(  # noqa: S603 S607 — taskkill é builtin do Windows
+        ["taskkill", "/F", "/IM", "vectora.exe", "/T"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    unpacked = os.path.join(ROOT, "desktop", "dist-electron", "win-unpacked")
+    if os.path.isdir(unpacked):
+        shutil.rmtree(unpacked, ignore_errors=True)
+        print(">> limpou win-unpacked travado (lock prevention)")
+
+
 def _action_package(target, source, env, platform=""):
+    _free_desktop_dist()
     cmd = [PNPM, "--dir", "desktop"]
     if platform:
         cmd.append(f"dist:{platform}")

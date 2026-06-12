@@ -134,7 +134,7 @@ class WorkbenchScreen(ModalScreen[None]):
                 table.add_row("S", item.a_path)
             for path in repo.untracked_files:
                 table.add_row("?", path)
-        except Exception:  # noqa: BLE001
+        except Exception:
             table.add_row("-", t("tui.workbench.diff_unavailable"))
 
     # ------------------------------------------------------------------
@@ -158,8 +158,7 @@ class WorkbenchScreen(ModalScreen[None]):
                 plan_widget.update(t("tui.workbench.plan_empty"))
                 return
             lines = [f"[bold]{t('tui.workbench.plan_title')}[/bold]"]
-            for entry in entries[:20]:
-                lines.append(f"  • {entry.name}")
+            lines.extend(f"  • {entry.name}" for entry in entries[:20])
             plan_widget.update("\n".join(lines))
         except OSError:
             plan_widget.update(t("tui.workbench.plan_unavailable"))

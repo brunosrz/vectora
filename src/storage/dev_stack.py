@@ -126,7 +126,7 @@ class StackResult:
 
 def _run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(  # noqa: S603 — comandos docker montados internamente  # nosec B603
-        cmd, capture_output=True, text=True, timeout=180
+        cmd, capture_output=True, text=True, timeout=180, check=False
     )
 
 

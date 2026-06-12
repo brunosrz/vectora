@@ -421,11 +421,15 @@ class TestAdaptersRegression:
         assert isinstance(result, TokenEvent)
         assert result.content == "hello"
 
-    def test_orchestrator_tokens_filtered(self):
+    def test_orchestrator_tokens_now_emitted(self):
+        """O orchestrator deixou de usar structured output (set
+        _STRUCTURED_OUTPUT_NODES vazio), então seus tokens agora são
+        user-facing e viram TokenEvent — antes eram filtrados como JSON cru."""
         from src.api.adapters import langgraph_event_to_payload
+        from src.api.schemas import TokenEvent
 
         class FakeChunk:
-            content = '{"action": "respond"}'
+            content = "Olá, como posso ajudar?"
 
         event = {
             "event": "on_chat_model_stream",
@@ -435,7 +439,9 @@ class TestAdaptersRegression:
             "metadata": {"langgraph_node": "orchestrator"},
         }
         result = langgraph_event_to_payload(event)
-        assert result is None
+        assert isinstance(result, TokenEvent)
+        assert result.content == "Olá, como posso ajudar?"
+        assert result.node == "orchestrator"
 
     def test_tool_call_event_emitted(self):
         from src.api.adapters import langgraph_event_to_payload

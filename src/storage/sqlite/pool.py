@@ -23,6 +23,7 @@ Como context manager:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -148,7 +149,7 @@ class AsyncConnectionPool:
         path: str | Path,
         min_size: int = 1,
         max_size: int = 8,
-    ) -> AsyncGenerator[AsyncConnectionPool, None]:
+    ) -> AsyncGenerator[AsyncConnectionPool]:
         """Context manager que abre e fecha o pool automaticamente.
 
         Example:
@@ -168,7 +169,7 @@ class AsyncConnectionPool:
     # ------------------------------------------------------------------
 
     @asynccontextmanager
-    async def acquire(self) -> AsyncGenerator[aiosqlite.Connection, None]:
+    async def acquire(self) -> AsyncGenerator[aiosqlite.Connection]:
         """Adquire uma conexão do pool.
 
         Ordem de prioridade:
@@ -184,10 +185,8 @@ class AsyncConnectionPool:
         conn: aiosqlite.Connection | None = None
 
         # 1. Tentativa rápida: pegar da fila sem bloquear
-        try:
+        with contextlib.suppress(asyncio.QueueEmpty):
             conn = self._idle.get_nowait()
-        except asyncio.QueueEmpty:
-            pass
 
         # 2. Criar nova conexão se ainda há slot disponível
         if conn is None:
@@ -207,10 +206,8 @@ class AsyncConnectionPool:
                 self._idle.put_nowait(conn)
             except asyncio.QueueFull:
                 logger.debug("storage/sqlite/pool: fila cheia, fechando conexão extra")
-                try:
+                with contextlib.suppress(Exception):
                     await conn.close()
-                except Exception:
-                    pass
 
     # ------------------------------------------------------------------
     # Internos

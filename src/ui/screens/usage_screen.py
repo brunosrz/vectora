@@ -52,7 +52,7 @@ class UsageScreen(ModalScreen[None]):
             data = usage_tracker.usage(str(user_id))
             lines = self._format_usage(data)
             body.update("\n".join(lines))
-        except Exception:  # noqa: BLE001
+        except Exception:
             body.update(t("tui.usage.unavailable"))
 
     @staticmethod

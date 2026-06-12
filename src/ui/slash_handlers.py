@@ -321,6 +321,6 @@ class SlashCommandsMixin:
             app = getattr(self, "app", None)
             if app is not None and hasattr(app, "refresh_css"):
                 app.refresh_css()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         self.append_line(f"[green]{t('tui.theme.changed', theme=theme)}[/green]")

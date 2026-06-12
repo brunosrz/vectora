@@ -450,7 +450,7 @@ class TestEnvOverrides:
         await set_env_override(user.id, "GITHUB_TOKEN", "ghp_test123")
 
         overrides = await get_env_overrides(user.id)
-        assert overrides["GITHUB_TOKEN"] == "ghp_test123"  # noqa: S105
+        assert overrides["GITHUB_TOKEN"] == "ghp_test123"
 
     @pytest.mark.asyncio
     async def test_delete_override(self):

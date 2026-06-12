@@ -103,5 +103,5 @@ async def _fetch_checkpoints(thread_id: str) -> list[dict[str, Any]]:
             ) as cur:
                 rows = await cur.fetchall()
         return [dict(r) for r in rows]
-    except Exception:  # noqa: BLE001
+    except Exception:
         return []

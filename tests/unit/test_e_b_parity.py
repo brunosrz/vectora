@@ -294,15 +294,20 @@ class TestMemoryToolsNamespace:
 
 
 class TestBuildStore:
-    def test_build_store_returns_inmemorstore(self):
-        """build_store() retorna InMemoryStore."""
-        from langgraph.store.memory import InMemoryStore
+    async def test_build_store_returns_async_sqlite_store(self):
+        """build_store() (async) retorna AsyncSqliteStore persistente (F5)."""
+        import contextlib
+
+        from langgraph.store.sqlite.aio import AsyncSqliteStore
 
         from src.services.backends import build_store
 
         with patch("src.services.backends._build_index", return_value=None):
-            store = build_store()
-        assert isinstance(store, InMemoryStore)
+            store = await build_store()
+        assert isinstance(store, AsyncSqliteStore)
+        # Fecha a conexão aiosqlite aberta pelo store para não vazar handle.
+        with contextlib.suppress(Exception):
+            await store.conn.close()
 
     def test_build_store_no_index_when_no_key(self):
         """Sem API key Cohere, build_store() retorna store sem indexação."""

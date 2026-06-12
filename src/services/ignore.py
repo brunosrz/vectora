@@ -197,7 +197,7 @@ def walk_files(
     ``rglob`` puro entra em ``node_modules``/``.venv`` inteiros antes de
     filtrar, o que em repositórios JS/Python grandes leva minutos (era a
     causa da suite de testes "travar": cada teste do orchestrator varria a
-    árvore completa do repo 3×).
+    árvore completa do repo 3x).
 
     Args:
         base_dir: Diretório raiz da varredura.

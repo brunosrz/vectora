@@ -17,6 +17,7 @@ Persiste no mesmo banco SQLite que o chat TUI usa, via AsyncSqliteSaver
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import uuid
@@ -595,10 +596,8 @@ async def thread_activity(thread_id: str) -> ActivityResponse:
 
     all_files: list[str] = []
     for (ft_json,) in ft_rows:
-        try:
+        with contextlib.suppress(Exception):
             all_files.extend(json.loads(ft_json or "[]"))
-        except Exception:
-            pass
     unique_files = sorted(set(all_files))
 
     # Contagem de turnos (número de checkpoints)

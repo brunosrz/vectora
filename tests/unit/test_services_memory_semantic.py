@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import math
-import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -139,70 +138,56 @@ class TestSearchSemantic:
 # ---------------------------------------------------------------------------
 
 
+class _FakeStoreItem:
+    """Item retornado pelo BaseStore.asearch — com .key, .value, .score.
+
+    O ``search_memory`` agora delega ao store do LangGraph (``_get_store()``);
+    a flag ``semantic`` é derivada de o item ter ``.score`` não-nulo (o store
+    com índice vetorial retorna score; sem índice, score é None).
+    """
+
+    def __init__(self, key: str, content: str, score: float | None = None) -> None:
+        self.key = key
+        self.value = {"content": content, "updated_at": "2025"}
+        self.score = score
+
+
 class TestSearchMemoryTool:
     @pytest.mark.asyncio
-    async def test_semantic_search_with_cohere(self):
-        """Quando Cohere disponível e semantic enabled, usa cosine similarity."""
+    async def test_search_with_scores_is_semantic(self):
+        """Itens com score (store indexado) → semantic=True e score exposto."""
         from src.tools.memory import search_memory
 
         config = {"configurable": {"thread_id": "t1"}}
+        store = AsyncMock()
+        store.asearch = AsyncMock(
+            return_value=[_FakeStoreItem("k1", "resultado semântico", score=0.9)]
+        )
 
-        query_emb = [0.1, 0.2, 0.3]
-        mock_result = [
-            {"key": "k1", "content": "resultado semântico", "updated_at": "2025"}
-        ]
-
-        with (
-            patch("src.settings.settings") as ms,
-            patch("src.services.memory.get_memory_store") as mock_gs,
-        ):
-            ms.memory_semantic_enabled = True
-            ms.get_cohere_api_key.return_value = "fake-key"
-            ms.embedding_model = "embed-multilingual-v3.0"
-
-            mock_store = AsyncMock()
-            mock_store.search_semantic = AsyncMock(return_value=mock_result)
-            mock_gs.return_value = mock_store
-
-            # Mock do client Cohere
-            mock_embed_resp = AsyncMock()
-            mock_embed_resp.embeddings = [query_emb]
-
-            mock_client = AsyncMock()
-            mock_client.embed = AsyncMock(return_value=mock_embed_resp)
-
-            with patch("cohere.AsyncClient", return_value=mock_client):
-                raw = await search_memory.ainvoke(
-                    {"query": "jwt auth", "config": config, "limit": 5}
-                )
+        with patch("src.tools.memory._get_store", return_value=store):
+            raw = await search_memory.ainvoke(
+                {"query": "jwt auth", "config": config, "limit": 5}
+            )
 
         data = json.loads(raw)
         assert data["status"] == "success"
         assert data["semantic"] is True
         assert data["count"] == 1
         assert data["memories"][0]["key"] == "k1"
+        assert data["memories"][0]["score"] == 0.9
 
     @pytest.mark.asyncio
-    async def test_fallback_when_semantic_disabled(self):
-        """Quando semantic desabilitado, retorna todas sem ranqueamento."""
+    async def test_search_without_scores_is_not_semantic(self):
+        """Itens sem score (store sem índice) → semantic=False, sem ranqueamento."""
         from src.tools.memory import search_memory
 
         config = {"configurable": {"thread_id": "t2"}}
-        all_mems = [
-            {"key": "k1", "content": "m1", "updated_at": "2025"},
-            {"key": "k2", "content": "m2", "updated_at": "2025"},
-        ]
+        store = AsyncMock()
+        store.asearch = AsyncMock(
+            return_value=[_FakeStoreItem("k1", "m1"), _FakeStoreItem("k2", "m2")]
+        )
 
-        with (
-            patch("src.settings.settings") as ms,
-            patch("src.services.memory.get_memory_store") as mock_gs,
-        ):
-            ms.memory_semantic_enabled = False
-
-            mock_store = AsyncMock()
-            mock_store.get_all = AsyncMock(return_value=all_mems)
-            mock_gs.return_value = mock_store
-
+        with patch("src.tools.memory._get_store", return_value=store):
             raw = await search_memory.ainvoke(
                 {"query": "qualquer coisa", "config": config, "limit": 5}
             )
@@ -213,40 +198,32 @@ class TestSearchMemoryTool:
         assert data["count"] == 2
 
     @pytest.mark.asyncio
-    async def test_fallback_when_no_api_key(self):
-        """Sem API key Cohere, degrada para retornar todas as memórias."""
+    async def test_search_empty_results(self):
+        """Store vazio → success com count 0."""
         from src.tools.memory import search_memory
 
         config = {"configurable": {"thread_id": "t3"}}
+        store = AsyncMock()
+        store.asearch = AsyncMock(return_value=[])
 
-        with (
-            patch("src.settings.settings") as ms,
-            patch("src.services.memory.get_memory_store") as mock_gs,
-        ):
-            ms.memory_semantic_enabled = True
-            ms.get_cohere_api_key.return_value = None  # sem key
-
-            mock_store = AsyncMock()
-            mock_store.get_all = AsyncMock(return_value=[])
-            mock_gs.return_value = mock_store
-
+        with patch("src.tools.memory._get_store", return_value=store):
             raw = await search_memory.ainvoke(
                 {"query": "teste", "config": config, "limit": 5}
             )
 
         data = json.loads(raw)
         assert data["status"] == "success"
-        assert data["semantic"] is False
+        assert data["count"] == 0
 
     @pytest.mark.asyncio
     async def test_error_returns_failed(self):
-        """Exceção em qualquer ponto retorna status failed."""
+        """Exceção ao obter o store retorna status failed com a mensagem."""
         from src.tools.memory import search_memory
 
         config = {"configurable": {"thread_id": "t4"}}
 
         with patch(
-            "src.services.memory.get_memory_store",
+            "src.tools.memory._get_store",
             side_effect=Exception("db error"),
         ):
             raw = await search_memory.ainvoke(

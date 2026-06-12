@@ -1,0 +1,72 @@
+name: Sites (company + docs)
+
+# A Vercel faz o DEPLOY automático no push (integração Git). Este workflow é só
+# verificação: garante que vectora.company (TanStack Start) e o site de docs
+# (Docusaurus) continuam buildando e passando no lint antes do merge.
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "company/**"
+      - ".github/workflows/sites.yml"
+  pull_request:
+    paths:
+      - "company/**"
+      - ".github/workflows/sites.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: sites-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  company:
+    name: vectora.company (build + lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: company
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: company/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Lint (eslint)
+        run: pnpm lint
+      - name: Build (vite)
+        run: pnpm build
+
+  docs:
+    name: vectora docs (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: company/docs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: company/docs/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Build (docusaurus)
+        run: pnpm build

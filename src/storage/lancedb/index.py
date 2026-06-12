@@ -29,7 +29,7 @@ _DEFAULT_MIN_ROWS = 10_000
 # Aqui usamos um valor conservador adequado para a faixa 10k-500k.
 _DEFAULT_NUM_PARTITIONS = 256
 
-# Subquantizers PQ (16 × 8-bit = 128 bits por vetor comprimido).
+# Subquantizers PQ (16 x 8-bit = 128 bits por vetor comprimido).
 _DEFAULT_NUM_SUB_VECTORS = 16
 
 

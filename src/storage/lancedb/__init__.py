@@ -6,8 +6,8 @@ from src.storage.lancedb.optimize import optimize_table, schedule_optimize
 
 __all__ = [
     "LanceDBConnectionCache",
-    "get_lancedb",
     "create_ivf_index",
+    "get_lancedb",
     "optimize_table",
     "schedule_optimize",
 ]

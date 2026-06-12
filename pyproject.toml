@@ -135,7 +135,10 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["ANN201", "ANN001", "ANN202", "ANN003", "ARG001", "ARG002", "S101", "S108", "N806", "RUF003"]
+# Tests usam credenciais fake (S105/6/7), asserts compostos (PT018), fixtures
+# sem valor (PT019), *args sem anotação (ANN002) e fakes que retornam self em
+# __aenter__ (PYI034) — todos idiomáticos em suíte de testes.
+"tests/**/*.py" = ["ANN201", "ANN001", "ANN202", "ANN003", "ANN002", "ARG001", "ARG002", "S101", "S105", "S106", "S107", "S108", "N806", "RUF003", "PT018", "PT019", "PYI034"]
 "tests/e2e/**/*.py" = ["S603", "S607", "PLW1510"]
 "tests/integration/**/*.py" = ["S603", "PLW1510"]
 "check_coverage.py" = ["S603", "PLW1510", "PLW2901", "B007"]
@@ -146,6 +149,13 @@ ignore = [
 "src/nodes/base.py" = ["PLR0911"]
 "src/ui/setup_wizard.py" = ["S603", "RUF006"]
 "src/services/checkpoint.py" = ["N802"]
+# Wizard interativo de CLI: input() bloqueante é o comportamento correto (nada
+# mais roda no loop durante o prompt).
+"src/main.py" = ["ASYNC250"]
+# Nomes de tabela vêm de _SQLITE_TABLES hardcoded (não user input); asserts de
+# narrowing de tipo em script de migração. SIM118/SIM401: as linhas operam
+# sobre sqlite3.Row (não dict) — `.keys()` é obrigatório e `.get()` não existe.
+"src/storage/migrations/data_migration.py" = ["S608", "S101", "SIM118", "SIM401"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -163,7 +173,7 @@ skips = ["B110", "B101"]
 [tool.pyright]
 typeCheckingMode = "standard"
 pythonVersion = "3.13"
-include = ["vectora", "tests"]
+include = ["src", "tests"]
 exclude = ["**/venv", "**/.venv", "**/env", "**/.env", "**/node_modules", "**/__pycache__"]
 venv = ".venv"
 venvPath = "."

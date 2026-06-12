@@ -41,6 +41,9 @@ export function broadcastEvent(
   if (typeof BroadcastChannel === "undefined") return;
   try {
     const bc = new BroadcastChannel(channel);
+    // BroadcastChannel.postMessage recebe só 1 argumento — targetOrigin é
+    // exclusivo de window.postMessage (regra é falso-positivo aqui).
+    // eslint-disable-next-line unicorn/require-post-message-target-origin
     bc.postMessage(payload);
     bc.close();
   } catch {
@@ -64,9 +67,9 @@ export function useBroadcastSync(
     if (!enabled || typeof BroadcastChannel === "undefined") return;
 
     const bc = new BroadcastChannel(channel);
-    bc.onmessage = (event: MessageEvent<BroadcastPayload>) => {
+    bc.addEventListener("message", (event: MessageEvent<BroadcastPayload>) => {
       onMessage(event.data);
-    };
+    });
 
     return () => {
       bc.close();

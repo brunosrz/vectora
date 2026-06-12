@@ -115,7 +115,7 @@ class LanceDBConnectionCache:
 _default_cache: LanceDBConnectionCache | None = None
 
 
-def LanceDBConnectionCache_default() -> LanceDBConnectionCache:
+def default_lancedb_cache() -> LanceDBConnectionCache:
     """Retorna o cache singleton do processo (cria na primeira chamada)."""
     global _default_cache
     if _default_cache is None:
@@ -137,4 +137,4 @@ async def get_lancedb(path: str | Path | None = None) -> Any:
     Returns:
         ``lancedb.AsyncConnection``
     """
-    return await LanceDBConnectionCache_default().connect(path)
+    return await default_lancedb_cache().connect(path)

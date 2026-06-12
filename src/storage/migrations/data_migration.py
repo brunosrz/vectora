@@ -423,6 +423,8 @@ async def migrate_memory_to_langgraph(
 
         async for mem_row in cur:
             try:
+                # mem_row é sqlite3.Row: precisa de .keys() para checar coluna
+                # (sem .keys(), `in` itera VALORES; e .get() nem existe na Row).
                 user_id = (
                     mem_row["user_id"] if "user_id" in mem_row.keys() else "unknown"
                 )

@@ -33,7 +33,7 @@ export function useWorkspaceWatcher(workspaceId: string | undefined): void {
       );
       esRef.current = es;
 
-      es.onmessage = (evt) => {
+      es.addEventListener("message", (evt) => {
         try {
           const data = JSON.parse(evt.data as string) as {
             type: string;
@@ -46,9 +46,9 @@ export function useWorkspaceWatcher(workspaceId: string | undefined): void {
         } catch {
           // ignorar linhas malformadas
         }
-      };
+      });
 
-      es.onerror = () => {
+      es.addEventListener("error", () => {
         es.close();
         esRef.current = null;
         if (cancelled) return;
@@ -59,7 +59,7 @@ export function useWorkspaceWatcher(workspaceId: string | undefined): void {
           );
           connect();
         }, reconnectDelay.current);
-      };
+      });
     }
 
     connect();

@@ -261,11 +261,11 @@ class TestShareSchemas:
 
     def test_create_share_response(self):
         resp = CreateShareResponse(
-            token="tok123",  # noqa: S106  # fixture
+            token="tok123",  # fixture
             url="http://localhost/share/tok123",
             expires_at="2026-06-07T00:00:00Z",
         )
-        assert resp.token == "tok123"  # noqa: S105  # fixture
+        assert resp.token == "tok123"  # fixture
         assert "/share/" in resp.url
 
     def test_shared_thread_defaults(self):

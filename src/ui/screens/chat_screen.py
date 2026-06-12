@@ -244,7 +244,7 @@ class ChatScreen(SlashCommandsMixin, Screen[None]):
                     classes="msg-system",
                 )
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             self.append_line(f"[red]{t('tui.rewind.error', error=exc)}[/red]")
 
     async def action_new_session(self) -> None:

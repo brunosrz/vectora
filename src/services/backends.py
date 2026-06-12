@@ -188,7 +188,7 @@ def _build_index(embedding_model: str | None) -> Any:
         # Instância CohereEmbeddings com o SDK oficial langchain-cohere.
         # NOTE: NÃO usar SecretStr — a lib chama str() internamente, resultando
         # em "**********" como API key. Passar a string diretamente.
-        # ty: ignore: CohereEmbeddings stubs exigem client/async_client que são
+        # NOTE: CohereEmbeddings stubs exigem client/async_client que são
         # opcionais em runtime. Mesmo padrão de src/services/background.py.
         _embeddings = CohereEmbeddings(  # ty: ignore[missing-argument]
             cohere_api_key=_key,  # ty: ignore[invalid-argument-type]

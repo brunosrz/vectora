@@ -205,6 +205,11 @@ def reset_kv() -> None:
     _kv = None
 
 
+#: Mantém referências fortes às tasks de publish disparadas em background; sem
+#: isso o GC pode coletar a task antes de ela completar (RUF006).
+_background_tasks: set[asyncio.Task] = set()
+
+
 def publish_soon(channel: str, payload: str) -> None:
     """Publica sem bloquear, a partir de código síncrono.
 
@@ -216,4 +221,6 @@ def publish_soon(channel: str, payload: str) -> None:
         loop = asyncio.get_running_loop()
     except RuntimeError:
         return
-    loop.create_task(get_kv().publish(channel, payload))
+    task = loop.create_task(get_kv().publish(channel, payload))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)

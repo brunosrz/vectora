@@ -284,7 +284,7 @@ def _agents_md_paths() -> list[str] | None:
     global_agents_md = Path.home() / ".vectora" / "AGENTS.md"
     if global_agents_md.is_file():
         paths.append(str(global_agents_md))
-    return paths if paths else None
+    return paths or None
 
 
 async def _build_graph_async() -> Any:
@@ -480,7 +480,7 @@ async def coder_compensate(workspace_id: str | None = None) -> str | None:
         if git_exe is None:
             return None
 
-        result = subprocess.run(  # noqa: S603  # nosec B603
+        result = subprocess.run(  # noqa: S603, ASYNC221  # nosec B603
             [
                 git_exe,
                 "-C",
@@ -492,6 +492,7 @@ async def coder_compensate(workspace_id: str | None = None) -> str | None:
             ],
             capture_output=True,
             timeout=30,
+            check=False,
         )
         output = result.stdout.decode("utf-8", errors="replace").strip()
         if result.returncode == 0:

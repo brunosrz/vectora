@@ -25,7 +25,6 @@ def _isolado(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(lic, "CONFIG_PATH", tmp_path / "config.toml")
     for var in ("VECTORA_TOKEN", "VECTORA_LICENSE_BYPASS", "VECTORA_LICENSE_URL"):
         monkeypatch.delenv(var, raising=False)
-    yield
 
 
 class _FakeResponse:
@@ -55,10 +54,10 @@ def _patch_http(
     class _FakeClient:
         def __init__(self, *args: Any, **kwargs: Any) -> None: ...
 
-        async def __aenter__(self) -> "_FakeClient":
+        async def __aenter__(self) -> _FakeClient:
             return self
 
-        async def __aexit__(self, *exc: Any) -> None: ...
+        async def __aexit__(self, *exc: object) -> None: ...
 
         async def post(self, url: str, json: dict | None = None, **kw: Any) -> Any:
             calls.append((url, json or {}))

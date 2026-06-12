@@ -614,6 +614,9 @@ export function ChatInterface({
         // Badge de título: (1) quando aba oculta
         if (document.visibilityState === "hidden" && assistantContent) {
           document.title = "(1) Vectora";
+          // restoreTitle referencia a si mesmo para remover o próprio listener;
+          // manter no escopo do handler de conclusão é intencional.
+          // eslint-disable-next-line unicorn/consistent-function-scoping
           const restoreTitle = () => {
             document.title = "Vectora";
             document.removeEventListener("visibilitychange", restoreTitle);
@@ -979,6 +982,7 @@ export function ChatInterface({
     resolveAtMentions,
     setMessages,
     inputLocked,
+    contextFull,
   ]);
 
   const handleStop = useCallback(async () => {

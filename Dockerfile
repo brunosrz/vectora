@@ -1,5 +1,5 @@
 # ── Stage 0: Build Vite SPA ────────────────────────────────────────────────
-FROM node:22-alpine AS chat-builder
+FROM node:24-alpine AS chat-builder
 
 WORKDIR /build/chat
 

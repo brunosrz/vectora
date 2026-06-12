@@ -248,13 +248,12 @@ def _build_lancedb_vs(
         warnings.simplefilter("ignore", DeprecationWarning)
         from langchain_community.vectorstores import LanceDB
 
-    vs = LanceDB(
+    return LanceDB(
         uri=db_path,
         embedding=embeddings,
         table_name=collection,
         mode="append",  # preserva docs existentes
     )
-    return vs
 
 
 def _build_qdrant_vs(
@@ -279,7 +278,7 @@ def _build_qdrant_vs(
 
     sparse_embeddings = _build_sparse_embeddings()
 
-    vs = QdrantVectorStore(
+    return QdrantVectorStore(
         client=client,
         collection_name=collection,
         embedding=embeddings,
@@ -288,7 +287,6 @@ def _build_qdrant_vs(
         else RetrievalMode.DENSE,
         sparse_embedding=sparse_embeddings,
     )
-    return vs
 
 
 def _build_sparse_embeddings() -> Any:

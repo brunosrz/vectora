@@ -30,7 +30,7 @@ def _user_initials(user_id: str) -> str:
     """Extrai iniciais do user_id para exibição compacta na status bar."""
     if not user_id or user_id == "local":
         return "local"
-    name_part = user_id.split("@")[0]
+    name_part = user_id.split("@", maxsplit=1)[0]
     parts = name_part.replace(".", " ").replace("_", " ").split()
     if len(parts) >= 2:
         return (parts[0][0] + parts[-1][0]).upper()
@@ -40,8 +40,8 @@ def _user_initials(user_id: str) -> str:
 def _current_branch(cwd: Path) -> str:
     """Lê o branch git atual; string vazia fora de um repo ou sem git."""
     try:
-        result = subprocess.run(  # noqa: S603 # nosec B603 B607
-            ["git", "branch", "--show-current"],
+        result = subprocess.run(  # nosec B603 B607
+            ["git", "branch", "--show-current"],  # noqa: S607
             capture_output=True,
             text=True,
             check=False,
@@ -49,7 +49,7 @@ def _current_branch(cwd: Path) -> str:
             timeout=2,
         )
         return result.stdout.strip()
-    except Exception:  # noqa: BLE001
+    except Exception:
         return ""
 
 
@@ -116,7 +116,7 @@ class CommandBar(Widget):
         user_initials = _user_initials(self._user_id)
 
         with Horizontal():
-            yield Static(f"◈ [bold #60a5fa]Vectora[/bold #60a5fa]", id="chip-logo")
+            yield Static("◈ [bold #60a5fa]Vectora[/bold #60a5fa]", id="chip-logo")
             yield Static(f"[dim]{user_initials}[/dim]", id="chip-user")
             if branch:
                 yield Button(f"🌿 {branch}", id="chip-branch", variant="default")

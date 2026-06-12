@@ -15,8 +15,8 @@ import { join, extname } from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
-const __dir = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dir, "..");
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(scriptDir, "..");
 
 // ---------------------------------------------------------------------------
 // 1. Ler CSV de strings e extrair chaves definidas
@@ -126,7 +126,7 @@ if (missing.length > 0) {
   console.log(
     `\n🔴  MISSING (${missing.length}) — usadas no código mas ausentes no CSV:\n`,
   );
-  for (const key of missing.sort()) {
+  for (const key of missing.toSorted()) {
     const file = usedInFiles.get(key) ?? "?";
     console.log(`   ✗  ${key.padEnd(50)}  ${file}`);
   }
@@ -136,7 +136,7 @@ if (unused.length > 0) {
   console.log(
     `\n🟡  UNUSED (${unused.length}) — no CSV mas não usadas no código:\n`,
   );
-  for (const key of unused.sort()) {
+  for (const key of unused.toSorted()) {
     console.log(`   ~  ${key}`);
   }
 }

@@ -100,7 +100,7 @@ class HITLModal(ModalScreen[str]):
             pretty = json.dumps(
                 json.loads(self._args_json), indent=2, ensure_ascii=False
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pretty = self._args_json
         pretty_truncated = pretty[:800] + ("…" if len(pretty) > 800 else "")
 

@@ -1,210 +1,69 @@
-# Deployment and GitHub Actions
+# Deployment & GitHub Actions
 
-This document describes how to configure and use the Vectora CI/CD pipeline.
+Pipeline definido em [`workflows/runner.yml`](workflows/runner.yml). O setup de
+Python/uv é centralizado na composite action
+[`actions/setup-uv`](actions/setup-uv/action.yml).
 
-## Required Secrets
+## Visão geral do pipeline
 
-All secrets live in the **GitHub Environment "Production"** (`Settings → Environments → Production`).
-Every job in `runner.yml` declares `environment: Production` — without this, secrets are invisible to the job.
+Todo push/PR roda, em ordem:
 
-### Infrastructure Secrets (Docker / VPS)
+1. **Lint & Format** — `ruff check src tests` + `ruff format --check`.
+2. **Security** — `bandit` + `pip-audit` (best-effort, não bloqueia).
+3. **Build Verification** — `compileall src` + build da SPA `chat` (Vite).
+4. **Unit / Stress Tests** — `pytest` com coverage (Codecov).
+5. **Integration + E2E** — só em `master` e tags `v*` (precisam de chaves reais).
+6. **Docker Build & Push** — imagem para `ghcr.io/<repo>`.
+7. **Release Native** — só em tags `v*`: Nuitka onefile + instaladores Electron
+   (Win/macOS/Linux) via matrix, publicados nas releases privadas.
 
-| Secret            | Description                                                                                                                                                                                           |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GHCR_TOKEN`      | Personal Access Token (classic) with `write:packages` + `read:packages`. Create at github.com/settings/tokens. Required because `GITHUB_TOKEN` returns 403 on personal accounts when pushing to GHCR. |
-| `VPS_SSH_KEY`     | SSH private key to connect to the VPS (RSA or Ed25519).                                                                                                                                               |
-| `VPS_HOST`        | Full VPS hostname. Example: `srv1640150.hstgr.cloud`                                                                                                                                                  |
-| `VPS_USER`        | SSH user. Example: `root`                                                                                                                                                                             |
-| `VPS_PORT`        | SSH port. Example: `22` (optional — defaults to 22)                                                                                                                                                   |
-| `VPS_DEPLOY_PATH` | Path on the VPS where `docker-compose.yml` will be copied. Example: `docker/vectora`                                                                                                                  |
+> Distribuição: a imagem Docker + o [`docker-compose.yml`](../docker-compose.yml)
+> da raiz são o caminho self-hosted; os instaladores nativos (desktop) vão para
+> o repositório de releases privado consumido pelo update-server.
 
-### API Secrets (for tests and runtime)
+### Quando a imagem Docker é publicada
 
-| Secret               | Description                                 |
-| -------------------- | ------------------------------------------- |
-| `GOOGLE_API_KEY`     | Google Gemini API key for tests and LLM     |
-| `COHERE_API_KEY`     | Cohere API key for embeddings and reranking |
-| `TAVILY_API_KEY`     | Tavily API key for web search               |
-| `LANGSMITH_API_KEY`  | LangSmith API key for tracing (optional)    |
-| `LANGSMITH_ENDPOINT` | LangSmith endpoint (optional)               |
-| `LANGSMITH_PROJECT`  | LangSmith project name (optional)           |
-| `LANGSMITH_TRACING`  | `true` or `false` (optional)                |
-| `LLM_PROVIDER`       | Default provider for tests: `google-genai`  |
-| `LOG_LEVEL`          | Log level: `INFO`                           |
-
-> **Note:** These keys are **never** embedded in the PyPI wheel or the Docker image. The VPS must have a `.env` created manually (see section below).
-
-### Generate SSH Key for Deploy
+- **`push` em `master`** → tag `latest` + `sha-<commit>`.
+- **tag `v*`** → tag da versão + `sha-<commit>`.
+- **Pull Requests** → apenas build de verificação (sem push).
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/vectora-deploy -C "vectora-deploy"
-# Add the public key to the VPS:
-ssh-copy-id -i ~/.ssh/vectora-deploy.pub root@$VPS_HOST
-# Copy the private key content to the VPS_SSH_KEY secret:
-cat ~/.ssh/vectora-deploy
+docker compose up -d        # usa ghcr.io/brunosrz/vectora:latest
+# http://localhost:8080
 ```
 
----
+## Python 3.13 (não 3.14, por ora)
 
-## Configuring Secrets
+`PYTHON_VERSION: "3.13"` no workflow casa com o `requires-python` do projeto,
+com o `.python-version` da raiz e com a CPython que o `uv` resolve localmente.
+O Nuitka 4.1.x (usado no `release-native`) **só suporta oficialmente até 3.13**
+— 3.14 vira oficial no Nuitka 4.2. Subir antes disso quebra o build nativo.
 
-### Via CLI (gh)
+## Secrets necessários
+
+Configurados em **Settings → Secrets and variables → Actions**.
+
+| Secret                                                       | Usado em       | Descrição                                                     |
+| ------------------------------------------------------------ | -------------- | ------------------------------------------------------------- |
+| `GHCR_TOKEN`                                                 | docker-build   | PAT com `write:packages` (fallback: `GITHUB_TOKEN`).          |
+| `VECTORA_RELEASES_TOKEN`                                     | release-native | Token p/ publicar instaladores em `vectora-releases`.         |
+| `WIN_CERTIFICATE_BASE64` / `WIN_CERTIFICATE_PASSWORD`        | release-native | Assinatura Windows (opcional — sem isso, build não assinado). |
+| `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` / `APPLE_TEAM_ID` | release-native | Notarização macOS (opcional).                                 |
+| `GOOGLE_API_KEY` / `COHERE_API_KEY` / `TAVILY_API_KEY`       | tests          | Chaves para integration/e2e (opcionais nos unit).             |
+| `LLM_PROVIDER` / `LOG_LEVEL`                                 | tests          | Config dos testes (defaults: `google-genai` / `INFO`).        |
+
+## Rollback (self-hosted Docker)
 
 ```bash
-gh secret set GHCR_TOKEN --env Production
-gh secret set VPS_SSH_KEY --env Production --body-file ~/.ssh/vectora-deploy
-gh secret set VPS_HOST --env Production -b "srv1640150.hstgr.cloud"
-gh secret set VPS_USER --env Production -b "root"
-gh secret set VPS_DEPLOY_PATH --env Production -b "docker/vectora"
-gh secret set GOOGLE_API_KEY --env Production
-gh secret set COHERE_API_KEY --env Production
-gh secret set TAVILY_API_KEY --env Production
-```
-
-### Via GitHub Web
-
-1. Go to: **Settings → Environments → Production → Add secret**
-2. Add each secret with its exact name and value
-
----
-
-## CI/CD Pipeline
-
-### Normal Flow (without `[deploy]`)
-
-Any push to any branch runs:
-
-1. **Setup** — installs dependencies via `uv sync`
-2. **Lint** — `ruff check`
-3. **Build** — `python -m compileall vectora`
-4. **Unit Tests** — `pytest tests/unit/` with coverage upload to Codecov
-5. **Stress Tests** — `pytest tests/stress/`
-6. **Integration Tests** — `pytest tests/integration/` (continues on error if no real keys)
-7. **E2E Tests** — `pytest tests/e2e/` (always passes — `|| true`)
-8. **Security** — `safety check`
-
-### Automatic Deploy (with `[deploy]`)
-
-When the commit title contains `[deploy]`, additional jobs run after the tests:
-
-```bash
-git commit -m "feat: new feature [deploy]"
-git push
-```
-
-Full pipeline:
-
-1. All test jobs above
-2. **Docker Build & Push** — builds image and pushes to `ghcr.io/brunosrz/vectora:latest`
-3. **Deploy to VPS** — copies `docker-compose.yml` via SCP + SSH to update the container
-4. **Publish to PyPI** — publishes `vectora-agent` to PyPI via Trusted Publishing (OIDC)
-
----
-
-## PyPI — Trusted Publishing (one-time setup)
-
-The pipeline uses **Trusted Publishing** (no stored token or password). Requires one-time configuration:
-
-1. Go to: [pypi.org/manage/account/publishing/](https://pypi.org/manage/account/publishing/)
-2. Click **"Add a new pending publisher"**
-3. Fill in:
-   - **PyPI Project Name:** `vectora-agent`
-   - **Owner:** `brunosrz`
-   - **Repository name:** `vectora`
-   - **Workflow name:** `runner.yml`
-   - **Environment name:** `Production`
-
-After this setup, any push with `[deploy]` publishes automatically to PyPI without additional tokens.
-
-> **PyPI name:** `vectora-agent` (the name `vectora` is already taken on PyPI by another project).
-> The package imports normally as `import vectora` and the CLIs remain `vectora`, `vectora-mcp`.
-
----
-
-## VPS Structure
-
-The deploy copies `docker-compose.yml` to `/$VPS_DEPLOY_PATH/` and runs `docker compose up`.
-
-Expected structure on the VPS after the first deploy:
-
-```
-/docker/vectora/          ← VPS_DEPLOY_PATH
-├── docker-compose.yml    ← copied by the pipeline via SCP
-└── .env                  ← created MANUALLY (never by the pipeline)
-```
-
-### Create `.env` on the VPS (once, manually)
-
-```bash
-ssh root@$VPS_HOST
-cat > /docker/vectora/.env << 'EOF'
-GOOGLE_API_KEY=your_key_here
-COHERE_API_KEY=your_key_here
-TAVILY_API_KEY=your_key_here
-LOG_LEVEL=INFO
-MCP_TRANSPORT=sse
-MCP_PORT=8000
-EOF
-```
-
-> These keys never pass through GitHub Actions — only you and the container know them.
-
----
-
-## Post-Deploy Verification
-
-```bash
-# View container logs
-ssh root@$VPS_HOST "docker logs vectora-vectora-1 --tail 50"
-
-# Check running containers
-ssh root@$VPS_HOST "docker compose -f /docker/vectora/docker-compose.yml ps"
-
-# Manual health check
-ssh root@$VPS_HOST "docker exec vectora-vectora-1 python -c 'import vectora; print(\"OK\")'"
-```
-
----
-
-## Manual Rollback
-
-```bash
-ssh root@$VPS_HOST << 'EOF'
-cd /docker/vectora
-docker compose down
-docker pull ghcr.io/brunosrz/vectora:sha-<previous-commit>
-# Edit docker-compose.yml to use the specific tag
+docker pull ghcr.io/brunosrz/vectora:sha-<commit-anterior>
+# Aponte o docker-compose.yml para a tag específica e suba de novo.
 docker compose up -d
-EOF
 ```
 
-To list available tags: `docker image ls ghcr.io/brunosrz/vectora`
+Lista de tags: `docker image ls ghcr.io/brunosrz/vectora`.
 
 ---
 
-## Troubleshooting
-
-### Docker push returns 403
-
-- Confirm `GHCR_TOKEN` is in the "Production" environment (capital P)
-- The `docker-build` job must have `environment: Production`
-- `GITHUB_TOKEN` **does not work** for push on personal accounts — always use `GHCR_TOKEN`
-
-### SSH deploy fails with "Could not resolve hostname"
-
-- Confirm `VPS_HOST` contains the full hostname: `srv1640150.hstgr.cloud`
-- Must not contain `https://` or `/` — only the bare hostname
-
-### Deploy fails with "No such file or directory"
-
-- `VPS_DEPLOY_PATH` must be a relative path without a leading `/`. Example: `docker/vectora`
-- The pipeline adds `/` automatically when creating the directory (`mkdir -p /$DEPLOY_PATH`)
-
-### PyPI returns "user not allowed"
-
-- Trusted Publishing has not been configured on pypi.org yet (see section above)
-- Confirm the project name on PyPI is exactly `vectora-agent`
-
----
-
-**Last updated:** 2026-05-20
+**Removido nesta revisão:** jobs de deploy via SSH/VPS, publicação no PyPI e no
+NPM. A distribuição agora é **imagem Docker (GHCR) + instaladores nativos**.
+Atualizações do desktop são geridas pelo [`update-server`](../update-server/).

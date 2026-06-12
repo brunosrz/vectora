@@ -1,18 +1,19 @@
 """Tests — Per-User Memory isolation.
 
 Verifica:
-- _user_id_from_config prioriza user:<id> quando há user_id no configurable
+- _user_id_from_config retorna o user_id cru quando há user_id no configurable
+  (o prefixo de namespace vem de _memory_namespace, que envolve em
+  ("user", <id>, "memories"))
 - fallback para workspace_<id> quando não há user_id mas há workspace
 - fallback para session_<thread_id> como último recurso
+- "local" quando não há nenhum identificador (config None / configurable vazio)
 - endpoints REST existem e têm assinaturas corretas
-- namespace user: é isolado de session: e workspace:
+- ids distintos (user/workspace/session) não colidem
 """
 
 from __future__ import annotations
 
 from typing import Any
-
-import pytest
 
 # ---------------------------------------------------------------------------
 # N1 — _user_id_from_config prioridade
@@ -27,7 +28,7 @@ class TestUserIdFromConfig:
 
         config: Any = {"configurable": {"user_id": "abc123", "thread_id": "t1"}}
         result = _user_id_from_config(config)
-        assert result == "user:abc123"
+        assert result == "abc123"
 
     def test_returns_workspace_namespace_when_no_user_id(self):
         from src.tools.memory import _user_id_from_config
@@ -61,7 +62,7 @@ class TestUserIdFromConfig:
             }
         }
         result = _user_id_from_config(config)
-        assert result == "user:user_abc"
+        assert result == "user_abc"
 
     def test_returns_session_namespace_when_only_thread_id(self):
         from src.tools.memory import _user_id_from_config
@@ -74,22 +75,22 @@ class TestUserIdFromConfig:
         from src.tools.memory import _user_id_from_config
 
         result = _user_id_from_config(None)
-        assert result == "default_session"
+        assert result == "local"
 
     def test_returns_default_when_configurable_is_empty(self):
         from src.tools.memory import _user_id_from_config
 
         result = _user_id_from_config({"configurable": {}})
-        assert result == "default_session"
+        assert result == "local"
 
     def test_user_namespace_format(self):
-        """Namespace user: usa ':' como separador para distinguir de workspace_ e session_."""
-        from src.tools.memory import _user_id_from_config
+        """Com user_id, o id retornado é o valor cru (sem prefixo); o prefixo
+        de namespace ("user", <id>, "memories") vem de _memory_namespace."""
+        from src.tools.memory import _memory_namespace, _user_id_from_config
 
         config: Any = {"configurable": {"user_id": "user-99"}}
-        ns = _user_id_from_config(config)
-        assert ns.startswith("user:")
-        assert "user-99" in ns
+        assert _user_id_from_config(config) == "user-99"
+        assert _memory_namespace(config) == ("user", "user-99", "memories")
 
 
 # ---------------------------------------------------------------------------

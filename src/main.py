@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import logging
 import os
 import socket
@@ -856,7 +857,7 @@ async def _storage_test(console: Console, dsn: str) -> None:
             conn = await asyncpg.connect(normalized)
             await conn.execute("SELECT 1")
             await conn.close()
-        elif dsn.startswith("https://") or dsn.startswith("http://"):
+        elif dsn.startswith(("https://", "http://")):
             # Qdrant
             from qdrant_client import QdrantClient
 
@@ -1113,10 +1114,8 @@ async def _storage_data_migrate(
     )
 
     _s: Any = None
-    try:
+    with contextlib.suppress(Exception):
         from src.settings import settings as _s
-    except Exception:
-        pass
 
     dry_run = False  # futuro: flag --dry-run via args
 

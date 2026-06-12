@@ -232,8 +232,8 @@ function SessionPage() {
         queryClient.setQueryData<{ threads: VectoraThread[] }>(
           threadsQueryKey,
           (old) => {
-            const threads = old?.threads ?? [];
-            if (threads.some((th) => th.id === id)) return old;
+            const existing = old?.threads ?? [];
+            if (existing.some((th) => th.id === id)) return old;
             const now = new Date().toISOString();
             const optimistic: VectoraThread = {
               id,
@@ -242,7 +242,7 @@ function SessionPage() {
               title,
               workspace_id: useWorkspacesStore.getState().active_id ?? "",
             };
-            return { threads: [optimistic, ...threads] };
+            return { threads: [optimistic, ...existing] };
           },
         );
         return;

@@ -662,7 +662,7 @@ async def test_storage_connection(request: Request) -> dict:
     body = await request.json()
     backend = body.get("backend", "sqlite")
 
-    async def _attempt() -> dict:
+    async def _attempt() -> dict:  # noqa: PLR0911
         t0 = time.monotonic()
         try:
             if backend == "postgres":
@@ -724,7 +724,7 @@ async def test_storage_connection(request: Request) -> dict:
         import subprocess  # nosec B404
 
         try:
-            subprocess.Popen(  # noqa: S603  # nosec B603 — comando configurado pelo operador no Setup Wizard
+            subprocess.Popen(  # noqa: S603, ASYNC220  # nosec B603 — comando configurado pelo operador no Setup Wizard
                 shlex.split(body["start_command"]),
                 start_new_session=True,
                 stdout=subprocess.DEVNULL,

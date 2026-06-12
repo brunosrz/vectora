@@ -26,14 +26,14 @@ def test_session_namespace_fallback_no_workspace_id():
 
 
 def test_default_session_when_config_none():
-    """Config None → default_session."""
-    assert _user_id_from_config(None) == "default_session"
+    """Config None → "local"."""
+    assert _user_id_from_config(None) == "local"
 
 
 def test_default_session_when_no_thread_id_or_workspace():
-    """Sem thread_id nem workspace_id → default_session."""
+    """Sem thread_id nem workspace_id → "local"."""
     config: Any = {"configurable": {}}
-    assert _user_id_from_config(config) == "default_session"
+    assert _user_id_from_config(config) == "local"
 
 
 def test_workspace_takes_priority_over_thread_id():

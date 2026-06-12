@@ -132,12 +132,12 @@ def load_llm() -> BaseLanguageModel:
             # api_key aceita str mas stubs exigem SecretStr — ambos são supprimidos.
             model = cast(
                 "BaseLanguageModel",
-                ChatAnthropic(  # ty: ignore[missing-argument,unknown-argument]
+                ChatAnthropic(  # ty: ignore[missing-argument]
                     model=os.getenv("ANTHROPIC_MODEL")  # ty: ignore[unknown-argument]
                     or _active_model("anthropic", "claude-opus-4-1"),
                     api_key=get_env("ANTHROPIC_API_KEY"),  # ty: ignore[invalid-argument-type]
                     temperature=temperature,
-                    betas=betas,  # ty: ignore[unknown-argument]
+                    betas=betas,
                 ),
             )
 
