@@ -16,6 +16,13 @@ productName: Vectora
 copyright: Copyright © 2026 Vectora Company
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
+# Esquema de deep-link vectora:// — antes vivia em package.json["build"], que o
+# electron-builder IGNORA quando existe este .yml (config único). Movido p/ cá.
+protocols:
+  - name: Vectora
+    schemes:
+      - vectora
+
 directories:
   output: dist-electron
   buildResources: build-resources
@@ -50,9 +57,11 @@ win:
     - target: msi
       arch: [x64]
   icon: ../chat/public/vectora.ico
-  signingHashAlgorithms: [sha256]
-  # CSC_LINK / CSC_KEY_PASSWORD vem do env do CI.
-  certificateSubjectName: "Vectora Company"
+  # Sem opções de assinatura fixas: o electron-builder assina automaticamente
+  # quando CSC_LINK + CSC_KEY_PASSWORD estão no env (CI, cert EV em base64) e
+  # gera build NÃO-assinado quando não estão (dev local). Fixar
+  # certificateSubjectName forçava procurar o cert no Windows store e quebrava
+  # o build local ("Cannot find certificate Vectora Company").
 
 mac:
   target:
@@ -68,7 +77,8 @@ mac:
 
 dmg:
   title: ${productName} ${version}
-  background: build-resources/dmg-background.png
+  # background omitido de propósito — usa o fundo padrão do electron-builder
+  # (não há dmg-background.png em build-resources; sem isso o build falharia).
   iconSize: 96
   contents:
     - x: 130
@@ -92,9 +102,12 @@ linux:
       arch: [x64]
   icon: ../chat/public/favicon-600x600.png
   category: Development
+  # electron-builder 26: as chaves do .desktop ficam sob `desktop.entry`
+  # (antes eram soltas em `desktop`).
   desktop:
-    StartupWMClass: vectora
-    Categories: Development;IDE;
+    entry:
+      StartupWMClass: vectora
+      Categories: Development;IDE;
   synopsis: Vectora — AI-first development assistant
   description: Self-hosted AI assistant with RAG, terminals, code editing and workflows.
   vendor: Vectora Company
