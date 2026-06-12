@@ -1,6 +1,11 @@
 allowBuilds:
   esbuild: true
-  sharp: set this to true or false
+  # sharp é puxado transitivamente (não importado em chat/src) e só tem build
+  # script para compilar o binário nativo de imagem — o chat não precisa dele.
+  # `false` = decisão explícita de NÃO rodar o build (limpa o
+  # ERR_PNPM_IGNORED_BUILDS que quebrava o `pnpm install` no CI). Antes o valor
+  # era o placeholder literal "set this to true or false", inválido para o pnpm.
+  sharp: false
 
 # Deprecação upstream aceita conscientemente: glob@11.1.0 é puxado
 # transitivamente por workbox-build@7.4.1 (via vite-plugin-pwa) só em
