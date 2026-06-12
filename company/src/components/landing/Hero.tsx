@@ -4,7 +4,7 @@ import Logo from "#/components/shared/Logo";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden px-4 pb-10 pt-12 sm:px-6 sm:pb-12 sm:pt-16 lg:px-8">
+    <section className="relative overflow-hidden px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8">
       {/* Background gradient mesh */}
       <div
         aria-hidden
@@ -68,14 +68,14 @@ export default function Hero() {
         </div>
 
         {/* GIF hero */}
-        <div className="mx-auto mt-10 max-w-[860px] sm:mt-12">
+        <div className="mx-auto mt-8 max-w-2xl sm:mt-10">
           <div
             className="overflow-hidden rounded-2xl border border-border glow-brand-lg"
             style={{ aspectRatio: "16/10" }}
           >
             <img
               src="/gifs/showcase-chat.gif"
-              alt="Vectora AI agent in action"
+              alt={m.hero_gif_alt()}
               loading="lazy"
               decoding="async"
               className="h-full w-full object-cover gif-skeleton"

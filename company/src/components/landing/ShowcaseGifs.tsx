@@ -41,28 +41,28 @@ export default function ShowcaseGifs() {
   const cards: ShowcaseCardProps[] = [
     {
       gif: "/gifs/showcase-chat.gif",
-      alt: "Vectora contextual conversation",
+      alt: m.showcase_chat_alt(),
       title: m.showcase_chat_title(),
       desc: m.showcase_chat_desc(),
       index: 0,
     },
     {
       gif: "/gifs/showcase-rag.gif",
-      alt: "Vectora RAG semantic search",
+      alt: m.showcase_rag_alt(),
       title: m.showcase_rag_title(),
       desc: m.showcase_rag_desc(),
       index: 1,
     },
     {
       gif: "/gifs/showcase-code.gif",
-      alt: "Vectora coding agent",
+      alt: m.showcase_code_alt(),
       title: m.showcase_code_title(),
       desc: m.showcase_code_desc(),
       index: 2,
     },
     {
       gif: "/gifs/showcase-plan.gif",
-      alt: "Vectora structured reasoning",
+      alt: m.showcase_plan_alt(),
       title: m.showcase_plan_title(),
       desc: m.showcase_plan_desc(),
       index: 3,
@@ -70,9 +70,9 @@ export default function ShowcaseGifs() {
   ];
 
   return (
-    <section className="px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-      {/* 80% do max-w-6xl original (72rem → 58rem): cards ~20% menores */}
-      <div className="mx-auto max-w-[58rem]">
+    <section className="px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      {/* max-w-3xl (48rem): cards compactos — eram gigantes em max-w-6xl */}
+      <div className="mx-auto max-w-3xl">
         <h2 className="mb-8 text-center text-2xl font-semibold text-foreground sm:text-3xl">
           {m.showcase_title()}
         </h2>

@@ -319,12 +319,14 @@ export default function RagFlowSection() {
             </h2>
             <ul className="space-y-2.5">
               {[
-                "PDF, DOCX, TXT, Markdown, código-fonte, planilhas",
+                "PDF, DOCX, TXT, Markdown e código-fonte",
                 "Embeddings via Cohere (assimétrico: search_document / search_query)",
-                "Hybrid RAG: dense (Cohere) + sparse (BM25) com RRF merge",
-                "Multi-query: LLM gera N variantes da query para maior recall",
-                "HyDE: documento hipotético quando score inicial é baixo",
-                "Reranker Cohere para precisão máxima",
+                "Busca híbrida: densa (Cohere) + esparsa (BM25) com fusão RRF",
+                "Multi-query: o LLM gera variantes da pergunta para mais recall",
+                "HyDE: documento hipotético quando o score inicial é baixo",
+                "Reranker Cohere para ordenar por relevância antes de responder",
+                "Indexação em segundo plano: o worker de embeddings processa sem travar o chat",
+                "Curador automático resume a base indexada no MANIFEST do workspace",
                 "Citação da fonte em cada resposta",
               ].map((item, i) => (
                 <li

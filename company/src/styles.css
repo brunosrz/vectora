@@ -235,11 +235,11 @@ body {
 
 /* ── Brand glow ──────────────────────────────────────────────── */
 .glow-brand {
-  box-shadow: 0 0 40px -8px color-mix(in srgb, var(--primary) 40%, transparent);
+  box-shadow: 0 0 16px -6px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .glow-brand-lg {
-  box-shadow: 0 0 80px -12px color-mix(in srgb, var(--primary) 50%, transparent);
+  box-shadow: 0 0 24px -8px color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────── */
