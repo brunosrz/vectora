@@ -18,7 +18,10 @@ const config = defineConfig({
     paraglideVitePlugin({
       project: "./project.inlang",
       outdir: "./src/paraglide",
-      strategy: ["url", "baseLocale"],
+      // cookie ANTES de baseLocale: a escolha do LocaleSwitcher persiste entre
+      // páginas e reloads (antes só url+baseLocale → trocar idioma "não pegava"
+      // ao navegar). url continua primeiro para links com prefixo (/en, /es…).
+      strategy: ["url", "cookie", "baseLocale"],
     }),
     nitro({
       preset: process.env.NITRO_PRESET ?? "node-server",

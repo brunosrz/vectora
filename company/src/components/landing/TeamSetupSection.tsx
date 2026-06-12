@@ -108,63 +108,56 @@ const COMPAT_ICONS = ["PostgreSQL", "Redis", "Docker"];
 export default function TeamSetupSection() {
   return (
     <section className="bg-background/50 px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-14 text-center">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 text-center">
           <h2 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
             {m.team_heading()}
           </h2>
         </div>
 
-        <div className="relative">
-          <div
-            className="absolute left-5 top-0 h-full w-px bg-card sm:left-6"
-            aria-hidden
-          />
-
-          <ol className="space-y-10">
-            {STEPS.map((step, i) => {
-              const Icon = step.icon;
-              const titleFn = m[step.titleKey] as (() => string) | undefined;
-              const descFn = m[step.descKey] as (() => string) | undefined;
-              return (
-                <li key={i} className="relative flex gap-5 sm:gap-6">
+        {/* Grid horizontal: 4 etapas lado a lado (1 col mobile, 2 tablet, 4 desktop) */}
+        <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {STEPS.map((step, i) => {
+            const Icon = step.icon;
+            const titleFn = m[step.titleKey] as (() => string) | undefined;
+            const descFn = m[step.descKey] as (() => string) | undefined;
+            return (
+              <li
+                key={i}
+                className="flex flex-col rounded-xl border border-border bg-card/30 p-5"
+              >
+                <div className="mb-3 flex items-center justify-between">
                   <div
-                    className={`relative z-10 flex h-10 w-10 shrink-0 sm:h-12 sm:w-12 items-center justify-center rounded-full border ${step.border} ${step.bg}`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${step.border} ${step.bg}`}
                   >
-                    <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${step.color}`} />
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-secondary text-[9px] font-bold text-foreground/90">
-                      {i + 1}
-                    </span>
+                    <Icon className={`h-5 w-5 ${step.color}`} />
                   </div>
-
-                  <div className="flex-1 pt-1.5">
-                    <p className="mb-1 font-semibold text-foreground">
-                      {titleFn?.()}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {descFn?.()}
-                    </p>
-                    {step.visual}
-                    {step.badges && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {step.badges.map((b) => (
-                          <span
-                            key={b}
-                            className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-xs text-muted-foreground"
-                          >
-                            {b}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  <span className="text-xs font-bold text-muted-foreground">
+                    {i + 1}/{STEPS.length}
+                  </span>
+                </div>
+                <p className="mb-1 font-semibold text-foreground">
+                  {titleFn?.()}
+                </p>
+                <p className="text-sm text-muted-foreground">{descFn?.()}</p>
+                {step.badges && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {step.badges.map((b) => (
+                      <span
+                        key={b}
+                        className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-xs text-muted-foreground"
+                      >
+                        {b}
+                      </span>
+                    ))}
                   </div>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
 
-        <div className="mt-14 rounded-xl border border-border bg-card/30 px-6 py-4 flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+        <div className="mt-10 rounded-xl border border-border bg-card/30 px-6 py-4 flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
           <div className="flex gap-2">
             {COMPAT_ICONS.map((ic) => (
               <span

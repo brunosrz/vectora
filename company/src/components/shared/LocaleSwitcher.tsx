@@ -1,4 +1,5 @@
 import { getLocale, locales, setLocale } from "#/paraglide/runtime";
+import { m } from "#/paraglide/messages";
 
 const LOCALE_LABELS: Record<string, string> = {
   pt: "PT",
@@ -19,7 +20,7 @@ export default function LocaleSwitcher() {
         value={current}
         onChange={(e) => setLocale(e.target.value as (typeof locales)[number])}
         className="h-8 cursor-pointer appearance-none rounded-lg border border-border bg-card px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-        aria-label="Select language"
+        aria-label={m.language_label()}
       >
         {locales.map((locale) => (
           <option key={locale} value={locale}>

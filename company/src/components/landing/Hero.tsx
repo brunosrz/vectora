@@ -68,9 +68,9 @@ export default function Hero() {
         </div>
 
         {/* GIF hero */}
-        <div className="mx-auto mt-8 max-w-2xl sm:mt-10">
+        <div className="mx-auto mt-8 max-w-xl sm:mt-10">
           <div
-            className="overflow-hidden rounded-2xl border border-border glow-brand-lg"
+            className="overflow-hidden rounded-2xl border border-border glow-brand"
             style={{ aspectRatio: "16/10" }}
           >
             <img

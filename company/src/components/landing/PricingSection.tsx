@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
 import { Check, Minus, ChevronDown } from "lucide-react";
@@ -85,12 +85,15 @@ function FeatureRow({ text, ok }: { text: () => string; ok: boolean }) {
 }
 
 export default function PricingSection() {
-  const defaultCurrency: Currency =
-    typeof navigator !== "undefined" && navigator.language.includes("pt")
-      ? "BRL"
-      : "USD";
-  const [currency, setCurrency] = useState<Currency>(defaultCurrency);
+  // Padrão USD para todos; só vira BRL após hidratar SE o navegador indicar
+  // Brasil (pt-BR). Iniciar fixo em "USD" evita hydration mismatch — o SSR
+  // não tem `navigator`, então o estado inicial precisa ser igual nos dois lados.
+  const [currency, setCurrency] = useState<Currency>("USD");
   const [showComparison, setShowComparison] = useState(false);
+
+  useEffect(() => {
+    if (navigator.language.toLowerCase().startsWith("pt")) setCurrency("BRL");
+  }, []);
 
   const handlePricing = () => track("pricing_viewed");
 
