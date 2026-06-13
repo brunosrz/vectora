@@ -10,6 +10,7 @@ exclude: |
     .*\.pdf$|
     .*\.lock$|
     package-lock\.json|
+    .*pnpm-lock\.yaml|
     yarn\.lock|
     coverage\..*|
     \.env.*|
@@ -119,7 +120,7 @@ repos:
     hooks:
       - id: bandit
         name: Bandit Security Scan
-        entry: uv run bandit -s B110,B101 -c pyproject.toml
+        entry: uv run --project vectora bandit -s B110,B101 -c vectora/pyproject.toml
         language: system
         types: [python]
 
@@ -132,7 +133,7 @@ repos:
     hooks:
       - id: ty
         name: Type Check — Python (ty)
-        entry: uv run ty check src tests
+        entry: uv run --project vectora ty check vectora/backend vectora/tests
         language: system
         types: [python]
         pass_filenames: false
@@ -145,9 +146,9 @@ repos:
     hooks:
       - id: oxlint
         name: JS/TS Lint (oxlint)
-        entry: pnpm --dir chat exec oxlint
+        entry: pnpm --dir vectora/frontend exec oxlint
         language: system
-        files: ^chat/.*\.(ts|tsx|js|jsx|mjs|cjs)$
+        files: ^vectora/frontend/.*\.(ts|tsx|js|jsx|mjs|cjs)$
         pass_filenames: false
 
   # ==========================================
@@ -159,9 +160,11 @@ repos:
     hooks:
       - id: tsc
         name: Type Check — TypeScript (tsc)
-        entry: pnpm --dir chat exec tsc --noEmit -p tsconfig.json
+        # `typecheck` gera o routeTree.gen.ts (TanStack Router, gitignored) antes
+        # do tsc --noEmit; tsc puro falharia sem o route tree.
+        entry: pnpm --dir vectora/frontend run typecheck
         language: system
-        files: ^chat/.*\.(ts|tsx)$
+        files: ^vectora/frontend/.*\.(ts|tsx)$
         pass_filenames: false
 
   # ==========================================

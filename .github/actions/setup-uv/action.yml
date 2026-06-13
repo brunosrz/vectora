@@ -16,6 +16,10 @@ inputs:
     description: "Se 'false', só prepara o uv sem rodar uv sync (jobs que não precisam de deps)."
     required: false
     default: "true"
+  working-directory:
+    description: "Diretório do projeto Python (onde está o pyproject.toml/uv.lock). No monorepo é 'vectora'."
+    required: false
+    default: "vectora"
 
 runs:
   using: composite
@@ -29,11 +33,12 @@ runs:
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        cache-dependency-glob: "${{ inputs.working-directory }}/uv.lock"
 
     - name: Sync dependencies
       if: ${{ inputs.sync == 'true' }}
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         if [ "${{ inputs.all-extras }}" = "true" ]; then
           uv sync --frozen --all-extras
