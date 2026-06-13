@@ -2339,6 +2339,11 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
                 asyncio.run_coroutine_threadsafe(queue.put(paths), loop)
 
     observer = Observer()
+    # daemon=True: se o cliente cair e o ``finally`` que faz observer.stop()
+    # não rodar (ex.: stream não-drenado em testes), a thread do watchdog não
+    # impede o shutdown do processo — caso contrário o interpretador trava no
+    # ``threading._shutdown()`` aguardando essa thread (travava a CI).
+    observer.daemon = True
     observer.schedule(_Handler(), cwd, recursive=True)
     observer.start()
 
