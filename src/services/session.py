@@ -40,11 +40,7 @@ def _generate_session_id() -> str:
     Exemplos: '042731', '000101', '999999'.
     Armazenado como string para preservar zeros à esquerda.
     """
-<<<<<<< HEAD:vectora/services/session.py
-    return f"{random.randint(0, 999_999):06d}"  # noqa: S311 — não é criptográfico, apenas ID de sessão
-=======
     return f"{random.randint(0, 999_999):06d}"  # noqa: S311  # nosec B311 — não é criptográfico, apenas ID de sessão legível
->>>>>>> dev:src/services/session.py
 
 
 class SessionService:

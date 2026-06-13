@@ -26,11 +26,7 @@ async def retrieval_node(state: State) -> dict:
     Extrai a query da última HumanMessage, busca no LanceDB e aplica rerank.
     Retorna dict vazio se não houver query ou se a busca não tiver resultados.
     """
-<<<<<<< HEAD:vectora/nodes/retrieval.py
-    from vectora.nodes.rag_subgraph import _call_vector_search_all, _extract_query
-=======
     from src.nodes.rag_subgraph import _call_vector_search_all, _extract_query
->>>>>>> dev:src/nodes/retrieval.py
 
     query = _extract_query(state)
     if not query:
@@ -48,11 +44,7 @@ async def retrieval_node(state: State) -> dict:
         session_id = state.get("session_metadata", {}).get("thread_id")
 
     try:
-<<<<<<< HEAD:vectora/nodes/retrieval.py
-        async with tracer.span("retrieval_node", "search", session_id=session_id) as s:
-=======
         async with tracer.span("retrieval_node", "search", session_id=session_id) as s:  # ty: ignore[invalid-argument-type]
->>>>>>> dev:src/nodes/retrieval.py
             docs = await _call_vector_search_all(query)
             if not docs:
                 logger.info("retrieval_node: sem resultados para '%s'", query[:60])

@@ -4,13 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vectora-agent"
-<<<<<<< HEAD
-version = "0.1.0rc4"
-description = "Vectora - Advanced AI Assistant with RAG and MCP capabilities"
-=======
 version = "0.1.0"
 description = "Vectora - Advanced AI Assistant"
->>>>>>> dev
 readme = "README.md"
 authors = [{name = "Bruno Soares", email = "bruno.soarxz@gmail.com"}]
 requires-python = ">=3.13"
@@ -20,11 +15,8 @@ classifiers = [
 ]
 
 dependencies = [
-<<<<<<< HEAD
-=======
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
->>>>>>> dev
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",
     "langchain>=1.3.1",
@@ -46,10 +38,7 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "langsmith>=0.8.5",
     "deepagents>=0.6.3",
-<<<<<<< HEAD
-=======
     "textual>=0.83",
->>>>>>> dev
     "dotfiles>=0.6.5",
     "ast-serialize>=0.3.0",
     "librt>=0.11.0",
@@ -101,11 +90,7 @@ dependencies = [
 ]
 
 [project.scripts]
-<<<<<<< HEAD
-vectora = "vectora.main:run"
-=======
 vectora = "src.main:run"
->>>>>>> dev
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

@@ -80,11 +80,7 @@ async def test_fresh_greeting(lifecycle_graph, lifecycle_config):
 @REQUIRES_GOOGLE
 async def test_orchestrator_routes_to_coder(lifecycle_graph, lifecycle_config):
     """Step 2: Pedido de listagem de arquivos → orchestrator roteia para coder."""
-<<<<<<< HEAD
-    from vectora.services.tracer import tracer
-=======
     from src.services.tracer import tracer
->>>>>>> dev
 
     response = await invoke_graph(
         lifecycle_graph,

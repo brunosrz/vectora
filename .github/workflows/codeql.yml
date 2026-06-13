@@ -19,6 +19,10 @@ on:
   schedule:
     - cron: "20 2 * * 3"
 
+env:
+  # Força todas as actions JS (checkout, codeql-action…) a Node 24, nunca Node 20.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})

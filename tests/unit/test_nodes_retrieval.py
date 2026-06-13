@@ -29,11 +29,7 @@ class TestRetrievalNode:
     @pytest.mark.asyncio
     async def test_no_results_returns_empty(self):
         with patch(
-<<<<<<< HEAD
-            "vectora.nodes.rag_subgraph._call_vector_search_all",
-=======
             "src.nodes.rag_subgraph._call_vector_search_all",
->>>>>>> dev
             new_callable=AsyncMock,
         ) as mock_vs:
             mock_vs.return_value = []
@@ -47,11 +43,7 @@ class TestRetrievalNode:
             Document(page_content="doc2", metadata={}, relevance_score=0.7),
         ]
         with patch(
-<<<<<<< HEAD
-            "vectora.nodes.rag_subgraph._call_vector_search_all",
-=======
             "src.nodes.rag_subgraph._call_vector_search_all",
->>>>>>> dev
             new_callable=AsyncMock,
         ) as mock_vs:
             with patch(

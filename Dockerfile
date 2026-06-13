@@ -76,12 +76,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 
 EXPOSE 8080
 
-<<<<<<< HEAD
-# Chama o entrypoint diretamente do venv (sem overhead do `uv run`)
-ENTRYPOINT ["vectora", "mcp-server"]
-=======
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
 ENTRYPOINT ["vectora", "server", "web"]
->>>>>>> dev

@@ -132,11 +132,7 @@ class TestGetServerStatus:
         assert data["server"] == "Vectora"
         assert data["status"] == "ready"
         assert "capabilities" in data
-<<<<<<< HEAD
-        assert data["tools_count"] == 14
-=======
         assert data["tools_count"] == 18
->>>>>>> dev
         assert data["resources_count"] == 4
 
     @pytest.mark.asyncio

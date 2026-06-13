@@ -8,17 +8,10 @@ from langchain_core.messages import SystemMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph.state import CompiledStateGraph
 
-<<<<<<< HEAD:vectora/testing/fixtures.py
-from vectora.agents.orchestrator import _ORCHESTRATOR_PROMPT as _DEFAULT_SYSTEM_PROMPT
-from vectora.context import Context
-from vectora.state import State
-from vectora.testing.mocks import MockLLM
-=======
 from src.agents.orchestrator import _ORCHESTRATOR_PROMPT as _DEFAULT_SYSTEM_PROMPT
 from src.context import Context
 from src.state import State
 from src.testing.mocks import MockLLM
->>>>>>> dev:src/testing/fixtures.py
 
 
 @pytest.fixture

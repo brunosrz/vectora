@@ -1,15 +1,5 @@
 name: vectora
 
-<<<<<<< HEAD
-# Vectora MCP Server — Multi-Agent Hub (SSE/HTTP)
-#
-# Uso local (sem Traefik):
-#   docker compose up -d
-#   A API SSE fica disponível em http://localhost:8000/sse
-#
-# Uso em VPS com Traefik:
-#   Defina VECTORA_DOMAIN no .env (ex: vectora.meudominio.com)
-=======
 # Vectora — Web Chat + API (FastAPI + Vite SPA) + Postgres + Redis + Qdrant
 #
 # Sobe o Vectora já em modo "Completo" (storage_mode=complete), com
@@ -23,7 +13,6 @@ name: vectora
 #
 # Uso em VPS com Traefik:
 #   Defina VECTORA_DOMAIN no .env (ex: chat.meudominio.com)
->>>>>>> dev
 #   Certifique-se que a rede "traefik-public" já existe no host
 #   docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
 
@@ -33,19 +22,6 @@ services:
     restart: unless-stopped
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-<<<<<<< HEAD
-      - COHERE_API_KEY=${COHERE_API_KEY}
-      - TAVILY_API_KEY=${TAVILY_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY:-}
-      - LANGSMITH_TRACING=${LANGSMITH_TRACING:-false}
-      - LANGSMITH_PROJECT=${LANGSMITH_PROJECT:-vectora}
-      - PYTHONUNBUFFERED=1
-      - MCP_TRANSPORT=sse
-      - MCP_HOST=0.0.0.0
-      - MCP_PORT=${MCP_PORT:-8000}
-=======
       - COHERE_API_KEY=${COHERE_API_KEY:-}
       - TAVILY_API_KEY=${TAVILY_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
@@ -62,7 +38,6 @@ services:
       - POSTGRES_DSN=${POSTGRES_DSN:-postgresql+asyncpg://vectora:vectora@postgres:5432/vectora}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
->>>>>>> dev
     volumes:
       - vectora-data:/root/.vectora
     ports:
@@ -131,12 +106,9 @@ services:
 volumes:
   vectora-data:
     driver: local
-<<<<<<< HEAD
-=======
   postgres-data:
     driver: local
   redis-data:
     driver: local
   qdrant-data:
     driver: local
->>>>>>> dev

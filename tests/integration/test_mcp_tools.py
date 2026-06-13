@@ -272,11 +272,7 @@ class TestMcpRagTools:
     @REQUIRES_COHERE
     async def test_embedding_tool_enqueues(self):
         """embedding_tool deve enfileirar documento (fire-and-forget)."""
-<<<<<<< HEAD
-        from vectora.mcp.server import embedding_tool
-=======
         from src.mcp.server import embedding_tool
->>>>>>> dev
 
         result = await embedding_tool(
             text="Texto de teste para embedding MCP",

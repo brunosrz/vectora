@@ -67,13 +67,7 @@ def load_vectoraignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
         if vectoraignore.is_file():
             try:
                 patterns = vectoraignore.read_text(encoding="utf-8", errors="ignore")
-<<<<<<< HEAD:vectora/services/ignore.py
-                return pathspec.PathSpec.from_lines(
-                    "gitwildmatch", patterns.splitlines()
-                )
-=======
                 return pathspec.PathSpec.from_lines("gitignore", patterns.splitlines())
->>>>>>> dev:src/services/ignore.py
             except Exception:
                 return None
     return None
@@ -111,11 +105,7 @@ def load_ignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
 
     if not all_lines:
         return None
-<<<<<<< HEAD:vectora/services/ignore.py
-    return pathspec.PathSpec.from_lines("gitwildmatch", all_lines)
-=======
     return pathspec.PathSpec.from_lines("gitignore", all_lines)
->>>>>>> dev:src/services/ignore.py
 
 
 def load_gitignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
@@ -136,13 +126,7 @@ def load_gitignore_spec(base_dir: Path) -> pathspec.PathSpec | None:
         if gitignore.is_file():
             try:
                 patterns = gitignore.read_text(encoding="utf-8", errors="ignore")
-<<<<<<< HEAD:vectora/services/ignore.py
-                return pathspec.PathSpec.from_lines(
-                    "gitwildmatch", patterns.splitlines()
-                )
-=======
                 return pathspec.PathSpec.from_lines("gitignore", patterns.splitlines())
->>>>>>> dev:src/services/ignore.py
             except Exception:
                 return None
     return None
@@ -194,8 +178,6 @@ def is_ignored(path: Path, base_dir: Path, spec: pathspec.PathSpec | None) -> bo
     return False
 
 
-<<<<<<< HEAD:vectora/services/ignore.py
-=======
 def walk_files(
     base_dir: Path,
     glob_pattern: str = "**/*",
@@ -268,7 +250,6 @@ def walk_files(
     return sorted(results), skipped
 
 
->>>>>>> dev:src/services/ignore.py
 def iter_files(
     base_dir: Path,
     glob_pattern: str = "**/*",
@@ -276,12 +257,8 @@ def iter_files(
 ) -> list[Path]:
     """Lista arquivos em ``base_dir`` respeitando .gitignore.
 
-<<<<<<< HEAD:vectora/services/ignore.py
-    Substitui ``Path.rglob()`` puro em contextos que precisam de filtragem.
-=======
     Wrapper de conveniência sobre ``walk_files`` para quem só precisa dos
     arquivos, sem o contador de ignorados nem diretórios.
->>>>>>> dev:src/services/ignore.py
 
     Args:
         base_dir: Diretório raiz da varredura.
@@ -292,18 +269,5 @@ def iter_files(
     Returns:
         Lista de Paths de arquivos que passaram em todos os filtros.
     """
-<<<<<<< HEAD:vectora/services/ignore.py
-    # Remove leading "**/" prefix so rglob receives a plain pattern (e.g. "*.md")
-    stripped = glob_pattern
-    while stripped.startswith("**/"):
-        stripped = stripped[3:]
-
-    return [
-        path
-        for path in sorted(base_dir.rglob(stripped))
-        if path.is_file() and not is_ignored(path, base_dir, spec)
-    ]
-=======
     files, _ = walk_files(base_dir, glob_pattern, spec)
     return files
->>>>>>> dev:src/services/ignore.py

@@ -7,11 +7,7 @@ import json
 import logging
 import time
 from datetime import UTC, datetime
-<<<<<<< HEAD:vectora/tools/rag.py
-from typing import Any, Literal
-=======
 from typing import Annotated, Any, Literal
->>>>>>> dev:src/tools/rag.py
 
 from langchain.tools import tool
 from langchain_core.documents import Document as LCDoc
@@ -44,22 +40,14 @@ def _parse_metadata(raw: object) -> dict[str, Any]:
     também dict já desserializado (defensivo) e devolve {} em qualquer falha.
     """
     if isinstance(raw, dict):
-<<<<<<< HEAD:vectora/tools/rag.py
-        return raw
-=======
         # type narrow: dict desserializado vindo do LanceDB
         return dict(raw)  # ty: ignore[no-matching-overload]
->>>>>>> dev:src/tools/rag.py
     if not isinstance(raw, str) or not raw:
         return {}
     try:
         parsed = json.loads(raw)
         return parsed if isinstance(parsed, dict) else {}
-<<<<<<< HEAD:vectora/tools/rag.py
-    except json.JSONDecodeError, ValueError:
-=======
     except (json.JSONDecodeError, ValueError):
->>>>>>> dev:src/tools/rag.py
         return {}
 
 
@@ -208,27 +196,11 @@ async def vector_search(
                 {"status": "failed", "error": "COHERE_API_KEY not configured"}
             )
 
-<<<<<<< HEAD:vectora/tools/rag.py
-        # NOTE: do NOT wrap in SecretStr here.
-        # langchain-core's get_from_dict_or_env calls str(SecretStr) → "**********",
-        # not the actual value, causing a 401 from Cohere.
-        embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
-            cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
-            model=settings.embedding_model,
-        )
-
-        # embed_query → input_type="search_query" (Cohere v3 assimétrico).
-        # Os documentos são indexados com embed_documents → "search_document"
-        # no background worker. Não trocar por embed_documents aqui.
-        query_vector = embeddings_model.embed_query(query)
-
-=======
         # Verificar existência da coleção ANTES de fazer embedding.
         # embed_query() é síncrono e usa tenacity com time.sleep() em retry,
         # o que bloqueia o event loop indefinidamente se a API Cohere falhar.
         # Ao checar o LanceDB primeiro, evitamos qualquer chamada à API para
         # coleções que não existem.
->>>>>>> dev:src/tools/rag.py
         db = await lancedb.connect_async(str(settings.lancedb_dir))
 
         try:
@@ -394,13 +366,8 @@ async def ingest_docs(
     """
     from pathlib import Path
 
-<<<<<<< HEAD:vectora/tools/rag.py
-    from vectora.services.ignore import is_ignored, load_ignore_spec
-    from vectora.services.security import is_safe_file_path
-=======
     from src.services.ignore import load_ignore_spec, walk_files
     from src.services.security import is_safe_file_path
->>>>>>> dev:src/tools/rag.py
 
     if not is_safe_file_path(directory_path):
         return f"Access denied: {directory_path} is outside allowed directory"
@@ -412,39 +379,12 @@ async def ingest_docs(
     # Carrega specs combinadas (.gitignore + .vectoraignore) uma vez para todo o diretório
     spec = load_ignore_spec(path)
 
-<<<<<<< HEAD:vectora/tools/rag.py
-    # Extrai o sufixo do glob_pattern (ex: **/*.md → .md) para filtrar por extensão
-    # Se o padrão não tiver extensão definida, aceita todos os arquivos
-    suffix_filter: str | None = None
-    if "." in glob_pattern.rsplit("/", maxsplit=1)[-1]:
-        suffix_filter = "." + glob_pattern.rsplit(".", 1)[-1]
-
-    # Varre o diretório respeitando .gitignore
-    raw_files = sorted(path.rglob("*"))
-    files_to_ingest: list[Path] = []
-    skipped_ignored = 0
-
-    for f in raw_files:
-        if not f.is_file():
-            continue
-        if suffix_filter and f.suffix != suffix_filter:
-            continue
-        if is_ignored(f, path, spec):
-            skipped_ignored += 1
-            logger.debug(
-                "ingest_docs: arquivo ignorado por .gitignore, .vectoraignore",
-                extra={"file": str(f)},
-            )
-            continue
-        files_to_ingest.append(f)
-=======
     # walk_files poda __pycache__/.venv/node_modules e dirs do gitignore
     # DURANTE o walk — rglob puro varria essas árvores inteiras antes de
     # filtrar, congelando a tool em repositórios grandes. Cada dir podado
     # (subárvore inteira) e cada arquivo batido pelo glob mas ignorado pelo
     # spec entram em skipped_ignored.
     files_to_ingest, skipped_ignored = walk_files(path, glob_pattern, spec)
->>>>>>> dev:src/tools/rag.py
 
     if not files_to_ingest:
         return json.dumps(
@@ -553,9 +493,6 @@ async def ingest_docs(
     )
 
 
-<<<<<<< HEAD:vectora/tools/rag.py
-@tool
-=======
 @tool(
     extras={
         "render_hint": "table",
@@ -564,7 +501,6 @@ async def ingest_docs(
         "icon": "settings",
     }
 )
->>>>>>> dev:src/tools/rag.py
 async def manage_retriever(
     action: Literal["list", "delete", "purge"],
     collection: str = "web_cache",

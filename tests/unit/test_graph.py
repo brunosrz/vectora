@@ -5,16 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-<<<<<<< HEAD
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.constants import END
-
-from vectora.graph import _orchestrator_route, build_graph
-=======
 from langgraph.constants import END
 
 from src.agents.orchestrator import _orchestrator_route
->>>>>>> dev
 
 if TYPE_CHECKING:
     from src.state import State
@@ -64,13 +57,8 @@ class TestOrchestratorRoute:
     def test_coder_routes_to_coder(self):
         assert _orchestrator_route(self._state("coder")) == "coder"
 
-<<<<<<< HEAD
-    def test_rag_routes_to_rag_subgraph(self):
-        assert _orchestrator_route(self._state("rag")) == "rag_subgraph"
-=======
     def test_rag_routes_to_rag_expand_query(self):
         assert _orchestrator_route(self._state("rag")) == "rag_expand_query"
->>>>>>> dev
 
     def test_none_defaults_to_end(self):
         state: State = {"messages": [], "session_metadata": {}}

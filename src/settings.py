@@ -70,11 +70,7 @@ class Settings(BaseSettings):
     # APPLICATION IDENTITY & VERSIONING
     # ============================================================================
 
-<<<<<<< HEAD:vectora/config/settings.py
-    version: str = "0.1.0rc4"
-=======
     version: str = "0.1.0"
->>>>>>> dev:src/settings.py
     """Vectora version (synced with pyproject.toml)."""
 
     app_name: str = "Vectora"
@@ -316,15 +312,12 @@ class Settings(BaseSettings):
     Separada do bucket curado para audit, observabilidade e purge cirúrgico —
     web é a única superfície de contaminação do RAG."""
 
-<<<<<<< HEAD:vectora/config/settings.py
-=======
     rag_collection_search: str = "search"
     """Coleção LanceDB para conteúdo curado pelo Search Agent.
     Conteúdo indexado pelo search agent após auditoria do RAG — maior confiança
     que web_cache, menor que articles (curado pelo usuário diretamente).
     Ex: fonte canônica fornecida pelo usuário durante uma correção de RAG."""
 
->>>>>>> dev:src/settings.py
     web_curation_enabled: bool = True
     """Liga o gate de curadoria (reranker + LLM judge) antes de persistir
     resultados web. Se False, volta ao comportamento legado (indexa tudo)."""
@@ -333,8 +326,6 @@ class Settings(BaseSettings):
     """Score mínimo do reranker para um resultado web sobreviver ao gate de
     curadoria. Abaixo disso é descartado antes mesmo do LLM judge."""
 
-<<<<<<< HEAD:vectora/config/settings.py
-=======
     # ── RAG Curator (Bloco B4) ────────────────────────────────────────────────
     rag_curator_enabled: bool = True
     """Liga o curator de RAG (resumo automático do manifest após ingestão)."""
@@ -375,7 +366,6 @@ class Settings(BaseSettings):
     rag_parallel_agents_enabled: bool = True
     """Permite ao orchestrator disparar múltiplos agentes em paralelo via asyncio.gather."""
 
->>>>>>> dev:src/settings.py
     # ============================================================================
     # MCP (MODEL CONTEXT PROTOCOL)
     # ============================================================================

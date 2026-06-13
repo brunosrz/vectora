@@ -70,11 +70,7 @@ except ImportError:
 @asynccontextmanager
 async def _mcp_lifespan(server: object) -> AsyncGenerator[None]:
     """Context manager de ciclo de vida para o servidor MCP."""
-<<<<<<< HEAD:vectora/mcp/server.py
-    from vectora.mcp.env_bootstrap import bootstrap_env_from_mcp, validate_required_keys
-=======
     from src.mcp.env_bootstrap import bootstrap_env_from_mcp, validate_required_keys
->>>>>>> dev:src/mcp/server.py
 
     bootstrapped = bootstrap_env_from_mcp()
     if bootstrapped:
@@ -155,12 +151,9 @@ TOOL_TIMEOUTS = {
     "embedding": 60.0,  # 60 segundos para embedding (fire-and-forget)
     "ingest_docs": 120.0,  # 2 minutos para ingestão em batch
     "manage_retriever": 30.0,  # 30 segundos para listar/remover do RAG
-<<<<<<< HEAD:vectora/mcp/server.py
-=======
     "workspace_describe": 5.0,  # 5 segundos — leitura de arquivo local
     "workspace_list": 5.0,  # 5 segundos — leitura de arquivo local
     "bucket_summary": 5.0,  # 5 segundos — leitura de arquivo local
->>>>>>> dev:src/mcp/server.py
     "file_read": 10.0,  # 10 segundos para ler arquivo
     "file_edit": 15.0,  # 15 segundos para editar arquivo
     "file_write": 15.0,  # 15 segundos para escrever arquivo
@@ -375,8 +368,6 @@ async def manage_retriever_tool(
 
 
 @mcp.tool()
-<<<<<<< HEAD:vectora/mcp/server.py
-=======
 async def workspace_describe_tool(workspace_id: str | None = None) -> str:
     """Descreve o workspace ativo: base de conhecimento indexada, buckets e tópicos.
 
@@ -438,7 +429,6 @@ async def bucket_summary_tool(bucket: str, workspace_id: str | None = None) -> s
 
 
 @mcp.tool()
->>>>>>> dev:src/mcp/server.py
 async def file_read_tool(file_path: str) -> str:
     """Lê o conteúdo completo de um arquivo de texto.
 
@@ -610,13 +600,6 @@ async def delegate_task_to_vectora(
     )
 
 
-<<<<<<< HEAD:vectora/mcp/server.py
-logger.info(
-    "14 tools registered: web_search, fetch_url, vector_search, embedding, ingest_docs, "
-    "manage_retriever, file_read, file_edit, file_write, grep, list_dir, terminal, "
-    "call_mcp_tool, delegate_task_to_vectora"
-)
-=======
 @mcp.tool()
 async def vectora_metrics(
     n: int = 30,
@@ -694,7 +677,6 @@ async def vectora_metrics(
 
 
 logger.info("18 tools registered in MCP server")
->>>>>>> dev:src/mcp/server.py
 
 
 # ============================================================================
@@ -872,11 +854,7 @@ async def get_server_status() -> str:
                 "mcp_enabled": settings.enable_mcp,
                 "embedding_queue_enabled": settings.embedding_queue_enabled,
             },
-<<<<<<< HEAD:vectora/mcp/server.py
-            "tools_count": 14,
-=======
             "tools_count": tools_count,
->>>>>>> dev:src/mcp/server.py
             "resources_count": 4,
         }
     )

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-"""Testes para vectora/services/ignore.py — foco nas funções novas.
-=======
 """Testes para src/services/ignore.py — foco nas funções novas.
->>>>>>> dev
 
 Cobre:
 - load_vectoraignore_spec: carrega .vectoraignore com pathspec gitwildmatch
@@ -21,21 +17,13 @@ class TestLoadVectoraignoreSpec:
     """load_vectoraignore_spec: carrega .vectoraignore como PathSpec."""
 
     def test_returns_none_when_no_file(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_vectoraignore_spec
-=======
         from src.services.ignore import load_vectoraignore_spec
->>>>>>> dev
 
         spec = load_vectoraignore_spec(tmp_path)
         assert spec is None
 
     def test_loads_simple_pattern(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_vectoraignore_spec
-=======
         from src.services.ignore import load_vectoraignore_spec
->>>>>>> dev
 
         (tmp_path / ".vectoraignore").write_text("*.log\n")
         spec = load_vectoraignore_spec(tmp_path)
@@ -44,11 +32,7 @@ class TestLoadVectoraignoreSpec:
         assert not spec.match_file("main.py")
 
     def test_loads_directory_pattern(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_vectoraignore_spec
-=======
         from src.services.ignore import load_vectoraignore_spec
->>>>>>> dev
 
         (tmp_path / ".vectoraignore").write_text("tests/fixtures/**\n")
         spec = load_vectoraignore_spec(tmp_path)
@@ -57,11 +41,7 @@ class TestLoadVectoraignoreSpec:
         assert not spec.match_file("src/main.py")
 
     def test_ignores_comment_lines(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_vectoraignore_spec
-=======
         from src.services.ignore import load_vectoraignore_spec
->>>>>>> dev
 
         (tmp_path / ".vectoraignore").write_text("# comment\n*.generated.py\n")
         spec = load_vectoraignore_spec(tmp_path)
@@ -70,11 +50,7 @@ class TestLoadVectoraignoreSpec:
         assert not spec.match_file("models.py")
 
     def test_searches_up_to_parent(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_vectoraignore_spec
-=======
         from src.services.ignore import load_vectoraignore_spec
->>>>>>> dev
 
         (tmp_path / ".vectoraignore").write_text("*.secret\n")
         subdir = tmp_path / "src" / "core"
@@ -86,11 +62,7 @@ class TestLoadVectoraignoreSpec:
 
     def test_uses_closest_vectoraignore(self, tmp_path):
         """Quando há dois .vectoraignore em níveis distintos, usa o mais próximo."""
-<<<<<<< HEAD
-        from vectora.services.ignore import load_vectoraignore_spec
-=======
         from src.services.ignore import load_vectoraignore_spec
->>>>>>> dev
 
         (tmp_path / ".vectoraignore").write_text("*.parent\n")
         subdir = tmp_path / "sub"
@@ -109,21 +81,13 @@ class TestLoadIgnoreSpec:
     """load_ignore_spec: combina .gitignore + .vectoraignore."""
 
     def test_returns_none_when_neither_exists(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_ignore_spec
-=======
         from src.services.ignore import load_ignore_spec
->>>>>>> dev
 
         spec = load_ignore_spec(tmp_path)
         assert spec is None
 
     def test_uses_gitignore_when_only_that_exists(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_ignore_spec
-=======
         from src.services.ignore import load_ignore_spec
->>>>>>> dev
 
         (tmp_path / ".gitignore").write_text("*.pyc\n")
         spec = load_ignore_spec(tmp_path)
@@ -132,11 +96,7 @@ class TestLoadIgnoreSpec:
         assert not spec.match_file("main.py")
 
     def test_uses_vectoraignore_when_only_that_exists(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_ignore_spec
-=======
         from src.services.ignore import load_ignore_spec
->>>>>>> dev
 
         (tmp_path / ".vectoraignore").write_text("data/**\n")
         spec = load_ignore_spec(tmp_path)
@@ -145,11 +105,7 @@ class TestLoadIgnoreSpec:
         assert not spec.match_file("src/model.py")
 
     def test_combines_both_specs(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import load_ignore_spec
-=======
         from src.services.ignore import load_ignore_spec
->>>>>>> dev
 
         (tmp_path / ".gitignore").write_text("*.pyc\ndist/\n")
         (tmp_path / ".vectoraignore").write_text("tests/fixtures/**\n*.generated.py\n")
@@ -169,11 +125,7 @@ class TestLoadIgnoreSpec:
 
     def test_gitignore_and_vectoraignore_independent_search(self, tmp_path):
         """Cada arquivo é procurado independentemente na hierarquia."""
-<<<<<<< HEAD
-        from vectora.services.ignore import load_ignore_spec
-=======
         from src.services.ignore import load_ignore_spec
->>>>>>> dev
 
         parent = tmp_path / "proj"
         parent.mkdir()
@@ -194,11 +146,7 @@ class TestIsIgnoredWithCombinedSpec:
     """Garante que is_ignored funciona com spec combinado de load_ignore_spec."""
 
     def test_file_ignored_by_vectoraignore(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import is_ignored, load_ignore_spec
-=======
         from src.services.ignore import is_ignored, load_ignore_spec
->>>>>>> dev
 
         (tmp_path / ".vectoraignore").write_text("*.dump\n")
         spec = load_ignore_spec(tmp_path)
@@ -207,11 +155,7 @@ class TestIsIgnoredWithCombinedSpec:
         assert is_ignored(dump_file, tmp_path, spec)
 
     def test_file_not_ignored(self, tmp_path):
-<<<<<<< HEAD
-        from vectora.services.ignore import is_ignored, load_ignore_spec
-=======
         from src.services.ignore import is_ignored, load_ignore_spec
->>>>>>> dev
 
         (tmp_path / ".vectoraignore").write_text("*.dump\n")
         spec = load_ignore_spec(tmp_path)
@@ -221,12 +165,6 @@ class TestIsIgnoredWithCombinedSpec:
 
     def test_always_skip_dirs_still_apply(self, tmp_path):
         """ALWAYS_SKIP_DIRS são bloqueados mesmo sem spec."""
-<<<<<<< HEAD
-        from vectora.services.ignore import is_ignored
-
-        node_modules_file = tmp_path / "node_modules" / "pkg" / "index.js"
-        assert is_ignored(node_modules_file, tmp_path, None)
-=======
         from src.services.ignore import is_ignored
 
         node_modules_file = tmp_path / "node_modules" / "pkg" / "index.js"
@@ -336,4 +274,3 @@ class TestWalkFilesPruning:
 
         files, _ = walk_files(tmp_path, "**/*.py", None)
         assert files == [tmp_path / "a.py"]
->>>>>>> dev

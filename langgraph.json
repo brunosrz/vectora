@@ -1,8 +1,0 @@
-{
-  "$schema": "https://raw.githubusercontent.com/langchain-ai/langgraph/main/libs/cli/schemas/schema.json",
-  "dependencies": ["."],
-  "graphs": {
-    "vectora": "./vectora/graph.py:build_graph"
-  },
-  "env": ".env"
-}

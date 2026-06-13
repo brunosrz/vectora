@@ -16,29 +16,17 @@ import logging
 
 from langchain.tools import BaseTool
 
-<<<<<<< HEAD:vectora/tools/__init__.py
-from vectora.config.settings import settings
-from vectora.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
-from vectora.tools.mcp import call_mcp_tool
-from vectora.tools.memory import delete_memory, get_memory, save_memory
-from vectora.tools.rag import (
-=======
 from src.settings import settings
 from src.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
 from src.tools.mcp import call_mcp_tool
 from src.tools.memory import delete_memory, get_memory, save_memory
 from src.tools.rag import (
->>>>>>> dev:src/tools/__init__.py
     embedding,
     ingest_docs,
     manage_retriever,
     vector_search,
 )
-<<<<<<< HEAD:vectora/tools/__init__.py
-from vectora.tools.web import fetch_url, web_search
-=======
 from src.tools.web import fetch_url, web_search
->>>>>>> dev:src/tools/__init__.py
 
 logger = logging.getLogger(__name__)
 

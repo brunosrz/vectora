@@ -51,12 +51,6 @@ def test_manage_retriever_registered():
     assert "manage_retriever" in names
 
 
-<<<<<<< HEAD
-def test_all_tools_count():
-    # 16 tools após o Bloco A5 (15 + manage_retriever). Guarda contra perda
-    # acidental de registro de ferramentas.
-    assert len(ALL_TOOLS) == 16
-=======
 def test_workspace_tools_registered():
     # Bloco B6 — ferramentas de workspace expostas aos agentes.
     names = [t.name for t in ALL_TOOLS]
@@ -75,4 +69,3 @@ def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas.
     # Atualize ao adicionar/remover tool em src/tools/__init__.py.
     assert len(ALL_TOOLS) == 39
->>>>>>> dev

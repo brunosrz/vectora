@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-"""Tests for vectora/agents/orchestrator.py"""
-=======
 """Tests for src/agents/orchestrator.py"""
->>>>>>> dev
 
 from __future__ import annotations
 
@@ -11,15 +7,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-<<<<<<< HEAD
-from langgraph.constants import END
-from langgraph.types import Command
-
-from vectora.agents.orchestrator import _is_post_rag, orchestrator
-
-if TYPE_CHECKING:
-    from vectora.state import State
-=======
 from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END
 from langgraph.types import Command
@@ -30,7 +17,6 @@ if TYPE_CHECKING:
     from src.state import State
 
 _CONFIG: RunnableConfig = {"configurable": {}}
->>>>>>> dev
 
 # ---------------------------------------------------------------------------
 # orchestrator node
@@ -45,11 +31,7 @@ class TestOrchestrator:
             "messages": [HumanMessage(content="oi")],
             "session_metadata": {},
         }
-<<<<<<< HEAD
-        cmd = await orchestrator(state)
-=======
         cmd = await orchestrator(state, config=_CONFIG)
->>>>>>> dev
         assert isinstance(cmd, Command)
         # Quando respond inline, goto == END
         assert cmd.goto == END
@@ -68,11 +50,7 @@ class TestOrchestrator:
             "messages": [HumanMessage(content="cria um arquivo main.py")],
             "session_metadata": {},
         }
-<<<<<<< HEAD
-        cmd = await orchestrator(state)
-=======
         cmd = await orchestrator(state, config=_CONFIG)
->>>>>>> dev
         assert isinstance(cmd, Command)
         assert cmd.update is not None
 
@@ -101,11 +79,7 @@ class TestOrchestrator:
             "messages": [HumanMessage(content="o que diz o documento sobre auth?")],
             "session_metadata": {},
         }
-<<<<<<< HEAD
-        cmd = await orchestrator(state)
-=======
         cmd = await orchestrator(state, config=_CONFIG)
->>>>>>> dev
         assert isinstance(cmd, Command)
         assert cmd.update is not None
 
@@ -134,11 +108,7 @@ class TestOrchestrator:
             ],
             "session_metadata": {},
         }
-<<<<<<< HEAD
-        cmd = await orchestrator(state)
-=======
         cmd = await orchestrator(state, config=_CONFIG)
->>>>>>> dev
         assert cmd.update is not None
         assert cmd.update["routing_decision"] == "respond"
 
@@ -146,11 +116,7 @@ class TestOrchestrator:
     async def test_empty_messages_defaults_to_respond(self):
         """Sem mensagens → fallback inline (respond)."""
         state: State = {"messages": [], "session_metadata": {}}
-<<<<<<< HEAD
-        cmd = await orchestrator(state)
-=======
         cmd = await orchestrator(state, config=_CONFIG)
->>>>>>> dev
         assert cmd.goto == END
 
     @pytest.mark.asyncio
@@ -160,11 +126,7 @@ class TestOrchestrator:
             "messages": [AIMessage(content="resposta")],
             "session_metadata": {},
         }
-<<<<<<< HEAD
-        cmd = await orchestrator(state)
-=======
         cmd = await orchestrator(state, config=_CONFIG)
->>>>>>> dev
         assert cmd.goto == END
 
     @pytest.mark.asyncio
@@ -178,14 +140,9 @@ class TestOrchestrator:
             ],
             "session_metadata": {},
         }
-<<<<<<< HEAD
-        cmd = await orchestrator(state)
-        if cmd.goto == "coder":
-=======
         cmd = await orchestrator(state, config=_CONFIG)
         if cmd.goto == "coder":
             assert cmd.update is not None
->>>>>>> dev
             task = cmd.update.get("orchestrator_task", "")
             assert isinstance(task, str)
             assert len(task) >= 10
@@ -197,14 +154,9 @@ class TestOrchestrator:
             "messages": [HumanMessage(content="oi, tudo bem?")],
             "session_metadata": {},
         }
-<<<<<<< HEAD
-        cmd = await orchestrator(state)
-        if cmd.goto == END:
-=======
         cmd = await orchestrator(state, config=_CONFIG)
         if cmd.goto == END:
             assert cmd.update is not None
->>>>>>> dev
             assert cmd.update.get("orchestrator_task") is None
             messages = cmd.update.get("messages", [])
             assert len(messages) == 1
@@ -265,22 +217,12 @@ class TestOrchestratorPostRAG:
         fake_llm.ainvoke = AsyncMock(
             return_value=AIMessage(content="Resposta sintetizada do contexto.")
         )
-<<<<<<< HEAD
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
-            cmd = await orchestrator(state)
-
-        assert cmd.goto == END
-        assert cmd.goto != "rag_subgraph"
-=======
         with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             cmd = await orchestrator(state, config=_CONFIG)
 
         assert cmd.goto == END
         assert cmd.goto != "rag_subgraph"
         assert cmd.update is not None
->>>>>>> dev
         assert cmd.update["routing_decision"] == "respond"
         msgs = cmd.update.get("messages", [])
         assert len(msgs) == 1
@@ -303,20 +245,11 @@ class TestOrchestratorPostRAG:
         }
         fake_llm = AsyncMock()
         fake_llm.ainvoke = AsyncMock(side_effect=Exception("LLM indisponível"))
-<<<<<<< HEAD
-        with patch(
-            "vectora.agents.orchestrator._get_synthesis_llm", return_value=fake_llm
-        ):
-            cmd = await orchestrator(state)
-
-        assert cmd.goto == END
-=======
         with patch("src.agents.orchestrator._get_synthesis_llm", return_value=fake_llm):
             cmd = await orchestrator(state, config=_CONFIG)
 
         assert cmd.goto == END
         assert cmd.update is not None
->>>>>>> dev
         msgs = cmd.update.get("messages", [])
         assert len(msgs) == 1
         assert isinstance(msgs[0], AIMessage)

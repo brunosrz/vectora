@@ -24,16 +24,9 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-<<<<<<< HEAD:vectora/nodes/web_curation.py
-from pydantic import BaseModel, Field
-
-from vectora.config.settings import settings
-from vectora.state import Document
-=======
 from src.settings import settings
 from src.state import Document
 from src.types import CurationDecision, WebResultVerdict
->>>>>>> dev:src/nodes/web_curation.py
 
 logger = logging.getLogger(__name__)
 
@@ -43,27 +36,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-<<<<<<< HEAD:vectora/nodes/web_curation.py
-class WebResultVerdict(BaseModel):
-    """Veredito do LLM judge para um único resultado web."""
-
-    index: int = Field(description="Índice do resultado na lista avaliada (base 0).")
-    keep: bool = Field(
-        description="True se o resultado é relevante e confiável para o projeto."
-    )
-    reason: str = Field(description="Uma frase curta justificando manter ou descartar.")
-
-
-class CurationDecision(BaseModel):
-    """Decisão de curadoria do LLM judge para o lote de resultados web."""
-
-    verdicts: list[WebResultVerdict] = Field(
-        description="Um veredito por resultado avaliado."
-    )
-
-
-=======
->>>>>>> dev:src/nodes/web_curation.py
 _JUDGE_PROMPT = """Você é o curador da base de conhecimento (RAG) do Vectora.
 
 Sua tarefa: decidir quais resultados de busca web merecem ser PERSISTIDOS na
@@ -92,11 +64,7 @@ def _get_judge_llm() -> Any:
     """Obtém o LLM judge singleton (structured output → CurationDecision)."""
     global _judge_llm
     if _judge_llm is None:
-<<<<<<< HEAD:vectora/nodes/web_curation.py
-        from vectora.services.utils import load_llm
-=======
         from src.services.utils import load_llm
->>>>>>> dev:src/nodes/web_curation.py
 
         _judge_llm = load_llm().with_structured_output(CurationDecision)
         logger.debug("web_curation: LLM judge inicializado")
@@ -357,11 +325,7 @@ async def curate_and_enqueue(
             )
 
     # Persistência — só os aprovados, no bucket web
-<<<<<<< HEAD:vectora/nodes/web_curation.py
-    from vectora.tools.rag import embedding
-=======
     from src.tools.rag import embedding
->>>>>>> dev:src/nodes/web_curation.py
 
     queue_ids: list[str] = []
     for r in approved:
