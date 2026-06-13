@@ -277,3 +277,27 @@ docs/
 tests/
 CHANGELOG.md
 LICENSE
+
+# ── Reduz drasticamente o build context (era 578MB → daemon caía com rpc EOF) ──
+# node_modules em QUALQUER nível (chat/, company/, desktop/, update-server/…).
+# O `node_modules/` acima só pega a raiz; este pega os aninhados.
+**/node_modules
+
+# Subprojetos que NÃO entram na imagem do backend (chat é o único build de front
+# que a imagem usa; o resto é site/desktop/worker, buildados/deployados à parte).
+company/
+desktop/
+update-server/
+deploy/
+packaging/
+assets/
+.wip/
+.vectora/
+
+# Outputs de build nativos pesados
+dist-nuitka/
+dist-electron/
+*.exe
+*.msi
+*.dmg
+*.AppImage

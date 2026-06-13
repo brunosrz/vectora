@@ -8,8 +8,8 @@ Uso (PowerShell / cmd, sem Git bash):
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
     scons package       → build completo (chat + Nuitka + Electron) + instalador
-    scons tests         → pytest (unit + stress + ...) com coverage + vitest do chat
-    scons tests-full    → idem + tests/integration + tests/e2e (requer API keys)
+    scons tests         → suíte completa: pytest tests/ (unit + stress +
+                          integration + e2e) + coverage + vitest do chat
     scons lint          → ruff + ty + tsc + oxlint
     scons clean         → remove outputs de build
 
@@ -42,11 +42,11 @@ def _find_pnpm() -> str:
 PNPM = _find_pnpm()
 
 
-def _run(cmd: list[str], env: dict | None = None) -> None:
+def _run(cmd: list[str], env: dict | None = None, cwd: str | None = None) -> None:
     """Executa um comando, falha se o código de retorno for ≠ 0."""
     merged = {**os.environ, **(env or {})}
     print(f"\n>> {' '.join(str(c) for c in cmd)}")
-    result = subprocess.run(cmd, cwd=ROOT, env=merged)
+    result = subprocess.run(cmd, cwd=cwd or ROOT, env=merged)
     if result.returncode != 0:
         raise SystemExit(result.returncode)
 
@@ -61,8 +61,13 @@ def _action_build_chat(target, source, env):
     (extraída pelo Nuitka como `chat_static/`) ou diretamente para
     `chat/dist/` em dev.
     """
-    _run([PNPM, "--dir", "chat", "install", "--frozen-lockfile"])
-    _run([PNPM, "--dir", "chat", "build"])
+    # `pnpm install` roda COM cwd=chat (não `--dir chat`): o `--dir` resolve as
+    # settings (ignoredBuiltDependencies p/ sharp) a partir do cwd do processo
+    # (a raiz, sem pnpm-workspace.yaml) → ERR_PNPM_IGNORED_BUILDS. Dentro de
+    # chat/, o pnpm lê chat/pnpm-workspace.yaml e o gate passa.
+    chat_dir = os.path.join(ROOT, "chat")
+    _run([PNPM, "install", "--frozen-lockfile"], cwd=chat_dir)
+    _run([PNPM, "build"], cwd=chat_dir)
 
     dist = os.path.join(ROOT, "chat", "dist")
     if not os.path.isdir(dist) or not os.path.isfile(os.path.join(dist, "index.html")):
@@ -210,29 +215,22 @@ def _action_package(target, source, env, platform=""):
         print(f">> build concluído em {out_dir} (nenhum instalador encontrado)")
 
 
-def _action_tests(target, source, env, *, include_external: bool = False):
-    """Roda a suíte de testes Python (pytest + coverage) e a do chat (vitest).
+def _action_tests(target, source, env):
+    """Roda a suíte de testes COMPLETA: pytest tests/ + coverage + chat (vitest).
 
-    Default (``scons tests``): unit + stress + qualquer pasta sem marker;
-    pula ``integration`` e ``e2e`` que exigem GOOGLE_API_KEY / COHERE_API_KEY /
-    gemini CLI. Use ``scons tests-full`` para incluir essas suítes.
+    Inclui TODAS as pastas e markers — ``unit``, ``stress``, ``integration`` e
+    ``e2e``. As suítes ``integration`` e ``e2e`` exigem GOOGLE_API_KEY /
+    COHERE_API_KEY / gemini CLI no ambiente; sem essas chaves elas falham ou
+    são puladas pelos próprios testes (skip-with-reason).
     """
-    pytest_cmd = [
+    _run([
         "uv", "run", "pytest", "tests",
         "--cov=src",
         "--cov-report=term-missing:skip-covered",
         "--cov-report=html:htmlcov",
         "--tb=short",
-    ]
-    if not include_external:
-        pytest_cmd += ["-m", "not e2e and not integration"]
-    _run(pytest_cmd)
+    ])
     _run([PNPM, "--dir", "chat", "test"])
-
-
-def _action_test_legacy(target, source, env):
-    """Compat: ``scons test`` continua rodando só `tests/unit/`."""
-    _run(["uv", "run", "pytest", "tests/unit/", "-v", "--tb=short"])
 
 
 def _action_lint(target, source, env):
@@ -272,10 +270,9 @@ def _action_help(target, source, env):
                            instalador para o SO atual
 
   Qualidade
-    scons tests            pytest tests/ + coverage + vitest do chat
-                           (pula -m e2e e -m integration)
-    scons tests-full       idem + integration + e2e (requer API keys)
-    scons test             [legado] pytest tests/unit/ apenas
+    scons tests            suíte completa: pytest tests/ (unit + stress +
+                           integration + e2e) + coverage + vitest do chat
+                           (integration e e2e exigem API keys)
     scons lint             ruff + ty + tsc + oxlint
     scons clean            remove todos os outputs de build
 """)
@@ -330,12 +327,10 @@ _release   = _cmd("release",       lambda target, source, env: _action_package(t
                    deps=_FULL_DEPS)
 
 # Qualidade
-_cmd("tests",      _action_tests)
-_cmd("tests-full", lambda target, source, env: _action_tests(target, source, env, include_external=True))
-_cmd("test",       _action_test_legacy)  # back-compat
-_cmd("lint",       _action_lint)
-_cmd("clean",      _action_clean)
-_cmd("help",       _action_help)
+_cmd("tests", _action_tests)
+_cmd("lint",  _action_lint)
+_cmd("clean", _action_clean)
+_cmd("help",  _action_help)
 
 # Default: exibe ajuda
 Default(env.Command("_default", [], _action_help))

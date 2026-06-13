@@ -1,17 +1,21 @@
-allowBuilds:
-  esbuild: true
+# Configuração do pnpm para o pacote `chat` (pnpm 10.16+ lê settings daqui).
+#
+# Build scripts de dependências nativas: o pnpm 10+ NÃO roda postinstall de
+# dependências por padrão e, se houver algum não-decidido, aborta o
+# `pnpm install` com ERR_PNPM_IGNORED_BUILDS. Declaramos explicitamente o que
+# rodar e o que ignorar (chaves canônicas do pnpm — `allowBuilds` não existe).
+onlyBuiltDependencies:
+  # esbuild resolve/baixa seu binário nativo no postinstall — o Vite precisa.
+  - esbuild
+ignoredBuiltDependencies:
   # sharp é puxado transitivamente (não importado em chat/src) e só tem build
-  # script para compilar o binário nativo de imagem — o chat não precisa dele.
-  # `false` = decisão explícita de NÃO rodar o build (limpa o
-  # ERR_PNPM_IGNORED_BUILDS que quebrava o `pnpm install` no CI). Antes o valor
-  # era o placeholder literal "set this to true or false", inválido para o pnpm.
-  sharp: false
+  # script para compilar o binário nativo de imagem — o chat não usa. Ignorar
+  # explicitamente limpa o ERR_PNPM_IGNORED_BUILDS sem rodar o build nativo.
+  - sharp
 
 # Deprecação upstream aceita conscientemente: glob@11.1.0 é puxado
 # transitivamente por workbox-build@7.4.1 (via vite-plugin-pwa) só em
 # build-time para gerar o service worker. O mantenedor do glob deprecou
 # todos os majors < 13, mas o glob 13 tem breaking changes que o
 # workbox-build@7.x não suporta — forçar override quebraria a build da PWA.
-# Silenciar aqui evita ruído sem mascarar dependência da aplicação.
-allowedDeprecatedVersions:
-  glob: "11.1.0"
+# É apenas um aviso de deprecação (não falha o build), então não silenciamos.

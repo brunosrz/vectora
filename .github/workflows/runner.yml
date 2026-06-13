@@ -30,6 +30,9 @@ env:
   # oficialmente suportada pelo Nuitka 4.1.x. 3.14 só vira oficial no Nuitka 4.2.
   PYTHON_VERSION: "3.13"
   NODE_VERSION: "24"
+  # Força TODAS as actions JS (checkout, setup-python, setup-uv…) a rodarem em
+  # Node 24, nunca Node 20 (que o GitHub vai aposentar). Opt-in oficial.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # ── 1. Lint & Format ────────────────────────────────────────────────────
@@ -83,9 +86,13 @@ jobs:
         with:
           version: 11.5.0
       - name: Build chat SPA
+        # cwd=chat (não `--dir chat`): o pnpm resolve onlyBuilt/ignoredBuiltDependencies
+        # a partir do cwd; de fora de chat/ ele não lê o pnpm-workspace.yaml e o
+        # install aborta com ERR_PNPM_IGNORED_BUILDS (sharp).
+        working-directory: chat
         run: |
-          pnpm --dir chat install --frozen-lockfile
-          pnpm --dir chat build
+          pnpm install --frozen-lockfile
+          pnpm build
 
   # ── 4a. Unit Tests ──────────────────────────────────────────────────────
   test-unit:
@@ -129,12 +136,11 @@ jobs:
       - name: Run stress tests
         run: uv run pytest tests/stress/ -v --timeout=120 --tb=short
 
-  # ── 4c. Integration + E2E (best-effort; precisam de chaves reais) ───────
+  # ── 4c. Integration + E2E (gate do Docker; precisam de chaves reais) ────
   test-external:
     name: Integration + E2E Tests
     runs-on: ubuntu-latest
     needs: build_verification
-    if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v') }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-uv
@@ -153,15 +159,14 @@ jobs:
           EOF
       - name: Integration tests
         run: uv run pytest tests/integration/ -v --timeout=120 -p no:randomly --tb=short
-        continue-on-error: ${{ secrets.GOOGLE_API_KEY == '' }}
       - name: E2E tests
-        run: uv run pytest tests/e2e/ -v --timeout=180 --tb=short || true
+        run: uv run pytest tests/e2e/ -v --timeout=180 --tb=short
 
   # ── 5. Docker Build & Push (imagem + docker-compose disponíveis) ────────
   docker-build:
     name: Docker Build & Push
     runs-on: ubuntu-latest
-    needs: [test-unit, test-stress]
+    needs: [test-unit, test-stress, test-external]
     permissions:
       contents: read
       packages: write
@@ -238,9 +243,10 @@ jobs:
         with:
           version: 11.5.0
       - name: Build chat SPA (Vite)
+        working-directory: chat
         run: |
-          pnpm --dir chat install --frozen-lockfile
-          pnpm --dir chat build
+          pnpm install --frozen-lockfile
+          pnpm build
       - name: Build Nuitka onefile
         run: >-
           uv run python -m nuitka

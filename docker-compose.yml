@@ -63,7 +63,11 @@ services:
       start_period: 60s
 
   postgres:
-    image: postgres:16-alpine
+    # pgvector/pgvector:pg16 (não postgres:16-alpine): o modo complete executa
+    # `CREATE EXTENSION IF NOT EXISTS vector` (src/storage/migrations) e
+    # src/storage/dev_stack.py também usa esta imagem — a oficial não traz a
+    # extensão pgvector e o startup falharia.
+    image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-vectora}

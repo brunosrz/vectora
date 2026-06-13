@@ -25,6 +25,8 @@ permissions:
 
 env:
   NODE_VERSION: "24"
+  # Força todas as actions JS a Node 24 (nunca Node 20).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   company:

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # ── Stage 0: Build Vite SPA ────────────────────────────────────────────────
 FROM node:24-alpine AS chat-builder
 
@@ -5,8 +6,16 @@ WORKDIR /build/chat
 
 RUN corepack enable && corepack prepare pnpm@11.5.0 --activate
 
-COPY chat/package.json chat/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# pnpm-workspace.yaml carrega as settings do pnpm (onlyBuiltDependencies /
+# ignoredBuiltDependencies). SEM ele, o `pnpm install` aborta com
+# ERR_PNPM_IGNORED_BUILDS: sharp@x no container — por isso ele PRECISA ser
+# copiado junto do package.json/lockfile, antes do install.
+COPY chat/package.json chat/pnpm-lock.yaml chat/pnpm-workspace.yaml ./
+# Cache mount do store do pnpm + fetch-timeout/retries altos: o build deixa de
+# falhar por timeout de download em rede lenta e retries reaproveitam o store.
+RUN --mount=type=cache,target=/pnpm-store \
+    pnpm install --frozen-lockfile --store-dir /pnpm-store \
+    --fetch-timeout=600000 --fetch-retries=5
 
 COPY chat/ ./
 RUN pnpm build
@@ -16,7 +25,14 @@ FROM python:3.13-slim AS builder
 
 ARG VERSION=0.1.0
 
-WORKDIR /build
+# IMPORTANTE: o WORKDIR do builder DEVE ser igual ao do runtime (/app). O uv
+# instala o projeto em modo editable — o arquivo `_editable_impl_*.pth` grava o
+# caminho ABSOLUTO da raiz (ex.: /app) em sys.path, e os console scripts do venv
+# (ex.: `vectora`) recebem um shebang com o caminho ABSOLUTO do python do venv.
+# Se o builder usasse /build e o runtime /app, o .pth apontaria para /build
+# (inexistente no runtime → `import src` falha) e o shebang para
+# /build/.venv/bin/python (inexistente → o entrypoint não executa).
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -26,11 +42,13 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
 COPY src/ ./src/
 COPY README.md ./
-RUN uv sync --frozen --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
 # ── Stage 2: Runtime ────────────────────────────────────────────────────────
 FROM python:3.13-slim
@@ -39,9 +57,9 @@ ARG VERSION=0.1.0
 
 WORKDIR /app
 
-COPY --from=builder /build/.venv /app/.venv
-COPY --from=builder /build/src   /app/src
-COPY --from=builder /build/pyproject.toml /app/pyproject.toml
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/src   /app/src
+COPY --from=builder /app/pyproject.toml /app/pyproject.toml
 COPY --from=chat-builder /build/chat/dist /app/chat/dist
 
 RUN mkdir -p /root/.vectora && chmod 700 /root/.vectora
