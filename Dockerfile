@@ -57,6 +57,11 @@ ARG VERSION=0.1.0
 
 WORKDIR /app
 
+# GitPython (src/tools/git.py) exige o binário `git` no PATH em runtime — sem ele
+# o backend crasha no import ("Bad git executable"). O python:slim não traz git.
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/src   /app/src
 COPY --from=builder /app/pyproject.toml /app/pyproject.toml
