@@ -35,6 +35,30 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # ── 0. Detecção de mudanças — gate de paths para os jobs de sites ────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    outputs:
+      company: ${{ steps.filter.outputs.company }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            company:
+              - 'company/**'
+
+  # ── Sites (company + docs) — verificação via workflow reutilizável ───────
+  # Só roda quando company/** muda; a Vercel faz o deploy real no push.
+  sites:
+    name: Sites
+    needs: changes
+    if: ${{ needs.changes.outputs.company == 'true' }}
+    uses: ./.github/workflows/sites.yml
+
   # ── 1. Lint & Format ────────────────────────────────────────────────────
   lint:
     name: Lint & Format Check
@@ -207,10 +231,14 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ── 6. Release Native Binaries (Nuitka onefile + Electron installers) ───
+  # Roda em TODO push (qualquer branch) + tags + dispatch — SEMPRE gera os
+  # instaladores como artifacts, independente de tag v*. PRs ficam de fora (o
+  # push do branch já cobre). A PUBLICAÇÃO nas releases privadas só ocorre em
+  # tags v* (--publish always); fora de tag, apenas builda + sobe o artifact.
   release-native:
     name: Release native (${{ matrix.target }}/${{ matrix.arch }})
     needs: docker-build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: ${{ github.event_name != 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
@@ -277,7 +305,7 @@ jobs:
         run: |
           pnpm --dir desktop install --frozen-lockfile
           pnpm --dir desktop build
-          pnpm --dir desktop dist:${{ matrix.target }}
+          pnpm --dir desktop exec electron-builder --${{ matrix.target }} --publish ${{ startsWith(github.ref, 'refs/tags/v') && 'always' || 'never' }}
       - name: Upload installers
         uses: actions/upload-artifact@v4
         with:
