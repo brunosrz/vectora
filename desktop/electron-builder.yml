@@ -16,6 +16,16 @@ productName: Vectora
 copyright: Copyright © 2026 Vectora Company
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
+# Toolset moderno de assinatura (electron-builder 26). O default (legacy/null)
+# baixa o pacote monolítico `winCodeSign-2.6.0.7z`, que carrega symlinks de
+# `darwin/.../*.dylib` (OpenSSL do macOS). No Windows sem Modo de Desenvolvedor
+# nem admin, o 7za falha ao criar esses symlinks (`Cannot create symbolic link`)
+# e o build inteiro aborta — mesmo num build NÃO-assinado. O toolset "1.1.0" usa
+# bundles `.zip` modulares (windows-kits-bundle + rcedit-windows), todos só com
+# binários Windows, sem nenhum symlink — extrai limpo sem privilégio especial.
+toolsets:
+  winCodeSign: "1.1.0"
+
 # Esquema de deep-link vectora:// — antes vivia em package.json["build"], que o
 # electron-builder IGNORA quando existe este .yml (config único). Movido p/ cá.
 protocols:

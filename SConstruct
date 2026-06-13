@@ -17,10 +17,12 @@ Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock)
 Instalar SCons: pip install scons (ou uv add --dev scons)
 """
 
+import glob
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -145,13 +147,67 @@ def _free_desktop_dist() -> None:
 
 
 def _action_package(target, source, env, platform=""):
+    """Empaqueta com electron-builder ESCREVENDO FORA do repositório.
+
+    O watcher de arquivos do editor/IDE (e do processo host) trava o
+    ``win-unpacked/resources/app.asar`` no instante em que o electron-builder
+    o escreve DENTRO da árvore observada, fazendo o próprio electron-builder
+    falhar no ``EnsureEmptyDir`` ("app.asar já está sendo usado"). Buildar num
+    diretório externo elimina a corrida; ao final copiamos só os instaladores
+    de volta para ``desktop/dist-electron/`` (local usual, esperado pelo CI).
+    """
     _free_desktop_dist()
-    cmd = [PNPM, "--dir", "desktop"]
-    if platform:
-        cmd.append(f"dist:{platform}")
+    out_dir = os.path.join(
+        os.environ.get("LOCALAPPDATA") or tempfile.gettempdir(),
+        "Vectora",
+        "dist-electron",
+    )
+    shutil.rmtree(out_dir, ignore_errors=True)
+    os.makedirs(out_dir, exist_ok=True)
+
+    # _build_desktop (dep) já rodou o tsc; chamamos o electron-builder direto
+    # (evita o `pnpm build` redundante do script `dist`) com o output externo.
+    flag = {"win": "--win", "mac": "--mac", "linux": "--linux"}.get(platform)
+    cmd = [PNPM, "--dir", "desktop", "exec", "electron-builder"]
+    if flag:
+        cmd.append(flag)
+    cmd.append(f"-c.directories.output={out_dir}")
+
+    # Assinatura: só quando há credenciais explícitas no ambiente (CI). Sem elas
+    # (build local), DESLIGAMOS a auto-descoberta de certificado — caso contrário
+    # o electron-builder vasculha o cert-store do Windows, acha qualquer cert e
+    # tenta assinar os sidecars, o que baixa o pacote legacy `winCodeSign-2.6.0`
+    # (com symlinks `darwin/*.dylib` que o 7za não consegue criar sem Modo de
+    # Desenvolvedor/admin) e aborta o build. Sem assinar, nada disso é baixado.
+    build_env: dict[str, str] = {}
+    has_signing_creds = any(
+        os.environ.get(k)
+        for k in ("CSC_LINK", "WIN_CSC_LINK", "CSC_KEY_PASSWORD", "MAC_CSC_LINK")
+    )
+    if not has_signing_creds:
+        build_env["CSC_IDENTITY_AUTO_DISCOVERY"] = "false"
+    _run(cmd, env=build_env or None)
+
+    # Copia só os instaladores finais de volta (não o win-unpacked/app.asar,
+    # que é justamente o que o watcher trava). Os .exe/.msi são artefatos
+    # fechados — copiá-los para dentro do repo depois do build é seguro.
+    dest = os.path.join(ROOT, "desktop", "dist-electron")
+    os.makedirs(dest, exist_ok=True)
+    patterns = (
+        "*.exe", "*.msi", "*.dmg", "*.AppImage", "*.deb", "*.rpm",
+        "latest*.yml", "*.blockmap",
+    )
+    copied: list[str] = []
+    for pat in patterns:
+        for f in glob.glob(os.path.join(out_dir, pat)):
+            shutil.copy2(f, dest)
+            copied.append(os.path.basename(f))
+    if copied:
+        print(f">> instaladores em {dest}:")
+        for name in copied:
+            print(f"     {name}")
     else:
-        cmd.append("dist")
-    _run(cmd)
+        print(f">> build concluído em {out_dir} (nenhum instalador encontrado)")
 
 
 def _action_tests(target, source, env, *, include_external: bool = False):
