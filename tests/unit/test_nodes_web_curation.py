@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 """Tests for vectora/nodes/web_curation.py — gate de curadoria do RAG (A5.2).
+=======
+"""Tests for src/nodes/web_curation.py — gate de curadoria do RAG (A5.2).
+>>>>>>> dev
 
 O gate impede que resultados web irrelevantes contaminem o RAG. Os testes
 mockam reranker e LLM judge — o foco é a lógica de aprovação/rejeição.
@@ -10,11 +14,19 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+<<<<<<< HEAD
 from vectora.nodes.web_curation import (
     WebResultVerdict,
     curate_and_enqueue,
     curate_web_results,
 )
+=======
+from src.nodes.web_curation import (
+    curate_and_enqueue,
+    curate_web_results,
+)
+from src.types import WebResultVerdict
+>>>>>>> dev
 
 
 def _results() -> list[dict]:
@@ -41,11 +53,17 @@ class TestCurateWebResults:
         scored = [(results[0], 0.9), (results[1], 0.1)]
         verdicts = {0: WebResultVerdict(index=0, keep=True, reason="repo correto")}
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.web_curation._rerank_results", new_callable=AsyncMock
         ) as mr:
             with patch(
                 "vectora.nodes.web_curation._judge", new_callable=AsyncMock
             ) as mj:
+=======
+            "src.nodes.web_curation._rerank_results", new_callable=AsyncMock
+        ) as mr:
+            with patch("src.nodes.web_curation._judge", new_callable=AsyncMock) as mj:
+>>>>>>> dev
                 mr.return_value = scored
                 mj.return_value = verdicts
                 approved, rejected = await curate_web_results(results, "godot ability")
@@ -54,6 +72,10 @@ class TestCurateWebResults:
         assert approved[0]["url"] == results[0]["url"]
         assert len(rejected) == 1
         # O judge só avalia os sobreviventes do reranker (1, não 2).
+<<<<<<< HEAD
+=======
+        assert mj.await_args is not None
+>>>>>>> dev
         assert len(mj.await_args.args[0]) == 1
 
     @pytest.mark.asyncio
@@ -68,11 +90,17 @@ class TestCurateWebResults:
             ),
         }
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.web_curation._rerank_results", new_callable=AsyncMock
         ) as mr:
             with patch(
                 "vectora.nodes.web_curation._judge", new_callable=AsyncMock
             ) as mj:
+=======
+            "src.nodes.web_curation._rerank_results", new_callable=AsyncMock
+        ) as mr:
+            with patch("src.nodes.web_curation._judge", new_callable=AsyncMock) as mj:
+>>>>>>> dev
                 mr.return_value = scored
                 mj.return_value = verdicts
                 approved, rejected = await curate_web_results(results, "q")
@@ -86,11 +114,17 @@ class TestCurateWebResults:
         # Fail-safe: judge devolve dict vazio (falhou) → nada é aprovado.
         results = _results()
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.web_curation._rerank_results", new_callable=AsyncMock
         ) as mr:
             with patch(
                 "vectora.nodes.web_curation._judge", new_callable=AsyncMock
             ) as mj:
+=======
+            "src.nodes.web_curation._rerank_results", new_callable=AsyncMock
+        ) as mr:
+            with patch("src.nodes.web_curation._judge", new_callable=AsyncMock) as mj:
+>>>>>>> dev
                 mr.return_value = [(results[0], 0.8)]
                 mj.return_value = {}
                 approved, rejected = await curate_web_results(results, "q")
@@ -102,11 +136,17 @@ class TestCurateWebResults:
     async def test_no_survivors_skips_judge(self):
         results = _results()
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.web_curation._rerank_results", new_callable=AsyncMock
         ) as mr:
             with patch(
                 "vectora.nodes.web_curation._judge", new_callable=AsyncMock
             ) as mj:
+=======
+            "src.nodes.web_curation._rerank_results", new_callable=AsyncMock
+        ) as mr:
+            with patch("src.nodes.web_curation._judge", new_callable=AsyncMock) as mj:
+>>>>>>> dev
                 mr.return_value = [(results[0], 0.2), (results[1], 0.1)]
                 approved, rejected = await curate_web_results(results, "q")
 
@@ -117,7 +157,11 @@ class TestCurateWebResults:
     @pytest.mark.asyncio
     async def test_kill_switch_approves_all(self):
         results = _results()
+<<<<<<< HEAD
         with patch("vectora.nodes.web_curation.settings") as ms:
+=======
+        with patch("src.nodes.web_curation.settings") as ms:
+>>>>>>> dev
             ms.web_curation_enabled = False
             approved, rejected = await curate_web_results(results, "q")
         assert len(approved) == len(results)
@@ -137,10 +181,17 @@ class TestCurateAndEnqueue:
         approved = [{**results[0], "relevance_score": 0.9, "curation_reason": "ok"}]
         rejected = [{**results[1], "relevance_score": 0.1, "curation_reason": "lixo"}]
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.web_curation.curate_web_results", new_callable=AsyncMock
         ) as mc:
             mc.return_value = (approved, rejected)
             with patch("vectora.tools.rag.embedding") as me:
+=======
+            "src.nodes.web_curation.curate_web_results", new_callable=AsyncMock
+        ) as mc:
+            mc.return_value = (approved, rejected)
+            with patch("src.tools.rag.embedding") as me:
+>>>>>>> dev
                 me.ainvoke = AsyncMock(return_value='{"queue_id": "q1"}')
                 formatted_docs, queue_ids = await curate_and_enqueue(results, "q")
 
@@ -155,10 +206,17 @@ class TestCurateAndEnqueue:
         results = _results()
         rejected = [{**r, "curation_reason": "rejeitado"} for r in results]
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.web_curation.curate_web_results", new_callable=AsyncMock
         ) as mc:
             mc.return_value = ([], rejected)
             with patch("vectora.tools.rag.embedding") as me:
+=======
+            "src.nodes.web_curation.curate_web_results", new_callable=AsyncMock
+        ) as mc:
+            mc.return_value = ([], rejected)
+            with patch("src.tools.rag.embedding") as me:
+>>>>>>> dev
                 me.ainvoke = AsyncMock()
                 formatted_docs, queue_ids = await curate_and_enqueue(results, "q")
 

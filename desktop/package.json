@@ -1,0 +1,26 @@
+{
+  "name": "vectora-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vectora desktop shell (Electron) — wraps the Nuitka-compiled backend.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "electron dist/main.js",
+    "dist": "pnpm build && electron-builder",
+    "dist:win": "pnpm build && electron-builder --win",
+    "dist:mac": "pnpm build && electron-builder --mac",
+    "dist:linux": "pnpm build && electron-builder --linux"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "electron": "^42.3.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@sentry/electron": "^7.13.0",
+    "electron-updater": "^6.8.3",
+    "tree-kill": "^1.2.2"
+  }
+}

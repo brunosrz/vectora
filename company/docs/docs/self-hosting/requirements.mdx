@@ -1,0 +1,62 @@
+---
+id: requirements
+title: Requirements
+sidebar_position: 1
+---
+
+# Self-Hosting Requirements
+
+## Hardware
+
+| | Minimum | Recommended (team) | Production (enterprise) |
+|---|---|---|---|
+| CPU | 2 vCPU | 4 vCPU | 8+ vCPU |
+| RAM | 4 GB | 8 GB | 16 GB |
+| Disk | 20 GB SSD | 100 GB SSD | 500 GB+ SSD |
+| Network | 100 Mbps | 1 Gbps | 1 Gbps + CDN |
+
+### Memory breakdown
+
+| Component | RAM usage |
+|---|---|
+| Vectora server | ~300 MB |
+| LanceDB (embedded) | ~200 MB + ~1 MB/10k chunks |
+| LLM API calls | negligible (API, not local) |
+| Local LLM (Ollama) | 4–40 GB depending on model |
+
+## Software
+
+| Component | Version |
+|---|---|
+| OS | Ubuntu 22.04 LTS+ / Debian 12+ |
+| Docker | 24+ |
+| Docker Compose | v2+ (`docker compose` not `docker-compose`) |
+
+:::tip
+**For local models with Ollama:** Add a GPU node. Minimum 8 GB VRAM for 7B models, 24 GB+ for 70B models.
+:::
+
+## Network
+
+- **Port 8080** — Vectora web UI + REST API (expose via reverse proxy)
+- **Port 9090** — MCP server (optional, expose only if needed externally)
+- **Outbound HTTPS** — for license validation, Cohere API, and LLM API calls
+
+## Supported VPS providers
+
+Vectora runs on any Linux VPS:
+
+| Provider | Recommended instance |
+|---|---|
+| Hetzner | CX31 (4 vCPU, 8 GB, €11/mo) |
+| DigitalOcean | 4 vCPU Droplet |
+| AWS | t3.large / c5.xlarge |
+| GCP | n2-standard-4 |
+| OVH / Scaleway | Any 4+ vCPU instance |
+
+## DNS
+
+Point your domain to the server IP before configuring HTTPS:
+```
+A  vectora.yourcompany.com  → your.server.ip
+```

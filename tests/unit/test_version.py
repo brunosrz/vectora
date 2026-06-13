@@ -1,10 +1,10 @@
-"""Tests for vectora/version.py"""
+"""Tests for src/version.py"""
 
 from __future__ import annotations
 
 import re
 
-from vectora.version import __version__
+from src.version import __version__
 
 
 def test_version_is_string():

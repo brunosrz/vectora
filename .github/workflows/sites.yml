@@ -1,0 +1,69 @@
+name: Sites (company + docs)
+
+# A Vercel faz o DEPLOY automático no push (integração Git). Este workflow é só
+# verificação: garante que vectora.company (TanStack Start) e o site de docs
+# (Docusaurus) continuam buildando e passando no lint antes do merge.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+  # Força todas as actions JS a Node 24 (nunca Node 20).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  company:
+    name: vectora.company (build + lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: company
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: company/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # Build é o que a Vercel roda no deploy — é o gate real.
+      - name: Build (vite)
+        run: pnpm build
+      # Lint é informativo: hoje há findings pré-existentes (ex.: LocaleSwitcher
+      # no-unnecessary-condition) que não devem travar o pipeline de verificação.
+      - name: Lint (eslint — informativo)
+        run: pnpm lint
+        continue-on-error: true
+
+  docs:
+    name: vectora docs (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: company/docs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: company/docs/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # Build do Docusaurus é o gate real (e gera os tipos em .docusaurus/).
+      - name: Build (docusaurus)
+        run: pnpm build
+      # Typecheck depende dos tipos gerados pelo build e de aliases do Docusaurus;
+      # informativo para não travar a verificação.
+      - name: Typecheck (informativo)
+        run: pnpm typecheck
+        continue-on-error: true

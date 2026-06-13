@@ -1,6 +1,6 @@
 # Security Policy
 
-Vectora is a local-first application. The attack surface is intentionally small — no remote servers, no user authentication, no exposed REST APIs. Even so, code that executes on behalf of the user needs real protections.
+Vectora is a self-hosted application. The attack surface is intentionally small — no remote servers, no user authentication, no exposed REST APIs. Even so, code that executes on behalf of the user needs real protections.
 
 ---
 
@@ -10,7 +10,7 @@ Vectora is a local-first application. The attack surface is intentionally small 
 
 The terminal is the highest-risk tool. Applied protections:
 
-- **Command blacklist**: Blocked by default — `rm -rf`, `mkfs`, `dd if=/dev/zero`, `:(){:|:&};:` (fork bomb), and similar destructive commands. The blacklist lives in `vectora/services/security.py`.
+- **Command blacklist**: Blocked by default — `rm -rf`, `mkfs`, `dd if=/dev/zero`, `:(){:|:&};:` (fork bomb), and similar destructive commands. The blacklist lives in `src/services/security.py`.
 - **Timeout**: 30 seconds per execution. Processes that exceed the limit are terminated via `proc.kill()`.
 - **Async execution**: Uses `asyncio.create_subprocess_shell` — never blocks the event loop or the UI.
 - **No persistent shell**: Each execution is a new child process. There is no persistent terminal session between calls.
@@ -25,7 +25,7 @@ The terminal is the highest-risk tool. Applied protections:
 
 The `grep` tool accepts regex patterns from the LLM. Malicious patterns can cause catastrophic backtracking (ReDoS). Protections:
 
-- Pattern validation in `vectora/services/security.py` (`is_safe_regex_pattern`)
+- Pattern validation in `src/services/security.py` (`is_safe_regex_pattern`)
 - 20s timeout on grep execution
 - File type filters (ignores `.pyc`, binaries)
 
@@ -49,7 +49,7 @@ The `grep` tool accepts regex patterns from the LLM. Malicious patterns can caus
 
 ## What Is NOT in the MVP
 
-By design — Vectora is local-first, single-user:
+By design — Vectora is self-hosted, single-user:
 
 - ❌ **Authentication**: No users, no access tokens, no OAuth.
 - ❌ **TLS/SSL**: Local communication via stdio; SSE on LAN without TLS is acceptable in the MVP.
@@ -67,7 +67,7 @@ If you find a security vulnerability, **do not open a public issue**. This would
 
 **How to report:**
 
-1. Open a [GitHub Security Advisory](https://github.com/brunosrz/vectora/security/advisories/new) (private)
+1. Open a [GitHub Security Advisory](https://github.com/brunosrz/src/security/advisories/new) (private)
 2. Include: affected component, vulnerability type, steps to reproduce, estimated impact
 
 **What to include:**

@@ -17,7 +17,7 @@ import time
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from vectora.nodes.base import sanitize_for_gemini
+from src.nodes.base import sanitize_for_gemini
 
 
 def _make_valid_history(n_pairs: int) -> list:

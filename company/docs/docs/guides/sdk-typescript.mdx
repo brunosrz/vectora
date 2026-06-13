@@ -1,0 +1,154 @@
+---
+id: sdk-typescript
+title: TypeScript SDK
+sidebar_position: 8
+---
+
+# TypeScript SDK
+
+The `@vectora/sdk` package provides a fully typed client for the Vectora REST API, compatible with Node.js, Bun, and browser environments.
+
+## Installation
+
+```bash
+npm install @vectora/sdk
+# or
+pnpm add @vectora/sdk
+# or
+bun add @vectora/sdk
+```
+
+## Authentication
+
+```typescript
+import { Vectora } from "@vectora/sdk";
+
+const client = new Vectora({
+  baseUrl: "https://your-vectora-domain.com",
+  apiKey: "vk_live_...",  // from Dashboard → API Keys
+});
+```
+
+Or use environment variables:
+
+```bash
+VECTORA_BASE_URL=https://your-vectora-domain.com
+VECTORA_API_KEY=vk_live_...
+```
+
+```typescript
+const client = new Vectora(); // reads VECTORA_BASE_URL + VECTORA_API_KEY
+```
+
+## Chat
+
+```typescript
+// Single message
+const response = await client.chat.send({
+  projectId: "proj_abc123",
+  message: "Summarize the architecture document.",
+});
+console.log(response.content);
+
+// Streaming
+const stream = await client.chat.stream({
+  projectId: "proj_abc123",
+  message: "Explain how the RAG pipeline works.",
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.delta);
+}
+```
+
+## Documents
+
+```typescript
+import { readFileSync } from "fs";
+
+// Upload
+const doc = await client.documents.upload({
+  projectId: "proj_abc123",
+  file: new Blob([readFileSync("./report.pdf")], { type: "application/pdf" }),
+  filename: "report.pdf",
+});
+console.log("Indexed:", doc.id);
+
+// List
+const docs = await client.documents.list({ projectId: "proj_abc123" });
+docs.forEach((d) => console.log(d.filename, d.status));
+
+// Delete
+await client.documents.delete({ documentId: doc.id });
+```
+
+## Projects
+
+```typescript
+// List
+const projects = await client.projects.list();
+
+// Create
+const project = await client.projects.create({ name: "My Project" });
+
+// Get
+const project = await client.projects.get({ projectId: "proj_abc123" });
+```
+
+## Error handling
+
+```typescript
+import {
+  Vectora,
+  VectoraError,
+  AuthenticationError,
+  RateLimitError,
+} from "@vectora/sdk";
+
+try {
+  const response = await client.chat.send({
+    projectId: "proj_abc123",
+    message: "Hello",
+  });
+} catch (err) {
+  if (err instanceof AuthenticationError) {
+    console.error("Invalid API key");
+  } else if (err instanceof RateLimitError) {
+    console.error(`Rate limited. Retry after ${err.retryAfter}s`);
+  } else if (err instanceof VectoraError) {
+    console.error(`API error: ${err.status} ${err.message}`);
+  }
+}
+```
+
+## Next.js / React
+
+```typescript
+// app/api/chat/route.ts
+import { Vectora } from "@vectora/sdk";
+import { NextRequest } from "next/server";
+
+const vectora = new Vectora();
+
+export async function POST(req: NextRequest) {
+  const { message, projectId } = await req.json();
+
+  const stream = await vectora.chat.stream({ projectId, message });
+
+  return new Response(
+    new ReadableStream({
+      async start(controller) {
+        for await (const chunk of stream) {
+          controller.enqueue(new TextEncoder().encode(chunk.delta));
+        }
+        controller.close();
+      },
+    }),
+    { headers: { "Content-Type": "text/plain; charset=utf-8" } },
+  );
+}
+```
+
+## Full reference
+
+See [REST API Reference](/api-reference/overview) for all available endpoints and types.

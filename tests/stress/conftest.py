@@ -52,7 +52,7 @@ REQUIRES_BOTH = pytest.mark.skipif(
 
 async def _cleanup_session_1212() -> None:
     """Remove dados de teste da session 1212: checkpoints + LanceDB + traces."""
-    from vectora.config.settings import settings
+    from src.settings import settings
 
     # 1. Limpa checkpoints SQLite (tabelas checkpoints + writes do LangGraph)
     try:
@@ -74,10 +74,10 @@ async def _cleanup_session_1212() -> None:
     try:
         import lancedb
 
-        from vectora.config.settings import settings as s
+        from src.settings import settings as s
 
         db_lance = await lancedb.connect_async(str(s.lancedb_dir))
-        tables = await db_lance.table_names()
+        tables = (await db_lance.list_tables()).tables
         if TEST_COLLECTION in tables:
             await db_lance.drop_table(TEST_COLLECTION)
             logger.info(f"Coleção LanceDB '{TEST_COLLECTION}' removida")
@@ -86,7 +86,7 @@ async def _cleanup_session_1212() -> None:
 
     # 3. Limpa traces da session 1212
     try:
-        from vectora.services.tracer import tracer
+        from src.services.tracer import tracer
 
         removed = await tracer.clear_session(TEST_SESSION_ID)
         logger.info(f"Traces da session 1212 removidos: {removed}")
@@ -115,8 +115,8 @@ async def lifecycle_graph():
     Cada teste abre e fecha sua própria conexão SQLite, mas compartilham o
     mesmo arquivo de banco — portanto o histórico persiste entre testes.
     """
-    from vectora.graph import build_graph
-    from vectora.services.checkpoint import Checkpointer
+    from src.graph import build_graph
+    from src.services.checkpoint import Checkpointer
 
     async with Checkpointer() as cp:
         graph = build_graph(cp)
@@ -126,7 +126,7 @@ async def lifecycle_graph():
 @pytest.fixture
 def lifecycle_config() -> RunnableConfig:
     """RunnableConfig para session 1212 com Context correto."""
-    from vectora.context import Context
+    from src.context import Context
 
     context = Context(user_type="test", thread_id=TEST_THREAD_ID)
     return RunnableConfig(
@@ -176,8 +176,8 @@ async def embed_direct(text: str, collection: str) -> None:
     """
     from uuid import uuid4
 
-    from vectora.services.background import BackgroundEmbeddingWorker
-    from vectora.services.queue import EmbeddingQueueRecord
+    from src.services.background import BackgroundEmbeddingWorker
+    from src.services.queue import EmbeddingQueueRecord
 
     worker = BackgroundEmbeddingWorker()
     vector = await worker._generate_embedding(text)

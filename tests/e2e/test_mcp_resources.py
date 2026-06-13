@@ -27,7 +27,7 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(30)]
 @pytest.fixture(scope="module")
 def mcp_server():
     """Importa e retorna o módulo do servidor MCP."""
-    from vectora.mcp import server
+    from src.mcp import server
 
     return server
 
@@ -116,10 +116,10 @@ class TestMcpStatusResource:
 
     @pytest.mark.asyncio
     async def test_status_tools_count_matches(self, mcp_server):
-        """tools_count deve ser 13."""
+        """tools_count deve ser 18 (ferramentas registradas no servidor)."""
         result = await mcp_server.get_server_status()
         data = json.loads(result)
-        assert data["tools_count"] == 13
+        assert data["tools_count"] == 18
 
     @pytest.mark.asyncio
     async def test_status_capabilities_are_booleans(self, mcp_server):

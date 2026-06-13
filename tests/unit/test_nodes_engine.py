@@ -1,4 +1,4 @@
-"""Tests for vectora/nodes/engine.py"""
+"""Tests for src/nodes/engine.py"""
 
 from __future__ import annotations
 
@@ -8,8 +8,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
+<<<<<<< HEAD
 from vectora.nodes.engine import _extract_tavily_results, process_retrieval
 from vectora.state import Document, State
+=======
+from src.nodes.engine import _extract_tavily_results, process_retrieval
+from src.state import Document, State
+>>>>>>> dev
 
 
 class TestExtractTavilyResults:
@@ -115,7 +120,11 @@ class TestProcessRetrieval:
             )
         ]
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+=======
+            "src.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+>>>>>>> dev
         ) as mock_curate:
             mock_curate.return_value = (docs, ["q-abc"])
             result = await process_retrieval(state, self._runtime())
@@ -124,6 +133,10 @@ class TestProcessRetrieval:
         assert len(result["retrieval_results"]["web_search"]) == 1
         assert "q-abc" in result["pending_embeds"]
         # O gate recebe a query do usuário para julgar relevância.
+<<<<<<< HEAD
+=======
+        assert mock_curate.await_args is not None
+>>>>>>> dev
         assert mock_curate.await_args.args[1] == "pesquisa X"
 
     @pytest.mark.asyncio
@@ -137,7 +150,11 @@ class TestProcessRetrieval:
         }
         docs = [Document(page_content="lixo", metadata={}, relevance_score=None)]
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+=======
+            "src.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+>>>>>>> dev
         ) as mock_curate:
             # Curadoria devolve docs para contexto imediato, mas 0 persistidos.
             mock_curate.return_value = (docs, [])
@@ -158,7 +175,11 @@ class TestProcessRetrieval:
         }
         docs = [Document(page_content="new doc", metadata={}, relevance_score=None)]
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+=======
+            "src.nodes.engine.curate_and_enqueue", new_callable=AsyncMock
+>>>>>>> dev
         ) as mock_curate:
             mock_curate.return_value = (docs, ["new-qid"])
             result = await process_retrieval(state, self._runtime())

@@ -1,0 +1,53 @@
+---
+id: api-keys
+title: API Keys
+sidebar_position: 3
+---
+
+# API Keys
+
+API keys allow external services to interact with Vectora programmatically.
+
+## Creating a key
+
+**Via the dashboard**: Dashboard → API Keys → New key
+
+**Via the API** (requires an admin key):
+
+```bash
+curl -X POST http://localhost:8080/v1/api-keys \
+  -H "Authorization: Bearer vct_key_admin_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "GitHub Actions CI",
+    "scopes": ["read"]
+  }'
+```
+
+Copy the returned `secret` — it will not be shown again.
+
+## Use cases
+
+| Integration | Recommended scopes |
+|---|---|
+| Read-only dashboard | `read` |
+| n8n workflow (upload docs + chat) | `read`, `write` |
+| GitHub Actions (retrieve context) | `read` |
+| Admin script (manage users) | `admin` |
+| Public-facing API | `read` (never expose `write` or `admin`) |
+
+## Security best practices
+
+- **One key per integration** — makes revocation easy and auditing clear
+- **Rotate regularly** — at minimum when team members leave
+- **Never expose `admin` keys** — use only from server-side, never in client code
+- **Use environment variables** — never hardcode keys in source code
+
+## Revoking a key
+
+```bash
+curl -X DELETE http://localhost:8080/v1/api-keys/key_01jxxxxxx \
+  -H "Authorization: Bearer vct_key_admin_xxx"
+```
+
+Revoked keys fail immediately with `401 Unauthorized`.

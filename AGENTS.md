@@ -93,8 +93,8 @@ Do not use formal planning for: typo fixes, single-line changes, research/code r
 
 Before running `git commit`, verify:
 
-- [ ] `uv run ruff check vectora/` — zero errors
-- [ ] `uv run ty check vectora/` — zero actionable type errors
+- [ ] `uv run ruff check src/` — zero errors
+- [ ] `uv run ty check src/` — zero actionable type errors
 - [ ] `uv run pytest tests/unit/` — all passing
 - [ ] Docstrings and type hints added to new code
 - [ ] README, MVP_SCOPE, or relevant documentation updated if needed
@@ -103,15 +103,29 @@ Before running `git commit`, verify:
 
 ## 9. Quick Reference — Critical Files
 
-| File                                | Purpose                                      |
-| ----------------------------------- | -------------------------------------------- |
-| `vectora/config/settings.py`        | Single source of truth for configuration     |
-| `vectora/graph.py`                  | LangGraph graph builder                      |
-| `vectora/nodes/engine.py`           | Node implementations                         |
-| `vectora/agents/orchestrator.py`    | Intent classification and routing            |
-| `vectora/agents/_identity.py`       | Shared identity block for all agents         |
-| `vectora/nodes/tools.py`            | Registry of all 15 tools                     |
-| `vectora/mcp/server.py`             | MCP Server (FastMCP, 13 tools, 4 resources)  |
-| `vectora/services/security.py`      | Blacklist, path validation, ReDoS protection |
-| `vectora/ui/setup_wizard.py`        | Interactive onboarding wizard                |
-| `integrations/paperclip/@AGENTS.md` | Multi-agent integration protocol             |
+| File | Purpose |
+| ---- | ------- |
+
+<<<<<<< HEAD
+| `vectora/config/settings.py` | Single source of truth for configuration |
+| `vectora/graph.py` | LangGraph graph builder |
+| `vectora/nodes/engine.py` | Node implementations |
+| `vectora/agents/orchestrator.py` | Intent classification and routing |
+| `vectora/agents/_identity.py` | Shared identity block for all agents |
+| `vectora/nodes/tools.py` | Registry of all 15 tools |
+| `vectora/mcp/server.py` | MCP Server (FastMCP, 13 tools, 4 resources) |
+| `vectora/services/security.py` | Blacklist, path validation, ReDoS protection |
+| `vectora/ui/setup_wizard.py` | Interactive onboarding wizard |
+=======
+| `src/settings.py` | Single source of truth for configuration |
+| `src/graph.py` | LangGraph graph builder |
+| `src/nodes/engine.py` | Node implementations |
+| `src/agents/orchestrator.py` | Intent classification and routing |
+| `src/agents/_identity.py` | Shared identity block for all agents |
+| `src/nodes/tools.py` | Registry of all 15 tools |
+| `src/mcp/server.py` | MCP Server (FastMCP, 13 tools, 4 resources) |
+| `src/services/security.py` | Blacklist, path validation, ReDoS protection |
+| `src/ui/setup_wizard.py` | Interactive onboarding wizard |
+
+> > > > > > > dev
+> > > > > > > | `integrations/paperclip/@AGENTS.md` | Multi-agent integration protocol |

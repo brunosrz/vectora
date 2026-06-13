@@ -1,0 +1,74 @@
+---
+id: git-workflows
+title: Git Workflows
+sidebar_position: 5
+---
+
+# Git Workflows
+
+Vectora's Coder Agent has built-in Git awareness. It can read history, create branches, commit, and open PRs — all from a chat message.
+
+## Prerequisites
+
+- Git installed on the server where Vectora runs.
+- The repository cloned and accessible to the Vectora process (via a mounted volume or workspace path).
+- SSH key or HTTPS credential configured for push access.
+
+## What the Coder Agent can do
+
+| Action | Example prompt |
+|---|---|
+| Read file / diff | "What changed in `auth.py` last week?" |
+| Create branch | "Create a branch `feat/dark-mode` from `main`" |
+| Commit changes | "Implement X and commit to the current branch" |
+| Open a PR | "Open a GitHub PR for branch `feat/dark-mode` targeting `main`" |
+| Resolve conflicts | "Rebase `feat/x` onto `main` and resolve conflicts" |
+
+## Workspace configuration
+
+In your project settings, set the **Git root path** so the agent knows where the repo lives:
+
+```
+Settings → Project → Git root: /home/ubuntu/my-app
+```
+
+The agent uses this path for all git operations in that project.
+
+## Example: feature development loop
+
+```
+You: Add a dark mode toggle to the settings page.
+     Commit to a new branch and open a GitHub PR.
+
+Vectora:
+  ✓ Created branch feat/dark-mode
+  ✓ Added DarkModeToggle component in src/components/Settings.tsx
+  ✓ Wired toggle to useTheme hook
+  ✓ Committed: "feat: add dark mode toggle to settings page"
+  ✓ Pushed branch to origin
+  ✓ Opened PR #42: "feat: dark mode toggle" → main
+```
+
+## Authentication
+
+### GitHub via SSH
+
+```bash
+# On the server
+ssh-keygen -t ed25519 -C "vectora@your-domain.com"
+cat ~/.ssh/id_ed25519.pub  # Add to GitHub → Settings → SSH keys
+```
+
+### GitHub via token (HTTPS)
+
+```bash
+git config --global credential.helper store
+git clone https://github.com/your-org/repo.git
+# Enter: username + PAT when prompted — stored for future operations
+```
+
+## Caveats
+
+- The agent won't force-push to `main` or `master` unless explicitly asked.
+- Destructive operations (reset --hard, branch -D) require explicit confirmation in the chat.
+- For monorepos, set the Git root to the specific package root rather than the monorepo root to limit scope.

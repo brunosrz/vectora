@@ -1,0 +1,132 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Check, FolderGit2, FolderOpen, FolderPlus } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useT } from "@/lib/i18n";
+
+interface NewChatDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** `workspaceId === null` pede ao backend para criar um workspace dedicado. */
+  onConfirm: (workspaceId: string | null) => void;
+}
+
+/** Pede ao usuário um workspace para a nova conversa: reusar um existente ou
+ * deixar o backend criar um dedicado em `~/Documents/vectora/<thread_id>`. */
+export function NewChatDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: NewChatDialogProps) {
+  const t = useT();
+  const workspaces = useWorkspacesStore((s) => s.workspaces);
+  const activeId = useWorkspacesStore((s) => s.active_id);
+  const hydrate = useWorkspacesStore((s) => s.hydrate);
+
+  const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      void hydrate();
+      setSelected(activeId ?? null);
+    }
+  }, [open, hydrate, activeId]);
+
+  function handleConfirm() {
+    onConfirm(selected);
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("new_chat.dialog_title")}</DialogTitle>
+          <DialogDescription>{t("new_chat.dialog_desc")}</DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className="max-h-72">
+          <div className="space-y-1 pr-3">
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
+                selected === null
+                  ? "border-primary bg-primary/10"
+                  : "border-border hover:bg-muted/50"
+              }`}
+            >
+              <FolderPlus className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-foreground">
+                  {t("new_chat.create_new")}
+                </span>
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  {t("new_chat.create_new_desc")}
+                </span>
+              </span>
+              {selected === null && (
+                <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+              )}
+            </button>
+
+            {workspaces.length > 0 && (
+              <p className="px-1 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t("new_chat.existing_label")}
+              </p>
+            )}
+
+            {workspaces.map((ws) => (
+              <button
+                key={ws.id}
+                type="button"
+                onClick={() => setSelected(ws.id)}
+                className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
+                  selected === ws.id
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:bg-muted/50"
+                }`}
+              >
+                {ws.is_git_repo ? (
+                  <FolderGit2 className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                ) : (
+                  <FolderOpen className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-foreground truncate">
+                    {ws.name}
+                  </span>
+                  <span className="block text-xs text-muted-foreground truncate mt-0.5">
+                    {ws.cwd}
+                  </span>
+                </span>
+                {selected === ws.id && (
+                  <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t("new_chat.cancel")}
+          </Button>
+          <Button onClick={handleConfirm}>{t("new_chat.confirm")}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

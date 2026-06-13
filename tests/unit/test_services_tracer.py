@@ -1,4 +1,4 @@
-"""Tests for vectora/services/tracer.py
+"""Tests for src/services/tracer.py
 
 Cobre VectoraTracer sem APIs externas:
 - span() context manager: sucesso, erro, set()
@@ -18,7 +18,7 @@ import time
 
 import pytest
 
-from vectora.services.tracer import VectoraTracer, tracer
+from src.services.tracer import VectoraTracer, tracer
 
 
 @pytest.fixture
@@ -221,7 +221,7 @@ class TestSingleton:
 
     def test_two_imports_same_object(self):
         """Importações múltiplas devem retornar o mesmo objeto."""
-        from vectora.services.tracer import tracer as t2
+        from src.services.tracer import tracer as t2
 
         assert tracer is t2
 

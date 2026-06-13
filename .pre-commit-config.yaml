@@ -13,7 +13,8 @@ exclude: |
     yarn\.lock|
     coverage\..*|
     \.env.*|
-    \.venv/.*
+    \.venv/.*|
+     \.mjs.*
   )$
 
 repos:
@@ -21,7 +22,7 @@ repos:
   # UV Lock Validation
   # ==========================================
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.5.21
+    rev: 0.11.16
     hooks:
       - id: uv-lock
 
@@ -29,7 +30,7 @@ repos:
   # Basic File Validation
   # ==========================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         name: Trim Trailing Whitespace
@@ -60,10 +61,22 @@ repos:
         stages: [pre-commit]
 
   # ==========================================
+  # Python Syntax Check (stdlib compileall)
+  # Roda antes do ruff — rejeita SyntaxErrors imediatamente.
+  # ==========================================
+  - repo: local
+    hooks:
+      - id: compileall
+        name: Python Syntax (compileall)
+        entry: uv run python -m compileall -q -j0
+        language: system
+        types: [python]
+
+  # ==========================================
   # Python Validation
   # ==========================================
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.12
+    rev: v0.15.14
     hooks:
       - id: ruff
         name: Ruff Lint (Python)
@@ -77,7 +90,7 @@ repos:
   # TypeScript / JavaScript Validation
   # ==========================================
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
+    rev: v4.0.0-alpha.8
     hooks:
       - id: prettier
         name: Prettier
@@ -90,7 +103,7 @@ repos:
   # ==========================================
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
+    rev: v4.0.0-alpha.8
     hooks:
       - id: prettier
         name: Prettier (markdown + yaml)
@@ -99,17 +112,67 @@ repos:
         types_or: [text]
 
   # ==========================================
-  # Type Checking (Disabled in Pre-commit)
   # ==========================================
-  # Note: `ty` (Python type checker) is not integrated here due to:
-  # - Cannot resolve relative imports in vectora/ without manual PYTHONPATH configuration
-  # - Strict incompatibility with optional imports used for lazy-loading external libraries
-  # - Conflicts with LangGraph's TypedDict and State typing patterns
-  #
-  # For manual type validation, run:
-  #   PYTHONPATH=vectora uv run ty check vectora tests
-  #
-  # Type checking via mypy is handled per-file in ruff configuration
+  # Security & Vulnerability Scans
+  # ==========================================
+  - repo: local
+    hooks:
+      - id: bandit
+        name: Bandit Security Scan
+        entry: uv run bandit -s B110,B101 -c pyproject.toml
+        language: system
+        types: [python]
+
+  # ==========================================
+  # Type Checking — Python (Astral `ty`, full repo)
+  # ==========================================
+  # Substitui o antigo Pyright limitado a 2 pastas. `ty` é um type checker
+  # em Rust ~10x mais rápido que pyright/mypy e cobre tudo de uma vez.
+  - repo: local
+    hooks:
+      - id: ty
+        name: Type Check — Python (ty)
+        entry: uv run ty check src tests
+        language: system
+        types: [python]
+        pass_filenames: false
+
+  # ==========================================
+  # JS/TS Lint — oxlint (Rust, OXC toolchain)
+  # ==========================================
+  # ~50–100x mais rapido que ESLint; config em chat/.oxlintrc.json.
+  - repo: local
+    hooks:
+      - id: oxlint
+        name: JS/TS Lint (oxlint)
+        entry: pnpm --dir chat exec oxlint
+        language: system
+        files: ^chat/.*\.(ts|tsx|js|jsx|mjs|cjs)$
+        pass_filenames: false
+
+  # ==========================================
+  # Type Checking — TypeScript (tsc)
+  # ==========================================
+  # `pnpm --dir chat exec tsc` é cross-platform (Windows/Linux/macOS) e
+  # não depende de `bash` — sem dependência de WSL no Windows.
+  - repo: local
+    hooks:
+      - id: tsc
+        name: Type Check — TypeScript (tsc)
+        entry: pnpm --dir chat exec tsc --noEmit -p tsconfig.json
+        language: system
+        files: ^chat/.*\.(ts|tsx)$
+        pass_filenames: false
+
+  # ==========================================
+  # GitHub Actions Workflow Lint (actionlint)
+  # ==========================================
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+        name: Lint GitHub Actions workflows
+        files: ^\.github/workflows/.*\.ya?ml$
 
 ci:
   autofix_commit_msg: "chore: auto fixes from pre-commit hooks"

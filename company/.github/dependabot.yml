@@ -1,0 +1,52 @@
+version: 2
+updates:
+  # 📦 Atualizar dependências Python
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "brunosrz"
+    assignees:
+      - "brunosrz"
+    commit-message:
+      prefix: "📦 deps"
+      include: "scope"
+    allow:
+      - dependency-type: "direct"
+
+  # 🔐 Atualizar dependências de segurança
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "08:00"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    reviewers:
+      - "brunosrz"
+    assignees:
+      - "brunosrz"
+    commit-message:
+      prefix: "🔒 security"
+      include: "scope"
+
+  # 🔐 Atualizar dependências do GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: ".github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "brunosrz"
+    assignees:
+      - "brunosrz"
+    commit-message:
+      prefix: "🔐 ci"
+      include: "scope"

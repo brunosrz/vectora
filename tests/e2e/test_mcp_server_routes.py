@@ -16,13 +16,17 @@ import pytest
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(30)]
 
-# Nomes canônicos das 13 ferramentas expostas pelo servidor MCP
+# Nomes canônicos das 18 ferramentas expostas pelo servidor MCP
 EXPECTED_TOOL_NAMES = {
     "web_search_tool",
     "fetch_url_tool",
     "vector_search_tool",
     "embedding_tool",
     "ingest_docs_tool",
+    "manage_retriever_tool",
+    "workspace_describe_tool",
+    "workspace_list_tool",
+    "bucket_summary_tool",
     "file_read_tool",
     "file_write_tool",
     "file_edit_tool",
@@ -31,6 +35,7 @@ EXPECTED_TOOL_NAMES = {
     "terminal_tool",
     "call_mcp_tool_tool",
     "delegate_task_to_vectora",
+    "vectora_metrics",
 }
 
 
@@ -42,7 +47,7 @@ EXPECTED_TOOL_NAMES = {
 @pytest.fixture(scope="module")
 def server():
     """Importa e retorna o módulo do servidor MCP."""
-    from vectora.mcp import server as _server
+    from src.mcp import server as _server
 
     return _server
 
@@ -61,11 +66,11 @@ def mcp(server):
 class TestToolRegistration:
     """Verifica que todas as 13 ferramentas estão registradas no servidor."""
 
-    def test_exactly_13_tools_registered(self, mcp):
-        """O servidor MCP deve expor exatamente 13 ferramentas."""
+    def test_exactly_18_tools_registered(self, mcp):
+        """O servidor MCP deve expor exatamente 18 ferramentas."""
         tools = mcp._tool_manager.list_tools()
-        assert len(tools) == 13, (
-            f"Esperado 13 ferramentas, encontrado {len(tools)}: "
+        assert len(tools) == 18, (
+            f"Esperado 18 ferramentas, encontrado {len(tools)}: "
             f"{[t.name for t in tools]}"
         )
 
@@ -115,7 +120,7 @@ class TestToolDefensiveBehavior:
     async def test_file_read_nonexistent_returns_error_string(self, server):
         """file_read_tool com arquivo inexistente deve retornar string de erro."""
         result = await server.file_read_tool(
-            path="/nonexistent/path/file_xyz_e2e_test.txt"
+            file_path="/nonexistent/path/file_xyz_e2e_test.txt"
         )
         assert isinstance(result, str), "file_read_tool deve retornar string"
         assert len(result) > 0

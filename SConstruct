@@ -1,0 +1,336 @@
+"""
+Vectora — SConstruct (SCons build file)
+
+Uso (PowerShell / cmd, sem Git bash):
+    scons               → exibe ajuda
+    scons release       → build completo + instalador para o SO atual
+    scons release-win   → instalador Windows (.msi + .exe NSIS)
+    scons release-mac   → instalador macOS (.dmg universal)
+    scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
+    scons package       → build completo (chat + Nuitka + Electron) + instalador
+    scons tests         → suíte completa: pytest tests/ (unit + stress +
+                          integration + e2e) + coverage + vitest do chat
+    scons lint          → ruff + ty + tsc + oxlint
+    scons clean         → remove outputs de build
+
+Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock)
+Instalar SCons: pip install scons (ou uv add --dev scons)
+"""
+
+import glob
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+ROOT = Dir(".").abspath
+
+
+def _find_pnpm() -> str:
+    """Localiza pnpm, preferindo pnpm.cmd no Windows."""
+    if sys.platform == "win32":
+        for name in ("pnpm.cmd", "pnpm.exe", "pnpm"):
+            found = shutil.which(name)
+            if found:
+                return found
+    return shutil.which("pnpm") or "pnpm"
+
+
+PNPM = _find_pnpm()
+
+
+def _run(cmd: list[str], env: dict | None = None, cwd: str | None = None) -> None:
+    """Executa um comando, falha se o código de retorno for ≠ 0."""
+    merged = {**os.environ, **(env or {})}
+    print(f"\n>> {' '.join(str(c) for c in cmd)}")
+    result = subprocess.run(cmd, cwd=cwd or ROOT, env=merged)
+    if result.returncode != 0:
+        raise SystemExit(result.returncode)
+
+
+# ── Ações ─────────────────────────────────────────────────────────────────────
+
+
+def _action_build_chat(target, source, env):
+    """Build da SPA Vite em `chat/dist/`.
+
+    O FastAPI faz `StaticFiles.mount` apontando para esta pasta em prod
+    (extraída pelo Nuitka como `chat_static/`) ou diretamente para
+    `chat/dist/` em dev.
+    """
+    # `pnpm install` roda COM cwd=chat (não `--dir chat`): o `--dir` resolve as
+    # settings (ignoredBuiltDependencies p/ sharp) a partir do cwd do processo
+    # (a raiz, sem pnpm-workspace.yaml) → ERR_PNPM_IGNORED_BUILDS. Dentro de
+    # chat/, o pnpm lê chat/pnpm-workspace.yaml e o gate passa.
+    chat_dir = os.path.join(ROOT, "chat")
+    _run([PNPM, "install", "--frozen-lockfile"], cwd=chat_dir)
+    _run([PNPM, "build"], cwd=chat_dir)
+
+    dist = os.path.join(ROOT, "chat", "dist")
+    if not os.path.isdir(dist) or not os.path.isfile(os.path.join(dist, "index.html")):
+        raise SystemExit(
+            "ERRO: chat/dist/index.html não foi gerado. "
+            "Verifique a configuração do Vite em chat/vite.config.ts."
+        )
+    print(f">> chat dist pronto em {dist}")
+
+
+def _action_build_nuitka(target, source, env):
+    """Compila o launcher Python embutindo a SPA Vite como data dir.
+
+    `chat/dist/` é incluído como `chat_static/` no binário. Em runtime,
+    o FastAPI (src/api/server.py::_chat_static_root) localiza essa pasta
+    via `__compiled__.containing_dir` ou `NUITKA_ONEFILE_PARENT` e
+    serve via `StaticFiles`.
+    """
+    # Ferramentas de DEV que estão em [project.dependencies] (mypy, pytest,
+    # ruff, ty, bandit, pyright, coverage…) acabam no grafo de imports e fazem
+    # o Nuitka compilar MILHARES de arquivos C inúteis (o build chegava a 6600+
+    # arquivos, ~10% em 30 min). Nada disso roda em produção — `--nofollow-import-to`
+    # poda esses módulos do binário e corta o tempo de compilação drasticamente.
+    NUITKA_SKIP = [
+        "mypy",
+        "pytest",
+        "_pytest",
+        "coverage",
+        "bandit",
+        "ty",
+        "ruff",
+        "pyright",
+        "IPython",
+        "black",
+        "isort",
+    ]
+    cpu = os.cpu_count() or 4
+    # NOTA sobre plugins: `multiprocessing` e `anti-bloat` são "always enabled"
+    # no Nuitka 4.1.x — passá-los explicitamente só gera WARNING ("no need to
+    # enable it"). Por isso NÃO são listados aqui; continuam ativos por padrão.
+    cmd = [
+        "uv", "run", "nuitka",
+        "--mode=onefile",
+        "--include-data-dir=chat/dist=chat_static",
+        f"--jobs={cpu}",
+        "--output-filename=vectora",
+        "--output-dir=dist-nuitka",
+    ]
+    cmd += [f"--nofollow-import-to={mod}" for mod in NUITKA_SKIP]
+    cmd.append("src/launcher.py")
+    _run(cmd)
+
+
+def _action_install_desktop(target, source, env):
+    _run([PNPM, "--dir", "desktop", "install", "--frozen-lockfile"])
+
+
+def _action_build_desktop(target, source, env):
+    _run([PNPM, "--dir", "desktop", "build"])
+
+
+def _free_desktop_dist() -> None:
+    """Previne o erro 'app.asar já está sendo usado por outro processo'.
+
+    No Windows, uma instância zumbi do Vectora (ou do sidecar Nuitka) mantém
+    `dist-electron/win-unpacked/resources/app.asar` travado, fazendo o
+    electron-builder falhar no FIM do build — depois das ~2h de Nuitka. Mata
+    processos órfãos e remove o win-unpacked antes de reempacotar.
+    """
+    if sys.platform != "win32":
+        return
+    subprocess.run(  # noqa: S603 S607 — taskkill é builtin do Windows
+        ["taskkill", "/F", "/IM", "vectora.exe", "/T"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    unpacked = os.path.join(ROOT, "desktop", "dist-electron", "win-unpacked")
+    if os.path.isdir(unpacked):
+        shutil.rmtree(unpacked, ignore_errors=True)
+        print(">> limpou win-unpacked travado (lock prevention)")
+
+
+def _action_package(target, source, env, platform=""):
+    """Empaqueta com electron-builder ESCREVENDO FORA do repositório.
+
+    O watcher de arquivos do editor/IDE (e do processo host) trava o
+    ``win-unpacked/resources/app.asar`` no instante em que o electron-builder
+    o escreve DENTRO da árvore observada, fazendo o próprio electron-builder
+    falhar no ``EnsureEmptyDir`` ("app.asar já está sendo usado"). Buildar num
+    diretório externo elimina a corrida; ao final copiamos só os instaladores
+    de volta para ``desktop/dist-electron/`` (local usual, esperado pelo CI).
+    """
+    _free_desktop_dist()
+    out_dir = os.path.join(
+        os.environ.get("LOCALAPPDATA") or tempfile.gettempdir(),
+        "Vectora",
+        "dist-electron",
+    )
+    shutil.rmtree(out_dir, ignore_errors=True)
+    os.makedirs(out_dir, exist_ok=True)
+
+    # _build_desktop (dep) já rodou o tsc; chamamos o electron-builder direto
+    # (evita o `pnpm build` redundante do script `dist`) com o output externo.
+    flag = {"win": "--win", "mac": "--mac", "linux": "--linux"}.get(platform)
+    cmd = [PNPM, "--dir", "desktop", "exec", "electron-builder"]
+    if flag:
+        cmd.append(flag)
+    cmd.append(f"-c.directories.output={out_dir}")
+
+    # Assinatura: só quando há credenciais explícitas no ambiente (CI). Sem elas
+    # (build local), DESLIGAMOS a auto-descoberta de certificado — caso contrário
+    # o electron-builder vasculha o cert-store do Windows, acha qualquer cert e
+    # tenta assinar os sidecars, o que baixa o pacote legacy `winCodeSign-2.6.0`
+    # (com symlinks `darwin/*.dylib` que o 7za não consegue criar sem Modo de
+    # Desenvolvedor/admin) e aborta o build. Sem assinar, nada disso é baixado.
+    build_env: dict[str, str] = {}
+    has_signing_creds = any(
+        os.environ.get(k)
+        for k in ("CSC_LINK", "WIN_CSC_LINK", "CSC_KEY_PASSWORD", "MAC_CSC_LINK")
+    )
+    if not has_signing_creds:
+        build_env["CSC_IDENTITY_AUTO_DISCOVERY"] = "false"
+    _run(cmd, env=build_env or None)
+
+    # Copia só os instaladores finais de volta (não o win-unpacked/app.asar,
+    # que é justamente o que o watcher trava). Os .exe/.msi são artefatos
+    # fechados — copiá-los para dentro do repo depois do build é seguro.
+    dest = os.path.join(ROOT, "desktop", "dist-electron")
+    os.makedirs(dest, exist_ok=True)
+    patterns = (
+        "*.exe", "*.msi", "*.dmg", "*.AppImage", "*.deb", "*.rpm",
+        "latest*.yml", "*.blockmap",
+    )
+    copied: list[str] = []
+    for pat in patterns:
+        for f in glob.glob(os.path.join(out_dir, pat)):
+            shutil.copy2(f, dest)
+            copied.append(os.path.basename(f))
+    if copied:
+        print(f">> instaladores em {dest}:")
+        for name in copied:
+            print(f"     {name}")
+    else:
+        print(f">> build concluído em {out_dir} (nenhum instalador encontrado)")
+
+
+def _action_tests(target, source, env):
+    """Roda a suíte de testes COMPLETA: pytest tests/ + coverage + chat (vitest).
+
+    Inclui TODAS as pastas e markers — ``unit``, ``stress``, ``integration`` e
+    ``e2e``. As suítes ``integration`` e ``e2e`` exigem GOOGLE_API_KEY /
+    COHERE_API_KEY / gemini CLI no ambiente; sem essas chaves elas falham ou
+    são puladas pelos próprios testes (skip-with-reason).
+    """
+    _run([
+        "uv", "run", "pytest", "tests",
+        "--cov=src",
+        "--cov-report=term-missing:skip-covered",
+        "--cov-report=html:htmlcov",
+        "--tb=short",
+    ])
+    _run([PNPM, "--dir", "chat", "test"])
+
+
+def _action_lint(target, source, env):
+    _run(["uv", "run", "ruff", "check", "src", "tests"])
+    _run(["uv", "run", "ty", "check", "src", "tests"])
+    _run([PNPM, "--dir", "chat", "exec", "tsc", "--noEmit"])
+    _run([PNPM, "--dir", "chat", "exec", "oxlint"])
+
+
+def _action_clean(target, source, env):
+    for path in [
+        "dist-nuitka",
+        "chat/dist",
+        "chat/.next",
+        "chat/out",
+        "desktop/dist",
+        "desktop/dist-electron",
+    ]:
+        full = os.path.join(ROOT, path.replace("/", os.sep))
+        if os.path.exists(full):
+            shutil.rmtree(full)
+            print(f">> removido: {path}")
+
+
+def _action_help(target, source, env):
+    sys.stdout.write("""
+  Vectora -- alvos SCons
+
+  Produto final
+    scons release          build completo + instalador para o SO atual
+    scons release-win      instalador Windows (.msi + .exe NSIS)
+    scons release-mac      instalador macOS (.dmg universal)
+    scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
+
+  Build
+    scons package          build completo (chat + Nuitka + Electron) +
+                           instalador para o SO atual
+
+  Qualidade
+    scons tests            suíte completa: pytest tests/ (unit + stress +
+                           integration + e2e) + coverage + vitest do chat
+                           (integration e e2e exigem API keys)
+    scons lint             ruff + ty + tsc + oxlint
+    scons clean            remove todos os outputs de build
+""")
+    sys.stdout.flush()
+
+
+# ── Alvos SCons ───────────────────────────────────────────────────────────────
+
+env = Environment(ENV=os.environ)
+
+# Desabilita a varredura implícita de dependências — somos nós que controlamos.
+env.Decider("timestamp-match")
+
+
+def _node(name: str, action, deps: list | None = None):
+    """Nó de build INTERNO (sem alias público) — usado só como dependência."""
+    t = env.Command(f"_{name}", deps or [], action)
+    env.AlwaysBuild(t)
+    return t
+
+
+def _cmd(name: str, action, deps: list | None = None):
+    """Cria um target PHONY público (chamável por `scons <name>`)."""
+    t = env.Command(f"_{name}", deps or [], action)
+    env.AlwaysBuild(t)
+    env.Alias(name, t)
+    return t
+
+
+# Passos de build — internos, não aparecem no menu nem são chamáveis direto.
+# O usuário usa `scons package` (ou `scons release*`), que encadeia tudo.
+_build_chat    = _node("build-chat",    _action_build_chat)
+_build_nuitka  = _node("build-nuitka",  _action_build_nuitka,    deps=[_build_chat])
+_inst_desktop  = _node("install-desktop", _action_install_desktop)
+_build_desktop = _node("build-desktop", _action_build_desktop,   deps=[_inst_desktop])
+
+# Build completo do SO atual: chat (Vite) + Nuitka onefile + Electron TS +
+# electron-builder. `package` e `release` fazem o mesmo; releases por plataforma
+# passam o alvo (`win`/`mac`/`linux`) ao electron-builder.
+_FULL_DEPS = [_build_chat, _build_nuitka, _build_desktop]
+_package   = _cmd("package",       lambda target, source, env: _action_package(target, source, env),
+                  deps=_FULL_DEPS)
+
+# Releases por plataforma
+_rel_win   = _cmd("release-win",   lambda target, source, env: _action_package(target, source, env, "win"),
+                   deps=_FULL_DEPS)
+_rel_mac   = _cmd("release-mac",   lambda target, source, env: _action_package(target, source, env, "mac"),
+                   deps=_FULL_DEPS)
+_rel_linux = _cmd("release-linux", lambda target, source, env: _action_package(target, source, env, "linux"),
+                   deps=_FULL_DEPS)
+_release   = _cmd("release",       lambda target, source, env: _action_package(target, source, env),
+                   deps=_FULL_DEPS)
+
+# Qualidade
+_cmd("tests", _action_tests)
+_cmd("lint",  _action_lint)
+_cmd("clean", _action_clean)
+_cmd("help",  _action_help)
+
+# Default: exibe ajuda
+Default(env.Command("_default", [], _action_help))

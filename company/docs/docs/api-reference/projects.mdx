@@ -1,0 +1,85 @@
+---
+id: projects
+title: Projects
+sidebar_position: 5
+---
+
+# Projects API
+
+## List projects
+
+```http
+GET /v1/projects
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "proj_01jxxxxxxxxxx",
+      "name": "Engineering",
+      "description": "Internal engineering documentation and codebase Q&A",
+      "document_count": 42,
+      "conversation_count": 128,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+## Create a project
+
+```http
+POST /v1/projects
+```
+
+```json
+{
+  "name": "Legal",
+  "description": "Contract review and legal research",
+  "system_prompt": "You are a legal research assistant. Always cite sources and note that you are not a lawyer.",
+  "settings": {
+    "rag_top_k": 10,
+    "rerank": true,
+    "web_search": false
+  }
+}
+```
+
+## Update a project
+
+```http
+PATCH /v1/projects/{project_id}
+```
+
+Accepts any subset of the create payload fields.
+
+## Delete a project
+
+```http
+DELETE /v1/projects/{project_id}
+```
+
+:::warning Irreversible
+Deletes all conversations, documents, and knowledge base data for the project. This cannot be undone.
+:::
+
+## Project members
+
+### List members
+```http
+GET /v1/projects/{project_id}/members
+```
+
+### Add member
+```http
+POST /v1/projects/{project_id}/members
+```
+```json
+{ "user_id": "usr_xxx", "role": "editor" }
+```
+
+### Remove member
+```http
+DELETE /v1/projects/{project_id}/members/{user_id}
+```

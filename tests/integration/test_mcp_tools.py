@@ -54,20 +54,20 @@ class TestMcpServerConfig:
 
     def test_mcp_instance_importable(self):
         """O objeto `mcp` (FastMCP) deve ser importável."""
-        from vectora.mcp.server import mcp
+        from src.mcp.server import mcp
 
         assert mcp is not None
         assert hasattr(mcp, "name")
 
     def test_mcp_server_name(self):
         """O servidor deve se chamar 'Vectora'."""
-        from vectora.mcp.server import mcp
+        from src.mcp.server import mcp
 
         assert mcp.name == "Vectora"
 
     def test_tool_functions_importable(self):
         """Todas as 13 funções de tool devem ser importáveis."""
-        from vectora.mcp.server import (
+        from src.mcp.server import (
             call_mcp_tool_tool,
             embedding_tool,
             fetch_url_tool,
@@ -100,13 +100,13 @@ class TestMcpServerConfig:
 
     def test_delegate_function_importable(self):
         """A função delegate_task_to_vectora deve ser importável."""
-        from vectora.mcp.server import delegate_task_to_vectora
+        from src.mcp.server import delegate_task_to_vectora
 
         assert callable(delegate_task_to_vectora)
 
     def test_tool_timeouts_configured(self):
         """TOOL_TIMEOUTS deve ter entradas para todas as tools principais."""
-        from vectora.mcp.server import TOOL_TIMEOUTS
+        from src.mcp.server import TOOL_TIMEOUTS
 
         expected = {
             "web_search",
@@ -158,7 +158,7 @@ class TestMcpFileTools:
 
     async def test_file_read_tool_reads_existing_file(self, project_tmp_dir):
         """file_read_tool deve ler um arquivo dentro do projeto."""
-        from vectora.mcp.server import file_read_tool
+        from src.mcp.server import file_read_tool
 
         test_file = project_tmp_dir / "test_mcp.txt"
         test_file.write_text("Conteudo de teste MCP", encoding="utf-8")
@@ -168,7 +168,7 @@ class TestMcpFileTools:
 
     async def test_file_write_and_read_roundtrip(self, project_tmp_dir):
         """file_write_tool escreve e file_read_tool lê de volta (dentro do projeto)."""
-        from vectora.mcp.server import file_read_tool, file_write_tool
+        from src.mcp.server import file_read_tool, file_write_tool
 
         test_file = project_tmp_dir / "roundtrip.txt"
         content = "Teste de roundtrip write-read"
@@ -183,13 +183,13 @@ class TestMcpFileTools:
         """list_dir_tool deve listar diretório do projeto sem erros."""
         from pathlib import Path
 
-        from vectora.mcp.server import list_dir_tool
+        from src.mcp.server import list_dir_tool
 
         project_root = Path(__file__).parent.parent.parent
         monkeypatch.chdir(project_root)
 
         result = await list_dir_tool(".")
-        # Deve listar arquivos do projeto (pyproject.toml, vectora/, etc.)
+        # Deve listar arquivos do projeto (pyproject.toml, src/, etc.)
         assert len(result) > 0
         assert "Error: Access denied" not in result or "pyproject" in result.lower()
 
@@ -197,14 +197,14 @@ class TestMcpFileTools:
         """grep_tool deve encontrar padrão em arquivo do projeto."""
         from pathlib import Path
 
-        from vectora.mcp.server import grep_tool
+        from src.mcp.server import grep_tool
 
         project_root = Path(__file__).parent.parent.parent
         monkeypatch.chdir(project_root)
 
         result = await grep_tool(
             pattern="VectoraTracer",
-            path="vectora/services/tracer.py",
+            path="src/services/tracer.py",
         )
         assert "VectoraTracer" in result or len(result) > 0
 
@@ -222,7 +222,7 @@ class TestMcpWebTools:
         monkeypatch.setenv("ENABLE_WEB_SEARCH", "false")
         # Reimportar settings para pegar o env var mockado
         # (o teste valida o comportamento do tool com search desabilitado)
-        from vectora.tools.web import web_search
+        from src.tools.web import web_search
 
         result = await web_search.ainvoke({"query": "test"})
         assert (
@@ -234,7 +234,7 @@ class TestMcpWebTools:
     @REQUIRES_TAVILY
     async def test_web_search_tool_returns_results(self):
         """web_search_tool deve retornar resultados quando configurado."""
-        from vectora.mcp.server import web_search_tool
+        from src.mcp.server import web_search_tool
 
         result = await web_search_tool("Python programming language")
         # Pode ser JSON de resultados ou erro — não deve ser vazio
@@ -242,7 +242,7 @@ class TestMcpWebTools:
 
     async def test_fetch_url_tool_invalid_url(self):
         """fetch_url_tool deve rejeitar URLs inválidas."""
-        from vectora.mcp.server import fetch_url_tool
+        from src.mcp.server import fetch_url_tool
 
         result = await fetch_url_tool("not-a-url")
         assert "Error" in result or "Erro" in result or "http" in result.lower()
@@ -258,7 +258,7 @@ class TestMcpRagTools:
 
     async def test_vector_search_tool_empty_collection(self):
         """vector_search_tool em coleção inexistente → resposta de no_results ou error."""
-        from vectora.mcp.server import vector_search_tool
+        from src.mcp.server import vector_search_tool
 
         result = await vector_search_tool(
             query="inexistent query xyz123",
@@ -272,7 +272,11 @@ class TestMcpRagTools:
     @REQUIRES_COHERE
     async def test_embedding_tool_enqueues(self):
         """embedding_tool deve enfileirar documento (fire-and-forget)."""
+<<<<<<< HEAD
         from vectora.mcp.server import embedding_tool
+=======
+        from src.mcp.server import embedding_tool
+>>>>>>> dev
 
         result = await embedding_tool(
             text="Texto de teste para embedding MCP",
@@ -305,8 +309,8 @@ class TestMcpProtocol:
             / "python"
         )
         if venv_python.exists():
-            return [str(venv_python), "-m", "vectora.mcp.server"]
-        return ["python", "-m", "vectora.mcp.server"]
+            return [str(venv_python), "-m", "src.mcp.server"]
+        return ["python", "-m", "src.mcp.server"]
 
     def _send_jsonrpc(self, proc, method: str, params: dict, req_id: int = 1) -> dict:
         """Envia request JSON-RPC e lê resposta."""

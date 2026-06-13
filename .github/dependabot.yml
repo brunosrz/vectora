@@ -1,7 +1,7 @@
 version: 2
 updates:
-  # 📦 Atualizar dependências Python
-  - package-ecosystem: "pip"
+  # 📦 Atualizar dependências Python (lock via uv.lock)
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
@@ -18,8 +18,8 @@ updates:
     allow:
       - dependency-type: "direct"
 
-  # 🔐 Atualizar dependências de segurança
-  - package-ecosystem: "pip"
+  # 🔐 Atualizar dependências de segurança (lock via uv.lock)
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "daily"
@@ -35,9 +35,9 @@ updates:
       prefix: "🔒 security"
       include: "scope"
 
-  # 🔐 Atualizar dependências do GitHub Actions
+  # 🔐 Atualizar dependências do GitHub Actions (workflows + composite actions)
   - package-ecosystem: "github-actions"
-    directory: ".github/workflows"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"

@@ -1,4 +1,4 @@
-"""Tests for vectora/nodes/base.py"""
+"""Tests for src/nodes/base.py"""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
-from vectora.nodes.base import build_messages, invoke_llm, sanitize_for_gemini
-from vectora.state import Document, State
+from src.nodes.base import build_messages, invoke_llm, sanitize_for_gemini
+from src.state import Document, State
 
 # ---------------------------------------------------------------------------
 # sanitize_for_gemini
@@ -53,9 +53,9 @@ class TestBuildMessages:
     async def test_returns_list_with_system_message(self):
         state: State = {
             "messages": [HumanMessage(content="oi")],
-            "session_metadata": {"thread_id": 1},
+            "session_metadata": {"thread_id": "1"},
         }
-        with patch("vectora.nodes.base.get_memory_store") as mock_store:
+        with patch("src.nodes.base.get_memory_store") as mock_store:
             store = AsyncMock()
             store.get_all.return_value = []
             mock_store.return_value = store
@@ -70,7 +70,7 @@ class TestBuildMessages:
             "messages": [HumanMessage(content="test")],
             "session_metadata": {},
         }
-        with patch("vectora.nodes.base.get_memory_store") as mock_store:
+        with patch("src.nodes.base.get_memory_store") as mock_store:
             store = AsyncMock()
             store.get_all.return_value = []
             mock_store.return_value = store
@@ -86,7 +86,7 @@ class TestBuildMessages:
             "session_metadata": {},
             "rag_docs": docs,
         }
-        with patch("vectora.nodes.base.get_memory_store") as mock_store:
+        with patch("src.nodes.base.get_memory_store") as mock_store:
             store = AsyncMock()
             store.get_all.return_value = []
             mock_store.return_value = store
@@ -117,7 +117,7 @@ class TestInvokeLlm:
         llm = MagicMock()
         llm.astream = fake_astream
 
-        with patch("vectora.nodes.base.get_memory_store") as mock_store:
+        with patch("src.nodes.base.get_memory_store") as mock_store:
             store = AsyncMock()
             store.get_all.return_value = []
             mock_store.return_value = store
@@ -141,7 +141,7 @@ class TestInvokeLlm:
         llm = MagicMock()
         llm.astream = fake_astream_error
 
-        with patch("vectora.nodes.base.get_memory_store") as mock_store:
+        with patch("src.nodes.base.get_memory_store") as mock_store:
             store = AsyncMock()
             store.get_all.return_value = []
             mock_store.return_value = store

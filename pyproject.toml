@@ -4,14 +4,27 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vectora-agent"
+<<<<<<< HEAD
 version = "0.1.0rc4"
 description = "Vectora - Advanced AI Assistant with RAG and MCP capabilities"
+=======
+version = "0.1.0"
+description = "Vectora - Advanced AI Assistant"
+>>>>>>> dev
 readme = "README.md"
-license = {text = "Apache-2.0"}
 authors = [{name = "Bruno Soares", email = "bruno.soarxz@gmail.com"}]
-requires-python = ">=3.14"
+requires-python = ">=3.13"
+# `Private :: Do Not Upload` impede `twine upload`/`uv publish` acidental.
+classifiers = [
+    "Private :: Do Not Upload",
+]
 
 dependencies = [
+<<<<<<< HEAD
+=======
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+>>>>>>> dev
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",
     "langchain>=1.3.1",
@@ -33,10 +46,15 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "langsmith>=0.8.5",
     "deepagents>=0.6.3",
+<<<<<<< HEAD
+=======
+    "textual>=0.83",
+>>>>>>> dev
     "dotfiles>=0.6.5",
     "ast-serialize>=0.3.0",
     "librt>=0.11.0",
     "pathspec>=1.1.1",
+    "watchdog>=4.0",
     "langchain-text-splitters>=1.1.2",
     "tiktoken>=0.13.0",
     "langchain-cohere>=0.5.1",
@@ -56,20 +74,52 @@ dependencies = [
     "mypy>=2.1.0",
     "bandit>=1.9.4",
     "types-python-dateutil",
+    "pyright>=1.1.409",
+    "argon2-cffi>=23.1",
+    "python-jose[cryptography]>=3.3",
+    "pynacl>=1.5",
+    "slowapi>=0.1.9",
+    "keyring>=25.0",
+    "pykeepass>=4.1",
+    "gitpython>=3.1.50",
+    "httpx>=0.28",
+    "pywinpty>=2.0 ; sys_platform == 'win32'",
+    "ptyprocess>=0.7 ; sys_platform != 'win32'",
+    "asyncssh>=2.18",
+    "nuitka[all]>=4.1.2",
+    "scons>=4.10.1",
+    "send2trash>=2.1.0",
+    "redis[hiredis]>=5.0",
+    "asyncpg>=0.29",
+    "langchain-redis>=0.2",
+    "langchain-qdrant>=0.2",
+    "qdrant-client[fastembed]>=1.12",
+    "langchain-openai>=0.3",
+    "langchain-anthropic>=0.3",
+    "langchain-google-genai>=2.0",
+    "fakeredis>=2.26",
 ]
 
 [project.scripts]
+<<<<<<< HEAD
 vectora = "vectora.main:run"
+=======
+vectora = "src.main:run"
+>>>>>>> dev
 
 [tool.hatch.build.targets.wheel]
-packages = ["vectora"]
+packages = ["src"]
+exclude = ["chat"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["chat"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"vectora/config/defaults.env" = "defaults.env"
+"src/defaults.env" = "src/defaults.env"
 
 [tool.ruff]
 line-length = 88
-target-version = "py314"
+target-version = "py313"
 fix = true
 show-fixes = true
 indent-width = 4
@@ -100,27 +150,45 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["ANN201", "ANN001", "ANN202", "ANN003", "ARG001", "ARG002", "S101", "S108", "N806", "RUF003"]
+# Tests usam credenciais fake (S105/6/7), asserts compostos (PT018), fixtures
+# sem valor (PT019), *args sem anotação (ANN002) e fakes que retornam self em
+# __aenter__ (PYI034) — todos idiomáticos em suíte de testes.
+"tests/**/*.py" = ["ANN201", "ANN001", "ANN202", "ANN003", "ANN002", "ARG001", "ARG002", "S101", "S105", "S106", "S107", "S108", "N806", "RUF003", "PT018", "PT019", "PYI034"]
 "tests/e2e/**/*.py" = ["S603", "S607", "PLW1510"]
 "tests/integration/**/*.py" = ["S603", "PLW1510"]
 "check_coverage.py" = ["S603", "PLW1510", "PLW2901", "B007"]
 "run_coverage.py" = ["S603", "PLW1510", "RUF005"]
-"vectora/tools/*.py" = ["PLR0911", "S602"]
-"vectora/agents/*.py" = ["PLR0911"]
-"vectora/nodes/engine.py" = ["E501"]
-"vectora/nodes/base.py" = ["PLR0911"]
-"vectora/ui/setup_wizard.py" = ["S603", "RUF006"]
-"vectora/services/checkpoint.py" = ["N802"]
+"src/tools/*.py" = ["PLR0911", "S602"]
+"src/agents/*.py" = ["PLR0911"]
+"src/nodes/engine.py" = ["E501"]
+"src/nodes/base.py" = ["PLR0911"]
+"src/ui/setup_wizard.py" = ["S603", "RUF006"]
+"src/services/checkpoint.py" = ["N802"]
+# Wizard interativo de CLI: input() bloqueante é o comportamento correto (nada
+# mais roda no loop durante o prompt).
+"src/main.py" = ["ASYNC250"]
+# Nomes de tabela vêm de _SQLITE_TABLES hardcoded (não user input); asserts de
+# narrowing de tipo em script de migração. SIM118/SIM401: as linhas operam
+# sobre sqlite3.Row (não dict) — `.keys()` é obrigatório e `.get()` não existe.
+"src/storage/migrations/data_migration.py" = ["S608", "S101", "SIM118", "SIM401"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
 
+# ─── ty (Astral type checker) ──────────────────────────────────────────────────
+[tool.ty.src]
+exclude = []
+
+[tool.bandit]
+exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py"]
+skips = ["B110", "B101"]
+
 [tool.pyright]
 typeCheckingMode = "standard"
-pythonVersion = "3.14"
-include = ["vectora", "tests"]
+pythonVersion = "3.13"
+include = ["src", "tests"]
 exclude = ["**/venv", "**/.venv", "**/env", "**/.env", "**/node_modules", "**/__pycache__"]
 venv = ".venv"
 venvPath = "."
@@ -131,12 +199,28 @@ addopts = "-s --color=yes --tb=short"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+timeout = 120  # LanceDB background threads demoram ~30s para fechar
 filterwarnings = [
     # asyncio.iscoroutinefunction está deprecado em Python 3.12 e será removido no futuro.
     # Esses avisos vêm de libs externas (cohere-sdk, langchain-core) — não do nosso código.
     # Suprimir até que as libs atualizem para inspect.iscoroutinefunction().
     "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:cohere",
     "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:langchain_core",
+    # ── Deprecações de libs externas que não controlamos ──────────────────────
+    # FastAPI/Starlette TestClient ainda usa httpx clássico (será httpx2).
+    "ignore:Using .httpx. with .starlette.testclient. is deprecated:Warning",
+    # google-genai herda de aiohttp.ClientSession (apenas "discouraged").
+    "ignore:Inheritance class AiohttpClientSession from ClientSession is discouraged:DeprecationWarning",
+    # deepagents <0.6 ainda avisa sobre virtual_mode default em chamadas internas.
+    "ignore:.*virtual_mode.* default will change:Warning",
+    # ── Ruído de teardown de testes (não é bug do produto) ────────────────────
+    # aiosqlite fecha sua thread worker após o event loop do teste encerrar;
+    # a exceção "Event loop is closed" é capturada pelo pytest como warning.
+    "ignore::pytest.PytestUnhandledThreadExceptionWarning",
+    # Conexões sqlite efêmeras coletadas pelo GC durante os testes (mocks/pydantic).
+    "ignore::ResourceWarning",
+    # Coroutines criadas dentro de mocks/streams de teste que não são aguardadas.
+    "ignore:coroutine .* was never awaited:RuntimeWarning",
 ]
 markers = [
     "e2e: testes end-to-end com APIs reais (requer env vars e gemini CLI)",

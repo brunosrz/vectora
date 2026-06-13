@@ -55,10 +55,10 @@ uv run vectora
 uv run pytest tests/unit/ -v
 
 # Check linting
-uv run ruff check vectora/
+uv run ruff check src/
 
 # Check types
-uv run ty check vectora/
+uv run ty check src/
 
 # Start the chat locally
 uv run vectora chat
@@ -181,7 +181,7 @@ from pydantic import BaseModel
 from rich.panel import Panel
 
 # 3. local
-from vectora.config.settings import settings
+from vectora.settings import settings
 from vectora.services.security import is_safe_file_path
 ```
 
@@ -206,7 +206,7 @@ async def call_llm(state: State, config: RunnableConfig) -> dict:
 ## Project Structure
 
 ```
-vectora/
+src/
 ├── agent.py          # AgentManager — main orchestrator
 ├── graph.py          # LangGraph graph builder
 ├── state.py          # TypedDict State
@@ -238,7 +238,7 @@ git checkout -b feat/my-feature
 ### 2. Commits — Conventional Commits (required)
 
 ```bash
-git add vectora/tools/new_tool.py
+git add src/tools/new_tool.py
 git commit -m "feat: add new_tool for X"
 ```
 
@@ -265,9 +265,9 @@ Bandit         → security scan
 If a hook fails, fix the error, `git add` again, then re-commit:
 
 ```bash
-uv run ruff check vectora/ --fix
-uv run ruff format vectora/
-git add vectora/
+uv run ruff check src/ --fix
+uv run ruff format src/
+git add src/
 git commit -m "feat: my feature"
 ```
 
@@ -282,10 +282,10 @@ gh pr create --title "feat: my feature" --body "Description..."
 
 ## Adding a New Tool
 
-1. Create in `vectora/tools/<category>.py` with the `@tool` decorator
-2. Add to `vectora/tools/__init__.py` (imports + `__all__`)
-3. Register in `vectora/mcp/server.py` as `@mcp.tool()` with a timeout
-4. Update `vectora/config/settings.py` if a feature flag is needed
+1. Create in `src/tools/<category>.py` with the `@tool` decorator
+2. Add to `src/tools/__init__.py` (imports + `__all__`)
+3. Register in `src/mcp/server.py` as `@mcp.tool()` with a timeout
+4. Update `src/settings.py` if a feature flag is needed
 5. Write tests in `tests/unit/test_tools_<category>.py`
 6. Update `docs/MVP_SCOPE.md` and `README.md`
 
@@ -293,10 +293,10 @@ gh pr create --title "feat: my feature" --body "Description..."
 
 ## Adding a New LangGraph Node
 
-1. Implement the node function in `vectora/nodes/engine.py`
-2. Register in the builder in `vectora/graph.py` with `builder.add_node()`
+1. Implement the node function in `src/nodes/engine.py`
+2. Register in the builder in `src/graph.py` with `builder.add_node()`
 3. Add edges (`add_edge` or `add_conditional_edges`)
-4. Update `State` in `vectora/state.py` if the node needs a new field
+4. Update `State` in `src/state.py` if the node needs a new field
 5. Write tests in `tests/integration/test_graph_execution.py`
 
 ---

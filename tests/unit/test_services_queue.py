@@ -1,11 +1,11 @@
-"""Tests for vectora/services/queue.py"""
+"""Tests for src/services/queue.py"""
 
 from __future__ import annotations
 
 import pytest
 
-import vectora.services.queue as _queue_mod
-from vectora.services.queue import EmbeddingQueue, get_embedding_queue
+import src.services.queue as _queue_mod
+from src.services.queue import EmbeddingQueue, get_embedding_queue
 
 _DSN = "sqlite+aiosqlite:///:memory:"
 

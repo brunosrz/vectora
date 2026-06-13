@@ -1,0 +1,42 @@
+name: "Setup Python + uv"
+description: >-
+  Configura Python na versão do projeto, instala o uv com cache nativo e
+  sincroniza as dependências. Centraliza o boilerplate que antes era repetido
+  em todos os jobs do runner.yml.
+
+inputs:
+  python-version:
+    description: "Versão do Python (deve casar com requires-python / Nuitka)."
+    required: true
+  all-extras:
+    description: "Se 'true', roda uv sync --all-extras (toolchain de dev/testes)."
+    required: false
+    default: "true"
+  sync:
+    description: "Se 'false', só prepara o uv sem rodar uv sync (jobs que não precisam de deps)."
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install uv (cache nativo keyed em uv.lock)
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Sync dependencies
+      if: ${{ inputs.sync == 'true' }}
+      shell: bash
+      run: |
+        if [ "${{ inputs.all-extras }}" = "true" ]; then
+          uv sync --frozen --all-extras
+        else
+          uv sync --frozen
+        fi

@@ -1,0 +1,101 @@
+# Referência das flags Nuitka usadas pelo SCons (build-nuitka) e CI
+# (runner.yml / release-native job).
+#
+# ATENÇÃO: Nuitka 4.x NÃO lê este arquivo diretamente. Ele existe como
+# documentação centralizada das opções. O comando real está em:
+#   SConstruct → _action_build_nuitka
+#   .github/workflows/runner.yml → step "Build Nuitka onefile"
+#
+# Comando equivalente:
+#
+#   uv run nuitka \
+#     --mode=onefile \
+#     --include-data-dir=chat/dist=chat_static \
+#     --enable-plugin=multiprocessing \
+#     --enable-plugin=anti-bloat \
+#     --output-filename=vectora \
+#     --output-dir=dist-nuitka \
+#     src/launcher.py
+#
+# Em CI (matrix Win/macOS/Linux), o runner.yml executa isto após
+# `pnpm --dir chat build` para garantir que `chat/dist/` existe (a SPA Vite).
+# O FastAPI localiza esse data dir em runtime via `__compiled__.containing_dir`
+# ou `NUITKA_ONEFILE_PARENT` e serve via `StaticFiles`.
+
+[main]
+# Entry point — o Launcher (T.12.1) faz o gate de licença e delega para
+# `src.main` que toca o CLI tradicional (chat/mcp/headless/desktop).
+script = "src/launcher.py"
+output_filename = "vectora"
+
+# Onefile: binário único auto-extraível. Standalone seria mais rápido para
+# subir mas distribuímos via instalador (T.12.6), então onefile vence.
+standalone = true
+onefile = true
+
+# Otimizações
+follow_imports = true
+remove_output = true
+assume_yes_for_downloads = true
+
+# Plugins Nuitka necessários para o stack do Vectora.
+plugins = [
+    "numpy",
+    "multiprocessing",
+    "anti-bloat",
+]
+
+# Plugins excluídos — modulos que aparecem por dep transitiva mas nunca
+# rodam em prod.
+disable_plugins = [
+    "tk-inter",
+]
+
+# Empacota a SPA Vite (chat/dist/) como data dir. O FastAPI
+# (src/api/server.py::_chat_static_root) localiza essa pasta em runtime
+# via __compiled__.containing_dir ou NUITKA_ONEFILE_PARENT e a serve via
+# StaticFiles. Antes de rodar nuitka: pnpm --dir chat build.
+include_data_dirs = [
+    "chat/dist=chat_static",
+]
+
+# Deps com extensões C que precisam ser empacotadas explicitamente. Ajustar
+# por SO conforme o build CI for validando.
+include_package_data = [
+    "lancedb",
+    "pyarrow",
+    "tantivy",
+    "pykeepass",
+    "asyncssh",
+]
+
+# Os imports lazy do langchain/langgraph dao falso negativo no scanner do
+# Nuitka — forcamos a inclusao para evitar ImportError em runtime.
+include_module = [
+    "langchain_cohere",
+    "langchain_openai",
+    "langchain_anthropic",
+    "langchain_google_genai",
+    "langchain_tavily",
+    "langchain_mcp_adapters",
+    "langgraph.checkpoint.sqlite.aio",
+]
+
+# Reducao de tamanho — strip de simbolos C em release.
+strip = true
+lto = "yes"
+
+# Plataforma — Nuitka detecta sozinho, mas reportamos para o build matrix.
+[platform.win32]
+windows_disable_console = false
+windows_company_name = "Vectora Company"
+windows_product_name = "Vectora"
+windows_file_description = "Vectora — AI-first development assistant"
+windows_icon_from_ico = "chat/public/vectora.ico"
+
+[platform.darwin]
+macos_create_app_bundle = false
+macos_signed_app_name = "com.vectora.cli"
+
+[platform.linux]
+linux_icon = "chat/public/favicon-600x600.png"

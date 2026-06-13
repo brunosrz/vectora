@@ -1,0 +1,96 @@
+---
+id: installation
+title: Installation
+sidebar_position: 1
+---
+
+# Installation
+
+Vectora ships as a single Docker image. All you need is a Linux server with Docker installed.
+
+## Requirements
+
+| Component | Minimum | Recommended |
+|---|---|---|
+| CPU | 2 vCPU | 4+ vCPU |
+| RAM | 4 GB | 8 GB |
+| Disk | 20 GB | 50 GB SSD |
+| OS | Ubuntu 22.04+ / Debian 12+ | Ubuntu 24.04 |
+| Docker | 24+ | Latest |
+
+:::info
+Vectora uses **LanceDB** for vector storage (embedded, no external service needed) and can use any LLM provider — local models like Ollama, or cloud providers like Google Gemini, OpenAI, Anthropic, etc.
+:::
+
+## 1. Get your token
+
+Sign up at [vectora.company/signup](https://vectora.company/signup) and start your 30-day free trial. After creating your account, go to the **Dashboard → Token** section and reveal your `VECTORA_TOKEN`.
+
+:::warning Store it safely
+The token is shown **once only**. Copy it before closing the modal — you can always rotate it if you lose it.
+:::
+
+## 2. Download docker-compose.yml
+
+```bash
+curl -fsSL https://vectora.company/install/docker-compose.yml -o docker-compose.yml
+```
+
+Or create it manually:
+
+```yaml title="docker-compose.yml"
+services:
+  vectora:
+    image: ghcr.io/vectora-company/vectora:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"   # web UI + API
+      - "9090:9090"   # MCP server (stdio over HTTP)
+    volumes:
+      - vectora_data:/app/data
+      - vectora_lancedb:/app/lancedb
+    environment:
+      VECTORA_TOKEN: "${VECTORA_TOKEN}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-google-genai}"
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      COHERE_API_KEY: "${COHERE_API_KEY}"   # required for RAG embeddings
+      LOG_LEVEL: "INFO"
+
+volumes:
+  vectora_data:
+  vectora_lancedb:
+```
+
+## 3. Create your .env file
+
+```bash title=".env"
+VECTORA_TOKEN=vct_live_xxxxxxxxxxxxxxxxxxxx
+
+# LLM provider — pick one
+LLM_PROVIDER=google-genai
+GOOGLE_API_KEY=AIza...
+
+# Required for RAG (Cohere free tier works)
+COHERE_API_KEY=...
+```
+
+## 4. Start Vectora
+
+```bash
+docker compose up -d
+```
+
+Vectora will be available at `http://localhost:8080` (or your server's IP/domain).
+
+## 5. Verify
+
+```bash
+curl http://localhost:8080/health
+# → {"status":"ok","version":"x.y.z","license":"valid"}
+```
+
+## Next steps
+
+→ [Quick start](/getting-started/quick-start) — create your root account and send your first message
+→ [Self-hosting guide](/self-hosting/requirements) — configure HTTPS with Nginx/Traefik

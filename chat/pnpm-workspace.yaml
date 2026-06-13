@@ -1,0 +1,20 @@
+# Configuração do pnpm 11 para o pacote `chat`.
+#
+# IMPORTANTE: o pnpm 11 REMOVEU `onlyBuiltDependencies` e `ignoredBuiltDependencies`
+# e os substituiu por `allowBuilds` (mapa pacote -> bool). Pacotes com build script
+# que NÃO estão listados aqui são bloqueados por padrão e, com `strictDepBuilds`
+# (default), o `pnpm install` aborta com ERR_PNPM_IGNORED_BUILDS. Por isso cada
+# dependência com postinstall nativo precisa de uma decisão explícita abaixo.
+allowBuilds:
+  # esbuild baixa/instala seu binário nativo no postinstall — o Vite depende dele.
+  esbuild: true
+  # sharp é transitivo (vite-plugin-pwa) e NÃO é usado em chat/src. `false` é uma
+  # decisão explícita de não rodar o build nativo — limpa o ERR_PNPM_IGNORED_BUILDS
+  # sem compilar nada (prebuilt @img/sharp-* nem é baixado).
+  sharp: false
+
+# Deprecação upstream aceita conscientemente: glob@11.1.0 é puxado transitivamente
+# por workbox-build@7.4.1 (via vite-plugin-pwa) só em build-time para gerar o
+# service worker. O mantenedor do glob deprecou os majors < 13, mas o glob 13 tem
+# breaking changes que o workbox-build@7.x não suporta — forçar override quebraria
+# a build da PWA. É só um aviso de deprecação (não falha o build), então não silenciamos.

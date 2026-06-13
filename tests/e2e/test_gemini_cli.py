@@ -54,21 +54,29 @@ REQUIRES_GEMINI_CLI = pytest.mark.skipif(
     reason="gemini CLI não instalado ou não encontrado em PATH",
 )
 
-GEMINI_SETTINGS_PATH = Path.home() / ".gemini" / "settings.json"
+# Arquivo de configuração MCP do projeto — settings.json na raiz do projeto.
+# Foi renomeado de .mcp.json para settings.json para ser legível por clientes
+# MCP que esperam esse nome (incluindo o Gemini CLI no modo projeto).
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+GEMINI_SETTINGS_PATH = _PROJECT_ROOT / "settings.json"
 
 
 def _gemini_has_vectora_mcp() -> bool:
-    """Verifica se ~/.gemini/settings.json tem vectora em mcpServers."""
+    """Verifica se settings.json (projeto) tem vectora em mcpServers.
+
+    A chave do servidor é case-insensitive: aceita "vectora" ou "Vectora".
+    """
     try:
         data = json.loads(GEMINI_SETTINGS_PATH.read_text(encoding="utf-8"))
-        return "vectora" in data.get("mcpServers", {})
+        servers = data.get("mcpServers", {})
+        return any(k.lower() == "vectora" for k in servers)
     except Exception:
         return False
 
 
 REQUIRES_MCP_CONFIG = pytest.mark.skipif(
     not _gemini_has_vectora_mcp(),
-    reason="~/.gemini/settings.json não tem vectora em mcpServers",
+    reason="settings.json (projeto) não tem vectora em mcpServers",
 )
 
 
@@ -109,13 +117,13 @@ class TestGeminiCliConfig:
     """Verifica a configuração do Gemini CLI + vectora-mcp."""
 
     def test_gemini_settings_file_exists(self):
-        """~/.gemini/settings.json deve existir."""
+        """settings.json na raiz do projeto deve existir."""
         assert GEMINI_SETTINGS_PATH.exists(), (
             f"Arquivo não encontrado: {GEMINI_SETTINGS_PATH}"
         )
 
     def test_gemini_settings_has_mcp_servers_section(self):
-        """~/.gemini/settings.json deve ter a seção mcpServers."""
+        """settings.json deve ter a seção mcpServers."""
         assert GEMINI_SETTINGS_PATH.exists(), "settings.json não existe"
         data = json.loads(GEMINI_SETTINGS_PATH.read_text(encoding="utf-8"))
         assert "mcpServers" in data, (
@@ -124,29 +132,55 @@ class TestGeminiCliConfig:
         )
 
     def test_gemini_settings_has_vectora_server(self):
-        """~/.gemini/settings.json deve ter vectora em mcpServers."""
+        """settings.json deve ter vectora em mcpServers (case-insensitive)."""
         assert _gemini_has_vectora_mcp(), (
             "vectora não encontrado em mcpServers. "
             f"Conteúdo atual: {GEMINI_SETTINGS_PATH.read_text()}"
         )
 
     def test_vectora_mcp_command_configured_correctly(self):
-        """O comando do vectora MCP deve usar `uv run vectora-mcp`."""
+        """O comando MCP deve iniciar o servidor MCP do vectora.
+
+        O único entry-point do pacote é 'vectora' (vectora.main:run).
+        Para iniciar o servidor MCP, o subcomando correto é 'server mcp'.
+        Formatos aceitos:
+          - command='vectora', args=['server', 'mcp', ...]
+          - command='uv', args=[..., 'vectora', 'server', 'mcp', ...]
+        """
         data = json.loads(GEMINI_SETTINGS_PATH.read_text(encoding="utf-8"))
-        vectora_config = data.get("mcpServers", {}).get("vectora", {})
+        # Busca a entrada vectora de forma case-insensitive
+        servers = data.get("mcpServers", {})
+        vectora_key = next((k for k in servers if k.lower() == "vectora"), None)
+        assert vectora_key is not None, "vectora não encontrado em mcpServers"
+        vectora_config = servers[vectora_key]
 
         assert "command" in vectora_config, "vectora não tem campo 'command'"
-        assert vectora_config["command"] == "uv", (
-            f"Comando esperado: 'uv', encontrado: '{vectora_config['command']}'"
+        cmd = vectora_config["command"]
+        args = vectora_config.get("args", [])
+
+        # Formato canônico: command="vectora", args=["server", "mcp", ...]
+        # Também aceita via uv: command="uv", args=[..., "vectora", "server", "mcp", ...]
+        is_canonical = (
+            cmd == "vectora"
+            and len(args) >= 2
+            and args[0] == "server"
+            and args[1] == "mcp"
         )
-        assert "vectora-mcp" in vectora_config.get("args", []), (
-            f"'vectora-mcp' não encontrado em args: {vectora_config.get('args')}"
+        is_uv = cmd == "uv" and "vectora" in args and "server" in args and "mcp" in args
+        assert is_canonical or is_uv, (
+            f"Comando inválido: '{cmd}' args={args}. "
+            "Esperado: command='vectora' args=['server', 'mcp', ...] "
+            "ou command='uv' com 'vectora', 'server' e 'mcp' nos args."
         )
 
     def test_vectora_mcp_project_path_exists(self):
-        """O caminho do projeto na configuração MCP deve existir."""
+        """O caminho do projeto na configuração MCP deve existir (quando especificado)."""
         data = json.loads(GEMINI_SETTINGS_PATH.read_text(encoding="utf-8"))
-        args = data.get("mcpServers", {}).get("vectora", {}).get("args", [])
+        servers = data.get("mcpServers", {})
+        vectora_key = next((k for k in servers if k.lower() == "vectora"), None)
+        if vectora_key is None:
+            return
+        args = servers[vectora_key].get("args", [])
 
         # Procura --project <path> nos args
         project_path = None
@@ -224,7 +258,7 @@ class TestGeminiCallsVectora:
         """Após chamada MCP do Gemini, o Vectora deve ter gravado traces."""
         import asyncio
 
-        from vectora.services.tracer import tracer
+        from src.services.tracer import tracer
 
         # Trigger uma chamada ao Vectora via Gemini
         prompt = (
@@ -309,7 +343,7 @@ class TestVectoraMcpServerDirectly:
             / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
         )
         if venv_python.exists():
-            return [str(venv_python), "-m", "vectora.mcp.server"]
+            return [str(venv_python), "-m", "src.mcp.server"]
         return ["uv", "run", "--project", str(project_dir), "vectora-mcp"]
 
     def _send_rpc(
@@ -369,27 +403,29 @@ class TestVectoraMcpServerDirectly:
             proc.stdin.flush()
 
             import select
+            import threading
             import time
 
-            # Aguarda até 10s por resposta
-            deadline = time.time() + 10
-            response_line = ""
-            while time.time() < deadline:
-                if sys.platform != "win32":
-                    ready, _, _ = select.select([proc.stdout], [], [], 1.0)
-                    if ready:
-                        response_line = proc.stdout.readline()
-                        break
-                else:
-                    # Windows: tenta ler com poll
-                    import io
+            # Lê a primeira linha do stdout com timeout — compatível com Windows.
+            # readline() é bloqueante em todos os sistemas, incluindo Windows onde
+            # select() não funciona em pipes. Usamos uma thread daemon para não travar.
+            def _readline_with_timeout(stream, timeout: float) -> str:
+                result: list[str] = []
 
+                def _read() -> None:
                     try:
-                        response_line = proc.stdout.readline()
-                        if response_line:
-                            break
+                        line = stream.readline()
+                        result.append(line or "")
                     except Exception:
-                        time.sleep(0.5)
+                        result.append("")
+
+                t = threading.Thread(target=_read, daemon=True)
+                t.start()
+                t.join(timeout=timeout)
+                return result[0] if result else ""
+
+            # Aguarda até 10s por resposta
+            response_line = _readline_with_timeout(proc.stdout, timeout=10)
 
             # O processo não deve ter crashado
             assert (
@@ -425,8 +461,10 @@ class TestVectoraMcpServerDirectly:
         )
 
         if venv_python:
+            # O wheel empacota o código como `src` (pyproject packages=["src"]),
+            # então o módulo real é src.mcp.server — não vectora.mcp.server.
             result = subprocess.run(
-                [venv_python, "-c", "from vectora.mcp.server import mcp; print('OK')"],
+                [venv_python, "-c", "from src.mcp.server import mcp; print('OK')"],
                 capture_output=True,
                 text=True,
                 timeout=20,

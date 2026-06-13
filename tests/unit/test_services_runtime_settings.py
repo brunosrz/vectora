@@ -1,4 +1,4 @@
-"""Tests for vectora/services/runtime_settings.py"""
+"""Tests for src/services/runtime_settings.py"""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vectora.services.runtime_settings import RuntimeSettings
+from src.services.runtime_settings import RuntimeSettings
 
 # ---------------------------------------------------------------------------
 # Fixtures

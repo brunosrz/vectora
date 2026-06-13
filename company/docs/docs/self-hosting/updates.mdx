@@ -1,0 +1,67 @@
+---
+id: updates
+title: Updating Vectora
+sidebar_position: 4
+---
+
+# Updating Vectora
+
+Vectora uses semantic versioning (`MAJOR.MINOR.PATCH`). Patch releases are always safe to apply; minor and major releases include migration notes.
+
+## Zero-downtime update procedure
+
+1. **Check the changelog** — read [release notes](/changelog) before updating
+2. **Backup your data** — always before updating
+3. **Pull the new image** — `docker compose pull`
+4. **Restart** — `docker compose up -d`
+5. **Migrations run automatically** on startup
+
+```bash
+# Full update script
+cd /opt/vectora
+
+# 1. Backup
+docker run --rm \
+  -v vectora_data:/data -v $(pwd):/backup \
+  alpine tar czf /backup/pre-update-$(date +%Y%m%d-%H%M).tar.gz /data
+
+# 2. Pull new image
+docker compose pull
+
+# 3. Restart (applies migrations automatically)
+docker compose up -d
+
+# 4. Verify
+docker compose ps
+curl http://localhost:8080/health
+```
+
+## Rollback
+
+If something goes wrong after an update:
+
+```bash
+# Pin to the previous version
+docker compose down
+# Edit docker-compose.yml: change `latest` to the previous tag (e.g., `1.2.3`)
+docker compose up -d
+```
+
+Check available tags at [ghcr.io/vectora-company/vectora](https://github.com/vectora-company/vectora/pkgs/container/vectora).
+
+## Automatic updates (optional)
+
+Use [Watchtower](https://containrrr.dev/watchtower/) for automatic updates:
+
+```yaml title="docker-compose.yml"
+services:
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 86400 --cleanup vectora  # check daily, only update vectora
+```
+
+:::caution
+Automatic updates can apply breaking changes without warning. We recommend manual updates for production deployments — always read the changelog first.
+:::

@@ -1,10 +1,10 @@
-"""Tests for vectora/state.py"""
+"""Tests for src/state.py"""
 
 from __future__ import annotations
 
 from langchain_core.messages import HumanMessage
 
-from vectora.state import Document, State
+from src.state import Document, State
 
 
 def test_document_required_fields():

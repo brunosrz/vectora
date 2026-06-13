@@ -1,0 +1,21 @@
+"""Services Layer: Domain-specific business logic without UI dependencies.
+
+Each service encapsulates one responsibility domain and can be tested in isolation.
+All services depend only on Settings and standard library/third-party packages.
+
+Services:
+- SessionService: Session lifecycle management
+- TelemetryService: Logging and audit trails
+- Security (module): Security validation utilities (is_safe_* functions)
+
+Nota: Embeddings são gerenciados por BackgroundEmbeddingWorker (services/background.py),
+iniciado via async_lifespan() em services/utils.py. Não há mais EmbeddingService aqui.
+"""
+
+from src.services.session import SessionService
+from src.services.telemetry import TelemetryService
+
+__all__ = [
+    "SessionService",
+    "TelemetryService",
+]

@@ -1,0 +1,131 @@
+---
+id: cli
+title: CLI Reference
+sidebar_position: 0
+---
+
+# CLI Reference
+
+The `vectora` CLI is the primary way to manage your Vectora installation.
+
+## Installation
+
+```bash
+pip install vectora
+```
+
+Or with pipx (recommended for isolation):
+
+```bash
+pipx install vectora
+```
+
+Verify:
+
+```bash
+vectora --version
+```
+
+## Global flags
+
+| Flag | Description |
+|---|---|
+| `--url <url>` | Vectora server URL (overrides `VECTORA_BASE_URL`) |
+| `--token <token>` | API key (overrides `VECTORA_API_KEY`) |
+| `--project <id>` | Default project for commands |
+| `--json` | Output as JSON (machine-readable) |
+| `--quiet` | Suppress non-essential output |
+| `--help` | Show help for a command |
+
+## Commands
+
+### `vectora setup`
+
+Interactive first-time setup. Sets server URL, token, and default project.
+
+```bash
+vectora setup
+```
+
+Config is saved to `~/.config/vectora/config.toml`.
+
+### `vectora chat`
+
+Start an interactive chat session.
+
+```bash
+vectora chat
+vectora chat --project proj_abc123
+vectora chat --message "Explain auth.py" --no-interactive
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--project` | Default project | Project to query |
+| `--message` | — | One-shot message (non-interactive) |
+| `--no-stream` | false | Wait for full response before printing |
+| `--model` | server default | Override LLM model |
+
+### `vectora index`
+
+Index files or directories into a project.
+
+```bash
+vectora index ./docs
+vectora index ./docs --project proj_abc123 --recursive --ext md,pdf,txt
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--project` | Default project | Target project |
+| `--recursive` | false | Recurse into subdirectories |
+| `--ext` | all supported | Comma-separated extensions to include |
+| `--concurrency` | 4 | Parallel upload workers |
+
+### `vectora documents`
+
+Manage indexed documents.
+
+```bash
+vectora documents list --project proj_abc123
+vectora documents delete --id doc_xyz
+vectora documents status --id doc_xyz
+```
+
+### `vectora projects`
+
+```bash
+vectora projects list
+vectora projects create --name "My Project"
+vectora projects delete --id proj_abc123
+```
+
+### `vectora version`
+
+```bash
+vectora version
+```
+
+Prints current version and available update.
+
+### `vectora export` / `vectora import`
+
+See [Data Migration](/guides/data-migration).
+
+### `vectora config`
+
+```bash
+vectora config show          # Print current config
+vectora config set key value # Set a config value
+vectora config reset         # Reset to defaults
+```
+
+## Environment variables
+
+| Variable | Description |
+|---|---|
+| `VECTORA_BASE_URL` | Server URL |
+| `VECTORA_API_KEY` | API key |
+| `VECTORA_PROJECT_ID` | Default project ID |
+| `VECTORA_NO_UPDATE` | Disable auto-update check |
+| `NO_COLOR` | Disable colored output |

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "Vectora": {
+      "command": "vectora",
+      "args": ["server", "mcp", "--transport", "stdio"]
+    }
+  }
+}

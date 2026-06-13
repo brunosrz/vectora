@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Support (email)
+    url: mailto:support@vectora.company
+    about: For billing, licensing, or account issues — email us directly.
+  - name: Docs
+    url: https://docs.vectora.company
+    about: Check the documentation first — your question may already be answered.
+  - name: Discord (coming soon)
+    url: https://vectora.company/support
+    about: Community chat and Q&A.

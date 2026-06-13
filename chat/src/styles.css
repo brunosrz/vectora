@@ -1,0 +1,161 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =============================================================================
+   Tokens de design — Vectora
+   Arquitetura:
+     :root         → valores do tema escuro (padrão)
+     .light        → overrides do tema claro
+     @theme inline → publica os vars como tokens Tailwind reativos
+   ============================================================================= */
+
+/* ── Tema escuro (padrão) — paleta "Min Dark" (miguelsolorio.min-theme) ────── */
+:root {
+  --background: #1f1f1f;
+  --foreground: #d4d4d4;
+
+  --muted: #262626;
+  --muted-foreground: #9e9e9e;
+
+  --card: #1a1a1a;
+  --card-foreground: #d4d4d4;
+
+  --popover: #1a1a1a;
+  --popover-foreground: #d4d4d4;
+
+  --secondary: #2a2a2a;
+  --secondary-foreground: #d4d4d4;
+
+  --accent: #2a2a2a;
+  --accent-foreground: #d4d4d4;
+
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+
+  /* Destaque — azul do Min Dark, exclusivo para CTAs, seleção ativa, foco. */
+  --primary: #79b8ff;
+  --primary-foreground: #0a0a0a;
+  --ring: #79b8ff;
+
+  /* Erro / destrutivo. */
+  --destructive: #f97583;
+  --destructive-foreground: #1a1a1a;
+
+  color-scheme: dark;
+}
+
+/* ── Tema claro — paleta "Min Light" (miguelsolorio.min-theme) ─────────────── */
+.light {
+  --background: #ffffff;
+  --foreground: #424242;
+
+  --muted: #f0f0f0;
+  --muted-foreground: #757575;
+
+  --card: #f6f6f6;
+  --card-foreground: #424242;
+
+  --popover: #ffffff;
+  --popover-foreground: #424242;
+
+  --secondary: #eeeeee;
+  --secondary-foreground: #424242;
+
+  --accent: #eeeeee;
+  --accent-foreground: #424242;
+
+  --border: #e9e9e9;
+  --input: #e9e9e9;
+
+  /* Azul do Min Light para contraste sobre fundo claro. */
+  --primary: #1976d2;
+  --primary-foreground: #ffffff;
+  --ring: #1976d2;
+
+  --destructive: #d32f2f;
+  --destructive-foreground: #ffffff;
+
+  color-scheme: light;
+}
+
+/* ── Publicar vars como tokens Tailwind reativos ─────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius: 0.5rem;
+
+  --font-aeonik-mono:
+    "JetBrains Mono", ui-monospace, "Cascadia Code", Menlo, Monaco, monospace;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--border);
+  }
+
+  html,
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      "Noto Sans",
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  /* Acessibilidade: respeita `prefers-reduced-motion`. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

@@ -1,0 +1,107 @@
+---
+id: acp-server
+title: ACP Server
+sidebar_position: 5
+---
+
+# ACP Server
+
+Vectora implements the [Agent Communication Protocol (ACP)](https://agentcommunicationprotocol.dev), allowing it to act as a sub-agent in multi-agent systems.
+
+## What is ACP?
+
+ACP is a protocol for inter-agent communication. Unlike MCP (which connects tools to a single model), ACP enables AI agents to delegate tasks to other specialized agents, passing context and receiving structured responses.
+
+## Use cases
+
+- Use Vectora as a **knowledge retrieval agent** in a larger LangChain or AutoGen pipeline.
+- Call Vectora from Zed's agent mode to search your codebase.
+- Chain multiple specialized agents: Vectora handles RAG, another handles code execution.
+
+## Endpoint
+
+```
+POST https://your-vectora-domain.com/acp/run
+Authorization: Bearer vk_live_...
+Content-Type: application/json
+```
+
+## Request format
+
+```json
+{
+  "agent": "vectora",
+  "input": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "What does the auth middleware do?"
+      }
+    ]
+  },
+  "project_id": "proj_abc123",
+  "stream": false
+}
+```
+
+## Response format
+
+```json
+{
+  "run_id": "run_abc123",
+  "status": "completed",
+  "output": {
+    "messages": [
+      {
+        "role": "assistant",
+        "content": "The auth middleware validates JWT tokens..."
+      }
+    ]
+  },
+  "usage": {
+    "input_tokens": 1240,
+    "output_tokens": 380
+  }
+}
+```
+
+## Streaming
+
+Set `"stream": true` to receive an SSE stream of partial responses:
+
+```
+data: {"type":"text_delta","delta":"The auth "}
+data: {"type":"text_delta","delta":"middleware "}
+data: {"type":"run_completed","run_id":"run_abc123"}
+```
+
+## Calling from LangChain
+
+```python
+from langchain_core.tools import tool
+import httpx
+
+@tool
+def vectora_search(query: str, project_id: str) -> str:
+    """Search Vectora knowledge base."""
+    resp = httpx.post(
+        "https://your-vectora.com/acp/run",
+        headers={"Authorization": f"Bearer {VECTORA_API_KEY}"},
+        json={
+            "agent": "vectora",
+            "input": {"messages": [{"role": "user", "content": query}]},
+            "project_id": project_id,
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()["output"]["messages"][-1]["content"]
+```
+
+## Calling from Zed
+
+See [IDE Integration → Zed section](/guides/ide-integration#zed-acp-server).
+
+## Authentication
+
+The ACP server uses the same API keys as the REST API. Scope required: `read` (for queries) or `write` (for indexing + agent tasks).

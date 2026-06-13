@@ -1,0 +1,32 @@
+allowBuilds:
+  "@sentry/cli": true
+  esbuild: true
+  unrs-resolver: true
+
+# Deprecações upstream aceitas conscientemente: a família react-email
+# (@react-email/components e seus componentes granulares) foi deprecada pelos
+# mantenedores durante a migração para o pacote unificado, mas o `latest` no
+# npm AINDA É a versão deprecada (1.0.12) — não há upgrade estável. Os pacotes
+# funcionam (build verde); só os usamos para renderizar os templates de email
+# em emails/*.tsx. Silenciar os warnings aqui evita ruído sem mascarar nada.
+allowedDeprecatedVersions:
+  "@react-email/components": "1.0.12"
+  "@react-email/body": "*"
+  "@react-email/button": "*"
+  "@react-email/code-block": "*"
+  "@react-email/code-inline": "*"
+  "@react-email/column": "*"
+  "@react-email/container": "*"
+  "@react-email/font": "*"
+  "@react-email/head": "*"
+  "@react-email/heading": "*"
+  "@react-email/hr": "*"
+  "@react-email/html": "*"
+  "@react-email/img": "*"
+  "@react-email/link": "*"
+  "@react-email/markdown": "*"
+  "@react-email/preview": "*"
+  "@react-email/row": "*"
+  "@react-email/section": "*"
+  "@react-email/tailwind": "*"
+  "@react-email/text": "*"

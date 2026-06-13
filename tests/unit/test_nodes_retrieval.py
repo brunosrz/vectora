@@ -1,4 +1,4 @@
-"""Tests for vectora/nodes/retrieval.py"""
+"""Tests for src/nodes/retrieval.py"""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import HumanMessage
 
-from vectora.nodes.retrieval import _rerank, retrieval_node
-from vectora.state import Document, State
+from src.nodes.retrieval import _rerank, retrieval_node
+from src.state import Document, State
 
 
 def _state(query="test query") -> State:
@@ -29,7 +29,11 @@ class TestRetrievalNode:
     @pytest.mark.asyncio
     async def test_no_results_returns_empty(self):
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.rag_subgraph._call_vector_search_all",
+=======
+            "src.nodes.rag_subgraph._call_vector_search_all",
+>>>>>>> dev
             new_callable=AsyncMock,
         ) as mock_vs:
             mock_vs.return_value = []
@@ -43,11 +47,15 @@ class TestRetrievalNode:
             Document(page_content="doc2", metadata={}, relevance_score=0.7),
         ]
         with patch(
+<<<<<<< HEAD
             "vectora.nodes.rag_subgraph._call_vector_search_all",
+=======
+            "src.nodes.rag_subgraph._call_vector_search_all",
+>>>>>>> dev
             new_callable=AsyncMock,
         ) as mock_vs:
             with patch(
-                "vectora.nodes.retrieval._rerank", new_callable=AsyncMock
+                "src.nodes.retrieval._rerank", new_callable=AsyncMock
             ) as mock_rerank:
                 mock_vs.return_value = docs
                 mock_rerank.return_value = docs
@@ -68,7 +76,7 @@ class TestRerank:
     @pytest.mark.asyncio
     async def test_no_api_key_returns_docs_unchanged(self):
         docs = self._docs(2)
-        with patch("vectora.config.settings.settings") as mock_settings:
+        with patch("src.settings.settings") as mock_settings:
             mock_settings.get_cohere_api_key.return_value = None
             result = await _rerank(docs, "query")
         assert result is docs
@@ -94,7 +102,7 @@ class TestRerank:
         mock_reranker = MagicMock()
         mock_reranker.compress_documents.return_value = reranked_lc
 
-        from vectora.config.settings import settings as real_settings
+        from src.settings import settings as real_settings
 
         original_key = real_settings.cohere_api_key
         try:
@@ -114,7 +122,7 @@ class TestRerank:
         mock_reranker = MagicMock()
         mock_reranker.compress_documents.side_effect = Exception("Cohere API error")
 
-        from vectora.config.settings import settings as real_settings
+        from src.settings import settings as real_settings
 
         original_key = real_settings.cohere_api_key
         try:

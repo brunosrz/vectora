@@ -1,4 +1,4 @@
-"""Tests for vectora/mcp/server.py
+"""Tests for src/mcp/server.py
 
 Cobre as funções testáveis sem exigir conexão MCP real:
 - _with_timeout: timeout, sucesso, erro
@@ -19,7 +19,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Importar módulo uma única vez — tem side effects de nível módulo (logging, FastMCP)
-import vectora.mcp.server as srv
+import src.mcp.server as srv
 
 # ---------------------------------------------------------------------------
 # _with_timeout
@@ -132,7 +132,11 @@ class TestGetServerStatus:
         assert data["server"] == "Vectora"
         assert data["status"] == "ready"
         assert "capabilities" in data
+<<<<<<< HEAD
         assert data["tools_count"] == 14
+=======
+        assert data["tools_count"] == 18
+>>>>>>> dev
         assert data["resources_count"] == 4
 
     @pytest.mark.asyncio
@@ -156,7 +160,7 @@ class TestGetThreadContext:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(return_value=None)
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_context("999")
 
         data = json.loads(result)
@@ -179,7 +183,7 @@ class TestGetThreadContext:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(return_value=state_values)
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_context("1")
 
         data = json.loads(result)
@@ -193,7 +197,7 @@ class TestGetThreadContext:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(side_effect=RuntimeError("db error"))
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_context("1")
 
         data = json.loads(result)
@@ -213,7 +217,7 @@ class TestGetThreadHistory:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(return_value=None)
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_history("999")
 
         data = json.loads(result)
@@ -235,7 +239,7 @@ class TestGetThreadHistory:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(return_value=state_values)
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_history("1")
 
         data = json.loads(result)
@@ -249,7 +253,7 @@ class TestGetThreadHistory:
         mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
         mock_checkpointer.aget = AsyncMock(side_effect=Exception("boom"))
 
-        with patch("vectora.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch("src.mcp.server.Checkpointer", return_value=mock_checkpointer):
             result = await srv.get_thread_history("1")
 
         data = json.loads(result)
@@ -467,19 +471,20 @@ class TestRun:
         mock_run.assert_called_once_with(transport="stdio")
 
     def test_run_sse_transport(self):
-        """run() com MCP_TRANSPORT=sse chama mcp.run(transport='sse')."""
+        """run() com MCP_TRANSPORT=sse chama _run_sse_with_heartbeat (D2)."""
         with (
             patch.dict(
                 "os.environ",
                 {"MCP_TRANSPORT": "sse", "MCP_HOST": "127.0.0.1", "MCP_PORT": "9000"},
                 clear=False,
             ),
-            patch.object(srv.mcp, "run") as mock_run,
+            patch.object(srv, "_run_sse_with_heartbeat") as mock_heartbeat,
             patch("rich.console.Console"),
         ):
             srv.run()
 
-        mock_run.assert_called_once_with(transport="sse")
+        # D2: SSE agora usa _run_sse_with_heartbeat em vez de mcp.run(transport="sse")
+        mock_heartbeat.assert_called_once_with(srv.mcp, "127.0.0.1", 9000)
 
     def test_run_keyboard_interrupt_exits_0(self):
         """KeyboardInterrupt durante mcp.run() → sys.exit(0)."""

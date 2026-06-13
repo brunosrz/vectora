@@ -86,6 +86,24 @@
     "**/dist": true,
     "**/build": true,
     "**/.next": true
+<<<<<<< HEAD
+=======
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.venv/**": true,
+    "**/__pycache__/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/dist-electron/**": true,
+    "**/dist-nuitka/**": true,
+    "**/win-unpacked/**": true,
+    "**/desktop/dist/**": true,
+    "**/chat/dist/**": true,
+    "**/.output/**": true,
+    "**/htmlcov/**": true
+>>>>>>> dev
   },
   "editor.mouseWheelZoom": true,
   "editor.autoIndentOnPaste": true,
@@ -119,5 +137,9 @@
   "security.promptForLocalFileProtocolHandling": false,
   "python.languageServer": "Default",
   "python.terminal.activateEnvironment": false,
+<<<<<<< HEAD
+=======
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+>>>>>>> dev
   "workbench.colorTheme": "Min Dark"
 }

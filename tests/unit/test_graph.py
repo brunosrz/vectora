@@ -1,37 +1,54 @@
-"""Tests for vectora/graph.py"""
+"""Tests for graph routing and topology."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import pytest
+<<<<<<< HEAD
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END
 
 from vectora.graph import _orchestrator_route, build_graph
+=======
+from langgraph.constants import END
+
+from src.agents.orchestrator import _orchestrator_route
+>>>>>>> dev
 
 if TYPE_CHECKING:
-    from vectora.state import State
+    from src.state import State
 
 
-def test_build_graph_compiles():
-    checkpointer = MemorySaver()
-    graph = build_graph(checkpointer)
+@pytest.mark.asyncio
+async def test_build_graph_compiles():
+    from src.graph import get_user_agent
+
+    graph = await get_user_agent("test-graph-compile")
     assert graph is not None
 
 
-def test_graph_has_expected_nodes():
-    checkpointer = MemorySaver()
-    graph = build_graph(checkpointer)
+@pytest.mark.asyncio
+async def test_graph_has_expected_nodes():
+    from src.graph import get_user_agent
+
+    graph = await get_user_agent("test-graph-nodes")
     nodes = set(graph.nodes.keys())
     expected = {
         "orchestrator",
         "search",
         "coder",
-        "rag_subgraph",
         "process_retrieval",
+        "rag_expand_query",
+        "rag_retrieve",
+        "rag_decide_node",
+        "rag_rerank",
+        "rag_inject",
     }
     assert expected.issubset(nodes)
+    assert "rag_subgraph" not in nodes
+    assert "rag_websearch" not in nodes
+    assert "rag_search_audit" not in nodes
 
 
 class TestOrchestratorRoute:
@@ -47,8 +64,13 @@ class TestOrchestratorRoute:
     def test_coder_routes_to_coder(self):
         assert _orchestrator_route(self._state("coder")) == "coder"
 
+<<<<<<< HEAD
     def test_rag_routes_to_rag_subgraph(self):
         assert _orchestrator_route(self._state("rag")) == "rag_subgraph"
+=======
+    def test_rag_routes_to_rag_expand_query(self):
+        assert _orchestrator_route(self._state("rag")) == "rag_expand_query"
+>>>>>>> dev
 
     def test_none_defaults_to_end(self):
         state: State = {"messages": [], "session_metadata": {}}

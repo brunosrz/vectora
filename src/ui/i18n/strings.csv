@@ -1,0 +1,218 @@
+key,en,es,pt-BR
+# =============================================================================
+# Vectora TUI — translation strings
+#
+# Formato: key,en,es,pt-BR — espelha chat/lib/i18n/strings.csv.ts (key,en,es,pt)
+# Resolução em __init__.py::t(): runtime_settings.language -> en -> chave.
+# Interpolação: {var}  ex.: t("tui.session.current", id=thread_id)
+# Linhas iniciando com # são comentários (ignoradas pelo parser).
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# /help — texto completo do comando de ajuda
+# ---------------------------------------------------------------------------
+tui.help.title,Available commands:,Comandos disponibles:,Comandos disponíveis:
+tui.help.cmd.help,This help,Esta ayuda,Esta ajuda
+tui.help.cmd.new,New session,Nueva sesión,Nova sessão
+tui.help.cmd.clear,Clear messages,Limpiar mensajes,Limpar mensagens
+tui.help.cmd.session,Switch session,Cambiar de sesión,Trocar de sessão
+tui.help.cmd.sessions,List recent sessions,Listar sesiones recientes,Listar sessões recentes
+tui.help.cmd.model_list,List available models,Listar modelos disponibles,Listar modelos disponíveis
+tui.help.cmd.model_set,Switch model,Cambiar de modelo,Trocar modelo
+tui.help.cmd.debug_show,Show current verbosity level,Ver nivel de verbosidad actual,Ver nível de verbosidade atual
+tui.help.cmd.debug_set,"Set verbosity (0=Silent, 5=Full)","Definir verbosidad (0=Silencio, 5=Full)","Definir verbosidade (0=Silêncio, 5=Full)"
+tui.help.cmd.rag,RAG pipeline status,Estado del pipeline RAG,Status do pipeline RAG
+tui.help.cmd.traces,Latest agent traces,Últimos traces del agente,Últimos traces do agente
+tui.help.cmd.workspaces,List workspaces,Listar workspaces,Listar workspaces
+tui.help.cmd.quit,Quit,Salir,Sair
+
+# ---------------------------------------------------------------------------
+# Popup de autocomplete (SLASH_COMMANDS)
+# ---------------------------------------------------------------------------
+tui.popup.cmd.rag_add,Indexes a folder or file into RAG,Indexa una carpeta o archivo en el RAG,Indexa pasta ou arquivo no RAG
+tui.popup.cmd.rag_list,Shows RAG statistics,Muestra estadísticas del RAG,Exibe estatísticas do RAG
+tui.popup.cmd.workspace,Switches the active workspace,Cambia el workspace activo,Troca o workspace ativo
+tui.popup.cmd.branch,Creates or switches branch,Crea o cambia de branch,Cria ou troca de branch
+tui.popup.cmd.pr,Opens a pull request,Abre un pull request,Abre um pull request
+tui.popup.cmd.model,Switches the language model,Cambia el modelo de lenguaje,Troca o modelo de linguagem
+tui.popup.cmd.clear,Clears the thread history,Limpia el historial del hilo,Limpa o histórico da thread
+tui.popup.cmd.export,Exports the conversation (md or json),Exporta la conversación (md o json),Exporta a conversa (md ou json)
+tui.popup.cmd.share,Generates a read-only URL for the thread,Genera una URL de solo lectura del hilo,Gera URL de leitura da thread
+tui.popup.cmd.auth_logout,Ends the session,Cierra la sesión,Encerra a sessão
+tui.popup.cmd.help,Lists all commands,Lista todos los comandos,Lista todos os comandos
+
+# ---------------------------------------------------------------------------
+# Níveis de verbosidade (/debug)
+# ---------------------------------------------------------------------------
+tui.verbosity.silent,Silent,Silencio,Silêncio
+tui.verbosity.routing,Routing,Enrutamiento,Roteamento
+tui.verbosity.tool_status,Tool status,Estado de herramientas,Status das ferramentas
+tui.verbosity.standard,Standard,Estándar,Padrão
+tui.verbosity.verbose,Verbose,Detallado,Detalhado
+tui.verbosity.full,Full,Completo,Completo
+
+# ---------------------------------------------------------------------------
+# Bindings / status bar / boas-vindas
+# ---------------------------------------------------------------------------
+tui.binding.new_session,New session,Nueva sesión,Nova sessão
+tui.binding.clear,Clear,Limpiar,Limpar
+tui.binding.quit,Quit,Salir,Sair
+tui.status.keys_hint,^N New  ^L Clear  ^Q Quit,^N Nueva  ^L Limpiar  ^Q Salir,^N Nova  ^L Limpar  ^Q Sair
+tui.input.placeholder,Message...,Mensaje...,Mensagem...
+tui.welcome.session,session {id},sesión {id},sessão {id}
+tui.welcome.new_session,new session {id},nueva sesión {id},nova sessão {id}
+tui.welcome.hint,"Type or [bold #3b82f6]/[/bold #3b82f6] for commands · [bold #3b82f6]^N[/bold #3b82f6] new session · [bold #3b82f6]^Q[/bold #3b82f6] quit","Escribe o [bold #3b82f6]/[/bold #3b82f6] para comandos · [bold #3b82f6]^N[/bold #3b82f6] nueva sesión · [bold #3b82f6]^Q[/bold #3b82f6] salir","Digite ou [bold #3b82f6]/[/bold #3b82f6] para comandos · [bold #3b82f6]^N[/bold #3b82f6] nova sessão · [bold #3b82f6]^Q[/bold #3b82f6] sair"
+
+# ---------------------------------------------------------------------------
+# Dispatcher de comandos desconhecidos
+# ---------------------------------------------------------------------------
+tui.error.unknown_command,"Unknown command: /{cmd}. Use /help to see the commands.","Comando desconocido: /{cmd}. Usa /help para ver los comandos.","Comando desconhecido: /{cmd}. Use /help para ver os comandos."
+
+# ---------------------------------------------------------------------------
+# /sessions, /session
+# ---------------------------------------------------------------------------
+tui.sessions.empty,No sessions found.,No se encontraron sesiones.,Nenhuma sessão encontrada.
+tui.sessions.title,Recent sessions:,Sesiones recientes:,Sessões recentes:
+tui.sessions.current_suffix,<- current,<- actual,<- atual
+tui.sessions.error,Error listing sessions: {error},Error al listar sesiones: {error},Erro ao listar sessões: {error}
+tui.session.current,Current session: {id},Sesión actual: {id},Sessão atual: {id}
+tui.session.switched,Switched to session: {id},Cambiado a la sesión: {id},Sessão trocada para: {id}
+
+# ---------------------------------------------------------------------------
+# /model
+# ---------------------------------------------------------------------------
+tui.model.available_title,Available models:  (use /model <name>),Modelos disponibles:  (usa /model <nombre>),Modelos disponíveis:  (use /model <nome>)
+tui.model.changed,✓ Model changed to: {model} ({provider}),✓ Modelo cambiado a: {model} ({provider}),✓ Modelo alterado para: {model} ({provider})
+tui.model.not_found,✗ Model not found: {model},✗ Modelo no encontrado: {model},✗ Modelo não encontrado: {model}
+tui.model.list_hint,(use /model to list),(usa /model para listar),(use /model para listar)
+
+# ---------------------------------------------------------------------------
+# /debug
+# ---------------------------------------------------------------------------
+tui.debug.current,Current verbosity: {level} ({label}),Verbosidad actual: {level} ({label}),Verbosidade atual: {level} ({label})
+tui.debug.changed,Verbosity set to: {level} ({label}),Verbosidad definida: {level} ({label}),Verbosidade definida: {level} ({label})
+tui.debug.invalid,Invalid level. Use a number from 0 to 5.,Nivel inválido. Usa un número del 0 al 5.,Nível inválido. Use um número de 0 a 5.
+
+# ---------------------------------------------------------------------------
+# /rag
+# ---------------------------------------------------------------------------
+tui.rag.title,RAG Pipeline:,Pipeline RAG:,Pipeline RAG:
+tui.rag.pending,Pending:,Pendientes:,Pendentes:
+tui.rag.processing,Processing:,Procesando:,Processando:
+tui.rag.success,Success:,Éxito:,Sucesso:
+tui.rag.failed,Failed:,Fallos:,Falhas:
+tui.rag.unavailable,RAG stats unavailable: {error},Estadísticas de RAG no disponibles: {error},Estatísticas do RAG indisponíveis: {error}
+
+# ---------------------------------------------------------------------------
+# /traces
+# ---------------------------------------------------------------------------
+tui.traces.title,Latest traces:,Últimos traces:,Últimos traces:
+tui.traces.empty,No traces found.,No se encontraron traces.,Nenhum trace encontrado.
+tui.traces.unavailable,Traces unavailable: {error},Traces no disponibles: {error},Traces indisponíveis: {error}
+
+# ---------------------------------------------------------------------------
+# /workspaces
+# ---------------------------------------------------------------------------
+tui.workspaces.title,Workspaces:,Workspaces:,Workspaces:
+tui.workspaces.empty,No workspaces registered.,No hay workspaces registrados.,Nenhum workspace registrado.
+tui.workspaces.trusted,trusted,confiable,confiável
+tui.workspaces.untrusted,untrusted,no confiable,não confiável
+tui.workspaces.unavailable,Workspaces unavailable: {error},Workspaces no disponibles: {error},Workspaces indisponíveis: {error}
+tui.help.cmd.theme,Change TUI theme (dark/light/system),Cambiar tema (dark/light/system),Trocar tema TUI (dark/light/system)
+
+# ---------------------------------------------------------------------------
+# Streaming (src/ui/streaming.py)
+# ---------------------------------------------------------------------------
+tui.stream.error,Error: {error},Error: {error},Erro: {error}
+tui.stream.resume_error,Error resuming: {error},Error al reanudar: {error},Erro ao retomar: {error}
+
+# ---------------------------------------------------------------------------
+# HITL modal (src/ui/widgets/hitl.py)
+# ---------------------------------------------------------------------------
+tui.hitl.approval_needed,Approval needed:,Aprobación necesaria:,Aprovação necessária:
+tui.hitl.approve,Approve,Aprobar,Aprovar
+tui.hitl.skip,Skip,Omitir,Pular
+tui.hitl.reject,Reject,Rechazar,Rejeitar
+
+# ---------------------------------------------------------------------------
+# ThinkingWidget (src/ui/widgets/thinking.py)
+# ---------------------------------------------------------------------------
+tui.thinking.label,Thinking -> {action},Pensando -> {action},Pensando -> {action}
+
+# ---------------------------------------------------------------------------
+# HelpScreen (src/ui/screens/help_screen.py)
+# ---------------------------------------------------------------------------
+tui.help.screen_title,Help — Vectora TUI,Ayuda — Vectora TUI,Ajuda — Vectora TUI
+tui.help.shortcuts_section,Keyboard shortcuts:,Atajos de teclado:,Atalhos de teclado:
+tui.help.close,Close,Cerrar,Fechar
+
+# ---------------------------------------------------------------------------
+# RewindScreen (src/ui/screens/rewind_screen.py)
+# ---------------------------------------------------------------------------
+tui.rewind.title,↶ Rewind session,↶ Rebobinar sesión,↶ Retroceder sessão
+tui.rewind.description,Select a checkpoint to restore:,Selecciona un checkpoint para restaurar:,Selecione um checkpoint para restaurar:
+tui.rewind.confirm,Restore,Restaurar,Restaurar
+tui.rewind.cancel,Cancel,Cancelar,Cancelar
+tui.rewind.no_checkpoints,No checkpoints available.,Sin checkpoints disponibles.,Nenhum checkpoint disponível.
+tui.rewind.unavailable,Could not load checkpoints.,No se pudieron cargar los checkpoints.,Não foi possível carregar os checkpoints.
+tui.rewind.no_workspace,No active workspace for rewind.,Sin workspace activo para rebobinar.,Nenhum workspace ativo para rewind.
+tui.rewind.done,Session rewound. History cleared.,Sesión rebobinada. Historial borrado.,Sessão retrocedida. Histórico limpo.
+tui.rewind.error,Rewind failed: {error},Error al rebobinar: {error},Falha no rewind: {error}
+
+# ---------------------------------------------------------------------------
+# /theme
+# ---------------------------------------------------------------------------
+tui.theme.invalid,Invalid theme. Use: {valid},Tema inválido. Use: {valid},Tema inválido. Use: {valid}
+tui.theme.changed,✓ Theme changed to: {theme},✓ Tema cambiado a: {theme},✓ Tema alterado para: {theme}
+
+# ---------------------------------------------------------------------------
+# SettingsScreen (src/ui/screens/settings_screen.py)
+# ---------------------------------------------------------------------------
+tui.settings.title,Settings,Configuración,Configurações
+tui.settings.theme,Theme,Tema,Tema
+tui.settings.theme_dark,Dark,Oscuro,Escuro
+tui.settings.theme_light,Light,Claro,Claro
+tui.settings.theme_system,System,Sistema,Sistema
+tui.settings.language,Language,Idioma,Idioma
+tui.settings.save,Save,Guardar,Salvar
+tui.settings.cancel,Cancel,Cancelar,Cancelar
+
+# ---------------------------------------------------------------------------
+# WorkbenchScreen (src/ui/screens/workbench_screen.py)
+# ---------------------------------------------------------------------------
+tui.workbench.title,Workbench,Workbench,Workbench
+tui.workbench.tab_terminal,Terminal,Terminal,Terminal
+tui.workbench.tab_files,Files,Archivos,Arquivos
+tui.workbench.tab_diff,Diff,Diff,Diff
+tui.workbench.tab_plan,Plan,Plan,Plano
+tui.workbench.hint,Esc to close,Esc para cerrar,Esc para fechar
+tui.workbench.files_root,Workspace,Workspace,Workspace
+tui.workbench.files_no_workspace,No workspace active,Sin workspace activo,Nenhum workspace ativo
+tui.workbench.terminal_empty,No log file found.,No se encontró archivo de log.,Nenhum arquivo de log encontrado.
+tui.workbench.terminal_unavailable,Could not read log.,No se pudo leer el log.,Não foi possível ler o log.
+tui.workbench.diff_col_status,Status,Estado,Estado
+tui.workbench.diff_col_file,File,Archivo,Arquivo
+tui.workbench.diff_unavailable,Git not available,Git no disponible,Git não disponível
+tui.workbench.plan_title,Artifacts:,Artefactos:,Artefatos:
+tui.workbench.plan_empty,No artifacts found.,Sin artefactos.,Nenhum artefato encontrado.
+tui.workbench.plan_no_workspace,No workspace active,Sin workspace activo,Nenhum workspace ativo
+tui.workbench.plan_unavailable,Could not read artifacts.,No se pudo leer artefactos.,Não foi possível ler artefatos.
+
+# ---------------------------------------------------------------------------
+# ModelPickerScreen (src/ui/screens/model_picker_screen.py)
+# ---------------------------------------------------------------------------
+tui.model_picker.title,Select model,Seleccionar modelo,Selecionar modelo
+tui.model_picker.search_placeholder,Search models...,Buscar modelos...,Buscar modelos...
+tui.model_picker.hint,Enter to select · Esc to close,Enter para seleccionar · Esc para cerrar,Enter para selecionar · Esc para fechar
+tui.model_picker.cancel,Cancel,Cancelar,Cancelar
+
+# ---------------------------------------------------------------------------
+# UsageScreen (src/ui/screens/usage_screen.py)
+# ---------------------------------------------------------------------------
+tui.usage.title,Request Usage,Consumo de solicitudes,Consumo de requisições
+tui.usage.close,Close,Cerrar,Fechar
+tui.usage.unavailable,Usage data unavailable.,Datos de uso no disponibles.,Dados de consumo indisponíveis.
+tui.usage.window_short,Short window,Ventana corta,Janela curta
+tui.usage.window_5h,5-hour window,Ventana de 5h,Janela de 5h
+tui.usage.window_weekly,Weekly,Semanal,Semanal
+tui.usage.remaining,{n} remaining,{n} restantes,{n} restantes

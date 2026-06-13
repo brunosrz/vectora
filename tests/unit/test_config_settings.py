@@ -1,4 +1,4 @@
-"""Tests for vectora/config/settings.py"""
+"""Tests for src/settings.py"""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from vectora.config.settings import Settings
+from src.settings import Settings
 
 # ---------------------------------------------------------------------------
 # Smoke tests (existentes)
@@ -41,6 +41,52 @@ def test_settings_get_cohere_api_key_returns_none_or_str():
     s = Settings()
     key = s.get_cohere_api_key()
     assert key is None or isinstance(key, str)
+
+
+# ---------------------------------------------------------------------------
+# TLS do servidor web (SSL_CERTFILE / SSL_KEYFILE)
+# ---------------------------------------------------------------------------
+
+
+def test_settings_ssl_defaults_none():
+    s = Settings()
+    assert s.ssl_certfile is None
+    assert s.ssl_keyfile is None
+
+
+def test_settings_ssl_from_env(monkeypatch):
+    monkeypatch.setenv("SSL_CERTFILE", "/certs/fullchain.pem")
+    monkeypatch.setenv("SSL_KEYFILE", "/certs/key.pem")
+    s = Settings()
+    assert s.ssl_certfile == "/certs/fullchain.pem"
+    assert s.ssl_keyfile == "/certs/key.pem"
+
+
+def test_cli_parser_accepts_ssl_flags():
+    from src.main import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args(
+        [
+            "server",
+            "web",
+            "--ssl-certfile",
+            "cert.pem",
+            "--ssl-keyfile",
+            "key.pem",
+        ]
+    )
+    assert args.ssl_certfile == "cert.pem"
+    assert args.ssl_keyfile == "key.pem"
+
+
+def test_cli_parser_ssl_flags_default_none():
+    from src.main import _build_parser
+
+    parser = _build_parser()
+    args = parser.parse_args(["server", "web"])
+    assert args.ssl_certfile is None
+    assert args.ssl_keyfile is None
 
 
 # ---------------------------------------------------------------------------
