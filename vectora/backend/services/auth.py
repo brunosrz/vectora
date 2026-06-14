@@ -147,7 +147,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_access_token(user: User) -> str:
     """Emite um JWT de acesso com vida útil de ACCESS_TOKEN_EXPIRE_MINUTES."""
-    from jose import jwt
+    import jwt
 
     now = datetime.now(UTC)
     payload = {
@@ -162,7 +162,7 @@ def create_access_token(user: User) -> str:
 
 def decode_access_token(token: str) -> dict[str, Any]:
     """Valida e decodifica JWT. Lança JWTError/ExpiredSignatureError em falha."""
-    from jose import jwt
+    import jwt
 
     return jwt.decode(token, _get_secret(), algorithms=[_ALGORITHM])
 

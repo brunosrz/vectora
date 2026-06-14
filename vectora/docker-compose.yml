@@ -29,7 +29,10 @@ services:
       - VECTORA_TOKEN=${VECTORA_TOKEN:-}
       - PYTHONUNBUFFERED=1
       - HOST=0.0.0.0
-      - PORT=${PORT:-8080}
+      # Porta INTERNA do container (fixa 8080) — o healthcheck bate em
+      # localhost:8080 dentro do container. A porta do HOST é separada
+      # (ver `ports:` abaixo) para não colidir com o dev local.
+      - PORT=8080
       # Storage mode "complete" — usa os serviços postgres/redis/qdrant deste
       # mesmo compose. Os DSNs/URLs apontam para os hostnames dos serviços
       # (rede interna do compose) e usam as credenciais padrão definidas
@@ -41,7 +44,9 @@ services:
     volumes:
       - vectora-data:/root/.vectora
     ports:
-      - "${PORT:-8080}:8080"
+      # HOST:CONTAINER — host 8090 por padrão (configurável via VECTORA_PORT).
+      # 3000/5173/8080 ficam reservadas para o dev local rodando no Windows.
+      - "${VECTORA_PORT:-8090}:8080"
     depends_on:
       postgres:
         condition: service_healthy

@@ -123,7 +123,7 @@ class TestJWT:
         assert payload["role"] == "member"
 
     def test_tampered_token_raises(self):
-        from jose import JWTError
+        from jwt import PyJWTError as JWTError
 
         from backend.services.auth import User, create_access_token, decode_access_token
 
@@ -143,7 +143,8 @@ class TestJWT:
         import time
         from datetime import UTC, datetime, timedelta
 
-        from jose import JWTError, jwt
+        import jwt
+        from jwt import PyJWTError as JWTError
 
         # Emite token já expirado
         payload = {

@@ -109,7 +109,7 @@ async def _extract_user(request: Request) -> Any:
 
     Retorna User ou None.
     """
-    from jose import JWTError
+    from jwt import PyJWTError as JWTError
 
     from backend.services.auth import decode_access_token, get_user_by_id
 
