@@ -48,12 +48,14 @@ export function PermissionModeMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs hover:bg-muted/50 transition-colors select-none ${MODE_TONE[mode]}`}
+        className={`flex items-center gap-1.5 min-w-0 max-w-[160px] px-2.5 py-1.5 rounded-md text-xs hover:bg-muted/50 transition-colors select-none ${MODE_TONE[mode]}`}
         title={t("permission.title")}
         aria-expanded={open}
       >
         <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-        <span className="font-medium">{t(`permission.mode.${mode}`)}</span>
+        <span className="truncate font-medium">
+          {t(`permission.mode.${mode}`)}
+        </span>
         <ChevronDown className="w-3 h-3 shrink-0" />
       </button>
 

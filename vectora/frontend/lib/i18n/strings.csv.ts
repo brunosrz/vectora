@@ -97,6 +97,7 @@ input.attach_files,"Attach files (images, code, logs)","Adjuntar archivos (imág
 input.stop,Stop,Detener,Parar
 input.stopping,Stopping...,Deteniendo...,Parando...
 input.stop_generating,Stop generating,Detener generación,Parar geração
+input.send,Send message,Enviar mensaje,Enviar mensagem
 input.send_hint,to send,para enviar,para enviar
 input.new_line_hint,new line,nueva línea,nova linha
 input.queued,Queued,En cola,Na fila
@@ -686,6 +687,54 @@ workbench.diff.worktree_create,Add,Agregar,Adicionar
 workbench.diff.worktree_name_placeholder,Name (e.g. feature),Nombre (ej: feature),Nome (ex: feature)
 workbench.diff.worktree_branch_placeholder,Branch (optional),Branch (opcional),Branch (opcional)
 workbench.tab.pending,Pending updates,Actualizaciones pendientes,Atualizações pendentes
+# Git redesign (toolbar + Histórico + compare/merge + stash/worktrees modais)
+workbench.git.tab_history,History,Historial,Histórico
+workbench.git.branch_menu,Branch,Branch,Branch
+workbench.git.branch_create,Create branch…,Crear branch…,Criar branch…
+workbench.git.branch_create_placeholder,New branch name,Nombre de la nueva branch,Nome da nova branch
+workbench.git.branch_compare,Compare / merge…,Comparar / merge…,Comparar / merge…
+workbench.git.branch_worktrees,Worktrees…,Worktrees…,Worktrees…
+workbench.git.branch_empty,No other branches.,Sin otras branches.,Sem outras branches.
+workbench.git.sync_fetch,Fetch,Fetch,Fetch
+workbench.git.sync_pull,"Pull {n}","Pull {n}","Pull {n}"
+workbench.git.sync_push,"Push {n}","Push {n}","Push {n}"
+workbench.git.sync_error,Sync failed,Falló la sincronización,Falha na sincronização
+workbench.git.pr,Pull requests,Pull requests,Pull requests
+workbench.git.pr_create,Create pull request,Crear pull request,Criar pull request
+workbench.git.pr_title_placeholder,PR title,Título del PR,Título do PR
+workbench.git.pr_body_placeholder,Description (optional),Descripción (opcional),Descrição (opcional)
+workbench.git.pr_base_placeholder,Base branch,Branch base,Branch base
+workbench.git.pr_submit,Create,Crear,Criar
+workbench.git.pr_empty,No open pull requests.,Sin pull requests abiertos.,Nenhum pull request aberto.
+workbench.git.pr_unavailable,Pull requests require a GitHub remote and the gh CLI.,Los pull requests requieren un remote GitHub y el CLI gh.,Pull requests exigem um remote GitHub e o CLI gh.
+workbench.git.pr_created,Pull request created.,Pull request creado.,Pull request criado.
+workbench.git.compare_base,Base,Base,Base
+workbench.git.compare_head,Compare,Comparar,Comparar
+workbench.git.compare_pick,Pick a branch,Elige una branch,Escolha uma branch
+workbench.git.compare_no_files,No differences between the selected branches.,Sin diferencias entre las branches seleccionadas.,Sem diferenças entre as branches selecionadas.
+workbench.git.compare_summary,"{ahead} ahead · {behind} behind","{ahead} adelante · {behind} atrás","{ahead} à frente · {behind} atrás"
+workbench.git.merge_into,"Merge into {branch}","Merge en {branch}","Merge na {branch}"
+workbench.git.merge_ok,Merge completed.,Merge completado.,Merge concluído.
+workbench.git.merge_conflict,Merge produced conflicts — resolve them below.,El merge generó conflictos — resuélvelos abajo.,O merge gerou conflitos — resolva-os abaixo.
+workbench.git.stash_view,View stashes,Ver stashes,Ver stashes
+workbench.git.stash_title,Stashes,Stashes,Stashes
+workbench.git.stash_apply,Apply,Aplicar,Aplicar
+workbench.git.worktrees_title,Worktrees,Worktrees,Worktrees
+workbench.git.back,Back,Volver,Voltar
+workbench.git.ctx_stage,Stage,Preparar,Stage
+workbench.git.ctx_unstage,Unstage,Quitar de stage,Unstage
+workbench.git.ctx_discard,Discard changes,Descartar cambios,Descartar alterações
+workbench.git.ctx_stash_file,Stash this file,Guardar este archivo,Stash deste arquivo
+workbench.git.ctx_copy_sha,Copy SHA,Copiar SHA,Copiar SHA
+workbench.git.ctx_revert,Revert commit,Revertir commit,Reverter commit
+workbench.git.ctx_checkout,Checkout commit,Checkout del commit,Checkout do commit
+workbench.git.ctx_view_diff,View diff,Ver diff,Ver diff
+workbench.git.discard_title,Discard changes?,¿Descartar cambios?,Descartar alterações?
+workbench.git.discard_body,Changes to this file will be permanently lost.,Los cambios en este archivo se perderán permanentemente.,As alterações neste arquivo serão perdidas permanentemente.
+workbench.git.cancel,Cancel,Cancelar,Cancelar
+workbench.git.discard_confirm,Discard,Descartar,Descartar
+workbench.git.history_empty,No commits found.,Ningún commit encontrado.,Nenhum commit encontrado.
+workbench.git.commits_count,"{n} commits","{n} commits","{n} commits"
 chat.rewind,Rewind to here,Rebobinar hasta aquí,Retroceder até aqui
 chat.rewind_title,Rewind to this point?,¿Rebobinar hasta aquí?,Retroceder até este ponto?
 chat.rewind_desc,"Undo all changes made after this message — the workspace files will be restored to their state at this point.","Deshacer todos los cambios realizados después de este mensaje — los archivos del workspace se restaurarán a su estado en este punto.","Desfazer todas as alterações feitas após esta mensagem — os arquivos do workspace serão restaurados para o estado neste ponto."

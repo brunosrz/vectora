@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -372,7 +373,7 @@ export function ChatInput({
               <PermissionModeMenu />
             </div>
 
-            <div className="flex items-center gap-1 shrink-0 justify-end">
+            <div className="flex items-center gap-1 min-w-0 justify-end">
               <ChatParamsMenu />
               {agentConfig && onAgentConfigChange && (
                 <ModelSelector
@@ -383,6 +384,20 @@ export function ChatInput({
               )}
               {modelId && (
                 <UsagePopover tokensUsed={tokensUsed ?? 0} modelId={modelId} />
+              )}
+              {!isLoading && (
+                <Button
+                  onClick={onSend}
+                  variant="ghost"
+                  size="sm"
+                  disabled={!input.trim() || !userId || offline}
+                  className="h-7 w-7 p-0 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground"
+                  type="button"
+                  title={t("input.send")}
+                  aria-label={t("input.send")}
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </Button>
               )}
             </div>
           </div>

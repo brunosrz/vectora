@@ -353,7 +353,7 @@ function FileItem({
       role="treeitem"
       aria-selected={openPath === entry.path}
       className="group flex items-center px-2 py-0.5 text-xs hover:bg-muted/50 rounded-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
-      style={{ paddingLeft: 8 + (depth + 1) * 12 }}
+      style={{ paddingLeft: 8 + depth * 12 }}
       onKeyDown={(e) => {
         if (e.key === "Delete" && !renaming) {
           e.preventDefault();
@@ -399,7 +399,7 @@ function FileItem({
       <GitBadge status={status} />
 
       {/* Ações em hover */}
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="hidden group-hover:flex items-center gap-0.5">
         {onAddToContext && (
           <button
             onClick={() => onAddToContext(entry.path)}
@@ -470,7 +470,7 @@ function InlineCreateInput({
   return (
     <div
       className="flex items-center px-2 py-0.5"
-      style={{ paddingLeft: 8 + (depth + 1) * 12 }}
+      style={{ paddingLeft: 8 + depth * 12 }}
     >
       <input
         autoFocus
@@ -634,7 +634,7 @@ function DirNode({
               }}
               onBlur={commitDirRename}
               className="flex-1 text-xs bg-background border border-primary/60 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-primary/40 font-mono"
-              style={{ paddingLeft: depth * 12 + 4 }}
+              style={{ paddingLeft: (depth - 1) * 12 + 4 }}
               placeholder={t("workbench.files.rename_placeholder")}
             />
           ) : (
@@ -647,7 +647,7 @@ function DirNode({
                 }
               }}
               className="flex items-center gap-1 flex-1 min-w-0"
-              style={{ paddingLeft: depth * 12 }}
+              style={{ paddingLeft: (depth - 1) * 12 }}
             >
               <ChevronRight
                 className={`w-3 h-3 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
@@ -658,7 +658,7 @@ function DirNode({
           )}
 
           {/* Ações em hover na pasta */}
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
             {onAddToContext && (
               <button
                 onClick={() => onAddToContext(path)}
@@ -698,7 +698,7 @@ function DirNode({
           ) : !entries ? (
             <div
               className="flex items-center gap-2 text-xs text-muted-foreground py-1"
-              style={{ paddingLeft: 8 + (depth + 1) * 12 }}
+              style={{ paddingLeft: 8 + depth * 12 }}
             >
               <Loader2 className="w-3 h-3 animate-spin" />
               <span>…</span>
@@ -802,7 +802,7 @@ function PinnedSection({
             >
               {name}
             </button>
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="hidden group-hover:flex items-center gap-0.5">
               {onAddToContext && (
                 <button
                   onClick={() => onAddToContext(path)}
