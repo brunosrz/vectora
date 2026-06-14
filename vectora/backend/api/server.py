@@ -50,6 +50,7 @@ from backend.api.handlers.threads import router as thread_router
 from backend.api.handlers.tools import router as tools_router
 from backend.api.handlers.v1.classify import router as v1_classify_router
 from backend.api.handlers.v1.extract import router as v1_extract_router
+from backend.api.handlers.v1.jobs import router as v1_jobs_router
 from backend.api.handlers.workspaces import router as workspace_router
 from backend.api.handlers.workspaces import view_router as workspace_view_router
 
@@ -145,6 +146,18 @@ async def _license_revalidation_loop() -> None:
         await asyncio.sleep(_LICENSE_REVALIDATE_INTERVAL_S)
 
 
+async def _run_jobs_worker(stop_event: asyncio.Event) -> None:
+    """Roda o worker da fila de jobs; encerra silenciosamente em erro fatal."""
+    try:
+        from backend.services.jobs import run_jobs_worker
+
+        await run_jobs_worker(stop_event=stop_event)
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        logger.warning("api/server: jobs worker encerrou: %s", exc)
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     """Startup / shutdown da aplicação.
@@ -204,14 +217,29 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     # servidor nunca validava o VECTORA_TOKEN.
     license_task = asyncio.create_task(_license_revalidation_loop())
 
-    # Bloco G — sincronização de caches entre réplicas (pub/sub via Redis
-    # quando REDIS_URL configurado; no modo lite é local e inofensivo).
+    # Sincronização de caches entre réplicas (pub/sub via Redis quando
+    # REDIS_URL configurado; no modo lite é local e inofensivo).
     try:
         from backend.services.cache_sync import start_cache_sync
 
         await start_cache_sync()
     except Exception as exc:
         logger.warning("api/server: cache_sync indisponível: %s", exc)
+
+    # Cache de completions LLM (RedisCache/RedisSemanticCache com Redis;
+    # InMemoryCache caso contrário), aplicado via set_llm_cache.
+    try:
+        from backend.services.cache_llm import init_llm_cache
+
+        init_llm_cache()
+    except Exception as exc:
+        logger.warning("api/server: cache_llm indisponível: %s", exc)
+
+    # Worker que consome a fila de jobs assíncronos da API.
+    jobs_stop = asyncio.Event()
+    jobs_worker_task: asyncio.Task[None] = asyncio.create_task(
+        _run_jobs_worker(jobs_stop)
+    )
 
     try:
         yield
@@ -224,6 +252,16 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             await stop_cache_sync()
         except Exception:
             logger.debug("api/server: erro ao encerrar cache_sync")
+
+        # Para o worker de jobs e fecha a message queue (Redis Streams).
+        jobs_stop.set()
+        jobs_worker_task.cancel()
+        try:
+            from backend.services.mq import get_mq
+
+            await get_mq().close()
+        except Exception:
+            logger.debug("api/server: erro ao fechar message queue")
         from backend.api.handlers.chat import aclose_graph
         from backend.services.pty_registry import pty_registry
 
@@ -326,9 +364,11 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(license_router)
     app.include_router(tools_router)
     app.include_router(terminal_router)
-    # REST API v1 — structured output endpoints (E.B-7)
+    # REST API v1 — structured output endpoints
     app.include_router(v1_extract_router)
     app.include_router(v1_classify_router)
+    # REST API v1 — jobs assíncronos
+    app.include_router(v1_jobs_router)
 
     # ── Health + Metrics ──────────────────────────────────────────────────────
 

@@ -189,6 +189,28 @@ class Settings(BaseSettings):
     """
 
     # ============================================================================
+    # CACHE LLM — só ativo quando Redis está acessível (senão InMemoryCache).
+    # ============================================================================
+
+    cache_llm_enabled: bool = True
+    """Liga o cache de completions LLM (``RedisCache`` em modo complete,
+    ``InMemoryCache`` caso contrário). Mata re-chamadas idênticas."""
+
+    cache_semantic: bool = False
+    """Usa ``RedisSemanticCache`` (hit fuzzy por similaridade do prompt) em vez
+    do ``RedisCache`` exato. Requer embeddings Cohere configurados."""
+
+    cache_ttl_seconds: int = 3600
+    """TTL das entradas de cache LLM (segundos). Default 1h."""
+
+    cache_distance_threshold: float = 0.2
+    """Limiar de distância do ``RedisSemanticCache`` (menor = mais estrito)."""
+
+    cache_history_backend: Literal["default", "redis"] = "default"
+    """Backend do histórico de chat. ``default`` usa SQLite/Postgres; ``redis``
+    usa ``RedisChatMessageHistory``."""
+
+    # ============================================================================
     # QDRANT (complete)
     # ============================================================================
 

@@ -228,10 +228,14 @@ async def vector_search(
             model=settings.embedding_model,
         )
 
-        # embed_query → input_type="search_query" (Cohere v3 assimétrico).
-        # Os documentos são indexados com embed_documents → "search_document"
-        # no background worker. Não trocar por embed_documents aqui.
-        query_vector = embeddings_model.embed_query(query)
+        # embed_query usa input_type="search_query" (Cohere v3 é assimétrico:
+        # os documentos são indexados com embed_documents → "search_document").
+        # Não trocar por embed_documents aqui.
+        from backend.services.cache_embeddings import embed_query_cached
+
+        query_vector = await embed_query_cached(
+            query, settings.embedding_model, embeddings_model.embed_query
+        )
 
         try:
             async with asyncio.timeout(10):

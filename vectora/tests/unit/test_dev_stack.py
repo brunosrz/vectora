@@ -71,13 +71,18 @@ def test_settings_carregam_defaults_de_infra(monkeypatch: pytest.MonkeyPatch) ->
     assert s.qdrant_api_key == DEFAULT_QDRANT_API_KEY
 
 
-def test_specs_usam_mesmas_imagens_do_compose() -> None:
-    """As imagens da stack de dev (docker run) batem com o docker-compose.yml
-    de produção (modo completo). Portas/credenciais divergem de propósito —
-    o compose roda em rede interna; o dev_stack publica em localhost com senha."""
+def test_specs_usam_imagens_compativeis_com_compose() -> None:
+    """Postgres e Qdrant usam a mesma imagem no dev_stack e no docker-compose.yml.
+
+    O Redis diverge de propósito: o dev_stack usa a imagem leve; o compose usa
+    redis-stack-server porque o cache LLM (langchain-redis) precisa de
+    RediSearch/RedisJSON. Sem esses módulos o cache cai para InMemoryCache.
+    """
     compose = (REPO_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
-    for spec in SERVICES:
+    for name in ("vectora-postgres", "vectora-qdrant"):
+        spec = next(s for s in SERVICES if s.name == name)
         assert spec.image in compose, f"imagem {spec.image} divergiu do compose"
+    assert "redis/redis-stack-server" in compose
 
 
 def test_connection_urls_mapeia_constantes() -> None:

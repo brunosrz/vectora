@@ -87,12 +87,16 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    # redis-stack-server (não redis:alpine): o cache LLM via langchain-redis usa
+    # os módulos RediSearch + RedisJSON (JSON.GET/FT.*), ausentes no Redis vanilla.
+    image: redis/redis-stack-server:latest
     restart: unless-stopped
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      # Só fica healthy quando o RediSearch carregou — o cache LLM o exige e a
+      # app conecta no startup; sem isso há race com o ping respondendo antes.
+      test: ["CMD-SHELL", "redis-cli MODULE LIST | grep -q search"]
       interval: 10s
       timeout: 5s
       retries: 5
