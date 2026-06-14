@@ -1475,16 +1475,25 @@ async def create_workspace_worktree(
 
 
 # ---------------------------------------------------------------------------
-# A.12 — Comparar refs
+# A.12 — Comparar refs (estilo VS Code: lista de arquivos + diff por arquivo)
 # ---------------------------------------------------------------------------
 
-_MAX_COMPARE_BYTES = 256 * 1024
+_MAX_COMPARE_FILES = 1000
+
+
+class CompareFile(BaseModel):
+    path: str
+    status: str  # "M" | "A" | "D" | "R"
+    additions: int = 0
+    deletions: int = 0
 
 
 class CompareRefsResponse(BaseModel):
     base: str
     head: str
-    diff: str
+    ahead: int = 0  # commits em head que não estão em base
+    behind: int = 0  # commits em base que não estão em head
+    files: list[CompareFile] = []
     truncated: bool = False
 
 
@@ -1494,26 +1503,88 @@ async def git_compare_refs(
     base: Annotated[str, Query(min_length=1)],
     head: Annotated[str, Query(min_length=1)],
 ) -> CompareRefsResponse:
-    """Diff entre dois refs (branch, tag, SHA)."""
+    """Lista os arquivos alterados entre dois refs (branch, tag, SHA).
+
+    Usa ``git diff --numstat/--name-status base...head`` para a lista de
+    arquivos e ``git rev-list --left-right --count`` para ahead/behind. O
+    diff de cada arquivo vem de ``/git/compare/file`` (lazy).
+    """
     repo = _open_workspace_repo(workspace_id)
     if repo is None:
-        return CompareRefsResponse(base=base, head=head, diff="")
+        return CompareRefsResponse(base=base, head=head)
 
     try:
-        diff_text = repo.git.diff(f"{base}...{head}", "--stat", "--unified=3")
+        numstat = repo.git.diff(f"{base}...{head}", "--numstat") or ""
+        name_status = repo.git.diff(f"{base}...{head}", "--name-status") or ""
     except Exception:
-        try:
-            diff_text = repo.git.diff(base, head)
-        except Exception as exc:
-            return CompareRefsResponse(base=base, head=head, diff=str(exc))
+        return CompareRefsResponse(base=base, head=head)
 
-    truncated = len(diff_text) > _MAX_COMPARE_BYTES
+    status_by_path: dict[str, str] = {}
+    for line in name_status.splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 2:
+            status_by_path[parts[-1]] = (parts[0][:1] or "M").upper()
+
+    files: list[CompareFile] = []
+    truncated = False
+    for line in numstat.splitlines():
+        cols = line.split("\t")
+        if len(cols) < 3:
+            continue
+        add_s, del_s, path = cols[0], cols[1], cols[2]
+        files.append(
+            CompareFile(
+                path=path,
+                status=status_by_path.get(path, "M"),
+                additions=int(add_s) if add_s.isdigit() else 0,
+                deletions=int(del_s) if del_s.isdigit() else 0,
+            )
+        )
+        if len(files) >= _MAX_COMPARE_FILES:
+            truncated = True
+            break
+
+    ahead = behind = 0
+    try:
+        counts = repo.git.rev_list("--left-right", "--count", f"{base}...{head}")
+        left, right = counts.split()
+        behind, ahead = int(left), int(right)
+    except Exception:
+        pass
+
     return CompareRefsResponse(
         base=base,
         head=head,
-        diff=diff_text[:_MAX_COMPARE_BYTES],
+        ahead=ahead,
+        behind=behind,
+        files=files,
         truncated=truncated,
     )
+
+
+class CompareFileDiffResponse(BaseModel):
+    path: str
+    hunks: list[DiffHunk] = []
+
+
+@view_router.get(
+    "/{workspace_id}/git/compare/file", response_model=CompareFileDiffResponse
+)
+async def git_compare_file(
+    workspace_id: str,
+    base: Annotated[str, Query(min_length=1)],
+    head: Annotated[str, Query(min_length=1)],
+    path: Annotated[str, Query()],
+) -> CompareFileDiffResponse:
+    """Hunks unificados de um arquivo entre dois refs (lazy load do compare)."""
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return CompareFileDiffResponse(path=path)
+    try:
+        diff_text = repo.git.diff(f"{base}...{head}", "--", path) or ""
+    except Exception:
+        diff_text = ""
+    return CompareFileDiffResponse(path=path, hunks=_parse_unified_diff(diff_text))
 
 
 # ---------------------------------------------------------------------------
@@ -1545,6 +1616,274 @@ async def git_revert_commit(
         return StatusResponse(status="ok", message=msg)
     except Exception as exc:
         return StatusResponse(status="error", message=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Git — status real, branches, checkout, sync (fetch/pull/push), merge
+# ---------------------------------------------------------------------------
+
+
+class GitStatusResponse(BaseModel):
+    is_git_repo: bool = False
+    branch: str = ""
+    clean: bool = True
+    ahead: int = 0
+    behind: int = 0
+
+
+@view_router.get("/{workspace_id}/git/status", response_model=GitStatusResponse)
+async def git_status(workspace_id: str) -> GitStatusResponse:
+    """Estado real do repo: branch, ahead/behind do tracking remoto, clean."""
+    from backend.tools.git import _git_status_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return GitStatusResponse(is_git_repo=False)
+    info = _git_status_impl(repo)
+    return GitStatusResponse(
+        is_git_repo=True,
+        branch=info.get("branch", ""),
+        clean=bool(info.get("clean", True)),
+        ahead=int(info.get("ahead", 0)),
+        behind=int(info.get("behind", 0)),
+    )
+
+
+class GitBranchesResponse(BaseModel):
+    current: str = ""
+    branches: list[str] = []
+    remotes: list[str] = []
+
+
+@view_router.get("/{workspace_id}/git/branches", response_model=GitBranchesResponse)
+async def git_branches(workspace_id: str) -> GitBranchesResponse:
+    """Lista branches locais e remotas + a branch atual."""
+    from backend.tools.git import _git_branch_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return GitBranchesResponse()
+    info = _git_branch_impl(repo, "list")
+    remotes: list[str] = []
+    try:
+        raw = repo.git.branch("-r", "--format=%(refname:short)") or ""
+        remotes = [
+            ln.strip() for ln in raw.splitlines() if ln.strip() and "->" not in ln
+        ]
+    except Exception:
+        pass
+    return GitBranchesResponse(
+        current=info.get("current", ""),
+        branches=info.get("branches", []),
+        remotes=remotes,
+    )
+
+
+class GitCheckoutRequest(BaseModel):
+    ref: str
+    create: bool = False
+
+
+@view_router.post("/{workspace_id}/git/checkout", response_model=StatusResponse)
+async def git_checkout(workspace_id: str, body: GitCheckoutRequest) -> StatusResponse:
+    """Troca de branch/commit; com ``create=true`` cria a branch antes."""
+    from backend.tools.git import _git_branch_impl, _git_checkout_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    if body.create:
+        created = _git_branch_impl(repo, "create", name=body.ref)
+        if created.get("status") != "ok":
+            return StatusResponse(status="error", message=created.get("message", ""))
+    result = _git_checkout_impl(repo, body.ref)
+    return StatusResponse(
+        status=result.get("status", "error"), message=result.get("message", "")
+    )
+
+
+class GitSyncRequest(BaseModel):
+    remote: str = "origin"
+    branch: str | None = None
+
+
+@view_router.post("/{workspace_id}/git/fetch", response_model=StatusResponse)
+async def git_fetch(workspace_id: str, body: GitSyncRequest) -> StatusResponse:
+    """``git fetch <remote>`` — atualiza refs remotos sem alterar o worktree."""
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    try:
+        repo.git.fetch(body.remote)
+        return StatusResponse(status="ok", message=f"fetch {body.remote}")
+    except Exception as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+@view_router.post("/{workspace_id}/git/pull", response_model=StatusResponse)
+async def git_pull(workspace_id: str, body: GitSyncRequest) -> StatusResponse:
+    """``git pull`` do remote/branch (pode gerar conflitos — ver /git/conflicts)."""
+    from backend.tools.git import _git_pull_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    result = _git_pull_impl(repo, body.remote, body.branch)
+    return StatusResponse(
+        status=result.get("status", "error"), message=result.get("message", "")
+    )
+
+
+@view_router.post("/{workspace_id}/git/push", response_model=StatusResponse)
+async def git_push(workspace_id: str, body: GitSyncRequest) -> StatusResponse:
+    """``git push`` da branch atual (ou ``branch``) para o remote."""
+    from backend.tools.git import _git_push_impl
+
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return StatusResponse(status="error", message="Repositório git não encontrado.")
+    result = _git_push_impl(repo, body.remote, body.branch)
+    return StatusResponse(
+        status=result.get("status", "error"), message=result.get("message", "")
+    )
+
+
+class GitMergeRequest(BaseModel):
+    branch: str
+
+
+class GitMergeResponse(BaseModel):
+    status: str  # "ok" | "conflict" | "error"
+    message: str = ""
+    conflicts: list[str] = []
+
+
+@view_router.post("/{workspace_id}/git/merge", response_model=GitMergeResponse)
+async def git_merge(workspace_id: str, body: GitMergeRequest) -> GitMergeResponse:
+    """Faz merge de ``branch`` na branch atual.
+
+    Em conflito, devolve ``status="conflict"`` + a lista de arquivos
+    conflitantes (resolver via /git/resolve-conflict).
+    """
+    repo = _open_workspace_repo(workspace_id)
+    if repo is None:
+        return GitMergeResponse(
+            status="error", message="Repositório git não encontrado."
+        )
+    try:
+        repo.git.merge(body.branch)
+        return GitMergeResponse(status="ok", message=f"merge {body.branch}")
+    except Exception as exc:
+        conflicts: list[str] = []
+        try:
+            raw = repo.git.diff("--name-only", "--diff-filter=U") or ""
+            conflicts = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        except Exception:
+            pass
+        if conflicts:
+            return GitMergeResponse(
+                status="conflict",
+                message=f"merge {body.branch}: conflitos em {len(conflicts)} arquivo(s)",
+                conflicts=conflicts,
+            )
+        return GitMergeResponse(status="error", message=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Pull Requests (gh CLI) — só quando o remote é GitHub
+# ---------------------------------------------------------------------------
+
+
+class PullRequestInfo(BaseModel):
+    number: int
+    title: str
+    state: str = ""
+    author: str = ""
+    head: str = ""
+    base: str = ""
+
+
+class PullRequestListResponse(BaseModel):
+    available: bool = True  # False quando gh ausente / remote não-GitHub
+    prs: list[PullRequestInfo] = []
+    message: str = ""
+
+
+@view_router.get("/{workspace_id}/pr", response_model=PullRequestListResponse)
+async def pr_list(
+    workspace_id: str,
+    state: Annotated[str, Query()] = "open",
+) -> PullRequestListResponse:
+    """Lista PRs do repositório via ``gh pr list``."""
+    from backend.tools.gh import _gh_run, _resolve_cwd
+
+    cwd = _resolve_cwd(workspace_id, None)
+    result = _gh_run(
+        [
+            "pr",
+            "list",
+            "--state",
+            state,
+            "--json",
+            "number,title,state,author,headRefName,baseRefName",
+        ],
+        cwd=cwd,
+    )
+    if result.get("status") != "ok":
+        return PullRequestListResponse(
+            available=False, message=result.get("message", "")
+        )
+    try:
+        raw = json.loads(result.get("output") or "[]")
+    except json.JSONDecodeError:
+        return PullRequestListResponse(available=False, message="gh: saída inválida")
+    prs = [
+        PullRequestInfo(
+            number=int(p.get("number", 0)),
+            title=str(p.get("title", "")),
+            state=str(p.get("state", "")),
+            author=str((p.get("author") or {}).get("login", "")),
+            head=str(p.get("headRefName", "")),
+            base=str(p.get("baseRefName", "")),
+        )
+        for p in raw
+    ]
+    return PullRequestListResponse(prs=prs)
+
+
+class PullRequestCreateRequest(BaseModel):
+    title: str
+    body: str = ""
+    base: str = "main"
+    draft: bool = False
+
+
+@view_router.post("/{workspace_id}/pr", response_model=StatusResponse)
+async def pr_create(
+    workspace_id: str, body: PullRequestCreateRequest
+) -> StatusResponse:
+    """Cria um PR da branch atual via ``gh pr create``."""
+    from backend.tools.gh import _gh_run, _resolve_cwd
+
+    if not body.title.strip():
+        return StatusResponse(status="error", message="Título do PR é obrigatório.")
+    cwd = _resolve_cwd(workspace_id, None)
+    args = [
+        "pr",
+        "create",
+        "--title",
+        body.title,
+        "--body",
+        body.body,
+        "--base",
+        body.base,
+    ]
+    if body.draft:
+        args.append("--draft")
+    result = _gh_run(args, cwd=cwd)
+    if result.get("status") == "ok":
+        return StatusResponse(status="ok", message=result.get("output", ""))
+    return StatusResponse(status="error", message=result.get("message", ""))
 
 
 # ---------------------------------------------------------------------------

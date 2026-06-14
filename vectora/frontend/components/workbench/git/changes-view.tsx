@@ -1,0 +1,375 @@
+"use client";
+
+/**
+ * ChangesView — aba "Mudanças" do painel Git.
+ *
+ * Grupos colapsáveis Staged / Modificados + painel de commit. Cada arquivo
+ * tem ações inline (+/−/↩) e menu de clique direito (stage/unstage/discard).
+ * O estado (resumo, arquivos abertos, hunks) vive no workbench-store (slice
+ * `diff`), cacheado por workspace, revalidado por `useWorkbenchSWR`.
+ */
+
+import { ChevronDown, ChevronRight, GitCommit, Loader2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useT } from "@/lib/i18n";
+import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
+import {
+  WORKBENCH_STALE_MS,
+  useWorkbenchStore,
+  type DiffFile,
+  type DiffSummary,
+} from "@/lib/stores/workbench-store";
+import { apiGitCommit, apiGitFileAction, fetchDiffFile } from "./api";
+import { HunkView, statusTone } from "./shared";
+import { useContextMenu, type ContextMenuItem } from "./git-context-menu";
+
+function FileRow({
+  workspaceId,
+  file,
+  onRefresh,
+  onContextMenu,
+}: {
+  workspaceId: string;
+  file: DiffFile;
+  onRefresh: () => void;
+  onContextMenu: (e: React.MouseEvent, file: DiffFile) => void;
+}) {
+  const t = useT();
+  const open = useWorkbenchStore((s) =>
+    s.getDiff(workspaceId).openFiles.includes(file.path),
+  );
+  const hunks = useWorkbenchStore(
+    (s) => s.getDiff(workspaceId).hunksByFile[file.path],
+  );
+  const fetchedAt = useWorkbenchStore(
+    (s) => s.getDiff(workspaceId).fileFetchedAt[file.path] ?? 0,
+  );
+  const setDiffOpenFile = useWorkbenchStore((s) => s.setDiffOpenFile);
+  const setDiffHunks = useWorkbenchStore((s) => s.setDiffHunks);
+  const [discardOpen, setDiscardOpen] = useState(false);
+
+  const revalidate = useCallback(async () => {
+    const h = await fetchDiffFile(workspaceId, file.path);
+    if (h) setDiffHunks(workspaceId, file.path, h);
+  }, [workspaceId, file.path, setDiffHunks]);
+
+  useWorkbenchSWR({
+    key: `diff:${workspaceId}:${file.path}`,
+    hasCache: Array.isArray(hunks),
+    isStale: Date.now() - fetchedAt > WORKBENCH_STALE_MS,
+    revalidate,
+    skip: !open,
+  });
+
+  const handleConfirmDiscard = useCallback(async () => {
+    setDiscardOpen(false);
+    await apiGitFileAction(workspaceId, "discard", file.path);
+    onRefresh();
+  }, [workspaceId, file.path, onRefresh]);
+
+  return (
+    <>
+      <Dialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("workbench.git.discard_title")}</DialogTitle>
+            <DialogDescription>
+              {t("workbench.git.discard_body")}{" "}
+              <span className="font-mono text-foreground">{file.path}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              onClick={() => setDiscardOpen(false)}
+              className="px-3 py-1.5 text-xs rounded-md border border-border/60 hover:bg-muted/40"
+            >
+              {t("workbench.git.cancel")}
+            </button>
+            <button
+              onClick={() => void handleConfirmDiscard()}
+              className="px-3 py-1.5 text-xs rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("workbench.git.discard_confirm")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <div
+        className="border-b border-border/40 last:border-0 group"
+        onContextMenu={(e) => onContextMenu(e, file)}
+      >
+        <div className="flex items-center">
+          <button
+            onClick={() => setDiffOpenFile(workspaceId, file.path, !open)}
+            className="flex-1 flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-muted/30 text-left min-w-0"
+          >
+            {open ? (
+              <ChevronDown className="w-3 h-3 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />
+            )}
+            <span
+              className={`w-4 text-center font-bold shrink-0 ${statusTone(file.status)}`}
+            >
+              {file.status}
+            </span>
+            <span className="flex-1 truncate font-mono">{file.path}</span>
+            <span className="text-green-500 shrink-0">+{file.additions}</span>
+            <span className="text-destructive shrink-0">−{file.deletions}</span>
+          </button>
+          <div className="flex items-center gap-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            {file.unstaged_change || file.untracked ? (
+              <button
+                onClick={() =>
+                  void apiGitFileAction(workspaceId, "stage", file.path).then(
+                    onRefresh,
+                  )
+                }
+                title={t("workbench.git.ctx_stage")}
+                className="p-0.5 text-green-500 hover:text-green-400 text-[10px] font-bold"
+              >
+                +
+              </button>
+            ) : null}
+            {file.staged_change ? (
+              <button
+                onClick={() =>
+                  void apiGitFileAction(workspaceId, "unstage", file.path).then(
+                    onRefresh,
+                  )
+                }
+                title={t("workbench.git.ctx_unstage")}
+                className="p-0.5 text-amber-500 hover:text-amber-400 text-[10px] font-bold"
+              >
+                −
+              </button>
+            ) : null}
+            {file.unstaged_change && !file.untracked ? (
+              <button
+                onClick={() => setDiscardOpen(true)}
+                title={t("workbench.git.ctx_discard")}
+                className="p-0.5 text-destructive hover:text-red-400 text-[10px]"
+              >
+                ↩
+              </button>
+            ) : null}
+          </div>
+        </div>
+        {open && (
+          <div className="px-3 pb-2 space-y-1">
+            {!hunks && (
+              <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+            )}
+            {hunks?.map((h, i) => (
+              <HunkView key={i} hunk={h} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function DiffGroup({
+  label,
+  tone,
+  workspaceId,
+  files,
+  onRefresh,
+  onContextMenu,
+}: {
+  label: string;
+  tone: string;
+  workspaceId: string;
+  files: DiffFile[];
+  onRefresh: () => void;
+  onContextMenu: (e: React.MouseEvent, file: DiffFile) => void;
+}) {
+  const [open, setOpen] = useState(true);
+  if (files.length === 0) return null;
+  return (
+    <div className="border-b border-border/40 last:border-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium uppercase tracking-wide hover:bg-muted/30 text-left"
+      >
+        {open ? (
+          <ChevronDown className="w-3 h-3 shrink-0 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />
+        )}
+        <span className={tone}>{label}</span>
+        <span className="text-muted-foreground">({files.length})</span>
+      </button>
+      {open &&
+        files.map((f) => (
+          <FileRow
+            key={f.path}
+            workspaceId={workspaceId}
+            file={f}
+            onRefresh={onRefresh}
+            onContextMenu={onContextMenu}
+          />
+        ))}
+    </div>
+  );
+}
+
+export function ChangesView({
+  workspaceId,
+  summary,
+}: {
+  workspaceId: string;
+  summary: DiffSummary;
+}) {
+  const t = useT();
+  const invalidateDiff = useWorkbenchStore((s) => s.invalidateDiff);
+  const menu = useContextMenu();
+  const [commitMsg, setCommitMsg] = useState("");
+  const [committing, setCommitting] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    invalidateDiff(workspaceId);
+  }, [workspaceId, invalidateDiff]);
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, file: DiffFile) => {
+      const items: ContextMenuItem[] = [];
+      if (file.unstaged_change || file.untracked) {
+        items.push({
+          label: t("workbench.git.ctx_stage"),
+          onSelect: () =>
+            void apiGitFileAction(workspaceId, "stage", file.path).then(
+              handleRefresh,
+            ),
+        });
+      }
+      if (file.staged_change) {
+        items.push({
+          label: t("workbench.git.ctx_unstage"),
+          onSelect: () =>
+            void apiGitFileAction(workspaceId, "unstage", file.path).then(
+              handleRefresh,
+            ),
+        });
+      }
+      if (file.unstaged_change && !file.untracked) {
+        items.push({
+          label: t("workbench.git.ctx_discard"),
+          danger: true,
+          onSelect: () =>
+            void apiGitFileAction(workspaceId, "discard", file.path).then(
+              handleRefresh,
+            ),
+        });
+      }
+      menu.open(e, items);
+    },
+    [workspaceId, t, handleRefresh, menu],
+  );
+
+  const handleCommit = useCallback(async () => {
+    if (!commitMsg.trim()) return;
+    setCommitting(true);
+    try {
+      const result = await apiGitCommit(workspaceId, commitMsg.trim());
+      if (result.status === "ok") {
+        setCommitMsg("");
+        handleRefresh();
+      }
+    } finally {
+      setCommitting(false);
+    }
+  }, [workspaceId, commitMsg, handleRefresh]);
+
+  const { staged, unstaged } = useMemo(() => {
+    const stagedFiles: DiffFile[] = [];
+    const unstagedFiles: DiffFile[] = [];
+    for (const f of summary.files) {
+      if (f.staged_change) stagedFiles.push(f);
+      if (f.unstaged_change || f.untracked) unstagedFiles.push(f);
+    }
+    return { staged: stagedFiles, unstaged: unstagedFiles };
+  }, [summary.files]);
+
+  if (summary.files.length === 0) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
+        <p className="text-xs text-muted-foreground">
+          {t("workbench.diff.clean")}
+        </p>
+        <p className="text-[10px] text-muted-foreground/60">
+          {t("workbench.diff.clean_hint")}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      {menu.element}
+      <div className="px-2 py-1.5 border-b border-border/60 flex items-center justify-between bg-background">
+        <span className="text-xs text-muted-foreground">
+          {t("workbench.diff.files_badge", { n: summary.files.length })}
+        </span>
+        <span className="text-xs font-mono">
+          <span className="text-green-500">+{summary.total_additions}</span>{" "}
+          <span className="text-destructive">−{summary.total_deletions}</span>
+        </span>
+      </div>
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <DiffGroup
+          label={t("workbench.diff.group_staged")}
+          tone="text-green-500"
+          workspaceId={workspaceId}
+          files={staged}
+          onRefresh={handleRefresh}
+          onContextMenu={handleContextMenu}
+        />
+        <DiffGroup
+          label={t("workbench.diff.group_unstaged")}
+          tone="text-amber-500"
+          workspaceId={workspaceId}
+          files={unstaged}
+          onRefresh={handleRefresh}
+          onContextMenu={handleContextMenu}
+        />
+      </div>
+      <div className="border-t border-border/60 p-2 flex flex-col gap-1.5 bg-muted/10 shrink-0">
+        <textarea
+          value={commitMsg}
+          onChange={(e) => setCommitMsg(e.target.value)}
+          placeholder={t("workbench.diff.commit_placeholder")}
+          rows={2}
+          className="w-full resize-none rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+              void handleCommit();
+            }
+          }}
+        />
+        <button
+          onClick={() => void handleCommit()}
+          disabled={!commitMsg.trim() || committing}
+          className="flex items-center justify-center gap-1.5 py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {committing ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <GitCommit className="w-3 h-3" />
+          )}
+          {t("workbench.diff.commit_button")}
+        </button>
+      </div>
+    </div>
+  );
+}
