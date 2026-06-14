@@ -196,7 +196,7 @@ export function WorkbenchContent({
 
   return (
     <div className="h-full flex flex-col bg-background border-l border-border/60">
-      <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-muted/20">
+      <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-background">
         <span className="flex items-center gap-2 text-sm font-medium">
           <ActiveIcon className="w-4 h-4 text-muted-foreground" />
           {t(`workbench.tab.${activeTab}`)}

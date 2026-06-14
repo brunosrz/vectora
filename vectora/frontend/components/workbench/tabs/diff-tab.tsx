@@ -1194,7 +1194,7 @@ function DiffGroups({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-2 py-1.5 border-b border-border/60 flex items-center justify-between bg-muted/20">
+      <div className="px-2 py-1.5 border-b border-border/60 flex items-center justify-between bg-background">
         <span className="text-xs text-muted-foreground">
           {t("workbench.diff.files_badge", { n: summary.files.length })}
         </span>

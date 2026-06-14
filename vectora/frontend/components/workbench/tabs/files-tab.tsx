@@ -1351,7 +1351,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   return (
     <div className="h-full flex flex-col">
       {/* Toolbar VS Code-like */}
-      <div className="flex items-center gap-0.5 px-2 py-1 border-b border-border/60 bg-muted/10">
+      <div className="flex items-center gap-0.5 px-2 py-1 border-b border-border/60 bg-background">
         <span className="text-[10px] font-medium text-muted-foreground truncate flex-1 select-none">
           {workspace.name}
         </span>
