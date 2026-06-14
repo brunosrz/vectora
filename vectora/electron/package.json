@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Vectora desktop shell (Electron) — wraps the Nuitka-compiled backend.",
+  "author": "Vectora Company <bruno@vectora.company>",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",

@@ -43,10 +43,15 @@ files:
   - "!node_modules/**/{CHANGELOG.md,README.md,*.d.ts,test,tests}"
 
 # Binário Nuitka como sidecar + icone do tray + manifesto de update.
+# Só o onefile (`vectora`/`vectora.exe`): o Nuitka mantém `launcher.build/`,
+# `launcher.dist/` e `launcher.onefile-build/` em dist-nuitka para inspeção, mas
+# o app spawna apenas `vectora-core/vectora.exe` (electron/src/main.ts). Copiar a
+# árvore inteira injetava ~840 MB de intermediários no instalador, enchia o disco
+# e estourava o mmap do makensis.
 extraResources:
   - from: ../dist-nuitka
     to: vectora-core
-    filter: ["**/*"]
+    filter: ["vectora", "vectora.exe"]
   - from: ../frontend/public/favicon-32x32.png
     to: tray-icon.png
   - from: ../frontend/public/vectora.ico
