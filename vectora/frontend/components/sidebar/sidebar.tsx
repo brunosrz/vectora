@@ -556,7 +556,7 @@ export const Sidebar = memo(function Sidebar({
 
         <div className="bg-gradient-to-t from-sidebar-accent/10 via-sidebar-accent/5 to-transparent pt-2 pb-0 space-y-0">
           <a
-            href="https://github.com/brunosrz/vectora"
+            href="https://docs.vectora.company"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground transition-all duration-300 ease-out hover:bg-sidebar-accent/10 group"
@@ -575,7 +575,7 @@ export const Sidebar = memo(function Sidebar({
           </a>
 
           <a
-            href="https://github.com/brunosrz/src/issues"
+            href="https://vectora.company/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground transition-all duration-300 ease-out hover:bg-sidebar-accent/10 group"

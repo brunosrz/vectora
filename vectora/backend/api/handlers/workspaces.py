@@ -234,14 +234,15 @@ async def list_workspaces(request: Request) -> ListWorkspacesResponse:
 
 @router.get("/GetActiveWorkspace", response_model=ActiveWorkspaceResponse)
 async def get_active_workspace(request: Request) -> ActiveWorkspaceResponse:
-    """Retorna o workspace ativo do usuário (ou o do diretório atual)."""
+    """Retorna o workspace ativo do usuário, ou ``None`` se não houver."""
     from backend.services.workspace import workspace_registry
 
     uid = _user_id(request)
     active = workspace_registry.get_active(uid)
     if active is None:
-        active = workspace_registry.get_or_create()
-        workspace_registry.set_active(active.id, uid)
+        # Não auto-cria na leitura: o frontend polla este endpoint no load e
+        # acabava materializando um workspace antes de qualquer ação do usuário.
+        return ActiveWorkspaceResponse(workspace=None)
     return ActiveWorkspaceResponse(workspace=_to_info(active))
 
 

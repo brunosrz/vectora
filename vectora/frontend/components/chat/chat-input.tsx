@@ -364,7 +364,7 @@ export function ChatInput({
               configuração). Grupo esquerdo: workspace (onde) → modo de
               permissão; direita: modelo e medidor de uso. Sem barra de
               contexto acima do input (poluição visual desnecessária). */}
-          <div className="flex items-center justify-between gap-2 mt-1 px-1 flex-wrap">
+          <div className="flex items-center justify-between gap-2 mt-1 px-1 flex-nowrap">
             <div className="flex items-center gap-1 min-w-0">
               <WorkspaceSelector compact />
               {wsId && <VscodeMenu workspaceId={wsId} />}
@@ -372,7 +372,7 @@ export function ChatInput({
               <PermissionModeMenu />
             </div>
 
-            <div className="flex items-center gap-1 flex-wrap justify-end">
+            <div className="flex items-center gap-1 shrink-0 justify-end">
               <ChatParamsMenu />
               {agentConfig && onAgentConfigChange && (
                 <ModelSelector

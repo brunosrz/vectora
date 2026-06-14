@@ -187,6 +187,13 @@ def _resolve_workspace_id(requested: str, thread_id: str, user_id: str) -> str:
     try:
         from backend.services.workspace import workspace_registry
 
+        # Reusa o workspace ativo do usuário em vez de registrar um por thread —
+        # caso contrário cada conversa cria um ~/Documents/vectora/<thread_id>,
+        # poluindo o seletor de workspaces.
+        active = workspace_registry.get_active(user_id)
+        if active is not None:
+            return active.id
+
         ws = workspace_registry.get_or_create_session_workspace(thread_id, user_id)
         workspace_registry.set_active(ws.id, user_id)
         return ws.id

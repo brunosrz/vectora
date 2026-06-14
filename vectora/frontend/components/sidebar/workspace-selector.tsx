@@ -134,8 +134,8 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
           onClick={() => setOpen((o) => !o)}
           className={
             compact
-              ? "flex items-center gap-1.5 h-7 px-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors select-none max-w-[160px]"
-              : "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors select-none max-w-[200px]"
+              ? "flex items-center gap-1.5 h-7 px-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors select-none min-w-0 max-w-[160px]"
+              : "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors select-none min-w-0 max-w-[200px]"
           }
           title={active?.cwd ?? t("workspace.select_title")}
           aria-expanded={open}
