@@ -8,8 +8,8 @@ Uso (PowerShell / cmd, sem Git bash):
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
     scons package       → build completo (chat + Nuitka + Electron) + instalador
-    scons tests         → suíte completa: pytest tests/ (unit + stress +
-                          integration + e2e) + coverage + vitest do chat
+    scons tests         → suíte completa: vitest (frontend) + pytest (backend),
+                          ambos com cobertura
     scons lint          → ruff + ty + tsc + oxlint
     scons clean         → remove outputs de build
 
@@ -185,13 +185,17 @@ def _action_package(target, source, env, platform=""):
 
 
 def _action_tests(target, source, env):
-    """Roda a suíte de testes COMPLETA: pytest tests/ + coverage + chat (vitest).
+    """Roda a suíte COMPLETA: vitest (frontend) + pytest (backend), ambos com
+    cobertura. O frontend roda primeiro por ser rápido e falhar cedo.
 
-    Inclui TODAS as pastas e markers — ``unit``, ``stress``, ``integration`` e
-    ``e2e``. As suítes ``integration`` e ``e2e`` exigem GOOGLE_API_KEY /
-    COHERE_API_KEY / gemini CLI no ambiente; sem essas chaves elas falham ou
-    são puladas pelos próprios testes (skip-with-reason).
+    O pytest inclui TODAS as pastas e markers — ``unit``, ``stress``,
+    ``integration`` e ``e2e``. As suítes ``integration`` e ``e2e`` exigem
+    GOOGLE_API_KEY / COHERE_API_KEY / gemini CLI no ambiente; sem essas chaves
+    elas falham ou são puladas pelos próprios testes (skip-with-reason).
     """
+    # Frontend primeiro: o vitest é rápido e falha cedo. `--coverage` usa o
+    # @vitest/coverage-v8 (relatório em frontend/coverage/).
+    _run([PNPM, "--dir", "frontend", "exec", "vitest", "run", "--coverage"])
     _run([
         "uv", "run", "pytest", "tests",
         "--cov=backend",
@@ -199,7 +203,6 @@ def _action_tests(target, source, env):
         "--cov-report=html:htmlcov",
         "--tb=short",
     ])
-    _run([PNPM, "--dir", "frontend", "test"])
 
 
 def _action_lint(target, source, env):
@@ -241,9 +244,8 @@ def _action_help(target, source, env):
                            instalador para o SO atual
 
   Qualidade
-    scons tests            suíte completa: pytest tests/ (unit + stress +
-                           integration + e2e) + coverage + vitest do chat
-                           (integration e e2e exigem API keys)
+    scons tests            suíte completa: vitest (frontend) + pytest (backend),
+                           ambos com cobertura (integration e e2e exigem API keys)
     scons lint             ruff + ty + tsc + oxlint
     scons clean            remove todos os outputs de build
 """)

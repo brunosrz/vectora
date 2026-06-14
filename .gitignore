@@ -345,3 +345,4 @@ AbilitySystem_repo/
 .vectora/
 /desktop/dist-electron
 /desktop/build-resources
+*.gen.ts
