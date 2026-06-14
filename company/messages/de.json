@@ -153,6 +153,8 @@
   "issues_title_label": "Titel",
   "issues_category_label": "Kategorie",
   "issues_category_bug": "Bug",
+  "issues_list_title": "Aktuelle Meldungen",
+  "issues_list_empty": "Noch keine Meldungen. Sei der Erste.",
   "issues_category_feedback": "Feedback",
   "issues_category_feature": "Feature-Anfrage",
   "issues_description_label": "Beschreibung",

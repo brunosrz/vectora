@@ -153,6 +153,8 @@
   "issues_title_label": "Title",
   "issues_category_label": "Category",
   "issues_category_bug": "Bug",
+  "issues_list_title": "Recent issues",
+  "issues_list_empty": "No issues yet. Be the first to report one.",
   "issues_category_feedback": "Feedback",
   "issues_category_feature": "Feature request",
   "issues_description_label": "Description",

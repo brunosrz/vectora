@@ -153,6 +153,8 @@
   "issues_title_label": "Titolo",
   "issues_category_label": "Categoria",
   "issues_category_bug": "Bug",
+  "issues_list_title": "Problemi recenti",
+  "issues_list_empty": "Ancora nessun problema. Sii il primo a segnalarne uno.",
   "issues_category_feedback": "Feedback",
   "issues_category_feature": "Richiesta di funzionalità",
   "issues_description_label": "Descrizione",

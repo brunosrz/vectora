@@ -42,6 +42,29 @@ export const submitIssue = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export type IssueListItem = {
+  id: string;
+  title: string;
+  category: "bug" | "feedback" | "feature";
+  description: string | null;
+  created_at: string;
+};
+
+// Lista pública das issues abertas. NUNCA seleciona `email` (privacidade do
+// reporter). RLS nega acesso de cliente, então usa o admin client server-side.
+export const listOpenIssues = createServerFn({ method: "GET" }).handler(
+  async (): Promise<IssueListItem[]> => {
+    const admin = createSupabaseAdminClient();
+    const { data, error } = await admin
+      .from("issues")
+      .select("id, title, category, description, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as IssueListItem[];
+  },
+);
+
 export const joinWaitlist = createServerFn({ method: "POST" })
   .validator(
     z.object({

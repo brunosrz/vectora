@@ -650,23 +650,6 @@ function SystemPanel() {
         ))}
       </div>
 
-      <div className="space-y-1">
-        <p className="text-xs font-medium">Serviços</p>
-        {Object.entries(info.services).map(([svc, status]) => (
-          <div
-            key={svc}
-            className="flex items-center justify-between px-2.5 py-1.5 rounded-md border"
-          >
-            <span className="text-xs">{svc}</span>
-            <Badge
-              variant={status === "ok" ? "default" : "destructive"}
-              className="text-[10px] h-4"
-            >
-              {status}
-            </Badge>
-          </div>
-        ))}
-      </div>
 
       <div className="pt-3 border-t space-y-3">
         <p className="text-xs font-medium">Configurações</p>

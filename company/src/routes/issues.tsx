@@ -3,7 +3,11 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { m } from "#/paraglide/messages";
 import Turnstile from "#/components/shared/Turnstile";
-import { submitIssue } from "#/server/fns/issues";
+import {
+  submitIssue,
+  listOpenIssues,
+  type IssueListItem,
+} from "#/server/fns/issues";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/issues")({
@@ -16,6 +20,7 @@ export const Route = createFileRoute("/issues")({
       },
     ],
   }),
+  loader: async () => ({ issues: await listOpenIssues() }),
   component: IssuesPage,
 });
 
@@ -146,7 +151,47 @@ function IssueForm() {
   );
 }
 
+function IssuesList({ issues }: { issues: IssueListItem[] }) {
+  return (
+    <section className="mt-14">
+      <h2 className="mb-4 text-lg font-semibold text-foreground">
+        {m.issues_list_title()}
+      </h2>
+      {issues.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{m.issues_list_empty()}</p>
+      ) : (
+        <ul className="space-y-3">
+          {issues.map((issue) => (
+            <li
+              key={issue.id}
+              className="rounded-xl border border-border bg-card/40 px-4 py-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-sm font-medium text-foreground">
+                  {issue.title}
+                </span>
+                <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
+                  {CATEGORY_LABELS[issue.category]}
+                </span>
+              </div>
+              {issue.description && (
+                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                  {issue.description}
+                </p>
+              )}
+              <time className="mt-1.5 block text-[11px] text-muted-foreground/70">
+                {new Date(issue.created_at).toLocaleDateString()}
+              </time>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function IssuesPage() {
+  const { issues } = Route.useLoaderData();
   return (
     <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
       <div className="mb-10">
@@ -156,6 +201,7 @@ function IssuesPage() {
         <p className="text-muted-foreground">{m.issues_subtitle()}</p>
       </div>
       <IssueForm />
+      <IssuesList issues={issues} />
     </div>
   );
 }

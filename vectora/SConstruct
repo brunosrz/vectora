@@ -7,10 +7,11 @@ Uso (PowerShell / cmd, sem Git bash):
     scons release-win   → instalador Windows (.msi + .exe NSIS)
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
-    scons package       → build completo (chat + Nuitka + Electron) + instalador
+    scons package       → build completo (frontend + Nuitka + Electron) + instalador
     scons tests         → suíte completa: vitest (frontend) + pytest (backend),
                           ambos com cobertura
     scons lint          → ruff + ty + tsc + oxlint
+    scons docker        → build da imagem Docker + docker compose up -d
     scons clean         → remove outputs de build
 
 Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock)
@@ -214,6 +215,29 @@ def _action_lint(target, source, env):
     _run([PNPM, "--dir", "frontend", "exec", "oxlint"])
 
 
+def _action_docker(target, source, env):
+    """Builda a imagem Docker do Vectora e sobe o stack do compose.
+
+    A imagem é a mesma referenciada no docker-compose.yml. As chaves do
+    ``~/.vectora/.env`` (GOOGLE_API_KEY etc.) são carregadas para o ambiente do
+    ``docker compose up`` substituir os ``${...}`` do compose.
+    """
+    image = "ghcr.io/brunosrz/vectora:latest"
+    _run(["docker", "build", "-t", image, "."])
+
+    compose_env: dict[str, str] = {}
+    dotenv = os.path.join(os.path.expanduser("~"), ".vectora", ".env")
+    if os.path.isfile(dotenv):
+        with open(dotenv, encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if stripped and not stripped.startswith("#") and "=" in stripped:
+                    key, value = stripped.split("=", 1)
+                    compose_env[key.strip()] = value.strip()
+
+    _run(["docker", "compose", "up", "-d"], env=compose_env or None)
+
+
 def _action_clean(target, source, env):
     for path in [
         "dist-nuitka",
@@ -240,8 +264,9 @@ def _action_help(target, source, env):
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
 
   Build
-    scons package          build completo (chat + Nuitka + Electron) +
+    scons package          build completo (frontend + Nuitka + Electron) +
                            instalador para o SO atual
+    scons docker           build da imagem Docker + docker compose up -d
 
   Qualidade
     scons tests            suíte completa: vitest (frontend) + pytest (backend),
@@ -304,6 +329,9 @@ _cmd("tests", _action_tests)
 _cmd("lint",  _action_lint)
 _cmd("clean", _action_clean)
 _cmd("help",  _action_help)
+
+# Docker — build da imagem + docker compose up -d
+_cmd("docker", _action_docker)
 
 # Default: exibe ajuda
 Default(env.Command("_default", [], _action_help))

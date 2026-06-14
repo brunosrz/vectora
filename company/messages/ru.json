@@ -153,6 +153,8 @@
   "issues_title_label": "Заголовок",
   "issues_category_label": "Категория",
   "issues_category_bug": "Ошибка",
+  "issues_list_title": "Недавние обращения",
+  "issues_list_empty": "Пока нет обращений. Будьте первым.",
   "issues_category_feedback": "Обратная связь",
   "issues_category_feature": "Запрос функции",
   "issues_description_label": "Описание",
