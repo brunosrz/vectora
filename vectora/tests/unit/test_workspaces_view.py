@@ -414,3 +414,123 @@ class TestParseUnifiedDiff:
         hunks = _parse_unified_diff(diff)
         assert len(hunks) == 1
         assert "-velha" in hunks[0].lines
+
+
+# ---------------------------------------------------------------------------
+# Git — status / branches / checkout / compare / merge / PR (endpoints novos)
+# ---------------------------------------------------------------------------
+
+
+def _init_repo(root):
+    """Inicializa um repo git em ``root`` com 1 commit; devolve o Repo."""
+    import git
+
+    repo = git.Repo.init(root)
+    with repo.config_writer() as cw:
+        cw.set_value("user", "name", "Test")
+        cw.set_value("user", "email", "test@example.com")
+    (root / "a.txt").write_text("linha 1\n", encoding="utf-8")
+    repo.index.add(["a.txt"])
+    repo.index.commit("init")
+    return repo
+
+
+class TestGitStatusBranches:
+    @pytest.mark.asyncio
+    async def test_status_non_git(self, trusted_ws):
+        from backend.api.handlers.workspaces import git_status
+
+        wsid, _ = trusted_ws
+        resp = await git_status(workspace_id=wsid)
+        assert resp.is_git_repo is False
+
+    @pytest.mark.asyncio
+    async def test_status_git_repo(self, trusted_ws):
+        from backend.api.handlers.workspaces import git_status
+
+        wsid, root = trusted_ws
+        _init_repo(root)
+        resp = await git_status(workspace_id=wsid)
+        assert resp.is_git_repo is True
+        assert resp.branch
+        assert resp.clean is True
+
+    @pytest.mark.asyncio
+    async def test_branches_lists_current(self, trusted_ws):
+        from backend.api.handlers.workspaces import git_branches
+
+        wsid, root = trusted_ws
+        repo = _init_repo(root)
+        repo.create_head("feature-x")
+        resp = await git_branches(workspace_id=wsid)
+        assert "feature-x" in resp.branches
+        assert resp.current
+
+    @pytest.mark.asyncio
+    async def test_checkout_creates_and_switches(self, trusted_ws):
+        from backend.api.handlers.workspaces import (
+            GitCheckoutRequest,
+            git_checkout,
+            git_status,
+        )
+
+        wsid, root = trusted_ws
+        _init_repo(root)
+        resp = await git_checkout(
+            workspace_id=wsid, body=GitCheckoutRequest(ref="nova", create=True)
+        )
+        assert resp.status == "ok"
+        st = await git_status(workspace_id=wsid)
+        assert st.branch == "nova"
+
+
+class TestGitCompareMerge:
+    @pytest.mark.asyncio
+    async def test_compare_lists_changed_files(self, trusted_ws):
+        from backend.api.handlers.workspaces import git_compare_refs
+
+        wsid, root = trusted_ws
+        repo = _init_repo(root)
+        base = repo.active_branch.name
+        repo.create_head("feat")
+        repo.git.checkout("feat")
+        (root / "b.txt").write_text("novo\n", encoding="utf-8")
+        repo.index.add(["b.txt"])
+        repo.index.commit("add b")
+        resp = await git_compare_refs(workspace_id=wsid, base=base, head="feat")
+        assert "b.txt" in {f.path for f in resp.files}
+        assert resp.ahead >= 1
+
+    @pytest.mark.asyncio
+    async def test_merge_clean(self, trusted_ws):
+        from backend.api.handlers.workspaces import GitMergeRequest, git_merge
+
+        wsid, root = trusted_ws
+        repo = _init_repo(root)
+        main = repo.active_branch.name
+        repo.create_head("feat")
+        repo.git.checkout("feat")
+        (root / "c.txt").write_text("c\n", encoding="utf-8")
+        repo.index.add(["c.txt"])
+        repo.index.commit("add c")
+        repo.git.checkout(main)
+        resp = await git_merge(workspace_id=wsid, body=GitMergeRequest(branch="feat"))
+        assert resp.status == "ok"
+        assert (root / "c.txt").exists()
+
+
+class TestPrEndpoints:
+    @pytest.mark.asyncio
+    async def test_pr_list_unavailable_when_gh_fails(self, trusted_ws, monkeypatch):
+        import backend.tools.gh as gh_mod
+        from backend.api.handlers import workspaces as ws_mod
+
+        wsid, root = trusted_ws
+        _init_repo(root)
+        monkeypatch.setattr(
+            gh_mod,
+            "_gh_run",
+            lambda *a, **k: {"status": "error", "message": "gh not found"},
+        )
+        resp = await ws_mod.pr_list(workspace_id=wsid)
+        assert resp.available is False

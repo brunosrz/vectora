@@ -91,14 +91,46 @@ def test_resolve_keeps_explicit_workspace():
     assert _resolve_workspace_id("ws-escolhido", "thread1", "u") == "ws-escolhido"
 
 
-def test_resolve_creates_session_workspace_when_empty(monkeypatch):
-    """Sem workspace, deriva o padrão da sessão via registry."""
+def test_resolve_reuses_active_workspace(monkeypatch):
+    """Sem workspace pedido mas com um ativo, reusa o ativo (não cria por thread)."""
+    calls = {}
+
+    class _ActiveWs:
+        id = "ws-ativo"
+
+    class _FakeRegistry:
+        def get_active(self, user_id=None):
+            calls["get_active"] = user_id
+            return _ActiveWs()
+
+        def get_or_create_session_workspace(self, *_args, **_kwargs):
+            calls["created"] = True  # não deve ser chamado
+            raise AssertionError("não deveria criar workspace de sessão")
+
+        def set_active(self, ws_id, user_id=None):
+            calls["set_active"] = (ws_id, user_id)
+            return True
+
+    monkeypatch.setattr(
+        "backend.services.workspace.workspace_registry", _FakeRegistry()
+    )
+    result = _resolve_workspace_id("", "thread1", "u")
+    assert result == "ws-ativo"
+    assert calls["get_active"] == "u"
+    assert "created" not in calls
+
+
+def test_resolve_creates_session_workspace_when_no_active(monkeypatch):
+    """Sem workspace pedido e sem ativo, deriva o padrão da sessão via registry."""
     calls = {}
 
     class _FakeWs:
         id = "sess-ws"
 
     class _FakeRegistry:
+        def get_active(self, *_args, **_kwargs):
+            return None
+
         def get_or_create_session_workspace(self, thread_id, user_id=None):
             calls["thread_id"] = thread_id
             calls["user_id"] = user_id

@@ -178,9 +178,11 @@ def _user_id_from_request(http_request: Request) -> str:
 def _resolve_workspace_id(requested: str, thread_id: str, user_id: str) -> str:
     """Resolve o workspace da sessão.
 
-    Se o cliente não escolheu uma pasta, cria/usa o workspace padrão da sessão
-    em ``~/Documents/vectora/<thread_id>``. Degrada para string vazia se a
-    criação falhar — nesse caso as tools usam o fallback de diretório atual.
+    Com ``requested``, mantém a pasta escolhida pelo cliente. Sem ela, reusa o
+    workspace ativo do usuário; só quando não há ativo registra o workspace
+    padrão da sessão em ``~/Documents/vectora/<thread_id>``. Degrada para
+    string vazia se a resolução falhar — nesse caso as tools usam o fallback
+    de diretório atual.
     """
     if requested:
         return requested
