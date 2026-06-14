@@ -1,0 +1,21 @@
+name: vectora
+
+# Override de build local — usado pelo `scons docker`.
+#
+# O docker-compose.yml base referencia `image: ghcr.io/brunosrz/vectora:latest`
+# (a imagem publicada, que a VPS puxa em produção). Este override acrescenta
+# `build:` + `pull_policy: build` ao serviço `vectora`, forçando o compose a
+# BUILDAR a imagem a partir do Dockerfile local e NUNCA puxar a publicada.
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# Assim o stack sobe sempre com o código local recém-buildado, sem ambiguidade
+# com a tag publicada no GHCR.
+
+services:
+  vectora:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: build

@@ -216,15 +216,15 @@ def _action_lint(target, source, env):
 
 
 def _action_docker(target, source, env):
-    """Builda a imagem Docker do Vectora e sobe o stack do compose.
+    """Builda a imagem Docker local e sobe o stack do compose.
 
-    A imagem é a mesma referenciada no docker-compose.yml. As chaves do
-    ``~/.vectora/.env`` (GOOGLE_API_KEY etc.) são carregadas para o ambiente do
-    ``docker compose up`` substituir os ``${...}`` do compose.
+    O ``docker-compose.build.yml`` (override) acrescenta ``build:`` +
+    ``pull_policy: build`` ao serviço ``vectora``, então ``up --build`` builda
+    a imagem do Dockerfile local e NUNCA puxa a publicada no GHCR. O compose
+    base segue com ``image:`` puro para a VPS puxar a versão publicada. As
+    chaves do ``~/.vectora/.env`` (GOOGLE_API_KEY etc.) são carregadas para o
+    ambiente do ``docker compose`` substituir os ``${...}`` do compose.
     """
-    image = "ghcr.io/brunosrz/vectora:latest"
-    _run(["docker", "build", "-t", image, "."])
-
     compose_env: dict[str, str] = {}
     dotenv = os.path.join(os.path.expanduser("~"), ".vectora", ".env")
     if os.path.isfile(dotenv):
@@ -235,7 +235,15 @@ def _action_docker(target, source, env):
                     key, value = stripped.split("=", 1)
                     compose_env[key.strip()] = value.strip()
 
-    _run(["docker", "compose", "up", "-d"], env=compose_env or None)
+    _run(
+        [
+            "docker", "compose",
+            "-f", "docker-compose.yml",
+            "-f", "docker-compose.build.yml",
+            "up", "-d", "--build",
+        ],
+        env=compose_env or None,
+    )
 
 
 def _action_clean(target, source, env):
