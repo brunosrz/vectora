@@ -316,6 +316,7 @@ export function WorkspaceTrustDialog({
               <Input
                 value={pathInput}
                 onChange={(e) => setPathInput(e.target.value)}
+                autoComplete="off"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -433,6 +434,7 @@ export function WorkspaceTrustDialog({
                 onChange={(e) => setSshHost(e.target.value)}
                 placeholder="user@host:22"
                 className="h-8 text-xs font-mono"
+                autoComplete="off"
                 spellCheck={false}
               />
             </div>
@@ -445,6 +447,7 @@ export function WorkspaceTrustDialog({
                 onChange={(e) => setSshPath(e.target.value)}
                 placeholder="/home/user/projects/app"
                 className="h-8 text-xs font-mono"
+                autoComplete="off"
                 spellCheck={false}
               />
             </div>

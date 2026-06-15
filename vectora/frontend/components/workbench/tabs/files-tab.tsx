@@ -1473,6 +1473,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               value={filter}
               onChange={(e) => setFilesFilter(wsId, e.target.value)}
               placeholder={t("workbench.files.filter")}
+              autoComplete="off"
               className="h-7 text-xs pl-7"
             />
           </div>

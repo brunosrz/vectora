@@ -228,6 +228,7 @@ export function EnvsTab() {
                 placeholder={t("envs.key_placeholder")}
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
+                autoComplete="off"
                 className="text-sm font-mono"
                 autoFocus
               />

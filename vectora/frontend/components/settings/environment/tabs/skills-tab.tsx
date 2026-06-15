@@ -134,6 +134,7 @@ export function SkillsTab() {
             onChange={(e) => setSource(e.target.value)}
             placeholder={t("skills.install_placeholder")}
             className="h-8 text-xs font-mono"
+            autoComplete="off"
             spellCheck={false}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !installing) void handleInstall();

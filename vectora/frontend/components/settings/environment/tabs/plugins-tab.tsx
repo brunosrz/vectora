@@ -236,6 +236,7 @@ export function PluginsTab() {
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+                autoComplete="off"
                 className="h-8 text-xs"
               />
             </div>
@@ -272,6 +273,7 @@ export function PluginsTab() {
                   onChange={(e) =>
                     setForm({ ...form, command: e.target.value })
                   }
+                  autoComplete="off"
                   className="h-8 text-xs font-mono"
                   placeholder="npx"
                 />
@@ -296,6 +298,7 @@ export function PluginsTab() {
               <Input
                 value={form.url}
                 onChange={(e) => setForm({ ...form, url: e.target.value })}
+                autoComplete="off"
                 className="h-8 text-xs font-mono"
                 placeholder="http://localhost:9000/mcp"
               />

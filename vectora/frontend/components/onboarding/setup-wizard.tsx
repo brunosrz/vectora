@@ -462,6 +462,7 @@ function ServiceConnectionCard({
         type={config.type ?? "text"}
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        autoComplete={config.type === "password" ? "new-password" : "off"}
         placeholder={config.placeholder}
         className="h-7 text-xs font-mono"
       />
@@ -473,6 +474,7 @@ function ServiceConnectionCard({
         <Input
           value={startCommand}
           onChange={(e) => setStartCommand(e.target.value)}
+          autoComplete="off"
           placeholder={t("onboarding.mode_start_command_placeholder")}
           className="h-7 text-xs font-mono"
         />

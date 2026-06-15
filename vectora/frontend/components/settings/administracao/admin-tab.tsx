@@ -258,6 +258,7 @@ function InvitesSection() {
                 type="number"
                 value={ttl}
                 onChange={(e) => setTtl(parseInt(e.target.value) || 24)}
+                autoComplete="off"
                 className="h-7 text-xs"
                 min={1}
                 max={720}
@@ -269,6 +270,7 @@ function InvitesSection() {
               </label>
               <Input
                 type="email"
+                autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-7 text-xs"
@@ -650,7 +652,6 @@ function SystemPanel() {
         ))}
       </div>
 
-
       <div className="pt-3 border-t space-y-3">
         <p className="text-xs font-medium">Configurações</p>
         <ConfigSection />
@@ -819,6 +820,7 @@ function ConfigSection() {
                 },
             )
           }
+          autoComplete="off"
           className="h-8 text-xs w-24"
           min={5}
           max={200}
@@ -943,12 +945,14 @@ function SafeRootsPanel() {
             value={newPath}
             onChange={(e) => setNewPath(e.target.value)}
             placeholder="/caminho/absoluto/da/pasta"
+            autoComplete="off"
             className="font-mono text-xs"
           />
           <Input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="Rótulo (opcional)"
+            autoComplete="off"
             className="text-xs sm:w-48"
           />
           <Button
@@ -993,6 +997,7 @@ function SafeRootsPanel() {
                       if (e.key === "Enter") void handleSaveLabel(r.id);
                       if (e.key === "Escape") setEditingId(null);
                     }}
+                    autoComplete="off"
                     autoFocus
                     className="h-6 text-xs"
                   />
@@ -1219,6 +1224,7 @@ function BackendConfigCard({
             onChange={(e) =>
               setValues((v) => ({ ...v, [f.key]: e.target.value }))
             }
+            autoComplete={f.type === "password" ? "new-password" : "off"}
             placeholder={f.placeholder}
             className="h-7 text-xs font-mono"
           />

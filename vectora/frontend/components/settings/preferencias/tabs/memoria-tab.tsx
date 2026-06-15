@@ -401,6 +401,7 @@ export function MemoriaTab() {
                 placeholder={t("memory.add_key_placeholder")}
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
+                autoComplete="off"
                 className="text-sm mt-2"
               />
             </details>

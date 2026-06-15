@@ -96,6 +96,7 @@ export function ContaTab() {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               maxLength={100}
+              autoComplete="off"
               placeholder="Como o Vectora deve te chamar?"
               className="text-sm"
               autoFocus
