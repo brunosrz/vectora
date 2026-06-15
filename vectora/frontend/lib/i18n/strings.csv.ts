@@ -619,6 +619,11 @@ workbench.files.filter,Filter files…,Filtrar archivos…,Filtrar arquivos…
 workbench.files.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
 workbench.files.binary,"Binary file ({size} bytes) — preview not shown.","Archivo binario ({size} bytes) — vista previa no disponible.","Arquivo binário ({size} bytes) — preview indisponível."
 workbench.files.truncated,File truncated for preview.,Archivo truncado para vista previa.,Arquivo truncado para preview.
+workbench.files.download,Download,Descargar,Baixar
+window.open_as_window,Open as window,Abrir como ventana,Abrir como janela
+window.minimize,Minimize,Minimizar,Minimizar
+window.close,Close,Cerrar,Fechar
+window.restore,Restore,Restaurar,Restaurar
 workbench.files.read_only_truncated,File too large to edit inline — showing read-only preview.,Archivo demasiado grande para editar — vista de solo lectura.,Arquivo grande demais para editar — exibindo preview somente leitura.
 workbench.files.save,Save,Guardar,Salvar
 workbench.files.discard,Discard,Descartar,Descartar

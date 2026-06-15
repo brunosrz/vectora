@@ -144,6 +144,8 @@ interface WorkbenchState {
   activeTabByThread: Record<string, WorkbenchTab>;
   /** Largura do painel direito em px (default = largura da sidebar esquerda). */
   splitSize: number;
+  /** Altura do viewer de arquivo (base do split vertical da aba Files) em px. */
+  viewerHeight: number;
   /** Arquivos fixados por sessão. */
   pinnedFiles: Record<string, string[]>;
 
@@ -164,6 +166,7 @@ interface WorkbenchState {
   selectTab: (threadId: string, tab: WorkbenchTab) => void;
 
   setSplitSize: (size: number) => void;
+  setViewerHeight: (height: number) => void;
 
   togglePinned: (threadId: string, path: string) => void;
   isPinned: (threadId: string, path: string) => boolean;
@@ -254,6 +257,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         activeTabByThread: {},
         // Mesma largura default da sidebar esquerda (lib/stores/settings-store.ts).
         splitSize: 224,
+        viewerHeight: 280,
         pinnedFiles: {},
         pending: {},
 
@@ -354,6 +358,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
           }),
 
         setSplitSize: (size) => set({ splitSize: size }),
+        setViewerHeight: (height) => set({ viewerHeight: height }),
 
         togglePinned: (threadId, path) =>
           set((s) => {
@@ -570,6 +575,7 @@ export const useWorkbenchStore = create<WorkbenchState>()(
           panelOpen: state.panelOpen,
           activeTabByThread: state.activeTabByThread,
           splitSize: state.splitSize,
+          viewerHeight: state.viewerHeight,
           pinnedFiles: state.pinnedFiles,
         }),
       },

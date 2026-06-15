@@ -39,7 +39,7 @@ import {
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { TerminalPanel } from "@/components/workbench/terminal/terminal-panel";
 import { FilesTab } from "./tabs/files-tab";
-import { DiffTab } from "./tabs/diff-tab";
+import { GitTab } from "./git/git-tab";
 import { PlanTab } from "./tabs/plan-tab";
 
 interface WorkbenchPanelProps {
@@ -217,7 +217,7 @@ export function WorkbenchContent({
         {activeTab === "files" && (
           <FilesTab threadId={threadId} onAddToContext={onAddToContext} />
         )}
-        {activeTab === "diff" && <DiffTab threadId={threadId} />}
+        {activeTab === "diff" && <GitTab threadId={threadId} />}
         {activeTab === "plan" && <PlanTab threadId={threadId} />}
       </div>
     </div>

@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * GitTab — painel Git do workbench (substitui o antigo diff-tab monolítico).
+ * GitTab — painel Git do workbench.
  *
  * Estrutura: toolbar (branch · sync · PR) + 2 abas (Mudanças | Histórico).
  * Comparar/merge entra como overlay de tela cheia; stash, worktrees e criação
- * de PR são modais. Resolve o overflow da barra de 6 abas antiga.
+ * de PR são modais.
  */
 
 import { GitBranch, Loader2 } from "lucide-react";

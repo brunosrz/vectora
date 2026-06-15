@@ -16,6 +16,8 @@ import {
   type PaletteCommand,
 } from "@/components/layout/command-palette";
 import { NewChatDialog } from "@/components/sidebar/new-chat-dialog";
+import { WindowLayer } from "@/components/workbench/windows/window-layer";
+import { WindowDock } from "@/components/workbench/windows/window-dock";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
@@ -422,6 +424,10 @@ function SessionPage() {
         onOpenChange={setShowNewChatDialog}
         onConfirm={(workspaceId) => void handleConfirmNewChat(workspaceId)}
       />
+
+      {/* Workstation: janelas flutuantes de arquivos + dock de minimizadas */}
+      <WindowLayer />
+      <WindowDock />
     </div>
   );
 }

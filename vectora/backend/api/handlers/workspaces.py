@@ -919,6 +919,32 @@ async def workspace_file(
     )
 
 
+@view_router.get("/{workspace_id}/fs/raw")
+async def workspace_file_raw(
+    workspace_id: str,
+    path: Annotated[str, Query()],
+) -> Response:
+    """Serve os bytes crus de um arquivo do workspace com Content-Type real.
+
+    Alimenta o preview de mídia (imagem/vídeo/áudio/pdf) e o download — o
+    ``GET /file`` trunca e devolve texto, sem servir para isso. Suporta
+    requisições Range (seek de vídeo/áudio) via ``FileResponse`` da Starlette.
+    Anti-traversal pelo mesmo ``resolve_within_workspace`` do viewer de texto.
+    """
+    import mimetypes
+    from pathlib import PurePosixPath
+
+    from fastapi import HTTPException
+    from fastapi.responses import FileResponse as _StarletteFileResponse
+
+    resolved = _resolve_inside(workspace_id, path)
+    if resolved is None or not resolved.exists() or not resolved.is_file():
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado.")
+    name = PurePosixPath(path).name or resolved.name
+    media_type = mimetypes.guess_type(name)[0] or "application/octet-stream"
+    return _StarletteFileResponse(resolved, media_type=media_type)
+
+
 def _parse_unified_diff(diff_text: str) -> list[DiffHunk]:
     """Quebra um diff unificado em hunks (sem a linha 'diff --git' inicial)."""
     hunks: list[DiffHunk] = []

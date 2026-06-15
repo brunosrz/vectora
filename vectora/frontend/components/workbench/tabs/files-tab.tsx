@@ -13,6 +13,7 @@
  */
 
 import {
+  AppWindow,
   AtSign,
   ChevronRight,
   FilePlus,
@@ -54,6 +55,9 @@ import {
   type FileEntry,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useWindowsStore } from "@/lib/stores/windows-store";
+import { VerticalSplit } from "@/components/layout/vertical-split";
+import { getMediaKind, MediaView } from "@/components/workbench/file-viewer";
 import { FileTreeSkeleton } from "./file-tree-skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -972,6 +976,9 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const setOpenFile = useWorkbenchStore((s) => s.setOpenFile);
   const setFileContent = useWorkbenchStore((s) => s.setFileContent);
   const invalidateFiles = useWorkbenchStore((s) => s.invalidateFiles);
+  const viewerHeight = useWorkbenchStore((s) => s.viewerHeight);
+  const setViewerHeight = useWorkbenchStore((s) => s.setViewerHeight);
+  const openWindow = useWindowsStore((s) => s.open);
 
   // aria-busy: verdadeiro enquanto a raiz ainda não chegou do servidor.
   const rootEntriesLoaded = useWorkbenchStore(
@@ -1461,256 +1468,281 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
         </div>
       )}
 
-      {/* Árvore de arquivos, resultados de busca ou histórico de arquivo */}
-      <div
-        className="flex-1 overflow-y-auto py-1"
-        role="tree"
-        aria-label={t("workbench.files.tree_label")}
-        aria-busy={showSkeleton}
-      >
-        {historyMode ? (
-          <>
-            {/* Cabeçalho do painel de histórico */}
-            <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/40">
-              <span className="text-[10px] font-medium text-muted-foreground truncate flex-1">
-                {t("workbench.files.history")}: {historyPath?.split("/").pop()}
-              </span>
-              <button
-                onClick={() => {
-                  setHistoryMode(false);
-                  setHistoryEntries(null);
-                  setHistoricSha(null);
-                  setHistoricContent(null);
-                }}
-                className="p-0.5 text-muted-foreground hover:text-foreground"
-                title={t("workbench.close")}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-            <FileHistoryPanel
-              entries={historyEntries}
-              loading={historyLoading}
-              selectedSha={historicSha}
-              onSelectSha={handleSelectHistoricSha}
-            />
-          </>
-        ) : searchMode ? (
-          <div className="px-1">
-            {searchResults !== null && searchResults.hits.length === 0 && (
-              <p className="text-[10px] text-muted-foreground text-center py-4">
-                {t("workbench.files.search_no_results")}
-              </p>
-            )}
-            {searchGrouped.map(([filePath, hits]) => (
-              <SearchResultGroup
-                key={filePath}
-                filePath={filePath}
-                hits={hits}
-                onOpenHit={handleOpenHit}
-              />
-            ))}
-            {searchResults?.truncated && (
-              <p className="text-[10px] text-muted-foreground px-2 py-1">
-                {t("workbench.files.search_truncated")}
-              </p>
-            )}
-          </div>
-        ) : (
-          <>
-            <PinnedSection
-              threadId={threadId}
-              onOpenFile={handleOpenFile}
-              onAddToContext={onAddToContext}
-            />
+      {/* Árvore (topo) + viewer (base) num split vertical arrastável */}
+      <VerticalSplit
+        className="flex-1"
+        showBottom={showViewer}
+        bottomSize={viewerHeight}
+        onResize={setViewerHeight}
+        top={
+          <div
+            className="h-full overflow-y-auto py-1"
+            role="tree"
+            aria-label={t("workbench.files.tree_label")}
+            aria-busy={showSkeleton}
+          >
+            {historyMode ? (
+              <>
+                {/* Cabeçalho do painel de histórico */}
+                <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/40">
+                  <span className="text-[10px] font-medium text-muted-foreground truncate flex-1">
+                    {t("workbench.files.history")}:{" "}
+                    {historyPath?.split("/").pop()}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setHistoryMode(false);
+                      setHistoryEntries(null);
+                      setHistoricSha(null);
+                      setHistoricContent(null);
+                    }}
+                    className="p-0.5 text-muted-foreground hover:text-foreground"
+                    title={t("workbench.close")}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+                <FileHistoryPanel
+                  entries={historyEntries}
+                  loading={historyLoading}
+                  selectedSha={historicSha}
+                  onSelectSha={handleSelectHistoricSha}
+                />
+              </>
+            ) : searchMode ? (
+              <div className="px-1">
+                {searchResults !== null && searchResults.hits.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground text-center py-4">
+                    {t("workbench.files.search_no_results")}
+                  </p>
+                )}
+                {searchGrouped.map(([filePath, hits]) => (
+                  <SearchResultGroup
+                    key={filePath}
+                    filePath={filePath}
+                    hits={hits}
+                    onOpenHit={handleOpenHit}
+                  />
+                ))}
+                {searchResults?.truncated && (
+                  <p className="text-[10px] text-muted-foreground px-2 py-1">
+                    {t("workbench.files.search_truncated")}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                <PinnedSection
+                  threadId={threadId}
+                  onOpenFile={handleOpenFile}
+                  onAddToContext={onAddToContext}
+                />
 
-            {/* O input de criação na raiz é renderizado pelo DirNode raiz
+                {/* O input de criação na raiz é renderizado pelo DirNode raiz
                 (path="", sempre expandido). Renderizar um segundo input aqui
                 fazia os dois montarem com autoFocus: o segundo roubava o foco,
                 o onBlur do primeiro disparava onCancel e ambos sumiam — era o
                 bug dos botões "novo arquivo"/"nova pasta" não funcionarem. */}
 
-            <DirNode
-              threadId={threadId}
-              workspaceId={wsId}
-              path=""
-              name={workspace.name}
-              depth={0}
-              filter={filter}
-              statusByPath={statusByPath}
-              onOpenFile={handleOpenFile}
-              onAddToContext={onAddToContext}
-              onDelete={handleDelete}
-              creating={creating}
-              onInlineCreate={handleInlineCreate}
-              onCancelCreate={handleCancelCreate}
-              onRequestCreate={handleRequestCreate}
-            />
-          </>
-        )}
-      </div>
-
-      {/* Viewer */}
-      {showViewer && (
-        <div className="border-t border-border/60 max-h-[50%] flex flex-col">
-          <div className="flex items-center justify-between px-2 py-1 bg-muted/30 text-xs">
-            <span className="truncate font-mono text-muted-foreground flex items-center gap-1.5">
-              {openPath ?? "…"}
-              {dirty && (
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
-                  title={t("workbench.files.unsaved")}
+                <DirNode
+                  threadId={threadId}
+                  workspaceId={wsId}
+                  path=""
+                  name={workspace.name}
+                  depth={0}
+                  filter={filter}
+                  statusByPath={statusByPath}
+                  onOpenFile={handleOpenFile}
+                  onAddToContext={onAddToContext}
+                  onDelete={handleDelete}
+                  creating={creating}
+                  onInlineCreate={handleInlineCreate}
+                  onCancelCreate={handleCancelCreate}
+                  onRequestCreate={handleRequestCreate}
                 />
-              )}
-            </span>
-            <div className="flex items-center gap-1 shrink-0">
-              {dirty && (
-                <>
-                  <button
-                    onClick={() => setDraft(null)}
-                    className="px-1.5 py-0.5 rounded text-muted-foreground hover:text-foreground"
-                  >
-                    {t("workbench.files.discard")}
-                  </button>
-                  <button
-                    onClick={handleSaveFile}
-                    disabled={saving}
-                    className="px-1.5 py-0.5 rounded text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                  >
-                    {saving && <Loader2 className="w-3 h-3 animate-spin" />}
-                    {t("workbench.files.save")}
-                  </button>
-                </>
-              )}
-              {onAddToContext && openPath && (
-                <button
-                  onClick={() => onAddToContext(openPath)}
-                  className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-                  title={t("workbench.files.add_context")}
-                >
-                  <AtSign className="w-3 h-3" />
-                </button>
-              )}
-              {/* Botão de histórico — só para workspaces git (A.6) */}
-              {workspace.is_git_repo && openPath && (
-                <button
-                  onClick={handleOpenHistory}
-                  className={`p-0.5 rounded transition-colors ${
-                    historyMode
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  title={t("workbench.files.history")}
-                  aria-pressed={historyMode}
-                >
-                  <History className="w-3 h-3" />
-                </button>
-              )}
-              <button
-                onClick={handleCloseViewer}
-                className="text-muted-foreground hover:text-foreground px-1"
-                title={t("workbench.close")}
-              >
-                ×
-              </button>
-            </div>
+              </>
+            )}
           </div>
-          {/* Banner de revisão histórica (A.6) */}
-          {historicSha && (
-            <div className="flex items-center gap-2 px-2 py-1 bg-amber-500/10 border-b border-amber-500/20 text-[10px]">
-              {historicLoading ? (
-                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0" />
-              ) : (
-                <History className="w-3 h-3 text-amber-500 shrink-0" />
-              )}
-              <span className="text-muted-foreground truncate flex-1">
-                {t("workbench.files.history_viewing_at")}{" "}
-                <span className="font-mono text-amber-500">
-                  {historicSha.slice(0, 7)}
-                </span>
+        }
+        bottom={
+          <div className="border-t border-border/60 h-full flex flex-col">
+            <div className="flex items-center justify-between px-2 py-1 bg-muted/30 text-xs">
+              <span className="truncate font-mono text-muted-foreground flex items-center gap-1.5">
+                {openPath ?? "…"}
+                {dirty && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+                    title={t("workbench.files.unsaved")}
+                  />
+                )}
               </span>
-              <button
-                onClick={() => {
-                  setHistoricSha(null);
-                  setHistoricContent(null);
-                }}
-                className="text-muted-foreground hover:text-foreground shrink-0"
-              >
-                {t("workbench.files.history_back")}
-              </button>
-            </div>
-          )}
-          <div className="flex-1 overflow-auto p-2">
-            {historicSha && historicLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-            ) : historicSha && historicContent ? (
-              historicContent.binary ? (
-                <p className="text-xs text-muted-foreground">
-                  {t("workbench.files.binary", { size: 0 })}
-                </p>
-              ) : (
-                <>
-                  <pre className="text-xs font-mono whitespace-pre-wrap break-all">
-                    {historicContent.content ?? ""}
-                  </pre>
-                  {historicContent.truncated && (
-                    <p className="text-[10px] text-muted-foreground mt-2">
-                      {t("workbench.files.read_only_truncated")}
-                    </p>
-                  )}
-                </>
-              )
-            ) : loadingFile ? (
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-            ) : openContent?.kind === "binary" ? (
-              <p className="text-xs text-muted-foreground">
-                {t("workbench.files.binary", { size: openContent.size })}
-              </p>
-            ) : editable ? (
-              <textarea
-                value={draft ?? openContent?.content ?? ""}
-                onChange={(e) => setDraft(e.target.value)}
-                spellCheck={false}
-                className="w-full h-full min-h-[160px] resize-none bg-transparent text-xs font-mono leading-relaxed outline-none"
-              />
-            ) : highlightLine !== null ? (
-              // Renderização linha-a-linha com destaque para busca em conteúdo
-              <div className="text-xs font-mono leading-relaxed">
-                {(openContent?.content ?? "").split("\n").map((line, i) => {
-                  const lineNum = i + 1;
-                  return (
-                    <div
-                      key={i}
-                      ref={lineNum === highlightLine ? highlightRef : undefined}
-                      className={
-                        lineNum === highlightLine
-                          ? "bg-yellow-500/20 rounded"
-                          : undefined
-                      }
+              <div className="flex items-center gap-1 shrink-0">
+                {dirty && (
+                  <>
+                    <button
+                      onClick={() => setDraft(null)}
+                      className="px-1.5 py-0.5 rounded text-muted-foreground hover:text-foreground"
                     >
-                      <span className="select-none text-muted-foreground inline-block w-8 text-right mr-3 text-[10px]">
-                        {lineNum}
-                      </span>
-                      <span className="whitespace-pre-wrap break-all">
-                        {line}
-                      </span>
-                    </div>
-                  );
-                })}
+                      {t("workbench.files.discard")}
+                    </button>
+                    <button
+                      onClick={handleSaveFile}
+                      disabled={saving}
+                      className="px-1.5 py-0.5 rounded text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                    >
+                      {saving && <Loader2 className="w-3 h-3 animate-spin" />}
+                      {t("workbench.files.save")}
+                    </button>
+                  </>
+                )}
+                {onAddToContext && openPath && (
+                  <button
+                    onClick={() => onAddToContext(openPath)}
+                    className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                    title={t("workbench.files.add_context")}
+                  >
+                    <AtSign className="w-3 h-3" />
+                  </button>
+                )}
+                {/* Botão de histórico — só para workspaces git (A.6) */}
+                {workspace.is_git_repo && openPath && (
+                  <button
+                    onClick={handleOpenHistory}
+                    className={`p-0.5 rounded transition-colors ${
+                      historyMode
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title={t("workbench.files.history")}
+                    aria-pressed={historyMode}
+                  >
+                    <History className="w-3 h-3" />
+                  </button>
+                )}
+                {openPath && (
+                  <button
+                    onClick={() => openWindow(wsId, openPath)}
+                    className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+                    title={t("window.open_as_window")}
+                    aria-label={t("window.open_as_window")}
+                  >
+                    <AppWindow className="w-3 h-3" />
+                  </button>
+                )}
+                <button
+                  onClick={handleCloseViewer}
+                  className="text-muted-foreground hover:text-foreground px-1"
+                  title={t("workbench.close")}
+                >
+                  ×
+                </button>
               </div>
-            ) : (
-              <pre className="text-xs font-mono whitespace-pre-wrap break-all">
-                {openContent?.content ?? ""}
-              </pre>
+            </div>
+            {/* Banner de revisão histórica (A.6) */}
+            {historicSha && (
+              <div className="flex items-center gap-2 px-2 py-1 bg-amber-500/10 border-b border-amber-500/20 text-[10px]">
+                {historicLoading ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground shrink-0" />
+                ) : (
+                  <History className="w-3 h-3 text-amber-500 shrink-0" />
+                )}
+                <span className="text-muted-foreground truncate flex-1">
+                  {t("workbench.files.history_viewing_at")}{" "}
+                  <span className="font-mono text-amber-500">
+                    {historicSha.slice(0, 7)}
+                  </span>
+                </span>
+                <button
+                  onClick={() => {
+                    setHistoricSha(null);
+                    setHistoricContent(null);
+                  }}
+                  className="text-muted-foreground hover:text-foreground shrink-0"
+                >
+                  {t("workbench.files.history_back")}
+                </button>
+              </div>
             )}
-            {openContent?.truncated && (
-              <p className="text-[10px] text-muted-foreground mt-2">
-                {t("workbench.files.read_only_truncated")}
-              </p>
-            )}
+            <div className="flex-1 overflow-auto p-2">
+              {!historicSha && openPath && getMediaKind(openPath) ? (
+                <MediaView
+                  kind={getMediaKind(openPath)!}
+                  workspaceId={wsId}
+                  path={openPath}
+                />
+              ) : historicSha && historicLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              ) : historicSha && historicContent ? (
+                historicContent.binary ? (
+                  <p className="text-xs text-muted-foreground">
+                    {t("workbench.files.binary", { size: 0 })}
+                  </p>
+                ) : (
+                  <>
+                    <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                      {historicContent.content ?? ""}
+                    </pre>
+                    {historicContent.truncated && (
+                      <p className="text-[10px] text-muted-foreground mt-2">
+                        {t("workbench.files.read_only_truncated")}
+                      </p>
+                    )}
+                  </>
+                )
+              ) : loadingFile ? (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              ) : openContent?.kind === "binary" ? (
+                <p className="text-xs text-muted-foreground">
+                  {t("workbench.files.binary", { size: openContent.size })}
+                </p>
+              ) : editable ? (
+                <textarea
+                  value={draft ?? openContent?.content ?? ""}
+                  onChange={(e) => setDraft(e.target.value)}
+                  spellCheck={false}
+                  className="w-full h-full min-h-[160px] resize-none bg-transparent text-xs font-mono leading-relaxed outline-none"
+                />
+              ) : highlightLine !== null ? (
+                // Renderização linha-a-linha com destaque para busca em conteúdo
+                <div className="text-xs font-mono leading-relaxed">
+                  {(openContent?.content ?? "").split("\n").map((line, i) => {
+                    const lineNum = i + 1;
+                    return (
+                      <div
+                        key={i}
+                        ref={
+                          lineNum === highlightLine ? highlightRef : undefined
+                        }
+                        className={
+                          lineNum === highlightLine
+                            ? "bg-yellow-500/20 rounded"
+                            : undefined
+                        }
+                      >
+                        <span className="select-none text-muted-foreground inline-block w-8 text-right mr-3 text-[10px]">
+                          {lineNum}
+                        </span>
+                        <span className="whitespace-pre-wrap break-all">
+                          {line}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                  {openContent?.content ?? ""}
+                </pre>
+              )}
+              {openContent?.truncated && (
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  {t("workbench.files.read_only_truncated")}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        }
+      />
 
       {/* Conflito de edição concorrente — 412 do PUT */}
       <Dialog open={conflictOpen} onOpenChange={setConflictOpen}>
