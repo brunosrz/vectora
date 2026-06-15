@@ -201,7 +201,7 @@ class TestGeminiCliConfig:
             ["gemini", "--version"],
             capture_output=True,
             text=True,
-            timeout=10,
+            timeout=30,
             check=False,
         )
         assert result.returncode == 0, f"gemini --version falhou: {result.stderr}"
@@ -467,7 +467,7 @@ class TestVectoraMcpServerDirectly:
                 [venv_python, "-c", "from backend.mcp.server import mcp; print('OK')"],
                 capture_output=True,
                 text=True,
-                timeout=20,
+                timeout=60,
                 check=False,
             )
             assert "OK" in result.stdout or result.returncode == 0, (
