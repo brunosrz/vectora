@@ -339,6 +339,7 @@ function FileItem({
   const pinned = useWorkbenchStore((s) => s.isPinned(threadId, entry.path));
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
   const openPath = useWorkbenchStore((s) => s.getFiles(workspaceId).openPath);
+  const openWindow = useWindowsStore((s) => s.open);
   const t = useT();
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(entry.name);
@@ -414,6 +415,14 @@ function FileItem({
             <AtSign className="w-3 h-3" />
           </button>
         )}
+        <button
+          onClick={() => openWindow(workspaceId, entry.path)}
+          className="p-0.5 rounded text-muted-foreground hover:text-foreground"
+          aria-label={t("window.open_as_window")}
+          title={t("window.open_as_window")}
+        >
+          <AppWindow className="w-3 h-3" />
+        </button>
         {onRename && !renaming && (
           <button
             onClick={() => {
