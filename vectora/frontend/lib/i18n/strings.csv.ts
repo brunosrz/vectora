@@ -431,7 +431,8 @@ onboarding.token_saved,Saved!,¡Guardado!,Salvo!
 onboarding.token_hint,Get your token at,Obtén tu token en,Obtenha seu token em
 onboarding.token_mode_token,I have a token,Tengo un token,Tenho um token
 onboarding.token_mode_login,Sign in with account,Entrar con la cuenta,Entrar com a conta
-onboarding.token_login_hint,"Sign in with your vectora.company account — your license token is fetched and activated automatically.","Inicia sesión con tu cuenta de vectora.company — tu token de licencia se obtiene y activa automáticamente.","Entre com sua conta vectora.company — seu token de licença é obtido e ativado automaticamente."
+onboarding.token_login_hint,Sign in to your vectora.company account and copy your token from the dashboard.,Inicia sesión en vectora.company y copia tu token desde el panel.,Entre em sua conta vectora.company e copie seu token no painel.
+onboarding.token_login_copy_hint,Copy the token and paste it in the field above.,Copia el token y pégalo en el campo de arriba.,Copie o token e cole no campo acima.
 onboarding.token_connect,Sign in and connect,Iniciar sesión y conectar,Entrar e conectar
 onboarding.token_valid,License valid,Licencia válida,Licença válida
 onboarding.token_invalid,Invalid token or license.,Token o licencia inválidos.,Token ou licença inválidos.
@@ -446,6 +447,7 @@ onboarding.mode_test,Test connection,Probar conexión,Testar conexão
 onboarding.mode_save,Save,Guardar,Salvar
 onboarding.mode_validation_warning,"Test the connection for PostgreSQL, Redis and Qdrant successfully before continuing.","Prueba la conexión de PostgreSQL, Redis y Qdrant con éxito antes de continuar.","Teste a conexão de PostgreSQL, Redis e Qdrant com sucesso antes de continuar."
 onboarding.mode_already_configured,Already configured,Ya configurado,Já configurado
+onboarding.mode_testing,Testing...,Probando...,Testando...
 onboarding.workspace_body,Workspaces are folders on your machine that Vectora can access when you grant trust.,Los espacios de trabajo son carpetas en tu máquina a las que Vectora puede acceder cuando les das confianza.,Workspaces são pastas no seu computador que o Vectora pode acessar quando você concede confiança.
 onboarding.workspace_bullet_1,Add a folder in the Workspace selector in the chat composer.,Agrega una carpeta en el selector de workspace del compositor.,Adicione uma pasta no seletor de workspace no composer do chat.
 onboarding.workspace_bullet_2,Vectora can read and write files only inside trusted folders.,Vectora solo puede leer y escribir archivos dentro de carpetas de confianza.,O Vectora só lê e escreve dentro de pastas confiáveis.

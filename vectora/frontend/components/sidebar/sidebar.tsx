@@ -495,10 +495,11 @@ export const Sidebar = memo(function Sidebar({
               <Search className="w-4 h-4 text-muted-foreground/70 group-focus-within:text-primary transition-all duration-200" />
             </div>
             <Input
-              type="text"
+              type="search"
               placeholder={t("sidebar.search_placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              autoComplete="off"
               className="pl-10 pr-8 h-10 text-sm bg-background/80 backdrop-blur-sm border-border/40 focus:border-primary/60 focus:bg-background/90 focus:shadow-sm transition-all duration-200 shadow-sm hover:shadow-md hover:bg-background/90 rounded-lg"
             />
             {searchQuery && (

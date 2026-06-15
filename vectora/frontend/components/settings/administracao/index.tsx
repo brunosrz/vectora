@@ -16,11 +16,11 @@
 import { Suspense, lazy } from "react";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ResizableDialogContent } from "@/components/ui/resizable-dialog";
 import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
 import { useT } from "@/lib/i18n";
 
@@ -44,7 +44,11 @@ export function AdminDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[640px] max-h-[80vh] overflow-hidden flex flex-col">
+      <ResizableDialogContent
+        defaultWidth={640}
+        defaultHeight={600}
+        className="p-6 gap-4"
+      >
         <DialogHeader>
           <DialogTitle>{t("admin.dialog_title")}</DialogTitle>
           <DialogDescription className="sr-only">
@@ -57,7 +61,7 @@ export function AdminDialog() {
             <AdminTab />
           </Suspense>
         </div>
-      </DialogContent>
+      </ResizableDialogContent>
     </Dialog>
   );
 }

@@ -238,6 +238,7 @@ export function EnvsTab() {
               </label>
               <Input
                 type="password"
+                autoComplete="new-password"
                 placeholder={t("envs.value_placeholder")}
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}

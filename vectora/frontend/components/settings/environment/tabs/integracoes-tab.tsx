@@ -254,6 +254,7 @@ function IntegrationCard({
           <div className="flex gap-2">
             <Input
               type="password"
+              autoComplete="new-password"
               placeholder={`Cole sua ${integ.env_var} aqui`}
               value={keyValue}
               onChange={(e) => setKeyValue(e.target.value)}

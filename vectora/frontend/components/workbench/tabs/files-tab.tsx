@@ -1439,6 +1439,8 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             <Input
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
+              type="search"
+              autoComplete="off"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("workbench.files.search_placeholder")}

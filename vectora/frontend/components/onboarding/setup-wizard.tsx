@@ -18,7 +18,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -199,11 +199,6 @@ function StepToken(_props: StepProps) {
   const [showToken, setShowToken] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Modo login (conta vectora.company)
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [connecting, setConnecting] = useState(false);
-
   useEffect(() => {
     fetch("/admin/config", { credentials: "include" })
       .then((r) => r.json())
@@ -238,38 +233,6 @@ function StepToken(_props: StepProps) {
       setResult({ valid: false, error: t("onboarding.token_invalid") });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleConnect = async () => {
-    if (!email.includes("@") || !password) return;
-    setConnecting(true);
-    setResult(null);
-    try {
-      const resp = await fetch("/license/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
-      const data = await resp.json();
-      if (!resp.ok) {
-        setResult({
-          valid: false,
-          error: data?.detail || t("onboarding.token_invalid"),
-        });
-        return;
-      }
-      setResult(data as LicenseResult);
-      setPassword("");
-      const fresh = await fetch("/admin/config", {
-        credentials: "include",
-      }).then((r) => r.json());
-      setConfig(fresh);
-    } catch {
-      setResult({ valid: false, error: t("onboarding.token_invalid") });
-    } finally {
-      setConnecting(false);
     }
   };
 
@@ -356,36 +319,18 @@ function StepToken(_props: StepProps) {
           <p className="text-xs text-muted-foreground">
             {t("onboarding.token_login_hint")}
           </p>
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t("auth.email_ph")}
-            className="h-8 text-xs"
-            autoComplete="email"
-          />
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={t("auth.signin.password_ph")}
-            className="h-8 text-xs"
-            autoComplete="current-password"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void handleConnect();
-            }}
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleConnect}
-            disabled={connecting || !email.includes("@") || !password}
+          <a
+            href="https://vectora.company/dashboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
           >
-            {connecting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-            ) : null}
-            {t("onboarding.token_connect")}
-          </Button>
+            vectora.company/dashboard
+            <ExternalLink className="w-3 h-3" />
+          </a>
+          <p className="text-xs text-muted-foreground">
+            {t("onboarding.token_login_copy_hint")}
+          </p>
         </>
       )}
 
@@ -597,6 +542,10 @@ function StepMode({ onValidityChange }: StepProps) {
   const [preconfigured, setPreconfigured] = useState<Record<string, boolean>>(
     {},
   );
+  // Resultado do teste automático dos serviços pré-configurados (via env).
+  const [preconfiguredTests, setPreconfiguredTests] = useState<
+    Record<string, StorageTestResult | null>
+  >({});
 
   const handleConnectedChange = useCallback((service: string, ok: boolean) => {
     setConnected((prev) => ({ ...prev, [service]: ok }));
@@ -620,11 +569,45 @@ function StepMode({ onValidityChange }: StepProps) {
       .then((data) => {
         const cfg = data?.config ?? {};
         setMode(cfg.storage_mode === "complete" ? "complete" : "lite");
-        setPreconfigured({
+        const pre: Record<string, boolean> = {
           postgres: !!cfg.postgres_configured,
           redis: !!cfg.redis_configured,
           qdrant: !!cfg.qdrant_configured,
-        });
+        };
+        setPreconfigured(pre);
+
+        // Testa em background cada serviço já configurado via env.
+        Object.entries(pre)
+          .filter(([, ok]) => ok)
+          .forEach(([service]) => {
+            fetch("/admin/storage/test", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ backend: service }),
+            })
+              .then((r) => r.json())
+              .then((result: StorageTestResult) => {
+                setPreconfiguredTests((prev) => ({
+                  ...prev,
+                  [service]: result,
+                }));
+                if (!result.ok) {
+                  // Teste falhou: remove da lista de pré-configurados para
+                  // exibir o card de configuração manual.
+                  setPreconfigured((prev) => ({ ...prev, [service]: false }));
+                } else {
+                  setConnected((prev) => ({ ...prev, [service]: true }));
+                }
+              })
+              .catch(() => {
+                setPreconfiguredTests((prev) => ({
+                  ...prev,
+                  [service]: { ok: false, error: "Erro ao testar conexão" },
+                }));
+                setPreconfigured((prev) => ({ ...prev, [service]: false }));
+              });
+          });
       })
       .catch(() => void 0);
   }, []);
@@ -691,10 +674,23 @@ function StepMode({ onValidityChange }: StepProps) {
                 className="flex items-center justify-between gap-2 rounded border px-2.5 py-2"
               >
                 <p className="text-xs font-medium">{cfg.title}</p>
-                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  {t("onboarding.mode_already_configured")}
-                </span>
+                {preconfiguredTests[cfg.service] === undefined ? (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {t("onboarding.mode_testing")}
+                  </span>
+                ) : preconfiguredTests[cfg.service]?.ok ? (
+                  <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {t("onboarding.mode_already_configured")}
+                    {preconfiguredTests[cfg.service]?.latency_ms !==
+                      undefined && (
+                      <span className="text-muted-foreground">
+                        ({preconfiguredTests[cfg.service]?.latency_ms}ms)
+                      </span>
+                    )}
+                  </span>
+                ) : null}
               </div>
             ) : (
               <ServiceConnectionCard

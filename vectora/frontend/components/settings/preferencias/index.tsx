@@ -22,11 +22,11 @@
 import { Suspense, lazy } from "react";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ResizableDialogContent } from "@/components/ui/resizable-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   usePreferenciasDialogStore,
@@ -61,7 +61,11 @@ export function PreferenciasDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[560px] max-h-[80vh] overflow-hidden flex flex-col">
+      <ResizableDialogContent
+        defaultWidth={560}
+        defaultHeight={560}
+        className="p-6 gap-4"
+      >
         <DialogHeader>
           <DialogTitle>Preferências</DialogTitle>
           <DialogDescription className="sr-only">
@@ -100,7 +104,7 @@ export function PreferenciasDialog() {
             </Suspense>
           </div>
         </Tabs>
-      </DialogContent>
+      </ResizableDialogContent>
     </Dialog>
   );
 }

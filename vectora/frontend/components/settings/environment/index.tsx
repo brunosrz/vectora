@@ -21,11 +21,11 @@
 import { Suspense, lazy } from "react";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ResizableDialogContent } from "@/components/ui/resizable-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useEnvironmentDialogStore,
@@ -63,7 +63,11 @@ export function EnvironmentDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[560px] max-h-[80vh] overflow-hidden flex flex-col">
+      <ResizableDialogContent
+        defaultWidth={560}
+        defaultHeight={560}
+        className="p-6 gap-4"
+      >
         <DialogHeader>
           <DialogTitle>Ambiente</DialogTitle>
           <DialogDescription className="sr-only">
@@ -108,7 +112,7 @@ export function EnvironmentDialog() {
             </Suspense>
           </div>
         </Tabs>
-      </DialogContent>
+      </ResizableDialogContent>
     </Dialog>
   );
 }
