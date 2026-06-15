@@ -225,6 +225,29 @@ def _action_docker(target, source, env):
     chaves do ``~/.vectora/.env`` (GOOGLE_API_KEY etc.) são carregadas para o
     ambiente do ``docker compose`` substituir os ``${...}`` do compose.
     """
+    # No Windows, o Docker Desktop pode retornar exit 0 mesmo com o daemon
+    # Linux parado — a mensagem de erro vai para stderr. Verificamos o stderr
+    # da probe explicitamente para detectar o pipe quebrado.
+    probe = subprocess.run(
+        ["docker", "info"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        cwd=ROOT,
+        text=True,
+    )
+    daemon_error = (
+        probe.returncode != 0
+        or "failed to connect" in (probe.stderr or "").lower()
+        or "cannot connect" in (probe.stderr or "").lower()
+        or "is the docker daemon running" in (probe.stderr or "").lower()
+    )
+    if daemon_error:
+        print(
+            "\n[scons docker] Docker não está acessível.\n"
+            "  Inicie o Docker Desktop e tente novamente.\n"
+        )
+        raise SystemExit(1)
+
     compose_env: dict[str, str] = {}
     dotenv = os.path.join(os.path.expanduser("~"), ".vectora", ".env")
     if os.path.isfile(dotenv):
