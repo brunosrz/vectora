@@ -23,6 +23,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { useT } from "@/lib/i18n";
 import { apiCheckout, apiSync, type GitBranches, type GitStatus } from "./api";
 
@@ -104,7 +109,11 @@ export function GitToolbar({
         {/* Branch dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1.5 min-w-0 max-w-[55%] px-2 py-1 rounded-md text-xs hover:bg-muted/50 transition-colors">
+            <button
+              className="flex items-center gap-1.5 min-w-0 max-w-[55%] px-2 py-1 rounded-md text-xs hover:bg-muted/50 transition-colors"
+              title={t("tooltip.git_branch")}
+              aria-label={t("tooltip.git_branch")}
+            >
               <GitBranch className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
               <span className="truncate font-mono">{current}</span>
             </button>
@@ -148,28 +157,38 @@ export function GitToolbar({
         <div className="flex-1" />
 
         {/* Sync */}
-        <button
-          onClick={() => void handleSync()}
-          disabled={syncing}
-          title={sync.label}
-          className="flex items-center gap-1 px-2 py-1 rounded-md text-xs hover:bg-muted/50 disabled:opacity-50 transition-colors shrink-0"
-        >
-          {syncing ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
-          )}
-          <span className="hidden sm:inline">{sync.label}</span>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => void handleSync()}
+              disabled={syncing}
+              aria-label={sync.label}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs hover:bg-muted/50 disabled:opacity-50 transition-colors shrink-0"
+            >
+              {syncing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
+              )}
+              <span className="hidden sm:inline">{sync.label}</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{sync.label}</TooltipContent>
+        </Tooltip>
 
         {/* PR */}
-        <button
-          onClick={() => onOpenPR(current)}
-          title={t("workbench.git.pr")}
-          className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
-        >
-          <GitPullRequest className="w-3.5 h-3.5" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => onOpenPR(current)}
+              aria-label={t("tooltip.git_pr")}
+              className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
+            >
+              <GitPullRequest className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t("tooltip.git_pr")}</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Linha de criação de branch (inline, aparece sob demanda) */}
