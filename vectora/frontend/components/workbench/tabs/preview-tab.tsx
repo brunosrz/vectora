@@ -5,13 +5,17 @@ import {
   ExternalLink,
   Loader2,
   Play,
+  Plus,
   RefreshCw,
   Search,
+  Sparkles,
   Square,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useT } from "@/lib/i18n";
+import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 
 interface LaunchConfig {
@@ -47,6 +51,13 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [urlOverride, setUrlOverride] = useState<string>("");
   const [showUrlBar, setShowUrlBar] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manual, setManual] = useState({
+    name: "",
+    runtimeExecutable: "",
+    runtimeArgs: "",
+    port: "",
+  });
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -100,6 +111,31 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
     };
   }, [wsId, configs.length, fetchStatus]);
 
+  const saveConfigs = useCallback(
+    async (next: LaunchConfig[]) => {
+      const saveRes = await fetch(
+        `/workspaces/${encodeURIComponent(wsId)}/preview/launch`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ version: "0.0.1", configurations: next }),
+        },
+      );
+      if (saveRes.ok) {
+        setConfigs(next);
+        fetchStatus();
+      }
+      return saveRes.ok;
+    },
+    [wsId, fetchStatus],
+  );
+
+  const handleAskAgent = useCallback(() => {
+    useChatInputStore
+      .getState()
+      .pushDraft(t("workbench.preview.ask_agent_prompt"));
+  }, [t]);
+
   const handleDetect = async () => {
     if (!wsId) return;
     setIsDetecting(true);
@@ -109,25 +145,37 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
       );
       if (!res.ok) return;
       const data = (await res.json()) as { configurations: LaunchConfig[] };
-      if (data.configurations.length === 0) return;
-
-      const saveRes = await fetch(
-        `/workspaces/${encodeURIComponent(wsId)}/preview/launch`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            version: "0.0.1",
-            configurations: data.configurations,
-          }),
-        },
-      );
-      if (saveRes.ok) {
-        setConfigs(data.configurations);
-        fetchStatus();
+      if (data.configurations.length === 0) {
+        // Nada detectado automaticamente — delega ao agente, que conhece a
+        // estrutura do projeto e pode escrever o .vectora/launch.json.
+        handleAskAgent();
+        return;
       }
+      await saveConfigs(data.configurations);
     } finally {
       setIsDetecting(false);
+    }
+  };
+
+  const handleManualSave = async () => {
+    if (!wsId || !manual.name.trim() || !manual.runtimeExecutable.trim())
+      return;
+    const port = Number.parseInt(manual.port, 10);
+    const cfg: LaunchConfig = {
+      name: manual.name.trim(),
+      runtimeExecutable: manual.runtimeExecutable.trim(),
+      runtimeArgs: manual.runtimeArgs.trim()
+        ? manual.runtimeArgs.trim().split(/\s+/)
+        : [],
+      port: Number.isFinite(port) ? port : 3000,
+    };
+    const ok = await saveConfigs([
+      ...configs.filter((c) => c.name !== cfg.name),
+      cfg,
+    ]);
+    if (ok) {
+      setManual({ name: "", runtimeExecutable: "", runtimeArgs: "", port: "" });
+      setShowManualForm(false);
     }
   };
 
@@ -182,11 +230,63 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
     );
   }
 
+  const manualForm = (
+    <div className="w-full max-w-[260px] space-y-1.5 rounded-md border border-border/60 bg-card/40 p-2 text-left">
+      <Input
+        value={manual.name}
+        onChange={(e) => setManual((m) => ({ ...m, name: e.target.value }))}
+        placeholder={t("workbench.preview.field_name")}
+        className="h-7 text-xs"
+      />
+      <Input
+        value={manual.runtimeExecutable}
+        onChange={(e) =>
+          setManual((m) => ({ ...m, runtimeExecutable: e.target.value }))
+        }
+        placeholder={t("workbench.preview.field_executable")}
+        className="h-7 text-xs"
+      />
+      <Input
+        value={manual.runtimeArgs}
+        onChange={(e) =>
+          setManual((m) => ({ ...m, runtimeArgs: e.target.value }))
+        }
+        placeholder={t("workbench.preview.field_args")}
+        className="h-7 text-xs"
+      />
+      <Input
+        value={manual.port}
+        onChange={(e) => setManual((m) => ({ ...m, port: e.target.value }))}
+        placeholder={t("workbench.preview.field_port")}
+        inputMode="numeric"
+        className="h-7 text-xs"
+      />
+      <div className="flex gap-1 pt-0.5">
+        <Button
+          size="sm"
+          onClick={handleManualSave}
+          disabled={!manual.name.trim() || !manual.runtimeExecutable.trim()}
+          className="h-7 flex-1 text-xs"
+        >
+          {t("workbench.preview.manual_save")}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setShowManualForm(false)}
+          className="h-7 text-xs"
+        >
+          {t("workbench.preview.manual_cancel")}
+        </Button>
+      </div>
+    </div>
+  );
+
   if (configs.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center pb-[28%] gap-3 p-4 text-center">
+      <div className="flex h-full flex-col items-center justify-center pb-[18%] gap-3 p-4 text-center">
         <Zap className="h-8 w-8 text-muted-foreground/40 shrink-0" />
-        <div className="min-w-0 max-w-[200px]">
+        <div className="min-w-0 max-w-[220px]">
           <p className="text-sm font-medium text-foreground leading-snug">
             {t("workbench.preview.empty_title")}
           </p>
@@ -194,20 +294,48 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
             {t("workbench.preview.empty_description")}
           </p>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleDetect}
-          disabled={isDetecting}
-          className="gap-1.5 max-w-full whitespace-normal h-auto py-1.5 px-3"
-        >
-          {isDetecting ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-          ) : (
-            <Search className="h-3.5 w-3.5 shrink-0" />
-          )}
-          <span className="text-xs">{t("workbench.preview.detect")}</span>
-        </Button>
+        {showManualForm ? (
+          manualForm
+        ) : (
+          <div className="flex w-full max-w-[220px] flex-col gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDetect}
+              disabled={isDetecting}
+              className="gap-1.5 w-full whitespace-normal h-auto py-1.5 px-3"
+            >
+              {isDetecting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+              ) : (
+                <Search className="h-3.5 w-3.5 shrink-0" />
+              )}
+              <span className="text-xs">{t("workbench.preview.detect")}</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleAskAgent}
+              className="gap-1.5 w-full h-auto py-1.5 px-3"
+            >
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs">
+                {t("workbench.preview.ask_agent")}
+              </span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowManualForm(true)}
+              className="gap-1.5 w-full h-auto py-1.5 px-3"
+            >
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs">
+                {t("workbench.preview.manual_add")}
+              </span>
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -216,6 +344,19 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Painel de controle dos servidores */}
       <div className="shrink-0 border-b border-border/60 bg-card/40 px-3 py-2 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            {t("workbench.preview.servers")}
+          </span>
+          <button
+            onClick={() => setShowManualForm((v) => !v)}
+            className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            title={t("workbench.preview.manual_add")}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        {showManualForm && <div className="pb-1">{manualForm}</div>}
         {configs.map((cfg) => {
           const status = getStatus(cfg.name);
           const isRunning = status?.running ?? false;

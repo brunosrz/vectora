@@ -633,6 +633,16 @@ workbench.preview.stop,Stop server,Detener servidor,Parar servidor
 workbench.preview.open_preview,Open in preview,Abrir en vista previa,Abrir no preview
 workbench.preview.open_external,Open in browser,Abrir en navegador,Abrir no navegador
 workbench.preview.select_server,Start a server to preview your app.,Inicia un servidor para ver la app.,Inicie um servidor para visualizar o app.
+workbench.preview.servers,Servers,Servidores,Servidores
+workbench.preview.ask_agent,Ask the agent,Pedir al agente,Perguntar ao agente
+workbench.preview.ask_agent_prompt,"Configure o Live Preview deste projeto: detecte o servidor de desenvolvimento e crie/atualize o arquivo .vectora/launch.json com name, runtimeExecutable, runtimeArgs e port.","Configura el Live Preview de este proyecto: detecta el servidor de desarrollo y crea/actualiza el archivo .vectora/launch.json con name, runtimeExecutable, runtimeArgs y port.","Configure o Live Preview deste projeto: detecte o servidor de desenvolvimento e crie/atualize o arquivo .vectora/launch.json com name, runtimeExecutable, runtimeArgs e port."
+workbench.preview.manual_add,Add manually,Agregar manualmente,Adicionar manualmente
+workbench.preview.manual_save,Save,Guardar,Salvar
+workbench.preview.manual_cancel,Cancel,Cancelar,Cancelar
+workbench.preview.field_name,Name (e.g. dev),Nombre (ej: dev),Nome (ex: dev)
+workbench.preview.field_executable,Executable (e.g. pnpm),Ejecutable (ej: pnpm),Executável (ex: pnpm)
+workbench.preview.field_args,Arguments (e.g. dev),Argumentos (ej: dev),Argumentos (ex: dev)
+workbench.preview.field_port,Port (e.g. 3000),Puerto (ej: 3000),Porta (ex: 3000)
 workbench.files.filter,Filter files…,Filtrar archivos…,Filtrar arquivos…
 workbench.files.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
 workbench.files.binary,"Binary file ({size} bytes) — preview not shown.","Archivo binario ({size} bytes) — vista previa no disponible.","Arquivo binário ({size} bytes) — preview indisponível."
