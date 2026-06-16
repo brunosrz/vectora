@@ -4,7 +4,7 @@ configurado e que os componentes-chave do bloco E.B funcionam como esperado.
 Cobertura:
     - VectoraContext: construção correta a partir de config dict (E.B-5)
     - Middleware stack: HITL + Summarization montados na ordem certa (E.B-3)
-    - HarnessProfiles: anthropic/google-genai/ollama registrados (E.B-4)
+    - HarnessProfiles: anthropic/google_genai/ollama registrados (E.B-4)
     - FilesystemPermission: regras DENY/ALLOW/INTERRUPT (E.B-9)
     - Memory tools: namespace correto + store API (E.B-11)
     - backends.build_store: InMemoryStore sem index quando sem API key (E.B-11)
@@ -153,7 +153,9 @@ class TestHarnessProfiles:
             _register_profiles()
         keys = [call.args[0] for call in mock_reg.call_args_list]
         assert "anthropic" in keys
-        assert "google-genai" in keys
+        # Chave deve bater com o provider resolvido pelo LangChain
+        # (ChatGoogleGenerativeAI → "google_genai"), não com o id de settings.
+        assert "google_genai" in keys
         assert "ollama" in keys
 
 

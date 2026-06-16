@@ -93,7 +93,7 @@ def _register_profiles() -> None:
     # erros de "too many tokens in tool description". Excluímos tools raramente
     # usadas em chat para reduzir o tamanho do contexto de tools.
     register_harness_profile(
-        "google-genai",
+        "google_genai",
         HarnessProfile(
             excluded_tools=_GEMINI_EXCLUDED,
             system_prompt_suffix=(
@@ -128,5 +128,5 @@ def _register_profiles() -> None:
     logger.debug("profiles: perfil Ollama registrado")
 
     logger.info(
-        "profiles: 3 perfis de harness registrados (anthropic, google-genai, ollama)"
+        "profiles: 3 perfis de harness registrados (anthropic, google_genai, ollama)"
     )

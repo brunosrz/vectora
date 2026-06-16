@@ -34,6 +34,7 @@ from backend.api.schemas import (
     ToolSchema,
 )
 from backend.services import agent_factory
+from backend.types.context import ctx_from_config
 
 logger = logging.getLogger(__name__)
 
@@ -336,6 +337,7 @@ async def stream_chat(
     events = graph.astream_events(
         {"messages": [human_msg]},
         config=config,
+        context=ctx_from_config(config),
         version="v2",
     )
 
@@ -402,6 +404,7 @@ async def resume_chat(
     events = graph.astream_events(
         Command(resume=resume_value),
         config=config,
+        context=ctx_from_config(config),
         version="v2",
     )
 
