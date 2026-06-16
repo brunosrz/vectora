@@ -1,19 +1,18 @@
 "use client";
 
 /**
- * MarkdownPreviewDialog — visualiza arquivos .md em modal.
- *
- * Usa react-markdown + remark-gfm para suporte a tabelas, strikethrough, etc.
+ * MarkdownPreviewDialog — visualiza arquivos .md em modal, render GitHub.
  */
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { MarkdownView } from "@/components/workbench/markdown-view";
+import { useT } from "@/lib/i18n";
 
 interface MarkdownPreviewDialogProps {
   open: boolean;
@@ -28,6 +27,7 @@ export function MarkdownPreviewDialog({
   filePath,
   content: initialContent,
 }: MarkdownPreviewDialogProps) {
+  const t = useT();
   const [content, setContent] = useState<string | null>(initialContent ?? null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,7 +38,7 @@ export function MarkdownPreviewDialog({
     fetch(filePath)
       .then((res) => res.text())
       .then(setContent)
-      .catch(() => setContent("Failed to load markdown"))
+      .catch(() => setContent(null))
       .finally(() => setIsLoading(false));
   }, [open, filePath, initialContent]);
 
@@ -47,22 +47,21 @@ export function MarkdownPreviewDialog({
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="truncate">
-            {filePath || "Markdown Preview"}
+            {filePath || t("workbench.preview_md.title")}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto custom-scrollbar prose dark:prose-invert max-w-none">
+        <div className="flex-1 overflow-auto custom-scrollbar">
           {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <span className="text-muted-foreground">Loading...</span>
+            <div className="flex items-center justify-center h-32 text-muted-foreground">
+              {t("workbench.preview_md.loading")}
             </div>
           ) : content ? (
-            <div className="p-4 bg-background text-sm">
-              {/* TODO: renderizar com react-markdown + remark-gfm */}
-              <pre className="whitespace-pre-wrap">{content}</pre>
-            </div>
+            <MarkdownView content={content} />
           ) : (
-            <div className="p-4 text-muted-foreground">No content</div>
+            <div className="p-4 text-muted-foreground">
+              {t("workbench.preview_md.empty")}
+            </div>
           )}
         </div>
       </DialogContent>

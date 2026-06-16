@@ -56,13 +56,14 @@ import {
   WORKBENCH_STALE_MS,
   useWorkbenchStore,
   type DiffSummary,
-  type FileContent,
   type FileEntry,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useWindowsStore } from "@/lib/stores/windows-store";
+import { fetchFile, apiUpdateFile } from "@/lib/api/fs-files";
 import { VerticalSplit } from "@/components/layout/vertical-split";
 import { getMediaKind, MediaView } from "@/components/workbench/file-viewer";
+import { MarkdownView } from "@/components/workbench/markdown-view";
 import { FileTreeSkeleton } from "./file-tree-skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -122,52 +123,6 @@ async function fetchDiffSummary(
   );
   if (!res.ok) return null;
   return res.json();
-}
-
-async function fetchFile(
-  workspaceId: string,
-  path: string,
-): Promise<FileContent | null> {
-  const qs = new URLSearchParams({ path });
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/file?${qs}`,
-  );
-  if (!res.ok) return null;
-  return res.json();
-}
-
-type SaveFileResult =
-  | { ok: true; sha256: string | null }
-  | { ok: false; conflict: boolean; message?: string };
-
-async function apiUpdateFile(
-  workspaceId: string,
-  path: string,
-  content: string,
-  expectedSha256: string | null,
-): Promise<SaveFileResult> {
-  const qs = new URLSearchParams({ path });
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/fs/file?${qs}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content, expected_sha256: expectedSha256 }),
-    },
-  );
-  if (res.status === 412) {
-    return { ok: false, conflict: true };
-  }
-  let data: { status?: string; message?: string; sha256?: string | null } = {};
-  try {
-    data = await res.json();
-  } catch {
-    // resposta sem corpo JSON — segue com `data` vazio
-  }
-  if (!res.ok || data.status !== "ok") {
-    return { ok: false, conflict: false, message: data.message };
-  }
-  return { ok: true, sha256: data.sha256 ?? null };
 }
 
 async function apiFsCreate(
@@ -1041,20 +996,6 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     permanent: boolean;
   } | null>(null);
 
-  // ── Editor inline (A.1): rascunho local + dirty-tracking ────────────────
-  const [draft, setDraft] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const [pendingNav, setPendingNav] = useState<
-    { kind: "open"; path: string } | { kind: "close" } | null
-  >(null);
-
-  const dirty = draft !== null && draft !== (openContent?.content ?? "");
-  const editable =
-    openContent?.kind === "text" &&
-    !openContent.truncated &&
-    openContent.sha256 != null;
-
   // ── Busca em conteúdo (A.5) ─────────────────────────────────────────────
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1155,76 +1096,18 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     }
   }, [openPath, historyMode, historyPath]);
 
-  // Trocar de arquivo limpa o rascunho (cada arquivo tem seu próprio ciclo).
-  useEffect(() => {
-    setDraft(null);
-  }, [openPath]);
-
   const handleOpenFile = useCallback(
     (path: string) => {
       if (!wsId) return;
-      if (dirty) {
-        setPendingNav({ kind: "open", path });
-        return;
-      }
       setOpenFile(wsId, path);
     },
-    [wsId, dirty, setOpenFile],
+    [wsId, setOpenFile],
   );
 
   const handleCloseViewer = useCallback(() => {
     if (!wsId) return;
-    if (dirty) {
-      setPendingNav({ kind: "close" });
-      return;
-    }
     setOpenFile(wsId, null);
-  }, [wsId, dirty, setOpenFile]);
-
-  const handleConfirmDiscardNav = useCallback(() => {
-    if (!wsId || !pendingNav) return;
-    setDraft(null);
-    if (pendingNav.kind === "open") setOpenFile(wsId, pendingNav.path);
-    else setOpenFile(wsId, null);
-    setPendingNav(null);
-  }, [wsId, pendingNav, setOpenFile]);
-
-  const handleSaveFile = useCallback(async () => {
-    if (!wsId || !openPath || draft === null || !openContent) return;
-    setSaving(true);
-    const result = await apiUpdateFile(
-      wsId,
-      openPath,
-      draft,
-      openContent.sha256 ?? null,
-    );
-    setSaving(false);
-    if (result.ok) {
-      setFileContent(wsId, openPath, {
-        ...openContent,
-        content: draft,
-        sha256: result.sha256,
-        truncated: false,
-      });
-      setDraft(null);
-      return;
-    }
-    if (result.conflict) {
-      setConflictOpen(true);
-      return;
-    }
-    useToastStore
-      .getState()
-      .error(t("workbench.files.save_error"), { description: result.message });
-  }, [wsId, openPath, draft, openContent, setFileContent, t]);
-
-  const handleReloadFile = useCallback(async () => {
-    if (!wsId || !openPath) return;
-    setConflictOpen(false);
-    setDraft(null);
-    const data = await fetchFile(wsId, openPath);
-    if (data) setFileContent(wsId, openPath, data);
-  }, [wsId, openPath, setFileContent]);
+  }, [wsId, setOpenFile]);
 
   // Refresh: invalida cache e força re-fetch
   const handleRefresh = useCallback(() => {
@@ -1680,34 +1563,10 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
         bottom={
           <div className="border-t border-border/60 h-full flex flex-col">
             <div className="flex items-center justify-between px-2 py-1 bg-muted/30 text-xs">
-              <span className="truncate font-mono text-muted-foreground flex items-center gap-1.5">
+              <span className="truncate font-mono text-muted-foreground">
                 {openPath ?? "…"}
-                {dirty && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
-                    title={t("workbench.files.unsaved")}
-                  />
-                )}
               </span>
               <div className="flex items-center gap-1 shrink-0">
-                {dirty && (
-                  <>
-                    <button
-                      onClick={() => setDraft(null)}
-                      className="px-1.5 py-0.5 rounded text-muted-foreground hover:text-foreground"
-                    >
-                      {t("workbench.files.discard")}
-                    </button>
-                    <button
-                      onClick={handleSaveFile}
-                      disabled={saving}
-                      className="px-1.5 py-0.5 rounded text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                    >
-                      {saving && <Loader2 className="w-3 h-3 animate-spin" />}
-                      {t("workbench.files.save")}
-                    </button>
-                  </>
-                )}
                 {onAddToContext && openPath && (
                   <button
                     onClick={() => onAddToContext(openPath)}
@@ -1808,13 +1667,10 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 <p className="text-xs text-muted-foreground">
                   {t("workbench.files.binary", { size: openContent.size })}
                 </p>
-              ) : editable ? (
-                <textarea
-                  value={draft ?? openContent?.content ?? ""}
-                  onChange={(e) => setDraft(e.target.value)}
-                  spellCheck={false}
-                  className="w-full h-full min-h-[160px] resize-none bg-transparent text-xs font-mono leading-relaxed outline-none"
-                />
+              ) : openPath?.toLowerCase().match(/\.(md|markdown)$/) &&
+                openContent?.content &&
+                highlightLine === null ? (
+                <MarkdownView content={openContent.content} />
               ) : highlightLine !== null ? (
                 // Renderização linha-a-linha com destaque para busca em conteúdo
                 <div className="text-xs font-mono leading-relaxed">
@@ -1856,51 +1712,6 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
           </div>
         }
       />
-
-      {/* Conflito de edição concorrente — 412 do PUT */}
-      <Dialog open={conflictOpen} onOpenChange={setConflictOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("workbench.files.conflict_title")}</DialogTitle>
-            <DialogDescription>
-              {t("workbench.files.conflict_desc")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConflictOpen(false)}>
-              {t("workbench.files.cancel")}
-            </Button>
-            <Button variant="destructive" onClick={handleReloadFile}>
-              {t("workbench.files.reload")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Aviso de descarte ao trocar/fechar arquivo com edições pendentes */}
-      <Dialog
-        open={pendingNav !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingNav(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("workbench.files.discard_title")}</DialogTitle>
-            <DialogDescription>
-              {t("workbench.files.discard_desc")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPendingNav(null)}>
-              {t("workbench.files.cancel")}
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDiscardNav}>
-              {t("workbench.files.discard")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Dialog .gitignore (A.10) */}
       <Dialog

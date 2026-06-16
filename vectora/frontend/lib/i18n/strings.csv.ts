@@ -654,6 +654,9 @@ window.close,Close,Cerrar,Fechar
 window.restore,Restore,Restaurar,Restaurar
 workbench.files.read_only_truncated,File too large to edit inline — showing read-only preview.,Archivo demasiado grande para editar — vista de solo lectura.,Arquivo grande demais para editar — exibindo preview somente leitura.
 workbench.files.save,Save,Guardar,Salvar
+workbench.preview_md.title,Markdown Preview,Vista previa de Markdown,Visualização de Markdown
+workbench.preview_md.loading,Loading…,Cargando…,Carregando…
+workbench.preview_md.empty,No content,Sin contenido,Sem conteúdo
 workbench.files.discard,Discard,Descartar,Descartar
 workbench.files.unsaved,Unsaved changes,Cambios sin guardar,Alterações não salvas
 workbench.files.discard_title,Discard unsaved changes?,¿Descartar los cambios sin guardar?,Descartar alterações não salvas?

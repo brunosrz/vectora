@@ -67,6 +67,9 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: "/index.html",
+        // O Monaco empacota web workers grandes (ts.worker ~7 MB); precisam
+        // ser precacheados para o editor funcionar offline (Electron).
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         // Nunca cachear chamadas de API; SSE depende de network direct.
         navigateFallbackDenylist: [
           /^\/auth\//,

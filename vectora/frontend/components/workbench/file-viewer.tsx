@@ -10,6 +10,13 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { MarkdownView } from "@/components/workbench/markdown-view";
+
+/** Verdadeiro para arquivos markdown (render GitHub no viewer). */
+function isMarkdown(path: string): boolean {
+  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+  return ext === "md" || ext === "markdown";
+}
 
 export type MediaKind = "image" | "video" | "audio" | "pdf";
 
@@ -171,6 +178,19 @@ export function FileViewer({
       </div>
     );
   }
+  if (isMarkdown(path) && text?.content) {
+    return (
+      <div className="h-full overflow-auto custom-scrollbar">
+        <MarkdownView content={text.content} />
+        {text.truncated && (
+          <p className="px-4 pb-2 text-[10px] text-muted-foreground">
+            {t("workbench.files.read_only_truncated")}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="h-full overflow-auto p-2">
       <pre className="text-xs font-mono whitespace-pre-wrap break-all">

@@ -3,14 +3,14 @@
 /**
  * FileWindow — uma janela flutuante (app da workstation) com um arquivo aberto.
  * Arrastável pela barra de título e redimensionável (8 handles) via react-rnd;
- * a posição/tamanho voltam ao windows-store. O corpo é o FileViewer (mídia ou
- * texto read-only).
+ * a posição/tamanho voltam ao windows-store. O corpo é o FileEditor (Monaco
+ * para texto; mídia cai no viewer read-only).
  */
 
 import { Rnd } from "react-rnd";
 import { Minus, X } from "lucide-react";
 
-import { FileViewer } from "@/components/workbench/file-viewer";
+import { FileEditor } from "@/components/workbench/file-editor";
 import {
   useWindowsStore,
   type FileWindowState,
@@ -75,7 +75,7 @@ export function FileWindow({ win }: { win: FileWindowState }) {
           </button>
         </div>
         <div className="flex-1 min-h-0 bg-background">
-          <FileViewer workspaceId={win.workspaceId} path={win.path} />
+          <FileEditor workspaceId={win.workspaceId} path={win.path} />
         </div>
       </div>
     </Rnd>
