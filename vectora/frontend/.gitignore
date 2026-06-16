@@ -23,6 +23,9 @@
 # tanstack router auto-gen
 /src/routeTree.gen.ts
 
+# paraglide i18n compilado (gerado pelo plugin no dev/build)
+/lib/paraglide
+
 # production
 /build
 

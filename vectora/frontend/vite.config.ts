@@ -4,6 +4,7 @@ import { dirname, resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { VitePWA } from "vite-plugin-pwa";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
@@ -31,6 +32,11 @@ export default defineConfig({
     TanStackRouterVite({
       routesDirectory: "./src/routes",
       generatedRouteTree: "./src/routeTree.gen.ts",
+    }),
+    paraglideVitePlugin({
+      project: "./project.inlang",
+      outdir: "./lib/paraglide",
+      strategy: ["localStorage", "preferredLanguage", "baseLocale"],
     }),
     react(),
     tailwindcss(),
