@@ -7,7 +7,6 @@ import {
   Play,
   Plus,
   RefreshCw,
-  Search,
   Sparkles,
   Square,
   Zap,
@@ -60,7 +59,6 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
   const [configs, setConfigs] = useState<LaunchConfig[]>([]);
   const [statuses, setStatuses] = useState<ServerStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDetecting, setIsDetecting] = useState(false);
   const [activeServer, setActiveServer] = useState<ServerStatus | null>(null);
   const [iframeKey, setIframeKey] = useState(0);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -153,27 +151,6 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
     ].join("\n\n");
     useChatInputStore.getState().pushDraft(prompt);
   }, [t]);
-
-  const handleDetect = async () => {
-    if (!wsId) return;
-    setIsDetecting(true);
-    try {
-      const res = await fetch(
-        `/workspaces/${encodeURIComponent(wsId)}/preview/detect`,
-      );
-      if (!res.ok) return;
-      const data = (await res.json()) as { configurations: LaunchConfig[] };
-      if (data.configurations.length === 0) {
-        // Nada detectado automaticamente — delega ao agente, que conhece a
-        // estrutura do projeto e pode escrever o .vectora/launch.json.
-        handleAskAgent();
-        return;
-      }
-      await saveConfigs(data.configurations);
-    } finally {
-      setIsDetecting(false);
-    }
-  };
 
   const handleManualSave = async () => {
     if (!wsId || !manual.name.trim() || !manual.runtimeExecutable.trim())
@@ -316,20 +293,6 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
           manualForm
         ) : (
           <div className="flex w-full max-w-[220px] flex-col gap-1.5">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDetect}
-              disabled={isDetecting}
-              className="gap-1.5 w-full whitespace-normal h-auto py-1.5 px-3"
-            >
-              {isDetecting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-              ) : (
-                <Search className="h-3.5 w-3.5 shrink-0" />
-              )}
-              <span className="text-xs">{t("workbench.preview.detect")}</span>
-            </Button>
             <Button
               size="sm"
               variant="ghost"

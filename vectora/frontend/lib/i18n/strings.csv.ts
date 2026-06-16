@@ -626,8 +626,7 @@ workbench.tab.search,Search,Buscar,Buscar
 workbench.tab.tasks,Tasks,Tareas,Tarefas
 workbench.tab.storage,Storage,Almacenamiento,Armazenamento
 workbench.preview.empty_title,No configurations,Sin configuraciones,Sem configurações
-workbench.preview.empty_description,Create a .vectora/launch.json or auto-detect dev servers.,Crea un .vectora/launch.json o detecta servidores automáticamente.,Crie um .vectora/launch.json ou detecte servidores automaticamente.
-workbench.preview.detect,Auto-detect,Detectar automáticamente,Detectar automaticamente
+workbench.preview.empty_description,Create a .vectora/launch.json — ask the agent or add one manually.,Crea un .vectora/launch.json — pregunta al agente o añádelo manualmente.,Crie um .vectora/launch.json — pergunte ao agente ou adicione manualmente.
 workbench.preview.start,Start server,Iniciar servidor,Iniciar servidor
 workbench.preview.stop,Stop server,Detener servidor,Parar servidor
 workbench.preview.open_preview,Open in preview,Abrir en vista previa,Abrir no preview
