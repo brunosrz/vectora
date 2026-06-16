@@ -15,6 +15,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import type { Thread } from "@/lib/hooks/threads";
 import { useT } from "@/lib/i18n";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
@@ -376,42 +381,58 @@ export const Sidebar = memo(function Sidebar({
     return (
       <aside className="hidden md:flex w-16 bg-gradient-to-b from-sidebar via-sidebar-light to-sidebar border-r border-border/60 flex-col shadow-depth-sm">
         <div className="px-3 py-4 border-b border-border/60 h-16 flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggle}
-            title={t("sidebar.expand")}
-            className="hover:bg-sidebar-primary/10 hover:text-sidebar-primary transition-all duration-200 shadow-depth-xs hover:shadow-depth-hover rounded-lg"
-          >
-            <PanelLeft className="w-5 h-5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggle}
+                aria-label={t("sidebar.expand")}
+                className="hover:bg-sidebar-primary/10 hover:text-sidebar-primary transition-all duration-200 shadow-depth-xs hover:shadow-depth-hover rounded-lg"
+              >
+                <PanelLeft className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t("sidebar.expand")}</TooltipContent>
+          </Tooltip>
         </div>
 
         {onNewChat && (
           <div className="px-3 pt-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onNewChat}
-              disabled={offline}
-              title={
-                offline ? t("network.disabled_offline") : t("header.new_chat")
-              }
-              className="w-full hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-lg"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5"
-              >
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onNewChat}
+                  disabled={offline}
+                  aria-label={
+                    offline
+                      ? t("network.disabled_offline")
+                      : t("sidebar.new_chat")
+                  }
+                  className="w-full hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-lg"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-5 h-5"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {offline
+                  ? t("network.disabled_offline")
+                  : t("sidebar.new_chat")}
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
 
@@ -447,14 +468,22 @@ export const Sidebar = memo(function Sidebar({
       <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-full bg-gradient-to-b from-sidebar via-sidebar-light to-sidebar-lighter border-r border-border/60 flex-col shadow-depth-md">
         <div className="px-3 pt-[13px] pb-[14px] border-b border-border/60 bg-gradient-to-r from-sidebar-accent/20 via-sidebar-accent/10 to-transparent">
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggle}
-              className="hover:bg-sidebar-primary/10 hover:text-sidebar-primary transition-all duration-200 shadow-depth-xs hover:shadow-depth-hover rounded-lg"
-            >
-              <PanelLeftClose className="w-5 h-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggle}
+                  aria-label={t("sidebar.collapse")}
+                  className="hover:bg-sidebar-primary/10 hover:text-sidebar-primary transition-all duration-200 shadow-depth-xs hover:shadow-depth-hover rounded-lg"
+                >
+                  <PanelLeftClose className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {t("sidebar.collapse")}
+              </TooltipContent>
+            </Tooltip>
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {t("sidebar.title")}
             </span>
@@ -463,28 +492,41 @@ export const Sidebar = memo(function Sidebar({
 
         {onNewChat && (
           <div className="px-3 pt-2">
-            <button
-              onClick={onNewChat}
-              disabled={offline}
-              title={offline ? t("network.disabled_offline") : undefined}
-              className="group w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-primary/15 disabled:hover:to-primary/5 disabled:hover:border-primary/30"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-primary"
-              >
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-              </svg>
-              {t("header.new_chat")}
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onNewChat}
+                  disabled={offline}
+                  aria-label={
+                    offline
+                      ? t("network.disabled_offline")
+                      : t("sidebar.new_chat")
+                  }
+                  className="group w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-primary/15 disabled:hover:to-primary/5 disabled:hover:border-primary/30"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-primary"
+                  >
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                  </svg>
+                  {t("sidebar.new_chat")}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {offline
+                  ? t("network.disabled_offline")
+                  : t("sidebar.new_chat")}
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
 
