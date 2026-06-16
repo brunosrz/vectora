@@ -8,9 +8,9 @@
   "nav_docs": "Docs",
   "nav_faq": "FAQ",
   "nav_login": "Se connecter",
-  "nav_signup": "Commencer gratuitement",
+  "nav_signup": "Créer un compte",
   "nav_support": "Support",
-  "hero_eyebrow": "Auto-hébergé · Confidentialité d'abord · Noyau ouvert",
+  "hero_eyebrow": "Auto-hébergé · Confidentialité d'abord · Extensible",
   "hero_tagline": "Votre IA. Vos données. Votre serveur.",
   "hero_subtitle": "Agent d'IA auto-hébergé avec RAG, MCP et chat web multi-utilisateurs. Vos données ne quittent jamais votre serveur.",
   "hero_gif_alt": "Agent IA Vectora en action",
@@ -18,7 +18,7 @@
   "showcase_rag_alt": "Recherche sémantique RAG de Vectora",
   "showcase_code_alt": "Agent de code de Vectora",
   "showcase_plan_alt": "Raisonnement structuré de Vectora",
-  "hero_cta_trial": "Essai gratuit — 30 jours",
+  "hero_cta_trial": "Commencer l'essai — 30 jours gratuits",
   "hero_cta_pricing": "Voir les tarifs",
   "showcase_title": "Voyez Vectora en action",
   "showcase_chat_title": "Conversation contextuelle",
@@ -301,5 +301,10 @@
   "pricing_faq_q4": "Que se passe-t-il à la fin de l'essai ?",
   "pricing_faq_a4": "Votre compte devient inactif. Vos données sont conservées 30 jours pour vous permettre de vous abonner.",
   "pricing_faq_q5": "Puis-je annuler à tout moment ?",
-  "pricing_faq_a5": "Oui. Sans engagement minimum. Annulez depuis le tableau de bord, l'accès reste actif jusqu'à la fin de la période payée."
+  "pricing_faq_a5": "Oui. Sans engagement minimum. Annulez depuis le tableau de bord, l'accès reste actif jusqu'à la fin de la période payée.",
+  "pricing_feat_mcp_acp": "MCP & ACP server",
+  "pricing_feat_everything_plus": "Tout du Plus",
+  "pricing_feat_rest_api": "REST API",
+  "pricing_feat_support_sla": "Support (SLA 24h)",
+  "pricing_feat_workspace5": "5 espaces de travail"
 }

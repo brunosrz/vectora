@@ -24,47 +24,83 @@ import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import CSV from "./strings.csv";
 
 // =============================================================================
-// CSV parser — RFC 4180 single-line values
+// CSV parser — RFC 4180 (campos entre aspas podem conter vírgulas e quebras
+// de linha; "" escapa aspas). Comentários: linhas iniciando com # fora de
+// aspas são ignoradas.
 // =============================================================================
 
-/** Analisa uma linha CSV respeitando campos entre aspas duplas. */
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
+/** Analisa o CSV inteiro em registros, respeitando campos multilinha. */
+function parseCSV(csv: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  let fieldHasContent = false;
+  let atRecordStart = true;
   let i = 0;
-  while (i <= line.length) {
-    if (i === line.length) {
-      // Linha terminou sem vírgula final → campo vazio no fim não é adicionado
-      break;
+  const n = csv.length;
+
+  const endField = () => {
+    row.push(field);
+    field = "";
+    fieldHasContent = false;
+  };
+  const endRecord = () => {
+    endField();
+    rows.push(row);
+    row = [];
+    atRecordStart = true;
+  };
+
+  while (i < n) {
+    const ch = csv[i];
+
+    if (inQuotes) {
+      if (ch === '"' && csv[i + 1] === '"') {
+        field += '"';
+        i += 2;
+      } else if (ch === '"') {
+        inQuotes = false;
+        i++;
+      } else {
+        field += ch;
+        i++;
+      }
+      continue;
     }
-    if (line[i] === '"') {
-      // Campo entre aspas
-      let field = "";
-      i++; // pula aspas de abertura
-      while (i < line.length) {
-        if (line[i] === '"' && line[i + 1] === '"') {
-          field += '"';
-          i += 2; // aspas escapadas ""
-        } else if (line[i] === '"') {
-          i++; // pula aspas de fechamento
-          break;
-        } else {
-          field += line[i++];
-        }
-      }
-      result.push(field);
-      if (line[i] === ",") i++; // consome vírgula separadora
+
+    // Comentário de linha inteira: '#' no início de um registro.
+    if (atRecordStart && ch === "#") {
+      const nl = csv.indexOf("\n", i);
+      i = nl === -1 ? n : nl + 1;
+      continue;
+    }
+
+    if (ch === '"' && !fieldHasContent) {
+      inQuotes = true;
+      fieldHasContent = true;
+      atRecordStart = false;
+      i++;
+    } else if (ch === ",") {
+      endField();
+      atRecordStart = false;
+      i++;
+    } else if (ch === "\n") {
+      endRecord();
+      i++;
+    } else if (ch === "\r") {
+      i++;
     } else {
-      // Campo sem aspas — até a próxima vírgula
-      const end = line.indexOf(",", i);
-      if (end === -1) {
-        result.push(line.slice(i));
-        break;
-      }
-      result.push(line.slice(i, end));
-      i = end + 1;
+      field += ch;
+      fieldHasContent = true;
+      atRecordStart = false;
+      i++;
     }
   }
-  return result;
+
+  // Último registro sem newline final.
+  if (fieldHasContent || field !== "" || row.length > 0) endRecord();
+  return rows;
 }
 
 // =============================================================================
@@ -75,19 +111,13 @@ type TranslationMap = Record<string, Record<Lang, string>>;
 
 function buildTranslations(csv: string): TranslationMap {
   const map: TranslationMap = {};
-  const lines = csv
-    .split("\n")
-    .map((l) => l.trimEnd())
-    .filter((l) => l.length > 0 && !l.startsWith("#"));
-
-  if (lines.length === 0) return map;
+  const rows = parseCSV(csv).filter((r) => r.length > 0 && r[0] !== "");
+  if (rows.length === 0) return map;
 
   // Primeira linha = cabeçalho: key,en,es,pt,...
-  const header = parseCSVLine(lines[0]);
-  const langs = header.slice(1) as Lang[];
+  const langs = rows[0].slice(1) as Lang[];
 
-  for (const line of lines.slice(1)) {
-    const cols = parseCSVLine(line);
+  for (const cols of rows.slice(1)) {
     const key = cols[0];
     if (!key) continue;
 

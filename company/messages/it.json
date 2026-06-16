@@ -8,9 +8,9 @@
   "nav_docs": "Docs",
   "nav_faq": "FAQ",
   "nav_login": "Accedi",
-  "nav_signup": "Inizia gratis",
+  "nav_signup": "Crea Account",
   "nav_support": "Supporto",
-  "hero_eyebrow": "Auto-ospitato · Privacy prima di tutto · Nucleo aperto",
+  "hero_eyebrow": "Auto-ospitato · Privacy prima di tutto · Estensibile",
   "hero_tagline": "La tua IA. I tuoi dati. Il tuo server.",
   "hero_subtitle": "Agente IA auto-ospitato con RAG, MCP e chat web multiutente. I tuoi dati non lasciano mai il tuo server.",
   "hero_gif_alt": "Agente IA Vectora in azione",
@@ -18,7 +18,7 @@
   "showcase_rag_alt": "Ricerca semantica RAG di Vectora",
   "showcase_code_alt": "Agente di codifica di Vectora",
   "showcase_plan_alt": "Ragionamento strutturato di Vectora",
-  "hero_cta_trial": "Inizia la prova gratuita — 30 giorni",
+  "hero_cta_trial": "Inizia la prova — 30 giorni gratis",
   "hero_cta_pricing": "Vedi i prezzi",
   "showcase_title": "Guarda Vectora in azione",
   "showcase_chat_title": "Conversazione contestuale",
@@ -301,5 +301,10 @@
   "pricing_faq_q4": "Cosa succede quando finisce la prova?",
   "pricing_faq_a4": "L'account passa in modalità inattiva. I dati sono conservati per 30 giorni così puoi abbonarti.",
   "pricing_faq_q5": "Posso annullare in qualsiasi momento?",
-  "pricing_faq_a5": "Sì. Nessun vincolo minimo. Annulla dal pannello e l'accesso continua fino alla fine del periodo pagato."
+  "pricing_faq_a5": "Sì. Nessun vincolo minimo. Annulla dal pannello e l'accesso continua fino alla fine del periodo pagato.",
+  "pricing_feat_mcp_acp": "MCP & ACP server",
+  "pricing_feat_everything_plus": "Tutto del Plus",
+  "pricing_feat_rest_api": "REST API",
+  "pricing_feat_support_sla": "Supporto (SLA 24h)",
+  "pricing_feat_workspace5": "5 workspace"
 }

@@ -6,18 +6,13 @@ interface ShowcaseCardProps {
   alt: string;
   title: string;
   desc: string;
-  index: number;
 }
 
-function ShowcaseCard({ gif, alt, title, desc, index }: ShowcaseCardProps) {
+function ShowcaseCard({ gif, alt, title, desc }: ShowcaseCardProps) {
   return (
-    <div
-      className="group overflow-hidden rounded-xl border border-border bg-card/40 transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/10"
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
+    <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
       <div
-        className="overflow-hidden"
-        style={{ aspectRatio: "16/10" }}
+        style={{ aspectRatio: "496 / 232" }}
         onMouseEnter={() => track("gif_viewed", { gif })}
       >
         <img
@@ -25,13 +20,17 @@ function ShowcaseCard({ gif, alt, title, desc, index }: ShowcaseCardProps) {
           alt={alt}
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover gif-skeleton transition-transform duration-300 group-hover:scale-[1.02]"
+          className="h-full w-full object-cover gif-skeleton"
           onLoad={(e) => (e.currentTarget.style.background = "none")}
         />
       </div>
       <div className="p-4">
-        <p className="mb-1 font-semibold text-foreground">{title}</p>
-        <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+        <p className="text-base font-semibold leading-6 text-foreground">
+          {title}
+        </p>
+        <p className="text-[14px] leading-[23px] text-muted-foreground">
+          {desc}
+        </p>
       </div>
     </div>
   );
@@ -44,39 +43,34 @@ export default function ShowcaseGifs() {
       alt: m.showcase_chat_alt(),
       title: m.showcase_chat_title(),
       desc: m.showcase_chat_desc(),
-      index: 0,
     },
     {
       gif: "/gifs/showcase-rag.gif",
       alt: m.showcase_rag_alt(),
       title: m.showcase_rag_title(),
       desc: m.showcase_rag_desc(),
-      index: 1,
     },
     {
       gif: "/gifs/showcase-code.gif",
       alt: m.showcase_code_alt(),
       title: m.showcase_code_title(),
       desc: m.showcase_code_desc(),
-      index: 2,
     },
     {
       gif: "/gifs/showcase-plan.gif",
       alt: m.showcase_plan_alt(),
       title: m.showcase_plan_title(),
       desc: m.showcase_plan_desc(),
-      index: 3,
     },
   ];
 
   return (
-    <section className="px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      {/* max-w-3xl (48rem): cards compactos — eram gigantes em max-w-6xl */}
-      <div className="mx-auto max-w-3xl">
-        <h2 className="mb-8 text-center text-2xl font-semibold text-foreground sm:text-3xl">
+    <section className="bg-background/50 py-[23px]">
+      <div className="mx-auto flex max-w-[1024px] flex-col items-center gap-8 px-4 sm:px-6 lg:px-0">
+        <h2 className="text-[28px] font-semibold leading-[36px] text-foreground">
           {m.showcase_title()}
         </h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2">
           {cards.map((card) => (
             <ShowcaseCard key={card.gif} {...card} />
           ))}

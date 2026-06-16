@@ -1,174 +1,98 @@
 import { m } from "#/paraglide/messages";
 import { Server, User, Users, FolderOpen } from "lucide-react";
 
-interface Step {
-  icon: typeof Server;
-  titleKey: keyof typeof m;
-  descKey: keyof typeof m;
-  color: string;
-  border: string;
-  bg: string;
-  visual: React.ReactNode;
-  badges?: string[];
-}
-
-const STEPS: Step[] = [
+const STEPS = [
   {
-    icon: Server,
-    titleKey: "team_step1_title",
-    descKey: "team_step1_desc",
-    color: "text-primary",
-    border: "border-primary",
-    bg: "bg-primary/10",
-    visual: (
-      <div className="mt-3 rounded-lg bg-background border border-border px-4 py-3 font-mono text-sm text-primary select-none">
-        <span className="text-muted-foreground">$ </span>docker compose up -d
-        <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
-          <div>✓ vectora running</div>
-          <div>✓ postgresql running</div>
-          <div>✓ redis running</div>
-        </div>
-      </div>
-    ),
-    badges: ["Vectora", "PostgreSQL", "Redis"],
+    Icon: Server,
+    titleKey: "team_step1_title" as const,
+    descKey: "team_step1_desc" as const,
+    iconBg: "rgba(121,184,255,0.1)",
+    iconColor: "var(--primary)",
+    badges: ["PostgreSQL", "Qdrant", "Redis"],
   },
   {
-    icon: User,
-    titleKey: "team_step2_title",
-    descKey: "team_step2_desc",
-    color: "text-accent-purple",
-    border: "border-purple-500",
-    bg: "bg-purple-500/10",
-    visual: (
-      <div
-        className="mt-3 overflow-hidden rounded-lg border border-border gif-skeleton"
-        style={{ aspectRatio: "16/9", maxWidth: 400 }}
-      >
-        <img
-          src="/gifs/setup-root.gif"
-          alt="First-time root setup"
-          loading="lazy"
-          decoding="async"
-          className="h-full w-full object-cover"
-          onLoad={(e) => (e.currentTarget.style.background = "none")}
-        />
-      </div>
-    ),
+    Icon: User,
+    titleKey: "team_step2_title" as const,
+    descKey: "team_step2_desc" as const,
+    iconBg: "rgba(173,70,255,0.1)",
+    iconColor: "var(--accent-purple)",
   },
   {
-    icon: Users,
-    titleKey: "team_step3_title",
-    descKey: "team_step3_desc",
-    color: "text-accent-green",
-    border: "border-green-500",
-    bg: "bg-accent-green/10",
-    visual: (
-      <div
-        className="mt-3 overflow-hidden rounded-lg border border-border gif-skeleton"
-        style={{ aspectRatio: "16/9", maxWidth: 400 }}
-      >
-        <img
-          src="/gifs/setup-invite.gif"
-          alt="Invite team members"
-          loading="lazy"
-          decoding="async"
-          className="h-full w-full object-cover"
-          onLoad={(e) => (e.currentTarget.style.background = "none")}
-        />
-      </div>
-    ),
+    Icon: Users,
+    titleKey: "team_step3_title" as const,
+    descKey: "team_step3_desc" as const,
+    iconBg: "rgba(78,201,160,0.1)",
+    iconColor: "var(--accent-green)",
   },
   {
-    icon: FolderOpen,
-    titleKey: "team_step4_title",
-    descKey: "team_step4_desc",
-    color: "text-accent-amber",
-    border: "border-amber-500",
-    bg: "bg-accent-amber/10",
-    visual: (
-      <div
-        className="mt-3 overflow-hidden rounded-lg border border-border gif-skeleton"
-        style={{ aspectRatio: "16/9", maxWidth: 400 }}
-      >
-        <img
-          src="/gifs/setup-project.gif"
-          alt="Create project and start chatting"
-          loading="lazy"
-          decoding="async"
-          className="h-full w-full object-cover"
-          onLoad={(e) => (e.currentTarget.style.background = "none")}
-        />
-      </div>
-    ),
+    Icon: FolderOpen,
+    titleKey: "team_step4_title" as const,
+    descKey: "team_step4_desc" as const,
+    iconBg: "rgba(226,192,141,0.1)",
+    iconColor: "var(--accent-amber)",
   },
 ];
 
-const COMPAT_ICONS = ["PostgreSQL", "Redis", "Docker"];
-
 export default function TeamSetupSection() {
   return (
-    <section className="bg-background/50 px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-10 text-center">
-          <h2 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
-            {m.team_heading()}
-          </h2>
-        </div>
+    <section className="px-4 py-[23px] sm:px-8">
+      <div className="mx-auto flex max-w-[1024px] flex-col items-center gap-[22px]">
+        <h2 className="text-center text-[28px] font-semibold leading-[36px] text-foreground">
+          {m.team_heading()}
+        </h2>
 
-        {/* Grid horizontal: 4 etapas lado a lado (1 col mobile, 2 tablet, 4 desktop) */}
-        <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 4 cards lado a lado */}
+        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, i) => {
-            const Icon = step.icon;
-            const titleFn = m[step.titleKey] as (() => string) | undefined;
-            const descFn = m[step.descKey] as (() => string) | undefined;
+            const { Icon } = step;
             return (
-              <li
+              <div
                 key={i}
-                className="flex flex-col rounded-xl border border-border bg-card/30 p-5"
+                className="flex flex-col gap-2 rounded-2xl border border-border bg-card/30 p-4"
               >
-                <div className="mb-3 flex items-center justify-between">
+                {/* Ícone + contador */}
+                <div className="flex items-center justify-between">
                   <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${step.border} ${step.bg}`}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border"
+                    style={{ background: step.iconBg }}
                   >
-                    <Icon className={`h-5 w-5 ${step.color}`} />
+                    <Icon
+                      className="h-5 w-5"
+                      style={{ color: step.iconColor }}
+                    />
                   </div>
-                  <span className="text-xs font-bold text-muted-foreground">
+                  <span className="text-[12px] font-medium text-muted-foreground">
                     {i + 1}/{STEPS.length}
                   </span>
                 </div>
-                <p className="mb-1 font-semibold text-foreground">
-                  {titleFn?.()}
+
+                <p className="text-base font-semibold leading-6 text-foreground">
+                  {m[step.titleKey]()}
                 </p>
-                <p className="text-sm text-muted-foreground">{descFn?.()}</p>
-                {step.badges && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
+                <p className="text-[14px] leading-5 text-muted-foreground">
+                  {m[step.descKey]()}
+                </p>
+
+                {"badges" in step && step.badges && (
+                  <div className="flex items-center justify-between gap-[6px]">
                     {step.badges.map((b) => (
                       <span
                         key={b}
-                        className="rounded-md border border-border bg-card/60 px-2 py-0.5 text-xs text-muted-foreground"
+                        className="rounded-lg border border-border bg-card/60 px-[9px] py-0.5 text-[12px] text-muted-foreground"
                       >
                         {b}
                       </span>
                     ))}
                   </div>
                 )}
-              </li>
+              </div>
             );
           })}
-        </ol>
+        </div>
 
-        <div className="mt-10 rounded-xl border border-border bg-card/30 px-6 py-4 flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
-          <div className="flex gap-2">
-            {COMPAT_ICONS.map((ic) => (
-              <span
-                key={ic}
-                className="rounded border border-border bg-background px-2 py-0.5 text-xs text-foreground/90"
-              >
-                {ic}
-              </span>
-            ))}
-          </div>
-          <p className="text-sm text-muted-foreground">{m.team_compat()}</p>
+        {/* Barra de compatibilidade */}
+        <div className="rounded-2xl border border-border bg-card/30 px-6 py-4 text-center text-[14px] leading-5 text-muted-foreground">
+          {m.team_compat()}
         </div>
       </div>
     </section>

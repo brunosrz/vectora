@@ -83,26 +83,26 @@
 
 /* ── Tema claro — Min Light ────────────────────────────────────────────────── */
 .light {
-  --background: #ffffff;
-  --foreground: #424242;
+  --background: #f2f2f2;
+  --foreground: #141414;
 
-  --muted: #f0f0f0;
-  --muted-foreground: #757575;
+  --muted: #e0e0e0;
+  --muted-foreground: #525252;
 
-  --card: #f6f6f6;
-  --card-foreground: #424242;
+  --card: #ffffff;
+  --card-foreground: #141414;
 
   --popover: #ffffff;
-  --popover-foreground: #424242;
+  --popover-foreground: #141414;
 
-  --secondary: #eeeeee;
-  --secondary-foreground: #424242;
+  --secondary: #e4e4e4;
+  --secondary-foreground: #141414;
 
-  --accent: #eeeeee;
-  --accent-foreground: #424242;
+  --accent: #e4e4e4;
+  --accent-foreground: #141414;
 
-  --border: #e9e9e9;
-  --input: #e9e9e9;
+  --border: #c8c8c8;
+  --input: #c8c8c8;
 
   --primary: #1976d2;
   --primary-foreground: #ffffff;

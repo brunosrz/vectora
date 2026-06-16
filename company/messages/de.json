@@ -8,9 +8,9 @@
   "nav_docs": "Docs",
   "nav_faq": "FAQ",
   "nav_login": "Anmelden",
-  "nav_signup": "Kostenlos starten",
+  "nav_signup": "Konto erstellen",
   "nav_support": "Support",
-  "hero_eyebrow": "Selbst gehostet · Datenschutz zuerst · Offener Kern",
+  "hero_eyebrow": "Selbst gehostet · Datenschutz zuerst · Erweiterbar",
   "hero_tagline": "Deine KI. Deine Daten. Dein Server.",
   "hero_subtitle": "Selbst gehosteter KI-Agent mit RAG, MCP und Mehrbenutzer-Webchat. Deine Daten verlassen niemals deinen Server.",
   "hero_gif_alt": "Vectora-KI-Agent in Aktion",
@@ -18,7 +18,7 @@
   "showcase_rag_alt": "Semantische RAG-Suche in Vectora",
   "showcase_code_alt": "Coding-Agent von Vectora",
   "showcase_plan_alt": "Strukturiertes Denken von Vectora",
-  "hero_cta_trial": "Kostenlose Testversion starten — 30 Tage",
+  "hero_cta_trial": "Test starten — 30 Tage kostenlos",
   "hero_cta_pricing": "Preise ansehen",
   "showcase_title": "Sieh Vectora in Aktion",
   "showcase_chat_title": "Kontextuelle Konversation",
@@ -301,5 +301,10 @@
   "pricing_faq_q4": "Was passiert nach Ablauf der Testphase?",
   "pricing_faq_a4": "Ihr Konto wird inaktiv. Ihre Daten bleiben 30 Tage erhalten, damit Sie abonnieren können.",
   "pricing_faq_q5": "Kann ich jederzeit kündigen?",
-  "pricing_faq_a5": "Ja. Keine Mindestlaufzeit. Kündigen Sie im Dashboard — der Zugang bleibt bis zum Ende des bezahlten Zeitraums."
+  "pricing_faq_a5": "Ja. Keine Mindestlaufzeit. Kündigen Sie im Dashboard — der Zugang bleibt bis zum Ende des bezahlten Zeitraums.",
+  "pricing_feat_mcp_acp": "MCP & ACP server",
+  "pricing_feat_everything_plus": "Alles aus Plus",
+  "pricing_feat_rest_api": "REST API",
+  "pricing_feat_support_sla": "Support (SLA 24h)",
+  "pricing_feat_workspace5": "5 Arbeitsbereiche"
 }

@@ -8,9 +8,9 @@
   "nav_docs": "Docs",
   "nav_faq": "FAQ",
   "nav_login": "Entrar",
-  "nav_signup": "Começar grátis",
+  "nav_signup": "Criar Conta",
   "nav_support": "Suporte",
-  "hero_eyebrow": "Auto-hospedado · Privacidade em primeiro lugar · Núcleo aberto",
+  "hero_eyebrow": "Auto-hospedado · Privacidade em primeiro lugar · Extensível",
   "hero_tagline": "Sua IA. Seus dados. Seu servidor.",
   "hero_subtitle": "Agente de IA auto-hospedado com RAG, MCP e chat web multiusuário. Seus dados nunca saem do seu servidor.",
   "hero_gif_alt": "Agente de IA Vectora em ação",
@@ -18,7 +18,7 @@
   "showcase_rag_alt": "Busca semântica RAG do Vectora",
   "showcase_code_alt": "Agente de código do Vectora",
   "showcase_plan_alt": "Raciocínio estruturado do Vectora",
-  "hero_cta_trial": "Começar trial — 30 dias grátis",
+  "hero_cta_trial": "Começar teste — 30 dias grátis",
   "hero_cta_pricing": "Ver preços",
   "showcase_title": "Veja o Vectora em ação",
   "showcase_chat_title": "Conversação com contexto",
@@ -301,5 +301,10 @@
   "pricing_faq_q4": "O que acontece quando o trial termina?",
   "pricing_faq_a4": "Sua conta entra em modo inativo. Os dados são preservados por 30 dias para que você possa assinar.",
   "pricing_faq_q5": "Posso cancelar a qualquer momento?",
-  "pricing_faq_a5": "Sim. Não há fidelidade mínima. Cancele pelo painel e o acesso continua até o fim do período pago."
+  "pricing_faq_a5": "Sim. Não há fidelidade mínima. Cancele pelo painel e o acesso continua até o fim do período pago.",
+  "pricing_feat_mcp_acp": "MCP & ACP server",
+  "pricing_feat_everything_plus": "Tudo do plus",
+  "pricing_feat_rest_api": "REST API",
+  "pricing_feat_support_sla": "Suporte (SLA 24h)",
+  "pricing_feat_workspace5": "5 workspace"
 }

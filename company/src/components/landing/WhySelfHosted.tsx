@@ -3,67 +3,68 @@ import { Lock, Coins, Settings, Server } from "lucide-react";
 
 const CARDS = [
   {
-    icon: Lock,
-    titleKey: "why_privacy_title",
-    descKey: "why_privacy_desc",
-    color: "text-primary",
-    bg: "bg-primary/10",
-    border: "border-border hover:border-primary",
+    Icon: Lock,
+    titleKey: "why_privacy_title" as const,
+    descKey: "why_privacy_desc" as const,
+    iconBg: "rgba(121,184,255,0.1)",
+    iconColor: "var(--primary)",
   },
   {
-    icon: Coins,
-    titleKey: "why_cost_title",
-    descKey: "why_cost_desc",
-    color: "text-accent-green",
-    bg: "bg-accent-green/10",
-    border: "border-border hover:border-green-500/50",
+    Icon: Coins,
+    titleKey: "why_cost_title" as const,
+    descKey: "why_cost_desc" as const,
+    iconBg: "rgba(78,201,160,0.1)",
+    iconColor: "var(--accent-green)",
   },
   {
-    icon: Settings,
-    titleKey: "why_custom_title",
-    descKey: "why_custom_desc",
-    color: "text-accent-purple",
-    bg: "bg-purple-500/10",
-    border: "border-border hover:border-purple-500/50",
+    Icon: Settings,
+    titleKey: "why_custom_title" as const,
+    descKey: "why_custom_desc" as const,
+    iconBg: "rgba(173,70,255,0.1)",
+    iconColor: "var(--accent-purple)",
   },
   {
-    icon: Server,
-    titleKey: "why_sovereign_title",
-    descKey: "why_sovereign_desc",
-    color: "text-accent-amber",
-    bg: "bg-accent-amber/10",
-    border: "border-border hover:border-amber-500/50",
+    Icon: Server,
+    titleKey: "why_sovereign_title" as const,
+    descKey: "why_sovereign_desc" as const,
+    iconBg: "rgba(226,192,141,0.1)",
+    iconColor: "var(--accent-amber)",
   },
-] as const;
+];
 
 export default function WhySelfHosted() {
   return (
-    <section className="px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-14 text-center">
-          <h2 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
+    <section className="bg-background/50 py-[23px]">
+      <div className="mx-auto flex max-w-[1024px] flex-col items-center gap-8 px-4 sm:px-6 lg:px-0">
+        {/* Heading */}
+        <div className="flex flex-col items-center gap-3">
+          <h2 className="text-center text-[28px] font-semibold leading-[36px] text-foreground">
             {m.why_heading()}
           </h2>
-          <p className="mx-auto max-w-xl text-muted-foreground">
+          <p className="text-center text-base leading-6 text-muted-foreground">
             {m.why_subtitle()}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {/* Grid 2×2 */}
+        <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
           {CARDS.map((card) => {
-            const Icon = card.icon;
+            const { Icon } = card;
             return (
               <div
                 key={card.titleKey}
-                className={`rounded-xl border ${card.border} bg-card/30 p-6 transition-all duration-200`}
+                className="flex flex-col gap-2 rounded-2xl border border-border bg-card/30 p-6"
               >
-                <div className={`mb-4 inline-flex rounded-lg p-2.5 ${card.bg}`}>
-                  <Icon className={`h-5 w-5 ${card.color}`} />
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: card.iconBg }}
+                >
+                  <Icon className="h-5 w-5" style={{ color: card.iconColor }} />
                 </div>
-                <h3 className="mb-2 font-semibold text-foreground">
+                <p className="text-base font-semibold leading-6 text-foreground">
                   {m[card.titleKey]()}
-                </h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
+                </p>
+                <p className="text-[14px] leading-[23px] text-muted-foreground">
                   {m[card.descKey]()}
                 </p>
               </div>

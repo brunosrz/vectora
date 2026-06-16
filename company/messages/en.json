@@ -8,9 +8,9 @@
   "nav_docs": "Docs",
   "nav_faq": "FAQ",
   "nav_login": "Log in",
-  "nav_signup": "Start free",
+  "nav_signup": "Create Account",
   "nav_support": "Support",
-  "hero_eyebrow": "Self-hosted · Privacy-first · Open core",
+  "hero_eyebrow": "Self-hosted · Privacy-first · Extensible",
   "hero_tagline": "Your AI. Your Data. Your Server.",
   "hero_subtitle": "Self-hosted AI agent with RAG, MCP and multi-user web chat. Your data never leaves your server.",
   "hero_gif_alt": "Vectora AI agent in action",
@@ -18,7 +18,7 @@
   "showcase_rag_alt": "Vectora RAG semantic search",
   "showcase_code_alt": "Vectora coding agent",
   "showcase_plan_alt": "Vectora structured reasoning",
-  "hero_cta_trial": "Start free trial — 30 days",
+  "hero_cta_trial": "Start trial — 30 days free",
   "hero_cta_pricing": "See pricing",
   "showcase_title": "See Vectora in action",
   "showcase_chat_title": "Contextual conversation",
@@ -301,5 +301,10 @@
   "pricing_faq_q4": "What happens when the trial ends?",
   "pricing_faq_a4": "Your account becomes inactive. Your data is kept for 30 days so you can subscribe.",
   "pricing_faq_q5": "Can I cancel anytime?",
-  "pricing_faq_a5": "Yes. No minimum commitment. Cancel from the dashboard and access continues until the end of the paid period."
+  "pricing_faq_a5": "Yes. No minimum commitment. Cancel from the dashboard and access continues until the end of the paid period.",
+  "pricing_feat_mcp_acp": "MCP & ACP server",
+  "pricing_feat_everything_plus": "Everything in Plus",
+  "pricing_feat_rest_api": "REST API",
+  "pricing_feat_support_sla": "Support (SLA 24h)",
+  "pricing_feat_workspace5": "5 workspaces"
 }
