@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { m } from "#/paraglide/messages";
-import Logo from "#/components/shared/Logo";
+import AuthLayout from "#/components/shared/AuthLayout";
 import { getSession, signIn, sendMagicLink } from "#/server/fns/auth";
 import { toast } from "sonner";
 
@@ -51,78 +51,69 @@ function LoginPage() {
     email.includes("@") && password.length >= 1 && !loginMutation.isPending;
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Logo size="md" className="justify-center" />
-          <h1 className="mt-4 text-2xl font-semibold text-foreground">
-            {m.login_heading()}
-          </h1>
+    <AuthLayout heading={m.login_heading()}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (canSubmit) loginMutation.mutate();
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground/90">
+            {m.form_email()}
+          </label>
+          <input
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
+          />
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (canSubmit) loginMutation.mutate();
-          }}
-          className="space-y-4"
-        >
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground/90">
-              {m.form_email()}
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="text-sm font-medium text-foreground/90">
+              {m.form_password()}
             </label>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
-            />
+            <button
+              type="button"
+              disabled={!email.includes("@") || magicLinkMutation.isPending}
+              onClick={() => magicLinkMutation.mutate()}
+              className="text-xs text-primary hover:text-primary transition-colors disabled:opacity-40"
+            >
+              {m.login_forgot()}
+            </button>
           </div>
+          <input
+            type="password"
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
+          />
+        </div>
 
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground/90">
-                {m.form_password()}
-              </label>
-              <button
-                type="button"
-                disabled={!email.includes("@") || magicLinkMutation.isPending}
-                onClick={() => magicLinkMutation.mutate()}
-                className="text-xs text-primary hover:text-primary transition-colors disabled:opacity-40"
-              >
-                {m.login_forgot()}
-              </button>
-            </div>
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
-            />
-          </div>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 transition-all hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {loginMutation.isPending ? m.form_submitting() : m.login_cta()}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow shadow-primary/25 transition-all hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {loginMutation.isPending ? m.form_submitting() : m.login_cta()}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          <Link
-            to="/signup"
-            className="text-primary hover:text-primary transition-colors"
-          >
-            {m.login_no_account()}
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        <Link
+          to="/signup"
+          className="text-primary hover:text-primary transition-colors"
+        >
+          {m.login_no_account()}
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
