@@ -37,6 +37,21 @@ interface PreviewTabProps {
   threadId: string;
 }
 
+/** Esqueleto do .vectora/launch.json enviado ao agente (formato Claude Code). */
+const LAUNCH_JSON_TEMPLATE = `\`\`\`json
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "<server-name>",
+      "runtimeExecutable": "<command>",
+      "runtimeArgs": ["<args>"],
+      "port": <port>
+    }
+  ]
+}
+\`\`\``;
+
 export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
   const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
@@ -131,9 +146,12 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
   );
 
   const handleAskAgent = useCallback(() => {
-    useChatInputStore
-      .getState()
-      .pushDraft(t("workbench.preview.ask_agent_prompt"));
+    const prompt = [
+      t("workbench.preview.ask_agent_prompt"),
+      LAUNCH_JSON_TEMPLATE,
+      t("workbench.preview.ask_agent_note"),
+    ].join("\n\n");
+    useChatInputStore.getState().pushDraft(prompt);
   }, [t]);
 
   const handleDetect = async () => {
