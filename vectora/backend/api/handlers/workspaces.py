@@ -2738,3 +2738,260 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
             "X-Accel-Buffering": "no",
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# Live Preview — launch.json + dev server management
+# ---------------------------------------------------------------------------
+
+import asyncio as _asyncio
+
+_preview_procs: dict[str, "_asyncio.subprocess.Process"] = {}
+
+
+def _preview_key(workspace_id: str, name: str) -> str:
+    return f"{workspace_id}::{name}"
+
+
+def _launch_json_path(workspace_id: str) -> Path | None:
+    from backend.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return None
+    return Path(ws.cwd) / ".vectora" / "launch.json"
+
+
+class LaunchConfigModel(BaseModel):
+    name: str
+    runtimeExecutable: str
+    runtimeArgs: list[str] = []
+    port: int
+    env: dict[str, str] = {}
+
+
+class LaunchJsonModel(BaseModel):
+    version: str = "0.0.1"
+    configurations: list[LaunchConfigModel] = []
+
+
+class PreviewServerStatus(BaseModel):
+    name: str
+    port: int
+    running: bool
+    pid: int | None = None
+
+
+class PreviewStatusResponse(BaseModel):
+    servers: list[PreviewServerStatus]
+
+
+class PreviewStartRequest(BaseModel):
+    name: str
+
+
+class PreviewStopRequest(BaseModel):
+    name: str
+
+
+class DetectedServer(BaseModel):
+    name: str
+    runtimeExecutable: str
+    runtimeArgs: list[str]
+    port: int
+
+
+class DetectResponse(BaseModel):
+    configurations: list[DetectedServer]
+
+
+@view_router.get("/{workspace_id}/preview/launch", response_model=LaunchJsonModel)
+async def get_launch_json(workspace_id: str) -> LaunchJsonModel:
+    """Lê .vectora/launch.json do workspace."""
+    p = _launch_json_path(workspace_id)
+    if p is None or not p.exists():
+        return LaunchJsonModel()
+    try:
+        import json as _json
+
+        data = _json.loads(p.read_text(encoding="utf-8"))
+        return LaunchJsonModel.model_validate(data)
+    except Exception:
+        return LaunchJsonModel()
+
+
+@view_router.post("/{workspace_id}/preview/launch", response_model=StatusResponse)
+async def save_launch_json(workspace_id: str, body: LaunchJsonModel) -> StatusResponse:
+    """Grava .vectora/launch.json no workspace."""
+    p = _launch_json_path(workspace_id)
+    if p is None:
+        return StatusResponse(status="error", message="Workspace não encontrado.")
+    try:
+        import json as _json
+
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(
+            _json.dumps(body.model_dump(), indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        return StatusResponse(status="ok")
+    except Exception as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+@view_router.get("/{workspace_id}/preview/status", response_model=PreviewStatusResponse)
+async def preview_status(workspace_id: str) -> PreviewStatusResponse:
+    """Retorna o status dos servidores de preview do workspace."""
+    launch = await get_launch_json(workspace_id)
+    servers: list[PreviewServerStatus] = []
+    for cfg in launch.configurations:
+        key = _preview_key(workspace_id, cfg.name)
+        proc = _preview_procs.get(key)
+        running = proc is not None and proc.returncode is None
+        pid = proc.pid if running and proc else None
+        servers.append(
+            PreviewServerStatus(name=cfg.name, port=cfg.port, running=running, pid=pid)
+        )
+    return PreviewStatusResponse(servers=servers)
+
+
+@view_router.post("/{workspace_id}/preview/start", response_model=StatusResponse)
+async def preview_start(workspace_id: str, body: PreviewStartRequest) -> StatusResponse:
+    """Inicia o dev server de preview com o nome indicado."""
+    from backend.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return StatusResponse(status="error", message="Workspace não encontrado.")
+
+    launch = await get_launch_json(workspace_id)
+    cfg = next((c for c in launch.configurations if c.name == body.name), None)
+    if cfg is None:
+        return StatusResponse(
+            status="error", message=f"Configuração '{body.name}' não encontrada."
+        )
+
+    key = _preview_key(workspace_id, cfg.name)
+    existing = _preview_procs.get(key)
+    if existing and existing.returncode is None:
+        return StatusResponse(status="ok", message="já em execução")
+
+    env = {**__import__("os").environ, **cfg.env}
+    cmd = [cfg.runtimeExecutable, *cfg.runtimeArgs]
+    try:
+        proc = await _asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=ws.cwd,
+            env=env,
+            stdout=_asyncio.subprocess.DEVNULL,
+            stderr=_asyncio.subprocess.DEVNULL,
+        )
+        _preview_procs[key] = proc
+        return StatusResponse(status="ok", message=f"iniciado na porta {cfg.port}")
+    except Exception as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+@view_router.post("/{workspace_id}/preview/stop", response_model=StatusResponse)
+async def preview_stop(workspace_id: str, body: PreviewStopRequest) -> StatusResponse:
+    """Para o dev server de preview com o nome indicado."""
+    launch = await get_launch_json(workspace_id)
+    cfg = next((c for c in launch.configurations if c.name == body.name), None)
+    if cfg is None:
+        return StatusResponse(
+            status="error", message=f"Configuração '{body.name}' não encontrada."
+        )
+
+    key = _preview_key(workspace_id, cfg.name)
+    proc = _preview_procs.pop(key, None)
+    if proc is None or proc.returncode is not None:
+        return StatusResponse(status="ok", message="não estava em execução")
+
+    try:
+        proc.terminate()
+        try:
+            await _asyncio.wait_for(proc.wait(), timeout=5.0)
+        except _asyncio.TimeoutError:
+            proc.kill()
+        return StatusResponse(status="ok", message="parado")
+    except Exception as exc:
+        return StatusResponse(status="error", message=str(exc))
+
+
+@view_router.get("/{workspace_id}/preview/detect", response_model=DetectResponse)
+async def preview_detect(workspace_id: str) -> DetectResponse:
+    """Detecta dev servers comuns no workspace e sugere configurações para launch.json."""
+    from backend.services.workspace import workspace_registry
+
+    ws = workspace_registry.get(workspace_id)
+    if ws is None:
+        return DetectResponse(configurations=[])
+
+    root = Path(ws.cwd)
+    configs: list[DetectedServer] = []
+
+    pkg_json = root / "package.json"
+    if pkg_json.exists():
+        try:
+            import json as _json
+
+            pkg = _json.loads(pkg_json.read_text(encoding="utf-8"))
+            scripts: dict = pkg.get("scripts", {})
+            _dev_scripts = ["dev", "start", "serve", "preview"]
+            for script_name in _dev_scripts:
+                if script_name in scripts:
+                    mgr = "pnpm"
+                    from shutil import which as _which
+
+                    if not _which("pnpm"):
+                        mgr = "npm" if _which("npm") else "node"
+                    configs.append(
+                        DetectedServer(
+                            name=f"npm {script_name}",
+                            runtimeExecutable=mgr,
+                            runtimeArgs=["run", script_name],
+                            port=3000,
+                        )
+                    )
+                    break
+        except Exception:
+            pass
+
+    pyproject = root / "pyproject.toml"
+    manage_py = root / "manage.py"
+    if manage_py.exists():
+        configs.append(
+            DetectedServer(
+                name="django",
+                runtimeExecutable="python",
+                runtimeArgs=["manage.py", "runserver", "8000"],
+                port=8000,
+            )
+        )
+    elif pyproject.exists():
+        try:
+            content = pyproject.read_text(encoding="utf-8")
+            if "fastapi" in content or "uvicorn" in content or "starlette" in content:
+                configs.append(
+                    DetectedServer(
+                        name="fastapi",
+                        runtimeExecutable="uvicorn",
+                        runtimeArgs=["main:app", "--reload", "--port", "8000"],
+                        port=8000,
+                    )
+                )
+        except Exception:
+            pass
+
+    vite_cfg = root / "vite.config.ts"
+    if not configs and vite_cfg.exists():
+        configs.append(
+            DetectedServer(
+                name="vite",
+                runtimeExecutable="pnpm",
+                runtimeArgs=["dev"],
+                port=5173,
+            )
+        )
+
+    return DetectResponse(configurations=configs)

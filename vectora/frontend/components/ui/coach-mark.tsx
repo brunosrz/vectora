@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 interface CoachMarkProps {
   isOpen: boolean;
-  targetRef: React.RefObject<HTMLElement>;
+  targetRef: React.RefObject<HTMLElement | null>;
   title: string;
   description: React.ReactNode;
   onDismiss: () => void;
@@ -79,7 +79,7 @@ export function CoachMark({
 
       <PopoverPrimitive.Root open={isOpen}>
         <PopoverPrimitive.Anchor
-          ref={targetRef}
+          ref={targetRef as React.RefObject<HTMLDivElement | null>}
           style={{
             pointerEvents: "none",
           }}

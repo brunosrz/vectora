@@ -621,6 +621,14 @@ workbench.tab.preview,Preview,Vista previa,Preview
 workbench.tab.search,Search,Buscar,Buscar
 workbench.tab.tasks,Tasks,Tareas,Tarefas
 workbench.tab.storage,Storage,Almacenamiento,Armazenamento
+workbench.preview.empty_title,No configurations,Sin configuraciones,Sem configurações
+workbench.preview.empty_description,Create a .vectora/launch.json or auto-detect dev servers.,Crea un .vectora/launch.json o detecta servidores automáticamente.,Crie um .vectora/launch.json ou detecte servidores automaticamente.
+workbench.preview.detect,Auto-detect,Detectar automáticamente,Detectar automaticamente
+workbench.preview.start,Start server,Iniciar servidor,Iniciar servidor
+workbench.preview.stop,Stop server,Detener servidor,Parar servidor
+workbench.preview.open_preview,Open in preview,Abrir en vista previa,Abrir no preview
+workbench.preview.open_external,Open in browser,Abrir en navegador,Abrir no navegador
+workbench.preview.select_server,Start a server to preview your app.,Inicia un servidor para ver la app.,Inicie um servidor para visualizar o app.
 workbench.files.filter,Filter files…,Filtrar archivos…,Filtrar arquivos…
 workbench.files.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
 workbench.files.binary,"Binary file ({size} bytes) — preview not shown.","Archivo binario ({size} bytes) — vista previa no disponible.","Arquivo binário ({size} bytes) — preview indisponível."
