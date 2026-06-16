@@ -37,12 +37,24 @@ export interface TerminalInstance {
 }
 
 /** Abas do workbench (espelha a referência Claude Code). */
-export type WorkbenchTab = "terminal" | "files" | "diff" | "plan";
+export type WorkbenchTab =
+  | "terminal"
+  | "files"
+  | "diff"
+  | "plan"
+  | "preview"
+  | "search"
+  | "tasks"
+  | "storage";
 
 export const WORKBENCH_TABS: WorkbenchTab[] = [
   "files",
   "diff",
   "plan",
+  "preview",
+  "search",
+  "tasks",
+  "storage",
   "terminal",
 ];
 

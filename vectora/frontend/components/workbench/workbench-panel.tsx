@@ -27,6 +27,10 @@ import {
   GitCompare,
   TerminalSquare,
   X,
+  Eye,
+  Search,
+  CheckSquare,
+  Database,
 } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
@@ -46,6 +50,10 @@ import { TerminalPanel } from "@/components/workbench/terminal/terminal-panel";
 import { FilesTab } from "./tabs/files-tab";
 import { GitTab } from "./git/git-tab";
 import { PlanTab } from "./tabs/plan-tab";
+import { PreviewTab } from "./tabs/preview-tab";
+import { SearchTab } from "./tabs/search-tab";
+import { TasksTab } from "./tabs/tasks-tab";
+import { StorageTab } from "./tabs/storage-tab";
 
 interface WorkbenchPanelProps {
   threadId: string;
@@ -61,6 +69,10 @@ const TAB_ICON: Record<
   files: FolderTree,
   diff: GitCompare,
   plan: FileText,
+  preview: Eye,
+  search: Search,
+  tasks: CheckSquare,
+  storage: Database,
 };
 
 /** Lê o cache do workbench-store e devolve o texto do chip por aba. */
@@ -70,6 +82,7 @@ function useTabBadge(
   tab: WorkbenchTab,
   hydrated: boolean,
 ): string | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   // Selectors são chamados incondicionalmente — Rules of Hooks. Filtramos por
   // aba no return e gateamos por `hydrated` para evitar mismatch SSR (T11).
   const terminals = useWorkbenchStore((s) => s.list(threadId));
@@ -89,6 +102,11 @@ function useTabBadge(
       return null;
     case "plan":
       return planItems > 0 ? String(planItems) : null;
+    case "preview":
+    case "search":
+    case "tasks":
+    case "storage":
+      return null;
   }
 }
 
@@ -233,6 +251,10 @@ export function WorkbenchContent({
         )}
         {activeTab === "diff" && <GitTab threadId={threadId} />}
         {activeTab === "plan" && <PlanTab threadId={threadId} />}
+        {activeTab === "preview" && <PreviewTab threadId={threadId} />}
+        {activeTab === "search" && <SearchTab />}
+        {activeTab === "tasks" && <TasksTab threadId={threadId} />}
+        {activeTab === "storage" && <StorageTab threadId={threadId} />}
       </div>
     </div>
   );

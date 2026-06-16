@@ -617,6 +617,10 @@ workbench.tab.terminal,Terminal,Terminal,Terminal
 workbench.tab.files,Files,Archivos,Arquivos
 workbench.tab.diff,Git,Git,Git
 workbench.tab.plan,Plan,Plan,Plano
+workbench.tab.preview,Preview,Vista previa,Preview
+workbench.tab.search,Search,Buscar,Buscar
+workbench.tab.tasks,Tasks,Tareas,Tarefas
+workbench.tab.storage,Storage,Almacenamiento,Armazenamento
 workbench.files.filter,Filter files…,Filtrar archivos…,Filtrar arquivos…
 workbench.files.no_workspace,No active workspace.,Sin espacio de trabajo activo.,Sem workspace ativo.
 workbench.files.binary,"Binary file ({size} bytes) — preview not shown.","Archivo binario ({size} bytes) — vista previa no disponible.","Arquivo binário ({size} bytes) — preview indisponível."
