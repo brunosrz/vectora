@@ -48,3 +48,10 @@ export function usageBarColor(level: "ok" | "warn" | "danger"): string {
   if (level === "warn") return "bg-amber-500";
   return "bg-emerald-500";
 }
+
+/** Cor de traço Tailwind para o anel de progresso por nível (usa currentColor). */
+export function usageRingColor(level: "ok" | "warn" | "danger"): string {
+  if (level === "danger") return "text-red-500";
+  if (level === "warn") return "text-amber-500";
+  return "text-emerald-500";
+}
