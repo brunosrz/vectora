@@ -255,15 +255,10 @@ export function ChatInput({
               }}
             />
 
-            {/* Multi-layered input container */}
+            {/* Input container — borda única, sem glow nem ring duplicado. */}
             <div className="relative">
-              {/* Glow de contraste — sem `shadow-*`: o Vectora não usa sombras
-                  projetadas (vazavam para a appbar no tema claro). */}
-              <div className="absolute -inset-1 bg-primary/8 rounded-2xl opacity-70 group-hover:opacity-90 group-focus-within:opacity-100 transition-opacity duration-300" />
-
-              {/* Main input container with enhanced contrast */}
               <div
-                className={`relative backdrop-blur-sm border-2 rounded-xl transition-all duration-300 group-focus-within:ring-2 group-focus-within:ring-primary/20 ${isDragging ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border/50 group-hover:border-primary/60 group-focus-within:border-primary/70"}`}
+                className={`relative rounded-xl border bg-background transition-colors duration-200 ${isDragging ? "border-primary bg-primary/5" : "border-border/60 group-focus-within:border-primary/70"}`}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
@@ -321,13 +316,25 @@ export function ChatInput({
                     rows={1}
                   />
 
-                  {isVoiceSupported && onVoiceToggle && (
-                    <VoiceInputButton
-                      isListening={isVoiceListening ?? false}
-                      disabled={!userId || offline}
-                      onClick={onVoiceToggle}
-                      size="sm"
-                    />
+                  {!isLoading && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={onSend}
+                          variant="ghost"
+                          size="sm"
+                          disabled={!input.trim() || !userId || offline}
+                          className="h-8 w-8 p-0 mb-0.5 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground"
+                          type="button"
+                          aria-label={t("tooltip.chat_send")}
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        {t("tooltip.chat_send")}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
 
                   {isLoading && (
@@ -399,25 +406,13 @@ export function ChatInput({
               {modelId && (
                 <UsagePopover tokensUsed={tokensUsed ?? 0} modelId={modelId} />
               )}
-              {!isLoading && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={onSend}
-                      variant="ghost"
-                      size="sm"
-                      disabled={!input.trim() || !userId || offline}
-                      className="h-7 w-7 p-0 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground"
-                      type="button"
-                      aria-label={t("tooltip.chat_send")}
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    {t("tooltip.chat_send")}
-                  </TooltipContent>
-                </Tooltip>
+              {isVoiceSupported && onVoiceToggle && (
+                <VoiceInputButton
+                  isListening={isVoiceListening ?? false}
+                  disabled={!userId || offline}
+                  onClick={onVoiceToggle}
+                  size="sm"
+                />
               )}
             </div>
           </div>
