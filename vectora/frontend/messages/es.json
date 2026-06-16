@@ -502,7 +502,7 @@
   "workbench_tab_preview": "Vista previa",
   "workbench_tab_search": "Buscar",
   "workbench_tab_tasks": "Tareas",
-  "workbench_tab_storage": "Almacenamiento",
+  "workbench_tab_storage": "Memoria",
   "workbench_preview_empty_title": "Sin configuraciones",
   "workbench_preview_empty_description": "Crea un .vectora/launch.json — pregunta al agente o añádelo manualmente.",
   "workbench_preview_start": "Iniciar servidor",
@@ -737,5 +737,10 @@
   "workbench_storage_empty_description": "Abre o crea un workspace para navegar por sus archivos.",
   "prefs_sidebar_position": "Posición de la barra lateral",
   "prefs_sidebar_position_left": "Sesiones a la izquierda",
-  "prefs_sidebar_position_right": "Sesiones a la derecha"
+  "prefs_sidebar_position_right": "Sesiones a la derecha",
+  "workbench_memory_no_result": "Sin resultado",
+  "workbench_memory_empty_title": "La memoria está vacía",
+  "workbench_memory_empty_desc": "Aquí aparece el contexto que el agente recupera en esta sesión (base de conocimiento y web).",
+  "workbench_memory_group_rag": "Base de conocimiento",
+  "workbench_memory_group_web": "Web"
 }

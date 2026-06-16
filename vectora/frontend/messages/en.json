@@ -502,7 +502,7 @@
   "workbench_tab_preview": "Preview",
   "workbench_tab_search": "Search",
   "workbench_tab_tasks": "Tasks",
-  "workbench_tab_storage": "Storage",
+  "workbench_tab_storage": "Memory",
   "workbench_preview_empty_title": "No configurations",
   "workbench_preview_empty_description": "Create a .vectora/launch.json — ask the agent or add one manually.",
   "workbench_preview_start": "Start server",
@@ -737,5 +737,10 @@
   "workbench_storage_empty_description": "Open or create a workspace to browse its files.",
   "prefs_sidebar_position": "Sidebar position",
   "prefs_sidebar_position_left": "Sessions on the left",
-  "prefs_sidebar_position_right": "Sessions on the right"
+  "prefs_sidebar_position_right": "Sessions on the right",
+  "workbench_memory_no_result": "No result",
+  "workbench_memory_empty_title": "Memory is empty",
+  "workbench_memory_empty_desc": "Knowledge base (RAG) and web results the agent retrieves this session show up here.",
+  "workbench_memory_group_rag": "Knowledge base",
+  "workbench_memory_group_web": "Web"
 }

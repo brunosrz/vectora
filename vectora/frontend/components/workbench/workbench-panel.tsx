@@ -28,7 +28,7 @@ import {
   TerminalSquare,
   X,
   MonitorPlay,
-  Database,
+  Brain,
 } from "lucide-react";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
@@ -67,7 +67,7 @@ const TAB_ICON: Record<
   diff: GitCompare,
   plan: FileText,
   preview: MonitorPlay,
-  storage: Database,
+  storage: Brain,
 };
 
 /** Lê o cache do workbench-store e devolve o texto do chip por aba. */

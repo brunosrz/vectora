@@ -1,246 +1,159 @@
 "use client";
 
 /**
- * StorageTab — navegação read-only do filesystem.
+ * StorageTab — "Memória da sessão": o que o Vectora recuperou nesta thread.
  *
- * Mostra a árvore completa do workspace sem opções de edição/delete.
- * Clique em arquivo abre em preview (se suportado).
- * Reutiliza tree logic do files-tab.
+ * Agrega o contexto trazido para as respostas — trechos da base de
+ * conhecimento (RAG) e resultados de web search / fetch — em pílulas que
+ * expandem para leitura do conteúdo completo. É a visão de "o que o agente
+ * sabe agora", derivada das mensagens da thread (sem novo endpoint).
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { ChevronRight, Database, File, Folder, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useMemo, useState } from "react";
+import { Brain, ChevronRight, Database, Globe } from "lucide-react";
+import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
+import { MarkdownView } from "@/components/workbench/markdown-view";
 import { m } from "@/lib/paraglide/messages";
 
 interface StorageTabProps {
   threadId: string;
-  onFileSelect?: (path: string) => void;
 }
 
-interface TreeNode {
-  name: string;
-  path: string;
-  type: "file" | "dir";
-  children?: TreeNode[];
-  isExpanded?: boolean;
-  isLoading?: boolean;
+interface MemoryItem {
+  id: string;
+  kind: "rag" | "web";
+  title: string;
+  subtitle?: string;
+  content: string;
 }
 
-export function StorageTab({ threadId, onFileSelect }: StorageTabProps) {
-  const workspace = useWorkspacesStore((s) => s.getActive());
-  const wsId = workspace?.id ?? "";
+const WEB_TOOLS = new Set(["web_search", "fetch_url", "web_fetch"]);
 
-  const [tree, setTree] = useState<TreeNode | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Carrega árvore de diretórios inicial ao montar
-  const loadTree = useCallback(async () => {
-    if (!wsId) {
-      setError(m.workbench_files_no_workspace());
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const res = await fetch(
-        `/workspaces/${encodeURIComponent(wsId)}/tree?path=.`,
-      );
-      if (!res.ok) throw new Error("Failed to load tree");
-
-      const data = (await res.json()) as TreeNode;
-      setTree(data);
-      setError(null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : m.workbench_files_no_workspace(),
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [wsId]);
-
-  useEffect(() => {
-    loadTree();
-  }, [loadTree]);
-
-  // Expande/contrai nó
-  const toggleNode = useCallback((path: string) => {
-    setTree((prev) => {
-      if (!prev) return prev;
-      return updateNode(prev, path, (n) => ({
-        ...n,
-        isExpanded: !n.isExpanded,
-      }));
-    });
-  }, []);
-
-  // Carrega filhos de um diretório (lazy load)
-  const loadChildren = useCallback(
-    async (dirPath: string) => {
-      if (!wsId) return;
-
-      setTree((prev) => {
-        if (!prev) return prev;
-        return updateNode(prev, dirPath, (n) => ({ ...n, isLoading: true }));
-      });
-
-      try {
-        const res = await fetch(
-          `/workspaces/${encodeURIComponent(wsId)}/tree?path=${encodeURIComponent(dirPath)}`,
-        );
-        if (!res.ok) throw new Error("Failed to load children");
-
-        const data = (await res.json()) as TreeNode;
-
-        setTree((prev) => {
-          if (!prev) return prev;
-          return updateNode(prev, dirPath, (n) => ({
-            ...n,
-            children: data.children,
-            isLoading: false,
-          }));
-        });
-      } catch {
-        setTree((prev) => {
-          if (!prev) return prev;
-          return updateNode(prev, dirPath, (n) => ({ ...n, isLoading: false }));
-        });
-      }
-    },
-    [wsId],
-  );
-
-  const handleNodeClick = (node: TreeNode) => {
-    if (node.type === "dir") {
-      if (node.isExpanded && node.children?.length === 0) {
-        loadChildren(node.path);
-      }
-      toggleNode(node.path);
-    } else {
-      onFileSelect?.(node.path);
-    }
-  };
-
-  if (isLoading && !tree) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
+function toText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
   }
+}
 
-  if (error) {
-    return (
-      <div className="p-4 text-sm text-destructive">
-        {error}
-        <button
-          onClick={loadTree}
-          className="mt-2 inline-block rounded bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20"
-        >
-          {m.workbench_files_refresh()}
-        </button>
-      </div>
-    );
-  }
-
-  if (!tree) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center pb-[28%] gap-3 p-4 text-center">
-        <Database className="h-8 w-8 text-muted-foreground/40 shrink-0" />
-        <div className="min-w-0 max-w-[200px]">
-          <p className="text-sm font-medium text-foreground leading-snug">
-            {m.workbench_storage_empty_title()}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-            {m.workbench_storage_empty_description()}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+function MemoryPill({ item }: { item: MemoryItem }) {
+  const [open, setOpen] = useState(false);
+  const Icon = item.kind === "rag" ? Database : Globe;
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-1 py-2">
-        {tree && <TreeNode node={tree} onNodeClick={handleNodeClick} />}
-      </div>
-    </div>
-  );
-}
-
-interface TreeNodeProps {
-  node: TreeNode;
-  depth?: number;
-  onNodeClick: (node: TreeNode) => void;
-}
-
-function TreeNode({ node, depth = 0, onNodeClick }: TreeNodeProps) {
-  return (
-    <div>
+    <div className="rounded-lg border border-border/60 bg-card/30">
       <button
-        onClick={() => onNodeClick(node)}
-        className={cn(
-          "w-full flex items-center gap-1 px-2 py-1 text-xs font-medium text-foreground/80 hover:bg-accent transition-colors rounded text-left",
-          "hover:text-foreground",
-        )}
-        style={{ paddingLeft: `${12 + depth * 12}px` }}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 px-2.5 py-2 text-left"
+        aria-expanded={open}
       >
-        {node.type === "dir" && (
-          <ChevronRight
-            className={cn(
-              "h-3.5 w-3.5 shrink-0 transition-transform",
-              node.isExpanded && "rotate-90",
-            )}
-          />
-        )}
-        {node.type === "file" && <div className="w-3.5" />}
-        {node.type === "dir" ? (
-          <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-        ) : (
-          <File className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-        )}
-        <span className="truncate">{node.name}</span>
-        {node.isLoading && (
-          <Loader2 className="h-3.5 w-3.5 animate-spin ml-auto" />
+        <ChevronRight
+          className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}
+        />
+        <Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+          {item.title}
+        </span>
+        {item.subtitle && (
+          <span className="shrink-0 truncate text-[10px] text-muted-foreground">
+            {item.subtitle}
+          </span>
         )}
       </button>
-
-      {node.isExpanded && node.children && node.children.length > 0 && (
-        <div>
-          {node.children.map((child) => (
-            <TreeNode
-              key={child.path}
-              node={child}
-              depth={depth + 1}
-              onNodeClick={onNodeClick}
-            />
-          ))}
+      {open && (
+        <div className="max-h-80 overflow-auto border-t border-border/60 px-3 py-2">
+          <MarkdownView content={item.content} />
         </div>
       )}
     </div>
   );
 }
 
-// Helper: atualiza nó na árvore recursivamente
-function updateNode(
-  tree: TreeNode,
-  targetPath: string,
-  update: (n: TreeNode) => TreeNode,
-): TreeNode {
-  if (tree.path === targetPath) {
-    return update(tree);
+export function StorageTab({ threadId }: StorageTabProps) {
+  const [messages] = useThreadMessages(threadId);
+
+  const { rag, web } = useMemo(() => {
+    const ragItems: MemoryItem[] = [];
+    const webItems: MemoryItem[] = [];
+    const seenRag = new Set<string>();
+
+    for (const msg of messages) {
+      for (const c of msg.ragCitations ?? []) {
+        const key = `${c.source}::${c.chunk.slice(0, 64)}`;
+        if (seenRag.has(key)) continue;
+        seenRag.add(key);
+        ragItems.push({
+          id: `rag-${ragItems.length}`,
+          kind: "rag",
+          title: c.source,
+          subtitle: `[${c.index}]`,
+          content: c.chunk,
+        });
+      }
+      for (const call of msg.toolCalls ?? []) {
+        if (!WEB_TOOLS.has(call.name)) continue;
+        const args = call.args ?? {};
+        const title =
+          (typeof args.query === "string" && args.query) ||
+          (typeof args.url === "string" && args.url) ||
+          call.name;
+        webItems.push({
+          id: `web-${call.id}`,
+          kind: "web",
+          title,
+          subtitle: call.name === "fetch_url" ? "fetch" : "search",
+          content: toText(call.output) || m.workbench_memory_no_result(),
+        });
+      }
+    }
+    return { rag: ragItems, web: webItems };
+  }, [messages]);
+
+  const isEmpty = rag.length === 0 && web.length === 0;
+
+  if (isEmpty) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+        <Brain className="h-8 w-8 shrink-0 text-muted-foreground/40" />
+        <div className="max-w-[240px]">
+          <p className="text-sm font-medium text-foreground">
+            {m.workbench_memory_empty_title()}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {m.workbench_memory_empty_desc()}
+          </p>
+        </div>
+      </div>
+    );
   }
-  if (tree.children) {
-    return {
-      ...tree,
-      children: tree.children.map((child) =>
-        updateNode(child, targetPath, update),
-      ),
-    };
-  }
-  return tree;
+
+  return (
+    <div className="h-full space-y-4 overflow-auto p-3">
+      {rag.length > 0 && (
+        <section className="space-y-1.5">
+          <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Database className="h-3 w-3" />
+            {m.workbench_memory_group_rag()} ({rag.length})
+          </h3>
+          {rag.map((item) => (
+            <MemoryPill key={item.id} item={item} />
+          ))}
+        </section>
+      )}
+      {web.length > 0 && (
+        <section className="space-y-1.5">
+          <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Globe className="h-3 w-3" />
+            {m.workbench_memory_group_web()} ({web.length})
+          </h3>
+          {web.map((item) => (
+            <MemoryPill key={item.id} item={item} />
+          ))}
+        </section>
+      )}
+    </div>
+  );
 }
