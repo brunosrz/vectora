@@ -41,14 +41,14 @@ export default function TeamSetupSection() {
           {m.team_heading()}
         </h2>
 
-        {/* 4 cards lado a lado */}
-        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 4 cards lado a lado — largura fixa ditada pela linha de badges */}
+        <div className="flex w-full flex-wrap justify-center gap-2">
           {STEPS.map((step, i) => {
             const { Icon } = step;
             return (
               <div
                 key={i}
-                className="flex flex-col gap-2 rounded-2xl border border-border bg-card/30 p-3"
+                className="flex w-[248px] shrink-0 flex-col gap-2 rounded-2xl border border-border bg-card/30 p-3"
               >
                 {/* Ícone + contador */}
                 <div className="flex items-center justify-between">
@@ -74,7 +74,7 @@ export default function TeamSetupSection() {
                 </p>
 
                 {"badges" in step && step.badges && (
-                  <div className="flex items-center justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5">
                     {step.badges.map((b) => (
                       <span
                         key={b}
