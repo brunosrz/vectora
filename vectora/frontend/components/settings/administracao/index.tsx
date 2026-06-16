@@ -45,8 +45,9 @@ export function AdminDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <ResizableDialogContent
+        storageKey="administracao"
         defaultWidth={640}
-        defaultHeight={600}
+        defaultHeight={480}
         className="p-6 gap-4"
       >
         <DialogHeader>

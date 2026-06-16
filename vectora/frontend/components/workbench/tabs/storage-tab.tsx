@@ -8,8 +8,8 @@
  * Reutiliza tree logic do files-tab.
  */
 
-import { useCallback, useState } from "react";
-import { ChevronRight, File, Folder, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ChevronRight, Database, File, Folder, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -63,6 +63,10 @@ export function StorageTab({ threadId, onFileSelect }: StorageTabProps) {
       setIsLoading(false);
     }
   }, [wsId, t]);
+
+  useEffect(() => {
+    loadTree();
+  }, [loadTree]);
 
   // Expande/contrai nó
   const toggleNode = useCallback((path: string) => {
@@ -140,6 +144,22 @@ export function StorageTab({ threadId, onFileSelect }: StorageTabProps) {
         >
           {t("workbench.files.refresh")}
         </button>
+      </div>
+    );
+  }
+
+  if (!tree) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center pb-[28%] gap-3 p-4 text-center">
+        <Database className="h-8 w-8 text-muted-foreground/40 shrink-0" />
+        <div className="min-w-0 max-w-[200px]">
+          <p className="text-sm font-medium text-foreground leading-snug">
+            {t("workbench.storage.empty_title")}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+            {t("workbench.storage.empty_description")}
+          </p>
+        </div>
       </div>
     );
   }

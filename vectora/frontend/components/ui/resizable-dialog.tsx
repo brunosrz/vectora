@@ -1,25 +1,11 @@
 "use client";
 
-/**
- * ResizableDialogContent — wrapper para diálogos redimensionáveis.
- *
- * Mantém todos os primitivos Radix (DialogPortal, Overlay, Content) intactos
- * para preservar acessibilidade (focus-trap, aria-modal, fechar com Esc).
- * O redimensionamento é feito por um handle no canto inferior-direito usando
- * pointer-capture — mesmo padrão de horizontal-split e vertical-split.
- *
- * Props extras:
- *   defaultWidth  — largura inicial em px (padrão: 600)
- *   defaultHeight — altura inicial em px (padrão: 560)
- *   minWidth      — mínimo em px (padrão: 380)
- *   minHeight     — mínimo em px (padrão: 300)
- */
-
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { GripHorizontal, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useDialogSizeStore } from "@/lib/stores/dialog-size-store";
 
 interface ResizableDialogContentProps extends React.ComponentProps<
   typeof DialogPrimitive.Content
@@ -29,23 +15,30 @@ interface ResizableDialogContentProps extends React.ComponentProps<
   minWidth?: number;
   minHeight?: number;
   showCloseButton?: boolean;
+  /** Chave para persistir o tamanho no Zustand. Se omitido, não persiste. */
+  storageKey?: string;
 }
 
 export function ResizableDialogContent({
   className,
   children,
-  defaultWidth = 600,
-  defaultHeight = 560,
-  minWidth = 380,
-  minHeight = 300,
+  defaultWidth = 560,
+  defaultHeight = 460,
+  minWidth = 340,
+  minHeight = 280,
   showCloseButton = true,
+  storageKey,
   style,
   ...props
 }: ResizableDialogContentProps) {
-  const [size, setSize] = React.useState({
-    w: defaultWidth,
-    h: defaultHeight,
-  });
+  const getSize = useDialogSizeStore((s) => s.getSize);
+  const saveSize = useDialogSizeStore((s) => s.setSize);
+
+  const initial = storageKey
+    ? getSize(storageKey, { w: defaultWidth, h: defaultHeight })
+    : { w: defaultWidth, h: defaultHeight };
+
+  const [size, setSize] = React.useState(initial);
   const dragging = React.useRef(false);
   const startRef = React.useRef({ x: 0, y: 0, w: 0, h: 0 });
 
@@ -69,6 +62,7 @@ export function ResizableDialogContent({
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     dragging.current = false;
     (e.currentTarget as Element).releasePointerCapture(e.pointerId);
+    if (storageKey) saveSize(storageKey, size);
   };
 
   return (
@@ -94,7 +88,6 @@ export function ResizableDialogContent({
           </DialogPrimitive.Close>
         )}
 
-        {/* Handle de redimensionamento — canto inferior direito */}
         <div
           role="separator"
           aria-label="Redimensionar diálogo"

@@ -28,8 +28,6 @@ import {
   TerminalSquare,
   X,
   MonitorPlay,
-  Search,
-  CheckSquare,
   Database,
 } from "lucide-react";
 import { useT } from "@/lib/i18n";
@@ -51,8 +49,6 @@ import { FilesTab } from "./tabs/files-tab";
 import { GitTab } from "./git/git-tab";
 import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";
-import { SearchTab } from "./tabs/search-tab";
-import { TasksTab } from "./tabs/tasks-tab";
 import { StorageTab } from "./tabs/storage-tab";
 
 interface WorkbenchPanelProps {
@@ -70,8 +66,6 @@ const TAB_ICON: Record<
   diff: GitCompare,
   plan: FileText,
   preview: MonitorPlay,
-  search: Search,
-  tasks: CheckSquare,
   storage: Database,
 };
 
@@ -103,8 +97,6 @@ function useTabBadge(
     case "plan":
       return planItems > 0 ? String(planItems) : null;
     case "preview":
-    case "search":
-    case "tasks":
     case "storage":
       return null;
   }
@@ -252,8 +244,6 @@ export function WorkbenchContent({
         {activeTab === "diff" && <GitTab threadId={threadId} />}
         {activeTab === "plan" && <PlanTab threadId={threadId} />}
         {activeTab === "preview" && <PreviewTab threadId={threadId} />}
-        {activeTab === "search" && <SearchTab />}
-        {activeTab === "tasks" && <TasksTab threadId={threadId} />}
         {activeTab === "storage" && <StorageTab threadId={threadId} />}
       </div>
     </div>

@@ -10,6 +10,7 @@
  */
 
 import {
+  CheckSquare,
   ChevronDown,
   ChevronRight,
   FileText,
@@ -93,6 +94,46 @@ function FilesTouchedSection({ threadId }: { threadId: string }) {
             >
               {f}
             </p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TasksSection({ threadId }: { threadId: string }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const plan = useWorkbenchStore((s) => s.getPlan(threadId));
+  const items = plan.items;
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="border-t border-border/40">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {open ? (
+          <ChevronDown className="w-3 h-3 shrink-0" />
+        ) : (
+          <ChevronRight className="w-3 h-3 shrink-0" />
+        )}
+        <CheckSquare className="w-3 h-3 shrink-0" />
+        <span className="font-medium flex-1 text-left">
+          {t("workbench.plan.tasks_section")} ({items.length})
+        </span>
+      </button>
+      {open && (
+        <div className="pb-2 divide-y divide-border/30">
+          {items.map((item, idx) => (
+            <div
+              key={idx}
+              className="px-4 py-1.5 text-[11px] text-foreground/70"
+            >
+              {item.title}
+            </div>
           ))}
         </div>
       )}
@@ -211,6 +252,8 @@ export function PlanTab({ threadId }: PlanTabProps) {
           );
         })}
       </div>
+
+      <TasksSection threadId={threadId} />
 
       <FilesTouchedSection threadId={threadId} />
 

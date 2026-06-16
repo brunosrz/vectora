@@ -184,13 +184,13 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
 
   if (configs.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-        <Zap className="h-10 w-10 text-muted-foreground/40" />
-        <div>
-          <p className="text-sm font-medium text-foreground">
+      <div className="flex h-full flex-col items-center justify-center pb-[28%] gap-3 p-4 text-center">
+        <Zap className="h-8 w-8 text-muted-foreground/40 shrink-0" />
+        <div className="min-w-0 max-w-[200px]">
+          <p className="text-sm font-medium text-foreground leading-snug">
             {t("workbench.preview.empty_title")}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
             {t("workbench.preview.empty_description")}
           </p>
         </div>
@@ -199,14 +199,14 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
           variant="outline"
           onClick={handleDetect}
           disabled={isDetecting}
-          className="gap-2"
+          className="gap-1.5 max-w-full whitespace-normal h-auto py-1.5 px-3"
         >
           {isDetecting ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
           ) : (
-            <Search className="h-3.5 w-3.5" />
+            <Search className="h-3.5 w-3.5 shrink-0" />
           )}
-          {t("workbench.preview.detect")}
+          <span className="text-xs">{t("workbench.preview.detect")}</span>
         </Button>
       </div>
     );
@@ -334,7 +334,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
             src={effectiveUrl}
             className="flex-1 w-full border-0 bg-white"
             title="Live Preview"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
+            sandbox="allow-scripts allow-forms allow-modals allow-popups"
           />
         </div>
       ) : (

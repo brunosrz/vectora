@@ -62,8 +62,9 @@ export function PreferenciasDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <ResizableDialogContent
+        storageKey="preferencias"
         defaultWidth={560}
-        defaultHeight={560}
+        defaultHeight={440}
         className="p-6 gap-4"
       >
         <DialogHeader>

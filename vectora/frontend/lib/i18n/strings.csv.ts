@@ -829,6 +829,11 @@ shortcuts.command_palette,Command palette,Paleta de comandos,Paleta de comandos
 shortcuts.keyboard_shortcuts,Keyboard shortcuts,Atalhos de teclado,Atalhos de teclado
 shortcuts.focus_input,Focus message input,Enfocar entrada,Focar entrada de mensagem
 shortcuts.scroll_bottom,Scroll to bottom,Ir al final,Ir ao fim
+workbench.files.replace_placeholder,Replace with…,Reemplazar con…,Substituir por…
+workbench.files.replace_all,Replace all,Reemplazar todo,Substituir tudo
+workbench.plan.tasks_section,Tasks,Tareas,Tarefas
+workbench.storage.empty_title,No workspace open,No hay workspace abierto,Nenhum workspace aberto
+workbench.storage.empty_description,Open or create a workspace to browse its files.,Abre o crea un workspace para navegar por sus archivos.,Abra ou crie um workspace para navegar pelos arquivos.
 `;
 
 export default CSV;

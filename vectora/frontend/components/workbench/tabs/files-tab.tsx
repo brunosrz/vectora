@@ -1060,6 +1060,8 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [searching, setSearching] = useState(false);
+  const [replaceQuery, setReplaceQuery] = useState("");
+  const [replacing, setReplacing] = useState(false);
   // Linha destacada no viewer quando resultado de busca é aberto.
   const [highlightLine, setHighlightLine] = useState<number | null>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -1096,6 +1098,40 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     }
     return Array.from(map.entries());
   }, [searchResults]);
+
+  const handleReplaceAll = useCallback(async () => {
+    if (!wsId || !searchQuery.trim() || !replaceQuery || !searchResults) return;
+    setReplacing(true);
+    try {
+      const filePaths = Array.from(
+        new Set(searchResults.hits.map((h) => h.path)),
+      );
+      const fileDatas = await Promise.all(
+        filePaths.map((p) => fetchFile(wsId, p)),
+      );
+      await Promise.all(
+        filePaths.map(async (filePath, i) => {
+          const fileData = fileDatas[i];
+          if (!fileData || fileData.content === undefined) return;
+          const updated = fileData.content.replaceAll(
+            searchQuery.trim(),
+            replaceQuery,
+          );
+          if (updated === fileData.content) return;
+          await apiUpdateFile(wsId, filePath, updated, fileData.sha256 ?? null);
+          setFileContent(wsId, filePath, {
+            ...fileData,
+            content: updated,
+            sha256: null,
+          });
+        }),
+      );
+      const res = await apiFsSearch(wsId, searchQuery.trim());
+      setSearchResults(res);
+    } finally {
+      setReplacing(false);
+    }
+  }, [wsId, searchQuery, replaceQuery, searchResults, setFileContent]);
 
   // ── Histórico de arquivo (A.6) ───────────────────────────────────────────
   const [historyMode, setHistoryMode] = useState(false);
@@ -1468,7 +1504,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
 
       {/* Filtro de nomes ou busca em conteúdo */}
       {searchMode ? (
-        <div className="px-2 py-1.5 border-b border-border/60">
+        <div className="px-2 py-1.5 border-b border-border/60 space-y-1">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
             <Input
@@ -1493,6 +1529,36 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 <X className="w-3 h-3" />
               </button>
             )}
+          </div>
+          <div className="flex gap-1">
+            <div className="relative flex-1">
+              <Pencil className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+              <Input
+                type="text"
+                autoComplete="off"
+                value={replaceQuery}
+                onChange={(e) => setReplaceQuery(e.target.value)}
+                placeholder={t("workbench.files.replace_placeholder")}
+                className="h-7 text-xs pl-7"
+              />
+            </div>
+            <button
+              onClick={() => void handleReplaceAll()}
+              disabled={
+                replacing ||
+                !searchQuery.trim() ||
+                !replaceQuery ||
+                !searchResults?.hits.length
+              }
+              className="shrink-0 px-2 h-7 rounded text-xs bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title={t("workbench.files.replace_all")}
+            >
+              {replacing ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                t("workbench.files.replace_all")
+              )}
+            </button>
           </div>
           {searching && (
             <div className="flex justify-center pt-1">

@@ -102,9 +102,10 @@ export function CompareView({
   onOpenPR: (head: string) => void;
 }) {
   const t = useT();
-  const others = branches.filter((b) => b !== current);
   const [baseRef, setBaseRef] = useState(current);
-  const [head, setHead] = useState(others[0] ?? current);
+  const [head, setHead] = useState(
+    branches.find((b) => b !== current) ?? current,
+  );
   const [result, setResult] = useState<CompareResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [merging, setMerging] = useState(false);

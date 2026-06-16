@@ -43,8 +43,6 @@ export type WorkbenchTab =
   | "diff"
   | "plan"
   | "preview"
-  | "search"
-  | "tasks"
   | "storage";
 
 export const WORKBENCH_TABS: WorkbenchTab[] = [
@@ -52,8 +50,6 @@ export const WORKBENCH_TABS: WorkbenchTab[] = [
   "diff",
   "plan",
   "preview",
-  "search",
-  "tasks",
   "storage",
   "terminal",
 ];
