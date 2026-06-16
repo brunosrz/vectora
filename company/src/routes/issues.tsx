@@ -5,11 +5,8 @@ import { m } from "#/paraglide/messages";
 import Turnstile from "#/components/shared/Turnstile";
 import Container from "#/components/shared/Container";
 import PageHeader from "#/components/shared/PageHeader";
-import {
-  submitIssue,
-  listOpenIssues,
-  type IssueListItem,
-} from "#/server/fns/issues";
+import { submitIssue, listOpenIssues } from "#/server/fns/issues";
+import type { IssueListItem } from "#/server/fns/issues";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/issues")({
