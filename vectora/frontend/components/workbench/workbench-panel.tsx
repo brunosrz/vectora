@@ -37,6 +37,11 @@ import {
   type WorkbenchTab,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { TerminalPanel } from "@/components/workbench/terminal/terminal-panel";
 import { FilesTab } from "./tabs/files-tab";
 import { GitTab } from "./git/git-tab";
@@ -114,30 +119,35 @@ function NavTabButton({
   const showPending = hydrated && pending && !active;
   const Icon = TAB_ICON[tab];
   const label = t(`workbench.tab.${tab}`);
+  const tooltipText = badge ? `${label} (${badge})` : label;
+
   return (
-    <button
-      onClick={onSelect}
-      title={badge ? `${label} (${badge})` : label}
-      className={`relative flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
-        active
-          ? "bg-muted text-foreground"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-      }`}
-    >
-      <Icon className="w-4 h-4" />
-      {showPending && (
-        <span
-          className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
-          aria-label={t("workbench.tab.pending")}
-          title={t("workbench.tab.pending")}
-        />
-      )}
-      {badge && (
-        <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-mono leading-none bg-primary/15 text-primary">
-          {badge}
-        </span>
-      )}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={onSelect}
+          className={`relative flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
+            active
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          }`}
+        >
+          <Icon className="w-4 h-4" />
+          {showPending && (
+            <span
+              className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
+              aria-label={t("workbench.tab.pending")}
+            />
+          )}
+          {badge && (
+            <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-mono leading-none bg-primary/15 text-primary">
+              {badge}
+            </span>
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">{tooltipText}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -201,14 +211,18 @@ export function WorkbenchContent({
           <ActiveIcon className="w-4 h-4 text-muted-foreground" />
           {t(`workbench.tab.${activeTab}`)}
         </span>
-        <button
-          onClick={() => setPanelOpen(threadId, false)}
-          title={t("workbench.toggle")}
-          aria-label={t("workbench.toggle")}
-          className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setPanelOpen(threadId, false)}
+              aria-label={t("workbench.toggle")}
+              className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left">{t("workbench.toggle")}</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Body — só monta a aba ativa (poupa recurso) */}
