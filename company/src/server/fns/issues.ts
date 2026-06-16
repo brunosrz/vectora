@@ -61,7 +61,7 @@ export const listOpenIssues = createServerFn({ method: "GET" }).handler(
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as IssueListItem[];
+    return data;
   },
 );
 
