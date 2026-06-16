@@ -35,6 +35,7 @@ import { stripMarkdownEnvelope } from "@/lib/utils/string";
 import { estimateCost, formatCost } from "@/lib/config/model-prices";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { useT } from "@/lib/i18n";
 import { useToastStore } from "@/lib/stores/toast-store";
 
@@ -44,91 +45,99 @@ import { useToastStore } from "@/lib/stores/toast-store";
 
 const COPY_FEEDBACK_DURATION = 2000;
 
-// Color palette for code highlighting
-const CODE_COLORS = {
-  // Background & borders
-  blockBackground: "oklch(0.16 0 0)",
-  blockBorder: "oklch(0.30 0 0)",
-  inlineBackground: "oklch(0.22 0 0)",
-  inlineBorder: "oklch(0.32 0 0)",
-
-  // Primary theme colors
-  primary: "#7FC8FF", // Blue - used for properties, operators, tags
-  primaryLight: "#99D3FF", // Light blue - strings, attributes
-  primaryDark: "#B2DEFF", // Lighter blue - keywords, built-ins
-
-  // Accent colors
-  blue: "#60a5fa", // Functions
-  yellow: "#fbbf24", // Classes
-  orange: "#f59e0b", // Numbers, booleans
-  green: "#10b981", // Selectors, inserted
-  red: "#ef4444", // Important, deleted
-
-  // Neutral colors
-  text: "#e4e4e7", // Main text
-  comment: "#6b7280", // Comments, docstrings
-  punctuation: "#a1a1aa", // Punctuation
-} as const;
+function getCodeColors(isDark: boolean) {
+  if (isDark) {
+    return {
+      blockBackground: "oklch(0.16 0 0)",
+      blockBorder: "oklch(0.30 0 0)",
+      inlineBackground: "oklch(0.22 0 0)",
+      inlineBorder: "oklch(0.32 0 0)",
+      primary: "#7FC8FF",
+      primaryLight: "#99D3FF",
+      primaryDark: "#B2DEFF",
+      blue: "#60a5fa",
+      yellow: "#fbbf24",
+      orange: "#f59e0b",
+      green: "#10b981",
+      red: "#ef4444",
+      text: "#e4e4e7",
+      comment: "#6b7280",
+      punctuation: "#a1a1aa",
+    };
+  }
+  return {
+    blockBackground: "#f8f9fa",
+    blockBorder: "#e1e4e8",
+    inlineBackground: "#f0f2f4",
+    inlineBorder: "#dde1e7",
+    primary: "#0366d6",
+    primaryLight: "#032f62",
+    primaryDark: "#005cc5",
+    blue: "#6f42c1",
+    yellow: "#b08800",
+    orange: "#e36209",
+    green: "#22863a",
+    red: "#cb2431",
+    text: "#24292e",
+    comment: "#6a737d",
+    punctuation: "#586069",
+  };
+}
 
 // ============================================================================
 // Syntax Highlighting Theme
 // ============================================================================
 
-const customTheme = {
-  ...vscDarkPlus,
-  'pre[class*="language-"]': {
-    ...vscDarkPlus['pre[class*="language-"]'],
-    background: CODE_COLORS.blockBackground,
-    border: `1px solid ${CODE_COLORS.blockBorder}`,
-    borderRadius: "8px",
-    padding: "1rem",
-    margin: "0.75rem 0",
-  },
-  'code[class*="language-"]': {
-    ...vscDarkPlus['code[class*="language-"]'],
-    background: "transparent",
-    color: CODE_COLORS.text,
-    fontSize: "13px",
-    lineHeight: "1.6",
-  },
-  // Token colors - grouped by theme color
-  comment: { color: CODE_COLORS.comment },
-  prolog: { color: CODE_COLORS.comment },
-  doctype: { color: CODE_COLORS.comment },
-  cdata: { color: CODE_COLORS.comment },
-  punctuation: { color: CODE_COLORS.punctuation },
-
-  property: { color: CODE_COLORS.primary },
-  tag: { color: CODE_COLORS.primary },
-  operator: { color: CODE_COLORS.primary },
-  entity: { color: CODE_COLORS.primary },
-  url: { color: CODE_COLORS.primary },
-  "attr-name": { color: CODE_COLORS.primary },
-
-  string: { color: CODE_COLORS.primaryLight },
-  char: { color: CODE_COLORS.primaryLight },
-  "attr-value": { color: CODE_COLORS.primaryLight },
-
-  builtin: { color: CODE_COLORS.primaryDark },
-  atrule: { color: CODE_COLORS.primaryDark },
-  keyword: { color: CODE_COLORS.primaryDark },
-
-  boolean: { color: CODE_COLORS.orange },
-  number: { color: CODE_COLORS.orange },
-  constant: { color: CODE_COLORS.orange },
-  symbol: { color: CODE_COLORS.orange },
-  regex: { color: CODE_COLORS.orange },
-
-  selector: { color: CODE_COLORS.green },
-  inserted: { color: CODE_COLORS.green },
-
-  function: { color: CODE_COLORS.blue },
-  "class-name": { color: CODE_COLORS.yellow },
-  variable: { color: CODE_COLORS.text },
-
-  important: { color: CODE_COLORS.red, fontWeight: "bold" },
-  deleted: { color: CODE_COLORS.red },
-};
+function getCodeTheme(isDark: boolean) {
+  const c = getCodeColors(isDark);
+  return {
+    ...(isDark ? vscDarkPlus : {}),
+    'pre[class*="language-"]': {
+      ...(isDark ? vscDarkPlus['pre[class*="language-"]'] : {}),
+      background: c.blockBackground,
+      border: `1px solid ${c.blockBorder}`,
+      borderRadius: "8px",
+      padding: "1rem",
+      margin: "0.75rem 0",
+    },
+    'code[class*="language-"]': {
+      ...(isDark ? vscDarkPlus['code[class*="language-"]'] : {}),
+      background: "transparent",
+      color: c.text,
+      fontSize: "13px",
+      lineHeight: "1.6",
+    },
+    comment: { color: c.comment },
+    prolog: { color: c.comment },
+    doctype: { color: c.comment },
+    cdata: { color: c.comment },
+    punctuation: { color: c.punctuation },
+    property: { color: c.primary },
+    tag: { color: c.primary },
+    operator: { color: c.primary },
+    entity: { color: c.primary },
+    url: { color: c.primary },
+    "attr-name": { color: c.primary },
+    string: { color: c.primaryLight },
+    char: { color: c.primaryLight },
+    "attr-value": { color: c.primaryLight },
+    builtin: { color: c.primaryDark },
+    atrule: { color: c.primaryDark },
+    keyword: { color: c.primaryDark },
+    boolean: { color: c.orange },
+    number: { color: c.orange },
+    constant: { color: c.orange },
+    symbol: { color: c.orange },
+    regex: { color: c.orange },
+    selector: { color: c.green },
+    inserted: { color: c.green },
+    function: { color: c.blue },
+    "class-name": { color: c.yellow },
+    variable: { color: c.text },
+    important: { color: c.red, fontWeight: "bold" },
+    deleted: { color: c.red },
+  };
+}
 
 // ============================================================================
 // Helper Functions
@@ -159,6 +168,10 @@ const extractTextFromNode = (node: any): string => {
 const CodeBlock = memo(
   ({ codeString, language }: { codeString: string; language: string }) => {
     const [isCopied, setIsCopied] = useState(false);
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme !== "light";
+    const colors = getCodeColors(isDark);
+    const codeTheme = getCodeTheme(isDark);
 
     const handleCopyCode = useCallback(() => {
       navigator.clipboard.writeText(codeString);
@@ -170,11 +183,11 @@ const CodeBlock = memo(
       <div className="relative group my-4">
         <SyntaxHighlighter
           language={language}
-          style={customTheme}
+          style={codeTheme}
           customStyle={{
             margin: "0.75rem 0",
-            background: CODE_COLORS.blockBackground,
-            border: `1px solid ${CODE_COLORS.blockBorder}`,
+            background: colors.blockBackground,
+            border: `1px solid ${colors.blockBorder}`,
             borderRadius: "8px",
             padding: "1rem",
           }}
@@ -191,9 +204,11 @@ const CodeBlock = memo(
           onClick={handleCopyCode}
           className="absolute top-2 right-2 sm:top-3 sm:right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md text-xs flex items-center gap-1 sm:gap-1.5 backdrop-blur-sm"
           style={{
-            background: "rgba(0, 0, 0, 0.7)",
-            color: CODE_COLORS.text,
-            border: `1px solid ${CODE_COLORS.blockBorder}`,
+            background: isDark
+              ? "rgba(0, 0, 0, 0.7)"
+              : "rgba(255, 255, 255, 0.85)",
+            color: colors.text,
+            border: `1px solid ${colors.blockBorder}`,
             willChange: "opacity",
           }}
           aria-label="Copy code to clipboard"
@@ -422,6 +437,8 @@ export const MessageItem = memo(
     modelId,
   }: MessageItemProps) {
     const t = useT();
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme !== "light";
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(message.content);
     const [editError] = useState<string | null>(null);
@@ -509,8 +526,9 @@ export const MessageItem = memo(
     codeBlockIndexRef.current = 0;
 
     // Memoize markdown components to prevent button remounting during streaming
-    const markdownComponents = useMemo(
-      () => ({
+    const markdownComponents = useMemo(() => {
+      const colors = getCodeColors(isDark);
+      return {
         // Custom link renderer - opens in new tab
         a: ({ children, ...props }: any) => (
           <a
@@ -518,8 +536,8 @@ export const MessageItem = memo(
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              color: CODE_COLORS.primary,
-              textDecorationColor: CODE_COLORS.primary,
+              color: colors.primary,
+              textDecorationColor: colors.primary,
             }}
           >
             {children}
@@ -542,9 +560,9 @@ export const MessageItem = memo(
               <code
                 className="px-1.5 py-0.5 text-[13px] font-mono"
                 style={{
-                  backgroundColor: CODE_COLORS.inlineBackground,
-                  color: CODE_COLORS.primary,
-                  border: `1px solid ${CODE_COLORS.inlineBorder}`,
+                  backgroundColor: colors.inlineBackground,
+                  color: colors.primary,
+                  border: `1px solid ${colors.inlineBorder}`,
                   borderRadius: "5px",
                 }}
                 {...props}
@@ -568,9 +586,8 @@ export const MessageItem = memo(
             />
           );
         },
-      }),
-      [message.id],
-    );
+      };
+    }, [message.id, isDark]);
 
     return (
       <>
