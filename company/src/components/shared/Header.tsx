@@ -57,7 +57,7 @@ export default function Header() {
         >
           <Link
             to="/pricing"
-            className="text-[#DDDDDD] transition-colors hover:text-foreground"
+            className="text-muted-foreground transition-colors hover:text-foreground"
             activeProps={{ className: "text-foreground" }}
           >
             {m.nav_pricing()}
@@ -66,13 +66,13 @@ export default function Header() {
             href="https://docs.vectora.company"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#DDDDDD] transition-colors hover:text-foreground"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             {m.nav_docs()}
           </a>
           <Link
             to="/faq"
-            className="text-[#DDDDDD] transition-colors hover:text-foreground"
+            className="text-muted-foreground transition-colors hover:text-foreground"
             activeProps={{ className: "text-foreground" }}
           >
             {m.nav_faq()}
@@ -89,14 +89,14 @@ export default function Header() {
               aria-label={m.language_label()}
               aria-expanded={localeOpen}
               aria-haspopup="listbox"
-              className={`h-[34px] w-8 cursor-pointer text-sm text-[#DDDDDD] ${pill}`}
+              className={`h-[34px] w-8 cursor-pointer text-sm text-muted-foreground ${pill}`}
             >
               {LOCALE_LABELS[locale] ?? locale.toUpperCase()}
             </button>
             {localeOpen && (
               <div
                 role="listbox"
-                className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[80px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0px_4px_12px_rgba(0,0,0,0.3)]"
+                className="absolute left-1/2 top-[calc(100%+6px)] z-50 w-fit min-w-[3.25rem] -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-card shadow-[0px_4px_12px_rgba(0,0,0,0.3)]"
               >
                 {locales.map((l) => (
                   <button
@@ -105,13 +105,13 @@ export default function Header() {
                     aria-selected={l === locale}
                     type="button"
                     onClick={() => {
-                      setLocale(l as (typeof locales)[number]);
+                      setLocale(l);
                       setLocaleOpen(false);
                     }}
-                    className={`flex w-full cursor-pointer items-center px-4 py-2 text-sm transition-colors hover:bg-muted ${
+                    className={`flex w-full cursor-pointer items-center justify-center px-3 py-2 text-sm transition-colors hover:bg-muted ${
                       l === locale
                         ? "font-medium text-primary"
-                        : "text-[#DDDDDD]"
+                        : "text-muted-foreground"
                     }`}
                   >
                     {LOCALE_LABELS[l] ?? l.toUpperCase()}
@@ -236,7 +236,7 @@ export default function Header() {
                   <button
                     key={l}
                     type="button"
-                    onClick={() => setLocale(l as (typeof locales)[number])}
+                    onClick={() => setLocale(l)}
                     className={`rounded-xl px-2.5 py-1 text-xs transition-colors ${
                       l === locale
                         ? "bg-primary text-primary-foreground"

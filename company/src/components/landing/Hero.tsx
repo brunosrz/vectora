@@ -5,7 +5,7 @@ import Logo from "#/components/shared/Logo";
 /** Três bullets do eyebrow — textos vindos das mensagens i18n */
 function Eyebrow() {
   return (
-    <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-6 rounded-full border border-border bg-card/60 px-[17px] py-1.5 backdrop-blur sm:flex-nowrap sm:gap-7">
+    <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-1.5 rounded-3xl border border-border bg-card/60 px-4 py-2 backdrop-blur sm:flex-nowrap sm:gap-7 sm:rounded-full sm:px-[17px] sm:py-1.5">
       {m
         .hero_eyebrow()
         .split(" · ")
@@ -23,7 +23,7 @@ function Eyebrow() {
 
 export default function Hero() {
   return (
-    <section className="flex flex-col items-center px-8 py-[23px]">
+    <section className="flex flex-col items-center px-4 py-[23px] sm:px-8">
       {/* Container interno — max 1024 px conforme Figma */}
       <div className="flex w-full max-w-[1024px] flex-col items-center gap-6">
         {/* Logo maior no hero (40 px) */}

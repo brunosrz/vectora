@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
 import {
   Mail,
-  Github,
+  Bug,
   BookOpen,
   Users,
   MessageCircle,
@@ -75,7 +75,7 @@ const CHANNELS = [
     badge: "WhatsApp only",
   },
   {
-    icon: Github,
+    icon: Bug,
     title: "GitHub Issues",
     desc: "Bugs, feature requests e discussões técnicas abertas",
     action: {

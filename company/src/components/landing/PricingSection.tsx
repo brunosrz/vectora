@@ -110,7 +110,7 @@ export default function PricingSection() {
                 onClick={() => setCurrency(c)}
                 className={`flex h-8 w-20 items-center justify-center rounded-lg text-[14px] font-medium transition-all ${
                   currency === c
-                    ? "bg-primary text-[#0A0A0A]"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
