@@ -35,6 +35,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileIcon } from "@/components/icons/file-icon";
 import { Button } from "@/components/ui/button";
 import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -1371,30 +1376,48 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
         <span className="text-[10px] font-medium text-muted-foreground truncate flex-1 select-none">
           {workspace.name}
         </span>
-        <button
-          onClick={() => handleRequestCreate("file", "")}
-          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-          title={t("workbench.files.new_file")}
-          aria-label={t("workbench.files.new_file")}
-        >
-          <FilePlus className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={() => handleRequestCreate("dir", "")}
-          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-          title={t("workbench.files.new_folder")}
-          aria-label={t("workbench.files.new_folder")}
-        >
-          <FolderPlus className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={handleRefresh}
-          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-          title={t("workbench.files.refresh")}
-          aria-label={t("workbench.files.refresh")}
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => handleRequestCreate("file", "")}
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              aria-label={t("tooltip.files_new_file")}
+            >
+              <FilePlus className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {t("tooltip.files_new_file")}
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => handleRequestCreate("dir", "")}
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              aria-label={t("tooltip.files_new_folder")}
+            >
+              <FolderPlus className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {t("tooltip.files_new_folder")}
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleRefresh}
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              aria-label={t("tooltip.files_refresh")}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {t("tooltip.files_refresh")}
+          </TooltipContent>
+        </Tooltip>
         {/* .gitignore manager (A.10) */}
         {workspace.is_git_repo && (
           <button
