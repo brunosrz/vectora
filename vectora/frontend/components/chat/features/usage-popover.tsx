@@ -99,7 +99,7 @@ export function UsagePopover({ tokensUsed, modelId }: UsagePopoverProps) {
               <UsageRing pct={pct} />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top" className="font-mono text-xs">
+          <TooltipContent side="top" className="z-[100] font-mono text-xs">
             {valueLabel}
           </TooltipContent>
         </Tooltip>

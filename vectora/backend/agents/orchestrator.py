@@ -18,7 +18,7 @@ Sub-agents disponíveis para delegação:
   "rag"    → RAG Subgraph (busca semântica na base de conhecimento indexada)
 
 Contexto enviado ao LLM:
-  - SystemMessage: contexto do projeto (AGENTS.md, CLAUDE.md, GEMINI.md) — primeira vez
+  - SystemMessage: contexto do projeto (AGENTS.md, CLAUDE.md, VECTORA.md, GEMINI.md)
   - SystemMessage: prompt de instrução
   - SystemMessage: bloco de contexto (session_id, tool chain, artifacts)
   - Últimas 5 HumanMessages
@@ -552,7 +552,7 @@ def _select_context_messages(all_messages: list) -> list:
 
 
 def _load_project_docs() -> str | None:
-    """Escaneia cwd recursivamente por AGENTS.md, CLAUDE.md, GEMINI.md.
+    """Escaneia cwd recursivamente por AGENTS.md, CLAUDE.md, VECTORA.md, GEMINI.md.
 
     Usa ``iter_files`` (varredura com poda de node_modules/.venv/etc. e
     respeito ao .gitignore) em vez de ``rglob`` puro — em repositórios JS
@@ -565,7 +565,7 @@ def _load_project_docs() -> str | None:
     """
     from backend.services.ignore import iter_files, load_ignore_spec
 
-    targets = ["AGENTS.md", "CLAUDE.md", "GEMINI.md"]
+    targets = ["AGENTS.md", "CLAUDE.md", "VECTORA.md", "GEMINI.md"]
     cwd = Path.cwd()
     spec = load_ignore_spec(cwd)
     sections: list[str] = []
@@ -587,7 +587,7 @@ def _load_session_context(workspace_id: str | None = None) -> str | None:
     """Carrega contexto completo da sessão: arquivos de projeto + manifest do workspace.
 
     Seções (B7):
-    1. AGENTS.md / CLAUDE.md / GEMINI.md — instrução do projeto (como antes)
+    1. AGENTS.md / CLAUDE.md / VECTORA.md / GEMINI.md — instrução do projeto
     2. MANIFEST.md do workspace ativo — base de conhecimento indexada
 
     O manifest é truncado a ~3200 chars para não inflar o contexto. Detalhes

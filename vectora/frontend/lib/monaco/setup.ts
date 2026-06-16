@@ -44,9 +44,32 @@ self.MonacoEnvironment = {
 
 loader.config({ monaco });
 
-/** Linguagem do Monaco a partir da extensão do arquivo. */
+/** Linguagem do Monaco a partir do caminho do arquivo.
+ *
+ * Trata primeiro nomes especiais e dotfiles (sem extensão "real"), depois
+ * cai na extensão. Desconhecido → "plaintext" (ainda editável no Monaco). */
 export function languageFromPath(path: string): string {
-  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+  const base = (path.split(/[/\\]/).pop() ?? "").toLowerCase();
+
+  // Nomes especiais / dotfiles cujo realce não vem da extensão.
+  const byName: Record<string, string> = {
+    ".gitignore": "ignore",
+    ".dockerignore": "ignore",
+    ".npmignore": "ignore",
+    ".gitattributes": "ini",
+    ".editorconfig": "ini",
+    dockerfile: "dockerfile",
+    makefile: "makefile",
+    procfile: "yaml",
+    ".bashrc": "shell",
+    ".zshrc": "shell",
+    ".profile": "shell",
+  };
+  if (base in byName) return byName[base];
+  if (base.startsWith(".env")) return "ini"; // .env, .env.local, .env.production
+  if (base.startsWith("dockerfile")) return "dockerfile"; // Dockerfile.dev
+
+  const ext = base.includes(".") ? (base.split(".").pop() ?? "") : "";
   const map: Record<string, string> = {
     ts: "typescript",
     tsx: "typescript",

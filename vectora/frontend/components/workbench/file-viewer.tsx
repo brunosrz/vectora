@@ -9,7 +9,10 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import MonacoEditor from "@monaco-editor/react";
+import { useTheme } from "next-themes";
 import { MarkdownView } from "@/components/workbench/markdown-view";
+import { languageFromPath } from "@/lib/monaco/setup";
 import { m } from "@/lib/paraglide/messages";
 
 /** Verdadeiro para arquivos markdown (render GitHub no viewer). */
@@ -127,6 +130,8 @@ export function FileViewer({
   path: string;
 }) {
   const media = getMediaKind(path);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme !== "light";
   const [text, setText] = useState<RawText | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -191,12 +196,29 @@ export function FileViewer({
   }
 
   return (
-    <div className="h-full overflow-auto p-2">
-      <pre className="text-xs font-mono whitespace-pre-wrap break-all">
-        {text?.content ?? ""}
-      </pre>
+    <div className="flex h-full flex-col">
+      <div className="min-h-0 flex-1">
+        <MonacoEditor
+          value={text?.content ?? ""}
+          language={languageFromPath(path)}
+          theme={isDark ? "vs-dark" : "vs"}
+          options={{
+            readOnly: true,
+            domReadOnly: true,
+            fontSize: 13,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            tabSize: 2,
+            wordWrap: "on",
+          }}
+          loading={
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          }
+        />
+      </div>
       {text?.truncated && (
-        <p className="text-[10px] text-muted-foreground mt-2">
+        <p className="shrink-0 border-t border-border/60 px-2 py-1 text-[10px] text-muted-foreground">
           {m.workbench_files_read_only_truncated()}
         </p>
       )}
