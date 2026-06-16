@@ -10,6 +10,11 @@ import { Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { FilePreviewGrid } from "./features/file-preview-grid";
 import { VoiceInputButton } from "./features/voice-input-button";
 import { PermissionModeMenu } from "./features/permission-mode-menu";
@@ -326,28 +331,37 @@ export function ChatInput({
                   )}
 
                   {isLoading && (
-                    <Button
-                      onClick={onStop}
-                      variant="ghost"
-                      size="sm"
-                      disabled={isStopping}
-                      className={`
-                        h-9 px-4 mb-0.5 rounded-full flex-shrink-0
-                        transition-all duration-200 hover:scale-105 active:scale-95
-                        bg-muted text-primary hover:text-primary hover:bg-muted/80 border-2 border-primary
-                        ${isStopping ? "opacity-60 cursor-not-allowed" : ""}
-                      `}
-                      type="button"
-                      title={
-                        isStopping
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={onStop}
+                          variant="ghost"
+                          size="sm"
+                          disabled={isStopping}
+                          className={`
+                            h-9 px-4 mb-0.5 rounded-full flex-shrink-0
+                            transition-all duration-200 hover:scale-105 active:scale-95
+                            bg-muted text-primary hover:text-primary hover:bg-muted/80 border-2 border-primary
+                            ${isStopping ? "opacity-60 cursor-not-allowed" : ""}
+                          `}
+                          type="button"
+                          aria-label={
+                            isStopping
+                              ? t("input.stopping")
+                              : t("tooltip.chat_stop")
+                          }
+                        >
+                          <span className="text-xs font-medium">
+                            {isStopping ? t("input.stopping") : t("input.stop")}
+                          </span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        {isStopping
                           ? t("input.stopping")
-                          : t("input.stop_generating")
-                      }
-                    >
-                      <span className="text-xs font-medium">
-                        {isStopping ? t("input.stopping") : t("input.stop")}
-                      </span>
-                    </Button>
+                          : t("tooltip.chat_stop")}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </div>
@@ -386,18 +400,24 @@ export function ChatInput({
                 <UsagePopover tokensUsed={tokensUsed ?? 0} modelId={modelId} />
               )}
               {!isLoading && (
-                <Button
-                  onClick={onSend}
-                  variant="ghost"
-                  size="sm"
-                  disabled={!input.trim() || !userId || offline}
-                  className="h-7 w-7 p-0 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground"
-                  type="button"
-                  title={t("input.send")}
-                  aria-label={t("input.send")}
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={onSend}
+                      variant="ghost"
+                      size="sm"
+                      disabled={!input.trim() || !userId || offline}
+                      className="h-7 w-7 p-0 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground"
+                      type="button"
+                      aria-label={t("tooltip.chat_send")}
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {t("tooltip.chat_send")}
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
           </div>

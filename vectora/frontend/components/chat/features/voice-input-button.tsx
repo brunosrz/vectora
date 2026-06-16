@@ -6,6 +6,12 @@
  */
 
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { useT } from "@/lib/i18n";
 
 interface VoiceInputButtonProps {
   isListening: boolean;
@@ -20,29 +26,36 @@ export function VoiceInputButton({
   onClick,
   size = "sm",
 }: VoiceInputButtonProps) {
+  const t = useT();
   const dimensions = size === "sm" ? "h-9 w-9" : "h-10 w-10";
   const iconSize = size === "sm" ? "w-4 h-4" : "w-4.5 h-4.5";
+  const tooltipText = isListening ? t("input.stop") : t("tooltip.chat_audio");
 
   return (
-    <Button
-      onClick={onClick}
-      variant="ghost"
-      size="sm"
-      disabled={disabled}
-      className={`
-        group ${dimensions} p-0 mb-0.5 rounded-full flex-shrink-0
-        transition-all duration-200 hover:scale-105 active:scale-95 border-0
-        ${isListening ? "bg-muted text-primary hover:text-primary hover:bg-muted/80 border-2 border-primary" : "bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary"}
-      `}
-      type="button"
-      title={isListening ? "Stop listening" : "Voice input"}
-    >
-      {isListening ? (
-        <StopIcon className={iconSize} />
-      ) : (
-        <MicrophoneIcon className={iconSize} />
-      )}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          onClick={onClick}
+          variant="ghost"
+          size="sm"
+          disabled={disabled}
+          className={`
+            group ${dimensions} p-0 mb-0.5 rounded-full flex-shrink-0
+            transition-all duration-200 hover:scale-105 active:scale-95 border-0
+            ${isListening ? "bg-muted text-primary hover:text-primary hover:bg-muted/80 border-2 border-primary" : "bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary"}
+          `}
+          type="button"
+          aria-label={tooltipText}
+        >
+          {isListening ? (
+            <StopIcon className={iconSize} />
+          ) : (
+            <MicrophoneIcon className={iconSize} />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">{tooltipText}</TooltipContent>
+    </Tooltip>
   );
 }
 

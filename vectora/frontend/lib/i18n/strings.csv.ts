@@ -762,6 +762,28 @@ workbench.files.search_in_files,Search in files,Buscar en archivos,Buscar nos ar
 workbench.files.search_placeholder,Search in files…,Buscar en archivos…,Buscar nos arquivos…
 workbench.files.search_no_results,No results.,Sin resultados.,Sem resultados.
 workbench.files.search_truncated,Showing first 200 results — refine your query to narrow down.,Mostrando los primeros 200 resultados — refine su consulta.,Mostrando os primeiros 200 resultados — refine sua busca.
+# Tooltips para botões (SPRINT 1 Task 1.3)
+tooltip.chat_audio,Send audio message,Enviar mensaje de audio,Enviar mensagem de áudio
+tooltip.chat_stop,Stop generation,Detener generación,Parar geração
+tooltip.chat_send,Send message (Ctrl+Enter),Enviar mensaje (Ctrl+Enter),Enviar mensagem (Ctrl+Enter)
+tooltip.sidebar_new_chat,New chat,Nuevo chat,Nova conversa
+tooltip.sidebar_settings,Settings,Configuración,Configurações
+tooltip.sidebar_workspace,Switch workspace,Cambiar workspace,Trocar workspace
+tooltip.sidebar_collapse,Collapse sidebar,Contraer barra lateral,Recolher barra lateral
+tooltip.sidebar_expand,Expand sidebar,Expandir barra lateral,Expandir barra lateral
+tooltip.files_refresh,Refresh,Actualizar,Atualizar
+tooltip.files_search,Search in files,Buscar en archivos,Buscar nos arquivos
+tooltip.files_new_file,New file,Nuevo archivo,Novo arquivo
+tooltip.files_new_folder,New folder,Nueva carpeta,Nova pasta
+tooltip.files_collapse_all,Collapse all,Colapsar todo,Recolher tudo
+tooltip.files_gitignore,Manage .gitignore,Gestionar .gitignore,Gerenciar .gitignore
+tooltip.git_fetch,Fetch,Fetch,Fetch
+tooltip.git_pull,Pull,Pull,Pull
+tooltip.git_push,Push,Push,Push
+tooltip.git_branch,Branch menu,Menú de branch,Menu de branch
+tooltip.settings_theme,Toggle theme,Cambiar tema,Trocar tema
+tooltip.settings_language,Change language,Cambiar idioma,Mudar idioma
+tooltip.settings_close,Close settings,Cerrar configuración,Fechar configurações
 quota.five_hour,5-hour usage,Uso en 5 horas,Uso em 5 horas
 quota.weekly,Weekly usage,Uso semanal,Uso semanal
 palette.title,Command Palette,Paleta de comandos,Paleta de comandos
