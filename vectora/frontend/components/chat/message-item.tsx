@@ -15,6 +15,12 @@ import { ToolCallRenderer } from "./tool-call-renderer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -38,6 +44,12 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useT } from "@/lib/i18n";
 import { useToastStore } from "@/lib/stores/toast-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR, es as esLocale, enUS } from "date-fns/locale";
+
+/** Locale do date-fns a partir do idioma da UI (item 9 — "há quanto tempo"). */
+const DATE_FNS_LOCALES = { pt: ptBR, es: esLocale, en: enUS } as const;
 
 // ============================================================================
 // Constants
@@ -437,6 +449,7 @@ export const MessageItem = memo(
     modelId,
   }: MessageItemProps) {
     const t = useT();
+    const uiLang = useSettingsStore((s) => s.language);
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme !== "light";
     const [isEditing, setIsEditing] = useState(false);
@@ -684,7 +697,7 @@ export const MessageItem = memo(
           </div>
           <div className="flex-1 min-w-0 space-y-2">
             <div
-              className={`rounded-lg px-4 py-2.5 transition-all duration-150 ease-out ${message.role === "user" ? "bg-muted/50 text-foreground" : "bg-muted text-foreground"}`}
+              className={`rounded-lg px-3 py-2 transition-all duration-150 ease-out ${message.role === "user" ? "bg-muted/50 text-foreground" : "bg-muted text-foreground"}`}
               style={{
                 willChange: message.isThinking ? "contents" : "auto",
                 contain: "layout style paint",
@@ -720,16 +733,22 @@ export const MessageItem = memo(
                             <AnimatedThinking />
                           )
                         ) : (
-                          <span className="font-medium">Agent steps</span>
+                          <span className="font-medium">
+                            {t("chat.agent_steps")}
+                          </span>
                         )}{" "}
                         ({message.thinkingSteps?.length || 0})
                       </span>
-                      <span className="ml-1">•</span>
-                      <ThinkingTimer
-                        startTime={message.thinkingStartTime}
-                        duration={message.thinkingDuration}
-                        isThinking={!!message.isThinking}
-                      />
+                      {message.isThinking && (
+                        <>
+                          <span className="ml-1">•</span>
+                          <ThinkingTimer
+                            startTime={message.thinkingStartTime}
+                            duration={message.thinkingDuration}
+                            isThinking={!!message.isThinking}
+                          />
+                        </>
+                      )}
                     </summary>
                     {message.thinkingSteps &&
                       message.thinkingSteps.length > 0 && (
@@ -902,28 +921,6 @@ export const MessageItem = memo(
                     ) : null}
                   </div>
 
-                  {/* D3 — badges de duração por nó */}
-                  {!message.isThinking &&
-                    message.nodeDurations &&
-                    message.nodeDurations.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                        {message.nodeDurations.map((nd, i) => (
-                          <span
-                            key={`${nd.node}-${i}`}
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono text-muted-foreground bg-muted/60 border border-border/50"
-                            title={nd.node}
-                          >
-                            {nd.label.replace(/[….]+$/, "")}{" "}
-                            <span className="text-primary/70">
-                              {nd.duration_ms >= 1000
-                                ? `${(nd.duration_ms / 1000).toFixed(1)}s`
-                                : `${nd.duration_ms}ms`}
-                            </span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
                   {/* C.28 — RAG citation list */}
                   {message.ragCitations && message.ragCitations.length > 0 && (
                     <RagCitationList citations={message.ragCitations} />
@@ -932,6 +929,15 @@ export const MessageItem = memo(
                   {/* Metadata — duração total, tokens e custo estimado */}
                   {!message.isThinking && message.thinkingDuration != null && (
                     <div className="flex items-center justify-end gap-2 mt-1 text-xs text-muted-foreground font-mono">
+                      <span
+                        title={new Date(message.timestamp).toLocaleString()}
+                      >
+                        {formatDistanceToNow(new Date(message.timestamp), {
+                          addSuffix: true,
+                          locale: DATE_FNS_LOCALES[uiLang] ?? enUS,
+                        })}
+                      </span>
+                      <span>•</span>
                       <span>
                         {(message.thinkingDuration / 1000).toFixed(1)}s
                       </span>
@@ -977,17 +983,23 @@ export const MessageItem = memo(
               workspaceId &&
               humanMessageIndex !== undefined && (
                 <>
-                  <div className="flex justify-end gap-1 mt-0.5">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setRewindOpen(true)}
-                      className="h-6 px-2 text-xs opacity-0 group-hover/message:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
-                      title={t("chat.rewind")}
-                    >
-                      <RotateCcw className="w-3 h-3 mr-1" />
-                      {t("chat.rewind")}
-                    </Button>
+                  <div className="flex justify-end mt-0.5">
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setRewindOpen(true)}
+                            className="h-7 w-7 opacity-0 group-hover/message:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                            aria-label={t("chat.rewind")}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t("chat.rewind")}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
 
                   <Dialog open={rewindOpen} onOpenChange={setRewindOpen}>
@@ -1026,121 +1038,161 @@ export const MessageItem = memo(
 
             {message.role === "assistant" && (
               <>
-                <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
-                  {/* M5 — Botão de retry para mensagens de erro */}
-                  {message.isError && onRetry && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onRetry}
-                      className="h-8 px-2 text-xs text-destructive hover:text-destructive"
-                    >
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Tentar novamente
-                    </Button>
-                  )}
+                <TooltipProvider delayDuration={300}>
+                  <div className="flex gap-0.5 items-center flex-wrap">
+                    {/* M5 — Botão de retry para mensagens de erro */}
+                    {message.isError && onRetry && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onRetry}
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            aria-label={t("chat.retry")}
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t("chat.retry")}</TooltipContent>
+                      </Tooltip>
+                    )}
 
-                  {!message.isThinking && !message.isError && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onCopy(message.content, message.id)}
-                        className="h-8 px-2 text-xs"
-                      >
-                        {copiedId === message.id ? (
-                          <>
-                            <Check className="w-3 h-3 mr-1" />
-                            Copied
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3 mr-1" />
-                            Copy
-                          </>
+                    {!message.isThinking && !message.isError && (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                onCopy(message.content, message.id)
+                              }
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              aria-label={t("chat.copy")}
+                            >
+                              {copiedId === message.id ? (
+                                <Check className="w-3.5 h-3.5" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {copiedId === message.id
+                              ? t("chat.copied")
+                              : t("chat.copy")}
+                          </TooltipContent>
+                        </Tooltip>
+
+                        {isLastAssistant && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={onRegenerate}
+                                disabled={isRegenerating}
+                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                aria-label={t("chat.regenerate")}
+                              >
+                                <RefreshCw
+                                  className={`w-3.5 h-3.5 ${isRegenerating ? "animate-spin" : ""}`}
+                                />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t("chat.regenerate")}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
-                      </Button>
+                      </>
+                    )}
 
-                      {isLastAssistant && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={onRegenerate}
-                          disabled={isRegenerating}
-                          className="h-8 px-2 text-xs"
-                        >
-                          <RefreshCw
-                            className={`w-3 h-3 mr-1 ${isRegenerating ? "animate-spin" : ""}`}
-                          />
-                          Regenerate
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  {message.isThinking && <></>}
-
-                  {!message.isThinking && message.runId && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          onFeedback(
-                            message.id,
-                            "positive",
-                            feedbackComment[message.id],
-                          )
-                        }
-                        aria-pressed={message.feedback === "positive"}
-                        className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${message.feedback === "positive" ? "text-white" : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"}`}
-                      >
-                        <ThumbsUp
-                          className="w-3 h-3 mr-1 transition-transform duration-150"
-                          aria-hidden="true"
-                          fill={
-                            message.feedback === "positive"
-                              ? "currentColor"
-                              : "none"
-                          }
-                        />
-                        Good
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          onFeedback(
-                            message.id,
-                            "negative",
-                            feedbackComment[message.id],
-                          )
-                        }
-                        aria-pressed={message.feedback === "negative"}
-                        className={`h-8 px-2 text-xs rounded-md transition-all duration-150 ease-out active:scale-95 bg-transparent ${message.feedback === "negative" ? "text-white" : "text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"}`}
-                      >
-                        <ThumbsDown
-                          className="w-3 h-3 mr-1 transition-transform duration-150"
-                          aria-hidden="true"
-                          fill={
-                            message.feedback === "negative"
-                              ? "currentColor"
-                              : "none"
-                          }
-                        />
-                        Bad
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onToggleComment(message.id)}
-                        className="h-8 px-2 text-xs rounded-md transition-colors duration-150 ease-out text-muted-foreground hover:text-black dark:text-white/70 dark:hover:text-black"
-                      >
-                        <MessageSquare className="w-3 h-3 mr-1" />
-                        Feedback
-                      </Button>
-                    </>
-                  )}
-                </div>
+                    {!message.isThinking && message.runId && (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                onFeedback(
+                                  message.id,
+                                  "positive",
+                                  feedbackComment[message.id],
+                                )
+                              }
+                              aria-pressed={message.feedback === "positive"}
+                              aria-label={t("chat.feedback_good")}
+                              className={`h-7 w-7 ${message.feedback === "positive" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                            >
+                              <ThumbsUp
+                                className="w-3.5 h-3.5"
+                                aria-hidden="true"
+                                fill={
+                                  message.feedback === "positive"
+                                    ? "currentColor"
+                                    : "none"
+                                }
+                              />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("chat.feedback_good")}
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                onFeedback(
+                                  message.id,
+                                  "negative",
+                                  feedbackComment[message.id],
+                                )
+                              }
+                              aria-pressed={message.feedback === "negative"}
+                              aria-label={t("chat.feedback_bad")}
+                              className={`h-7 w-7 ${message.feedback === "negative" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                            >
+                              <ThumbsDown
+                                className="w-3.5 h-3.5"
+                                aria-hidden="true"
+                                fill={
+                                  message.feedback === "negative"
+                                    ? "currentColor"
+                                    : "none"
+                                }
+                              />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("chat.feedback_bad")}
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onToggleComment(message.id)}
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              aria-label={t("chat.feedback_comment")}
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("chat.feedback_comment")}
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    )}
+                  </div>
+                </TooltipProvider>
 
                 {showCommentInput === message.id && (
                   <div className="mt-2 w-full">

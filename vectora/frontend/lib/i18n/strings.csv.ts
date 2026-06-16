@@ -779,6 +779,14 @@ chat.rewind_ok,Workspace rewound successfully.,Workspace rebobinado con éxito.,
 chat.rewind_busy,The workspace is busy — try again in a moment.,El workspace está ocupado — inténtelo de nuevo en un momento.,O workspace está ocupado — tente novamente em instantes.
 chat.rewind_no_checkpoint,No checkpoint available for this message.,No hay punto de control disponible para este mensaje.,Nenhum checkpoint disponível para esta mensagem.
 chat.rewind_error,Couldn't rewind the workspace.,No se pudo rebobinar el workspace.,Não foi possível retroceder o workspace.
+chat.agent_steps,Agent steps,Pasos del agente,Etapas do agente
+chat.copy,Copy,Copiar,Copiar
+chat.copied,Copied,Copiado,Copiado
+chat.regenerate,Regenerate,Regenerar,Regenerar
+chat.retry,Try again,Intentar de nuevo,Tentar novamente
+chat.feedback_good,Good response,Buena respuesta,Resposta boa
+chat.feedback_bad,Bad response,Mala respuesta,Resposta ruim
+chat.feedback_comment,Leave a comment,Dejar un comentario,Deixar um comentário
 workbench.files.rename,Rename,Renombrar,Renomear
 workbench.files.rename_placeholder,New name…,Nuevo nombre…,Novo nome…
 workbench.files.rename_error,Couldn't rename.,No se pudo renombrar.,Não foi possível renomear.
