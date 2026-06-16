@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { m } from "#/paraglide/messages";
 import Turnstile from "#/components/shared/Turnstile";
+import Container from "#/components/shared/Container";
+import PageHeader from "#/components/shared/PageHeader";
 import {
   submitIssue,
   listOpenIssues,
@@ -193,15 +195,16 @@ function IssuesList({ issues }: { issues: IssueListItem[] }) {
 function IssuesPage() {
   const { issues } = Route.useLoaderData();
   return (
-    <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
+    <Container size="prose" className="py-16">
       <div className="mb-10">
-        <h1 className="mb-2 text-3xl font-semibold text-foreground">
-          {m.page_issues_title()}
-        </h1>
-        <p className="text-muted-foreground">{m.issues_subtitle()}</p>
+        <PageHeader
+          align="left"
+          title={m.page_issues_title()}
+          subtitle={m.issues_subtitle()}
+        />
       </div>
       <IssueForm />
       <IssuesList issues={issues} />
-    </div>
+    </Container>
   );
 }

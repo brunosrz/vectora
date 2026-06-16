@@ -3,6 +3,7 @@ import { m } from "#/paraglide/messages";
 import PricingSection from "#/components/landing/PricingSection";
 import FaqAccordion from "#/components/shared/FaqAccordion";
 import WaitlistCta from "#/components/landing/WaitlistCta";
+import Container from "#/components/shared/Container";
 
 // Mensagens i18n (paraglide) — avaliadas na renderização para refletir o locale.
 const PRICING_FAQS = () => [
@@ -57,12 +58,12 @@ function PricingPage() {
   return (
     <>
       <PricingSection />
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <Container size="prose" className="py-10 sm:py-14">
         <h2 className="mb-8 text-center text-2xl font-semibold text-foreground">
           {m.pricing_faq_heading()}
         </h2>
         <FaqAccordion items={PRICING_FAQS()} />
-      </div>
+      </Container>
       <WaitlistCta />
     </>
   );

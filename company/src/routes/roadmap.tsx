@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
 import { CheckCircle2, Construction, MapPin } from "lucide-react";
+import Container from "#/components/shared/Container";
+import PageHeader from "#/components/shared/PageHeader";
 
 export const Route = createFileRoute("/roadmap")({
   head: () => ({
@@ -97,12 +99,12 @@ const SECTIONS: Section[] = [
 
 function RoadmapPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      <div className="mb-14 text-center">
-        <h1 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
-          {m.page_roadmap_title()}
-        </h1>
-        <p className="text-muted-foreground">{m.page_roadmap_desc()}</p>
+    <Container className="py-16">
+      <div className="mb-14">
+        <PageHeader
+          title={m.page_roadmap_title()}
+          subtitle={m.page_roadmap_desc()}
+        />
       </div>
 
       <div className="grid gap-8 md:grid-cols-3">
@@ -142,6 +144,6 @@ function RoadmapPage() {
       <p className="mt-10 text-center text-xs text-muted-foreground/80">
         Última atualização: junho 2025 · Roadmap sujeito a alterações
       </p>
-    </div>
+    </Container>
   );
 }

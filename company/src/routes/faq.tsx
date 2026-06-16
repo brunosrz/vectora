@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { m } from "#/paraglide/messages";
 import FaqAccordion from "#/components/shared/FaqAccordion";
+import Container from "#/components/shared/Container";
+import PageHeader from "#/components/shared/PageHeader";
 
 const FAQ_DATA = {
   Geral: [
@@ -136,11 +138,8 @@ function FaqPage() {
     .filter((c) => c.items.length > 0);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <div className="mb-10 text-center">
-        <h1 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
-          {m.page_faq_title()}
-        </h1>
+    <Container size="prose" className="py-16">
+      <PageHeader title={m.page_faq_title()}>
         <input
           type="search"
           value={search}
@@ -148,9 +147,9 @@ function FaqPage() {
           placeholder="Buscar pergunta..."
           className="mt-4 w-full max-w-sm rounded-xl border border-border bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
         />
-      </div>
+      </PageHeader>
 
-      <div className="space-y-10">
+      <div className="mt-10 space-y-10">
         {filtered.map(({ cat, items }) => (
           <div key={cat}>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -160,6 +159,6 @@ function FaqPage() {
           </div>
         ))}
       </div>
-    </div>
+    </Container>
   );
 }

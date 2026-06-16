@@ -8,6 +8,8 @@ import {
   MessageCircle,
   FileText,
 } from "lucide-react";
+import Container from "#/components/shared/Container";
+import PageHeader from "#/components/shared/PageHeader";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
@@ -100,15 +102,13 @@ const CHANNELS = [
 
 function SupportPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <div className="mb-10 text-center">
-        <h1 className="mb-3 text-2xl font-semibold text-foreground sm:text-3xl">
-          {m.page_support_title()}
-        </h1>
-        <p className="text-muted-foreground">{m.support_subtitle()}</p>
-      </div>
+    <Container size="prose" className="py-16">
+      <PageHeader
+        title={m.page_support_title()}
+        subtitle={m.support_subtitle()}
+      />
 
-      <div className="mb-8">
+      <div className="mb-8 mt-10">
         <Link
           to="/issues"
           className="flex w-full items-center justify-between rounded-xl border border-primary/40 bg-primary/10 px-5 py-4 text-left transition-all hover:border-primary/60 hover:bg-primary/15"
@@ -164,7 +164,7 @@ function SupportPage() {
                 {ch.sla && (
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     <span className="rounded border border-border bg-background px-2 py-0.5 text-muted-foreground">
-                      Trial: {ch.sla.trial}
+                      Teste: {ch.sla.trial}
                     </span>
                     <span className="rounded border border-border bg-background px-2 py-0.5 text-muted-foreground">
                       Plus: {ch.sla.plus}
@@ -179,6 +179,6 @@ function SupportPage() {
           );
         })}
       </div>
-    </div>
+    </Container>
   );
 }
