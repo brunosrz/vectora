@@ -17,6 +17,7 @@ import {
   Cpu,
   Database,
   FolderLock,
+  HardDrive,
   Loader2,
   Pencil,
   RefreshCw,
@@ -1066,6 +1067,7 @@ interface StorageBackendStatus {
   error?: string | null;
   tables?: string[];
   latency_ms?: number;
+  internal?: boolean;
 }
 
 interface StorageConfigSummary {
@@ -1085,16 +1087,37 @@ interface StorageHealth {
 }
 
 function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
+  const t = useT();
   if (status.ok === null || status.ok === undefined) {
     return (
-      <span className="text-xs text-muted-foreground">não configurado</span>
+      <span className="text-xs text-muted-foreground">
+        {t("admin.storage.not_configured")}
+      </span>
+    );
+  }
+  // Backends internos (SQLite/LanceDB locais) não têm conexão externa para
+  // "estabelecer" — rotular como local em vez de prometer um OK de conexão.
+  if (status.internal) {
+    if (status.ok) {
+      return (
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <HardDrive className="w-3.5 h-3.5" />
+          {t("admin.storage.local")}
+        </span>
+      );
+    }
+    return (
+      <span className="flex items-center gap-1 text-xs text-destructive">
+        <XCircle className="w-3.5 h-3.5" />
+        {status.error ?? t("admin.storage.error")}
+      </span>
     );
   }
   if (status.ok) {
     return (
       <span className="flex items-center gap-1 text-xs text-green-600">
         <CheckCircle2 className="w-3.5 h-3.5" />
-        OK
+        {t("admin.storage.connected")}
         {status.latency_ms !== undefined && (
           <span className="text-muted-foreground">({status.latency_ms}ms)</span>
         )}
@@ -1104,7 +1127,7 @@ function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
   return (
     <span className="flex items-center gap-1 text-xs text-destructive">
       <XCircle className="w-3.5 h-3.5" />
-      {status.error ?? "erro"}
+      {status.error ?? t("admin.storage.error")}
     </span>
   );
 }

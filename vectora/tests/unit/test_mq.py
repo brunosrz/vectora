@@ -136,3 +136,31 @@ def test_get_mq_default_memoria(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "redis_url", None)
     assert isinstance(get_mq(), MemoryMQ)
     assert get_mq() is get_mq()
+
+
+def test_get_mq_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Em modo lite, redis_url é ignorado — sem consultar a rede."""
+    from backend.services import kv as kv_mod
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "storage_mode", "lite")
+    monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379/0")
+
+    def _boom(_url: str) -> bool:  # pragma: no cover - não deve ser chamado
+        raise AssertionError("redis_reachable não deve ser consultado em lite")
+
+    monkeypatch.setattr(kv_mod, "redis_reachable", _boom)
+    assert isinstance(get_mq(), MemoryMQ)
+
+
+def test_get_mq_complete_redis_inacessivel_cai_em_memoria(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Em modo complete com redis inacessível, cai em MemoryMQ."""
+    from backend.services import kv as kv_mod
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "storage_mode", "complete")
+    monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379/0")
+    monkeypatch.setattr(kv_mod, "redis_reachable", lambda _url: False)
+    assert isinstance(get_mq(), MemoryMQ)

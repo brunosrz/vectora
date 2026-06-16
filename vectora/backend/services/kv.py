@@ -185,7 +185,7 @@ def get_kv() -> KV:
         from backend.settings import settings
 
         url = (settings.redis_url or "").strip()
-        if url and redis_reachable(url):
+        if settings.storage_mode == "complete" and url and redis_reachable(url):
             try:
                 _kv = RedisKV(url)
                 logger.info("kv: backend Redis (%s)", url.split("@")[-1])
@@ -193,7 +193,7 @@ def get_kv() -> KV:
                 logger.warning("kv: Redis indisponível (%s) — usando memória", exc)
                 _kv = MemoryKV()
         else:
-            if url:
+            if settings.storage_mode == "complete" and url:
                 logger.info("kv: redis_url configurado mas inacessível — memória")
             _kv = MemoryKV()
     return _kv

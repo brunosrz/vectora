@@ -381,18 +381,22 @@ async def storage_health() -> dict[str, Any]:
 
             async with aiosqlite.connect(db_path) as conn:
                 await conn.execute("SELECT 1")
-            result["checkpointer"] = {"ok": True, "error": None}
+            result["checkpointer"] = {"ok": True, "error": None, "internal": True}
         else:
-            result["checkpointer"] = {"ok": False, "error": "db_dsn não configurado"}
+            result["checkpointer"] = {
+                "ok": False,
+                "error": "db_dsn não configurado",
+                "internal": True,
+            }
     except Exception as exc:
-        result["checkpointer"] = {"ok": False, "error": str(exc)}
+        result["checkpointer"] = {"ok": False, "error": str(exc), "internal": True}
 
     # Store — verifica se o AsyncSqliteStore foi criado e a conexão está ativa
     try:
         store = await get_store()
-        result["store"] = {"ok": store is not None, "error": None}
+        result["store"] = {"ok": store is not None, "error": None, "internal": True}
     except Exception as exc:
-        result["store"] = {"ok": False, "error": str(exc)}
+        result["store"] = {"ok": False, "error": str(exc), "internal": True}
 
     # LanceDB — testa conexão e listagem de tabelas
     try:
@@ -400,9 +404,14 @@ async def storage_health() -> dict[str, Any]:
 
         db = await get_lancedb()
         tables = (await db.list_tables()).tables
-        result["lancedb"] = {"ok": True, "error": None, "tables": list(tables)}
+        result["lancedb"] = {
+            "ok": True,
+            "error": None,
+            "tables": list(tables),
+            "internal": True,
+        }
     except Exception as exc:
-        result["lancedb"] = {"ok": False, "error": str(exc)}
+        result["lancedb"] = {"ok": False, "error": str(exc), "internal": True}
 
     # Postgres — testado apenas no modo complete
     try:

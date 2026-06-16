@@ -168,7 +168,7 @@ def get_mq() -> MQ:
         from backend.settings import settings
 
         url = (settings.redis_url or "").strip()
-        if url and redis_reachable(url):
+        if settings.storage_mode == "complete" and url and redis_reachable(url):
             try:
                 _mq = RedisMQ(url)
                 logger.info("mq: backend Redis Streams")
@@ -176,7 +176,7 @@ def get_mq() -> MQ:
                 logger.warning("mq: Redis indisponível (%s) — usando memória", exc)
                 _mq = MemoryMQ()
         else:
-            if url:
+            if settings.storage_mode == "complete" and url:
                 logger.info("mq: redis_url configurado mas inacessível — memória")
             _mq = MemoryMQ()
     return _mq

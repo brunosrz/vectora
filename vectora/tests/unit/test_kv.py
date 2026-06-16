@@ -133,6 +133,32 @@ def test_get_kv_singleton(monkeypatch: pytest.MonkeyPatch) -> None:
     assert get_kv() is get_kv()
 
 
+def test_get_kv_lite_ignora_redis(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Em modo lite, redis_url é ignorado mesmo se setado — sem tocar a rede."""
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "storage_mode", "lite")
+    monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379/0")
+
+    def _boom(_url: str) -> bool:  # pragma: no cover - não deve ser chamado
+        raise AssertionError("redis_reachable não deve ser consultado em lite")
+
+    monkeypatch.setattr(kv_mod, "redis_reachable", _boom)
+    assert isinstance(get_kv(), MemoryKV)
+
+
+def test_get_kv_complete_redis_inacessivel_cai_em_memoria(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Em modo complete com redis inacessível, cai em MemoryKV."""
+    from backend.settings import settings
+
+    monkeypatch.setattr(settings, "storage_mode", "complete")
+    monkeypatch.setattr(settings, "redis_url", "redis://localhost:6379/0")
+    monkeypatch.setattr(kv_mod, "redis_reachable", lambda _url: False)
+    assert isinstance(get_kv(), MemoryKV)
+
+
 @pytest.mark.asyncio
 async def test_publish_soon_entrega_no_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.settings import settings

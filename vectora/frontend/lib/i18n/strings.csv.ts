@@ -491,6 +491,10 @@ help.tip_slash_commands,"Type / in the chat to see available commands (e.g. /mod
 help.view_shortcuts,View all keyboard shortcuts,Ver todos los atajos de teclado,Ver todos os atalhos de teclado
 
 # Administração — painel próprio (P4), separado do SettingsDialog
+admin.storage.local,Local,Local,Local
+admin.storage.connected,Connected,Conectado,Conectado
+admin.storage.not_configured,not configured,no configurado,não configurado
+admin.storage.error,error,error,erro
 admin.dialog_title,Administration,Administración,Administração
 admin.dialog_desc,Server administration — users, tools, safe folders, system and configuration.,Administración del servidor — usuarios, herramientas, carpetas seguras, sistema y configuración.,Administração do servidor — usuários, ferramentas, pastas seguras, sistema e configuração.
 admin.loading,Loading…,Cargando…,Carregando…
