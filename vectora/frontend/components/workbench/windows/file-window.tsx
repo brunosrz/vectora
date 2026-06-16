@@ -15,12 +15,10 @@ import {
   useWindowsStore,
   type FileWindowState,
 } from "@/lib/stores/windows-store";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 const TITLE_BAR_CLASS = "vectora-window-drag-handle";
 
 export function FileWindow({ win }: { win: FileWindowState }) {
-  const t = useT();
   const focus = useWindowsStore((s) => s.focus);
   const close = useWindowsStore((s) => s.close);
   const minimize = useWindowsStore((s) => s.minimize);
@@ -60,16 +58,16 @@ export function FileWindow({ win }: { win: FileWindowState }) {
           <button
             onClick={() => minimize(win.id)}
             className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60"
-            aria-label={t("window.minimize")}
-            title={t("window.minimize")}
+            aria-label={m.window_minimize()}
+            title={m.window_minimize()}
           >
             <Minus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => close(win.id)}
             className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-muted/60"
-            aria-label={t("window.close")}
-            title={t("window.close")}
+            aria-label={m.window_close()}
+            title={m.window_close()}
           >
             <X className="w-3.5 h-3.5" />
           </button>

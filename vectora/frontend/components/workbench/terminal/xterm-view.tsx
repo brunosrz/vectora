@@ -9,8 +9,7 @@
 import { useEffect, useRef } from "react";
 
 import { VECTORA_API_URL } from "@/lib/constants/api";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 /** Lê os tokens de cor ativos (`.dark`/`.light`) e monta o tema do xterm. */
 function readXtermTheme(): Record<string, string> {
   if (typeof document === "undefined") {
@@ -42,7 +41,6 @@ export function XtermView({
   workspaceId,
   onClosed,
 }: XtermViewProps) {
-  const t = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<any | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -55,8 +53,6 @@ export function XtermView({
   // cada re-render. Refs entregam sempre a versão atual sem re-executar o efeito.
   const onClosedRef = useRef(onClosed);
   onClosedRef.current = onClosed;
-  const tRef = useRef(t);
-  tRef.current = t;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -141,9 +137,7 @@ export function XtermView({
             if (j.type === "error") {
               term.write(`\r\n\x1b[31m${j.message}\x1b[0m\r\n`);
             } else if (j.type === "closed") {
-              term.write(
-                `\r\n\x1b[33m[${tRef.current("terminal.ended")}]\x1b[0m\r\n`,
-              );
+              term.write(`\r\n\x1b[33m[${m.terminal_ended()}]\x1b[0m\r\n`);
               onClosedRef.current?.();
             }
           } catch {
@@ -156,9 +150,7 @@ export function XtermView({
       });
 
       ws.addEventListener("error", () => {
-        term.write(
-          `\r\n\x1b[31m[${tRef.current("terminal.conn_error")}]\x1b[0m\r\n`,
-        );
+        term.write(`\r\n\x1b[31m[${m.terminal_conn_error()}]\x1b[0m\r\n`);
       });
 
       ws.addEventListener("close", () => {

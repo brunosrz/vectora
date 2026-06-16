@@ -21,7 +21,6 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import type { Thread } from "@/lib/hooks/threads";
-import { useT } from "@/lib/i18n";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 import {
   useWorkspacesStore,
@@ -31,8 +30,7 @@ import { ThreadListSkeleton } from "./thread-list-skeleton";
 import { queryClient } from "../../src/router";
 import { getHistory, listThreads } from "@/lib/api/vectora-client";
 import { threadsQueryKey } from "@/lib/queries/threads";
-
-type TFunc = (key: string, params?: Record<string, string | number>) => string;
+import { m } from "@/lib/paraglide/messages";
 
 // Add custom scrollbar styles - overlay scrollbar that doesn't affect layout
 const scrollbarStyles = `
@@ -72,29 +70,27 @@ interface SidebarProps {
   isLoading?: boolean;
 }
 
-function getRelativeTime(date: Date, t: TFunc): string {
+function getRelativeTime(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return t("time.just_now");
-  if (diffMins < 60) return t("time.minutes_ago", { n: diffMins });
+  if (diffMins < 1) return m.time_just_now();
+  if (diffMins < 60) return m.time_minutes_ago({ n: diffMins });
   if (diffHours < 24)
     return diffHours === 1
-      ? t("time.hour_ago")
-      : t("time.hours_ago", { n: diffHours });
-  if (diffDays === 1) return t("time.yesterday");
-  if (diffDays < 7) return t("time.days_ago", { n: diffDays });
+      ? m.time_hour_ago()
+      : m.time_hours_ago({ n: diffHours });
+  if (diffDays === 1) return m.time_yesterday();
+  if (diffDays < 7) return m.time_days_ago({ n: diffDays });
   if (diffDays < 30) {
     const weeks = Math.floor(diffDays / 7);
-    return weeks === 1 ? t("time.week_ago") : t("time.weeks_ago", { n: weeks });
+    return weeks === 1 ? m.time_week_ago() : m.time_weeks_ago({ n: weeks });
   }
   const months = Math.floor(diffDays / 30);
-  return months === 1
-    ? t("time.month_ago")
-    : t("time.months_ago", { n: months });
+  return months === 1 ? m.time_month_ago() : m.time_months_ago({ n: months });
 }
 
 function groupThreads(threads: Thread[]) {
@@ -196,7 +192,6 @@ export const Sidebar = memo(function Sidebar({
   isLoading = false,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const t = useT();
   // UX-16 — criar thread exige round-trip ao backend; sem rede só geraria erro.
   const { offline } = useNetworkStatus();
 
@@ -264,7 +259,7 @@ export const Sidebar = memo(function Sidebar({
   const renderThreadItem = useCallback(
     (thread: Thread) => {
       const threadDate = new Date(thread.updated_at || thread.created_at);
-      const title = thread.metadata?.title || t("sidebar.new_conversation");
+      const title = thread.metadata?.title || m.sidebar_new_conversation();
 
       return (
         <div
@@ -289,7 +284,7 @@ export const Sidebar = memo(function Sidebar({
           <div className="flex-1 min-w-0">
             <div className="truncate font-medium">{title}</div>
             <div className="text-xs text-muted-foreground mt-0.5">
-              {getRelativeTime(threadDate, t)}
+              {getRelativeTime(threadDate)}
             </div>
           </div>
           <button
@@ -301,7 +296,7 @@ export const Sidebar = memo(function Sidebar({
         </div>
       );
     },
-    [currentThreadId, handleSelectThread, handleDeleteThread, t],
+    [currentThreadId, handleSelectThread, handleDeleteThread],
   );
 
   // Memoize renderThreadGroup to prevent recreation on every render
@@ -337,8 +332,8 @@ export const Sidebar = memo(function Sidebar({
             aria-expanded={expanded}
             aria-label={
               expanded
-                ? t("sidebar.workspace_collapse")
-                : t("sidebar.workspace_expand")
+                ? m.sidebar_workspace_collapse()
+                : m.sidebar_workspace_expand()
             }
             className="w-full flex items-center gap-1.5 px-3 py-1 mb-2 text-xs font-semibold text-sidebar-accent-foreground uppercase tracking-wider shadow-inset-light hover:text-foreground transition-colors rounded-md"
           >
@@ -352,7 +347,7 @@ export const Sidebar = memo(function Sidebar({
               {shortWorkspaceName(workspace)}
             </span>
             <span className="shrink-0 text-[10px] text-muted-foreground normal-case tracking-normal">
-              {t("sidebar.workspace_thread_count", { n: wsThreads.length })}
+              {m.sidebar_workspace_thread_count({ n: wsThreads.length })}
             </span>
           </button>
           {expanded && (
@@ -363,13 +358,7 @@ export const Sidebar = memo(function Sidebar({
         </div>
       );
     },
-    [
-      collapsedWorkspaces,
-      isSearching,
-      renderThreadItem,
-      t,
-      toggleWorkspaceGroup,
-    ],
+    [collapsedWorkspaces, isSearching, renderThreadItem, toggleWorkspaceGroup],
   );
 
   // Early return for collapsed state (after all hooks)
@@ -387,13 +376,13 @@ export const Sidebar = memo(function Sidebar({
                 variant="ghost"
                 size="icon"
                 onClick={onToggle}
-                aria-label={t("sidebar.expand")}
+                aria-label={m.sidebar_expand()}
                 className="hover:bg-sidebar-primary/10 hover:text-sidebar-primary transition-all duration-200 shadow-depth-xs hover:shadow-depth-hover rounded-lg"
               >
                 <PanelLeft className="w-5 h-5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">{t("sidebar.expand")}</TooltipContent>
+            <TooltipContent side="right">{m.sidebar_expand()}</TooltipContent>
           </Tooltip>
         </div>
 
@@ -408,8 +397,8 @@ export const Sidebar = memo(function Sidebar({
                   disabled={offline}
                   aria-label={
                     offline
-                      ? t("network.disabled_offline")
-                      : t("sidebar.new_chat")
+                      ? m.network_disabled_offline()
+                      : m.sidebar_new_chat()
                   }
                   className="w-full hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-lg"
                 >
@@ -428,9 +417,7 @@ export const Sidebar = memo(function Sidebar({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                {offline
-                  ? t("network.disabled_offline")
-                  : t("sidebar.new_chat")}
+                {offline ? m.network_disabled_offline() : m.sidebar_new_chat()}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -441,7 +428,7 @@ export const Sidebar = memo(function Sidebar({
             <button
               key={thread.thread_id}
               onClick={() => onSelectThread(thread.thread_id)}
-              title={thread.metadata?.title || t("sidebar.untitled_chat")}
+              title={thread.metadata?.title || m.sidebar_untitled_chat()}
               className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-200 ${
                 thread.thread_id === currentThreadId
                   ? "bg-primary/15 text-primary"
@@ -474,18 +461,18 @@ export const Sidebar = memo(function Sidebar({
                   variant="ghost"
                   size="icon"
                   onClick={onToggle}
-                  aria-label={t("sidebar.collapse")}
+                  aria-label={m.sidebar_collapse()}
                   className="hover:bg-sidebar-primary/10 hover:text-sidebar-primary transition-all duration-200 shadow-depth-xs hover:shadow-depth-hover rounded-lg"
                 >
                   <PanelLeftClose className="w-5 h-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                {t("sidebar.collapse")}
+                {m.sidebar_collapse()}
               </TooltipContent>
             </Tooltip>
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("sidebar.title")}
+              {m.sidebar_title()}
             </span>
           </div>
         </div>
@@ -499,8 +486,8 @@ export const Sidebar = memo(function Sidebar({
                   disabled={offline}
                   aria-label={
                     offline
-                      ? t("network.disabled_offline")
-                      : t("sidebar.new_chat")
+                      ? m.network_disabled_offline()
+                      : m.sidebar_new_chat()
                   }
                   className="group w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-primary/15 disabled:hover:to-primary/5 disabled:hover:border-primary/30"
                 >
@@ -518,13 +505,11 @@ export const Sidebar = memo(function Sidebar({
                   >
                     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
                   </svg>
-                  {t("sidebar.new_chat")}
+                  {m.sidebar_new_chat()}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                {offline
-                  ? t("network.disabled_offline")
-                  : t("sidebar.new_chat")}
+                {offline ? m.network_disabled_offline() : m.sidebar_new_chat()}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -538,7 +523,7 @@ export const Sidebar = memo(function Sidebar({
             </div>
             <Input
               type="search"
-              placeholder={t("sidebar.search_placeholder")}
+              placeholder={m.sidebar_search_placeholder()}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoComplete="off"
@@ -549,7 +534,7 @@ export const Sidebar = memo(function Sidebar({
                 type="button"
                 onClick={handleClearSearch}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10 text-muted-foreground/60 hover:text-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-full p-0.5 hover:bg-muted/50"
-                aria-label={t("sidebar.clear_search")}
+                aria-label={m.sidebar_clear_search()}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -562,17 +547,15 @@ export const Sidebar = memo(function Sidebar({
             <ThreadListSkeleton />
           ) : searchQuery && filteredThreads.length === 0 ? (
             <div className="px-6 py-8 text-center text-sm text-muted-foreground bg-gradient-to-br from-card/10 via-card/5 to-transparent rounded-lg mx-3 shadow-depth-xs">
-              <div className="font-medium mb-1">{t("sidebar.no_results")}</div>
-              <div className="text-xs">{t("sidebar.no_results_hint")}</div>
+              <div className="font-medium mb-1">{m.sidebar_no_results()}</div>
+              <div className="text-xs">{m.sidebar_no_results_hint()}</div>
             </div>
           ) : filteredThreads.length === 0 ? (
             <div className="px-6 py-8 text-center text-sm text-muted-foreground bg-gradient-to-br from-card/10 via-card/5 to-transparent rounded-lg mx-3 shadow-depth-xs">
               <div className="font-medium mb-1">
-                {t("sidebar.no_conversations")}
+                {m.sidebar_no_conversations()}
               </div>
-              <div className="text-xs">
-                {t("sidebar.no_conversations_hint")}
-              </div>
+              <div className="text-xs">{m.sidebar_no_conversations_hint()}</div>
             </div>
           ) : (
             <>
@@ -584,13 +567,13 @@ export const Sidebar = memo(function Sidebar({
                 <>
                   {workspaceGroups.length > 0 && (
                     <h3 className="mt-4 px-6 text-xs font-semibold text-sidebar-accent-foreground/70 uppercase tracking-wider shadow-inset-light">
-                      {t("sidebar.group.other_conversations")}
+                      {m.sidebar_group_other_conversations()}
                     </h3>
                   )}
-                  {renderThreadGroup(today, t("sidebar.group.today"))}
-                  {renderThreadGroup(yesterday, t("sidebar.group.yesterday"))}
-                  {renderThreadGroup(last7Days, t("sidebar.group.last_7_days"))}
-                  {renderThreadGroup(older, t("sidebar.group.older"))}
+                  {renderThreadGroup(today, m.sidebar_group_today())}
+                  {renderThreadGroup(yesterday, m.sidebar_group_yesterday())}
+                  {renderThreadGroup(last7Days, m.sidebar_group_last_7_days())}
+                  {renderThreadGroup(older, m.sidebar_group_older())}
                 </>
               )}
             </>
@@ -609,10 +592,10 @@ export const Sidebar = memo(function Sidebar({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium leading-tight transition-colors duration-300 group-hover:text-sidebar-primary/90">
-                {t("sidebar.documentation")}
+                {m.sidebar_documentation()}
               </div>
               <div className="text-[10px] text-muted-foreground leading-tight transition-colors duration-300 group-hover:text-muted-foreground/80">
-                {t("sidebar.documentation_caption")}
+                {m.sidebar_documentation_caption()}
               </div>
             </div>
           </a>
@@ -628,10 +611,10 @@ export const Sidebar = memo(function Sidebar({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium leading-tight transition-colors duration-300 group-hover:text-sidebar-primary/90">
-                {t("sidebar.feedback")}
+                {m.sidebar_feedback()}
               </div>
               <div className="text-[10px] text-muted-foreground leading-tight transition-colors duration-300 group-hover:text-muted-foreground/80">
-                {t("sidebar.report_issue")}
+                {m.sidebar_report_issue()}
               </div>
             </div>
           </a>

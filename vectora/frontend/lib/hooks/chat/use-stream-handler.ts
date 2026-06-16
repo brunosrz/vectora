@@ -35,11 +35,11 @@ import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useToastStore } from "@/lib/stores/toast-store";
 import { useNetworkStore } from "@/lib/hooks/use-network-status";
-import { t } from "@/lib/i18n";
 import {
   markStreamStarted,
   markStreamEnded,
 } from "@/lib/utils/stream-interruption";
+import { m as msg } from "@/lib/paraglide/messages";
 
 // ============================================================================
 // UX-15 — Resiliência de rede: status do SSE
@@ -64,7 +64,7 @@ function isNetworkError(err: unknown): boolean {
 function announceSSEConnected(): void {
   const prev = useNetworkStore.getState().sseStatus;
   if (prev === "reconnecting" || prev === "failed") {
-    useToastStore.getState().success(t("network.sse_reconnected"));
+    useToastStore.getState().success(msg.network_sse_reconnected());
   }
   if (prev !== "connected")
     useNetworkStore.getState().setSSEStatus("connected");

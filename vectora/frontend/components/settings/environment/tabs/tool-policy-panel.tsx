@@ -13,15 +13,13 @@ import { Check, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 interface Policy {
   disabled: string[];
   available: string[];
 }
 
 export function ToolPolicyPanel() {
-  const t = useT();
   const [policy, setPolicy] = useState<Policy | null>(null);
   const [disabled, setDisabled] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -39,15 +37,15 @@ export function ToolPolicyPanel() {
           setPolicy(d);
           setDisabled(new Set(d.disabled ?? []));
         } else {
-          setError(t("toolpolicy.error_load"));
+          setError(m.toolpolicy_error_load());
         }
       })
-      .catch(() => setError(t("toolpolicy.error_load")))
+      .catch(() => setError(m.toolpolicy_error_load()))
       .finally(() => setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, []);
 
   const toggle = (name: string) => {
     setDisabled((prev) => {
@@ -69,13 +67,13 @@ export function ToolPolicyPanel() {
         body: JSON.stringify({ disabled: [...disabled] }),
       });
       if (!res.ok) {
-        setError(t("toolpolicy.error_save"));
+        setError(m.toolpolicy_error_save());
         return;
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      setError(t("toolpolicy.error_save"));
+      setError(m.toolpolicy_error_save());
     } finally {
       setSaving(false);
     }
@@ -102,9 +100,9 @@ export function ToolPolicyPanel() {
   return (
     <div className="space-y-3">
       <div className="space-y-0.5">
-        <p className="text-sm font-medium">{t("toolpolicy.title")}</p>
+        <p className="text-sm font-medium">{m.toolpolicy_title()}</p>
         <p className="text-xs text-muted-foreground">
-          {t("toolpolicy.subtitle")}
+          {m.toolpolicy_subtitle()}
         </p>
       </div>
 
@@ -132,7 +130,7 @@ export function ToolPolicyPanel() {
         {saved && (
           <span className="text-xs text-green-500 inline-flex items-center gap-1">
             <Check className="w-3 h-3" />
-            {t("toolpolicy.saved")}
+            {m.toolpolicy_saved()}
           </span>
         )}
         <Button
@@ -142,7 +140,7 @@ export function ToolPolicyPanel() {
           disabled={saving || !dirty}
         >
           {saving && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
-          {t("toolpolicy.save")}
+          {m.toolpolicy_save()}
         </Button>
       </div>
     </div>

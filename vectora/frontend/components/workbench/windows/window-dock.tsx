@@ -7,10 +7,8 @@
 
 import { FileText } from "lucide-react";
 import { useWindowsStore } from "@/lib/stores/windows-store";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 export function WindowDock() {
-  const t = useT();
   const windows = useWindowsStore((s) => s.windows);
   const restore = useWindowsStore((s) => s.restore);
   const minimized = windows.filter((w) => w.minimized);
@@ -22,7 +20,7 @@ export function WindowDock() {
           key={win.id}
           onClick={() => restore(win.id)}
           className="flex items-center gap-1.5 max-w-[180px] px-2 py-1 rounded text-xs hover:bg-muted/60"
-          title={t("window.restore")}
+          title={m.window_restore()}
         >
           <FileText className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">{win.title}</span>

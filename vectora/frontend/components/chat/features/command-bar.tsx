@@ -14,9 +14,9 @@ import { GitBranch, Monitor, Plug } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useEnvironmentDialogStore } from "@/lib/stores/environment-dialog-store";
-import { useT } from "@/lib/i18n";
 import { VECTORA_API_URL } from "@/lib/constants/api";
 import { PermissionModeMenu } from "./permission-mode-menu";
+import { m } from "@/lib/paraglide/messages";
 
 /**
  * Hostname abreviado extraído da URL do backend, com porta quando não-padrão.
@@ -36,15 +36,14 @@ function serverHostLabel(): string {
 }
 
 function LocalChip() {
-  const t = useT();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   // CLI/root local exibe "Local". Sessão autenticada exibe o hostname real
   // do backend — informativo (distingue localhost vs LAN vs Tailscale).
-  const label = isAuthenticated ? serverHostLabel() : t("commandbar.local");
+  const label = isAuthenticated ? serverHostLabel() : m.commandbar_local();
   return (
     <span
       className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground select-none"
-      title={t("commandbar.local_tip")}
+      title={m.commandbar_local_tip()}
     >
       <Monitor className="w-3.5 h-3.5 shrink-0" />
       {label}
@@ -53,7 +52,6 @@ function LocalChip() {
 }
 
 function WorktreeChip() {
-  const t = useT();
   const active = useWorkspacesStore((s) => s.getActive());
   const [worktrees, setWorktrees] = useState<
     { path: string; branch: string | null }[]
@@ -84,7 +82,7 @@ function WorktreeChip() {
   return (
     <span
       className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground select-none"
-      title={t("commandbar.worktree")}
+      title={m.commandbar_worktree()}
     >
       <GitBranch className="w-3.5 h-3.5 shrink-0" />
       {worktrees.length}

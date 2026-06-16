@@ -17,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import {
@@ -42,6 +41,7 @@ import { HistoryView } from "./history-view";
 import { CompareView } from "./compare-view";
 import { StashModal } from "./stash-modal";
 import { WorktreesModal } from "./worktrees-modal";
+import { m } from "@/lib/paraglide/messages";
 
 type GitView = "changes" | "history";
 
@@ -56,7 +56,6 @@ function PrDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const t = useT();
   const [prs, setPrs] = useState<PullRequest[]>([]);
   const [available, setAvailable] = useState(true);
   const [title, setTitle] = useState("");
@@ -84,7 +83,7 @@ function PrDialog({
         body,
         baseBranch.trim(),
       );
-      setMsg(r.status === "ok" ? t("workbench.git.pr_created") : r.message);
+      setMsg(r.status === "ok" ? m.workbench_git_pr_created() : r.message);
       if (r.status === "ok") {
         setTitle("");
         setBody("");
@@ -93,24 +92,24 @@ function PrDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [workspaceId, title, body, baseBranch, t]);
+  }, [workspaceId, title, body, baseBranch]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("workbench.git.pr")}</DialogTitle>
+          <DialogTitle>{m.workbench_git_pr()}</DialogTitle>
         </DialogHeader>
         {!available ? (
           <p className="text-xs text-muted-foreground">
-            {t("workbench.git.pr_unavailable")}
+            {m.workbench_git_pr_unavailable()}
           </p>
         ) : (
           <>
             <div className="max-h-40 overflow-y-auto -mx-1">
               {prs.length === 0 ? (
                 <p className="text-xs text-muted-foreground py-2 px-1">
-                  {t("workbench.git.pr_empty")}
+                  {m.workbench_git_pr_empty()}
                 </p>
               ) : (
                 prs.map((pr) => (
@@ -131,20 +130,20 @@ function PrDialog({
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={t("workbench.git.pr_title_placeholder")}
+                placeholder={m.workbench_git_pr_title_placeholder()}
                 className="text-xs bg-background border border-border/60 rounded px-2 py-1 outline-none focus:border-primary"
               />
               <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder={t("workbench.git.pr_body_placeholder")}
+                placeholder={m.workbench_git_pr_body_placeholder()}
                 rows={2}
                 className="text-xs bg-background border border-border/60 rounded px-2 py-1 outline-none focus:border-primary resize-none"
               />
               <input
                 value={baseBranch}
                 onChange={(e) => setBaseBranch(e.target.value)}
-                placeholder={t("workbench.git.pr_base_placeholder")}
+                placeholder={m.workbench_git_pr_base_placeholder()}
                 className="text-xs font-mono bg-background border border-border/60 rounded px-2 py-1 outline-none focus:border-primary"
               />
               {msg && (
@@ -156,7 +155,7 @@ function PrDialog({
                 className="flex items-center justify-center gap-1.5 py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {submitting && <Loader2 className="w-3 h-3 animate-spin" />}
-                {t("workbench.git.pr_submit")}
+                {m.workbench_git_pr_submit()}
               </button>
             </div>
           </>
@@ -167,7 +166,6 @@ function PrDialog({
 }
 
 export function GitTab(_props: { threadId: string }) {
-  const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
 
@@ -226,7 +224,7 @@ export function GitTab(_props: { threadId: string }) {
   if (!workspace) {
     return (
       <div className="h-full flex items-center justify-center text-xs text-muted-foreground p-4 text-center">
-        {t("workbench.diff.no_workspace")}
+        {m.workbench_diff_no_workspace()}
       </div>
     );
   }
@@ -238,7 +236,7 @@ export function GitTab(_props: { threadId: string }) {
       <div className="h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
         <GitBranch className="w-6 h-6 text-muted-foreground" />
         <p className="text-xs text-muted-foreground">
-          {t("workbench.diff.not_git")}
+          {m.workbench_diff_not_git()}
         </p>
       </div>
     );
@@ -281,7 +279,7 @@ export function GitTab(_props: { threadId: string }) {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t("workbench.diff.tab_changes")}
+              {m.workbench_diff_tab_changes()}
             </button>
             <button
               onClick={() => setView("history")}
@@ -292,7 +290,7 @@ export function GitTab(_props: { threadId: string }) {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t("workbench.git.tab_history")}
+              {m.workbench_git_tab_history()}
             </button>
           </div>
           <div className="flex-1 min-h-0">

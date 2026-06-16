@@ -30,8 +30,8 @@ import {
   DEFAULT_CUSTOM_COLORS,
   type BaseThemeColors,
 } from "@/lib/theme/presets";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 /** Deriva o `Theme` (claro/escuro) a partir do id de um preset. */
 function themeForPreset(id: string): Theme {
   return id.endsWith("-light") ? "light" : "dark";
@@ -49,7 +49,6 @@ const CUSTOM_COLOR_FIELDS: { key: keyof BaseThemeColors; labelKey: string }[] =
   ];
 
 export function PreferenciasTab() {
-  const t = useT();
   const {
     theme,
     themePreset,
@@ -115,25 +114,25 @@ export function PreferenciasTab() {
     <div className="space-y-6">
       {/* Tema — seletor unificado (sistema, presets claros/escuros, custom) */}
       <div className="space-y-2">
-        <Label htmlFor="theme">{t("prefs.theme")}</Label>
+        <Label htmlFor="theme">{m.prefs_theme()}</Label>
         <Select value={selectedTheme} onValueChange={handleThemeChange}>
           <SelectTrigger id="theme">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="system">{t("prefs.theme.system")}</SelectItem>
+            <SelectItem value="system">{m.prefs_theme_system()}</SelectItem>
             {THEME_PRESETS.map((preset) => (
               <SelectItem key={preset.id} value={preset.id}>
                 {preset.label}
               </SelectItem>
             ))}
             <SelectItem value="custom">
-              {t("prefs.theme_palette.custom")}
+              {m.prefs_theme_palette_custom()}
             </SelectItem>
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          {t("prefs.theme_palette_help")}
+          {m.prefs_theme_palette_help()}
         </p>
 
         {themePreset === "custom" && (
@@ -141,7 +140,7 @@ export function PreferenciasTab() {
             {CUSTOM_COLOR_FIELDS.map(({ key, labelKey }) => (
               <div key={key} className="space-y-1">
                 <Label htmlFor={`custom-color-${key}`} className="text-xs">
-                  {t(labelKey)}
+                  {mDyn(labelKey)}
                 </Label>
                 <div className="flex items-center gap-2">
                   <input
@@ -165,7 +164,7 @@ export function PreferenciasTab() {
 
       {/* Idioma */}
       <div className="space-y-2">
-        <Label htmlFor="language">{t("prefs.language")}</Label>
+        <Label htmlFor="language">{m.prefs_language()}</Label>
         <Select value={language} onValueChange={(v) => setLanguage(v as Lang)}>
           <SelectTrigger id="language">
             <SelectValue />
@@ -182,24 +181,24 @@ export function PreferenciasTab() {
 
       {/* System prompt personalizado */}
       <div className="space-y-2">
-        <Label htmlFor="custom-prompt">{t("prefs.custom_prompt")}</Label>
+        <Label htmlFor="custom-prompt">{m.prefs_custom_prompt()}</Label>
         <Textarea
           id="custom-prompt"
-          placeholder={t("prefs.custom_prompt_placeholder")}
+          placeholder={m.prefs_custom_prompt_placeholder()}
           value={customSystemPrompt}
           onChange={(e) => setCustomSystemPrompt(e.target.value)}
           rows={4}
           className="resize-none text-sm"
         />
         <p className="text-xs text-muted-foreground">
-          {t("prefs.custom_prompt_help")}
+          {m.prefs_custom_prompt_help()}
         </p>
       </div>
 
       {/* Treinamento — blocos de instrução adicionais */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label>{t("prefs.training")}</Label>
+          <Label>{m.prefs_training()}</Label>
           <Button
             variant="ghost"
             size="sm"
@@ -207,16 +206,16 @@ export function PreferenciasTab() {
             onClick={handleAddTrainingBlock}
           >
             <Plus className="w-3.5 h-3.5 mr-1" />
-            {t("prefs.training.add")}
+            {m.prefs_training_add()}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          {t("prefs.training_help")}
+          {m.prefs_training_help()}
         </p>
         {trainingInstructions.map((block, index) => (
           <div key={index} className="flex items-start gap-2">
             <Textarea
-              placeholder={t("prefs.training.placeholder")}
+              placeholder={m.prefs_training_placeholder()}
               value={block}
               onChange={(e) => handleTrainingBlockChange(index, e.target.value)}
               rows={3}
@@ -227,8 +226,8 @@ export function PreferenciasTab() {
               size="sm"
               className="h-8 px-2 text-muted-foreground hover:text-destructive shrink-0"
               onClick={() => handleRemoveTrainingBlock(index)}
-              title={t("prefs.training.remove")}
-              aria-label={t("prefs.training.remove")}
+              title={m.prefs_training_remove()}
+              aria-label={m.prefs_training_remove()}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </Button>

@@ -15,8 +15,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRight, File, FolderClosed, Loader2 } from "lucide-react";
 
-import { useT } from "@/lib/i18n";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { m } from "@/lib/paraglide/messages";
 
 interface Entry {
   name: string;
@@ -44,7 +44,6 @@ interface AtMentionMenuProps {
 }
 
 export function AtMentionMenu({ input, onSelect }: AtMentionMenuProps) {
-  const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
 
@@ -112,7 +111,7 @@ export function AtMentionMenu({ input, onSelect }: AtMentionMenuProps) {
     <div className="absolute bottom-full left-0 mb-2 w-80 rounded-lg border border-border bg-background shadow-xl py-1 z-50 animate-in fade-in slide-in-from-bottom-2 max-h-72 overflow-y-auto">
       <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5 sticky top-0 bg-background border-b border-border/40">
         <span className="font-mono">@</span>
-        {t("at.title")}
+        {m.at_title()}
       </div>
 
       {loading && (

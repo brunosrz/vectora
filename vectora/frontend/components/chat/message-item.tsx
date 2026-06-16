@@ -42,11 +42,11 @@ import { estimateCost, formatCost } from "@/lib/config/model-prices";
 import { useState, useMemo, useEffect, useCallback, memo, useRef } from "react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
-import { useT } from "@/lib/i18n";
 import { useToastStore } from "@/lib/stores/toast-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR, es as esLocale, enUS } from "date-fns/locale";
+import { m } from "@/lib/paraglide/messages";
 
 /** Locale do date-fns a partir do idioma da UI (item 9 — "há quanto tempo"). */
 const DATE_FNS_LOCALES = { pt: ptBR, es: esLocale, en: enUS } as const;
@@ -448,7 +448,6 @@ export const MessageItem = memo(
     humanMessageIndex,
     modelId,
   }: MessageItemProps) {
-    const t = useT();
     const uiLang = useSettingsStore((s) => s.language);
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme !== "light";
@@ -504,7 +503,7 @@ export const MessageItem = memo(
         const checkpoints = data.checkpoints ?? [];
         const target = checkpoints[humanMessageIndex];
         if (!target) {
-          useToastStore.getState().error(t("chat.rewind_no_checkpoint"));
+          useToastStore.getState().error(m.chat_rewind_no_checkpoint());
           setRewindOpen(false);
           return;
         }
@@ -518,19 +517,19 @@ export const MessageItem = memo(
           },
         );
         if (rewindRes.status === 409) {
-          useToastStore.getState().error(t("chat.rewind_busy"));
+          useToastStore.getState().error(m.chat_rewind_busy());
         } else if (!rewindRes.ok) {
-          useToastStore.getState().error(t("chat.rewind_error"));
+          useToastStore.getState().error(m.chat_rewind_error());
         } else {
-          useToastStore.getState().success(t("chat.rewind_ok"));
+          useToastStore.getState().success(m.chat_rewind_ok());
         }
       } catch {
-        useToastStore.getState().error(t("chat.rewind_error"));
+        useToastStore.getState().error(m.chat_rewind_error());
       } finally {
         setRewinding(false);
         setRewindOpen(false);
       }
-    }, [threadId, workspaceId, humanMessageIndex, t]);
+    }, [threadId, workspaceId, humanMessageIndex]);
 
     // Track code block index to generate stable IDs during streaming
     const codeBlockIndexRef = useRef(0);
@@ -734,7 +733,7 @@ export const MessageItem = memo(
                           )
                         ) : (
                           <span className="font-medium">
-                            {t("chat.agent_steps")}
+                            {m.chat_agent_steps()}
                           </span>
                         )}{" "}
                         ({message.thinkingSteps?.length || 0})
@@ -992,12 +991,12 @@ export const MessageItem = memo(
                             size="icon"
                             onClick={() => setRewindOpen(true)}
                             className="h-7 w-7 opacity-0 group-hover/message:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
-                            aria-label={t("chat.rewind")}
+                            aria-label={m.chat_rewind()}
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{t("chat.rewind")}</TooltipContent>
+                        <TooltipContent>{m.chat_rewind()}</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
@@ -1005,9 +1004,9 @@ export const MessageItem = memo(
                   <Dialog open={rewindOpen} onOpenChange={setRewindOpen}>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>{t("chat.rewind_title")}</DialogTitle>
+                        <DialogTitle>{m.chat_rewind_title()}</DialogTitle>
                         <DialogDescription>
-                          {t("chat.rewind_desc")}
+                          {m.chat_rewind_desc()}
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
@@ -1016,7 +1015,7 @@ export const MessageItem = memo(
                           onClick={() => setRewindOpen(false)}
                           disabled={rewinding}
                         >
-                          {t("workbench.files.cancel")}
+                          {m.workbench_files_cancel()}
                         </Button>
                         <Button
                           variant="destructive"
@@ -1028,7 +1027,7 @@ export const MessageItem = memo(
                           ) : (
                             <RotateCcw className="w-3 h-3 mr-1" />
                           )}
-                          {t("chat.rewind_confirm")}
+                          {m.chat_rewind_confirm()}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -1049,12 +1048,12 @@ export const MessageItem = memo(
                             size="icon"
                             onClick={onRetry}
                             className="h-7 w-7 text-destructive hover:text-destructive"
-                            aria-label={t("chat.retry")}
+                            aria-label={m.chat_retry()}
                           >
                             <RefreshCw className="w-3.5 h-3.5" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{t("chat.retry")}</TooltipContent>
+                        <TooltipContent>{m.chat_retry()}</TooltipContent>
                       </Tooltip>
                     )}
 
@@ -1069,7 +1068,7 @@ export const MessageItem = memo(
                                 onCopy(message.content, message.id)
                               }
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              aria-label={t("chat.copy")}
+                              aria-label={m.chat_copy()}
                             >
                               {copiedId === message.id ? (
                                 <Check className="w-3.5 h-3.5" />
@@ -1080,8 +1079,8 @@ export const MessageItem = memo(
                           </TooltipTrigger>
                           <TooltipContent>
                             {copiedId === message.id
-                              ? t("chat.copied")
-                              : t("chat.copy")}
+                              ? m.chat_copied()
+                              : m.chat_copy()}
                           </TooltipContent>
                         </Tooltip>
 
@@ -1094,7 +1093,7 @@ export const MessageItem = memo(
                                 onClick={onRegenerate}
                                 disabled={isRegenerating}
                                 className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                aria-label={t("chat.regenerate")}
+                                aria-label={m.chat_regenerate()}
                               >
                                 <RefreshCw
                                   className={`w-3.5 h-3.5 ${isRegenerating ? "animate-spin" : ""}`}
@@ -1102,7 +1101,7 @@ export const MessageItem = memo(
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {t("chat.regenerate")}
+                              {m.chat_regenerate()}
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -1124,7 +1123,7 @@ export const MessageItem = memo(
                                 )
                               }
                               aria-pressed={message.feedback === "positive"}
-                              aria-label={t("chat.feedback_good")}
+                              aria-label={m.chat_feedback_good()}
                               className={`h-7 w-7 ${message.feedback === "positive" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
                             >
                               <ThumbsUp
@@ -1139,7 +1138,7 @@ export const MessageItem = memo(
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {t("chat.feedback_good")}
+                            {m.chat_feedback_good()}
                           </TooltipContent>
                         </Tooltip>
                         <Tooltip>
@@ -1155,7 +1154,7 @@ export const MessageItem = memo(
                                 )
                               }
                               aria-pressed={message.feedback === "negative"}
-                              aria-label={t("chat.feedback_bad")}
+                              aria-label={m.chat_feedback_bad()}
                               className={`h-7 w-7 ${message.feedback === "negative" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
                             >
                               <ThumbsDown
@@ -1170,7 +1169,7 @@ export const MessageItem = memo(
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {t("chat.feedback_bad")}
+                            {m.chat_feedback_bad()}
                           </TooltipContent>
                         </Tooltip>
                         <Tooltip>
@@ -1180,13 +1179,13 @@ export const MessageItem = memo(
                               size="icon"
                               onClick={() => onToggleComment(message.id)}
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              aria-label={t("chat.feedback_comment")}
+                              aria-label={m.chat_feedback_comment()}
                             >
                               <MessageSquare className="w-3.5 h-3.5" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {t("chat.feedback_comment")}
+                            {m.chat_feedback_comment()}
                           </TooltipContent>
                         </Tooltip>
                       </>

@@ -10,7 +10,6 @@
 import { ChevronDown, ChevronRight, GitBranch, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import { useT } from "@/lib/i18n";
 import {
   apiCheckout,
   apiRevert,
@@ -19,6 +18,7 @@ import {
   type GitLogCommit,
 } from "./api";
 import { useContextMenu, type ContextMenuItem } from "./git-context-menu";
+import { m } from "@/lib/paraglide/messages";
 
 function formatDate(raw: string): string {
   try {
@@ -116,7 +116,6 @@ export function HistoryView({
   /** Chamado após checkout/revert para o pai revalidar branch/diff. */
   onChanged: () => void;
 }) {
-  const t = useT();
   const menu = useContextMenu();
   const [data, setData] = useState<{
     branch: string;
@@ -137,16 +136,16 @@ export function HistoryView({
     (e: React.MouseEvent, commit: GitLogCommit) => {
       const items: ContextMenuItem[] = [
         {
-          label: t("workbench.git.ctx_copy_sha"),
+          label: m.workbench_git_ctx_copy_sha(),
           onSelect: () => void navigator.clipboard.writeText(commit.sha),
         },
         {
-          label: t("workbench.git.ctx_checkout"),
+          label: m.workbench_git_ctx_checkout(),
           onSelect: () =>
             void apiCheckout(workspaceId, commit.sha).then(onChanged),
         },
         {
-          label: t("workbench.git.ctx_revert"),
+          label: m.workbench_git_ctx_revert(),
           danger: true,
           onSelect: () =>
             void apiRevert(workspaceId, commit.sha).then(onChanged),
@@ -154,7 +153,7 @@ export function HistoryView({
       ];
       menu.open(e, items);
     },
-    [workspaceId, t, onChanged, menu],
+    [workspaceId, onChanged, menu],
   );
 
   if (loading) {
@@ -167,7 +166,7 @@ export function HistoryView({
   if (!data || data.commits.length === 0) {
     return (
       <p className="text-xs text-muted-foreground text-center py-8 px-4">
-        {t("workbench.git.history_empty")}
+        {m.workbench_git_history_empty()}
       </p>
     );
   }
@@ -181,7 +180,7 @@ export function HistoryView({
           {data.branch}
         </span>
         <span className="text-[10px] text-muted-foreground ml-auto">
-          {t("workbench.git.commits_count", { n: data.commits.length })}
+          {m.workbench_git_commits_count({ n: data.commits.length })}
         </span>
       </div>
       <div className="flex-1 overflow-y-auto">

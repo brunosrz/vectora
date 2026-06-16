@@ -14,7 +14,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 
-import { useT } from "@/lib/i18n";
 import { ProviderIcon } from "@/components/icons/provider-icons";
 import {
   getAllowedModels,
@@ -22,6 +21,7 @@ import {
   getModelProvider,
   type ModelOption,
 } from "@/lib/config/deployment-config";
+import { m } from "@/lib/paraglide/messages";
 
 interface ModelSelectorProps {
   value: string;
@@ -34,7 +34,6 @@ export function ModelSelector({
   onChange,
   compact = false,
 }: ModelSelectorProps) {
-  const t = useT();
   const allowedModels = getAllowedModels();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -59,7 +58,7 @@ export function ModelSelector({
             ? "flex items-center gap-1.5 h-7 px-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors select-none min-w-0 max-w-[160px]"
             : "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors select-none max-w-[200px]"
         }
-        title={t("model.select_title")}
+        title={m.model_select_title()}
         aria-expanded={open}
       >
         <ProviderIcon
@@ -77,7 +76,7 @@ export function ModelSelector({
           }`}
         >
           <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {t("model.select_title")}
+            {m.model_select_title()}
           </div>
 
           <div className="max-h-72 overflow-y-auto">

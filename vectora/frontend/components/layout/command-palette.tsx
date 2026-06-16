@@ -15,8 +15,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -48,7 +47,6 @@ export function CommandPalette({
   onOpenChange,
   commands,
 }: CommandPaletteProps) {
-  const t = useT();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -130,8 +128,8 @@ export function CommandPalette({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden">
         <DialogHeader className="sr-only">
-          <DialogTitle>{t("palette.title")}</DialogTitle>
-          <DialogDescription>{t("palette.description")}</DialogDescription>
+          <DialogTitle>{m.palette_title()}</DialogTitle>
+          <DialogDescription>{m.palette_description()}</DialogDescription>
         </DialogHeader>
 
         {/* Input de busca */}
@@ -161,9 +159,9 @@ export function CommandPalette({
               setActiveIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder={t("palette.placeholder")}
+            placeholder={m.palette_placeholder()}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            aria-label={t("palette.title")}
+            aria-label={m.palette_title()}
             aria-autocomplete="list"
             role="combobox"
             aria-expanded={filtered.length > 0}
@@ -178,7 +176,7 @@ export function CommandPalette({
               type="button"
               onClick={() => setQuery("")}
               className="text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={t("palette.clear")}
+              aria-label={m.palette_clear()}
             >
               ✕
             </button>
@@ -189,12 +187,12 @@ export function CommandPalette({
         <ul
           ref={listRef}
           role="listbox"
-          aria-label={t("palette.title")}
+          aria-label={m.palette_title()}
           className="max-h-80 overflow-y-auto py-1"
         >
           {filtered.length === 0 ? (
             <li className="px-4 py-6 text-center text-sm text-muted-foreground">
-              {t("palette.no_results")}
+              {m.palette_no_results()}
             </li>
           ) : (
             Object.entries(grouped).map(([category, cmds]) => {
@@ -241,9 +239,9 @@ export function CommandPalette({
 
         {/* Rodapé — dica de navegação */}
         <div className="flex items-center gap-4 border-t border-border px-4 py-2 text-[10px] text-muted-foreground/60 select-none">
-          <span>↑↓ {t("palette.hint_navigate")}</span>
-          <span>↵ {t("palette.hint_run")}</span>
-          <span>Esc {t("palette.hint_close")}</span>
+          <span>↑↓ {m.palette_hint_navigate()}</span>
+          <span>↵ {m.palette_hint_run()}</span>
+          <span>Esc {m.palette_hint_close()}</span>
         </div>
       </DialogContent>
     </Dialog>

@@ -26,10 +26,10 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { useT } from "@/lib/i18n";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useEnvironmentDialogStore } from "@/lib/stores/environment-dialog-store";
 import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
+import { m } from "@/lib/paraglide/messages";
 
 interface PlusMenuProps {
   disabled?: boolean;
@@ -43,7 +43,6 @@ export function PlusMenu({
   onAddFiles,
   onSlashCommands,
 }: PlusMenuProps) {
-  const t = useT();
   const openEnvironment = useEnvironmentDialogStore((s) => s.openAt);
   const pushDraft = useChatInputStore((s) => s.pushDraft);
   const [open, setOpen] = useState(false);
@@ -71,15 +70,13 @@ export function PlusMenu({
             disabled={disabled}
             className="group h-9 w-9 p-0 mb-0.5 rounded-full bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary border-0 flex-shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
             type="button"
-            aria-label={t("tooltip.chat_add_files")}
+            aria-label={m.tooltip_chat_add_files()}
             aria-expanded={open}
           >
             <Plus className="w-4.5 h-4.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="top">
-          {t("tooltip.chat_add_files")}
-        </TooltipContent>
+        <TooltipContent side="top">{m.tooltip_chat_add_files()}</TooltipContent>
       </Tooltip>
 
       {open && (
@@ -92,7 +89,7 @@ export function PlusMenu({
             }}
           >
             <Paperclip className="w-4 h-4 shrink-0 text-muted-foreground" />
-            {t("plus.add_files")}
+            {m.plus_add_files()}
           </button>
 
           <button
@@ -103,7 +100,7 @@ export function PlusMenu({
             }}
           >
             <FolderPlus className="w-4 h-4 shrink-0 text-muted-foreground" />
-            {t("plus.add_folder")}
+            {m.plus_add_folder()}
           </button>
 
           {/* Abre o directory browser real (mesmo do trust). Ao confirmar,
@@ -117,7 +114,7 @@ export function PlusMenu({
             }}
           >
             <Database className="w-4 h-4 shrink-0 text-muted-foreground" />
-            {t("plus.ingest_folder")}
+            {m.plus_ingest_folder()}
           </button>
 
           {onSlashCommands && (
@@ -129,7 +126,7 @@ export function PlusMenu({
               }}
             >
               <Slash className="w-4 h-4 shrink-0 text-muted-foreground" />
-              {t("plus.slash_commands")}
+              {m.plus_slash_commands()}
             </button>
           )}
 
@@ -143,7 +140,7 @@ export function PlusMenu({
             }}
           >
             <Share2 className="w-4 h-4 shrink-0 text-muted-foreground" />
-            {t("plus.connectors")}
+            {m.plus_connectors()}
           </button>
 
           <button
@@ -154,7 +151,7 @@ export function PlusMenu({
             }}
           >
             <Plug className="w-4 h-4 shrink-0 text-muted-foreground" />
-            {t("plus.plugins")}
+            {m.plus_plugins()}
           </button>
         </div>
       )}
@@ -165,7 +162,7 @@ export function PlusMenu({
         onOpenChange={setIngestOpen}
         mode="ingest"
         onConfirmPath={(path) => {
-          pushDraft(t("plus.ingest_prompt", { path }));
+          pushDraft(m.plus_ingest_prompt({ path }));
         }}
       />
     </div>

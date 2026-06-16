@@ -18,8 +18,8 @@ import { languageFromPath } from "@/lib/monaco/setup";
 import { fetchFile, apiUpdateFile } from "@/lib/api/fs-files";
 import type { FileContent } from "@/lib/stores/workbench-store";
 import { useToastStore } from "@/lib/stores/toast-store";
-import { useT } from "@/lib/i18n";
 import { getMediaKind, FileViewer } from "@/components/workbench/file-viewer";
+import { m } from "@/lib/paraglide/messages";
 
 export function FileEditor({
   workspaceId,
@@ -28,7 +28,6 @@ export function FileEditor({
   workspaceId: string;
   path: string;
 }) {
-  const t = useT();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
   const media = getMediaKind(path);
@@ -81,11 +80,11 @@ export function FileEditor({
       .getState()
       .error(
         result.conflict
-          ? t("workbench.files.conflict_title")
-          : t("workbench.files.save_error"),
+          ? m.workbench_files_conflict_title()
+          : m.workbench_files_save_error(),
         { description: result.message },
       );
-  }, [file, readOnly, saving, workspaceId, path, value, t]);
+  }, [file, readOnly, saving, workspaceId, path, value]);
 
   const handleMount: OnMount = useCallback(
     (editor, monaco) => {
@@ -119,7 +118,7 @@ export function FileEditor({
           {dirty && (
             <span
               className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
-              title={t("workbench.files.unsaved")}
+              title={m.workbench_files_unsaved()}
             />
           )}
           {path}
@@ -129,14 +128,14 @@ export function FileEditor({
             onClick={() => void handleSave()}
             disabled={!dirty || saving}
             className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
-            title={t("workbench.files.save")}
+            title={m.workbench_files_save()}
           >
             {saving ? (
               <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
               <Save className="h-3 w-3" />
             )}
-            {t("workbench.files.save")}
+            {m.workbench_files_save()}
           </button>
         )}
       </div>
@@ -163,7 +162,7 @@ export function FileEditor({
       </div>
       {file?.truncated && (
         <p className="shrink-0 border-t border-border/60 px-2 py-1 text-[10px] text-muted-foreground">
-          {t("workbench.files.read_only_truncated")}
+          {m.workbench_files_read_only_truncated()}
         </p>
       )}
     </div>

@@ -5,7 +5,16 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { router, queryClient } from "./router";
+import { getLocale, setLocale } from "@/lib/paraglide/runtime";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import "./styles.css";
+
+// Sincroniza o locale do Paraglide com o idioma persistido antes de renderizar,
+// para que as mensagens m.* saiam no idioma correto já no primeiro paint.
+{
+  const lang = useSettingsStore.getState().language;
+  if (getLocale() !== lang) setLocale(lang, { reload: false });
+}
 
 declare module "@tanstack/react-router" {
   interface Register {

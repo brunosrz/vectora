@@ -18,7 +18,6 @@ import {
   type Verbosity,
   type ReasoningEffort,
 } from "@/lib/stores/settings-store";
-import { useT } from "@/lib/i18n";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -29,12 +28,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { m } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 
 const VERBOSITY_VALUES: Verbosity[] = ["concise", "normal", "detailed"];
 const EFFORT_VALUES: ReasoningEffort[] = ["low", "medium", "high", "max"];
 
 export function ChatParamsMenu() {
-  const t = useT();
   const {
     verbosity,
     reasoningEffort,
@@ -65,7 +65,7 @@ export function ChatParamsMenu() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors select-none"
-        title={t("chat_params.title")}
+        title={m.chat_params_title()}
         aria-expanded={open}
         aria-haspopup="true"
         type="button"
@@ -76,13 +76,13 @@ export function ChatParamsMenu() {
       {open && (
         <div className="absolute right-0 bottom-9 z-50 w-64 rounded-lg border border-border bg-background shadow-xl p-3 space-y-4 animate-in fade-in slide-in-from-bottom-2">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {t("chat_params.title")}
+            {m.chat_params_title()}
           </p>
 
           {/* Verbosidade */}
           <div className="grid gap-1.5">
             <Label htmlFor="cp-verbosity" className="text-xs">
-              {t("settings.chat.verbosity")}
+              {m.settings_chat_verbosity()}
             </Label>
             <Select
               value={verbosity}
@@ -94,7 +94,7 @@ export function ChatParamsMenu() {
               <SelectContent>
                 {VERBOSITY_VALUES.map((v) => (
                   <SelectItem key={v} value={v} className="text-xs">
-                    {t(`settings.chat.verbosity.${v}`)}
+                    {mDyn(`settings.chat.verbosity.${v}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -104,7 +104,7 @@ export function ChatParamsMenu() {
           {/* Esforço de raciocínio */}
           <div className="grid gap-1.5">
             <Label htmlFor="cp-effort" className="text-xs">
-              {t("effort.title")}
+              {m.effort_title()}
             </Label>
             <Select
               value={reasoningEffort}
@@ -117,7 +117,7 @@ export function ChatParamsMenu() {
               <SelectContent>
                 {EFFORT_VALUES.map((v) => (
                   <SelectItem key={v} value={v} className="text-xs">
-                    {t(`effort.${v}`)}
+                    {mDyn(`effort.${v}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -131,10 +131,10 @@ export function ChatParamsMenu() {
                 htmlFor="cp-fast-mode"
                 className="text-xs font-normal cursor-pointer"
               >
-                {t("effort.fast_mode")}
+                {m.effort_fast_mode()}
               </Label>
               <p className="text-xs text-muted-foreground leading-tight">
-                {t("effort.fast_mode_desc")}
+                {m.effort_fast_mode_desc()}
               </p>
             </div>
             <Switch
@@ -148,10 +148,10 @@ export function ChatParamsMenu() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="cp-history-limit" className="text-xs">
-                {t("prefs.history_limit")}
+                {m.prefs_history_limit()}
               </Label>
               <span className="text-xs text-muted-foreground tabular-nums">
-                {historyLimit} {t("prefs.history_limit_unit")}
+                {historyLimit} {m.prefs_history_limit_unit()}
               </span>
             </div>
             <Slider
@@ -171,7 +171,7 @@ export function ChatParamsMenu() {
               htmlFor="cp-show-tool-calls"
               className="text-xs font-normal cursor-pointer"
             >
-              {t("settings.chat.show_tool_calls")}
+              {m.settings_chat_show_tool_calls()}
             </Label>
             <Switch
               id="cp-show-tool-calls"

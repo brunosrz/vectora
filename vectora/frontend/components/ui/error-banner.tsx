@@ -15,8 +15,8 @@
 import { useState } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 
-import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { m } from "@/lib/paraglide/messages";
 
 interface ErrorBannerProps {
   /** Mensagem de erro a exibir (geralmente `store.error`). */
@@ -34,7 +34,6 @@ export function ErrorBanner({
   onRetry,
   className,
 }: ErrorBannerProps) {
-  const t = useT();
   const [retrying, setRetrying] = useState(false);
 
   async function handleRetry() {
@@ -57,7 +56,7 @@ export function ErrorBanner({
     >
       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="font-medium">{title ?? t("error_banner.title")}</p>
+        <p className="font-medium">{title ?? m.error_banner_title()}</p>
         <p className="mt-0.5 break-words text-destructive/80">{message}</p>
       </div>
       {onRetry && (
@@ -68,7 +67,7 @@ export function ErrorBanner({
           className="flex shrink-0 items-center gap-1.5 rounded-md border border-destructive/30 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-destructive/15 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <RefreshCw className={cn("h-3 w-3", retrying && "animate-spin")} />
-          {retrying ? t("error_banner.retrying") : t("error_banner.retry")}
+          {retrying ? m.error_banner_retrying() : m.error_banner_retry()}
         </button>
       )}
     </div>

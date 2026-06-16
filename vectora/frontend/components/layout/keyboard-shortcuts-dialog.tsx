@@ -14,8 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useT } from "@/lib/i18n";
 import { isMac } from "@/hooks/useKeyboardShortcuts";
+import { m } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 
 // ---------------------------------------------------------------------------
 // Static shortcut registry (espelha use-global-shortcuts.ts)
@@ -78,15 +79,13 @@ export function KeyboardShortcutsDialog({
   open,
   onOpenChange,
 }: KeyboardShortcutsDialogProps) {
-  const t = useT();
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">{t("shortcuts.title")}</DialogTitle>
+          <DialogTitle className="text-xl">{m.shortcuts_title()}</DialogTitle>
           <DialogDescription className="sr-only">
-            {t("shortcuts.title")}
+            {m.shortcuts_title()}
           </DialogDescription>
         </DialogHeader>
 
@@ -94,7 +93,7 @@ export function KeyboardShortcutsDialog({
           {SHORTCUT_CATEGORIES.map(({ labelKey, shortcuts }) => (
             <div key={labelKey}>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 pb-1.5 border-b border-border/50">
-                {t(labelKey)}
+                {mDyn(labelKey)}
               </h3>
               <div className="space-y-1.5">
                 {shortcuts.map(({ descKey, keys }) => (
@@ -103,7 +102,7 @@ export function KeyboardShortcutsDialog({
                     className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors border border-border/20"
                   >
                     <span className="text-sm text-foreground">
-                      {t(descKey)}
+                      {mDyn(descKey)}
                     </span>
                     <kbd className="inline-flex items-center rounded-md border border-border bg-card px-2.5 py-1 font-mono text-xs font-semibold text-foreground shadow-sm">
                       {formatKeys(keys)}

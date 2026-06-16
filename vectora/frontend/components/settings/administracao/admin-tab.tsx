@@ -35,8 +35,6 @@ import {
   type AdminSubTab,
 } from "@/lib/stores/administracao-dialog-store";
 
-import { useT } from "@/lib/i18n";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -54,6 +52,7 @@ import {
   getModelDisplayName,
   type ModelOption,
 } from "@/lib/config/deployment-config";
+import { m } from "@/lib/paraglide/messages";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -153,7 +152,6 @@ const api = {
 // ---------------------------------------------------------------------------
 
 function InvitesSection() {
-  const t = useT();
   const [invites, setInvites] = useState<PendingInvite[]>([]);
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState("member");
@@ -191,10 +189,10 @@ function InvitesSection() {
         setLink(data.url);
         await load();
       } else {
-        setError(t("invite.error_create"));
+        setError(m.invite_error_create());
       }
     } catch {
-      setError(t("invite.error_create"));
+      setError(m.invite_error_create());
     } finally {
       setCreating(false);
     }
@@ -217,7 +215,7 @@ function InvitesSection() {
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium flex items-center gap-1.5">
           <UserPlus className="w-3.5 h-3.5 text-muted-foreground" />
-          {t("invite.title")}
+          {m.invite_title()}
         </span>
         <Button
           variant="ghost"
@@ -229,7 +227,7 @@ function InvitesSection() {
             setError(null);
           }}
         >
-          {t("invite.title")}
+          {m.invite_title()}
         </Button>
       </div>
 
@@ -238,7 +236,7 @@ function InvitesSection() {
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground">
-                {t("invite.role_label")}
+                {m.invite_role_label()}
               </label>
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger className="h-7 text-xs">
@@ -253,7 +251,7 @@ function InvitesSection() {
             </div>
             <div className="space-y-1 col-span-1">
               <label className="text-[10px] text-muted-foreground">
-                {t("invite.ttl_label")}
+                {m.invite_ttl_label()}
               </label>
               <Input
                 type="number"
@@ -267,7 +265,7 @@ function InvitesSection() {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground">
-                {t("invite.email_label")}
+                {m.invite_email_label()}
               </label>
               <Input
                 type="email"
@@ -289,7 +287,7 @@ function InvitesSection() {
             {creating ? (
               <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
             ) : null}
-            {t("invite.create")}
+            {m.invite_create()}
           </Button>
 
           {error && <p className="text-xs text-destructive">{error}</p>}
@@ -319,10 +317,10 @@ function InvitesSection() {
       {/* Convites pendentes */}
       <div className="space-y-1">
         <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-          {t("invite.pending")}
+          {m.invite_pending()}
         </p>
         {invites.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{t("invite.none")}</p>
+          <p className="text-xs text-muted-foreground">{m.invite_none()}</p>
         ) : (
           invites.map((inv) => (
             <div
@@ -333,7 +331,7 @@ function InvitesSection() {
                 {inv.role}
               </Badge>
               <span className="flex-1 truncate text-muted-foreground">
-                {inv.email || "—"} · {t("invite.expires")}{" "}
+                {inv.email || "—"} · {m.invite_expires()}{" "}
                 {new Date(inv.expires_at).toLocaleString("pt-BR")}
               </span>
               <Button
@@ -341,7 +339,7 @@ function InvitesSection() {
                 size="sm"
                 className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                 onClick={() => void handleRevoke(inv.token_hash)}
-                title={t("invite.revoke")}
+                title={m.invite_revoke()}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
@@ -354,7 +352,6 @@ function InvitesSection() {
 }
 
 function UserToolsRow({ userId }: { userId: string }) {
-  const t = useT();
   const [available, setAvailable] = useState<string[]>([]);
   const [disabled, setDisabled] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -428,7 +425,7 @@ function UserToolsRow({ userId }: { userId: string }) {
       <div className="flex items-center justify-end gap-2">
         {saved && (
           <span className="text-[10px] text-green-500">
-            {t("toolpolicy.saved")}
+            {m.toolpolicy_saved()}
           </span>
         )}
         <Button
@@ -438,7 +435,7 @@ function UserToolsRow({ userId }: { userId: string }) {
           disabled={saving}
         >
           {saving && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
-          {t("toolpolicy.save")}
+          {m.toolpolicy_save()}
         </Button>
       </div>
     </div>
@@ -1087,11 +1084,10 @@ interface StorageHealth {
 }
 
 function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
-  const t = useT();
   if (status.ok === null || status.ok === undefined) {
     return (
       <span className="text-xs text-muted-foreground">
-        {t("admin.storage.not_configured")}
+        {m.admin_storage_not_configured()}
       </span>
     );
   }
@@ -1102,14 +1098,14 @@ function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
       return (
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <HardDrive className="w-3.5 h-3.5" />
-          {t("admin.storage.local")}
+          {m.admin_storage_local()}
         </span>
       );
     }
     return (
       <span className="flex items-center gap-1 text-xs text-destructive">
         <XCircle className="w-3.5 h-3.5" />
-        {status.error ?? t("admin.storage.error")}
+        {status.error ?? m.admin_storage_error()}
       </span>
     );
   }
@@ -1117,7 +1113,7 @@ function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
     return (
       <span className="flex items-center gap-1 text-xs text-green-600">
         <CheckCircle2 className="w-3.5 h-3.5" />
-        {t("admin.storage.connected")}
+        {m.admin_storage_connected()}
         {status.latency_ms !== undefined && (
           <span className="text-muted-foreground">({status.latency_ms}ms)</span>
         )}
@@ -1127,7 +1123,7 @@ function StorageStatusBadge({ status }: { status: StorageBackendStatus }) {
   return (
     <span className="flex items-center gap-1 text-xs text-destructive">
       <XCircle className="w-3.5 h-3.5" />
-      {status.error ?? t("admin.storage.error")}
+      {status.error ?? m.admin_storage_error()}
     </span>
   );
 }

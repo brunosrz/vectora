@@ -53,8 +53,7 @@ import {
   SetupWizard,
   isOnboardingDone,
 } from "@/components/onboarding/setup-wizard";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 export const Route = createFileRoute("/session/$threadId")({
   // Prefetch em paralelo: lista de threads (sidebar) + histórico da thread ativa.
   // O histórico fica em cache no queryClient com chave ['thread-history', id]
@@ -78,8 +77,6 @@ export const Route = createFileRoute("/session/$threadId")({
 function SessionPage() {
   const { threadId } = Route.useParams() as { threadId: string };
   const navigate = useNavigate();
-  const t = useT();
-
   const userId = useAuthStore((s) => s.user?.id);
   const pushMention = useChatInputStore((s) => s.pushMention);
 
@@ -261,36 +258,36 @@ function SessionPage() {
     () => [
       {
         id: "new-chat",
-        label: t("palette.cmd.new_chat"),
-        category: t("palette.cat.navigation"),
+        label: m.palette_cmd_new_chat(),
+        category: m.palette_cat_navigation(),
         shortcut: "Ctrl+T",
         run: () => void handleConfirmNewChat(null),
       },
       {
         id: "settings",
-        label: t("palette.cmd.settings"),
-        category: t("palette.cat.navigation"),
+        label: m.palette_cmd_settings(),
+        category: m.palette_cat_navigation(),
         shortcut: "Ctrl+,",
         run: () => usePreferenciasDialogStore.getState().openAt("conta"),
       },
       {
         id: "keyboard-shortcuts",
-        label: t("palette.cmd.keyboard_shortcuts"),
-        category: t("palette.cat.navigation"),
+        label: m.palette_cmd_keyboard_shortcuts(),
+        category: m.palette_cat_navigation(),
         shortcut: "Ctrl+?",
         run: () => setShowShortcutsDialog(true),
       },
       {
         id: "toggle-workbench",
-        label: t("palette.cmd.toggle_workbench"),
-        category: t("palette.cat.workbench"),
+        label: m.palette_cmd_toggle_workbench(),
+        category: m.palette_cat_workbench(),
         shortcut: "Ctrl+\\",
         run: () => useWorkbenchStore.getState().togglePanel(threadId),
       },
       {
         id: "clear-messages",
-        label: t("palette.cmd.clear_messages"),
-        category: t("palette.cat.chat"),
+        label: m.palette_cmd_clear_messages(),
+        category: m.palette_cat_chat(),
         shortcut: "Ctrl+L",
         run: () => {
           // Disparado pelo atalho Ctrl+L — o chat-interface escuta esse evento.
@@ -299,7 +296,7 @@ function SessionPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t, threadId],
+    [threadId],
   );
 
   // ── Sidebar (instância única reutilizada em desktop e mobile Sheet) ───────

@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import { useT } from "@/lib/i18n";
 import type { DiffHunk } from "@/lib/stores/workbench-store";
 import {
   apiCompare,
@@ -29,6 +28,7 @@ import {
   type CompareResult,
 } from "./api";
 import { HunkView, statusTone } from "./shared";
+import { m } from "@/lib/paraglide/messages";
 
 function CompareFileRow({
   workspaceId,
@@ -101,7 +101,6 @@ export function CompareView({
   onChanged: () => void;
   onOpenPR: (head: string) => void;
 }) {
-  const t = useT();
   const [baseRef, setBaseRef] = useState(current);
   const [head, setHead] = useState(
     branches.find((b) => b !== current) ?? current,
@@ -134,11 +133,11 @@ export function CompareView({
     try {
       const r = await apiMerge(workspaceId, head);
       if (r.status === "ok") {
-        setMergeMsg(t("workbench.git.merge_ok"));
+        setMergeMsg(m.workbench_git_merge_ok());
         onChanged();
         void runCompare();
       } else if (r.status === "conflict") {
-        setMergeMsg(t("workbench.git.merge_conflict"));
+        setMergeMsg(m.workbench_git_merge_conflict());
         setConflicts(r.conflicts);
       } else {
         setMergeMsg(r.message);
@@ -146,7 +145,7 @@ export function CompareView({
     } finally {
       setMerging(false);
     }
-  }, [workspaceId, head, t, onChanged, runCompare]);
+  }, [workspaceId, head, onChanged, runCompare]);
 
   const resolve = useCallback(
     async (path: string, resolution: "ours" | "theirs") => {
@@ -162,7 +161,7 @@ export function CompareView({
       <div className="px-2 py-1.5 border-b border-border/60 bg-muted/10 flex items-center gap-1.5">
         <button
           onClick={onBack}
-          title={t("workbench.git.back")}
+          title={m.workbench_git_back()}
           className="p-1 rounded hover:bg-muted/40 text-muted-foreground hover:text-foreground shrink-0"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -171,7 +170,7 @@ export function CompareView({
           value={baseRef}
           onChange={(e) => setBaseRef(e.target.value)}
           className="flex-1 min-w-0 text-xs font-mono bg-background border border-border/60 rounded px-1.5 py-0.5 outline-none focus:border-primary"
-          aria-label={t("workbench.git.compare_base")}
+          aria-label={m.workbench_git_compare_base()}
         >
           {branches.map((b) => (
             <option key={b} value={b}>
@@ -184,7 +183,7 @@ export function CompareView({
           value={head}
           onChange={(e) => setHead(e.target.value)}
           className="flex-1 min-w-0 text-xs font-mono bg-background border border-border/60 rounded px-1.5 py-0.5 outline-none focus:border-primary"
-          aria-label={t("workbench.git.compare_head")}
+          aria-label={m.workbench_git_compare_head()}
         >
           {branches.map((b) => (
             <option key={b} value={b}>
@@ -202,12 +201,12 @@ export function CompareView({
           </div>
         ) : !result || result.files.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-8 px-4">
-            {t("workbench.git.compare_no_files")}
+            {m.workbench_git_compare_no_files()}
           </p>
         ) : (
           <>
             <div className="px-2 py-1 text-[10px] text-muted-foreground border-b border-border/40">
-              {t("workbench.git.compare_summary", {
+              {m.workbench_git_compare_summary({
                 ahead: result.ahead,
                 behind: result.behind,
               })}
@@ -244,13 +243,13 @@ export function CompareView({
                   onClick={() => void resolve(path, "ours")}
                   className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
                 >
-                  {t("workbench.diff.conflicts_ours")}
+                  {m.workbench_diff_conflicts_ours()}
                 </button>
                 <button
                   onClick={() => void resolve(path, "theirs")}
                   className="text-[10px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
                 >
-                  {t("workbench.diff.conflicts_theirs")}
+                  {m.workbench_diff_conflicts_theirs()}
                 </button>
               </div>
             </div>
@@ -274,13 +273,13 @@ export function CompareView({
             ) : (
               <GitMerge className="w-3 h-3" />
             )}
-            {t("workbench.git.merge_into", { branch: current })}
+            {m.workbench_git_merge_into({ branch: current })}
           </button>
           <button
             onClick={() => onOpenPR(head)}
             className="py-1 px-2 text-xs rounded-md bg-primary/10 text-primary hover:bg-primary/20"
           >
-            {t("workbench.git.pr_create")}
+            {m.workbench_git_pr_create()}
           </button>
         </div>
       </div>

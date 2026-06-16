@@ -25,8 +25,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useT } from "@/lib/i18n";
-
+import { m as msg } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 // ---------------------------------------------------------------------------
 // Tipos
 // ---------------------------------------------------------------------------
@@ -96,8 +96,6 @@ async function createMemory(key: string, content: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export function MemoriaTab() {
-  const t = useT();
-
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -127,11 +125,11 @@ export function MemoriaTab() {
       setMemories(data.memories);
       setTotal(data.total);
     } catch {
-      setError(t("memory.error_load"));
+      setError(msg.memory_error_load());
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -154,7 +152,7 @@ export function MemoriaTab() {
       );
       setEditingKey(null);
     } catch {
-      setError(t("memory.error_save"));
+      setError(msg.memory_error_save());
     } finally {
       setSaving(false);
     }
@@ -167,7 +165,7 @@ export function MemoriaTab() {
       setMemories((prev) => prev.filter((m) => m.key !== key));
       setTotal((prev) => prev - 1);
     } catch {
-      setError(t("memory.error_delete"));
+      setError(msg.memory_error_delete());
     } finally {
       setDeletingKey(null);
     }
@@ -188,7 +186,7 @@ export function MemoriaTab() {
       setNewKey("");
       setNewContent("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("memory.error_create"));
+      setError(err instanceof Error ? err.message : msg.memory_error_create());
     } finally {
       setAdding(false);
     }
@@ -202,7 +200,7 @@ export function MemoriaTab() {
       setTotal(0);
       setClearConfirmOpen(false);
     } catch {
-      setError(t("memory.error_clear"));
+      setError(msg.memory_error_clear());
     } finally {
       setClearing(false);
     }
@@ -222,8 +220,10 @@ export function MemoriaTab() {
 
   const headerTitle =
     total > 0
-      ? t(total === 1 ? "memory.count_one" : "memory.count_many", { n: total })
-      : t("memory.empty_title");
+      ? mDyn(total === 1 ? "memory.count_one" : "memory.count_many", {
+          n: total,
+        })
+      : msg.memory_empty_title();
 
   return (
     <div className="space-y-4">
@@ -232,13 +232,13 @@ export function MemoriaTab() {
         <div className="space-y-0.5">
           <p className="text-sm font-medium">{headerTitle}</p>
           <p className="text-xs text-muted-foreground">
-            {t("memory.subtitle")}
+            {msg.memory_subtitle()}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
             <Plus className="w-3.5 h-3.5 mr-1.5" />
-            {t("memory.add")}
+            {msg.memory_add()}
           </Button>
           {memories.length > 0 && (
             <Button
@@ -248,7 +248,7 @@ export function MemoriaTab() {
               onClick={() => setClearConfirmOpen(true)}
             >
               <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-              {t("memory.clear_all")}
+              {msg.memory_clear_all()}
             </Button>
           )}
         </div>
@@ -266,10 +266,10 @@ export function MemoriaTab() {
         <div className="flex flex-col items-center justify-center py-10 text-center space-y-3">
           <Brain className="w-10 h-10 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">
-            {t("memory.empty_hint")}
+            {msg.memory_empty_hint()}
           </p>
           <p className="text-xs text-muted-foreground/70 max-w-[260px]">
-            {t("memory.empty_hint2")}
+            {msg.memory_empty_hint2()}
           </p>
         </div>
       )}
@@ -312,7 +312,7 @@ export function MemoriaTab() {
                     {saving && (
                       <Loader2 className="w-3 h-3 animate-spin mr-1" />
                     )}
-                    {t("memory.save")}
+                    {msg.memory_save()}
                   </Button>
                   <Button
                     size="sm"
@@ -321,7 +321,7 @@ export function MemoriaTab() {
                     disabled={saving}
                     className="h-7 text-xs"
                   >
-                    {t("memory.cancel")}
+                    {msg.memory_cancel()}
                   </Button>
                 </div>
               </div>
@@ -341,7 +341,7 @@ export function MemoriaTab() {
                   onClick={() => handleEditStart(mem)}
                 >
                   <Edit2 className="w-3 h-3 mr-1" />
-                  {t("memory.edit")}
+                  {msg.memory_edit()}
                 </Button>
                 <Button
                   variant="ghost"
@@ -355,7 +355,7 @@ export function MemoriaTab() {
                   ) : (
                     <Trash2 className="w-3 h-3 mr-1" />
                   )}
-                  {t("memory.delete")}
+                  {msg.memory_delete()}
                 </Button>
               </div>
             )}
@@ -377,16 +377,16 @@ export function MemoriaTab() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("memory.add_title")}</DialogTitle>
-            <DialogDescription>{t("memory.add_desc")}</DialogDescription>
+            <DialogTitle>{msg.memory_add_title()}</DialogTitle>
+            <DialogDescription>{msg.memory_add_desc()}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-1">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
-                {t("memory.add_content_label")}
+                {msg.memory_add_content_label()}
               </label>
               <Textarea
-                placeholder={t("memory.add_content_placeholder")}
+                placeholder={msg.memory_add_content_placeholder()}
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 className="text-sm min-h-[100px] resize-none"
@@ -395,10 +395,10 @@ export function MemoriaTab() {
             </div>
             <details className="text-xs text-muted-foreground">
               <summary className="cursor-pointer select-none hover:text-foreground">
-                {t("memory.add_key_label")}
+                {msg.memory_add_key_label()}
               </summary>
               <Input
-                placeholder={t("memory.add_key_placeholder")}
+                placeholder={msg.memory_add_key_placeholder()}
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
                 autoComplete="off"
@@ -413,14 +413,14 @@ export function MemoriaTab() {
               onClick={() => setAddOpen(false)}
               disabled={adding}
             >
-              {t("memory.cancel")}
+              {msg.memory_cancel()}
             </Button>
             <Button
               onClick={handleAddMemory}
               disabled={adding || !newContent.trim()}
             >
               {adding && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {t("memory.save")}
+              {msg.memory_save()}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -430,8 +430,8 @@ export function MemoriaTab() {
       <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("memory.clear_title")}</DialogTitle>
-            <DialogDescription>{t("memory.clear_desc")}</DialogDescription>
+            <DialogTitle>{msg.memory_clear_title()}</DialogTitle>
+            <DialogDescription>{msg.memory_clear_desc()}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
@@ -439,7 +439,7 @@ export function MemoriaTab() {
               onClick={() => setClearConfirmOpen(false)}
               disabled={clearing}
             >
-              {t("memory.cancel")}
+              {msg.memory_cancel()}
             </Button>
             <Button
               variant="destructive"
@@ -447,7 +447,7 @@ export function MemoriaTab() {
               disabled={clearing}
             >
               {clearing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {t("memory.clear_all")}
+              {msg.memory_clear_all()}
             </Button>
           </DialogFooter>
         </DialogContent>

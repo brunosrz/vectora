@@ -16,9 +16,9 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Clock, ShieldAlert, X } from "lucide-react";
 
-import { useT } from "@/lib/i18n";
 import { useLicenseStatus } from "@/lib/hooks/use-license-status";
 import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
+import { m } from "@/lib/paraglide/messages";
 
 interface LicenseBannerProps {
   /** Se true, banner ocupa toda a largura abaixo do header. */
@@ -42,13 +42,12 @@ export function LicenseBanner({
   fullWidth = true,
   onBlockingChange,
 }: LicenseBannerProps) {
-  const t = useT();
   const { status } = useLicenseStatus();
   const openAdmin = useAdministracaoDialogStore((s) => s.openAt);
   const [dismissed, setDismissed] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
-  const spec = computeSpec(status, t);
+  const spec = computeSpec(status);
 
   useEffect(() => {
     onBlockingChange?.(spec.severity === "critical");
@@ -101,7 +100,7 @@ export function LicenseBanner({
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          aria-label={t("license.dismiss")}
+          aria-label={m.license_dismiss()}
           className="ml-1 p-0.5 rounded hover:bg-current/10"
         >
           <X className="w-3.5 h-3.5" />
@@ -141,7 +140,6 @@ function openUrl(url: string): Promise<void> {
 
 function computeSpec(
   status: ReturnType<typeof useLicenseStatus>["status"],
-  t: ReturnType<typeof useT>,
 ): BannerSpec {
   if (!status || status.status === "offline") {
     return { severity: null, icon: AlertTriangle, message: "", cta: null };
@@ -150,24 +148,24 @@ function computeSpec(
     return {
       severity: "danger",
       icon: AlertTriangle,
-      message: t("license.banner.unconfigured"),
-      cta: { label: t("license.banner.configure"), action: "configure" },
+      message: m.license_banner_unconfigured(),
+      cta: { label: m.license_banner_configure(), action: "configure" },
     };
   }
   if (status.status === "expired" || status.status === "revoked") {
     return {
       severity: "critical",
       icon: ShieldAlert,
-      message: t("license.banner.expired"),
-      cta: { label: t("license.banner.renew"), action: "portal" },
+      message: m.license_banner_expired(),
+      cta: { label: m.license_banner_renew(), action: "portal" },
     };
   }
   if (status.status === "past_due") {
     return {
       severity: "danger",
       icon: AlertTriangle,
-      message: t("license.banner.past_due"),
-      cta: { label: t("license.banner.manage"), action: "portal" },
+      message: m.license_banner_past_due(),
+      cta: { label: m.license_banner_manage(), action: "portal" },
     };
   }
   if (
@@ -177,10 +175,10 @@ function computeSpec(
     return {
       severity: "warning",
       icon: Clock,
-      message: t("license.banner.trial_ending", {
+      message: m.license_banner_trial_ending({
         n: status.days_remaining,
       }),
-      cta: { label: t("license.banner.subscribe"), action: "portal" },
+      cta: { label: m.license_banner_subscribe(), action: "portal" },
     };
   }
   return { severity: null, icon: AlertTriangle, message: "", cta: null };

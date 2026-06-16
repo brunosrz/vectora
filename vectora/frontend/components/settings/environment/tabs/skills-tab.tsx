@@ -20,8 +20,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 interface Skill {
   id: string;
   name: string;
@@ -35,7 +34,6 @@ interface Skill {
 type VerifyState = { state: "idle" | "loading" | "ok" | "error"; msg: string };
 
 export function SkillsTab() {
-  const t = useT();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState("");
@@ -50,11 +48,11 @@ export function SkillsTab() {
       const data = await res.json();
       setSkills(Array.isArray(data.skills) ? data.skills : []);
     } catch {
-      setError(t("skills.error_load"));
+      setError(m.skills_error_load());
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void refresh();
@@ -72,20 +70,20 @@ export function SkillsTab() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.detail || t("skills.error_install"));
+        setError(data.detail || m.skills_error_install());
         return;
       }
       setSource("");
       await refresh();
     } catch {
-      setError(t("skills.error_install"));
+      setError(m.skills_error_install());
     } finally {
       setInstalling(false);
     }
   }
 
   async function handleRemove(id: string) {
-    if (!confirm(t("skills.confirm_remove"))) return;
+    if (!confirm(m.skills_confirm_remove())) return;
     await fetch(`/skills/${encodeURIComponent(id)}`, { method: "DELETE" });
     await refresh();
   }
@@ -101,13 +99,13 @@ export function SkillsTab() {
         ...v,
         [id]: {
           state: data.ok ? "ok" : "error",
-          msg: data.ok ? t("skills.verify_ok") : (data.error ?? ""),
+          msg: data.ok ? m.skills_verify_ok() : (data.error ?? ""),
         },
       }));
     } catch {
       setVerify((v) => ({
         ...v,
-        [id]: { state: "error", msg: t("skills.error_verify") },
+        [id]: { state: "error", msg: m.skills_error_verify() },
       }));
     }
   }
@@ -117,22 +115,22 @@ export function SkillsTab() {
       <div>
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Sparkles className="w-4 h-4" />
-          {t("skills.title")}
+          {m.skills_title()}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          {t("skills.description")}
+          {m.skills_description()}
         </p>
       </div>
 
       <div className="space-y-2 rounded-md border border-border/60 p-3">
         <label className="text-xs text-muted-foreground">
-          {t("skills.install_label")}
+          {m.skills_install_label()}
         </label>
         <div className="flex items-center gap-1.5">
           <Input
             value={source}
             onChange={(e) => setSource(e.target.value)}
-            placeholder={t("skills.install_placeholder")}
+            placeholder={m.skills_install_placeholder()}
             className="h-8 text-xs font-mono"
             autoComplete="off"
             spellCheck={false}
@@ -159,11 +157,11 @@ export function SkillsTab() {
       {loading ? (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          {t("skills.loading")}
+          {m.skills_loading()}
         </div>
       ) : skills.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">
-          {t("skills.empty")}
+          {m.skills_empty()}
         </p>
       ) : (
         <div className="divide-y divide-border/60 rounded-md border border-border/60">
@@ -198,7 +196,7 @@ export function SkillsTab() {
                       ) : v?.state === "error" ? (
                         <XCircle className="w-3 h-3 text-destructive" />
                       ) : (
-                        t("skills.verify")
+                        m.skills_verify()
                       )}
                     </Button>
                     <Button

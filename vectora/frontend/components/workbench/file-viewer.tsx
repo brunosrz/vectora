@@ -9,8 +9,8 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useT } from "@/lib/i18n";
 import { MarkdownView } from "@/components/workbench/markdown-view";
+import { m } from "@/lib/paraglide/messages";
 
 /** Verdadeiro para arquivos markdown (render GitHub no viewer). */
 function isMarkdown(path: string): boolean {
@@ -126,7 +126,6 @@ export function FileViewer({
   workspaceId: string;
   path: string;
 }) {
-  const t = useT();
   const media = getMediaKind(path);
   const [text, setText] = useState<RawText | null>(null);
   const [loading, setLoading] = useState(false);
@@ -167,13 +166,13 @@ export function FileViewer({
   if (text?.kind === "binary") {
     return (
       <div className="p-3 text-xs text-muted-foreground">
-        {t("workbench.files.binary", { size: text.size })}{" "}
+        {m.workbench_files_binary({ size: text.size })}{" "}
         <a
           href={rawFileUrl(workspaceId, path)}
           download
           className="text-primary hover:underline"
         >
-          {t("workbench.files.download")}
+          {m.workbench_files_download()}
         </a>
       </div>
     );
@@ -184,7 +183,7 @@ export function FileViewer({
         <MarkdownView content={text.content} />
         {text.truncated && (
           <p className="px-4 pb-2 text-[10px] text-muted-foreground">
-            {t("workbench.files.read_only_truncated")}
+            {m.workbench_files_read_only_truncated()}
           </p>
         )}
       </div>
@@ -198,7 +197,7 @@ export function FileViewer({
       </pre>
       {text?.truncated && (
         <p className="text-[10px] text-muted-foreground mt-2">
-          {t("workbench.files.read_only_truncated")}
+          {m.workbench_files_read_only_truncated()}
         </p>
       )}
     </div>

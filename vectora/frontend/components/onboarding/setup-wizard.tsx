@@ -31,8 +31,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 const TOTAL_STEPS = 7;
 
 const ONBOARDING_KEY = (userId: string) => `vectora:onboarding-done-${userId}`;
@@ -63,7 +63,6 @@ interface StepProps {
 // ===========================================================================
 
 function StepWelcome(_props: StepProps) {
-  const t = useT();
   return (
     <div className="flex flex-col items-center gap-4 py-4">
       <Image
@@ -74,7 +73,7 @@ function StepWelcome(_props: StepProps) {
         className="h-16 w-16"
       />
       <p className="text-sm text-muted-foreground text-center max-w-xs">
-        {t("onboarding.welcome_body")}
+        {m.onboarding_welcome_body()}
       </p>
     </div>
   );
@@ -87,7 +86,6 @@ const LANGUAGES: { code: Lang; label: string }[] = [
 ];
 
 function StepLanguage(_props: StepProps) {
-  const t = useT();
   const lang = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const theme = useSettingsStore((s) => s.theme);
@@ -97,7 +95,7 @@ function StepLanguage(_props: StepProps) {
     <div className="space-y-4 py-2">
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-2">
-          {t("onboarding.language_label")}
+          {m.onboarding_language_label()}
         </p>
         <div className="flex gap-2">
           {LANGUAGES.map((l) => (
@@ -117,7 +115,7 @@ function StepLanguage(_props: StepProps) {
       </div>
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-2">
-          {t("onboarding.theme_label")}
+          {m.onboarding_theme_label()}
         </p>
         <div className="flex gap-2">
           {(["dark", "light", "system"] as const).map((th) => (
@@ -167,12 +165,11 @@ const segmentClass = (active: boolean) =>
 
 /** Badge compacto com o resultado da validação da licença. */
 function LicenseResultBadge({ result }: { result: LicenseResult }) {
-  const t = useT();
   if (result.valid) {
     return (
       <p className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
         <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-        {t("onboarding.token_valid")}
+        {m.onboarding_token_valid()}
         {result.tier ? ` — ${result.tier}` : ""}
         {result.status === "trial" && result.days_remaining
           ? ` (trial, ${result.days_remaining}d)`
@@ -183,13 +180,12 @@ function LicenseResultBadge({ result }: { result: LicenseResult }) {
   return (
     <p className="flex items-center gap-1.5 text-xs text-destructive">
       <XCircle className="w-3.5 h-3.5 shrink-0" />
-      {result.error || t("onboarding.token_invalid")}
+      {result.error || m.onboarding_token_invalid()}
     </p>
   );
 }
 
 function StepToken(_props: StepProps) {
-  const t = useT();
   const [mode, setMode] = useState<"token" | "login">("token");
   const [config, setConfig] = useState<ConfigSummary | null>(null);
   const [result, setResult] = useState<LicenseResult | null>(null);
@@ -230,7 +226,7 @@ function StepToken(_props: StepProps) {
       }).then((r) => r.json())) as LicenseResult;
       setResult(validation);
     } catch {
-      setResult({ valid: false, error: t("onboarding.token_invalid") });
+      setResult({ valid: false, error: m.onboarding_token_invalid() });
     } finally {
       setSaving(false);
     }
@@ -239,7 +235,7 @@ function StepToken(_props: StepProps) {
   return (
     <div className="space-y-3 py-2">
       <p className="text-sm text-muted-foreground">
-        {t("onboarding.token_body")}
+        {m.onboarding_token_body()}
       </p>
 
       {/* Seletor: colar token OU entrar com a conta vectora.company */}
@@ -249,20 +245,20 @@ function StepToken(_props: StepProps) {
           className={segmentClass(mode === "token")}
           onClick={() => setMode("token")}
         >
-          {t("onboarding.token_mode_token")}
+          {m.onboarding_token_mode_token()}
         </button>
         <button
           type="button"
           className={segmentClass(mode === "login")}
           onClick={() => setMode("login")}
         >
-          {t("onboarding.token_mode_login")}
+          {m.onboarding_token_mode_login()}
         </button>
       </div>
 
       {config?.vectora_token_configured && (
         <p className="text-xs text-muted-foreground font-mono">
-          {t("onboarding.token_configured")}: {config.vectora_token_masked}
+          {m.onboarding_token_configured()}: {config.vectora_token_masked}
         </p>
       )}
 
@@ -285,8 +281,8 @@ function StepToken(_props: StepProps) {
               onClick={() => setShowToken((v) => !v)}
             >
               {showToken
-                ? t("onboarding.token_hide")
-                : t("onboarding.token_show")}
+                ? m.onboarding_token_hide()
+                : m.onboarding_token_show()}
             </Button>
           </div>
           <div className="flex items-center gap-2">
@@ -299,11 +295,11 @@ function StepToken(_props: StepProps) {
               {saving ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
               ) : null}
-              {t("onboarding.token_save")}
+              {m.onboarding_token_save()}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            {t("onboarding.token_hint")}{" "}
+            {m.onboarding_token_hint()}{" "}
             <a
               href="https://vectora.company/dashboard"
               target="_blank"
@@ -317,7 +313,7 @@ function StepToken(_props: StepProps) {
       ) : (
         <>
           <p className="text-xs text-muted-foreground">
-            {t("onboarding.token_login_hint")}
+            {m.onboarding_token_login_hint()}
           </p>
           <a
             href="https://vectora.company/dashboard"
@@ -329,7 +325,7 @@ function StepToken(_props: StepProps) {
             <ExternalLink className="w-3 h-3" />
           </a>
           <p className="text-xs text-muted-foreground">
-            {t("onboarding.token_login_copy_hint")}
+            {m.onboarding_token_login_copy_hint()}
           </p>
         </>
       )}
@@ -390,7 +386,6 @@ function ServiceConnectionCard({
   config: ServiceFieldConfig;
   onConnectedChange?: (service: string, ok: boolean) => void;
 }) {
-  const t = useT();
   const [value, setValue] = useState("");
   const [selfHosted, setSelfHosted] = useState(false);
   const [startCommand, setStartCommand] = useState("");
@@ -468,14 +463,14 @@ function ServiceConnectionCard({
       />
       <label className="flex items-center gap-2 text-xs text-muted-foreground">
         <Switch checked={selfHosted} onCheckedChange={setSelfHosted} />
-        {t("onboarding.mode_self_hosted")}
+        {m.onboarding_mode_self_hosted()}
       </label>
       {selfHosted && (
         <Input
           value={startCommand}
           onChange={(e) => setStartCommand(e.target.value)}
           autoComplete="off"
-          placeholder={t("onboarding.mode_start_command_placeholder")}
+          placeholder={m.onboarding_mode_start_command_placeholder()}
           className="h-7 text-xs font-mono"
         />
       )}
@@ -490,7 +485,7 @@ function ServiceConnectionCard({
           {testing ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            t("onboarding.mode_test")
+            m.onboarding_mode_test()
           )}
         </Button>
         <Button
@@ -502,9 +497,9 @@ function ServiceConnectionCard({
           {saving ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : saved ? (
-            t("onboarding.token_saved")
+            m.onboarding_token_saved()
           ) : (
-            t("onboarding.mode_save")
+            m.onboarding_mode_save()
           )}
         </Button>
       </div>
@@ -535,7 +530,6 @@ function ServiceConnectionCard({
 }
 
 function StepMode({ onValidityChange }: StepProps) {
-  const t = useT();
   const [mode, setMode] = useState<"lite" | "complete">("lite");
   const [saving, setSaving] = useState(false);
   const [connected, setConnected] = useState<Record<string, boolean>>({});
@@ -632,7 +626,7 @@ function StepMode({ onValidityChange }: StepProps) {
   return (
     <div className="space-y-3 py-2">
       <p className="text-sm text-muted-foreground">
-        {t("onboarding.mode_body")}
+        {m.onboarding_mode_body()}
       </p>
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -644,9 +638,9 @@ function StepMode({ onValidityChange }: StepProps) {
           }`}
         >
           <p className="text-xs font-medium">
-            {t("onboarding.mode_lite_title")}
+            {m.onboarding_mode_lite_title()}
           </p>
-          <p className="text-[11px] mt-1">{t("onboarding.mode_lite_desc")}</p>
+          <p className="text-[11px] mt-1">{m.onboarding_mode_lite_desc()}</p>
         </button>
         <button
           onClick={() => handleSelect("complete")}
@@ -657,10 +651,10 @@ function StepMode({ onValidityChange }: StepProps) {
           }`}
         >
           <p className="text-xs font-medium">
-            {t("onboarding.mode_complete_title")}
+            {m.onboarding_mode_complete_title()}
           </p>
           <p className="text-[11px] mt-1">
-            {t("onboarding.mode_complete_desc")}
+            {m.onboarding_mode_complete_desc()}
           </p>
         </button>
       </div>
@@ -679,12 +673,12 @@ function StepMode({ onValidityChange }: StepProps) {
                 {preconfiguredTests[cfg.service] === undefined ? (
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    {t("onboarding.mode_testing")}
+                    {m.onboarding_mode_testing()}
                   </span>
                 ) : preconfiguredTests[cfg.service]?.ok ? (
                   <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    {t("onboarding.mode_already_configured")}
+                    {m.onboarding_mode_already_configured()}
                     {preconfiguredTests[cfg.service]?.latency_ms !==
                       undefined && (
                       <span className="text-muted-foreground">
@@ -709,7 +703,7 @@ function StepMode({ onValidityChange }: StepProps) {
           (f) => preconfigured[f.service] || connected[f.service],
         ) && (
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            {t("onboarding.mode_validation_warning")}
+            {m.onboarding_mode_validation_warning()}
           </p>
         )}
     </div>
@@ -717,35 +711,32 @@ function StepMode({ onValidityChange }: StepProps) {
 }
 
 function StepWorkspace(_props: StepProps) {
-  const t = useT();
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
-      <p>{t("onboarding.workspace_body")}</p>
+      <p>{m.onboarding_workspace_body()}</p>
       <ul className="list-disc list-inside space-y-1 text-xs">
-        <li>{t("onboarding.workspace_bullet_1")}</li>
-        <li>{t("onboarding.workspace_bullet_2")}</li>
-        <li>{t("onboarding.workspace_bullet_3")}</li>
+        <li>{m.onboarding_workspace_bullet_1()}</li>
+        <li>{m.onboarding_workspace_bullet_2()}</li>
+        <li>{m.onboarding_workspace_bullet_3()}</li>
       </ul>
     </div>
   );
 }
 
 function StepRag(_props: StepProps) {
-  const t = useT();
   return (
     <div className="space-y-3 py-2 text-sm text-muted-foreground">
-      <p>{t("onboarding.rag_body")}</p>
+      <p>{m.onboarding_rag_body()}</p>
     </div>
   );
 }
 
 function StepDone(_props: StepProps) {
-  const t = useT();
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center">
       <span className="text-4xl">🎉</span>
       <p className="text-sm text-muted-foreground max-w-xs">
-        {t("onboarding.done_body")}
+        {m.onboarding_done_body()}
       </p>
     </div>
   );
@@ -807,7 +798,6 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
 // ===========================================================================
 
 export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
-  const t = useT();
   const [step, setStep] = useState(0);
   const [valid, setValid] = useState(true);
 
@@ -844,7 +834,7 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>{t(STEP_TITLE_KEYS[step]!)}</DialogTitle>
+          <DialogTitle>{mDyn(STEP_TITLE_KEYS[step]!)}</DialogTitle>
           <DialogDescription className="sr-only">
             {step + 1} / {TOTAL_STEPS}
           </DialogDescription>
@@ -862,7 +852,7 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
             disabled={isFirstStep}
             className={`text-xs ${isFirstStep ? "invisible" : ""}`}
           >
-            {t("onboarding.back")}
+            {m.onboarding_back()}
           </Button>
 
           <div className="flex items-center gap-2">
@@ -873,11 +863,11 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
                 onClick={handleSkip}
                 className="text-xs"
               >
-                {t("onboarding.skip")}
+                {m.onboarding_skip()}
               </Button>
             )}
             <Button size="sm" onClick={handleNext} disabled={!valid} autoFocus>
-              {isLastStep ? t("onboarding.finish") : t("onboarding.next")}
+              {isLastStep ? m.onboarding_finish() : m.onboarding_next()}
             </Button>
           </div>
         </DialogFooter>

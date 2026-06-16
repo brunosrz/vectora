@@ -9,8 +9,8 @@
 
 import { useCallback, useState } from "react";
 import { Loader2, Search, X } from "lucide-react";
-import { useT } from "@/lib/i18n";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { m } from "@/lib/paraglide/messages";
 
 interface SearchHit {
   path: string;
@@ -24,7 +24,6 @@ interface SearchResult {
 }
 
 export function SearchTab() {
-  const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
 
@@ -52,12 +51,12 @@ export function SearchTab() {
       setError(
         err instanceof Error
           ? err.message
-          : t("workbench.files.search_no_results"),
+          : m.workbench_files_search_no_results(),
       );
     } finally {
       setIsSearching(false);
     }
-  }, [query, wsId, t]);
+  }, [query, wsId]);
 
   const handleClear = () => {
     setQuery("");
@@ -73,7 +72,7 @@ export function SearchTab() {
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
             type="text"
-            placeholder={t("workbench.files.search_placeholder")}
+            placeholder={m.workbench_files_search_placeholder()}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -105,7 +104,7 @@ export function SearchTab() {
 
         {results && results.length === 0 && !isSearching && (
           <div className="p-4 text-sm text-muted-foreground text-center">
-            {t("workbench.files.search_no_results")}
+            {m.workbench_files_search_no_results()}
           </div>
         )}
 

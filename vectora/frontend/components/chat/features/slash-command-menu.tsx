@@ -15,16 +15,14 @@ import {
   isSlashQuery,
   type SlashCommand,
 } from "@/lib/constants/slash-commands";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 interface SlashCommandMenuProps {
   input: string;
   onSelect: (command: SlashCommand) => void;
 }
 
 export function SlashCommandMenu({ input, onSelect }: SlashCommandMenuProps) {
-  const t = useT();
-
   // Só aparece enquanto o usuário ainda escolhe o comando (sem espaço/arg).
   if (!isSlashQuery(input)) return null;
   const commands = filterCommands(input);
@@ -34,7 +32,7 @@ export function SlashCommandMenu({ input, onSelect }: SlashCommandMenuProps) {
     <div className="absolute bottom-full left-0 mb-2 w-80 rounded-lg border border-border bg-background shadow-xl py-1 z-50 animate-in fade-in slide-in-from-bottom-2">
       <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
         <Slash className="w-3 h-3" />
-        {t("slash.title")}
+        {m.slash_title()}
       </div>
       {commands.map((cmd) => (
         <button
@@ -49,7 +47,7 @@ export function SlashCommandMenu({ input, onSelect }: SlashCommandMenuProps) {
         >
           <span className="font-mono text-foreground">{cmd.usage}</span>
           <span className="text-xs text-muted-foreground truncate">
-            {t(cmd.descKey)}
+            {mDyn(cmd.descKey)}
           </span>
         </button>
       ))}

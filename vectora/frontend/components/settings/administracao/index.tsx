@@ -22,23 +22,20 @@ import {
 } from "@/components/ui/dialog";
 import { ResizableDialogContent } from "@/components/ui/resizable-dialog";
 import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
-import { useT } from "@/lib/i18n";
-
+import { m as msg } from "@/lib/paraglide/messages";
 const AdminTab = lazy(() =>
   import("./admin-tab").then((m) => ({ default: m.AdminTab })),
 );
 
 function AdminFallback() {
-  const t = useT();
   return (
     <div className="flex items-center justify-center py-12 text-xs text-muted-foreground">
-      {t("admin.loading")}
+      {msg.admin_loading()}
     </div>
   );
 }
 
 export function AdminDialog() {
-  const t = useT();
   const open = useAdministracaoDialogStore((s) => s.open);
   const setOpen = useAdministracaoDialogStore((s) => s.setOpen);
 
@@ -51,9 +48,9 @@ export function AdminDialog() {
         className="p-6 gap-4"
       >
         <DialogHeader>
-          <DialogTitle>{t("admin.dialog_title")}</DialogTitle>
+          <DialogTitle>{msg.admin_dialog_title()}</DialogTitle>
           <DialogDescription className="sr-only">
-            {t("admin.dialog_desc")}
+            {msg.admin_dialog_desc()}
           </DialogDescription>
         </DialogHeader>
 

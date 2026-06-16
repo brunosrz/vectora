@@ -13,9 +13,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useT } from "@/lib/i18n";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { m as msg } from "@/lib/paraglide/messages";
 
 interface LaunchConfig {
   name: string;
@@ -52,7 +52,6 @@ const LAUNCH_JSON_TEMPLATE = `\`\`\`json
 \`\`\``;
 
 export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
-  const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
 
@@ -145,12 +144,12 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
 
   const handleAskAgent = useCallback(() => {
     const prompt = [
-      t("workbench.preview.ask_agent_prompt"),
+      msg.workbench_preview_ask_agent_prompt(),
       LAUNCH_JSON_TEMPLATE,
-      t("workbench.preview.ask_agent_note"),
+      msg.workbench_preview_ask_agent_note(),
     ].join("\n\n");
     useChatInputStore.getState().pushDraft(prompt);
-  }, [t]);
+  }, []);
 
   const handleManualSave = async () => {
     if (!wsId || !manual.name.trim() || !manual.runtimeExecutable.trim())
@@ -230,7 +229,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
       <Input
         value={manual.name}
         onChange={(e) => setManual((m) => ({ ...m, name: e.target.value }))}
-        placeholder={t("workbench.preview.field_name")}
+        placeholder={msg.workbench_preview_field_name()}
         className="h-7 text-xs"
       />
       <Input
@@ -238,7 +237,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
         onChange={(e) =>
           setManual((m) => ({ ...m, runtimeExecutable: e.target.value }))
         }
-        placeholder={t("workbench.preview.field_executable")}
+        placeholder={msg.workbench_preview_field_executable()}
         className="h-7 text-xs"
       />
       <Input
@@ -246,13 +245,13 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
         onChange={(e) =>
           setManual((m) => ({ ...m, runtimeArgs: e.target.value }))
         }
-        placeholder={t("workbench.preview.field_args")}
+        placeholder={msg.workbench_preview_field_args()}
         className="h-7 text-xs"
       />
       <Input
         value={manual.port}
         onChange={(e) => setManual((m) => ({ ...m, port: e.target.value }))}
-        placeholder={t("workbench.preview.field_port")}
+        placeholder={msg.workbench_preview_field_port()}
         inputMode="numeric"
         className="h-7 text-xs"
       />
@@ -263,7 +262,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
           disabled={!manual.name.trim() || !manual.runtimeExecutable.trim()}
           className="h-7 flex-1 text-xs"
         >
-          {t("workbench.preview.manual_save")}
+          {msg.workbench_preview_manual_save()}
         </Button>
         <Button
           size="sm"
@@ -271,7 +270,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
           onClick={() => setShowManualForm(false)}
           className="h-7 text-xs"
         >
-          {t("workbench.preview.manual_cancel")}
+          {msg.workbench_preview_manual_cancel()}
         </Button>
       </div>
     </div>
@@ -283,10 +282,10 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
         <Zap className="h-8 w-8 text-muted-foreground/40 shrink-0" />
         <div className="min-w-0 max-w-[220px]">
           <p className="text-sm font-medium text-foreground leading-snug">
-            {t("workbench.preview.empty_title")}
+            {msg.workbench_preview_empty_title()}
           </p>
           <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-            {t("workbench.preview.empty_description")}
+            {msg.workbench_preview_empty_description()}
           </p>
         </div>
         {showManualForm ? (
@@ -301,7 +300,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
             >
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span className="text-xs">
-                {t("workbench.preview.ask_agent")}
+                {msg.workbench_preview_ask_agent()}
               </span>
             </Button>
             <Button
@@ -312,7 +311,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
             >
               <Plus className="h-3.5 w-3.5 shrink-0" />
               <span className="text-xs">
-                {t("workbench.preview.manual_add")}
+                {msg.workbench_preview_manual_add()}
               </span>
             </Button>
           </div>
@@ -327,12 +326,12 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
       <div className="shrink-0 border-b border-border/60 bg-card/40 px-3 py-2 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            {t("workbench.preview.servers")}
+            {msg.workbench_preview_servers()}
           </span>
           <button
             onClick={() => setShowManualForm((v) => !v)}
             className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            title={t("workbench.preview.manual_add")}
+            title={msg.workbench_preview_manual_add()}
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -374,7 +373,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
                     size="icon"
                     variant={isActive ? "secondary" : "ghost"}
                     className="h-6 w-6"
-                    title={t("workbench.preview.open_preview")}
+                    title={msg.workbench_preview_open_preview()}
                     onClick={() => {
                       setActiveServer(status ?? null);
                       setUrlOverride("");
@@ -394,8 +393,8 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
                   }
                   title={
                     isRunning
-                      ? t("workbench.preview.stop")
-                      : t("workbench.preview.start")
+                      ? msg.workbench_preview_stop()
+                      : msg.workbench_preview_start()
                   }
                 >
                   {isAction ? (
@@ -419,7 +418,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
             <button
               className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIframeKey((k) => k + 1)}
-              title={t("workbench.files.refresh")}
+              title={msg.workbench_files_refresh()}
             >
               <RefreshCw className="h-3 w-3" />
             </button>
@@ -445,7 +444,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
               target="_blank"
               rel="noreferrer"
               className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-              title={t("workbench.preview.open_external")}
+              title={msg.workbench_preview_open_external()}
             >
               <ExternalLink className="h-3 w-3" />
             </a>
@@ -462,7 +461,7 @@ export function PreviewTab({ threadId: _threadId }: PreviewTabProps) {
       ) : (
         <div className="flex flex-1 items-center justify-center">
           <p className="text-xs text-muted-foreground">
-            {t("workbench.preview.select_server")}
+            {msg.workbench_preview_select_server()}
           </p>
         </div>
       )}

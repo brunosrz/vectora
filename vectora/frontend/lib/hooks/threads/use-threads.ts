@@ -25,8 +25,8 @@ import { THREAD_FETCH_LIMIT } from "../../constants/features";
 import { useToastStore } from "@/lib/stores/toast-store";
 // Alias — este módulo já usa `t` como nome de variável local para threads
 // (ex.: `raw.map((t) => ...)`); evita colisão com a tradução fora de hooks.
-import { t as translate } from "@/lib/i18n";
 import { withRetry } from "@/lib/utils/fetch-retry";
+import { m } from "@/lib/paraglide/messages";
 
 // ============================================================================
 // Types
@@ -104,7 +104,7 @@ export function useThreads(userId: string | undefined) {
       logger.error("useThreads: erro ao buscar threads:", error);
       setThreads([]);
       // UX-7 — falha visível (sidebar ficaria vazia sem explicação alguma).
-      useToastStore.getState().error(translate("threads.error.list"));
+      useToastStore.getState().error(m.threads_error_list());
     } finally {
       if (!silent) setIsLoading(false);
     }
@@ -153,7 +153,7 @@ export function useThreads(userId: string | undefined) {
         logger.error("useThreads: erro ao persistir title da thread:", error);
         // UX-7 — o título mudou na UI (otimista) mas não foi salvo; o
         // usuário precisa saber que vai reverter no próximo reload.
-        useToastStore.getState().error(translate("threads.error.rename"));
+        useToastStore.getState().error(m.threads_error_rename());
       }
     }
   };
@@ -190,7 +190,7 @@ export function useThreads(userId: string | undefined) {
       logger.error("useThreads: erro ao deletar thread:", error);
       // UX-7 — sem isso o item simplesmente reaparece e o usuário não
       // entende por quê.
-      useToastStore.getState().error(translate("threads.error.delete"));
+      useToastStore.getState().error(m.threads_error_delete());
       // Reverte update otimista
       if (userId) await getUserThreads(userId);
     }

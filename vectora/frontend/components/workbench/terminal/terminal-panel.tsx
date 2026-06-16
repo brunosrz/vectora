@@ -9,13 +9,13 @@
 import { Plug, Plus, TerminalSquare, X } from "lucide-react";
 import { useEffect } from "react";
 
-import { useT } from "@/lib/i18n";
 import {
   useTerminalsStore,
   type TerminalInstance,
 } from "@/lib/stores/terminals-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { XtermView } from "./xterm-view";
+import { m } from "@/lib/paraglide/messages";
 
 interface TerminalPanelProps {
   threadId: string;
@@ -26,7 +26,6 @@ function newId(): string {
 }
 
 export function TerminalPanel({ threadId }: TerminalPanelProps) {
-  const t = useT();
   const terminals = useTerminalsStore((s) => s.list(threadId));
   const active = useTerminalsStore((s) => s.active(threadId));
   const open = useTerminalsStore((s) => s.open);
@@ -42,7 +41,7 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
     if (current.length === 0 && workspace?.trusted) {
       open(threadId, {
         id: newId(),
-        title: t("terminal.tab_default"),
+        title: m.terminal_tab_default(),
         workspaceId: workspace.id,
       });
     }
@@ -52,7 +51,7 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
   if (!workspace) {
     return (
       <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
-        {t("terminal.no_workspace")}
+        {m.terminal_no_workspace()}
       </div>
     );
   }
@@ -61,8 +60,8 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground p-4 text-center">
         <Plug className="w-6 h-6" />
-        <p className="font-medium">{t("terminal.untrusted_title")}</p>
-        <p className="opacity-70">{t("terminal.untrusted_hint")}</p>
+        <p className="font-medium">{m.terminal_untrusted_title()}</p>
+        <p className="opacity-70">{m.terminal_untrusted_hint()}</p>
       </div>
     );
   }
@@ -70,7 +69,7 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
   const handleNew = () => {
     open(threadId, {
       id: newId(),
-      title: t("terminal.tab_default"),
+      title: m.terminal_tab_default(),
       workspaceId: workspace.id,
     });
   };
@@ -107,7 +106,7 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
         <button
           onClick={handleNew}
           className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
-          title={t("terminal.new")}
+          title={m.terminal_new()}
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
@@ -115,7 +114,7 @@ export function TerminalPanel({ threadId }: TerminalPanelProps) {
 
       {/* Aviso de "sem sandbox" — recolhível, baixa fricção */}
       <div className="px-3 py-1.5 text-[10px] text-amber-700 dark:text-amber-300 bg-amber-500/10 border-b border-amber-500/20">
-        {t("terminal.no_sandbox_warning")}
+        {m.terminal_no_sandbox_warning()}
       </div>
 
       {/* Body — só renderiza o terminal ativo (poupa CPU; estado fica no PTY) */}

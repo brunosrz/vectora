@@ -4,8 +4,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { useT } from "@/lib/i18n";
 import type { AuthUser } from "@/lib/types/auth";
+import { m } from "@/lib/paraglide/messages";
 
 /** Tamanho mínimo de senha — espelha a validação do backend. */
 const PASSWORD_MIN = 8;
@@ -22,7 +22,6 @@ export const Route = createFileRoute("/auth/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const t = useT();
   const { invite: inviteFromUrl } = Route.useSearch();
   const setUser = useAuthStore((s) => s.setUser);
 
@@ -33,22 +32,19 @@ function SignUpPage() {
           name: z
             .string()
             .trim()
-            .min(1, t("auth.signup.name_required"))
-            .max(NAME_MAX, t("auth.signup.name_too_long", { n: NAME_MAX })),
-          email: z.string().email(t("auth.email_invalid")),
+            .min(1, m.auth_signup_name_required())
+            .max(NAME_MAX, m.auth_signup_name_too_long({ n: NAME_MAX })),
+          email: z.string().email(m.auth_email_invalid()),
           password: z
             .string()
-            .min(
-              PASSWORD_MIN,
-              t("auth.signup.password_min", { n: PASSWORD_MIN }),
-            ),
+            .min(PASSWORD_MIN, m.auth_signup_password_min({ n: PASSWORD_MIN })),
           confirm: z.string(),
         })
         .refine((d) => d.password === d.confirm, {
-          message: t("auth.signup.passwords_mismatch"),
+          message: m.auth_signup_passwords_mismatch(),
           path: ["confirm"],
         }),
-    [t],
+    [],
   );
 
   const [name, setName] = useState("");
@@ -143,14 +139,14 @@ function SignUpPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setServerError(data.detail ?? t("auth.signup.create_error"));
+        setServerError(data.detail ?? m.auth_signup_create_error());
         return;
       }
 
       setUser(data.user as AuthUser);
       void navigate({ to: "/" });
     } catch {
-      setServerError(t("auth.conn_error"));
+      setServerError(m.auth_conn_error());
     } finally {
       setLoading(false);
     }
@@ -159,7 +155,7 @@ function SignUpPage() {
   if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">{t("auth.loading")}</p>
+        <p className="text-sm text-muted-foreground">{m.auth_loading()}</p>
       </div>
     );
   }
@@ -181,20 +177,21 @@ function SignUpPage() {
             {inviteRole ? (
               <>
                 <p className="text-sm text-muted-foreground">
-                  {t("auth.signup.invite_title")}
+                  {m.auth_signup_invite_title()}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-0.5">
-                  {t("auth.signup.invite_role")}{" "}
+                  {m.auth_signup_invite_role()}{" "}
                   <span className="text-primary font-medium">{inviteRole}</span>
                 </p>
               </>
             ) : (
               <>
                 <p className="text-sm text-muted-foreground">
-                  {t("auth.signup.first_access")}
+                  {m.auth_signup_first_access()}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-0.5">
-                  {t("auth.signup.root_hint")
+                  {m
+                    .auth_signup_root_hint({ root: "{root}" })
                     .split("{root}")
                     .flatMap((part, i) =>
                       i === 0
@@ -221,7 +218,7 @@ function SignUpPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="name"
             >
-              {t("auth.signup.name")}
+              {m.auth_signup_name()}
             </label>
             <input
               id="name"
@@ -232,7 +229,7 @@ function SignUpPage() {
               required
               maxLength={NAME_MAX}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-              placeholder={t("auth.signup.name_ph")}
+              placeholder={m.auth_signup_name_ph()}
             />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name}</p>
@@ -244,7 +241,7 @@ function SignUpPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="email"
             >
-              {t("auth.email")}
+              {m.auth_email()}
             </label>
             <input
               id="email"
@@ -254,7 +251,7 @@ function SignUpPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-              placeholder={t("auth.email_ph")}
+              placeholder={m.auth_email_ph()}
             />
             {errors.email && (
               <p className="text-xs text-destructive">{errors.email}</p>
@@ -266,7 +263,7 @@ function SignUpPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="password"
             >
-              {t("auth.password")}
+              {m.auth_password()}
             </label>
             <div className="relative">
               <input
@@ -277,7 +274,7 @@ function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-                placeholder={t("auth.signup.password_ph", { n: PASSWORD_MIN })}
+                placeholder={m.auth_signup_password_ph({ n: PASSWORD_MIN })}
               />
               <button
                 type="button"
@@ -289,9 +286,7 @@ function SignUpPage() {
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute inset-y-0 right-0 flex items-center justify-center w-11 min-h-[44px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={
-                  showPassword
-                    ? t("auth.hide_password")
-                    : t("auth.show_password")
+                  showPassword ? m.auth_hide_password() : m.auth_show_password()
                 }
               >
                 {showPassword ? (
@@ -311,7 +306,7 @@ function SignUpPage() {
               className="text-sm font-medium text-foreground"
               htmlFor="confirm"
             >
-              {t("auth.signup.confirm")}
+              {m.auth_signup_confirm()}
             </label>
             <div className="relative">
               <input
@@ -322,7 +317,7 @@ function SignUpPage() {
                 onChange={(e) => setConfirm(e.target.value)}
                 required
                 className="w-full rounded-md border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
-                placeholder={t("auth.signup.confirm_ph")}
+                placeholder={m.auth_signup_confirm_ph()}
               />
               <button
                 type="button"
@@ -335,8 +330,8 @@ function SignUpPage() {
                 className="absolute inset-y-0 right-0 flex items-center justify-center w-11 min-h-[44px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
                 aria-label={
                   showConfirm
-                    ? t("auth.signup.hide_confirm")
-                    : t("auth.signup.show_confirm")
+                    ? m.auth_signup_hide_confirm()
+                    : m.auth_signup_show_confirm()
                 }
               >
                 {showConfirm ? (
@@ -362,14 +357,14 @@ function SignUpPage() {
             disabled={loading}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
           >
-            {loading ? t("auth.signup.submitting") : t("auth.signup.submit")}
+            {loading ? m.auth_signup_submitting() : m.auth_signup_submit()}
           </button>
         </form>
 
         <p className="text-center text-xs text-muted-foreground">
-          {t("auth.signup.have_account")}{" "}
+          {m.auth_signup_have_account()}{" "}
           <Link to={"/auth/signin"} className="text-primary hover:underline">
-            {t("auth.signup.signin_link")}
+            {m.auth_signup_signin_link()}
           </Link>
         </p>
       </div>

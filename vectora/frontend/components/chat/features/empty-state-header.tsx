@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
-import { useT } from "@/lib/i18n";
 import { getStackHint } from "@/lib/api/vectora-client";
+import { m } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 
 interface EmptyStateHeaderProps {
   /** Chamado quando o usuário clica em uma sugestão — popula o input do chat. */
@@ -32,8 +33,6 @@ export function EmptyStateHeader({
   onSelect,
   workspaceId,
 }: EmptyStateHeaderProps) {
-  const t = useT();
-
   // Busca o stack hint apenas quando há workspace ativo.
   const { data: hintData } = useQuery({
     queryKey: ["stack-hint", workspaceId],
@@ -46,9 +45,9 @@ export function EmptyStateHeader({
     hintData && isKnownStack(hintData.stack) ? hintData.stack : "unknown";
 
   const suggestions = [
-    t(`stack.${stack}.1`),
-    t(`stack.${stack}.2`),
-    t(`stack.${stack}.3`),
+    mDyn(`stack.${stack}.1`),
+    mDyn(`stack.${stack}.2`),
+    mDyn(`stack.${stack}.3`),
   ];
 
   return (
@@ -74,7 +73,7 @@ export function EmptyStateHeader({
           className="text-2xl sm:text-4xl font-semibold text-foreground mb-8"
           style={{ fontFamily: "var(--font-aeonik-mono)" }}
         >
-          {t("welcome.title")}
+          {m.welcome_title()}
         </h2>
 
         {onSelect && (

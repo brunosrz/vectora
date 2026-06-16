@@ -12,10 +12,8 @@
 
 import { WifiOff, Loader2 } from "lucide-react";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 export function NetworkStatusBanner() {
-  const t = useT();
   const { offline, sseReconnecting } = useNetworkStatus();
 
   if (!offline && !sseReconnecting) return null;
@@ -28,7 +26,7 @@ export function NetworkStatusBanner() {
         className="fixed top-0 inset-x-0 z-[55] flex items-center justify-center gap-2 bg-red-600/90 px-4 py-1.5 text-xs font-medium text-white shadow-md backdrop-blur-sm"
       >
         <WifiOff className="h-3.5 w-3.5" aria-hidden />
-        <span>{t("network.offline_banner")}</span>
+        <span>{m.network_offline_banner()}</span>
       </div>
     );
   }
@@ -40,7 +38,7 @@ export function NetworkStatusBanner() {
       className="fixed top-0 inset-x-0 z-[55] flex items-center justify-center gap-2 bg-amber-500/90 px-4 py-1.5 text-xs font-medium text-amber-950 shadow-md backdrop-blur-sm"
     >
       <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-      <span>{t("network.reconnecting_banner")}</span>
+      <span>{m.network_reconnecting_banner()}</span>
     </div>
   );
 }

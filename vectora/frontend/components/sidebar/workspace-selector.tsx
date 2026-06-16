@@ -34,10 +34,10 @@ import {
 } from "lucide-react";
 
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
-import { useT } from "@/lib/i18n";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { WorkspaceTrustDialog } from "./workspace-trust-dialog";
+import { m } from "@/lib/paraglide/messages";
 
 interface WorkspaceSelectorProps {
   compact?: boolean;
@@ -93,7 +93,6 @@ function WorkspaceFolderIcon({
 }
 
 export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
-  const t = useT();
   // UX-16 — criar/confiar/inicializar workspace exigem o backend; offline
   // essas ações só produziriam erro silencioso.
   const { offline } = useNetworkStatus();
@@ -137,7 +136,7 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
               ? "flex items-center gap-1.5 h-7 px-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors select-none min-w-0 max-w-[160px]"
               : "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-foreground/80 hover:text-foreground hover:bg-muted/50 transition-colors select-none min-w-0 max-w-[200px]"
           }
-          title={active?.cwd ?? t("workspace.select_title")}
+          title={active?.cwd ?? m.workspace_select_title()}
           aria-expanded={open}
         >
           {active ? (
@@ -151,12 +150,12 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
             />
           )}
           <span className="truncate font-medium">
-            {active?.name ?? t("workspace.add_folder")}
+            {active?.name ?? m.workspace_add_folder()}
           </span>
           {active?.transport === "ssh" && (
             <span
               className="shrink-0"
-              title={`${t("workspace.transport.ssh")}: ${active.remote_host ?? ""}`}
+              title={`${m.workspace_transport_ssh()}: ${active.remote_host ?? ""}`}
             >
               <Server className="w-3.5 h-3.5 text-sky-500" />
             </span>
@@ -164,7 +163,7 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
           {active?.transport === "codespace" && (
             <span
               className="shrink-0"
-              title={`${t("workspace.transport.codespace")}: ${active.codespace_name ?? ""}`}
+              title={`${m.workspace_transport_codespace()}: ${active.codespace_name ?? ""}`}
             >
               <Cloud className="w-3.5 h-3.5 text-violet-500" />
             </span>
@@ -179,7 +178,7 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
             }`}
           >
             <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              {t("workspace.select_title")}
+              {m.workspace_select_title()}
             </div>
 
             {status === "error" && error && (
@@ -191,7 +190,7 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
             <div className="max-h-72 overflow-y-auto">
               {workspaces.length === 0 && (
                 <p className="px-3 py-2 text-sm text-muted-foreground">
-                  {t("workspace.no_workspaces")}
+                  {m.workspace_no_workspaces()}
                 </p>
               )}
 
@@ -227,7 +226,7 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
                   {w.trusted ? (
                     <span
                       className="flex items-center gap-1 text-xs text-green-500 shrink-0"
-                      title={t("workspace.trusted")}
+                      title={m.workspace_trusted()}
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
                     </span>
@@ -248,11 +247,11 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
                       }}
                       title={
                         offline
-                          ? t("network.disabled_offline")
-                          : t("workspace.trust_confirm")
+                          ? m.network_disabled_offline()
+                          : m.workspace_trust_confirm()
                       }
                     >
-                      {t("workspace.trust_confirm")}
+                      {m.workspace_trust_confirm()}
                     </span>
                   )}
                 </button>
@@ -263,14 +262,14 @@ export function WorkspaceSelector({ compact = false }: WorkspaceSelectorProps) {
               <button
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-foreground/80"
                 disabled={offline}
-                title={offline ? t("network.disabled_offline") : undefined}
+                title={offline ? m.network_disabled_offline() : undefined}
                 onClick={() => {
                   setOpen(false);
                   setTrustOpen(true);
                 }}
               >
                 <Plus className="w-4 h-4 shrink-0 text-muted-foreground" />
-                {t("workspace.add_folder")}
+                {m.workspace_add_folder()}
               </button>
             </div>
           </div>

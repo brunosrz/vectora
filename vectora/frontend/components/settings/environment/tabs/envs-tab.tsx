@@ -21,8 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 // ---------------------------------------------------------------------------
 // Tipos + API helpers
 // ---------------------------------------------------------------------------
@@ -59,8 +58,6 @@ async function deleteEnv(key: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export function EnvsTab() {
-  const t = useT();
-
   const [envs, setEnvs] = useState<Record<string, string>>({});
   const [keys, setKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,11 +78,11 @@ export function EnvsTab() {
       setEnvs(data.envs ?? {});
       setKeys(data.keys ?? []);
     } catch {
-      setError(t("envs.error_load"));
+      setError(m.envs_error_load());
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -102,7 +99,7 @@ export function EnvsTab() {
       setNewKey("");
       setNewValue("");
     } catch {
-      setError(t("envs.error_save"));
+      setError(m.envs_error_save());
     } finally {
       setSaving(false);
     }
@@ -120,7 +117,7 @@ export function EnvsTab() {
         return next;
       });
     } catch {
-      setError(t("envs.error_delete"));
+      setError(m.envs_error_delete());
     } finally {
       setDeletingKey(null);
     }
@@ -139,9 +136,9 @@ export function EnvsTab() {
       {/* Cabeçalho */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-0.5">
-          <p className="text-sm font-medium">{t("envs.title")}</p>
+          <p className="text-sm font-medium">{m.envs_title()}</p>
           <p className="text-xs text-muted-foreground max-w-[320px]">
-            {t("envs.subtitle")}
+            {m.envs_subtitle()}
           </p>
         </div>
         <Button
@@ -151,7 +148,7 @@ export function EnvsTab() {
           onClick={() => setAddOpen(true)}
         >
           <Plus className="w-3.5 h-3.5 mr-1.5" />
-          {t("envs.add")}
+          {m.envs_add()}
         </Button>
       </div>
 
@@ -166,7 +163,7 @@ export function EnvsTab() {
       {keys.length === 0 && (
         <div className="flex flex-col items-center justify-center py-10 text-center space-y-3">
           <KeyRound className="w-10 h-10 text-muted-foreground/30" />
-          <p className="text-sm text-muted-foreground">{t("envs.empty")}</p>
+          <p className="text-sm text-muted-foreground">{m.envs_empty()}</p>
         </div>
       )}
 
@@ -216,16 +213,16 @@ export function EnvsTab() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("envs.add_title")}</DialogTitle>
-            <DialogDescription>{t("envs.add_desc")}</DialogDescription>
+            <DialogTitle>{m.envs_add_title()}</DialogTitle>
+            <DialogDescription>{m.envs_add_desc()}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-1">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
-                {t("envs.key_label")}
+                {m.envs_key_label()}
               </label>
               <Input
-                placeholder={t("envs.key_placeholder")}
+                placeholder={m.envs_key_placeholder()}
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
                 autoComplete="off"
@@ -235,12 +232,12 @@ export function EnvsTab() {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
-                {t("envs.value_label")}
+                {m.envs_value_label()}
               </label>
               <Input
                 type="password"
                 autoComplete="new-password"
-                placeholder={t("envs.value_placeholder")}
+                placeholder={m.envs_value_placeholder()}
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
                 className="text-sm font-mono"
@@ -253,14 +250,14 @@ export function EnvsTab() {
               onClick={() => setAddOpen(false)}
               disabled={saving}
             >
-              {t("envs.cancel")}
+              {m.envs_cancel()}
             </Button>
             <Button
               onClick={handleAdd}
               disabled={saving || !newKey.trim() || !newValue.trim()}
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {t("envs.save")}
+              {m.envs_save()}
             </Button>
           </DialogFooter>
         </DialogContent>

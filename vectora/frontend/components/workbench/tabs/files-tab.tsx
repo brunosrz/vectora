@@ -48,7 +48,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useToastStore } from "@/lib/stores/toast-store";
@@ -66,6 +65,7 @@ import { getMediaKind, MediaView } from "@/components/workbench/file-viewer";
 import { MarkdownView } from "@/components/workbench/markdown-view";
 import { FileTreeSkeleton } from "./file-tree-skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { m } from "@/lib/paraglide/messages";
 
 // ---------------------------------------------------------------------------
 // Badge de status git — derivado do diff porcelain por join client-side.
@@ -300,7 +300,6 @@ function FileItem({
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
   const openPath = useWorkbenchStore((s) => s.getFiles(workspaceId).openPath);
   const openWindow = useWindowsStore((s) => s.open);
-  const t = useT();
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(entry.name);
 
@@ -344,7 +343,7 @@ function FileItem({
           }}
           onBlur={commitRename}
           className="flex-1 text-xs bg-background border border-primary/60 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-primary/40 font-mono ml-1"
-          placeholder={t("workbench.files.rename_placeholder")}
+          placeholder={m.workbench_files_rename_placeholder()}
         />
       ) : (
         <button
@@ -356,7 +355,7 @@ function FileItem({
             }
           }}
           className="flex-1 text-left truncate text-foreground/80 hover:text-foreground ml-1"
-          title={onRename ? t("workbench.files.rename") : undefined}
+          title={onRename ? m.workbench_files_rename() : undefined}
         >
           {entry.name}
         </button>
@@ -369,8 +368,8 @@ function FileItem({
           <button
             onClick={() => onAddToContext(entry.path)}
             className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-            aria-label={t("workbench.files.add_context")}
-            title={t("workbench.files.add_context")}
+            aria-label={m.workbench_files_add_context()}
+            title={m.workbench_files_add_context()}
           >
             <AtSign className="w-3 h-3" />
           </button>
@@ -378,8 +377,8 @@ function FileItem({
         <button
           onClick={() => openWindow(workspaceId, entry.path)}
           className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-          aria-label={t("window.open_as_window")}
-          title={t("window.open_as_window")}
+          aria-label={m.window_open_as_window()}
+          title={m.window_open_as_window()}
         >
           <AppWindow className="w-3 h-3" />
         </button>
@@ -390,8 +389,8 @@ function FileItem({
               setRenaming(true);
             }}
             className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-            aria-label={t("workbench.files.rename")}
-            title={t("workbench.files.rename")}
+            aria-label={m.workbench_files_rename()}
+            title={m.workbench_files_rename()}
           >
             <Pencil className="w-3 h-3" />
           </button>
@@ -399,8 +398,8 @@ function FileItem({
         <button
           onClick={(e) => onDelete(entry.path, entry.name, e.shiftKey)}
           className="p-0.5 rounded text-muted-foreground hover:text-destructive"
-          aria-label={t("workbench.files.delete")}
-          title={`${t("workbench.files.delete")} (Shift: permanente)`}
+          aria-label={m.workbench_files_delete()}
+          title={`${m.workbench_files_delete()} (Shift: permanente)`}
         >
           <Trash2 className="w-3 h-3" />
         </button>
@@ -412,9 +411,9 @@ function FileItem({
               : "text-muted-foreground hover:text-foreground"
           }`}
           aria-label={
-            pinned ? t("workbench.files.unpin") : t("workbench.files.pin")
+            pinned ? m.workbench_files_unpin() : m.workbench_files_pin()
           }
-          title={pinned ? t("workbench.files.unpin") : t("workbench.files.pin")}
+          title={pinned ? m.workbench_files_unpin() : m.workbench_files_pin()}
         >
           <Pin className="w-3 h-3" />
         </button>
@@ -504,7 +503,6 @@ function DirNode({
   onRequestCreate,
   onRename,
 }: DirNodeProps) {
-  const t = useT();
   const [renamingDir, setRenamingDir] = useState(false);
   const [renameDirValue, setRenameDirValue] = useState(name);
 
@@ -543,13 +541,13 @@ function DirNode({
       if (!result.ok) {
         const msg =
           result.message === "Já existe um arquivo ou pasta com esse nome."
-            ? t("workbench.files.rename_exists")
-            : t("workbench.files.rename_error");
+            ? m.workbench_files_rename_exists()
+            : m.workbench_files_rename_error();
         useToastStore.getState().error(msg);
       }
       await revalidate();
     },
-    [workspaceId, revalidate, t],
+    [workspaceId, revalidate],
   );
 
   useWorkbenchSWR({
@@ -608,7 +606,7 @@ function DirNode({
               onBlur={commitDirRename}
               className="flex-1 text-xs bg-background border border-primary/60 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-primary/40 font-mono"
               style={{ paddingLeft: (depth - 1) * 12 + 4 }}
-              placeholder={t("workbench.files.rename_placeholder")}
+              placeholder={m.workbench_files_rename_placeholder()}
             />
           ) : (
             <button
@@ -636,7 +634,7 @@ function DirNode({
               <button
                 onClick={() => onAddToContext(path)}
                 className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-                title={t("workbench.files.add_context")}
+                title={m.workbench_files_add_context()}
               >
                 <AtSign className="w-3 h-3" />
               </button>
@@ -648,7 +646,7 @@ function DirNode({
                   setRenamingDir(true);
                 }}
                 className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-                title={t("workbench.files.rename")}
+                title={m.workbench_files_rename()}
               >
                 <Pencil className="w-3 h-3" />
               </button>
@@ -656,7 +654,7 @@ function DirNode({
             <button
               onClick={(e) => onDelete(path, name, e.shiftKey)}
               className="p-0.5 rounded text-muted-foreground hover:text-destructive"
-              title={`${t("workbench.files.delete")} (Shift: permanente)`}
+              title={`${m.workbench_files_delete()} (Shift: permanente)`}
             >
               <Trash2 className="w-3 h-3" />
             </button>
@@ -683,8 +681,8 @@ function DirNode({
             <InlineCreateInput
               placeholder={
                 creating!.type === "file"
-                  ? t("workbench.files.creating_file")
-                  : t("workbench.files.creating_folder")
+                  ? m.workbench_files_creating_file()
+                  : m.workbench_files_creating_folder()
               }
               onConfirm={onInlineCreate}
               onCancel={onCancelCreate}
@@ -747,7 +745,6 @@ function PinnedSection({
   onOpenFile: (path: string) => void;
   onAddToContext?: (path: string) => void;
 }) {
-  const t = useT();
   const pinned = useWorkbenchStore(
     (s) => s.pinnedFiles[threadId] ?? EMPTY_PINNED,
   );
@@ -758,7 +755,7 @@ function PinnedSection({
   return (
     <div className="border-b border-border/40 pb-1 mb-1">
       <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-        {t("workbench.files.pinned")}
+        {m.workbench_files_pinned()}
       </div>
       {pinned.map((path) => {
         const name = path.split(/[/\\]/).pop() ?? path;
@@ -780,7 +777,7 @@ function PinnedSection({
                 <button
                   onClick={() => onAddToContext(path)}
                   className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-                  title={t("workbench.files.add_context")}
+                  title={m.workbench_files_add_context()}
                 >
                   <AtSign className="w-3 h-3" />
                 </button>
@@ -788,8 +785,8 @@ function PinnedSection({
               <button
                 onClick={() => togglePinned(threadId, path)}
                 className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-                aria-label={t("workbench.files.unpin")}
-                title={t("workbench.files.unpin")}
+                aria-label={m.workbench_files_unpin()}
+                title={m.workbench_files_unpin()}
               >
                 <PinOff className="w-3 h-3" />
               </button>
@@ -932,7 +929,6 @@ interface FilesTabProps {
 }
 
 export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
-  const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
 
@@ -1280,7 +1276,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   if (!workspace) {
     return (
       <div className="h-full flex items-center justify-center text-xs text-muted-foreground p-4 text-center">
-        {t("workbench.files.no_workspace")}
+        {m.workbench_files_no_workspace()}
       </div>
     );
   }
@@ -1300,13 +1296,13 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             <button
               onClick={() => handleRequestCreate("file", "")}
               className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-              aria-label={t("tooltip.files_new_file")}
+              aria-label={m.tooltip_files_new_file()}
             >
               <FilePlus className="w-3.5 h-3.5" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {t("tooltip.files_new_file")}
+            {m.tooltip_files_new_file()}
           </TooltipContent>
         </Tooltip>
         <Tooltip>
@@ -1314,13 +1310,13 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             <button
               onClick={() => handleRequestCreate("dir", "")}
               className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-              aria-label={t("tooltip.files_new_folder")}
+              aria-label={m.tooltip_files_new_folder()}
             >
               <FolderPlus className="w-3.5 h-3.5" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {t("tooltip.files_new_folder")}
+            {m.tooltip_files_new_folder()}
           </TooltipContent>
         </Tooltip>
         <Tooltip>
@@ -1328,13 +1324,13 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             <button
               onClick={handleRefresh}
               className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-              aria-label={t("tooltip.files_refresh")}
+              aria-label={m.tooltip_files_refresh()}
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {t("tooltip.files_refresh")}
+            {m.tooltip_files_refresh()}
           </TooltipContent>
         </Tooltip>
         {/* .gitignore manager (A.10) */}
@@ -1344,13 +1340,13 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               <button
                 onClick={handleOpenGitignore}
                 className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                aria-label={t("tooltip.files_gitignore")}
+                aria-label={m.tooltip_files_gitignore()}
               >
                 <Filter className="w-3.5 h-3.5" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {t("tooltip.files_gitignore")}
+              {m.tooltip_files_gitignore()}
             </TooltipContent>
           </Tooltip>
         )}
@@ -1373,14 +1369,14 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                   ? "bg-primary/20 text-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
               }`}
-              aria-label={t("tooltip.files_search")}
+              aria-label={m.tooltip_files_search()}
               aria-pressed={searchMode}
             >
               <Search className="w-3.5 h-3.5" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {t("tooltip.files_search")}
+            {m.tooltip_files_search()}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -1397,7 +1393,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               autoComplete="off"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("workbench.files.search_placeholder")}
+              placeholder={m.workbench_files_search_placeholder()}
               className="h-7 text-xs pl-7 pr-6"
             />
             {searchQuery && (
@@ -1407,7 +1403,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                   setSearchResults(null);
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                title={t("workbench.files.cancel")}
+                title={m.workbench_files_cancel()}
               >
                 <X className="w-3 h-3" />
               </button>
@@ -1421,7 +1417,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 autoComplete="off"
                 value={replaceQuery}
                 onChange={(e) => setReplaceQuery(e.target.value)}
-                placeholder={t("workbench.files.replace_placeholder")}
+                placeholder={m.workbench_files_replace_placeholder()}
                 className="h-7 text-xs pl-7"
               />
             </div>
@@ -1434,12 +1430,12 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 !searchResults?.hits.length
               }
               className="shrink-0 px-2 h-7 rounded text-xs bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title={t("workbench.files.replace_all")}
+              title={m.workbench_files_replace_all()}
             >
               {replacing ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
-                t("workbench.files.replace_all")
+                m.workbench_files_replace_all()
               )}
             </button>
           </div>
@@ -1456,7 +1452,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             <Input
               value={filter}
               onChange={(e) => setFilesFilter(wsId, e.target.value)}
-              placeholder={t("workbench.files.filter")}
+              placeholder={m.workbench_files_filter()}
               autoComplete="off"
               className="h-7 text-xs pl-7"
             />
@@ -1474,7 +1470,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
           <div
             className="h-full overflow-y-auto py-1"
             role="tree"
-            aria-label={t("workbench.files.tree_label")}
+            aria-label={m.workbench_files_tree_label()}
             aria-busy={showSkeleton}
           >
             {historyMode ? (
@@ -1482,7 +1478,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 {/* Cabeçalho do painel de histórico */}
                 <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/40">
                   <span className="text-[10px] font-medium text-muted-foreground truncate flex-1">
-                    {t("workbench.files.history")}:{" "}
+                    {m.workbench_files_history()}:{" "}
                     {historyPath?.split("/").pop()}
                   </span>
                   <button
@@ -1493,7 +1489,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                       setHistoricContent(null);
                     }}
                     className="p-0.5 text-muted-foreground hover:text-foreground"
-                    title={t("workbench.close")}
+                    title={m.workbench_close()}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -1509,7 +1505,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               <div className="px-1">
                 {searchResults !== null && searchResults.hits.length === 0 && (
                   <p className="text-[10px] text-muted-foreground text-center py-4">
-                    {t("workbench.files.search_no_results")}
+                    {m.workbench_files_search_no_results()}
                   </p>
                 )}
                 {searchGrouped.map(([filePath, hits]) => (
@@ -1522,7 +1518,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 ))}
                 {searchResults?.truncated && (
                   <p className="text-[10px] text-muted-foreground px-2 py-1">
-                    {t("workbench.files.search_truncated")}
+                    {m.workbench_files_search_truncated()}
                   </p>
                 )}
               </div>
@@ -1571,7 +1567,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                   <button
                     onClick={() => onAddToContext(openPath)}
                     className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-                    title={t("workbench.files.add_context")}
+                    title={m.workbench_files_add_context()}
                   >
                     <AtSign className="w-3 h-3" />
                   </button>
@@ -1585,7 +1581,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                         ? "text-primary"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
-                    title={t("workbench.files.history")}
+                    title={m.workbench_files_history()}
                     aria-pressed={historyMode}
                   >
                     <History className="w-3 h-3" />
@@ -1595,8 +1591,8 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                   <button
                     onClick={() => openWindow(wsId, openPath)}
                     className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-                    title={t("window.open_as_window")}
-                    aria-label={t("window.open_as_window")}
+                    title={m.window_open_as_window()}
+                    aria-label={m.window_open_as_window()}
                   >
                     <AppWindow className="w-3 h-3" />
                   </button>
@@ -1604,7 +1600,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 <button
                   onClick={handleCloseViewer}
                   className="text-muted-foreground hover:text-foreground px-1"
-                  title={t("workbench.close")}
+                  title={m.workbench_close()}
                 >
                   ×
                 </button>
@@ -1619,7 +1615,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                   <History className="w-3 h-3 text-amber-500 shrink-0" />
                 )}
                 <span className="text-muted-foreground truncate flex-1">
-                  {t("workbench.files.history_viewing_at")}{" "}
+                  {m.workbench_files_history_viewing_at()}{" "}
                   <span className="font-mono text-amber-500">
                     {historicSha.slice(0, 7)}
                   </span>
@@ -1631,7 +1627,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                   }}
                   className="text-muted-foreground hover:text-foreground shrink-0"
                 >
-                  {t("workbench.files.history_back")}
+                  {m.workbench_files_history_back()}
                 </button>
               </div>
             )}
@@ -1647,7 +1643,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               ) : historicSha && historicContent ? (
                 historicContent.binary ? (
                   <p className="text-xs text-muted-foreground">
-                    {t("workbench.files.binary", { size: 0 })}
+                    {m.workbench_files_binary({ size: 0 })}
                   </p>
                 ) : (
                   <>
@@ -1656,7 +1652,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                     </pre>
                     {historicContent.truncated && (
                       <p className="text-[10px] text-muted-foreground mt-2">
-                        {t("workbench.files.read_only_truncated")}
+                        {m.workbench_files_read_only_truncated()}
                       </p>
                     )}
                   </>
@@ -1665,7 +1661,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               ) : openContent?.kind === "binary" ? (
                 <p className="text-xs text-muted-foreground">
-                  {t("workbench.files.binary", { size: openContent.size })}
+                  {m.workbench_files_binary({ size: openContent.size })}
                 </p>
               ) : openPath?.toLowerCase().match(/\.(md|markdown)$/) &&
                 openContent?.content &&
@@ -1705,7 +1701,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               )}
               {openContent?.truncated && (
                 <p className="text-[10px] text-muted-foreground mt-2">
-                  {t("workbench.files.read_only_truncated")}
+                  {m.workbench_files_read_only_truncated()}
                 </p>
               )}
             </div>
@@ -1722,9 +1718,9 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t("workbench.files.gitignore_title")}</DialogTitle>
+            <DialogTitle>{m.workbench_files_gitignore_title()}</DialogTitle>
             <DialogDescription>
-              {t("workbench.files.gitignore_desc")}
+              {m.workbench_files_gitignore_desc()}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
@@ -1737,7 +1733,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             <div className="flex gap-2 items-center">
               <input
                 className="flex-1 text-xs bg-background border border-border/60 rounded px-2 py-1 outline-none focus:border-primary"
-                placeholder={t("workbench.files.gitignore_preview_placeholder")}
+                placeholder={m.workbench_files_gitignore_preview_placeholder()}
                 value={previewPattern}
                 onChange={(e) => setPreviewPattern(e.target.value)}
               />
@@ -1745,7 +1741,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
             {gitignorePreview.length > 0 && (
               <div className="border border-border/40 rounded p-2 max-h-28 overflow-y-auto">
                 <p className="text-[10px] text-muted-foreground mb-1">
-                  {t("workbench.files.gitignore_preview_matches", {
+                  {m.workbench_files_gitignore_preview_matches({
                     n: gitignorePreview.length,
                   })}
                 </p>
@@ -1766,7 +1762,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               size="sm"
               onClick={() => setGitignoreOpen(false)}
             >
-              {t("workbench.files.cancel")}
+              {m.workbench_files_cancel()}
             </Button>
             <Button
               size="sm"
@@ -1776,7 +1772,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               {gitignoreSaving ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                t("workbench.files.save")
+                m.workbench_files_save()
               )}
             </Button>
           </DialogFooter>

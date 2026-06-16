@@ -30,7 +30,6 @@ import {
   MonitorPlay,
   Database,
 } from "lucide-react";
-import { useT } from "@/lib/i18n";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import {
@@ -50,6 +49,8 @@ import { GitTab } from "./git/git-tab";
 import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";
 import { StorageTab } from "./tabs/storage-tab";
+import { m } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 
 interface WorkbenchPanelProps {
   threadId: string;
@@ -117,7 +118,6 @@ function NavTabButton({
   hydrated: boolean;
   onSelect: () => void;
 }) {
-  const t = useT();
   const badge = useTabBadge(threadId, workspaceId, tab, hydrated);
   const pending = useWorkbenchStore((s) =>
     tab === "files"
@@ -128,7 +128,7 @@ function NavTabButton({
   );
   const showPending = hydrated && pending && !active;
   const Icon = TAB_ICON[tab];
-  const label = t(`workbench.tab.${tab}`);
+  const label = mDyn(`workbench.tab.${tab}`);
   const tooltipText = badge ? `${label} (${badge})` : label;
 
   return (
@@ -146,7 +146,7 @@ function NavTabButton({
           {showPending && (
             <span
               className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500"
-              aria-label={t("workbench.tab.pending")}
+              aria-label={m.workbench_tab_pending()}
             />
           )}
           {badge && (
@@ -204,7 +204,6 @@ export function WorkbenchContent({
   threadId,
   onAddToContext,
 }: WorkbenchPanelProps) {
-  const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
   const activeTab = useWorkbenchStore((s) => s.getActiveTab(threadId));
@@ -219,19 +218,19 @@ export function WorkbenchContent({
       <div className="flex h-16 items-center justify-between px-3 border-b border-border/60 bg-background">
         <span className="flex items-center gap-2 text-sm font-medium">
           <ActiveIcon className="w-4 h-4 text-muted-foreground" />
-          {t(`workbench.tab.${activeTab}`)}
+          {mDyn(`workbench.tab.${activeTab}`)}
         </span>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => setPanelOpen(threadId, false)}
-              aria-label={t("workbench.toggle")}
+              aria-label={m.workbench_toggle()}
               className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="left">{t("workbench.toggle")}</TooltipContent>
+          <TooltipContent side="left">{m.workbench_toggle()}</TooltipContent>
         </Tooltip>
       </div>
 

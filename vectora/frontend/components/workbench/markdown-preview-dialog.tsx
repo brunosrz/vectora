@@ -12,8 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MarkdownView } from "@/components/workbench/markdown-view";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 interface MarkdownPreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,7 +26,6 @@ export function MarkdownPreviewDialog({
   filePath,
   content: initialContent,
 }: MarkdownPreviewDialogProps) {
-  const t = useT();
   const [content, setContent] = useState<string | null>(initialContent ?? null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,20 +45,20 @@ export function MarkdownPreviewDialog({
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="truncate">
-            {filePath || t("workbench.preview_md.title")}
+            {filePath || m.workbench_preview_md_title()}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-auto custom-scrollbar">
           {isLoading ? (
             <div className="flex items-center justify-center h-32 text-muted-foreground">
-              {t("workbench.preview_md.loading")}
+              {m.workbench_preview_md_loading()}
             </div>
           ) : content ? (
             <MarkdownView content={content} />
           ) : (
             <div className="p-4 text-muted-foreground">
-              {t("workbench.preview_md.empty")}
+              {m.workbench_preview_md_empty()}
             </div>
           )}
         </div>

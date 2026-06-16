@@ -5,20 +5,17 @@
  */
 
 import { FileText } from "lucide-react";
-import { useT } from "@/lib/i18n";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
+import { m } from "@/lib/paraglide/messages";
 
 export function TasksTab({ threadId }: { threadId: string }) {
-  const t = useT();
   const plan = useWorkbenchStore((s) => s.getPlan(threadId));
 
   if (!plan.items || plan.items.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
         <FileText className="h-10 w-10 text-muted-foreground/40" />
-        <p className="text-sm text-foreground/60">
-          {t("workbench.plan.empty")}
-        </p>
+        <p className="text-sm text-foreground/60">{m.workbench_plan_empty()}</p>
       </div>
     );
   }

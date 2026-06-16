@@ -35,26 +35,26 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { useT } from "@/lib/i18n";
 import { apiCheckout, apiSync, type GitBranches, type GitStatus } from "./api";
+import { m } from "@/lib/paraglide/messages";
 
-function syncLabel(
-  t: ReturnType<typeof useT>,
-  status: GitStatus | null,
-): { label: string; action: "fetch" | "pull" | "push" } {
+function syncLabel(status: GitStatus | null): {
+  label: string;
+  action: "fetch" | "pull" | "push";
+} {
   if (status && status.behind > 0) {
     return {
-      label: t("workbench.git.sync_pull", { n: status.behind }),
+      label: m.workbench_git_sync_pull({ n: status.behind }),
       action: "pull",
     };
   }
   if (status && status.ahead > 0) {
     return {
-      label: t("workbench.git.sync_push", { n: status.ahead }),
+      label: m.workbench_git_sync_push({ n: status.ahead }),
       action: "push",
     };
   }
-  return { label: t("workbench.git.sync_fetch"), action: "fetch" };
+  return { label: m.workbench_git_sync_fetch(), action: "fetch" };
 }
 
 export function GitToolbar({
@@ -76,14 +76,13 @@ export function GitToolbar({
   onOpenPR: (head: string) => void;
   onChanged: () => void;
 }) {
-  const t = useT();
   const [creating, setCreating] = useState(false);
   const [newBranch, setNewBranch] = useState("");
   const [syncing, setSyncing] = useState(false);
 
   const current = status?.branch || branches?.current || "—";
   const others = (branches?.branches ?? []).filter((b) => b !== current);
-  const sync = syncLabel(t, status);
+  const sync = syncLabel(status);
   const SyncIcon =
     sync.action === "push"
       ? ArrowUp
@@ -124,8 +123,8 @@ export function GitToolbar({
           <DropdownMenuTrigger asChild>
             <button
               className="flex items-center gap-1.5 min-w-0 max-w-[55%] px-2 py-1 rounded-md text-xs hover:bg-muted/50 transition-colors"
-              title={t("tooltip.git_branch")}
-              aria-label={t("tooltip.git_branch")}
+              title={m.tooltip_git_branch()}
+              aria-label={m.tooltip_git_branch()}
             >
               <GitBranch className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
               <span className="truncate font-mono">{current}</span>
@@ -133,12 +132,12 @@ export function GitToolbar({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[200px]">
             <DropdownMenuLabel>
-              {t("workbench.git.branch_menu")}
+              {m.workbench_git_branch_menu()}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {others.length === 0 ? (
               <DropdownMenuItem disabled>
-                {t("workbench.git.branch_empty")}
+                {m.workbench_git_branch_empty()}
               </DropdownMenuItem>
             ) : (
               others.map((b) => (
@@ -153,16 +152,16 @@ export function GitToolbar({
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => setCreating(true)}>
-              {t("workbench.git.branch_create")}
+              {m.workbench_git_branch_create()}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onCompare}>
-              {t("workbench.git.branch_compare")}
+              {m.workbench_git_branch_compare()}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onOpenWorktrees}>
-              {t("workbench.git.branch_worktrees")}
+              {m.workbench_git_branch_worktrees()}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onOpenStash}>
-              {t("workbench.git.stash_view")}
+              {m.workbench_git_stash_view()}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -194,13 +193,13 @@ export function GitToolbar({
           <TooltipTrigger asChild>
             <button
               onClick={() => onOpenPR(current)}
-              aria-label={t("tooltip.git_pr")}
+              aria-label={m.tooltip_git_pr()}
               className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
             >
               <GitPullRequest className="w-3.5 h-3.5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{t("tooltip.git_pr")}</TooltipContent>
+          <TooltipContent side="bottom">{m.tooltip_git_pr()}</TooltipContent>
         </Tooltip>
       </div>
 
@@ -211,7 +210,7 @@ export function GitToolbar({
             autoFocus
             value={newBranch}
             onChange={(e) => setNewBranch(e.target.value)}
-            placeholder={t("workbench.git.branch_create_placeholder")}
+            placeholder={m.workbench_git_branch_create_placeholder()}
             className="flex-1 text-xs font-mono bg-background border border-border/60 rounded px-1.5 py-0.5 outline-none focus:border-primary min-w-0"
             onKeyDown={(e) => {
               if (e.key === "Enter") void handleCreate();
@@ -222,7 +221,7 @@ export function GitToolbar({
             onClick={() => void handleCreate()}
             className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20"
           >
-            {t("workbench.git.branch_create").replace("…", "")}
+            {m.workbench_git_branch_create().replace("…", "")}
           </button>
         </div>
       )}

@@ -11,8 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useT } from "@/lib/i18n";
 import { apiCreateWorktree, fetchWorktrees, type WorktreeEntry } from "./api";
+import { m } from "@/lib/paraglide/messages";
 
 export function WorktreesModal({
   workspaceId,
@@ -23,7 +23,6 @@ export function WorktreesModal({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const t = useT();
   const [entries, setEntries] = useState<WorktreeEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -56,26 +55,26 @@ export function WorktreesModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("workbench.git.worktrees_title")}</DialogTitle>
+          <DialogTitle>{m.workbench_git_worktrees_title()}</DialogTitle>
         </DialogHeader>
         <div className="flex items-center gap-1.5">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={t("workbench.diff.worktree_name_placeholder")}
+            placeholder={m.workbench_diff_worktree_name_placeholder()}
             className="flex-1 text-xs bg-background border border-border/60 rounded px-1.5 py-1 outline-none focus:border-primary min-w-0"
           />
           <input
             value={branch}
             onChange={(e) => setBranch(e.target.value)}
-            placeholder={t("workbench.diff.worktree_branch_placeholder")}
+            placeholder={m.workbench_diff_worktree_branch_placeholder()}
             className="flex-1 text-xs font-mono bg-background border border-border/60 rounded px-1.5 py-1 outline-none focus:border-primary min-w-0"
           />
           <button
             onClick={() => void handleCreate()}
             className="text-[10px] px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 shrink-0"
           >
-            {t("workbench.diff.worktree_create")}
+            {m.workbench_diff_worktree_create()}
           </button>
         </div>
         <div className="max-h-72 overflow-y-auto -mx-1">
@@ -85,7 +84,7 @@ export function WorktreesModal({
             </div>
           ) : entries.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-6">
-              {t("workbench.diff.worktree_empty")}
+              {m.workbench_diff_worktree_empty()}
             </p>
           ) : (
             entries.map((w, i) => (

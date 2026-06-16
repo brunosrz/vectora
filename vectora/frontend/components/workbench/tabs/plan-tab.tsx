@@ -22,7 +22,6 @@ import { useCallback } from "react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useT } from "@/lib/i18n";
 import { useWorkbenchSWR } from "@/lib/hooks/workbench/use-swr";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { getThreadActivity } from "@/lib/api/vectora-client";
@@ -31,6 +30,7 @@ import {
   useWorkbenchStore,
   type PlanItem,
 } from "@/lib/stores/workbench-store";
+import { m } from "@/lib/paraglide/messages";
 
 async function fetchArtifacts(threadId: string): Promise<PlanItem[]> {
   const qs = new URLSearchParams({ session_id: threadId });
@@ -61,7 +61,6 @@ interface PlanTabProps {
 }
 
 function FilesTouchedSection({ threadId }: { threadId: string }) {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const { data } = useQuery({
     queryKey: ["thread-activity", threadId],
@@ -82,7 +81,7 @@ function FilesTouchedSection({ threadId }: { threadId: string }) {
           <ChevronRight className="w-3 h-3 shrink-0" />
         )}
         <span className="font-medium flex-1 text-left">
-          {t("workbench.plan.files_touched")} ({files.length})
+          {m.workbench_plan_files_touched()} ({files.length})
         </span>
       </button>
       {open && (
@@ -102,7 +101,6 @@ function FilesTouchedSection({ threadId }: { threadId: string }) {
 }
 
 function TasksSection({ threadId }: { threadId: string }) {
-  const t = useT();
   const [open, setOpen] = useState(false);
   const plan = useWorkbenchStore((s) => s.getPlan(threadId));
   const items = plan.items;
@@ -122,7 +120,7 @@ function TasksSection({ threadId }: { threadId: string }) {
         )}
         <CheckSquare className="w-3 h-3 shrink-0" />
         <span className="font-medium flex-1 text-left">
-          {t("workbench.plan.tasks_section")} ({items.length})
+          {m.workbench_plan_tasks_section()} ({items.length})
         </span>
       </button>
       {open && (
@@ -142,7 +140,6 @@ function TasksSection({ threadId }: { threadId: string }) {
 }
 
 export function PlanTab({ threadId }: PlanTabProps) {
-  const t = useT();
   const items = useWorkbenchStore((s) => s.getPlan(threadId).items);
   const fetchedAt = useWorkbenchStore((s) => s.getPlan(threadId).fetchedAt);
   const openSlug = useWorkbenchStore((s) => s.getPlan(threadId).openSlug);
@@ -199,7 +196,7 @@ export function PlanTab({ threadId }: PlanTabProps) {
       <div className="h-full flex flex-col items-center justify-center gap-3 p-4 text-center">
         <FileText className="w-6 h-6 text-muted-foreground/40" />
         <p className="text-xs text-muted-foreground">
-          {t("workbench.plan.empty")}
+          {m.workbench_plan_empty()}
         </p>
         <Button
           variant="outline"
@@ -208,11 +205,11 @@ export function PlanTab({ threadId }: PlanTabProps) {
           onClick={() =>
             useChatInputStore
               .getState()
-              .pushDraft(t("workbench.plan.ask_prompt"))
+              .pushDraft(m.workbench_plan_ask_prompt())
           }
         >
           <Sparkles className="w-3 h-3" />
-          {t("workbench.plan.ask_cta")}
+          {m.workbench_plan_ask_cta()}
         </Button>
       </div>
     );
@@ -266,7 +263,7 @@ export function PlanTab({ threadId }: PlanTabProps) {
             <button
               onClick={() => setPlanOpenSlug(threadId, null)}
               className="text-muted-foreground hover:text-foreground px-1"
-              title={t("workbench.close")}
+              title={m.workbench_close()}
             >
               ×
             </button>

@@ -16,8 +16,8 @@ import {
   PERMISSION_MODES,
   type PermissionMode,
 } from "@/lib/stores/settings-store";
-import { useT } from "@/lib/i18n";
-
+import { m as msg } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 /** Cor do chip por modo — quanto mais permissivo, mais "quente". */
 const MODE_TONE: Record<PermissionMode, string> = {
   ask: "text-muted-foreground",
@@ -28,7 +28,6 @@ const MODE_TONE: Record<PermissionMode, string> = {
 };
 
 export function PermissionModeMenu() {
-  const t = useT();
   const mode = useSettingsStore((s) => s.permissionMode);
   const setMode = useSettingsStore((s) => s.setPermissionMode);
 
@@ -49,12 +48,12 @@ export function PermissionModeMenu() {
       <button
         onClick={() => setOpen((o) => !o)}
         className={`flex items-center gap-1.5 min-w-0 max-w-[160px] px-2.5 py-1.5 rounded-md text-xs hover:bg-muted/50 transition-colors select-none ${MODE_TONE[mode]}`}
-        title={t("permission.title")}
+        title={msg.permission_title()}
         aria-expanded={open}
       >
         <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
         <span className="truncate font-medium">
-          {t(`permission.mode.${mode}`)}
+          {mDyn(`permission.mode.${mode}`)}
         </span>
         <ChevronDown className="w-3 h-3 shrink-0" />
       </button>
@@ -62,7 +61,7 @@ export function PermissionModeMenu() {
       {open && (
         <div className="absolute right-0 bottom-9 z-50 w-72 max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-y-auto rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-bottom-2">
           <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {t("permission.title")}
+            {msg.permission_title()}
           </div>
           {PERMISSION_MODES.map((m) => (
             <button
@@ -78,10 +77,10 @@ export function PermissionModeMenu() {
               </span>
               <span className="min-w-0">
                 <span className={`block font-medium ${MODE_TONE[m]}`}>
-                  {t(`permission.mode.${m}`)}
+                  {mDyn(`permission.mode.${m}`)}
                 </span>
                 <span className="block text-xs text-muted-foreground">
-                  {t(`permission.desc.${m}`)}
+                  {mDyn(`permission.desc.${m}`)}
                 </span>
               </span>
             </button>

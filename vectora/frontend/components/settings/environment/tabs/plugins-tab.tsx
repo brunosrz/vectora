@@ -28,8 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useT } from "@/lib/i18n";
 import { ToolPolicyPanel } from "./tool-policy-panel";
+import { m } from "@/lib/paraglide/messages";
 
 interface McpServer {
   name: string;
@@ -50,7 +50,6 @@ const EMPTY_FORM: McpServer = {
 };
 
 export function PluginsTab() {
-  const t = useT();
   const [servers, setServers] = useState<McpServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -67,11 +66,11 @@ export function PluginsTab() {
       const data = res.ok ? await res.json() : { servers: [] };
       setServers(data.servers ?? []);
     } catch {
-      setError(t("plugins.error_load"));
+      setError(m.plugins_error_load());
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -95,7 +94,7 @@ export function PluginsTab() {
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        setError(d.detail ?? t("plugins.error_save"));
+        setError(d.detail ?? m.plugins_error_save());
         return;
       }
       setForm(EMPTY_FORM);
@@ -103,7 +102,7 @@ export function PluginsTab() {
       setAdding(false);
       await load();
     } catch {
-      setError(t("plugins.error_save"));
+      setError(m.plugins_error_save());
     } finally {
       setSaving(false);
     }
@@ -126,13 +125,13 @@ export function PluginsTab() {
       setVerify((p) => ({
         ...p,
         [name]: d.ok
-          ? { state: "ok", msg: t("plugins.verify_ok", { n: d.tools.length }) }
-          : { state: "error", msg: d.error || t("plugins.verify_fail") },
+          ? { state: "ok", msg: m.plugins_verify_ok({ n: d.tools.length }) }
+          : { state: "error", msg: d.error || m.plugins_verify_fail() },
       }));
     } catch {
       setVerify((p) => ({
         ...p,
-        [name]: { state: "error", msg: t("plugins.verify_fail") },
+        [name]: { state: "error", msg: m.plugins_verify_fail() },
       }));
     }
   };
@@ -148,15 +147,15 @@ export function PluginsTab() {
   return (
     <div className="space-y-3">
       <div className="space-y-0.5">
-        <p className="text-sm font-medium">{t("plugins.title")}</p>
-        <p className="text-xs text-muted-foreground">{t("plugins.subtitle")}</p>
+        <p className="text-sm font-medium">{m.plugins_title()}</p>
+        <p className="text-xs text-muted-foreground">{m.plugins_subtitle()}</p>
       </div>
 
       {/* Lista */}
       <div className="space-y-2">
         {servers.length === 0 && !adding && (
           <p className="text-xs text-muted-foreground py-2">
-            {t("plugins.empty")}
+            {m.plugins_empty()}
           </p>
         )}
         {servers.map((s) => {
@@ -200,7 +199,7 @@ export function PluginsTab() {
                     ) : v?.state === "error" ? (
                       <XCircle className="w-3 h-3 text-destructive" />
                     ) : (
-                      t("plugins.verify")
+                      m.plugins_verify()
                     )}
                   </Button>
                   <Button
@@ -231,7 +230,7 @@ export function PluginsTab() {
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground">
-                {t("plugins.name")}
+                {m.plugins_name()}
               </label>
               <Input
                 value={form.name}
@@ -242,7 +241,7 @@ export function PluginsTab() {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground">
-                {t("plugins.transport")}
+                {m.plugins_transport()}
               </label>
               <Select
                 value={form.transport}
@@ -266,7 +265,7 @@ export function PluginsTab() {
             <>
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">
-                  {t("plugins.command")}
+                  {m.plugins_command()}
                 </label>
                 <Input
                   value={form.command}
@@ -280,7 +279,7 @@ export function PluginsTab() {
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">
-                  {t("plugins.args")}
+                  {m.plugins_args()}
                 </label>
                 <textarea
                   value={argsText}
@@ -293,7 +292,7 @@ export function PluginsTab() {
           ) : (
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground">
-                {t("plugins.url")}
+                {m.plugins_url()}
               </label>
               <Input
                 value={form.url}
@@ -319,7 +318,7 @@ export function PluginsTab() {
                 setError(null);
               }}
             >
-              {t("plugins.cancel")}
+              {m.plugins_cancel()}
             </Button>
             <Button
               size="sm"
@@ -328,7 +327,7 @@ export function PluginsTab() {
               disabled={saving || !form.name.trim()}
             >
               {saving && <Loader2 className="w-3 h-3 animate-spin mr-1.5" />}
-              {t("plugins.save")}
+              {m.plugins_save()}
             </Button>
           </div>
         </div>
@@ -340,7 +339,7 @@ export function PluginsTab() {
           onClick={() => setAdding(true)}
         >
           <Plus className="w-3.5 h-3.5 mr-1.5" />
-          {t("plugins.add")}
+          {m.plugins_add()}
         </Button>
       )}
 

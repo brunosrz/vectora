@@ -21,7 +21,6 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import { useToastStore } from "./toast-store";
-import { t } from "@/lib/i18n";
 import { fetchJsonWithRetry, FetchHttpError } from "@/lib/utils/fetch-retry";
 import {
   asyncError,
@@ -32,6 +31,7 @@ import {
   type AsyncStatus,
   type ActionResult,
 } from "@/lib/types/async-state";
+import { m } from "@/lib/paraglide/messages";
 
 export type WorkspaceTransport = "local" | "ssh" | "codespace";
 
@@ -286,7 +286,7 @@ export const useWorkspacesStore = create<WorkspacesState>()(
             ...asyncError(message),
             pending: { ...s.pending, hydrate: false },
           }));
-          useToastStore.getState().error(t("workspaces.error.hydrate"), {
+          useToastStore.getState().error(m.workspaces_error_hydrate(), {
             description: message,
           });
         }
@@ -327,7 +327,7 @@ export const useWorkspacesStore = create<WorkspacesState>()(
           return { ok: true, data: data.workspace as WorkspaceInfo };
         } catch (err) {
           const message = toErrorMessage(err);
-          useToastStore.getState().error(t("workspaces.error.create"), {
+          useToastStore.getState().error(m.workspaces_error_create(), {
             description: message,
           });
           return { ok: false, error: message };
@@ -361,7 +361,7 @@ export const useWorkspacesStore = create<WorkspacesState>()(
           return { ok: true, data: data.workspace as WorkspaceInfo };
         } catch (err) {
           const message = toErrorMessage(err);
-          useToastStore.getState().error(t("workspaces.error.trust"), {
+          useToastStore.getState().error(m.workspaces_error_trust(), {
             description: message,
           });
           return { ok: false, error: message };
@@ -395,7 +395,7 @@ export const useWorkspacesStore = create<WorkspacesState>()(
           return { ok: true, data: data.workspace as WorkspaceInfo };
         } catch (err) {
           const message = toErrorMessage(err);
-          useToastStore.getState().error(t("workspaces.error.git_init"), {
+          useToastStore.getState().error(m.workspaces_error_git_init(), {
             description: message,
           });
           return { ok: false, error: message };

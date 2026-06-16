@@ -11,8 +11,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 interface VoiceInputButtonProps {
   isListening: boolean;
   disabled?: boolean;
@@ -26,10 +25,9 @@ export function VoiceInputButton({
   onClick,
   size = "sm",
 }: VoiceInputButtonProps) {
-  const t = useT();
   const dimensions = size === "sm" ? "h-9 w-9" : "h-10 w-10";
   const iconSize = size === "sm" ? "w-4 h-4" : "w-4.5 h-4.5";
-  const tooltipText = isListening ? t("input.stop") : t("tooltip.chat_audio");
+  const tooltipText = isListening ? m.input_stop() : m.tooltip_chat_audio();
 
   return (
     <Tooltip>

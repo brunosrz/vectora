@@ -14,8 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 interface NewChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,7 +29,6 @@ export function NewChatDialog({
   onOpenChange,
   onConfirm,
 }: NewChatDialogProps) {
-  const t = useT();
   const workspaces = useWorkspacesStore((s) => s.workspaces);
   const activeId = useWorkspacesStore((s) => s.active_id);
   const hydrate = useWorkspacesStore((s) => s.hydrate);
@@ -53,8 +51,8 @@ export function NewChatDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("new_chat.dialog_title")}</DialogTitle>
-          <DialogDescription>{t("new_chat.dialog_desc")}</DialogDescription>
+          <DialogTitle>{m.new_chat_dialog_title()}</DialogTitle>
+          <DialogDescription>{m.new_chat_dialog_desc()}</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-72">
@@ -71,10 +69,10 @@ export function NewChatDialog({
               <FolderPlus className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-foreground">
-                  {t("new_chat.create_new")}
+                  {m.new_chat_create_new()}
                 </span>
                 <span className="block text-xs text-muted-foreground mt-0.5">
-                  {t("new_chat.create_new_desc")}
+                  {m.new_chat_create_new_desc()}
                 </span>
               </span>
               {selected === null && (
@@ -84,7 +82,7 @@ export function NewChatDialog({
 
             {workspaces.length > 0 && (
               <p className="px-1 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                {t("new_chat.existing_label")}
+                {m.new_chat_existing_label()}
               </p>
             )}
 
@@ -122,9 +120,9 @@ export function NewChatDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("new_chat.cancel")}
+            {m.new_chat_cancel()}
           </Button>
-          <Button onClick={handleConfirm}>{t("new_chat.confirm")}</Button>
+          <Button onClick={handleConfirm}>{m.new_chat_confirm()}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

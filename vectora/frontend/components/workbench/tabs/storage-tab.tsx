@@ -11,8 +11,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronRight, Database, File, Folder, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { m } from "@/lib/paraglide/messages";
 
 interface StorageTabProps {
   threadId: string;
@@ -29,7 +29,6 @@ interface TreeNode {
 }
 
 export function StorageTab({ threadId, onFileSelect }: StorageTabProps) {
-  const t = useT();
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
 
@@ -40,7 +39,7 @@ export function StorageTab({ threadId, onFileSelect }: StorageTabProps) {
   // Carrega árvore de diretórios inicial ao montar
   const loadTree = useCallback(async () => {
     if (!wsId) {
-      setError(t("workbench.files.no_workspace"));
+      setError(m.workbench_files_no_workspace());
       setIsLoading(false);
       return;
     }
@@ -57,12 +56,12 @@ export function StorageTab({ threadId, onFileSelect }: StorageTabProps) {
       setError(null);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : t("workbench.files.no_workspace"),
+        err instanceof Error ? err.message : m.workbench_files_no_workspace(),
       );
     } finally {
       setIsLoading(false);
     }
-  }, [wsId, t]);
+  }, [wsId]);
 
   useEffect(() => {
     loadTree();
@@ -142,7 +141,7 @@ export function StorageTab({ threadId, onFileSelect }: StorageTabProps) {
           onClick={loadTree}
           className="mt-2 inline-block rounded bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20"
         >
-          {t("workbench.files.refresh")}
+          {m.workbench_files_refresh()}
         </button>
       </div>
     );
@@ -154,10 +153,10 @@ export function StorageTab({ threadId, onFileSelect }: StorageTabProps) {
         <Database className="h-8 w-8 text-muted-foreground/40 shrink-0" />
         <div className="min-w-0 max-w-[200px]">
           <p className="text-sm font-medium text-foreground leading-snug">
-            {t("workbench.storage.empty_title")}
+            {m.workbench_storage_empty_title()}
           </p>
           <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-            {t("workbench.storage.empty_description")}
+            {m.workbench_storage_empty_description()}
           </p>
         </div>
       </div>

@@ -173,7 +173,16 @@ export const useSettingsStore = create<SettingsState>()(
       setHistoryLimit: (v) => set({ historyLimit: v }),
       setCustomSystemPrompt: (v) => set({ customSystemPrompt: v }),
       setTrainingInstructions: (v) => set({ trainingInstructions: v }),
-      setLanguage: (v) => set({ language: v }),
+      setLanguage: (v) => {
+        set({ language: v });
+        // Sincroniza o locale do Paraglide (recarrega para aplicar o idioma
+        // a todas as mensagens m.* renderizadas).
+        void import("@/lib/paraglide/runtime").then(
+          ({ setLocale, getLocale }) => {
+            if (getLocale() !== v) setLocale(v);
+          },
+        );
+      },
       setPermissionMode: (v) => set({ permissionMode: v }),
       setReasoningEffort: (v) => set({ reasoningEffort: v }),
       setFastMode: (v) => set({ fastMode: v }),

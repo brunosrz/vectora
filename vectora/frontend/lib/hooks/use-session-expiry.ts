@@ -21,8 +21,7 @@
 import { useEffect, useRef } from "react";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useToastStore } from "@/lib/stores/toast-store";
-import { t } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 /** Avisa 5 minutos antes do access token expirar. */
 const WARN_BEFORE_MS = 5 * 60 * 1000;
 /** Nunca agenda para "já" — evita disparo em loop em re-renders/race. */
@@ -49,17 +48,17 @@ async function renewSession(): Promise<boolean> {
 }
 
 function showExpiryToast(): void {
-  useToastStore.getState().warning(t("auth.session.expiring_title"), {
-    description: t("auth.session.expiring_desc"),
+  useToastStore.getState().warning(m.auth_session_expiring_title(), {
+    description: m.auth_session_expiring_desc(),
     duration: null, // fica até o usuário agir ou a sessão de fato cair
     action: {
-      label: t("auth.session.renew_action"),
+      label: m.auth_session_renew_action(),
       onClick: async () => {
         const ok = await renewSession();
         if (ok) {
-          useToastStore.getState().success(t("auth.session.renewed"));
+          useToastStore.getState().success(m.auth_session_renewed());
         } else {
-          useToastStore.getState().error(t("auth.session.renew_failed"));
+          useToastStore.getState().error(m.auth_session_renew_failed());
         }
       },
     },

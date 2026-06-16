@@ -6,8 +6,7 @@ import { Menu } from "lucide-react";
 import { ContextualHelp } from "./contextual-help";
 import { GitStatusBadge } from "./git-status-badge";
 import { SettingsMenu } from "./settings-menu";
-import { useT } from "@/lib/i18n";
-
+import { m } from "@/lib/paraglide/messages";
 interface HeaderProps {
   showToolCalls?: boolean;
   onToggleToolCalls?: () => void;
@@ -16,7 +15,6 @@ interface HeaderProps {
 }
 
 export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
-  const t = useT();
   return (
     <header className="border-b border-border/60 bg-background h-16 flex items-center">
       <div className="flex items-center justify-between w-full px-4 sm:px-6">
@@ -26,7 +24,7 @@ export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
             <button
               type="button"
               onClick={onOpenSidebar}
-              aria-label={t("sidebar.open")}
+              aria-label={m.sidebar_open()}
               className="md:hidden -ml-1 mr-1 inline-flex items-center justify-center w-10 h-10 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
               <Menu className="w-5 h-5" />

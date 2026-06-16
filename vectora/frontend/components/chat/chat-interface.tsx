@@ -31,7 +31,6 @@ import { CONTEXT_BLOCK_PCT, CONTEXT_WARN_PCT } from "@/lib/utils/usage";
 import { useThreadsStore } from "@/lib/stores/threads-store";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { useRouter } from "next/navigation";
-import { useT, t as translate } from "@/lib/i18n";
 import { useToastStore } from "@/lib/stores/toast-store";
 import { consumeInterruptedFlag } from "@/lib/utils/stream-interruption";
 import {
@@ -58,6 +57,8 @@ const VOICE_LANG: Record<Lang, string> = {
 const readRun = async (_runId: string) => null;
 const shareRun = async (_runId: string): Promise<string> => "";
 import { LARGE_PASTE_THRESHOLD } from "@/lib/constants/features";
+import { m as msg } from "@/lib/paraglide/messages";
+import { mDyn } from "@/lib/i18n-dyn";
 
 // Enhanced scrollbar styles with smooth transitions
 const scrollbarStyles = `
@@ -171,8 +172,6 @@ export function ChatInterface({
   const activeWorkspaceId = useWorkspacesStore((s) => s.active_id ?? undefined);
 
   const router = useRouter();
-  const t = useT();
-
   // Workspace acompanha a sessão: ao abrir/trocar de chat, ativa o workspace
   // gravado naquela thread. Threads novas (sem workspace ainda) são ignoradas —
   // o backend cria o padrão em Documents/src/<id> na primeira mensagem.
@@ -458,7 +457,7 @@ export function ChatInterface({
       if (consumeInterruptedFlag(currentThreadId)) {
         // `translate` (não o `t` do useT()) — evita acrescentar dependência
         // de hook a este efeito só por causa de um toast condicional.
-        useToastStore.getState().warning(translate("chat.stream_interrupted"));
+        useToastStore.getState().warning(msg.chat_stream_interrupted());
       }
 
       try {
@@ -743,9 +742,10 @@ export function ChatInterface({
       processMessage(trimmedMessage, [], userMessage)
         .then(() => onInitialMessageSent?.())
         .catch((error) => {
-          const msg = error instanceof Error ? error.message : String(error);
-          useToastStore.getState().error(translate("chat.auto_send_failed"), {
-            description: msg,
+          const errText =
+            error instanceof Error ? error.message : String(error);
+          useToastStore.getState().error(msg.chat_auto_send_failed(), {
+            description: errText,
           });
           onInitialMessageSent?.(); // Clear URL param even on error to prevent retry loops
         });
@@ -784,9 +784,9 @@ export function ChatInterface({
 
       if (name === "help") {
         const lines = SLASH_COMMANDS.map(
-          (c) => `- \`${c.usage}\` — ${t(c.descKey)}`,
+          (c) => `- \`${c.usage}\` — ${mDyn(c.descKey)}`,
         ).join("\n");
-        addSystemMsg(`${t("slash.help_intro")}\n\n${lines}`);
+        addSystemMsg(`${msg.slash_help_intro()}\n\n${lines}`);
         return;
       }
       if (name === "clear") {
@@ -797,7 +797,7 @@ export function ChatInterface({
         const models = getAllowedModels();
         if (!arg) {
           addSystemMsg(
-            t("slash.model_usage", {
+            msg.slash_model_usage({
               models: models.map((m) => getModelDisplayName(m)).join(", "),
             }),
           );
@@ -812,14 +812,14 @@ export function ChatInterface({
         if (found && onAgentConfigChange && agentConfig) {
           onAgentConfigChange({ ...agentConfig, model: found });
           addSystemMsg(
-            t("slash.model_changed", { model: getModelDisplayName(found) }),
+            msg.slash_model_changed({ model: getModelDisplayName(found) }),
           );
         } else {
-          addSystemMsg(t("slash.model_not_found", { name: arg }));
+          addSystemMsg(msg.slash_model_not_found({ name: arg }));
         }
       }
     },
-    [setMessages, router, t, onAgentConfigChange, agentConfig],
+    [setMessages, router, onAgentConfigChange, agentConfig],
   );
 
   // Handler de seleção no AtMentionMenu: substitui @query pelo @path escolhido.

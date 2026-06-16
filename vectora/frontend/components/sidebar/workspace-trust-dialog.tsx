@@ -48,8 +48,8 @@ import {
   type BrowseResult,
   type CodespaceSummary,
 } from "@/lib/stores/workspaces-store";
-import { useT } from "@/lib/i18n";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
+import { m } from "@/lib/paraglide/messages";
 
 type Tab = "local" | "ssh" | "codespace";
 
@@ -73,7 +73,6 @@ export function WorkspaceTrustDialog({
   onConfirmPath,
   initialPath,
 }: WorkspaceTrustDialogProps) {
-  const t = useT();
   // UX-16 — todo o fluxo (browse, trust, SSH, codespaces) depende do backend.
   const { offline } = useNetworkStatus();
   const create = useWorkspacesStore((s) => s.create);
@@ -258,13 +257,13 @@ export function WorkspaceTrustDialog({
         <DialogHeader>
           <DialogTitle>
             {mode === "ingest"
-              ? t("workspace.ingest_title")
-              : t("workspace.trust_title")}
+              ? m.workspace_ingest_title()
+              : m.workspace_trust_title()}
           </DialogTitle>
           <DialogDescription>
             {mode === "ingest"
-              ? t("workspace.ingest_desc")
-              : t("workspace.trust_desc")}
+              ? m.workspace_ingest_desc()
+              : m.workspace_trust_desc()}
           </DialogDescription>
         </DialogHeader>
 
@@ -281,7 +280,7 @@ export function WorkspaceTrustDialog({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Monitor className="w-3.5 h-3.5" /> {t("workspace.tab_local")}
+              <Monitor className="w-3.5 h-3.5" /> {m.workspace_tab_local()}
             </button>
             <button
               type="button"
@@ -323,7 +322,7 @@ export function WorkspaceTrustDialog({
                     handleGo();
                   }
                 }}
-                placeholder={t("workspace.path_placeholder")}
+                placeholder={m.workspace_path_placeholder()}
                 spellCheck={false}
                 className="h-8 text-xs font-mono"
                 disabled={loading || offline}
@@ -336,7 +335,7 @@ export function WorkspaceTrustDialog({
                 onClick={handleGo}
                 disabled={loading || offline || !pathInput.trim()}
                 title={
-                  offline ? t("network.disabled_offline") : t("workspace.go")
+                  offline ? m.network_disabled_offline() : m.workspace_go()
                 }
               >
                 <CornerDownLeft className="w-3.5 h-3.5" />
@@ -359,7 +358,7 @@ export function WorkspaceTrustDialog({
                     disabled={loading}
                   >
                     <ChevronLeft className="w-4 h-4 shrink-0 text-muted-foreground" />
-                    {t("workspace.browse_up")}
+                    {m.workspace_browse_up()}
                   </button>
                 )}
 
@@ -373,13 +372,13 @@ export function WorkspaceTrustDialog({
                     disabled={loading}
                   >
                     <HardDrive className="w-4 h-4 shrink-0" />
-                    {t("workspace.browse_drives")}
+                    {m.workspace_browse_drives()}
                   </button>
                 )}
 
                 {listing && listing.entries.length === 0 && (
                   <p className="px-3 py-4 text-sm text-muted-foreground text-center">
-                    {t("workspace.browse_empty")}
+                    {m.workspace_browse_empty()}
                   </p>
                 )}
 
@@ -417,7 +416,7 @@ export function WorkspaceTrustDialog({
                   className="rounded border-border"
                 />
                 <GitBranch className="w-4 h-4 shrink-0 text-muted-foreground" />
-                {t("workspace.git_init_label")}
+                {m.workspace_git_init_label()}
               </label>
             )}
           </>
@@ -427,7 +426,7 @@ export function WorkspaceTrustDialog({
           <div className="space-y-3">
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">
-                {t("workspace.ssh_host")}
+                {m.workspace_ssh_host()}
               </label>
               <Input
                 value={sshHost}
@@ -440,7 +439,7 @@ export function WorkspaceTrustDialog({
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">
-                {t("workspace.ssh_path")}
+                {m.workspace_ssh_path()}
               </label>
               <Input
                 value={sshPath}
@@ -453,7 +452,7 @@ export function WorkspaceTrustDialog({
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">
-                {t("workspace.ssh_key")}
+                {m.workspace_ssh_key()}
               </label>
               <div className="flex items-center gap-1.5">
                 <Select
@@ -462,12 +461,12 @@ export function WorkspaceTrustDialog({
                 >
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue
-                      placeholder={t("workspace.ssh_key_placeholder")}
+                      placeholder={m.workspace_ssh_key_placeholder()}
                     />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__none__">
-                      {t("workspace.ssh_key_none")}
+                      {m.workspace_ssh_key_none()}
                     </SelectItem>
                     {sshKeys.map((id) => (
                       <SelectItem key={id} value={id}>
@@ -496,13 +495,13 @@ export function WorkspaceTrustDialog({
                 variant="ghost"
                 onClick={handleTestSsh}
                 disabled={sshTesting || offline || !sshHost.trim()}
-                title={offline ? t("network.disabled_offline") : undefined}
+                title={offline ? m.network_disabled_offline() : undefined}
                 className="h-8"
               >
                 {sshTesting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  t("workspace.ssh_test")
+                  m.workspace_ssh_test()
                 )}
               </Button>
               {sshTestResult && (
@@ -512,7 +511,7 @@ export function WorkspaceTrustDialog({
                   }`}
                 >
                   {sshTestResult.ok
-                    ? t("workspace.ssh_ok")
+                    ? m.workspace_ssh_ok()
                     : sshTestResult.message}
                 </span>
               )}
@@ -525,15 +524,15 @@ export function WorkspaceTrustDialog({
             {codespaceLoading ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                {t("workspace.codespaces_loading")}
+                {m.workspace_codespaces_loading()}
               </div>
             ) : !codespaceAvailable ? (
               <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
-                {codespaceMessage || t("workspace.codespaces_unavailable")}
+                {codespaceMessage || m.workspace_codespaces_unavailable()}
               </div>
             ) : codespaces.length === 0 ? (
               <p className="text-xs text-muted-foreground italic">
-                {t("workspace.codespaces_empty")}
+                {m.workspace_codespaces_empty()}
               </p>
             ) : (
               <ScrollArea className="h-64 rounded-md border border-border">
@@ -543,9 +542,7 @@ export function WorkspaceTrustDialog({
                       key={cs.name}
                       onClick={() => void handleConfirmCodespace(cs)}
                       disabled={submitting || offline}
-                      title={
-                        offline ? t("network.disabled_offline") : undefined
-                      }
+                      title={offline ? m.network_disabled_offline() : undefined}
                       className="w-full text-left px-3 py-2 hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="text-sm font-medium text-foreground truncate">
@@ -568,26 +565,26 @@ export function WorkspaceTrustDialog({
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
-            {t("workspace.cancel")}
+            {m.workspace_cancel()}
           </Button>
           {tab === "local" && (
             <Button
               onClick={handleConfirm}
               disabled={!listing || submitting || offline}
-              title={offline ? t("network.disabled_offline") : undefined}
+              title={offline ? m.network_disabled_offline() : undefined}
             >
               {mode === "ingest"
-                ? t("workspace.ingest_confirm")
-                : t("workspace.trust_confirm")}
+                ? m.workspace_ingest_confirm()
+                : m.workspace_trust_confirm()}
             </Button>
           )}
           {tab === "ssh" && (
             <Button
               onClick={handleConfirmSsh}
               disabled={submitting || offline || !sshHost.trim()}
-              title={offline ? t("network.disabled_offline") : undefined}
+              title={offline ? m.network_disabled_offline() : undefined}
             >
-              {t("workspace.ssh_confirm")}
+              {m.workspace_ssh_confirm()}
             </Button>
           )}
         </DialogFooter>

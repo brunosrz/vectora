@@ -30,9 +30,9 @@ import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import type { ImageAttachment } from "@/lib/types";
-import { useT } from "@/lib/i18n";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
 import { useToastStore } from "@/lib/stores/toast-store";
+import { m } from "@/lib/paraglide/messages";
 
 interface VscodeOption {
   strategy: string;
@@ -46,8 +46,6 @@ interface VscodeOption {
  * opção disponível (ssh/devcontainer) quando o workspace não é local.
  */
 function VscodeMenu({ workspaceId }: { workspaceId: string }) {
-  const t = useT();
-
   const handleLaunch = useCallback(async () => {
     if (!workspaceId) return;
     const res = await fetch(
@@ -59,18 +57,18 @@ function VscodeMenu({ workspaceId }: { workspaceId: string }) {
     const opt =
       options.find((o) => o.strategy === "local") ?? options[0] ?? null;
     if (!opt) {
-      useToastStore.getState().error(t("workbench.open_vscode_unavailable"));
+      useToastStore.getState().error(m.workbench_open_vscode_unavailable());
       return;
     }
     window.location.href = opt.url;
-  }, [workspaceId, t]);
+  }, [workspaceId]);
 
   return (
     <button
       onClick={handleLaunch}
       className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0"
-      title={t("workbench.open_vscode")}
-      aria-label={t("workbench.open_vscode")}
+      title={m.workbench_open_vscode()}
+      aria-label={m.workbench_open_vscode()}
     >
       <VscodeIcon className="w-4 h-4" />
     </button>
@@ -165,7 +163,6 @@ export function ChatInput({
   dropHintExpanded = false,
   onAtMentionSelect,
 }: ChatInputProps) {
-  const t = useT();
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
@@ -229,7 +226,7 @@ export function ChatInput({
                       <circle cx="12" cy="12" r="10" />
                     </svg>
                     <span className="text-xs font-medium">
-                      {t("input.queued")}
+                      {m.input_queued()}
                     </span>
                   </div>
                   <span className="text-foreground/80 truncate">
@@ -272,7 +269,7 @@ export function ChatInput({
                     }
                   >
                     <div className="text-primary font-medium">
-                      {t("welcome.drop_files")}
+                      {m.welcome_drop_files()}
                     </div>
                   </div>
                 )}
@@ -303,14 +300,14 @@ export function ChatInput({
                     onPaste={onPaste}
                     placeholder={
                       !userId
-                        ? t("input.initializing")
+                        ? m.input_initializing()
                         : offline
-                          ? t("network.disabled_offline")
+                          ? m.network_disabled_offline()
                           : isLoading
-                            ? t("input.loading_placeholder")
-                            : t("input.placeholder")
+                            ? m.input_loading_placeholder()
+                            : m.input_placeholder()
                     }
-                    title={offline ? t("network.disabled_offline") : undefined}
+                    title={offline ? m.network_disabled_offline() : undefined}
                     className="relative z-10 min-h-[36px] max-h-[240px] resize-none overflow-y-auto bg-transparent border-0 w-full px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 transition-[height] duration-150 break-words custom-scrollbar"
                     disabled={!userId || offline}
                     rows={1}
@@ -326,13 +323,13 @@ export function ChatInput({
                           disabled={!input.trim() || !userId || offline}
                           className="h-8 w-8 p-0 mb-0.5 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:bg-muted disabled:text-muted-foreground"
                           type="button"
-                          aria-label={t("tooltip.chat_send")}
+                          aria-label={m.tooltip_chat_send()}
                         >
                           <Send className="w-3.5 h-3.5" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        {t("tooltip.chat_send")}
+                        {m.tooltip_chat_send()}
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -354,19 +351,19 @@ export function ChatInput({
                           type="button"
                           aria-label={
                             isStopping
-                              ? t("input.stopping")
-                              : t("tooltip.chat_stop")
+                              ? m.input_stopping()
+                              : m.tooltip_chat_stop()
                           }
                         >
                           <span className="text-xs font-medium">
-                            {isStopping ? t("input.stopping") : t("input.stop")}
+                            {isStopping ? m.input_stopping() : m.input_stop()}
                           </span>
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="top">
                         {isStopping
-                          ? t("input.stopping")
-                          : t("tooltip.chat_stop")}
+                          ? m.input_stopping()
+                          : m.tooltip_chat_stop()}
                       </TooltipContent>
                     </Tooltip>
                   )}

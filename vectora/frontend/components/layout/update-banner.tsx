@@ -13,11 +13,9 @@
 
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
-
-import { useT } from "@/lib/i18n";
+import { m } from "@/lib/paraglide/messages";
 
 export function UpdateBanner() {
-  const t = useT();
   const [ready, setReady] = useState(false);
   const [version, setVersion] = useState<string>("");
 
@@ -43,15 +41,15 @@ export function UpdateBanner() {
       <Download className="w-3.5 h-3.5 shrink-0" />
       <span className="flex-1 min-w-0">
         {version
-          ? t("update.banner.ready_with_version", { v: version })
-          : t("update.banner.ready")}
+          ? m.update_banner_ready_with_version({ v: version })
+          : m.update_banner_ready()}
       </span>
       <button
         type="button"
         onClick={() => window.vectora?.quitAndInstallUpdate?.()}
         className="px-2 py-0.5 rounded border border-current/40 hover:bg-current/10 transition-colors"
       >
-        {t("update.banner.restart")}
+        {m.update_banner_restart()}
       </button>
     </div>
   );
