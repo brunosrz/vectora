@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { m } from "#/paraglide/messages";
 import AccountSection from "#/components/dashboard/AccountSection";
+import DashboardHeading from "#/components/dashboard/DashboardHeading";
 
 export const Route = createFileRoute("/dashboard/account")({
   component: AccountPage,
@@ -9,9 +10,7 @@ export const Route = createFileRoute("/dashboard/account")({
 function AccountPage() {
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold text-foreground">
-        {m.nav_account()}
-      </h1>
+      <DashboardHeading title={m.nav_account()} />
       <AccountSection />
     </div>
   );

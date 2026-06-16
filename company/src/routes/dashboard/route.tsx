@@ -54,7 +54,9 @@ function DashboardLayout() {
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 overflow-y-auto bg-background p-6 pb-24 lg:pb-6">
-        <Outlet />
+        <div className="mx-auto w-full max-w-[1024px]">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

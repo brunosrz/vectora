@@ -4,6 +4,7 @@ import {
   LicenseStatus,
   LicenseHistory,
 } from "#/components/dashboard/LicenseStatus";
+import DashboardHeading from "#/components/dashboard/DashboardHeading";
 
 export const Route = createFileRoute("/dashboard/license")({
   component: LicensePage,
@@ -12,9 +13,7 @@ export const Route = createFileRoute("/dashboard/license")({
 function LicensePage() {
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold text-foreground">
-        {m.nav_license()}
-      </h1>
+      <DashboardHeading title={m.nav_license()} />
       <LicenseStatus />
       <div className="mt-8 max-w-3xl">
         <h2 className="mb-4 text-base font-medium text-foreground">
