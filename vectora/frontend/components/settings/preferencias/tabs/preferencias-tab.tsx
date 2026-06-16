@@ -24,6 +24,7 @@ import {
   SUPPORTED_LANGS,
   type Theme,
   type Lang,
+  type SidebarPosition,
 } from "@/lib/stores/settings-store";
 import {
   THEME_PRESETS,
@@ -60,6 +61,8 @@ export function PreferenciasTab() {
     setThemePreset,
     setCustomThemeColors,
     setLanguage,
+    sidebarPosition,
+    setSidebarPosition,
     setCustomSystemPrompt,
     setTrainingInstructions,
   } = useSettingsStore();
@@ -175,6 +178,27 @@ export function PreferenciasTab() {
                 {label}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Posição da sidebar de sessões (workbench no lado oposto) */}
+      <div className="space-y-2">
+        <Label htmlFor="sidebar-position">{m.prefs_sidebar_position()}</Label>
+        <Select
+          value={sidebarPosition}
+          onValueChange={(v) => setSidebarPosition(v as SidebarPosition)}
+        >
+          <SelectTrigger id="sidebar-position">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="left">
+              {m.prefs_sidebar_position_left()}
+            </SelectItem>
+            <SelectItem value="right">
+              {m.prefs_sidebar_position_right()}
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>

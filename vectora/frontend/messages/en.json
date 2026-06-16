@@ -734,5 +734,8 @@
   "workbench_files_replace_all": "Replace all",
   "workbench_plan_tasks_section": "Tasks",
   "workbench_storage_empty_title": "No workspace open",
-  "workbench_storage_empty_description": "Open or create a workspace to browse its files."
+  "workbench_storage_empty_description": "Open or create a workspace to browse its files.",
+  "prefs_sidebar_position": "Sidebar position",
+  "prefs_sidebar_position_left": "Sessions on the left",
+  "prefs_sidebar_position_right": "Sessions on the right"
 }

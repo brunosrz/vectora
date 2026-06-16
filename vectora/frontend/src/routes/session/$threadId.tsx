@@ -90,6 +90,8 @@ function SessionPage() {
   // Largura da sidebar (desktop) arrastável pela borda direita.
   const sidebarWidth = useSettingsStore((s) => s.sidebarWidth);
   const setSidebarWidth = useSettingsStore((s) => s.setSidebarWidth);
+  const sidebarPosition = useSettingsStore((s) => s.sidebarPosition);
+  const sidebarOnRight = sidebarPosition === "right";
   const sidebarWrapRef = useRef<HTMLDivElement>(null);
   const draggingSidebar = useRef(false);
 
@@ -107,9 +109,13 @@ function SessionPage() {
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!draggingSidebar.current) return;
       const rect = sidebarWrapRef.current?.getBoundingClientRect();
-      if (rect) setSidebarWidth(e.clientX - rect.left);
+      if (rect) {
+        setSidebarWidth(
+          sidebarOnRight ? rect.right - e.clientX : e.clientX - rect.left,
+        );
+      }
     },
-    [setSidebarWidth],
+    [setSidebarWidth, sidebarOnRight],
   );
   const onSidebarResizeUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -326,7 +332,7 @@ function SessionPage() {
             expandida; colapsada usa a largura própria (w-16) do componente. */}
         <div
           ref={sidebarWrapRef}
-          className="hidden md:flex shrink-0 relative"
+          className={`hidden md:flex shrink-0 relative ${sidebarOnRight ? "order-last" : ""}`}
           style={
             isSidebarCollapsed
               ? undefined
@@ -342,7 +348,7 @@ function SessionPage() {
               onPointerMove={onSidebarResizeMove}
               onPointerUp={onSidebarResizeUp}
               onPointerCancel={onSidebarResizeUp}
-              className="absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors"
+              className={`absolute top-0 ${sidebarOnRight ? "left-0" : "right-0"} z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-border transition-colors`}
             />
           )}
         </div>
@@ -362,6 +368,7 @@ function SessionPage() {
         <div className="flex-1 min-w-0 flex h-full">
           <HorizontalSplit
             className="flex-1 min-w-0"
+            side={sidebarOnRight ? "left" : "right"}
             showRight={hydrated && workbenchOpen}
             rightSize={splitSize}
             onResize={setSplitSize}
@@ -394,7 +401,9 @@ function SessionPage() {
               />
             }
           />
-          <WorkbenchNavBar threadId={threadId} />
+          <div className={`shrink-0 ${sidebarOnRight ? "order-first" : ""}`}>
+            <WorkbenchNavBar threadId={threadId} />
+          </div>
         </div>
       </div>
 

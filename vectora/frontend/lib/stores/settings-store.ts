@@ -20,6 +20,8 @@ export type Theme = "light" | "dark" | "system";
  *  qualquer outro valor é o `id` de um item em `THEME_PRESETS`. */
 export type ThemePreset = "default" | "custom" | (string & {});
 export type Lang = "en" | "es" | "pt";
+/** Lado da sidebar de sessões (workbench fica no lado oposto). */
+export type SidebarPosition = "left" | "right";
 /** Modos de permissão (R2) — espelham o permission_mode do backend. */
 export type PermissionMode =
   | "ask"
@@ -96,6 +98,8 @@ export interface SettingsState {
   fastMode: boolean;
   /** Largura da sidebar em px (desktop), arrastável pela borda direita. */
   sidebarWidth: number;
+  /** Lado da sidebar de sessões; workbench fica no lado oposto. */
+  sidebarPosition: SidebarPosition;
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
@@ -112,6 +116,7 @@ export interface SettingsState {
   setReasoningEffort: (v: ReasoningEffort) => void;
   setFastMode: (v: boolean) => void;
   setSidebarWidth: (v: number) => void;
+  setSidebarPosition: (v: SidebarPosition) => void;
   resetSettings: () => void;
 }
 
@@ -138,6 +143,7 @@ const DEFAULTS = {
   reasoningEffort: "medium" as ReasoningEffort,
   fastMode: false,
   sidebarWidth: 224,
+  sidebarPosition: "left" as SidebarPosition,
 };
 
 // ---------------------------------------------------------------------------
@@ -193,6 +199,7 @@ export const useSettingsStore = create<SettingsState>()(
             Math.min(SIDEBAR_MAX_WIDTH, Math.round(v)),
           ),
         }),
+      setSidebarPosition: (v) => set({ sidebarPosition: v }),
       resetSettings: () => set({ ...DEFAULTS, language: detectLanguage() }),
     }),
     {

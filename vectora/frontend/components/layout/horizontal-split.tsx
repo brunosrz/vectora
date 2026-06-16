@@ -42,6 +42,8 @@ interface HorizontalSplitProps {
   rightCollapsed?: boolean;
   /** Largura em px da faixa colapsada. Default: 48 (w-12). */
   collapsedWidth?: number;
+  /** Lado do painel fixo (`right`). Default "right" (atrás do flex-1). */
+  side?: "left" | "right";
 }
 
 export function HorizontalSplit({
@@ -55,6 +57,7 @@ export function HorizontalSplit({
   className,
   rightCollapsed = false,
   collapsedWidth = 48,
+  side = "right",
 }: HorizontalSplitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
@@ -72,11 +75,12 @@ export function HorizontalSplit({
       if (!draggingRef.current) return;
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const distFromRight = rect.right - e.clientX;
-      const clamped = Math.max(minRight, Math.min(maxRight, distFromRight));
+      const dist =
+        side === "left" ? e.clientX - rect.left : rect.right - e.clientX;
+      const clamped = Math.max(minRight, Math.min(maxRight, dist));
       onResize(clamped);
     },
-    [maxRight, minRight, onResize],
+    [maxRight, minRight, onResize, side],
   );
 
   const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -99,37 +103,49 @@ export function HorizontalSplit({
 
   const rightWidth = Math.max(minRight, Math.min(maxRight, rightSize));
 
+  const handle = (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      className="w-1 bg-border/40 hover:bg-border transition-colors cursor-col-resize shrink-0"
+    />
+  );
+  const fixedPanel = rightCollapsed ? (
+    <div
+      style={{ width: collapsedWidth }}
+      className={`shrink-0 overflow-hidden border-border/60 ${side === "left" ? "border-r" : "border-l"}`}
+    >
+      {right}
+    </div>
+  ) : (
+    <div style={{ width: rightWidth }} className="shrink-0 overflow-hidden">
+      {right}
+    </div>
+  );
+
+  // overflow-visible: dropdowns do appbar (Header) não podem ser recortados
+  // por este container — o conteúdo rolável já tem overflow-hidden interno.
+  const flexPanel = (
+    <div className="flex-1 min-w-0 overflow-visible">{left}</div>
+  );
+
   return (
     <div ref={containerRef} className={`flex h-full ${className ?? ""}`}>
-      {/* overflow-visible: dropdowns do appbar (Header) não podem ser
-          recortados por este container — o conteúdo rolável (ChatInterface)
-          já tem seu próprio overflow-hidden interno. */}
-      <div className="flex-1 min-w-0 overflow-visible">{left}</div>
-      {showRight && rightCollapsed && (
-        <div
-          style={{ width: collapsedWidth }}
-          className="shrink-0 overflow-hidden border-l border-border/60"
-        >
-          {right}
-        </div>
-      )}
-      {showRight && !rightCollapsed && (
+      {side === "left" && showRight && (
         <>
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            className="w-1 bg-border/40 hover:bg-border transition-colors cursor-col-resize shrink-0"
-          />
-          <div
-            style={{ width: rightWidth }}
-            className="shrink-0 overflow-hidden"
-          >
-            {right}
-          </div>
+          {fixedPanel}
+          {!rightCollapsed && handle}
+        </>
+      )}
+      {flexPanel}
+      {side === "right" && showRight && (
+        <>
+          {!rightCollapsed && handle}
+          {fixedPanel}
         </>
       )}
     </div>

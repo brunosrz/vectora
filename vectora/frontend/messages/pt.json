@@ -734,5 +734,8 @@
   "workbench_files_replace_all": "Substituir tudo",
   "workbench_plan_tasks_section": "Tarefas",
   "workbench_storage_empty_title": "Nenhum workspace aberto",
-  "workbench_storage_empty_description": "Abra ou crie um workspace para navegar pelos arquivos."
+  "workbench_storage_empty_description": "Abra ou crie um workspace para navegar pelos arquivos.",
+  "prefs_sidebar_position": "Posição da barra lateral",
+  "prefs_sidebar_position_left": "Sessões à esquerda",
+  "prefs_sidebar_position_right": "Sessões à direita"
 }
