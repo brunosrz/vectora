@@ -1420,38 +1420,50 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
         </Tooltip>
         {/* .gitignore manager (A.10) */}
         {workspace.is_git_repo && (
-          <button
-            onClick={handleOpenGitignore}
-            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-            title={t("workbench.files.gitignore_manage")}
-            aria-label={t("workbench.files.gitignore_manage")}
-          >
-            <Filter className="w-3.5 h-3.5" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleOpenGitignore}
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                aria-label={t("tooltip.files_gitignore")}
+              >
+                <Filter className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t("tooltip.files_gitignore")}
+            </TooltipContent>
+          </Tooltip>
         )}
         {/* Toggle de busca em conteúdo (A.5) */}
-        <button
-          onClick={() => {
-            if (searchMode) {
-              setSearchMode(false);
-              setSearchQuery("");
-              setSearchResults(null);
-              setHighlightLine(null);
-            } else {
-              setSearchMode(true);
-            }
-          }}
-          className={`p-1 rounded transition-colors ${
-            searchMode
-              ? "bg-primary/20 text-primary"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-          }`}
-          title={t("workbench.files.search_in_files")}
-          aria-label={t("workbench.files.search_in_files")}
-          aria-pressed={searchMode}
-        >
-          <Search className="w-3.5 h-3.5" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => {
+                if (searchMode) {
+                  setSearchMode(false);
+                  setSearchQuery("");
+                  setSearchResults(null);
+                  setHighlightLine(null);
+                } else {
+                  setSearchMode(true);
+                }
+              }}
+              className={`p-1 rounded transition-colors ${
+                searchMode
+                  ? "bg-primary/20 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              }`}
+              aria-label={t("tooltip.files_search")}
+              aria-pressed={searchMode}
+            >
+              <Search className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {t("tooltip.files_search")}
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Filtro de nomes ou busca em conteúdo */}
