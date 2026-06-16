@@ -479,7 +479,7 @@ export const MessageList = memo(function MessageList({
           </div>
         ) : (
           // Renderização direta (≤ 50 mensagens)
-          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-5 space-y-4">
             {messages.map((message, idx) => {
               const isLastMessage = idx === messages.length - 1;
               return (
