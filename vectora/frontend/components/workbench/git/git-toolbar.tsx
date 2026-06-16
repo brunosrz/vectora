@@ -12,7 +12,14 @@
  * eliminando o overflow horizontal da barra antiga.
  */
 
-import { GitBranch, GitPullRequest, Loader2, RefreshCw } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  GitBranch,
+  GitPullRequest,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { useCallback, useState } from "react";
 
 import {
@@ -77,6 +84,12 @@ export function GitToolbar({
   const current = status?.branch || branches?.current || "—";
   const others = (branches?.branches ?? []).filter((b) => b !== current);
   const sync = syncLabel(t, status);
+  const SyncIcon =
+    sync.action === "push"
+      ? ArrowUp
+      : sync.action === "pull"
+        ? ArrowDown
+        : RefreshCw;
 
   const handleCheckout = useCallback(
     async (ref: string, create = false) => {
@@ -168,7 +181,7 @@ export function GitToolbar({
               {syncing ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
+                <SyncIcon className="w-3.5 h-3.5 text-muted-foreground" />
               )}
               <span className="hidden sm:inline">{sync.label}</span>
             </button>
