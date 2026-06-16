@@ -21,6 +21,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { useT } from "@/lib/i18n";
 import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useEnvironmentDialogStore } from "@/lib/stores/environment-dialog-store";
@@ -57,18 +62,25 @@ export function PlusMenu({
 
   return (
     <div className="relative" ref={ref}>
-      <Button
-        onClick={() => setOpen((o) => !o)}
-        variant="ghost"
-        size="sm"
-        disabled={disabled}
-        className="group h-9 w-9 p-0 mb-0.5 rounded-full bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary border-0 flex-shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
-        type="button"
-        aria-label="+"
-        aria-expanded={open}
-      >
-        <Plus className="w-4.5 h-4.5" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => setOpen((o) => !o)}
+            variant="ghost"
+            size="sm"
+            disabled={disabled}
+            className="group h-9 w-9 p-0 mb-0.5 rounded-full bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary border-0 flex-shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
+            type="button"
+            aria-label={t("tooltip.chat_add_files")}
+            aria-expanded={open}
+          >
+            <Plus className="w-4.5 h-4.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {t("tooltip.chat_add_files")}
+        </TooltipContent>
+      </Tooltip>
 
       {open && (
         <div className="absolute left-0 bottom-11 z-50 w-60 rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-bottom-2">

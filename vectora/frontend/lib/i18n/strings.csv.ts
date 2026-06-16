@@ -766,6 +766,7 @@ workbench.files.search_truncated,Showing first 200 results — refine your query
 tooltip.chat_audio,Send audio message,Enviar mensaje de audio,Enviar mensagem de áudio
 tooltip.chat_stop,Stop generation,Detener generación,Parar geração
 tooltip.chat_send,Send message (Ctrl+Enter),Enviar mensaje (Ctrl+Enter),Enviar mensagem (Ctrl+Enter)
+tooltip.chat_add_files,Add files · folders · commands,Agregar archivos · carpetas · comandos,Adicionar arquivos · pastas · comandos
 tooltip.sidebar_new_chat,New chat,Nuevo chat,Nova conversa
 tooltip.sidebar_settings,Settings,Configuración,Configurações
 tooltip.sidebar_workspace,Switch workspace,Cambiar workspace,Trocar workspace
