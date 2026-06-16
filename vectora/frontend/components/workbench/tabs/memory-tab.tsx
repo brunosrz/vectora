@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * StorageTab — "Memória da sessão": o que o Vectora recuperou nesta thread.
+ * MemoryTab — "Memória da sessão": o que o Vectora recuperou nesta thread.
  *
  * Agrega o contexto trazido para as respostas — trechos da base de
  * conhecimento (RAG) e resultados de web search / fetch — em pílulas que
@@ -15,7 +15,7 @@ import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { MarkdownView } from "@/components/workbench/markdown-view";
 import { m } from "@/lib/paraglide/messages";
 
-interface StorageTabProps {
+interface MemoryTabProps {
   threadId: string;
 }
 
@@ -72,7 +72,7 @@ function MemoryPill({ item }: { item: MemoryItem }) {
   );
 }
 
-export function StorageTab({ threadId }: StorageTabProps) {
+export function MemoryTab({ threadId }: MemoryTabProps) {
   const [messages] = useThreadMessages(threadId);
 
   const { rag, web } = useMemo(() => {

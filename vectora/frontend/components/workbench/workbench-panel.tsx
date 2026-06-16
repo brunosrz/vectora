@@ -48,7 +48,7 @@ import { FilesTab } from "./tabs/files-tab";
 import { GitTab } from "./git/git-tab";
 import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";
-import { StorageTab } from "./tabs/storage-tab";
+import { MemoryTab } from "./tabs/memory-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 
@@ -243,7 +243,7 @@ export function WorkbenchContent({
         {activeTab === "diff" && <GitTab threadId={threadId} />}
         {activeTab === "plan" && <PlanTab threadId={threadId} />}
         {activeTab === "preview" && <PreviewTab threadId={threadId} />}
-        {activeTab === "storage" && <StorageTab threadId={threadId} />}
+        {activeTab === "storage" && <MemoryTab threadId={threadId} />}
       </div>
     </div>
   );
