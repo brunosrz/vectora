@@ -165,7 +165,7 @@ export function LicenseStatus() {
             <button
               onClick={() => portalMutation.mutate()}
               disabled={isPortalBusy}
-              className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-foreground hover:bg-amber-400 disabled:opacity-50"
+              className="rounded-xl bg-accent-amber px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent-amber disabled:opacity-50"
             >
               {m.license_cta_update_payment()}
             </button>

@@ -111,7 +111,7 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
                 <Copy className="h-4 w-4" />
               </button>
             </div>
-            <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+            <div className="flex items-start gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 px-3 py-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent-amber" />
               <p className="text-xs text-accent-amber">
                 {m.token_show_once_warning()}
@@ -123,7 +123,7 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
         {/* State B: already revealed */}
         {revealed && token === null && (
           <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+            <div className="flex items-start gap-2 rounded-lg border border-accent-amber/20 bg-accent-amber/5 px-3 py-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent-amber" />
               <p className="text-sm text-accent-amber">
                 {m.token_already_revealed()}

@@ -233,7 +233,7 @@ export default function ApiKeysList() {
                               });
                             }}
                             disabled={revokeMutation.isPending}
-                            className="text-xs text-accent-red hover:text-red-300 font-medium"
+                            className="text-xs text-accent-red hover:text-destructive font-medium"
                           >
                             Confirmar
                           </button>

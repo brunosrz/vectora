@@ -199,7 +199,7 @@ export default function AccountSection() {
           {!showDeleteConfirm ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-2 rounded-xl border border-accent-red/30 px-4 py-2 text-sm font-medium text-accent-red hover:border-red-500 hover:bg-red-500/5 transition-all"
+              className="flex items-center gap-2 rounded-xl border border-accent-red/30 px-4 py-2 text-sm font-medium text-accent-red hover:border-destructive hover:bg-destructive/5 transition-all"
             >
               <Trash2 className="h-4 w-4" />
               {m.account_delete_cta()}
@@ -214,7 +214,7 @@ export default function AccountSection() {
                 value={confirmEmail}
                 onChange={(e) => setConfirmEmail(e.target.value)}
                 placeholder={user?.email}
-                className="w-full rounded-xl border border-accent-red/30 bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-red-500 transition-colors"
+                className="w-full rounded-xl border border-accent-red/30 bg-card/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/80 outline-none focus:border-destructive transition-colors"
               />
               <div className="flex gap-2">
                 <button
@@ -229,7 +229,7 @@ export default function AccountSection() {
                 <button
                   onClick={() => deleteMutation.mutate()}
                   disabled={!canDelete}
-                  className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-foreground hover:bg-red-500 disabled:opacity-40 transition-all"
+                  className="rounded-xl bg-destructive px-4 py-2 text-sm font-semibold text-foreground hover:bg-destructive disabled:opacity-40 transition-all"
                 >
                   {deleteMutation.isPending
                     ? m.form_submitting()

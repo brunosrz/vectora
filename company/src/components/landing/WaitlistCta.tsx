@@ -64,7 +64,7 @@ export default function WaitlistCta() {
         <p className="mb-8 text-muted-foreground">{m.waitlist_subtitle()}</p>
 
         {done ? (
-          <div className="rounded-xl border border-accent-green/30 bg-accent-green/10 px-6 py-5 text-green-300">
+          <div className="rounded-xl border border-accent-green/30 bg-accent-green/10 px-6 py-5 text-accent-green">
             ✓ {m.waitlist_success()}
           </div>
         ) : (
