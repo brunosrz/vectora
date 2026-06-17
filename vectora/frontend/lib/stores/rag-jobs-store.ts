@@ -13,6 +13,7 @@ export type RagJobStatus =
   | "indexing"
   | "done"
   | "failed"
+  | "paused"
   | "no_files";
 
 export interface RagJob {
@@ -23,6 +24,8 @@ export interface RagJob {
   processed: number;
   failed: number;
   status: RagJobStatus;
+  /** Motivo quando o worker pausou a indexação (ex.: rate limit do Cohere). */
+  errorReason?: string;
 }
 
 interface RagJobsState {
@@ -103,6 +106,7 @@ export const useRagJobsStore = create<RagJobsState>((set) => ({
           processed: number;
           failed: number;
           status: RagJobStatus;
+          error_reason?: string | null;
         };
         set((s) => {
           const prev = s.jobs[jobId];
@@ -116,11 +120,18 @@ export const useRagJobsStore = create<RagJobsState>((set) => ({
                 processed: st.processed,
                 failed: st.failed,
                 status: st.status,
+                errorReason: st.error_reason ?? undefined,
               },
             },
           };
         });
-        if (st.status === "done" || st.status === "failed") stopPoll(jobId);
+        // "paused" é terminal (worker arquivou a fila): para o poll.
+        if (
+          st.status === "done" ||
+          st.status === "failed" ||
+          st.status === "paused"
+        )
+          stopPoll(jobId);
       } catch {
         // mantém o poll; falha transitória de rede
       }

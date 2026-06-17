@@ -116,6 +116,26 @@ MAX_RETRIES = 3
 MAX_PARALLEL = 5  # Max 5 embeddings simultâneos (Semaphore)
 BATCH_SIZE = 10  # Processa até 10 registros por batch
 
+
+def _is_rate_limit_error(exc: Exception) -> bool:
+    """``True`` para erros de rate limit / quota da API de embeddings.
+
+    Estes não são transitórios no curto prazo (chave Trial no limite por
+    minuto/mês): re-tentar cada chunk só flooda o log e satura o thread pool.
+    Disparam o circuit breaker em vez do retry normal.
+    """
+    text = str(exc).lower()
+    return (
+        "429" in text
+        or "too many requests" in text
+        or "toomanyrequests" in text
+        or "rate limit" in text
+        or "ratelimit" in text
+        or "trial key" in text
+        or "quota" in text
+    )
+
+
 # Polling adaptativo: ao invés de POLLING_INTERVAL fixo, o worker
 # aumenta o intervalo exponencialmente quando a fila está vazia
 # e reseta ao encontrar items (evita queries desnecessárias em idle).
@@ -176,6 +196,13 @@ class BackgroundEmbeddingWorker:
         self.rate_limit_count: int = 0  # Total de 429s nesta sessão
         self.last_rate_limit_at: datetime | None = None
         self._rate_limit_handler: _CohereRateLimitInterceptor | None = None
+        # Circuit breaker: ao detectar rate limit/quota, o worker pausa e
+        # arquiva a fila em vez de re-tentar cada chunk em loop (que floodava o
+        # log e saturava o thread pool, travando o backend). pause_reason é
+        # exibido ao usuário via status dos jobs RAG.
+        self.paused: bool = False
+        self.pause_reason: str | None = None
+        self.paused_at: datetime | None = None
         # Token bucket rate limiter — evita bursts que disparam HTTP 429.
         # Inicializado com o valor de settings (configurável; default 90/min).
         self._rate_limiter = CohereRateLimiter(self.config.cohere_calls_per_minute)
@@ -270,6 +297,13 @@ class BackgroundEmbeddingWorker:
         """Loop principal: fetch pending → process → retry/success/dlq."""
         while self.running:
             try:
+                # Circuit breaker ativo: a fila foi arquivada por rate limit.
+                # Não busca novos pendentes (evita re-storm); fica idle até o
+                # processo reiniciar ou alguém retomar via /rag.
+                if self.paused:
+                    await asyncio.sleep(POLL_INTERVAL_MAX)
+                    continue
+
                 # Obter queue (lazy-loaded do singleton)
                 queue = await self._get_queue()
 
@@ -328,6 +362,10 @@ class BackgroundEmbeddingWorker:
         attempt = 0
 
         while attempt < MAX_RETRIES:
+            # Outra task do batch pode ter disparado o breaker enquanto este
+            # registro esperava o semáforo — não faz mais nenhuma chamada.
+            if self.paused:
+                return
             try:
                 async with self.semaphore:
                     # Marcar como processing
@@ -361,14 +399,24 @@ class BackgroundEmbeddingWorker:
                     return  # Sucesso, sair do loop de retry
 
             except Exception as e:
+                # Rate limit / quota: não é transitório no curto prazo. Dispara
+                # o circuit breaker (pausa o worker + arquiva a fila) em vez de
+                # re-tentar este e todos os outros chunks em loop.
+                if _is_rate_limit_error(e):
+                    await self._trip_rate_limit_breaker(queue)
+                    return
+
                 attempt += 1
                 error_trace = traceback.format_exc()
-                # Erro exposto diretamente na mensagem para aparecer no terminal
+                # Mensagem enxuta no terminal — o erro cru da Cohere despeja
+                # headers HTTP inteiros e polui o log. Stack completo fica no
+                # `extra` (logging estruturado), não na mensagem.
+                _msg = str(e)[:300]
                 logger.warning(
                     "embedding_processing_failed [%d/%d]: %s",
                     attempt,
                     MAX_RETRIES,
-                    str(e),
+                    _msg,
                     extra={"queue_id": queue_id, "traceback": error_trace},
                 )
 
@@ -404,6 +452,37 @@ class BackgroundEmbeddingWorker:
                             },
                         )
 
+    async def _trip_rate_limit_breaker(self, queue: Any) -> None:
+        """Pausa o worker e arquiva a fila ao detectar rate limit / quota.
+
+        Idempotente entre as tasks paralelas do mesmo batch: a primeira a
+        detectar arquiva a fila; as demais apenas retornam. A fila inteira vai
+        para a DLQ com um motivo único (não re-tentada no próximo start),
+        recuperável via ``retry_failed`` quando a chave estiver normalizada.
+        """
+        self.rate_limit_active = True
+        self.rate_limit_count += 1
+        self.last_rate_limit_at = datetime.now()
+
+        if self.paused:
+            return
+
+        self.paused = True
+        self.paused_at = datetime.now()
+        self.pause_reason = (
+            "Indexação RAG pausada: a API de embeddings (Cohere) retornou rate "
+            "limit (429). A chave Trial tem limite de 100 chamadas/min e "
+            "1000/mês. Configure uma chave paga ou aguarde a renovação do "
+            "limite e reprocesse a fila."
+        )
+
+        archived = await queue.archive_pending(self.pause_reason)
+        logger.warning(
+            "embedding_worker_paused_rate_limit: %d chunks arquivados",
+            archived,
+            extra={"reason": self.pause_reason, "archived": archived},
+        )
+
     async def _generate_embedding(self, text: str) -> list[float]:
         """Gera embedding via Cohere.
 
@@ -438,9 +517,14 @@ class BackgroundEmbeddingWorker:
         # langchain-core's get_from_dict_or_env calls str(SecretStr) which returns
         # "**********" instead of the actual value, causing a 401 from Cohere.
         # Passing the plain string bypasses that branch entirely.
+        # max_retries=0: o langchain_cohere, por padrão, re-tenta o 429
+        # internamente com backoff longo — prendendo a thread do to_thread por
+        # minutos e saturando o pool (travava o backend inteiro). Com 0, o 429
+        # propaga na hora e o circuit breaker do worker assume.
         embeddings_model = CohereEmbeddings(  # ty: ignore[missing-argument]
             cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
             model=self.config.embedding_model,
+            max_retries=0,
         )
 
         # Indexação usa embed_documents → input_type="search_document".
@@ -486,17 +570,6 @@ class BackgroundEmbeddingWorker:
             ]
         )
 
-        # Abrir ou criar tabela
-        try:
-            table = await db.open_table(str(record.collection))
-        except Exception:
-            table = await db.create_table(str(record.collection), schema=schema)
-            logger.info(
-                "lancedb_table_created",
-                extra={"collection": record.collection},
-            )
-
-        # Adicionar documento (queue_id como document ID para idempotência)
         doc = {
             "id": record.queue_id,  # Chave primária = queue_id
             "vector": vector,
@@ -504,8 +577,22 @@ class BackgroundEmbeddingWorker:
             "metadata": record.doc_metadata or "{}",
         }
 
-        # Protege escrita em LanceDB com semaphore(1) contra race conditions
+        # Abrir-ou-criar + add sob o mesmo semaphore(1): com várias tasks
+        # processando o mesmo collection, dois open_table podiam falhar juntos
+        # e ambos chamar create_table → "Table already exists". Serializar aqui
+        # elimina a corrida; se mesmo assim o create colidir, reabre.
         async with self.lancedb_semaphore:
+            try:
+                table = await db.open_table(str(record.collection))
+            except Exception:
+                try:
+                    table = await db.create_table(str(record.collection), schema=schema)
+                    logger.info(
+                        "lancedb_table_created",
+                        extra={"collection": record.collection},
+                    )
+                except Exception:
+                    table = await db.open_table(str(record.collection))
             await table.add([doc])
 
         logger.debug(
@@ -582,6 +669,18 @@ class BackgroundEmbeddingWorker:
 # Singleton global com lock
 _worker: BackgroundEmbeddingWorker | None = None
 _worker_lock: asyncio.Lock = asyncio.Lock()
+
+
+def get_worker_pause_state() -> tuple[bool, str | None]:
+    """Estado do circuit breaker do worker (lido sem instanciar o worker).
+
+    Returns:
+        ``(paused, reason)`` — ``paused`` True quando a fila foi arquivada por
+        rate limit; ``reason`` é a mensagem a exibir ao usuário (ou None).
+    """
+    if _worker is None:
+        return False, None
+    return _worker.paused, _worker.pause_reason
 
 
 async def get_background_worker() -> BackgroundEmbeddingWorker:

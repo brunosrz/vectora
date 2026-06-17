@@ -113,6 +113,27 @@ class TestEmbeddingQueue:
             assert key in stats
 
     @pytest.mark.asyncio
+    async def test_archive_pending_moves_to_dlq(self, queue):
+        """archive_pending arquiva pending + processing para DLQ de uma vez."""
+        qid_pending = await queue.enqueue("a indexar", "articles", {})
+        qid_processing = await queue.enqueue("em processamento", "articles", {})
+        await queue.mark_processing(qid_processing)
+
+        archived = await queue.archive_pending("Cohere rate limit (429)")
+
+        assert archived == 2
+        # Nada mais pendente — não há re-storm no próximo start.
+        assert await queue.get_pending(limit=10) == []
+        failed = await queue.get_failed(limit=10)
+        q_ids = {r.queue_id for r in failed}
+        assert {qid_pending, qid_processing} <= q_ids
+        assert all(r.dlq_reason == "Cohere rate limit (429)" for r in failed)
+
+    @pytest.mark.asyncio
+    async def test_archive_pending_empty_returns_zero(self, queue):
+        assert await queue.archive_pending("motivo") == 0
+
+    @pytest.mark.asyncio
     async def test_get_embedding_queue_raises_if_none_dsn(self):
         with pytest.raises(ValueError, match="embedding_queue_dsn"):
             await get_embedding_queue(None)

@@ -2763,9 +2763,11 @@ def _launch_json_path(workspace_id: str) -> Path | None:
 
 
 class LaunchConfigModel(BaseModel):
+    # Campos em camelCase espelham o formato do .vectora/launch.json
+    # (estilo Claude Code/VS Code) — não renomear.
     name: str
-    runtimeExecutable: str
-    runtimeArgs: list[str] = []
+    runtimeExecutable: str  # noqa: N815
+    runtimeArgs: list[str] = []  # noqa: N815
     port: int
     env: dict[str, str] = {}
 
@@ -2796,8 +2798,8 @@ class PreviewStopRequest(BaseModel):
 
 class DetectedServer(BaseModel):
     name: str
-    runtimeExecutable: str
-    runtimeArgs: list[str]
+    runtimeExecutable: str  # noqa: N815
+    runtimeArgs: list[str]  # noqa: N815
     port: int
 
 
@@ -3022,7 +3024,9 @@ class RagJobStatus(BaseModel):
     total: int
     processed: int
     failed: int
-    status: str  # "indexing" | "done" | "failed" | "no_files"
+    status: str  # "indexing" | "done" | "failed" | "no_files" | "paused"
+    # Preenchido quando o worker pausou por rate limit (motivo exibido ao usuário).
+    error_reason: str | None = None
 
 
 # Registro em memória dos jobs disparados neste processo (path + total para a
@@ -3033,6 +3037,8 @@ _RAG_TASKS: set[Any] = set()
 
 
 def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
+    from backend.services.background import get_worker_pause_state
+
     meta = _RAG_JOBS.get(job_id, {})
     enqueue_done = bool(meta.get("enqueue_done"))
     declared = meta.get("total_chunks")
@@ -3041,10 +3047,15 @@ def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
     total = int(declared) if declared is not None else int(stats.get("total") or 0)
     processed = int(stats.get("success", 0))
     failed = int(stats.get("failed", 0)) + int(stats.get("dlq", 0))
+
+    paused, reason = get_worker_pause_state()
     if enqueue_done and total == 0:
         status = "no_files"
     elif enqueue_done and processed + failed >= total:
         status = "done" if failed < total else "failed"
+    elif paused and processed < total:
+        # Circuit breaker arquivou a fila — o job não termina sozinho.
+        status = "paused"
     else:
         status = "indexing"
     return RagJobStatus(
@@ -3054,6 +3065,7 @@ def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
         processed=processed,
         failed=failed,
         status=status,
+        error_reason=reason if paused else None,
     )
 
 

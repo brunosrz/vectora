@@ -25,8 +25,8 @@ const STATE_KEY = "vectora:sidebar:folders-open";
 
 function shortName(path: string): string {
   // Último segmento (Windows ou POSIX); fallback no path inteiro.
-  const m = path.match(/[/\\]([^/\\]+)[/\\]?$/);
-  return m?.[1] ?? path;
+  const match = path.match(/[/\\]([^/\\]+)[/\\]?$/);
+  return match?.[1] ?? path;
 }
 
 export function SidebarFolders() {

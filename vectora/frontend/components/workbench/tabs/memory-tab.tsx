@@ -9,7 +9,14 @@
  */
 
 import { useMemo, useState } from "react";
-import { Brain, ChevronRight, Database, Globe, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Brain,
+  ChevronRight,
+  Database,
+  Globe,
+  Loader2,
+} from "lucide-react";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -169,6 +176,7 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
                 : job.status === "done"
                   ? 100
                   : 5;
+            const stalled = job.status === "paused" || job.status === "failed";
             return (
               <div
                 key={job.jobId}
@@ -177,6 +185,8 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
                 <div className="flex items-center gap-2">
                   {job.status === "done" ? (
                     <Database className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                  ) : stalled ? (
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
                   ) : (
                     <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
                   )}
@@ -187,12 +197,18 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
                     {job.processed}/{job.total}
                   </span>
                 </div>
-                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted/60">
-                  <div
-                    className="h-full bg-primary transition-all duration-300"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
+                {stalled && job.errorReason ? (
+                  <p className="mt-1.5 text-[11px] leading-snug text-amber-600 dark:text-amber-400">
+                    {job.errorReason}
+                  </p>
+                ) : (
+                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted/60">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}

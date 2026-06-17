@@ -39,8 +39,15 @@ beforeEach(reset);
 // ---------------------------------------------------------------------------
 
 describe("WORKBENCH_TABS", () => {
-  it("expõe as 4 abas na ordem da UI", () => {
-    expect(WORKBENCH_TABS).toEqual(["files", "diff", "plan", "terminal"]);
+  it("expõe as abas na ordem da UI", () => {
+    expect(WORKBENCH_TABS).toEqual([
+      "files",
+      "diff",
+      "plan",
+      "preview",
+      "storage",
+      "terminal",
+    ]);
   });
 });
 

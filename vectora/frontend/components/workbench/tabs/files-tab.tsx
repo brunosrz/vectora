@@ -965,9 +965,10 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   }, [wsId, diffFetchedAt, clearPending]);
 
   const statusByPath = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const f of diffSummary?.files ?? []) m.set(norm(f.path), f.status);
-    return m;
+    const byPath = new Map<string, string>();
+    for (const f of diffSummary?.files ?? [])
+      byPath.set(norm(f.path), f.status);
+    return byPath;
   }, [diffSummary]);
 
   useWorkbenchSWR({

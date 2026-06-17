@@ -427,6 +427,50 @@ class EmbeddingQueue:
                 extra={"queue_id": queue_id},
             )
 
+    async def archive_pending(self, reason: str) -> int:
+        """Move todos os registros pendentes/em processamento para a DLQ.
+
+        Usado pelo circuit breaker quando a API de embeddings está em rate limit:
+        em vez de re-tentar cada chunk em loop (floodando o log e saturando o
+        thread pool), arquiva a fila inteira de uma vez com um motivo único. Os
+        registros ficam recuperáveis via ``retry_failed`` quando a chave estiver
+        normalizada — e não são reprocessados automaticamente no próximo start.
+
+        Args:
+            reason: Motivo do arquivamento (exibido ao usuário).
+
+        Returns:
+            Número de registros arquivados.
+        """
+        try:
+            if self.AsyncSessionLocal is None:
+                return 0
+            async with self.AsyncSessionLocal() as session:
+                from sqlalchemy import update
+
+                query = (
+                    update(EmbeddingQueueRecord)
+                    .where(
+                        EmbeddingQueueRecord.status.in_(
+                            [EmbeddingStatus.PENDING, EmbeddingStatus.PROCESSING]
+                        )
+                    )
+                    .values(status=EmbeddingStatus.DLQ, dlq_reason=reason)
+                )
+                result = await session.execute(query)
+                await session.commit()
+                archived = result.rowcount or 0
+
+            if archived:
+                logger.warning(
+                    "embedding_queue_archived",
+                    extra={"archived": archived, "reason": reason},
+                )
+            return archived
+        except Exception:
+            logger.exception("embedding_queue_archive_pending_failed")
+            return 0
+
     async def get_failed(self, limit: int = 10) -> list[EmbeddingQueueRecord]:
         """Obtém registros com falha (status='failed' ou 'dlq').
 
@@ -872,3 +916,22 @@ class PostgresQueueDB:
                   AND created_at < now() - INTERVAL '5 minutes'
                 """
             )
+
+    async def archive_pending(self, reason: str) -> int:
+        """Move tarefas pending/processing para DLQ (circuit breaker de rate limit)."""
+        from backend.storage.factory import get_pg_pool
+
+        pool = await get_pg_pool()
+        async with pool.acquire() as conn:
+            result = await conn.execute(
+                """
+                UPDATE vectora_embedding_queue
+                SET status = 'dlq', processed_at = now()
+                WHERE status IN ('pending', 'processing')
+                """
+            )
+        # asyncpg retorna "UPDATE <n>" — extrai o n.
+        try:
+            return int(str(result).split()[-1])
+        except (ValueError, IndexError):
+            return 0

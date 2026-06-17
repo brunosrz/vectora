@@ -7,13 +7,17 @@
  * `GET /workspaces/{id}/fs/raw`. Texto é lido do `GET /file` (truncado).
  */
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import MonacoEditor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import { MarkdownView } from "@/components/workbench/markdown-view";
-import { languageFromPath } from "@/lib/monaco/setup";
 import { m } from "@/lib/paraglide/messages";
+
+// Monaco depende de `window` — carregado sob demanda (lazy) para não entrar no
+// grafo de import estático do viewer (quebraria testes/SSR sem DOM).
+const MonacoReadOnly = lazy(
+  () => import("@/components/workbench/monaco-readonly"),
+);
 
 /** Verdadeiro para arquivos markdown (render GitHub no viewer). */
 function isMarkdown(path: string): boolean {
@@ -198,24 +202,19 @@ export function FileViewer({
   return (
     <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1">
-        <MonacoEditor
-          value={text?.content ?? ""}
-          language={languageFromPath(path)}
-          theme={isDark ? "vs-dark" : "vs"}
-          options={{
-            readOnly: true,
-            domReadOnly: true,
-            fontSize: 13,
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            tabSize: 2,
-            wordWrap: "on",
-          }}
-          loading={
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
           }
-        />
+        >
+          <MonacoReadOnly
+            value={text?.content ?? ""}
+            path={path}
+            isDark={isDark}
+          />
+        </Suspense>
       </div>
       {text?.truncated && (
         <p className="shrink-0 border-t border-border/60 px-2 py-1 text-[10px] text-muted-foreground">

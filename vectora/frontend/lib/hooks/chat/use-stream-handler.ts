@@ -54,9 +54,9 @@ import { m as msg } from "@/lib/paraglide/messages";
 /** `true` para falhas de rede/conexão (fetch caiu, DNS, timeout de socket). */
 function isNetworkError(err: unknown): boolean {
   if (err instanceof TypeError) return true;
-  const msg = err instanceof Error ? err.message : String(err);
+  const errMsg = err instanceof Error ? err.message : String(err);
   return /failed to fetch|network ?error|load failed|ECONNRESET|ECONNREFUSED/i.test(
-    msg,
+    errMsg,
   );
 }
 
@@ -284,11 +284,11 @@ export function useStreamHandler({
           // UX-15 — distingue queda de transporte (badge "Reconectando…") de
           // erro de aplicação reportado pelo próprio backend via evento `error`.
           announceSSEDropped(err);
-          const msg = err instanceof Error ? err.message : String(err);
+          const errMsg = err instanceof Error ? err.message : String(err);
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
               ...m,
-              content: assistantContent || `Erro no stream: ${msg}`,
+              content: assistantContent || `Erro no stream: ${errMsg}`,
               isThinking: false,
               thinkingDuration:
                 m.thinkingStartTime !== undefined
@@ -422,11 +422,11 @@ export function useStreamHandler({
         if ((err as { name?: string }).name !== "AbortError") {
           // UX-15 — mesma distinção transporte vs. aplicação do processStream
           announceSSEDropped(err);
-          const msg = err instanceof Error ? err.message : String(err);
+          const errMsg = err instanceof Error ? err.message : String(err);
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
               ...m,
-              content: assistantContent || `Erro ao retomar: ${msg}`,
+              content: assistantContent || `Erro ao retomar: ${errMsg}`,
               isThinking: false,
             })),
           );

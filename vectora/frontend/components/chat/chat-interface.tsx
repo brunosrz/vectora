@@ -469,8 +469,8 @@ export function ChatInterface({
         const { messages: historyMessages } = prefetched
           ? prefetched
           : await getHistory(currentThreadId).catch((err) => {
-              const msg = err instanceof Error ? err.message : String(err);
-              if (msg.includes("404")) {
+              const errMsg = err instanceof Error ? err.message : String(err);
+              if (errMsg.includes("404")) {
                 console.log("Thread not found (404)");
                 onThreadNotFound?.();
               } else {
@@ -487,17 +487,17 @@ export function ChatInterface({
 
         const convertedMessages: Message[] = historyMessages
           .map(
-            (msg, idx) =>
+            (hist, idx) =>
               ({
                 id: `history-${currentThreadId}-${idx}`,
-                role: msg.role === "human" ? "user" : "assistant",
-                content: msg.content,
-                timestamp: msg.created_at
-                  ? new Date(msg.created_at)
+                role: hist.role === "human" ? "user" : "assistant",
+                content: hist.content,
+                timestamp: hist.created_at
+                  ? new Date(hist.created_at)
                   : new Date(),
               }) as Message,
           )
-          .filter((msg) => msg.content.trim().length > 0);
+          .filter((message) => message.content.trim().length > 0);
 
         console.log(
           `SUCCESS: Loaded ${convertedMessages.length} messages from thread history`,

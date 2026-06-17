@@ -125,8 +125,8 @@ function groupThreads(threads: Thread[]) {
 /** Último segmento do path (Windows ou POSIX); fallback no path inteiro. */
 function shortWorkspaceName(ws: WorkspaceInfo): string {
   if (ws.name) return ws.name;
-  const m = ws.cwd.match(/[/\\]([^/\\]+)[/\\]?$/);
-  return m?.[1] ?? ws.cwd;
+  const match = ws.cwd.match(/[/\\]([^/\\]+)[/\\]?$/);
+  return match?.[1] ?? ws.cwd;
 }
 
 function activityOf(thread: Thread): number {

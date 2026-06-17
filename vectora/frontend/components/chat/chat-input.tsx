@@ -284,13 +284,14 @@ export function ChatInput({
                     className="hidden"
                   />
 
-                  {/* Menu + (anexos / pasta / comandos) — R3 */}
-                  {!isLoading && (
-                    <PlusMenu
-                      disabled={!userId || offline}
-                      onAddFiles={onFileButtonClick}
-                    />
-                  )}
+                  {/* Menu + (anexos / pasta / comandos) — R3.
+                      Permanece visível durante o streaming: anexar arquivo,
+                      indexar pasta no RAG etc. não conflitam com a resposta em
+                      curso (antes sumia, deslocando o layout). */}
+                  <PlusMenu
+                    disabled={!userId || offline}
+                    onAddFiles={onFileButtonClick}
+                  />
 
                   <Textarea
                     ref={textareaRef}

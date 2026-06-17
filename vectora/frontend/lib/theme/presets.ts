@@ -148,7 +148,10 @@ export const THEME_PRESETS: ThemePresetDef[] = [
       card: "#252526",
       border: "#2d2d2d",
       primary: "#569cd6",
-      accent: "#4ec9b0",
+      // `accent` é o token de hover/superfície (shadcn `hover:bg-accent`), não a
+      // cor de destaque de sintaxe — mantém o hover neutro como o tema base
+      // (`#2a2a2a`); o teal do VS Code (#4ec9b0) deixava todos os hovers verdes.
+      accent: "#2a2a2a",
       muted: "#2a2a2a",
     },
   },
@@ -161,7 +164,8 @@ export const THEME_PRESETS: ThemePresetDef[] = [
       card: "#f5f5f5",
       border: "#e5e5e5",
       primary: "#1a73e8",
-      accent: "#6f42c1",
+      // Hover/superfície neutro como o tema base claro (não a cor de destaque).
+      accent: "#eeeeee",
       muted: "#f0f0f0",
     },
   },
