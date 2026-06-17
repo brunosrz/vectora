@@ -26,6 +26,7 @@ import {
   useWorkspacesStore,
   type WorkspaceInfo,
 } from "@/lib/stores/workspaces-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { ThreadListSkeleton } from "./thread-list-skeleton";
 import { queryClient } from "../../src/router";
 import { getHistory, listThreads } from "@/lib/api/vectora-client";
@@ -194,6 +195,8 @@ export const Sidebar = memo(function Sidebar({
   const [searchQuery, setSearchQuery] = useState("");
   // UX-16 — criar thread exige round-trip ao backend; sem rede só geraria erro.
   const { offline } = useNetworkStatus();
+  // Alinhamento do conteúdo segue o lado em que a sidebar está (item 14).
+  const sidebarOnRight = useSettingsStore((s) => s.sidebarPosition === "right");
 
   // Filter threads based on search query
   const filteredThreads = useMemo(() => {
@@ -489,7 +492,7 @@ export const Sidebar = memo(function Sidebar({
                       ? m.network_disabled_offline()
                       : m.sidebar_new_chat()
                   }
-                  className="group w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-primary/15 disabled:hover:to-primary/5 disabled:hover:border-primary/30"
+                  className={`group w-full inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-primary/15 disabled:hover:to-primary/5 disabled:hover:border-primary/30"`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -501,7 +504,7 @@ export const Sidebar = memo(function Sidebar({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-primary"
+                    className={`text-primary ${sidebarOnRight ? "order-last" : ""}`}
                   >
                     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
                   </svg>
