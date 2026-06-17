@@ -16,10 +16,10 @@ describe("broadcastEvent", () => {
   it("entrega o payload a um listener do mesmo canal", async () => {
     const received = new Promise<BroadcastPayload>((resolve) => {
       const bc = new BroadcastChannel("chan-a");
-      bc.onmessage = (e: MessageEvent<BroadcastPayload>) => {
+      bc.addEventListener("message", (e: MessageEvent<BroadcastPayload>) => {
         resolve(e.data);
         bc.close();
-      };
+      });
     });
     broadcastEvent("chan-a", { type: "invalidate" });
     expect(await received).toEqual({ type: "invalidate" });
