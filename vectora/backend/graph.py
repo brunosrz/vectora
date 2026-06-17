@@ -1,4 +1,14 @@
-"""Fábrica do agente por usuário.
+"""Fábrica do agente por usuário (grafo orchestrator — superfície TUI).
+
+Este é o grafo **orchestrator** (orchestrator + subagents + RAG pipeline),
+usado pela **TUI** (`backend/ui/`). A superfície **web/API** usa o grafo
+**deep-agent** de ``backend.services.agent_factory``. Os dois schemas de estado
+são diferentes e gravam no mesmo ``~/.vectora/checkpoints.db``, mas seus
+checkpoints **não são intercambiáveis**: ``aget_state`` reconstrói os canais
+conforme o schema do grafo que lê. Por isso, leituras de histórico/estado
+**devem usar o mesmo grafo que escreveu** — ler uma sessão web por este grafo
+(ou vice-versa) devolve ``messages`` vazio. Para histórico de sessões web, use
+``agent_factory.aget_thread_messages``.
 
 Centraliza o ciclo de vida do grafo LangGraph + checkpointer SQLite.
 Este módulo é a fonte de verdade para:

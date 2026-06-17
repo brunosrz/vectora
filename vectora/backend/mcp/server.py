@@ -749,33 +749,34 @@ async def get_thread_context(thread_id: str) -> str:
     logger.info("Resource: get_thread_context(%s)", thread_id)
 
     try:
-        async with Checkpointer() as checkpointer:
-            config = {"configurable": {"thread_id": str(thread_id)}}
-            values = await checkpointer.aget(config)  # ty: ignore[invalid-argument-type]
+        # As mensagens só são reconstruíveis pelo grafo que as escreveu
+        # (deep-agent): a leitura raw do checkpoint expõe canais de orquestração,
+        # não o canal `messages`. A leitura raw anterior também apontava para o
+        # DB errado (settings.db_dsn ≠ o checkpoints.db do grafo), devolvendo
+        # sempre vazio.
+        from backend.services import agent_factory
 
-            if not values:
-                return json.dumps(
-                    {
-                        "thread_id": thread_id,
-                        "status": "empty",
-                        "message": "No conversation found for this thread",
-                        "timestamp": datetime.now(UTC).isoformat(),
-                    }
-                )
+        pairs = await agent_factory.aget_thread_messages(str(thread_id))
 
-            state = values.get("values", {})
-            messages = state.get("messages", [])
-            summary = state.get("summarized_history", "")
-
+        if not pairs:
             return json.dumps(
                 {
                     "thread_id": thread_id,
-                    "status": "active",
-                    "message_count": len(messages),
-                    "summary": summary or f"Thread with {len(messages)} messages",
+                    "status": "empty",
+                    "message": "No conversation found for this thread",
                     "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
+
+        return json.dumps(
+            {
+                "thread_id": thread_id,
+                "status": "active",
+                "message_count": len(pairs),
+                "summary": f"Thread with {len(pairs)} messages",
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
 
     except Exception:
         logger.exception("Failed to get thread context: %s", thread_id)
