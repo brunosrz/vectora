@@ -12,9 +12,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  CheckCircle2,
   ChevronLeft,
   Cloud,
   CornerDownLeft,
+  Database,
   Folder,
   GitBranch,
   HardDrive,
@@ -49,6 +51,7 @@ import {
   type CodespaceSummary,
 } from "@/lib/stores/workspaces-store";
 import { useNetworkStatus } from "@/lib/hooks/use-network-status";
+import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
 import { m } from "@/lib/paraglide/messages";
 
 type Tab = "local" | "ssh" | "codespace";
@@ -76,6 +79,8 @@ export function WorkspaceTrustDialog({
   // UX-16 — todo o fluxo (browse, trust, SSH, codespaces) depende do backend.
   const { offline } = useNetworkStatus();
   const create = useWorkspacesStore((s) => s.create);
+  const getActive = useWorkspacesStore((s) => s.getActive);
+  const ragStart = useRagJobsStore((s) => s.start);
   const createRemote = useWorkspacesStore((s) => s.createRemote);
   const listSshKeys = useWorkspacesStore((s) => s.listSshKeys);
   const uploadSshKey = useWorkspacesStore((s) => s.uploadSshKey);
@@ -89,6 +94,15 @@ export function WorkspaceTrustDialog({
   const [submitting, setSubmitting] = useState(false);
   const [pathInput, setPathInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Ingest (mode="ingest"): filtro de tipo + job de indexação em progresso.
+  const [fileTypes, setFileTypes] = useState<"code" | "markdown" | "all">(
+    "all",
+  );
+  const [ingestJobId, setIngestJobId] = useState<string | null>(null);
+  const ingestJob = useRagJobsStore((s) =>
+    ingestJobId ? s.jobs[ingestJobId] : null,
+  );
 
   // SSH state
   const [sshHost, setSshHost] = useState("");
@@ -155,6 +169,8 @@ export function WorkspaceTrustDialog({
       setListing(null);
       setGitInit(true);
       setError(null);
+      setIngestJobId(null);
+      setFileTypes("all");
       setPathInput(initialPath ?? "");
       lastLoadedPathRef.current = null;
       setTab("local");
@@ -238,8 +254,17 @@ export function WorkspaceTrustDialog({
   const handleConfirm = async () => {
     if (!listing) return;
     if (mode === "ingest") {
+      const wsId = getActive()?.id;
+      if (!wsId) {
+        setError(m.workspace_ingest_no_workspace());
+        return;
+      }
       onConfirmPath?.(listing.path);
-      onOpenChange(false);
+      setSubmitting(true);
+      const jobId = await ragStart(wsId, listing.path, fileTypes);
+      setSubmitting(false);
+      if (jobId) setIngestJobId(jobId);
+      else setError(m.workspace_ingest_failed());
       return;
     }
     setSubmitting(true);
@@ -267,327 +292,412 @@ export function WorkspaceTrustDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* G.2.6 — tabs Local / SSH / Codespace.
-            mode="ingest" mantém só Local: ingest é fluxo local-only. */}
-        {mode === "trust" && (
-          <div className="flex gap-1 border-b border-border/60 pb-1">
-            <button
-              type="button"
-              onClick={() => setTab("local")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors ${
-                tab === "local"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Monitor className="w-3.5 h-3.5" /> {m.workspace_tab_local()}
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("ssh")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors ${
-                tab === "ssh"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Server className="w-3.5 h-3.5" /> SSH
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("codespace")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors ${
-                tab === "codespace"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Cloud className="w-3.5 h-3.5" /> Codespace
-            </button>
-          </div>
-        )}
-
-        {tab === "local" && (
-          <>
-            {/* Path editável — Enter ou botão "Ir" navega para o destino.
-            Backend recusa (403) se o usuário comum sair das pastas seguras. */}
-            <div className="flex items-center gap-1.5">
-              <Input
-                value={pathInput}
-                onChange={(e) => setPathInput(e.target.value)}
-                autoComplete="off"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleGo();
-                  }
+        {mode === "ingest" && ingestJobId ? (
+          <div className="space-y-3 py-2">
+            <div className="flex items-center gap-2 text-sm">
+              {ingestJob?.status === "done" ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              ) : ingestJob?.status === "no_files" ? (
+                <Database className="h-4 w-4 shrink-0 text-muted-foreground" />
+              ) : (
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+              )}
+              <span className="truncate font-mono text-xs text-muted-foreground">
+                {ingestJob?.path}
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted/60">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{
+                  width: `${
+                    ingestJob && ingestJob.total > 0
+                      ? Math.min(
+                          100,
+                          Math.round(
+                            (ingestJob.processed / ingestJob.total) * 100,
+                          ),
+                        )
+                      : ingestJob?.status === "done"
+                        ? 100
+                        : 5
+                  }%`,
                 }}
-                placeholder={m.workspace_path_placeholder()}
-                spellCheck={false}
-                className="h-8 text-xs font-mono"
-                disabled={loading || offline}
               />
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="h-8 px-2"
-                onClick={handleGo}
-                disabled={loading || offline || !pathInput.trim()}
-                title={
-                  offline ? m.network_disabled_offline() : m.workspace_go()
-                }
-              >
-                <CornerDownLeft className="w-3.5 h-3.5" />
-              </Button>
             </div>
-
-            {error && (
-              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
-                {error}
-              </div>
-            )}
-
-            {/* Directory browser */}
-            <ScrollArea className="h-64 rounded-md border border-border">
-              <div className="p-1">
-                {listing?.parent && (
-                  <button
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors"
-                    onClick={() => load(listing.parent!)}
-                    disabled={loading}
-                  >
-                    <ChevronLeft className="w-4 h-4 shrink-0 text-muted-foreground" />
-                    {m.workspace_browse_up()}
-                  </button>
-                )}
-
-                {/* Atalho explícito para a tela de discos, oculto quando já
-                    está nela. Útil quando o usuário pulou direto para uma
-                    pasta via texto e quer ver outras unidades. */}
-                {listing && !listing.at_drives_root && (
-                  <button
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors text-muted-foreground"
-                    onClick={() => load(DRIVES_PSEUDO_PATH)}
-                    disabled={loading}
-                  >
-                    <HardDrive className="w-4 h-4 shrink-0" />
-                    {m.workspace_browse_drives()}
-                  </button>
-                )}
-
-                {listing && listing.entries.length === 0 && (
-                  <p className="px-3 py-4 text-sm text-muted-foreground text-center">
-                    {m.workspace_browse_empty()}
-                  </p>
-                )}
-
-                {listing?.entries.map((entry) => {
-                  const isDrive = entry.kind === "drive";
-                  const Icon = isDrive ? HardDrive : Folder;
-                  return (
-                    <button
-                      key={entry.path}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors"
-                      onClick={() => load(entry.path)}
-                      disabled={loading}
-                    >
-                      <Icon
-                        className={`w-4 h-4 shrink-0 ${isDrive ? "text-sky-500" : "text-muted-foreground"}`}
-                      />
-                      <span className="truncate font-medium">{entry.name}</span>
-                      {entry.label && (
-                        <span className="truncate text-xs text-muted-foreground">
-                          {entry.label}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-
+            <p className="text-xs text-muted-foreground">
+              {ingestJob?.status === "no_files"
+                ? m.workspace_ingest_no_files()
+                : `${ingestJob?.processed ?? 0} / ${ingestJob?.total ?? 0} ${m.workspace_ingest_chunks()}`}
+            </p>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => onOpenChange(false)}>
+                {m.workspace_ingest_minimize()}
+              </Button>
+              <Button
+                onClick={() => onOpenChange(false)}
+                disabled={ingestJob?.status === "indexing"}
+              >
+                {m.workspace_ingest_done()}
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <>
+            {/* G.2.6 — tabs Local / SSH / Codespace.
+            mode="ingest" mantém só Local: ingest é fluxo local-only. */}
             {mode === "trust" && (
-              <label className="flex items-center gap-2 text-sm text-foreground/80 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={gitInit}
-                  onChange={(e) => setGitInit(e.target.checked)}
-                  className="rounded border-border"
-                />
-                <GitBranch className="w-4 h-4 shrink-0 text-muted-foreground" />
-                {m.workspace_git_init_label()}
-              </label>
-            )}
-          </>
-        )}
-
-        {tab === "ssh" && (
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground">
-                {m.workspace_ssh_host()}
-              </label>
-              <Input
-                value={sshHost}
-                onChange={(e) => setSshHost(e.target.value)}
-                placeholder="user@host:22"
-                className="h-8 text-xs font-mono"
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground">
-                {m.workspace_ssh_path()}
-              </label>
-              <Input
-                value={sshPath}
-                onChange={(e) => setSshPath(e.target.value)}
-                placeholder="/home/user/projects/app"
-                className="h-8 text-xs font-mono"
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground">
-                {m.workspace_ssh_key()}
-              </label>
-              <div className="flex items-center gap-1.5">
-                <Select
-                  value={sshKeyId || "__none__"}
-                  onValueChange={(v) => setSshKeyId(v === "__none__" ? "" : v)}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue
-                      placeholder={m.workspace_ssh_key_placeholder()}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">
-                      {m.workspace_ssh_key_none()}
-                    </SelectItem>
-                    {sshKeys.map((id) => (
-                      <SelectItem key={id} value={id}>
-                        {id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <label className="inline-flex items-center gap-1 px-2 h-8 rounded-md border border-border/60 text-xs cursor-pointer hover:bg-muted/50">
-                  <Upload className="w-3.5 h-3.5" />
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void handleUploadKey(f);
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={handleTestSsh}
-                disabled={sshTesting || offline || !sshHost.trim()}
-                title={offline ? m.network_disabled_offline() : undefined}
-                className="h-8"
-              >
-                {sshTesting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  m.workspace_ssh_test()
-                )}
-              </Button>
-              {sshTestResult && (
-                <span
-                  className={`text-xs ${
-                    sshTestResult.ok ? "text-emerald-500" : "text-destructive"
+              <div className="flex gap-1 border-b border-border/60 pb-1">
+                <button
+                  type="button"
+                  onClick={() => setTab("local")}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors ${
+                    tab === "local"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {sshTestResult.ok
-                    ? m.workspace_ssh_ok()
-                    : sshTestResult.message}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {tab === "codespace" && (
-          <div className="space-y-3">
-            {codespaceLoading ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                {m.workspace_codespaces_loading()}
+                  <Monitor className="w-3.5 h-3.5" /> {m.workspace_tab_local()}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("ssh")}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors ${
+                    tab === "ssh"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Server className="w-3.5 h-3.5" /> SSH
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("codespace")}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors ${
+                    tab === "codespace"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Cloud className="w-3.5 h-3.5" /> Codespace
+                </button>
               </div>
-            ) : !codespaceAvailable ? (
-              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
-                {codespaceMessage || m.workspace_codespaces_unavailable()}
-              </div>
-            ) : codespaces.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">
-                {m.workspace_codespaces_empty()}
-              </p>
-            ) : (
-              <ScrollArea className="h-64 rounded-md border border-border">
-                <div className="p-1 divide-y divide-border/60">
-                  {codespaces.map((cs) => (
-                    <button
-                      key={cs.name}
-                      onClick={() => void handleConfirmCodespace(cs)}
-                      disabled={submitting || offline}
-                      title={offline ? m.network_disabled_offline() : undefined}
-                      className="w-full text-left px-3 py-2 hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="text-sm font-medium text-foreground truncate">
-                        {cs.repository || cs.name}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground font-mono truncate">
-                        {cs.name} · {cs.state}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </ScrollArea>
             )}
-          </div>
-        )}
 
-        <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
-            {m.workspace_cancel()}
-          </Button>
-          {tab === "local" && (
-            <Button
-              onClick={handleConfirm}
-              disabled={!listing || submitting || offline}
-              title={offline ? m.network_disabled_offline() : undefined}
-            >
-              {mode === "ingest"
-                ? m.workspace_ingest_confirm()
-                : m.workspace_trust_confirm()}
-            </Button>
-          )}
-          {tab === "ssh" && (
-            <Button
-              onClick={handleConfirmSsh}
-              disabled={submitting || offline || !sshHost.trim()}
-              title={offline ? m.network_disabled_offline() : undefined}
-            >
-              {m.workspace_ssh_confirm()}
-            </Button>
-          )}
-        </DialogFooter>
+            {tab === "local" && (
+              <>
+                {mode === "ingest" && (
+                  <Select
+                    value={fileTypes}
+                    onValueChange={(v) =>
+                      setFileTypes(v as "code" | "markdown" | "all")
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        {m.workspace_ingest_types_all()}
+                      </SelectItem>
+                      <SelectItem value="code">
+                        {m.workspace_ingest_types_code()}
+                      </SelectItem>
+                      <SelectItem value="markdown">
+                        {m.workspace_ingest_types_markdown()}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+                {/* Path editável — Enter ou botão "Ir" navega para o destino.
+            Backend recusa (403) se o usuário comum sair das pastas seguras. */}
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    value={pathInput}
+                    onChange={(e) => setPathInput(e.target.value)}
+                    autoComplete="off"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleGo();
+                      }
+                    }}
+                    placeholder={m.workspace_path_placeholder()}
+                    spellCheck={false}
+                    className="h-8 text-xs font-mono"
+                    disabled={loading || offline}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-2"
+                    onClick={handleGo}
+                    disabled={loading || offline || !pathInput.trim()}
+                    title={
+                      offline ? m.network_disabled_offline() : m.workspace_go()
+                    }
+                  >
+                    <CornerDownLeft className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+
+                {error && (
+                  <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
+                    {error}
+                  </div>
+                )}
+
+                {/* Directory browser */}
+                <ScrollArea className="h-64 rounded-md border border-border">
+                  <div className="p-1">
+                    {listing?.parent && (
+                      <button
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors"
+                        onClick={() => load(listing.parent!)}
+                        disabled={loading}
+                      >
+                        <ChevronLeft className="w-4 h-4 shrink-0 text-muted-foreground" />
+                        {m.workspace_browse_up()}
+                      </button>
+                    )}
+
+                    {/* Atalho explícito para a tela de discos, oculto quando já
+                    está nela. Útil quando o usuário pulou direto para uma
+                    pasta via texto e quer ver outras unidades. */}
+                    {listing && !listing.at_drives_root && (
+                      <button
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors text-muted-foreground"
+                        onClick={() => load(DRIVES_PSEUDO_PATH)}
+                        disabled={loading}
+                      >
+                        <HardDrive className="w-4 h-4 shrink-0" />
+                        {m.workspace_browse_drives()}
+                      </button>
+                    )}
+
+                    {listing && listing.entries.length === 0 && (
+                      <p className="px-3 py-4 text-sm text-muted-foreground text-center">
+                        {m.workspace_browse_empty()}
+                      </p>
+                    )}
+
+                    {listing?.entries.map((entry) => {
+                      const isDrive = entry.kind === "drive";
+                      const Icon = isDrive ? HardDrive : Folder;
+                      return (
+                        <button
+                          key={entry.path}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left transition-colors"
+                          onClick={() => load(entry.path)}
+                          disabled={loading}
+                        >
+                          <Icon
+                            className={`w-4 h-4 shrink-0 ${isDrive ? "text-sky-500" : "text-muted-foreground"}`}
+                          />
+                          <span className="truncate font-medium">
+                            {entry.name}
+                          </span>
+                          {entry.label && (
+                            <span className="truncate text-xs text-muted-foreground">
+                              {entry.label}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+
+                {mode === "trust" && (
+                  <label className="flex items-center gap-2 text-sm text-foreground/80 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={gitInit}
+                      onChange={(e) => setGitInit(e.target.checked)}
+                      className="rounded border-border"
+                    />
+                    <GitBranch className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    {m.workspace_git_init_label()}
+                  </label>
+                )}
+              </>
+            )}
+
+            {tab === "ssh" && (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    {m.workspace_ssh_host()}
+                  </label>
+                  <Input
+                    value={sshHost}
+                    onChange={(e) => setSshHost(e.target.value)}
+                    placeholder="user@host:22"
+                    className="h-8 text-xs font-mono"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    {m.workspace_ssh_path()}
+                  </label>
+                  <Input
+                    value={sshPath}
+                    onChange={(e) => setSshPath(e.target.value)}
+                    placeholder="/home/user/projects/app"
+                    className="h-8 text-xs font-mono"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    {m.workspace_ssh_key()}
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <Select
+                      value={sshKeyId || "__none__"}
+                      onValueChange={(v) =>
+                        setSshKeyId(v === "__none__" ? "" : v)
+                      }
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue
+                          placeholder={m.workspace_ssh_key_placeholder()}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">
+                          {m.workspace_ssh_key_none()}
+                        </SelectItem>
+                        {sshKeys.map((id) => (
+                          <SelectItem key={id} value={id}>
+                            {id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <label className="inline-flex items-center gap-1 px-2 h-8 rounded-md border border-border/60 text-xs cursor-pointer hover:bg-muted/50">
+                      <Upload className="w-3.5 h-3.5" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void handleUploadKey(f);
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleTestSsh}
+                    disabled={sshTesting || offline || !sshHost.trim()}
+                    title={offline ? m.network_disabled_offline() : undefined}
+                    className="h-8"
+                  >
+                    {sshTesting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      m.workspace_ssh_test()
+                    )}
+                  </Button>
+                  {sshTestResult && (
+                    <span
+                      className={`text-xs ${
+                        sshTestResult.ok
+                          ? "text-emerald-500"
+                          : "text-destructive"
+                      }`}
+                    >
+                      {sshTestResult.ok
+                        ? m.workspace_ssh_ok()
+                        : sshTestResult.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {tab === "codespace" && (
+              <div className="space-y-3">
+                {codespaceLoading ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {m.workspace_codespaces_loading()}
+                  </div>
+                ) : !codespaceAvailable ? (
+                  <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
+                    {codespaceMessage || m.workspace_codespaces_unavailable()}
+                  </div>
+                ) : codespaces.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    {m.workspace_codespaces_empty()}
+                  </p>
+                ) : (
+                  <ScrollArea className="h-64 rounded-md border border-border">
+                    <div className="p-1 divide-y divide-border/60">
+                      {codespaces.map((cs) => (
+                        <button
+                          key={cs.name}
+                          onClick={() => void handleConfirmCodespace(cs)}
+                          disabled={submitting || offline}
+                          title={
+                            offline ? m.network_disabled_offline() : undefined
+                          }
+                          className="w-full text-left px-3 py-2 hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="text-sm font-medium text-foreground truncate">
+                            {cs.repository || cs.name}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground font-mono truncate">
+                            {cs.name} · {cs.state}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                disabled={submitting}
+              >
+                {m.workspace_cancel()}
+              </Button>
+              {tab === "local" && (
+                <Button
+                  onClick={handleConfirm}
+                  disabled={!listing || submitting || offline}
+                  title={offline ? m.network_disabled_offline() : undefined}
+                >
+                  {mode === "ingest"
+                    ? m.workspace_ingest_confirm()
+                    : m.workspace_trust_confirm()}
+                </Button>
+              )}
+              {tab === "ssh" && (
+                <Button
+                  onClick={handleConfirmSsh}
+                  disabled={submitting || offline || !sshHost.trim()}
+                  title={offline ? m.network_disabled_offline() : undefined}
+                >
+                  {m.workspace_ssh_confirm()}
+                </Button>
+              )}
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

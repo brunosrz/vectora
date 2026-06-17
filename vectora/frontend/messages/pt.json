@@ -441,7 +441,6 @@
   "plus_add_files": "Adicionar arquivos ou fotos",
   "plus_add_folder": "Adicionar pasta",
   "plus_ingest_folder": "Indexar pasta no RAG",
-  "plus_ingest_prompt": "Indexe esta pasta no RAG: {path}",
   "plus_slash_commands": "Comandos de barra",
   "plus_connectors": "Conectores",
   "plus_plugins": "Adicionar plugins…",
@@ -742,5 +741,14 @@
   "workbench_memory_empty_title": "Memória vazia",
   "workbench_memory_empty_desc": "O contexto que o agente recupera nesta sessão (base de conhecimento e web) aparece aqui.",
   "workbench_memory_group_rag": "Base de conhecimento",
-  "workbench_memory_group_web": "Web"
+  "workbench_memory_group_web": "Web",
+  "workspace_ingest_no_workspace": "Nenhum workspace ativo.",
+  "workspace_ingest_failed": "Não foi possível iniciar a indexação.",
+  "workspace_ingest_no_files": "Nenhum arquivo encontrado.",
+  "workspace_ingest_chunks": "trechos",
+  "workspace_ingest_minimize": "Minimizar",
+  "workspace_ingest_done": "Concluído",
+  "workspace_ingest_types_all": "Todos os arquivos",
+  "workspace_ingest_types_code": "Código",
+  "workspace_ingest_types_markdown": "Markdown"
 }

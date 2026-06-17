@@ -441,7 +441,6 @@
   "plus_add_files": "Add files or photos",
   "plus_add_folder": "Add folder",
   "plus_ingest_folder": "Index folder in RAG",
-  "plus_ingest_prompt": "Index this folder in RAG: {path}",
   "plus_slash_commands": "Slash commands",
   "plus_connectors": "Connectors",
   "plus_plugins": "Add plugins…",
@@ -742,5 +741,14 @@
   "workbench_memory_empty_title": "Memory is empty",
   "workbench_memory_empty_desc": "Knowledge base (RAG) and web results the agent retrieves this session show up here.",
   "workbench_memory_group_rag": "Knowledge base",
-  "workbench_memory_group_web": "Web"
+  "workbench_memory_group_web": "Web",
+  "workspace_ingest_no_workspace": "No active workspace.",
+  "workspace_ingest_failed": "Could not start indexing.",
+  "workspace_ingest_no_files": "No matching files found.",
+  "workspace_ingest_chunks": "chunks",
+  "workspace_ingest_minimize": "Minimize",
+  "workspace_ingest_done": "Done",
+  "workspace_ingest_types_all": "All files",
+  "workspace_ingest_types_code": "Code",
+  "workspace_ingest_types_markdown": "Markdown"
 }

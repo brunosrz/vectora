@@ -26,8 +26,8 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { useChatInputStore } from "@/lib/stores/chat-input-store";
 import { useEnvironmentDialogStore } from "@/lib/stores/environment-dialog-store";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
 import { m } from "@/lib/paraglide/messages";
 
@@ -44,7 +44,7 @@ export function PlusMenu({
   onSlashCommands,
 }: PlusMenuProps) {
   const openEnvironment = useEnvironmentDialogStore((s) => s.openAt);
-  const pushDraft = useChatInputStore((s) => s.pushDraft);
+  const activeCwd = useWorkspacesStore((s) => s.getActive()?.cwd);
   const [open, setOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
   const [ingestOpen, setIngestOpen] = useState(false);
@@ -161,9 +161,7 @@ export function PlusMenu({
         open={ingestOpen}
         onOpenChange={setIngestOpen}
         mode="ingest"
-        onConfirmPath={(path) => {
-          pushDraft(m.plus_ingest_prompt({ path }));
-        }}
+        initialPath={activeCwd}
       />
     </div>
   );
