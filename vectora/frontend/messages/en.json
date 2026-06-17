@@ -750,5 +750,8 @@
   "workspace_ingest_done": "Done",
   "workspace_ingest_types_all": "All files",
   "workspace_ingest_types_code": "Code",
-  "workspace_ingest_types_markdown": "Markdown"
+  "workspace_ingest_types_markdown": "Markdown",
+  "workbench_memory_activity": "Activity",
+  "workbench_memory_indexing": "Indexing",
+  "workbench_memory_searching": "Searching"
 }

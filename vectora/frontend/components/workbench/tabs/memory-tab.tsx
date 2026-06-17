@@ -1,17 +1,18 @@
 "use client";
 
 /**
- * MemoryTab — "Memória da sessão": o que o Vectora recuperou nesta thread.
+ * MemoryTab — "Memória da sessão": o que o Vectora está recuperando e já sabe.
  *
- * Agrega o contexto trazido para as respostas — trechos da base de
- * conhecimento (RAG) e resultados de web search / fetch — em pílulas que
- * expandem para leitura do conteúdo completo. É a visão de "o que o agente
- * sabe agora", derivada das mensagens da thread (sem novo endpoint).
+ * Estilo deep research: uma timeline de **atividade** (indexações RAG em
+ * progresso e buscas/fetch web em andamento) seguida do **contexto recuperado**
+ * (trechos da base de conhecimento + resultados web) em pílulas expansíveis.
  */
 
 import { useMemo, useState } from "react";
-import { Brain, ChevronRight, Database, Globe } from "lucide-react";
+import { Brain, ChevronRight, Database, Globe, Loader2 } from "lucide-react";
 import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
+import { useRagJobsStore } from "@/lib/stores/rag-jobs-store";
+import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { MarkdownView } from "@/components/workbench/markdown-view";
 import { m } from "@/lib/paraglide/messages";
 
@@ -37,6 +38,12 @@ function toText(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+/** Último segmento de um caminho (Windows ou POSIX). */
+function baseName(path: string): string {
+  const parts = path.split(/[/\\]/).filter(Boolean);
+  return parts[parts.length - 1] || path;
 }
 
 function MemoryPill({ item }: { item: MemoryItem }) {
@@ -74,10 +81,22 @@ function MemoryPill({ item }: { item: MemoryItem }) {
 
 export function MemoryTab({ threadId }: MemoryTabProps) {
   const [messages] = useThreadMessages(threadId);
+  const activeWorkspaceId = useWorkspacesStore((s) => s.getActive()?.id);
+  const jobs = useRagJobsStore((s) => s.jobs);
 
-  const { rag, web } = useMemo(() => {
+  // Jobs de indexação RAG do workspace ativo (atividade ao vivo).
+  const ragJobs = useMemo(
+    () =>
+      Object.values(jobs).filter(
+        (j) => !activeWorkspaceId || j.workspaceId === activeWorkspaceId,
+      ),
+    [jobs, activeWorkspaceId],
+  );
+
+  const { rag, web, activeWeb } = useMemo(() => {
     const ragItems: MemoryItem[] = [];
     const webItems: MemoryItem[] = [];
+    const activeWebItems: string[] = [];
     const seenRag = new Set<string>();
 
     for (const msg of messages) {
@@ -100,6 +119,11 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
           (typeof args.query === "string" && args.query) ||
           (typeof args.url === "string" && args.url) ||
           call.name;
+        // Sem output ainda → busca em andamento (deep research ao vivo).
+        if (call.output == null || call.output === "") {
+          activeWebItems.push(title);
+          continue;
+        }
         webItems.push({
           id: `web-${call.id}`,
           kind: "web",
@@ -109,10 +133,11 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
         });
       }
     }
-    return { rag: ragItems, web: webItems };
+    return { rag: ragItems, web: webItems, activeWeb: activeWebItems };
   }, [messages]);
 
-  const isEmpty = rag.length === 0 && web.length === 0;
+  const hasActivity = ragJobs.length > 0 || activeWeb.length > 0;
+  const isEmpty = !hasActivity && rag.length === 0 && web.length === 0;
 
   if (isEmpty) {
     return (
@@ -132,6 +157,59 @@ export function MemoryTab({ threadId }: MemoryTabProps) {
 
   return (
     <div className="h-full space-y-4 overflow-auto p-3">
+      {hasActivity && (
+        <section className="space-y-1.5">
+          <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {m.workbench_memory_activity()}
+          </h3>
+          {ragJobs.map((job) => {
+            const pct =
+              job.total > 0
+                ? Math.min(100, Math.round((job.processed / job.total) * 100))
+                : job.status === "done"
+                  ? 100
+                  : 5;
+            return (
+              <div
+                key={job.jobId}
+                className="rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
+              >
+                <div className="flex items-center gap-2">
+                  {job.status === "done" ? (
+                    <Database className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                  ) : (
+                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
+                  )}
+                  <span className="min-w-0 flex-1 truncate text-xs text-foreground">
+                    {m.workbench_memory_indexing()} {baseName(job.path)}
+                  </span>
+                  <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                    {job.processed}/{job.total}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted/60">
+                  <div
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          {activeWeb.map((query, i) => (
+            <div
+              key={`active-web-${i}`}
+              className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/30 px-2.5 py-2"
+            >
+              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
+              <span className="min-w-0 flex-1 truncate text-xs text-foreground">
+                {m.workbench_memory_searching()} {query}
+              </span>
+            </div>
+          ))}
+        </section>
+      )}
+
       {rag.length > 0 && (
         <section className="space-y-1.5">
           <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">

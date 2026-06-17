@@ -750,5 +750,8 @@
   "workspace_ingest_done": "Listo",
   "workspace_ingest_types_all": "Todos los archivos",
   "workspace_ingest_types_code": "Código",
-  "workspace_ingest_types_markdown": "Markdown"
+  "workspace_ingest_types_markdown": "Markdown",
+  "workbench_memory_activity": "Actividad",
+  "workbench_memory_indexing": "Indexando",
+  "workbench_memory_searching": "Buscando"
 }
