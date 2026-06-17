@@ -17,6 +17,14 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "."),
+      // Mesmos shims do vite.config: componentes importam next/* que não
+      // existem nesta SPA. Sem isto o vitest falha ao resolver os imports.
+      "next/navigation": path.resolve(
+        __dirname,
+        "src/shims/next-navigation.ts",
+      ),
+      "next/image": path.resolve(__dirname, "src/shims/next-image.tsx"),
+      "next/link": path.resolve(__dirname, "src/shims/next-link.tsx"),
     },
   },
 });
