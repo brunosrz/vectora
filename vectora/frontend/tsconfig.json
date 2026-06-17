@@ -35,7 +35,8 @@
     "lib/**/*.tsx",
     "hooks/**/*.ts",
     "hooks/**/*.tsx",
-    "vite.config.ts"
+    "vite.config.ts",
+    "vitest.setup.ts"
   ],
   "exclude": ["node_modules", "dist", ".next"]
 }
