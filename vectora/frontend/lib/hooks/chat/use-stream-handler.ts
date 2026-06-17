@@ -52,7 +52,7 @@ import { m as msg } from "@/lib/paraglide/messages";
 // aplicação reportada pelo backend via evento `error`).
 
 /** `true` para falhas de rede/conexão (fetch caiu, DNS, timeout de socket). */
-function isNetworkError(err: unknown): boolean {
+export function isNetworkError(err: unknown): boolean {
   if (err instanceof TypeError) return true;
   const errMsg = err instanceof Error ? err.message : String(err);
   return /failed to fetch|network ?error|load failed|ECONNRESET|ECONNREFUSED/i.test(
