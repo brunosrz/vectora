@@ -11,7 +11,15 @@ export default defineConfig({
       reporter: ["text", "html"],
       reportsDirectory: "coverage",
       include: ["lib/**", "src/**", "components/**", "hooks/**"],
-      exclude: ["**/*.gen.ts", "**/*.d.ts", "tests/**", "**/__tests__/**"],
+      exclude: [
+        "**/*.gen.ts",
+        "**/*.d.ts",
+        "tests/**",
+        "**/__tests__/**",
+        // Saída auto-gerada do paraglide (messages compiladas + README/ignores):
+        // não é código nosso e os arquivos não-JS quebram o remap do v8.
+        "lib/paraglide/**",
+      ],
     },
   },
   resolve: {
