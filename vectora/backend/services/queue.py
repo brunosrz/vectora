@@ -44,10 +44,15 @@ class EmbeddingQueueRecord(Base):  # type: ignore[valid-type,misc]
         # Index on status for O(log n) WHERE status = '...' queries.
         # Critical for get_pending() and count_pending() which run every poll cycle.
         Index("ix_embedding_queue_status", "status"),
+        # Index on job_id para get_job_stats() (progresso por pasta indexada).
+        Index("ix_embedding_queue_job_id", "job_id"),
     )
 
     id = Column(Integer, primary_key=True)
     queue_id = Column(String(36), unique=True, nullable=False)
+    # Agrupa chunks enfileirados por uma mesma operação de ingest (uma pasta),
+    # permitindo barra de progresso por job. Nulo para enqueues avulsos.
+    job_id = Column(String(36), nullable=True)
     text = Column(Text, nullable=False)
     collection = Column(String(255), nullable=False)
     doc_metadata = Column(String(4096), nullable=True)  # String JSON
@@ -95,6 +100,19 @@ class EmbeddingQueue:
             # Redundant with connect_args but explicit for clarity
             await conn.exec_driver_sql("PRAGMA busy_timeout=30000;")
 
+            # Migração idempotente: tabelas antigas não têm `job_id`
+            # (create_all não altera tabelas existentes). Adiciona a coluna +
+            # índice se ausente, sem perder dados.
+            cols = await conn.exec_driver_sql("PRAGMA table_info(embedding_queue);")
+            if "job_id" not in {row[1] for row in cols.fetchall()}:
+                await conn.exec_driver_sql(
+                    "ALTER TABLE embedding_queue ADD COLUMN job_id VARCHAR(36);"
+                )
+                await conn.exec_driver_sql(
+                    "CREATE INDEX IF NOT EXISTS ix_embedding_queue_job_id "
+                    "ON embedding_queue (job_id);"
+                )
+
         self.AsyncSessionLocal = sessionmaker(  # ty: ignore[no-matching-overload]
             self.engine, class_=AsyncSession, expire_on_commit=False
         )
@@ -109,6 +127,7 @@ class EmbeddingQueue:
         text: str,
         collection: str = "articles",
         metadata: dict[str, Any] | None = None,
+        job_id: str | None = None,
     ) -> str:
         """Adiciona um texto à fila de embedding para processamento posterior.
 
@@ -116,6 +135,7 @@ class EmbeddingQueue:
             text: Conteúdo a ser transformado em embedding
             collection: Nome da coleção (articles, wiki, api_docs, etc)
             metadata: Metadados opcionais do documento
+            job_id: Agrupa este chunk a uma operação de ingest (progresso por job)
 
         Returns:
             ID da fila para rastreamento
@@ -130,6 +150,7 @@ class EmbeddingQueue:
             async with self.AsyncSessionLocal() as session:
                 record = EmbeddingQueueRecord(
                     queue_id=queue_id,
+                    job_id=job_id,
                     text=text,
                     collection=collection,
                     doc_metadata=metadata_json,
@@ -239,6 +260,39 @@ class EmbeddingQueue:
                 for status, cnt in rows:
                     if status in result:
                         result[status] = cnt
+        except Exception:
+            pass
+        return result
+
+    async def get_job_stats(self, job_id: str) -> dict[str, int]:
+        """Contagem por status dos chunks de um job de ingest (progresso).
+
+        Returns:
+            Dict com ``total`` e contagem por status (pending, processing,
+            success, failed, dlq) restrita a ``job_id``.
+        """
+        statuses = [s.value for s in EmbeddingStatus]
+        result = dict.fromkeys(statuses, 0)
+        result["total"] = 0
+        try:
+            if self.AsyncSessionLocal is None:
+                return result
+            async with self.AsyncSessionLocal() as session:
+                from sqlalchemy import func, select
+
+                query = (
+                    select(
+                        EmbeddingQueueRecord.status,
+                        func.count().label("cnt"),
+                    )
+                    .where(EmbeddingQueueRecord.job_id == job_id)
+                    .group_by(EmbeddingQueueRecord.status)
+                )
+                rows = await session.execute(query)
+                for status, cnt in rows:
+                    if status in result:
+                        result[status] = cnt
+                    result["total"] += cnt
         except Exception:
             pass
         return result

@@ -1,0 +1,99 @@
+"""Testes do serviço de ingest direto no RAG (Fase A)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from backend.services import rag_ingest
+
+
+class _FakeQueue:
+    """Captura chamadas de enqueue para inspeção."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    async def enqueue(
+        self,
+        text: str,
+        collection: str = "articles",
+        metadata: dict[str, Any] | None = None,
+        job_id: str | None = None,
+    ) -> str:
+        self.calls.append(
+            {
+                "text": text,
+                "collection": collection,
+                "metadata": metadata,
+                "job_id": job_id,
+            }
+        )
+        return f"q-{len(self.calls)}"
+
+
+@pytest.fixture
+def _patched(monkeypatch: pytest.MonkeyPatch) -> _FakeQueue:
+    queue = _FakeQueue()
+
+    async def _get_queue(_dsn: str | None) -> _FakeQueue:
+        return queue
+
+    monkeypatch.setattr(rag_ingest, "get_embedding_queue", _get_queue)
+    monkeypatch.setattr(rag_ingest, "is_safe_file_path", lambda _p: True)
+    return queue
+
+
+def _make_tree(root: Path) -> None:
+    (root / "a.py").write_text("def f():\n    return 1\n", encoding="utf-8")
+    (root / "b.md").write_text("# Título\n\nconteúdo de teste\n", encoding="utf-8")
+    (root / "c.txt").write_text("texto puro\n", encoding="utf-8")
+
+
+@pytest.mark.asyncio
+async def test_ingest_markdown_only(tmp_path: Path, _patched: _FakeQueue) -> None:
+    _make_tree(tmp_path)
+    result = await rag_ingest.ingest_directory(
+        str(tmp_path), file_types="markdown", workspace_id="ws-1"
+    )
+    assert result["status"] == "enqueued"
+    assert result["total_files"] == 1  # só o .md
+    assert result["total_chunks"] >= 1
+    # Todos os chunks compartilham o mesmo job_id e carregam o workspace_id.
+    job_ids = {c["job_id"] for c in _patched.calls}
+    assert job_ids == {result["job_id"]}
+    assert all(c["metadata"]["workspace_id"] == "ws-1" for c in _patched.calls)
+
+
+@pytest.mark.asyncio
+async def test_ingest_code_only(tmp_path: Path, _patched: _FakeQueue) -> None:
+    _make_tree(tmp_path)
+    result = await rag_ingest.ingest_directory(str(tmp_path), file_types="code")
+    assert result["total_files"] == 1  # só o .py (txt/md não são "code")
+    assert result["total_chunks"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_ingest_all(tmp_path: Path, _patched: _FakeQueue) -> None:
+    _make_tree(tmp_path)
+    result = await rag_ingest.ingest_directory(str(tmp_path), file_types="all")
+    assert result["total_files"] == 3
+
+
+@pytest.mark.asyncio
+async def test_ingest_rejects_unsafe_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(rag_ingest, "is_safe_file_path", lambda _p: False)
+    with pytest.raises(ValueError, match="fora do escopo"):
+        await rag_ingest.ingest_directory(str(tmp_path))
+
+
+@pytest.mark.asyncio
+async def test_ingest_not_a_directory(tmp_path: Path, _patched: _FakeQueue) -> None:
+    f = tmp_path / "file.py"
+    f.write_text("x = 1\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="Não é um diretório"):
+        await rag_ingest.ingest_directory(str(f))

@@ -2746,7 +2746,7 @@ async def workspace_events(workspace_id: str, request: Request) -> StreamingResp
 
 import asyncio as _asyncio
 
-_preview_procs: dict[str, "_asyncio.subprocess.Process"] = {}
+_preview_procs: dict[str, _asyncio.subprocess.Process] = {}
 
 
 def _preview_key(workspace_id: str, name: str) -> str:
@@ -2911,7 +2911,7 @@ async def preview_stop(workspace_id: str, body: PreviewStopRequest) -> StatusRes
         proc.terminate()
         try:
             await _asyncio.wait_for(proc.wait(), timeout=5.0)
-        except _asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
         return StatusResponse(status="ok", message="parado")
     except Exception as exc:
@@ -2995,3 +2995,132 @@ async def preview_detect(workspace_id: str) -> DetectResponse:
         )
 
     return DetectResponse(configurations=configs)
+
+
+# ---------------------------------------------------------------------------
+# RAG — indexação direta de pasta (sem passar pelo chat) + progresso por job
+# ---------------------------------------------------------------------------
+
+
+class RagIngestRequest(BaseModel):
+    """Pedido de indexação de uma pasta no RAG."""
+
+    path: str
+    file_types: str = "all"  # "code" | "markdown" | "all"
+
+
+class RagIngestResponse(BaseModel):
+    job_id: str
+    total_files: int
+    total_chunks: int
+    status: str
+
+
+class RagJobStatus(BaseModel):
+    job_id: str
+    path: str
+    total: int
+    processed: int
+    failed: int
+    status: str  # "indexing" | "done" | "failed" | "no_files"
+
+
+# Registro em memória dos jobs disparados neste processo (path + total para a
+# barra de progresso). O progresso real vem da embedding queue (get_job_stats).
+_RAG_JOBS: dict[str, dict[str, Any]] = {}
+
+
+def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
+    meta = _RAG_JOBS.get(job_id, {})
+    total = int(meta.get("total_chunks") or stats.get("total") or 0)
+    processed = int(stats.get("success", 0))
+    failed = int(stats.get("failed", 0)) + int(stats.get("dlq", 0))
+    if total == 0:
+        status = "no_files"
+    elif processed + failed >= total:
+        status = "done" if failed < total else "failed"
+    else:
+        status = "indexing"
+    return RagJobStatus(
+        job_id=job_id,
+        path=str(meta.get("path", "")),
+        total=total,
+        processed=processed,
+        failed=failed,
+        status=status,
+    )
+
+
+@view_router.post("/{workspace_id}/rag/ingest", response_model=RagIngestResponse)
+async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResponse:
+    """Indexa uma pasta no RAG diretamente (walk + chunk + enqueue por job).
+
+    O caminho é validado por ``is_safe_file_path`` dentro do serviço; o
+    progresso é acompanhado via ``GET /rag/jobs/{job_id}``. Defensivo: erros
+    viram HTTP 400 com mensagem, nunca derrubam o handler.
+    """
+    from fastapi import HTTPException
+
+    from backend.services.rag_ingest import ingest_directory
+
+    try:
+        result = await ingest_directory(
+            body.path,
+            file_types=body.file_types,
+            workspace_id=workspace_id or None,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("rag_ingest_endpoint_failed", extra={"path": body.path})
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    job_id = str(result["job_id"])
+    _RAG_JOBS[job_id] = {
+        "path": body.path,
+        "total_chunks": result["total_chunks"],
+        "workspace_id": workspace_id,
+    }
+    return RagIngestResponse(
+        job_id=job_id,
+        total_files=int(result["total_files"]),
+        total_chunks=int(result["total_chunks"]),
+        status=str(result["status"]),
+    )
+
+
+@view_router.get("/{workspace_id}/rag/jobs/{job_id}", response_model=RagJobStatus)
+async def rag_job_status(workspace_id: str, job_id: str) -> RagJobStatus:
+    """Progresso de um job de indexação (chunks processados / total)."""
+    from backend.services.queue import get_embedding_queue
+    from backend.settings import settings
+
+    try:
+        queue = await get_embedding_queue(settings.embedding_queue_dsn)
+        stats = await queue.get_job_stats(job_id)
+    except Exception:
+        logger.warning("rag_job_status_failed", extra={"job_id": job_id})
+        stats = {}
+    return _rag_job_status(job_id, stats)
+
+
+@view_router.get("/{workspace_id}/rag/jobs", response_model=list[RagJobStatus])
+async def rag_jobs(workspace_id: str) -> list[RagJobStatus]:
+    """Lista os jobs de indexação deste workspace com seu progresso atual."""
+    from backend.services.queue import get_embedding_queue
+    from backend.settings import settings
+
+    out: list[RagJobStatus] = []
+    try:
+        queue = await get_embedding_queue(settings.embedding_queue_dsn)
+    except Exception:
+        return out
+    for job_id, meta in list(_RAG_JOBS.items()):
+        if workspace_id and meta.get("workspace_id") != workspace_id:
+            continue
+        try:
+            stats = await queue.get_job_stats(job_id)
+        except Exception:
+            stats = {}
+        out.append(_rag_job_status(job_id, stats))
+    return out
