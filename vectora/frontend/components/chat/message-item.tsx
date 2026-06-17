@@ -51,6 +51,37 @@ import { m } from "@/lib/paraglide/messages";
 /** Locale do date-fns a partir do idioma da UI (item 9 — "há quanto tempo"). */
 const DATE_FNS_LOCALES = { pt: ptBR, es: esLocale, en: enUS } as const;
 
+const WEB_TOOLS = new Set(["web_search", "fetch_url", "web_fetch"]);
+
+/** Chips de fonte (RAG + domínios web) para o painel de atividade (deep research). */
+function activitySources(message: Message): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (label: string) => {
+    if (label && !seen.has(label)) {
+      seen.add(label);
+      out.push(label);
+    }
+  };
+  for (const c of message.ragCitations ?? []) {
+    push((c.source ?? "").split(/[/\\]/).pop() || c.source);
+  }
+  for (const call of message.toolCalls ?? []) {
+    if (!WEB_TOOLS.has(call.name)) continue;
+    const args = (call.args ?? {}) as Record<string, unknown>;
+    if (typeof args.url === "string") {
+      try {
+        push(new URL(args.url).hostname);
+      } catch {
+        push(args.url);
+      }
+    } else if (typeof args.query === "string") {
+      push(args.query);
+    }
+  }
+  return out.slice(0, 8);
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -751,20 +782,33 @@ export const MessageItem = memo(
                     </summary>
                     {message.thinkingSteps &&
                       message.thinkingSteps.length > 0 && (
-                        <div className="mt-2 pl-4 space-y-1 text-muted-foreground font-mono text-[11px]">
+                        <div className="mt-2 ml-1 space-y-1.5 border-l border-border/60 pl-3 text-muted-foreground text-[11px]">
                           {message.thinkingSteps.map((step, idx) => (
                             <div
                               key={`${message.id}-step-${idx}`}
-                              className="flex items-start gap-2"
+                              className="relative flex items-start gap-2"
                             >
-                              <span className="text-primary opacity-50">
-                                {(idx + 1).toString().padStart(2, "0")}
-                              </span>
+                              <span className="absolute -left-[15px] top-1.5 h-1.5 w-1.5 rounded-full bg-primary/50" />
                               <span>{step}</span>
                             </div>
                           ))}
                         </div>
                       )}
+                    {(() => {
+                      const src = activitySources(message);
+                      return src.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-1 pl-1">
+                          {src.map((s, i) => (
+                            <span
+                              key={`${message.id}-src-${i}`}
+                              className="inline-flex max-w-[180px] items-center truncate rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null;
+                    })()}
                   </details>
                 )}
 
