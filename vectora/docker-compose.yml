@@ -7,9 +7,15 @@ name: vectora
 # essa configuração automaticamente e não pede para o usuário configurar
 # esses 3 serviços novamente.
 #
-# Uso local:
-#   docker compose up -d
-#   Acesse http://localhost:8080
+# Uso local (builda a imagem do código local — NÃO puxa a publicada):
+#   scons docker
+#   — ou, equivalente, com o override de build:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#   Acesse http://localhost:8090 (VECTORA_PORT)
+#
+# ATENÇÃO: `docker compose up -d` (só este arquivo) puxa a imagem PUBLICADA do
+# GHCR (ghcr.io/brunosrz/vectora) — use apenas para rodar a versão de produção,
+# não o código local. Para dev local, use `scons docker`.
 #
 # Uso em VPS com Traefik:
 #   Defina VECTORA_DOMAIN no .env (ex: chat.meudominio.com)

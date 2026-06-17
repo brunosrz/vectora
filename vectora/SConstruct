@@ -258,13 +258,24 @@ def _action_docker(target, source, env):
                     key, value = stripped.split("=", 1)
                     compose_env[key.strip()] = value.strip()
 
+    # Build + up em duas etapas explícitas com os DOIS arquivos de compose:
+    # o override `docker-compose.build.yml` redefine `image: vectora:dev` +
+    # `build:` + `pull_policy: build`, então o compose builda a imagem do
+    # Dockerfile local e NUNCA puxa a publicada no GHCR. Buildar `vectora`
+    # antes do up garante imagem local fresca e falha cedo (erro de build) em
+    # vez de subir uma imagem antiga; o `up` então só sobe (sem `--build`),
+    # usando a imagem recém-buildada. postgres/redis/qdrant seguem puxando suas
+    # imagens oficiais normalmente (o override não as toca).
+    compose_files = [
+        "-f", "docker-compose.yml",
+        "-f", "docker-compose.build.yml",
+    ]
     _run(
-        [
-            "docker", "compose",
-            "-f", "docker-compose.yml",
-            "-f", "docker-compose.build.yml",
-            "up", "-d", "--build",
-        ],
+        ["docker", "compose", *compose_files, "build", "vectora"],
+        env=compose_env or None,
+    )
+    _run(
+        ["docker", "compose", *compose_files, "up", "-d"],
         env=compose_env or None,
     )
 
