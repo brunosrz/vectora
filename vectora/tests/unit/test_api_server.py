@@ -43,6 +43,43 @@ def client(headless_app):
 # ---------------------------------------------------------------------------
 
 
+class TestLifespan:
+    """Regressão: o ciclo de vida do app precisa INICIAR o embedding worker.
+
+    O bug original: ``_lifespan`` parava o BackgroundEmbeddingWorker no shutdown
+    mas nunca o iniciava no startup, então os chunks enfileirados por
+    ``ingest_docs``/``ingest_directory`` ficavam "pending" para sempre e o RAG
+    nunca recuperava nada — sem nenhum teste pegando isso (os testes de RAG
+    mockavam LanceDB/Cohere e davam falso verde).
+    """
+
+    def test_lifespan_starts_embedding_worker(self, headless_app, monkeypatch):
+        import backend.services.background as bg
+
+        started = {"value": False}
+
+        class _FakeWorker:
+            async def start(self) -> None:
+                started["value"] = True
+
+            async def stop(self, *_a, **_k) -> None:
+                pass
+
+        async def _fake_get_worker() -> _FakeWorker:
+            return _FakeWorker()
+
+        monkeypatch.setattr(bg, "get_background_worker", _fake_get_worker)
+
+        # Entrar/sair do TestClient como context manager dispara o lifespan.
+        with TestClient(headless_app, raise_server_exceptions=False):
+            pass
+
+        assert started["value"], (
+            "_lifespan não iniciou o BackgroundEmbeddingWorker — chunks "
+            "enfileirados ficariam pending e o RAG não recuperaria nada."
+        )
+
+
 class TestHealth:
     def test_health_ok(self, client):
         response = client.get("/health")

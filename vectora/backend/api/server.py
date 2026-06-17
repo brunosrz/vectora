@@ -241,6 +241,19 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         _run_jobs_worker(jobs_stop)
     )
 
+    # Worker que processa a fila de embeddings (RAG): lê os chunks PENDING e
+    # grava os vetores no LanceDB. SEM ele, tudo que `ingest_docs`/
+    # `ingest_directory` enfileiram fica "pending" para sempre e o RAG nunca
+    # recupera nada (o `_lifespan` parava o worker no shutdown mas nunca o
+    # iniciava no startup).
+    try:
+        from backend.services.background import get_background_worker
+
+        embedding_worker = await get_background_worker()
+        await embedding_worker.start()
+    except Exception as exc:
+        logger.warning("api/server: falha ao iniciar embedding worker: %s", exc)
+
     try:
         yield
     finally:

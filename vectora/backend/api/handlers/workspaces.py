@@ -3028,16 +3028,22 @@ class RagJobStatus(BaseModel):
 # Registro em memória dos jobs disparados neste processo (path + total para a
 # barra de progresso). O progresso real vem da embedding queue (get_job_stats).
 _RAG_JOBS: dict[str, dict[str, Any]] = {}
+# Mantém referência às tasks de enqueue em andamento (evita GC prematuro).
+_RAG_TASKS: set[Any] = set()
 
 
 def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
     meta = _RAG_JOBS.get(job_id, {})
-    total = int(meta.get("total_chunks") or stats.get("total") or 0)
+    enqueue_done = bool(meta.get("enqueue_done"))
+    declared = meta.get("total_chunks")
+    # Enquanto o enqueue roda em background, o total cresce — usa a contagem
+    # viva da fila; quando o enqueue termina, fixa no total declarado.
+    total = int(declared) if declared is not None else int(stats.get("total") or 0)
     processed = int(stats.get("success", 0))
     failed = int(stats.get("failed", 0)) + int(stats.get("dlq", 0))
-    if total == 0:
+    if enqueue_done and total == 0:
         status = "no_files"
-    elif processed + failed >= total:
+    elif enqueue_done and processed + failed >= total:
         status = "done" if failed < total else "failed"
     else:
         status = "indexing"
@@ -3055,37 +3061,59 @@ def _rag_job_status(job_id: str, stats: dict[str, int]) -> RagJobStatus:
 async def rag_ingest(workspace_id: str, body: RagIngestRequest) -> RagIngestResponse:
     """Indexa uma pasta no RAG diretamente (walk + chunk + enqueue por job).
 
-    O caminho é validado por ``is_safe_file_path`` dentro do serviço; o
-    progresso é acompanhado via ``GET /rag/jobs/{job_id}``. Defensivo: erros
-    viram HTTP 400 com mensagem, nunca derrubam o handler.
+    Valida o caminho na hora (erro imediato se inválido) e enfileira os chunks
+    em uma **task de fundo** — uma pasta grande gera centenas de inserts e não
+    deve bloquear a request (nem morrer com ela). O progresso é acompanhado via
+    ``GET /rag/jobs/{job_id}``.
     """
+    from pathlib import Path
+    from uuid import uuid4
+
     from fastapi import HTTPException
 
     from backend.services.rag_ingest import ingest_directory
+    from backend.services.security import is_safe_file_path
 
-    try:
-        result = await ingest_directory(
-            body.path,
-            file_types=body.file_types,
-            workspace_id=workspace_id or None,
+    if not is_safe_file_path(body.path) or not Path(body.path).is_dir():
+        raise HTTPException(
+            status_code=400, detail="Caminho inválido ou fora do escopo."
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        logger.exception("rag_ingest_endpoint_failed", extra={"path": body.path})
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    job_id = str(result["job_id"])
+    job_id = str(uuid4())
     _RAG_JOBS[job_id] = {
         "path": body.path,
-        "total_chunks": result["total_chunks"],
+        "total_chunks": None,
         "workspace_id": workspace_id,
+        "enqueue_done": False,
     }
+
+    async def _run() -> None:
+        try:
+            result = await ingest_directory(
+                body.path,
+                file_types=body.file_types,
+                workspace_id=workspace_id or None,
+                job_id=job_id,
+            )
+            meta = _RAG_JOBS.get(job_id)
+            if meta is not None:
+                meta["total_chunks"] = int(result["total_chunks"])
+        except Exception:
+            logger.exception("rag_ingest_task_failed", extra={"path": body.path})
+            meta = _RAG_JOBS.get(job_id)
+            if meta is not None:
+                meta["total_chunks"] = 0
+        finally:
+            meta = _RAG_JOBS.get(job_id)
+            if meta is not None:
+                meta["enqueue_done"] = True
+
+    task = _asyncio.create_task(_run())
+    _RAG_TASKS.add(task)
+    task.add_done_callback(_RAG_TASKS.discard)
+
     return RagIngestResponse(
-        job_id=job_id,
-        total_files=int(result["total_files"]),
-        total_chunks=int(result["total_chunks"]),
-        status=str(result["status"]),
+        job_id=job_id, total_files=0, total_chunks=0, status="indexing"
     )
 
 
