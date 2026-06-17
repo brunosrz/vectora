@@ -228,6 +228,15 @@ export function ChatInterface({
     setTimeout(() => textareaRef.current?.focus(), 50);
   }, [pendingMention, setInput, consumeMention]);
 
+  // Troca de thread (sem remount): carrega o rascunho persistido da nova thread
+  // no input. O rascunho da anterior já foi salvo no store a cada tecla.
+  const prevThreadIdRef = useRef(threadId);
+  useEffect(() => {
+    if (prevThreadIdRef.current === threadId) return;
+    prevThreadIdRef.current = threadId;
+    setInput(useChatInputStore.getState().getDraft(threadId));
+  }, [threadId, setInput]);
+
   // File upload state
   const {
     attachedFiles,
@@ -584,6 +593,9 @@ export function ChatInterface({
   const processMessage = useCallback(
     async (content: string, files: ImageAttachment[], userMessage: Message) => {
       uiDispatch({ type: "START_SEND" });
+      // START_SEND zera o input no reducer; descarta também o rascunho
+      // persistido para a mensagem enviada não reaparecer no reload.
+      useChatInputStore.getState().clearDraft(threadId);
       shouldInterruptRef.current = false;
       hasSentMessageRef.current = threadId;
 

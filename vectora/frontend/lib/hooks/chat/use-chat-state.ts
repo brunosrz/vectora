@@ -6,7 +6,7 @@
  */
 
 import { useReducer, useCallback } from "react";
-import { STORAGE_KEYS } from "../../constants/features";
+import { useChatInputStore } from "@/lib/stores/chat-input-store";
 
 // ============================================================================
 // Types
@@ -137,11 +137,8 @@ function chatUIReducer(state: ChatUIState, action: ChatUIAction): ChatUIState {
  * ```
  */
 export function useChatState(threadId: string) {
-  // Initialize input from localStorage if available
-  const initialInput =
-    typeof window !== "undefined"
-      ? localStorage.getItem(`${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`) || ""
-      : "";
+  // Rascunho inicial da thread, persistido no chat-input-store.
+  const initialInput = useChatInputStore.getState().getDraft(threadId);
 
   const [state, dispatch] = useReducer(chatUIReducer, {
     input: initialInput,
@@ -155,35 +152,22 @@ export function useChatState(threadId: string) {
   });
 
   /**
-   * Set input with localStorage persistence.
+   * Atualiza o input e persiste o rascunho da thread no store.
    */
   const setInput = useCallback(
     (value: string) => {
       dispatch({ type: "SET_INPUT", payload: value });
-
-      // Auto-save draft to localStorage
-      if (typeof window !== "undefined") {
-        if (value) {
-          localStorage.setItem(
-            `${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`,
-            value,
-          );
-        } else {
-          localStorage.removeItem(`${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`);
-        }
-      }
+      useChatInputStore.getState().setDraft(threadId, value);
     },
     [threadId],
   );
 
   /**
-   * Clear input and remove draft from localStorage.
+   * Limpa o input e descarta o rascunho persistido da thread.
    */
   const clearInput = useCallback(() => {
     dispatch({ type: "RESET_INPUT" });
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(`${STORAGE_KEYS.DRAFT_PREFIX}${threadId}`);
-    }
+    useChatInputStore.getState().clearDraft(threadId);
   }, [threadId]);
 
   return {

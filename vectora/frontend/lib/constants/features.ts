@@ -18,7 +18,6 @@ export const IMAGE_UNSUPPORTED_MODEL_MESSAGE =
 
 export const STORAGE_KEYS = {
   CLIENT_PROFILE: "client-profile",
-  DRAFT_PREFIX: "draft-",
 } as const;
 
 export const FEEDBACK_KEY = "ux.thumb_vote" as const;
