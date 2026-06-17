@@ -128,23 +128,14 @@ async def get_shared_thread(token: str) -> SharedThread:
         except Exception:
             pass
 
-    # Busca histórico via grafo LangGraph
+    # Histórico via o mesmo grafo que o chat escreve (deep-agent). Ler por um
+    # grafo diferente devolve messages vazio — ver agent_factory.aget_thread_messages.
     messages: list[HistoryMessage] = []
     try:
-        from backend.graph import get_user_agent
+        from backend.services import agent_factory
 
-        graph = await get_user_agent()
-        config = {"configurable": {"thread_id": thread_id}}
-        state = await graph.aget_state(config)
-        if state and state.values:
-            for msg in state.values.get("messages", []):
-                role = "assistant"
-                if hasattr(msg, "type"):
-                    role = "human" if msg.type == "human" else "assistant"
-                content = (
-                    msg.content if isinstance(msg.content, str) else str(msg.content)
-                )
-                messages.append(HistoryMessage(role=role, content=content))
+        pairs = await agent_factory.aget_thread_messages(thread_id)
+        messages = [HistoryMessage(role=role, content=text) for role, text in pairs]
     except Exception:
         logger.debug("share: não foi possível carregar histórico do grafo")
 

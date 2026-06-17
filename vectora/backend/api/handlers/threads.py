@@ -348,24 +348,10 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
     do grafo + abertura de uma nova connection SQLite a cada request.
     """
     try:
-        from backend.graph import get_user_agent
+        from backend.services import agent_factory
 
-        graph = await get_user_agent()
-        config = {"configurable": {"thread_id": request.thread_id}}
-        state = await graph.aget_state(config)
-
-        if state is None or not state.values:
-            return GetHistoryResponse(messages=[])
-
-        messages_raw = state.values.get("messages", [])
-        history: list[HistoryMessage] = []
-        for msg in messages_raw:
-            role = "assistant"
-            if hasattr(msg, "type"):
-                role = "human" if msg.type == "human" else "assistant"
-            content = msg.content if isinstance(msg.content, str) else str(msg.content)
-            history.append(HistoryMessage(role=role, content=content))
-
+        pairs = await agent_factory.aget_thread_messages(request.thread_id)
+        history = [HistoryMessage(role=role, content=text) for role, text in pairs]
         return GetHistoryResponse(messages=history)
 
     except Exception as exc:

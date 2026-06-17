@@ -415,6 +415,67 @@ async def get_user_agent(user_id: str | None = None) -> Any:
     return _graph
 
 
+def _message_text(content: Any) -> str:
+    """Extrai o texto de uma mensagem (str ou lista de partes multimodais).
+
+    Mensagens AI modernas têm ``content`` como lista de blocos
+    (``[{"type": "text", "text": ...}, ...]``); extrai e concatena só o texto.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                parts.append(str(block.get("text", "")))
+            elif isinstance(block, str):
+                parts.append(block)
+        return "".join(parts)
+    return str(content)
+
+
+async def aget_thread_messages(thread_id: str) -> list[tuple[str, str]]:
+    """Mensagens persistidas de uma thread como ``(role, text)``.
+
+    Lê o checkpoint do **mesmo** grafo que o chat escreve (deep-agent), o que
+    é essencial: ``aget_state`` reconstrói os canais conforme o schema do grafo
+    e a leitura por um grafo diferente devolve ``messages`` vazio. Desembrulha o
+    retry wrapper (``_wrap_with_retry``) porque ``aget_state`` é método do
+    ``CompiledStateGraph``, não do ``RunnableRetry``.
+
+    Filtra mensagens de tool e turnos AI sem texto (só tool-call) — devolve um
+    transcript humano/assistente limpo.
+    """
+    graph = await get_user_agent()
+    compiled: Any = graph
+    for _ in range(6):
+        if hasattr(compiled, "aget_state"):
+            break
+        nxt = getattr(compiled, "bound", None)
+        if nxt is None:
+            break
+        compiled = nxt
+    if not hasattr(compiled, "aget_state"):
+        return []
+
+    config = {"configurable": {"thread_id": thread_id}}
+    state = await compiled.aget_state(config)
+    if not state or not state.values:
+        return []
+
+    out: list[tuple[str, str]] = []
+    for msg in state.values.get("messages", []):
+        msg_type = getattr(msg, "type", "")
+        if msg_type == "tool":
+            continue
+        text = _message_text(getattr(msg, "content", "")).strip()
+        if not text:
+            continue
+        role = "human" if msg_type == "human" else "assistant"
+        out.append((role, text))
+    return out
+
+
 def _track_versions(user_id: str) -> None:
     """Atualiza rastreamento de versão sem bloquear o caller."""
     try:
