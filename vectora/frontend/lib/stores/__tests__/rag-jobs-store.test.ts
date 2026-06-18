@@ -59,4 +59,61 @@ describe("rag-jobs-store", () => {
     expect(result).toBeNull();
     expect(Object.keys(useRagJobsStore.getState().jobs)).toHaveLength(0);
   });
+
+  it("start com no_files cria o job em estado no_files e não pollla", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          ({
+            ok: true,
+            json: async () => ({
+              job_id: "jnf",
+              total_chunks: 0,
+              status: "no_files",
+            }),
+          }) as Response,
+      ),
+    );
+    const id = await useRagJobsStore.getState().start("ws1", "/vazia", "all");
+    expect(id).toBe("jnf");
+    const tracked = useRagJobsStore.getState().jobs.jnf;
+    expect(tracked.status).toBe("no_files");
+    expect(tracked.total).toBe(0);
+  });
+
+  it("start indexando registra o job; dismiss para o poll e remove", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (String(url).includes("/rag/ingest")) {
+          return {
+            ok: true,
+            json: async () => ({
+              job_id: "jix",
+              total_chunks: 5,
+              status: "indexing",
+            }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            total: 5,
+            processed: 0,
+            failed: 0,
+            status: "indexing",
+          }),
+        } as Response;
+      }),
+    );
+    const id = await useRagJobsStore.getState().start("ws1", "/docs", "code");
+    expect(id).toBe("jix");
+    expect(useRagJobsStore.getState().jobs.jix?.status).toBe("indexing");
+
+    useRagJobsStore.getState().dismiss("jix");
+    expect("jix" in useRagJobsStore.getState().jobs).toBe(false);
+    vi.useRealTimers();
+  });
 });
