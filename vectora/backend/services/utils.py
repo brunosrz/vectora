@@ -15,7 +15,7 @@ Inclui async context managers e helpers de variáveis de ambiente.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from backend.services.env import get_env
 
@@ -31,8 +31,101 @@ def _get_env_with_default(name: str, default: str) -> str:
     return value if value is not None else default
 
 
-def load_llm() -> BaseLanguageModel:
+# provider canônico (underscore) → (env var do modelo, modelo default).
+# A UI/LLM_PROVIDER pode usar hífen ("google-genai"); normalizamos p/ underscore.
+_PROVIDER_SPEC: dict[str, tuple[str, str]] = {
+    "google_genai": ("GOOGLE_MODEL", "gemini-2.5-flash"),
+    "openai": ("OPENAI_MODEL", "gpt-4o"),
+    "anthropic": ("ANTHROPIC_MODEL", "claude-opus-4-1"),
+    "cohere": ("COHERE_CHAT_MODEL", "command-a-03-2025"),
+    "ollama": ("OLLAMA_MODEL", "gpt-oss:20b"),
+}
+
+
+def _build_concrete_model(provider: str, model_name: str, temperature: float) -> Any:
+    """Constrói o ``BaseChatModel`` concreto do provider (SDK oficial LangChain).
+
+    Concreto de propósito — **não** um modelo configurável: o deepagents
+    (``create_deep_agent`` → ``resolve_model``) só aceita um ``BaseChatModel``
+    instanciado (ou uma string de spec). Um ``_ConfigurableModel`` quebra o
+    ``apply_provider_profile`` dele (trata o objeto como string e chama
+    ``.count(":")``). A troca de modelo por request é feita uma camada acima
+    (``agent_factory`` cacheia um grafo por modelo), não por configurable aqui.
+    """
+    import os
+
+    match provider:
+        case "google_genai":
+            from langchain_google_genai import ChatGoogleGenerativeAI
+
+            return ChatGoogleGenerativeAI(
+                model=model_name,
+                google_api_key=get_env("GOOGLE_API_KEY"),  # type: ignore[arg-type]
+                temperature=temperature,
+            )
+        case "openai":
+            from langchain_openai import ChatOpenAI
+
+            return ChatOpenAI(
+                model=model_name,
+                api_key=get_env("OPENAI_API_KEY"),  # ty: ignore[invalid-argument-type]
+                temperature=temperature,
+            )
+        case "anthropic":
+            from langchain_anthropic import ChatAnthropic
+
+            prompt_cache = os.getenv("ANTHROPIC_PROMPT_CACHE", "true").lower() not in {
+                "false",
+                "0",
+                "no",
+            }
+            betas = ["prompt-caching-2024-07-31"] if prompt_cache else []
+            return ChatAnthropic(  # ty: ignore[missing-argument]
+                model=model_name,  # ty: ignore[unknown-argument]
+                api_key=get_env("ANTHROPIC_API_KEY"),  # ty: ignore[invalid-argument-type]
+                temperature=temperature,
+                betas=betas,
+            )
+        case "cohere":
+            from langchain_cohere import ChatCohere
+
+            api_key = get_env("COHERE_API_KEY")
+            if not api_key:
+                msg = "COHERE_API_KEY não configurado. Adicione ao seu .env para usar o provider cohere."
+                raise ValueError(msg)
+            # NÃO usar SecretStr: o get_from_dict_or_env do langchain-core faz
+            # str(SecretStr) → "**********", causando 401 na API do Cohere.
+            return ChatCohere(
+                cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
+                model=model_name,
+                temperature=temperature,
+            )
+        case "ollama":
+            from langchain.chat_models import init_chat_model
+
+            return init_chat_model(
+                model=model_name,
+                model_provider="ollama",
+                base_url=_get_env_with_default(
+                    "OLLAMA_BASE_URL", "http://127.0.0.1:11434"
+                ),
+                temperature=temperature,
+            )
+        case _:
+            msg = (
+                f"Provider de LLM desconhecido: {provider!r}. Suportados: "
+                "google_genai, openai, anthropic, cohere, ollama"
+            )
+            raise ValueError(msg)
+
+
+def load_llm(model_id: str = "") -> BaseLanguageModel:
     """Carrega o LLM de acordo com as configurações de ambiente.
+
+    ``model_id`` (opcional, formato ``"provider:model"``) sobrepõe o
+    provider/modelo padrão — usado pela troca de modelo por request (o
+    ``agent_factory`` cacheia um grafo por ``model_id``). Vazio = padrão de
+    env/settings.
 
     A precedência é: variáveis de ambiente > ``~/.vectora/settings.json``
     (runtime_settings) > defaults.
@@ -65,130 +158,49 @@ def load_llm() -> BaseLanguageModel:
 
     from backend.services.runtime_settings import runtime_settings
 
-    provider = os.getenv("LLM_PROVIDER") or runtime_settings.active_provider
     temperature = float(_get_env_with_default("LLM_TEMPERATURE", "0.2"))
 
-    def _active_model(p: str, default: str) -> str:
-        """Retorna active_model se o provider ativo bater; caso contrário, o default."""
-        if runtime_settings.active_provider == p:
-            return runtime_settings.active_model or default
-        return default
-
-    model: BaseLanguageModel
-
-    match provider:
-        case "google-genai":
-            try:
-                from langchain_google_genai import ChatGoogleGenerativeAI
-            except ImportError as exc:
-                msg = "langchain-google-genai não instalado. Execute: uv add langchain-google-genai"
-                raise ImportError(msg) from exc
-
-            model = cast(
-                "BaseLanguageModel",
-                ChatGoogleGenerativeAI(
-                    model=os.getenv("GOOGLE_MODEL")
-                    or _active_model("google-genai", "gemini-2.5-flash"),
-                    google_api_key=get_env("GOOGLE_API_KEY"),  # type: ignore[arg-type]
-                    temperature=temperature,
-                ),
-            )
-
-        case "openai":
-            try:
-                from langchain_openai import ChatOpenAI
-            except ImportError as exc:
-                msg = "langchain-openai não instalado. Execute: uv add langchain-openai"
-                raise ImportError(msg) from exc
-
-            model = cast(
-                "BaseLanguageModel",
-                ChatOpenAI(
-                    model=os.getenv("OPENAI_MODEL")
-                    or _active_model("openai", "gpt-4o"),
-                    api_key=get_env("OPENAI_API_KEY"),  # ty: ignore[invalid-argument-type]
-                    temperature=temperature,
-                ),
-            )
-
-        case "anthropic":
-            try:
-                from langchain_anthropic import ChatAnthropic
-            except ImportError as exc:
-                msg = "langchain-anthropic não instalado. Execute: uv add langchain-anthropic"
-                raise ImportError(msg) from exc
-
-            # Prompt caching habilitado por padrão (reduz custo em ~90% para
-            # system prompts longos reutilizados). Desabilitar com
-            # ANTHROPIC_PROMPT_CACHE=false para depuração.
-            prompt_cache = os.getenv("ANTHROPIC_PROMPT_CACHE", "true").lower() not in {
-                "false",
-                "0",
-                "no",
-            }
-            betas = ["prompt-caching-2024-07-31"] if prompt_cache else []
-
-            # ChatAnthropic stubs usam model_name mas o campo aceita model em runtime.
-            # api_key aceita str mas stubs exigem SecretStr — ambos são supprimidos.
-            model = cast(
-                "BaseLanguageModel",
-                ChatAnthropic(  # ty: ignore[missing-argument]
-                    model=os.getenv("ANTHROPIC_MODEL")  # ty: ignore[unknown-argument]
-                    or _active_model("anthropic", "claude-opus-4-1"),
-                    api_key=get_env("ANTHROPIC_API_KEY"),  # ty: ignore[invalid-argument-type]
-                    temperature=temperature,
-                    betas=betas,
-                ),
-            )
-
-        case "cohere":
-            try:
-                from langchain_cohere import ChatCohere
-            except ImportError as exc:
-                msg = "langchain-cohere não instalado. Execute: uv add langchain-cohere"
-                raise ImportError(msg) from exc
-
-            api_key = get_env("COHERE_API_KEY")
-            if not api_key:
-                msg = "COHERE_API_KEY não configurado. Adicione ao seu .env para usar o provider cohere."
-                raise ValueError(msg)
-
-            # NOTE: NÃO usar SecretStr aqui.
-            # langchain-core's get_from_dict_or_env chama str(SecretStr) → "**********",
-            # o que causa 401 Unauthorized da API do Cohere.
-            model = cast(
-                "BaseLanguageModel",
-                ChatCohere(
-                    cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
-                    model=os.getenv("COHERE_CHAT_MODEL")
-                    or _active_model("cohere", "command-a-03-2025"),
-                    temperature=temperature,
-                ),
-            )
-
-        case "ollama":
-            from langchain.chat_models import init_chat_model
-
-            model = cast(
-                "BaseLanguageModel",
-                init_chat_model(
-                    model=os.getenv("OLLAMA_MODEL")
-                    or _active_model("ollama", "gpt-oss:20b"),
-                    model_provider="ollama",
-                    base_url=_get_env_with_default(
-                        "OLLAMA_BASE_URL", "http://127.0.0.1:11434"
-                    ),
-                    temperature=temperature,
-                    configurable_fields=["model"],
-                ),
-            )
-
-        case _:
+    if model_id:
+        # Override por request: "provider:model" (o provider já vem normalizado
+        # p/ underscore em handlers/chat.py::_build_configurable; aceitamos
+        # hífen por robustez). O nome do modelo do request tem precedência.
+        prov, _sep, name = model_id.partition(":")
+        provider = prov.replace("-", "_")
+        spec = _PROVIDER_SPEC.get(provider)
+        env_var = spec[0] if spec else ""
+        model_name = (
+            name
+            or (os.getenv(env_var) if env_var else None)
+            or (spec[1] if spec else "")
+        )
+    else:
+        provider = (
+            os.getenv("LLM_PROVIDER") or runtime_settings.active_provider
+        ).replace("-", "_")
+        spec = _PROVIDER_SPEC.get(provider)
+        if spec is None:
             msg = (
-                f"LLM_PROVIDER desconhecido: {provider!r}. "
-                "Suportados: google-genai, openai, anthropic, cohere, ollama"
+                f"LLM_PROVIDER desconhecido: {provider!r}. Suportados: "
+                "google_genai, openai, anthropic, cohere, ollama"
             )
             raise ValueError(msg)
+        env_var, default_model = spec
+        # active_model só vale se o provider ativo bater com o resolvido.
+        active = (
+            runtime_settings.active_model
+            if runtime_settings.active_provider.replace("-", "_") == provider
+            else ""
+        )
+        model_name = os.getenv(env_var) or active or default_model
+
+    if not model_name:
+        msg = f"Modelo de LLM não resolvido para provider {provider!r}."
+        raise ValueError(msg)
+
+    model: BaseLanguageModel = cast(
+        "BaseLanguageModel",
+        _build_concrete_model(provider, model_name, temperature),
+    )
 
     if not hasattr(model, "bind_tools"):
         msg = "Model must support bind_tools"

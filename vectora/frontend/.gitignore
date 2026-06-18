@@ -53,3 +53,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 chat/.turbo/
+
+# playwright (e2e)
+/playwright-report/
+/test-results/
+/e2e/.auth/
+/blob-report/
+/playwright/.cache/

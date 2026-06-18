@@ -566,4 +566,9 @@ class TestAdaptersRegression:
 
         error_events = [p for p in payloads if p["type"] == "error"]
         assert len(error_events) >= 1
-        assert "erro simulado" in error_events[0]["message"]
+        # O adaptador classifica o erro e NÃO vaza a exceção crua ao usuário
+        # (ver adapters.classify_stream_error): erro genérico → STREAM_ERROR
+        # com mensagem limpa. A mensagem técnica fica só no log do servidor.
+        assert error_events[0]["code"] == "STREAM_ERROR"
+        assert "erro simulado" not in error_events[0]["message"]
+        assert error_events[0]["message"]

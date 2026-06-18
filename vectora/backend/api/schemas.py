@@ -104,6 +104,14 @@ class GetHistoryRequest(BaseModel):
     thread_id: str
 
 
+class GenerateTitleRequest(BaseModel):
+    thread_id: str
+
+
+class GenerateTitleResponse(BaseModel):
+    title: str
+
+
 # ---------------------------------------------------------------------------
 # Eventos de streaming (oneof StreamChatEvent)
 # ---------------------------------------------------------------------------

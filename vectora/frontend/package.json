@@ -8,10 +8,13 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsr generate && tsc --noEmit",
+    "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./lib/paraglide",
+    "typecheck": "pnpm i18n:compile && tsr generate && tsc --noEmit",
     "lint:oxc": "oxlint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -58,6 +61,7 @@
   },
   "devDependencies": {
     "@inlang/paraglide-js": "^2.19.0",
+    "@playwright/test": "^1.49.0",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/router-cli": "^1.167.17",
     "@tanstack/router-plugin": "^1.168.14",

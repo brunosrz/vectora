@@ -120,7 +120,11 @@ repos:
     hooks:
       - id: bandit
         name: Bandit Security Scan
-        entry: uv run --project vectora bandit -s B110,B101 -c vectora/pyproject.toml
+        # Invoca via `python -m bandit` (spawna python.exe) em vez do launcher
+        # `bandit.exe`: o stub de console-script gerado pelo pip/uv não é
+        # assinado e o Smart App Control / WDAC do Windows o bloqueia ao spawn
+        # (os error 4551). `python -m` importa o mesmo módulo sem o stub.
+        entry: uv run --project vectora python -m bandit -s B110,B101 -c vectora/pyproject.toml
         language: system
         types: [python]
 

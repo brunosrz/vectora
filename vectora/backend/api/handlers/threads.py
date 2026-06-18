@@ -30,6 +30,8 @@ from pydantic import BaseModel
 from backend.api.schemas import (
     CreateThreadRequest,
     DeleteThreadRequest,
+    GenerateTitleRequest,
+    GenerateTitleResponse,
     GetHistoryRequest,
     GetHistoryResponse,
     GetThreadRequest,
@@ -356,6 +358,89 @@ async def get_history(request: GetHistoryRequest) -> GetHistoryResponse:
 
     except Exception as exc:
         logger.exception("api/threads: erro ao carregar histórico")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# GenerateTitle — título da sessão atribuído pela IA (uma vez, no 1º turno)
+# ---------------------------------------------------------------------------
+
+
+async def _ai_title(user_text: str, assistant_text: str) -> str:
+    """Gera um título curto (≤6 palavras) para a sessão via LLM.
+
+    Defensivo: qualquer falha do modelo cai no fallback (primeiras palavras da
+    mensagem do usuário), nunca propaga. Sem pontuação final, sem aspas.
+    """
+    fallback = " ".join(user_text.split()[:6]).strip(" .\"'") or "Nova conversa"
+    try:
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        from backend.services.utils import load_llm
+
+        llm = load_llm()
+        prompt = (
+            "Gere um título curto (no máximo 6 palavras, sem aspas e sem ponto "
+            "final) que resuma o tema desta conversa, no mesmo idioma do "
+            "usuário.\n\n"
+            f"Usuário: {user_text[:500]}\n"
+            f"Assistente: {assistant_text[:500]}\n\n"
+            "Título:"
+        )
+        resp = await llm.ainvoke(
+            [
+                SystemMessage(content="Você nomeia conversas de forma concisa."),
+                HumanMessage(content=prompt),
+            ]
+        )
+        raw = resp.content if isinstance(resp.content, str) else str(resp.content)
+        title = raw.strip().strip("\"'").splitlines()[0].strip()
+        # Limita a 6 palavras e remove pontuação final.
+        title = " ".join(title.split()[:6]).strip(" .\"'")
+        return title or fallback
+    except Exception:
+        logger.warning("api/threads: falha ao gerar título via LLM; usando fallback")
+        return fallback
+
+
+@router.post("/vectora.chat.v1.ThreadService/GenerateTitle")
+async def generate_title(request: GenerateTitleRequest) -> GenerateTitleResponse:
+    """Atribui (uma vez) um título gerado pela IA à sessão e persiste.
+
+    Idempotente: se a sessão já tem título, devolve o existente sem nova chamada
+    de LLM. Caso contrário, lê o 1º par usuário/assistente do histórico, gera o
+    título e grava em ``vectora_sessions``.
+    """
+    try:
+        # Já tem título? Não regenera (título é estável após o 1º turno).
+        db = await _get_db()
+        async with db.execute(
+            "SELECT extra FROM vectora_sessions WHERE thread_id = ?",
+            (request.thread_id,),
+        ) as cur:
+            row = await cur.fetchone()
+        if row:
+            try:
+                existing = json.loads(row[0] or "{}").get("title", "")
+            except Exception:
+                existing = ""
+            if existing:
+                return GenerateTitleResponse(title=existing)
+
+        from backend.services import agent_factory
+
+        pairs = await agent_factory.aget_thread_messages(request.thread_id)
+        user_text = next((t for r, t in pairs if r == "human"), "")
+        assistant_text = next((t for r, t in pairs if r == "assistant"), "")
+        if not user_text:
+            return GenerateTitleResponse(title="")
+
+        title = await _ai_title(user_text, assistant_text)
+        await _upsert_session(request.thread_id, title=title)
+        return GenerateTitleResponse(title=title)
+
+    except Exception as exc:
+        logger.exception("api/threads: erro ao gerar título")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 

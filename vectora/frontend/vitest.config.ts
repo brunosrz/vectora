@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import path from "path";
 
 export default defineConfig({
@@ -6,6 +6,11 @@ export default defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
+    // Os specs do Playwright (e2e/*.spec.ts) NÃO são testes de vitest — usam o
+    // runner do Playwright e o `@playwright/test`. Sem este exclude, o vitest
+    // (include default `**/*.spec.ts`) tentaria rodá-los e o `scons tests`
+    // quebraria. E2e roda à parte via `pnpm test:e2e`.
+    exclude: [...configDefaults.exclude, "e2e/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

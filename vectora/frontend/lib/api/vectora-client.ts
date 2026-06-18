@@ -318,6 +318,10 @@ export const getHistory = (
 ): Promise<{ messages: HistoryMessage[] }> =>
   postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
 
+/** Pede ao backend um título gerado pela IA (idempotente: só no 1º turno). */
+export const generateTitle = (thread_id: string): Promise<{ title: string }> =>
+  postRpc("/vectora.chat.v1.ThreadService/GenerateTitle", { thread_id });
+
 // ============================================================================
 // Auth usage — quota consumption
 // ============================================================================

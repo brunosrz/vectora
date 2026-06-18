@@ -82,6 +82,35 @@ def test_workspace_and_prompt_passthrough():
 
 
 # ---------------------------------------------------------------------------
+# Troca de modelo por request — config.model entra no configurable, com o
+# provider normalizado para o formato canônico do init_chat_model (underscore).
+# ---------------------------------------------------------------------------
+
+
+def test_model_absent_by_default():
+    cfg = _build_configurable(ChatConfig(), "t", "u")
+    assert "model" not in cfg
+
+
+def test_model_provider_hyphen_normalized_to_underscore():
+    cfg = _build_configurable(
+        ChatConfig(model="google-genai:gemini-2.5-flash"), "t", "u"
+    )
+    assert cfg["model"] == "google_genai:gemini-2.5-flash"
+
+
+def test_model_provider_without_hyphen_passthrough():
+    cfg = _build_configurable(ChatConfig(model="cohere:command-a-03-2025"), "t", "u")
+    assert cfg["model"] == "cohere:command-a-03-2025"
+
+
+def test_model_without_colon_passthrough():
+    # Sem prefixo de provider: repassado como veio (não vira provider espúrio).
+    cfg = _build_configurable(ChatConfig(model="gemini-2.5-flash"), "t", "u")
+    assert cfg["model"] == "gemini-2.5-flash"
+
+
+# ---------------------------------------------------------------------------
 # Workspace por sessão — _resolve_workspace_id
 # ---------------------------------------------------------------------------
 

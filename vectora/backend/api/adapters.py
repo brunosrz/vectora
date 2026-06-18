@@ -32,6 +32,40 @@ from backend.api.schemas import (
 
 logger = logging.getLogger(__name__)
 
+
+def classify_stream_error(exc: BaseException) -> tuple[str, str]:
+    """Classifica uma exceção do stream em ``(code, message)``.
+
+    O ``code`` é tipado e estável para o frontend localizar a mensagem ao
+    usuário (i18n no cliente). O ``message`` é um resumo limpo (sem o JSON cru
+    do provedor) usado como fallback.
+
+    Códigos: ``RATE_LIMIT`` (429 / quota esgotada), ``AUTH`` (chave inválida /
+    401 / 403), ``STREAM_ERROR`` (genérico).
+    """
+    text = f"{type(exc).__name__}: {exc}".lower()
+    if (
+        "429" in text
+        or "too many requests" in text
+        or "resource_exhausted" in text
+        or "rate limit" in text
+        or "ratelimit" in text
+        or "quota" in text
+    ):
+        return "RATE_LIMIT", "O limite de uso deste modelo foi atingido."
+    if (
+        "401" in text
+        or "403" in text
+        or "unauthorized" in text
+        or "permission denied" in text
+        or "api key" in text
+        or "api_key" in text
+        or "invalid authentication" in text
+    ):
+        return "AUTH", "Falha de autenticação com o provedor do modelo."
+    return "STREAM_ERROR", "Ocorreu um erro ao gerar a resposta."
+
+
 # Cache de metadados de tool: nome → dict com render_hint, category, destructive, icon.
 # Populado lazily para evitar importar ALL_TOOLS no startup.
 _tool_meta_cache: dict[str, dict] = {}
@@ -358,7 +392,8 @@ def adapt_stream(
 
         except Exception as exc:
             logger.exception("adapt_stream: erro no stream LangGraph")
-            yield encode_event(ErrorEvent(message=str(exc), code="STREAM_ERROR"))
+            code, friendly = classify_stream_error(exc)
+            yield encode_event(ErrorEvent(message=friendly, code=code))
 
         finally:
             yield encode_event(DoneEvent(thread_id=thread_id))

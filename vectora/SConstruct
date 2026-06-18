@@ -194,6 +194,11 @@ def _action_tests(target, source, env):
     GOOGLE_API_KEY / COHERE_API_KEY / gemini CLI no ambiente; sem essas chaves
     elas falham ou são puladas pelos próprios testes (skip-with-reason).
     """
+    # Compila o paraglide ANTES do vitest: `lib/paraglide` é gerado (gitignored)
+    # e o vitest importa os messages compilados. Sem isto, chaves i18n recém
+    # adicionadas em `messages/*.json` ainda não existem no bundle gerado e o
+    # vitest falha. O plugin do Vite só compila no dev/build, não no test puro.
+    _run([PNPM, "--dir", "frontend", "run", "i18n:compile"])
     # Frontend primeiro: o vitest é rápido e falha cedo. `--coverage` usa o
     # @vitest/coverage-v8 (relatório em frontend/coverage/).
     _run([PNPM, "--dir", "frontend", "exec", "vitest", "run", "--coverage"])
@@ -209,8 +214,9 @@ def _action_tests(target, source, env):
 def _action_lint(target, source, env):
     _run(["uv", "run", "ruff", "check", "backend", "tests"])
     _run(["uv", "run", "ty", "check", "backend", "tests"])
-    # `typecheck` = tsr generate (routeTree.gen.ts é gitignored, gerado pelo
-    # plugin) + tsc --noEmit. Rodar tsc puro falharia sem o route tree.
+    # `typecheck` = i18n:compile (paraglide) + tsr generate (routeTree.gen.ts
+    # gitignored, gerado pelo plugin) + tsc --noEmit. Ambos os geradores são
+    # gitignored; rodar tsc puro falharia sem eles (e sem chaves i18n novas).
     _run([PNPM, "--dir", "frontend", "run", "typecheck"])
     _run([PNPM, "--dir", "frontend", "exec", "oxlint"])
 

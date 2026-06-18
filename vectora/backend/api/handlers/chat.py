@@ -235,6 +235,16 @@ def _build_configurable(
         "thread_id": thread_id,
         "user_id": user_id,
     }
+    if config.model:
+        # O seletor de modelo envia "provider:model" (ex.:
+        # "cohere:command-a-03-2025"). O grafo (singleton) é compilado com um
+        # modelo configurável via init_chat_model; passar "model" no
+        # configurable troca o modelo por request. O init_chat_model espera o
+        # provider canônico com underscore ("google_genai"), enquanto a UI usa
+        # hífen ("google-genai") — normalizamos só o segmento de provider.
+        spec = config.model
+        prov, sep, name = spec.partition(":")
+        configurable["model"] = f"{prov.replace('-', '_')}:{name}" if sep else spec
     if config.workspace_id:
         configurable["workspace_id"] = config.workspace_id
     if config.custom_system_prompt:
@@ -312,16 +322,21 @@ async def stream_chat(
             "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
         )
 
-    try:
-        graph = await agent_factory.get_user_agent(user_id)
-    except Exception as exc:
-        logger.exception("api/chat: erro ao inicializar grafo")
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-
     user_name = _user_name_from_request(http_request)
     configurable = _build_configurable(
         request.config, thread_id, user_id, user_name=user_name
     )
+
+    try:
+        # Troca de modelo por request: o grafo é cacheado por modelo escolhido
+        # (configurable["model"] já normalizado para "provider:model"). Sem
+        # escolha, usa o grafo do modelo padrão.
+        graph = await agent_factory.get_user_agent(
+            user_id, model=configurable.get("model", "")
+        )
+    except Exception as exc:
+        logger.exception("api/chat: erro ao inicializar grafo")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     from backend.services.usage import usage_tracker
 

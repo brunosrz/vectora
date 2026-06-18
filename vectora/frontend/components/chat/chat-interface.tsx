@@ -18,6 +18,7 @@ import { ChatInput } from "./chat-input";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import { VECTORA_API_URL } from "@/lib/constants/api";
 import {
+  generateTitle,
   getHistory,
   getThread,
   type HistoryMessage,
@@ -471,22 +472,27 @@ export function ChatInterface({
 
       try {
         console.log("Loading thread history for:", currentThreadId);
-        // Consume prefetch do route loader (evita segunda viagem ao servidor).
+        // Consume o prefetch do route loader como otimização — MAS só quando
+        // ele já trouxe mensagens. Um prefetch vazio (ex.: corrida com o boot
+        // do backend logo após reiniciar) não é autoritativo: o backend é a
+        // fonte de verdade no reload (CLAUDE.md #8), então refazemos o fetch.
+        // Sem isso, reabrir a sessão após reiniciar mostrava o chat vazio.
         const prefetched = queryClient.getQueryData<{
           messages: HistoryMessage[];
         }>(["thread-history", currentThreadId]);
-        const { messages: historyMessages } = prefetched
-          ? prefetched
-          : await getHistory(currentThreadId).catch((err) => {
-              const errMsg = err instanceof Error ? err.message : String(err);
-              if (errMsg.includes("404")) {
-                console.log("Thread not found (404)");
-                onThreadNotFound?.();
-              } else {
-                console.error("Error fetching thread history:", err);
-              }
-              return { messages: [] as HistoryMessage[] };
-            });
+        const { messages: historyMessages } =
+          prefetched && prefetched.messages.length > 0
+            ? prefetched
+            : await getHistory(currentThreadId).catch((err) => {
+                const errMsg = err instanceof Error ? err.message : String(err);
+                if (errMsg.includes("404")) {
+                  console.log("Thread not found (404)");
+                  onThreadNotFound?.();
+                } else {
+                  console.error("Error fetching thread history:", err);
+                }
+                return { messages: [] as HistoryMessage[] };
+              });
 
         if (historyMessages.length === 0) {
           setMessages([]);
@@ -636,20 +642,38 @@ export function ChatInterface({
         }
 
         if (onThreadUpdate && assistantContent) {
-          const firstUserMsg =
-            messages.find((m) => m.role === "user") || userMessage;
-          const title =
-            customTitle ||
-            truncate(firstUserMsg.content, 60) ||
-            "New conversation";
           const messageCount = messages.length + 2;
-          onThreadUpdate(
-            threadId,
-            title,
-            truncate(assistantContent, 100),
-            undefined,
-            messageCount,
-          );
+          const lastMessage = truncate(assistantContent, 100);
+          // Título atribuído pela IA, uma única vez (no 1º turno) — não muda a
+          // cada nova mensagem. `customTitle` (renomeação manual) tem
+          // precedência. Para turnos seguintes não reescrevemos o título.
+          const isFirstExchange = !messages.some((m) => m.role === "assistant");
+          if (customTitle) {
+            onThreadUpdate(
+              threadId,
+              customTitle,
+              lastMessage,
+              undefined,
+              messageCount,
+            );
+          } else if (isFirstExchange) {
+            // Best-effort: o backend resume a conversa em ≤6 palavras. Falha
+            // não quebra o envio (mantém o título provisório otimista).
+            void generateTitle(threadId)
+              .then((res) => {
+                if (res.title)
+                  onThreadUpdate(
+                    threadId,
+                    res.title,
+                    lastMessage,
+                    undefined,
+                    messageCount,
+                  );
+              })
+              .catch(() => {
+                /* mantém o título provisório */
+              });
+          }
         }
       } catch (error) {
         console.error("Error streaming from LangGraph:", error);
@@ -664,7 +688,9 @@ export function ChatInterface({
 
         setMessages((prev) => [...prev, errorMessage]);
 
-        if (onThreadUpdate) {
+        // Só define título no 1º turno (sem resposta da IA, usa o provisório);
+        // turnos seguintes não reescrevem o título já atribuído.
+        if (onThreadUpdate && !messages.some((m) => m.role === "assistant")) {
           const messageCount = messages.length + 2;
           onThreadUpdate(
             threadId,

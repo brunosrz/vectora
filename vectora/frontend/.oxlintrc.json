@@ -29,6 +29,9 @@
     "dist",
     "build",
     "public/service-worker.js",
-    "lib/paraglide"
+    "lib/paraglide",
+    "e2e",
+    "playwright-report",
+    "test-results"
   ]
 }

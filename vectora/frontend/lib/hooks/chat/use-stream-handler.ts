@@ -60,6 +60,23 @@ export function isNetworkError(err: unknown): boolean {
   );
 }
 
+/**
+ * Mensagem amigável (localizada) para um erro de aplicação reportado pelo
+ * backend via evento `error`. O backend classifica em códigos estáveis
+ * (`RATE_LIMIT`, `AUTH`, `STREAM_ERROR`) — aqui mapeamos para i18n. Erros de
+ * limite/quota do provedor (ex.: 429 do Gemini) não vazam o JSON cru.
+ */
+export function streamErrorMessage(code?: string): string {
+  switch (code) {
+    case "RATE_LIMIT":
+      return msg.chat_error_rate_limit();
+    case "AUTH":
+      return msg.chat_error_auth();
+    default:
+      return msg.chat_error_generic();
+  }
+}
+
 /** Marca o stream como conectado; se vínhamos de uma queda, avisa via toast. */
 function announceSSEConnected(): void {
   const prev = useNetworkStore.getState().sseStatus;
@@ -257,7 +274,26 @@ export function useStreamHandler({
             break;
           }
           if (event.type === "error") {
-            throw new Error(event.message || "Stream error");
+            // Erro de aplicação reportado pelo backend (ex.: 429/quota do
+            // provedor). Em vez de exibir o JSON cru como se fosse a resposta
+            // da IA, mostramos uma mensagem limpa e localizada (por código) e
+            // marcamos isError para habilitar o retry. Encerra o loop sem
+            // throw — o catch fica reservado a quedas de transporte.
+            flushNow();
+            const friendly = streamErrorMessage(event.code);
+            setMessages((prev) =>
+              updateMessageInList(prev, assistantMessageId, (m) => ({
+                ...m,
+                content: friendly,
+                isError: true,
+                isThinking: false,
+                thinkingDuration:
+                  m.thinkingStartTime !== undefined
+                    ? Date.now() - m.thinkingStartTime
+                    : undefined,
+              })),
+            );
+            break;
           }
         }
 
@@ -284,11 +320,14 @@ export function useStreamHandler({
           // UX-15 — distingue queda de transporte (badge "Reconectando…") de
           // erro de aplicação reportado pelo próprio backend via evento `error`.
           announceSSEDropped(err);
-          const errMsg = err instanceof Error ? err.message : String(err);
+          // Queda de transporte: preserva qualquer conteúdo parcial já
+          // recebido; sem conteúdo, mostra mensagem genérica localizada e
+          // marca isError (retry), nunca o texto cru da exceção.
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
               ...m,
-              content: assistantContent || `Erro no stream: ${errMsg}`,
+              content: assistantContent || streamErrorMessage(undefined),
+              isError: !assistantContent,
               isThinking: false,
               thinkingDuration:
                 m.thinkingStartTime !== undefined
@@ -411,8 +450,19 @@ export function useStreamHandler({
           await handleEvent(event, assistantMessageId, setMessages, threadId);
 
           if (event.type === "done") break;
-          if (event.type === "error")
-            throw new Error(event.message || "Resume error");
+          if (event.type === "error") {
+            flushNow();
+            const friendly = streamErrorMessage(event.code);
+            setMessages((prev) =>
+              updateMessageInList(prev, assistantMessageId, (m) => ({
+                ...m,
+                content: friendly,
+                isError: true,
+                isThinking: false,
+              })),
+            );
+            break;
+          }
         }
 
         flushNow();
@@ -422,11 +472,11 @@ export function useStreamHandler({
         if ((err as { name?: string }).name !== "AbortError") {
           // UX-15 — mesma distinção transporte vs. aplicação do processStream
           announceSSEDropped(err);
-          const errMsg = err instanceof Error ? err.message : String(err);
           setMessages((prev) =>
             updateMessageInList(prev, assistantMessageId, (m) => ({
               ...m,
-              content: assistantContent || `Erro ao retomar: ${errMsg}`,
+              content: assistantContent || streamErrorMessage(undefined),
+              isError: !assistantContent,
               isThinking: false,
             })),
           );

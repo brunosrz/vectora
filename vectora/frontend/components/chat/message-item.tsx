@@ -923,6 +923,7 @@ export const MessageItem = memo(
                     {/* Text content */}
                     {message.content && (
                       <p
+                        data-testid={`message-content-${message.role}`}
                         className="text-sm leading-relaxed whitespace-pre-wrap break-words cursor-pointer rounded px-2 py-1 -mx-2 -my-1 transition-colors overflow-wrap break-word"
                         onClick={() => onEditAndRerun && handleStartEdit()}
                         title="Click to edit and rerun from here"
@@ -935,6 +936,9 @@ export const MessageItem = memo(
               ) : (
                 <div className="relative">
                   <div
+                    data-testid={`message-content-${message.role}`}
+                    data-streaming={message.isThinking ? "true" : "false"}
+                    data-error={message.isError ? "true" : "false"}
                     className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none break-words overflow-wrap break-word transition-opacity duration-200 ease-out"
                     style={{
                       animation: message.isThinking

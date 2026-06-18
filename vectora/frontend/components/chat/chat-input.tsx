@@ -295,6 +295,7 @@ export function ChatInput({
 
                   <Textarea
                     ref={textareaRef}
+                    data-testid="chat-input"
                     value={input}
                     onChange={(e) => onInputChange(e.target.value)}
                     onKeyDown={onKeyDown}
@@ -319,6 +320,7 @@ export function ChatInput({
                       <TooltipTrigger asChild>
                         <Button
                           onClick={onSend}
+                          data-testid="chat-send"
                           variant="ghost"
                           size="sm"
                           disabled={!input.trim() || !userId || offline}

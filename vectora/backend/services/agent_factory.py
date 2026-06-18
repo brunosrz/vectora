@@ -31,7 +31,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from backend.agents._identity import VECTORA_IDENTITY
 from backend.services import tool_policy
@@ -261,8 +261,14 @@ def _build_session_system_prompt(
 # Singleton do grafo
 # ---------------------------------------------------------------------------
 
-_graph: Any = None
+# Cache de grafos compilados por modelo (`model_id` "provider:model"; "" = o
+# padrão de env/settings). A troca de modelo por request constrói/reusa um
+# grafo por modelo — o deepagents não aceita modelo configurável, então cada
+# modelo tem seu grafo, todos compartilhando o MESMO checkpointer + store
+# (uma única conexão SQLite, sem disputa de lock).
+_graphs: dict[str, Any] = {}
 _checkpointer_ctx: Any = None
+_checkpointer: Any = None
 _store: Any = None
 _lock = asyncio.Lock()
 
@@ -287,28 +293,47 @@ def _agents_md_paths() -> list[str] | None:
     return paths or None
 
 
-async def _build_graph_async() -> Any:
-    """Compila o grafo deepagents e abre o checkpointer SQLite."""
-    global _graph, _checkpointer_ctx, _store
+async def _ensure_infra() -> None:
+    """Abre (uma única vez) o checkpointer SQLite + store compartilhados.
 
-    from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+    Todos os grafos (um por modelo) reusam estes recursos — assim há uma só
+    conexão SQLite com o checkpointer, sem disputa de lock entre grafos.
+    """
+    global _checkpointer_ctx, _checkpointer, _store
 
-    from backend.nodes.tools import ALL_TOOLS
-    from backend.services.utils import load_llm
+    if _checkpointer is None:
+        from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
-    db_path = str(Path.home() / ".vectora" / "checkpoints.db")
-    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        db_path = str(Path.home() / ".vectora" / "checkpoints.db")
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
+        _checkpointer = await _checkpointer_ctx.__aenter__()
 
-    _checkpointer_ctx = AsyncSqliteSaver.from_conn_string(db_path)
-    checkpointer = await _checkpointer_ctx.__aenter__()
+    if _store is None:
+        from backend.services.backends import build_store
+
+        _store = await build_store()
+
+
+async def _build_graph_async(model_id: str = "") -> Any:
+    """Compila um grafo deepagents para ``model_id`` (checkpointer/store compartilhados).
+
+    Não muta estado global de cache — quem cacheia é ``get_user_agent``. Vazio
+    em ``model_id`` usa o modelo padrão de env/settings.
+    """
+    await _ensure_infra()
 
     from typing import cast as _cast
 
     from deepagents import create_deep_agent
     from langchain_core.language_models.chat_models import BaseChatModel
 
-    # load_llm() retorna BaseChatModel em runtime; a anotação usa a base mais genérica.
-    llm: BaseChatModel = _cast("BaseChatModel", load_llm())
+    from backend.nodes.tools import ALL_TOOLS
+    from backend.services.utils import load_llm
+
+    # load_llm() retorna BaseChatModel concreto em runtime (deepagents exige
+    # um BaseChatModel, não um modelo configurável). A anotação usa a base.
+    llm: BaseChatModel = _cast("BaseChatModel", load_llm(model_id))
     subagents = _subagent_specs()  # sem user_id: toolset completo no singleton
 
     system_prompt = _build_session_system_prompt()
@@ -327,17 +352,13 @@ async def _build_graph_async() -> Any:
 
     middleware = build_middleware_stack(permission_mode="ask")
 
-    from backend.services.backends import build_backend_lazy, build_store
+    from backend.services.backends import build_backend_lazy
     from backend.services.skills import list_skill_paths
     from backend.types.context import VectoraContext
 
     # Skills instaladas pelo usuário local (singleton compartilhado).
     # Paths absolutos — harness lê SKILL.md frontmatter on-demand.
     skill_paths = [str(p) for p in list_skill_paths("local")]
-
-    # BaseStore (AsyncSqliteStore lite via F5) — persistente via aiosqlite dedicado.
-    # Disponível às tools via langgraph.config.get_store() dentro do grafo.
-    _store = await build_store()
 
     # AGENTS.md paths para o MemoryMiddleware — injetado no system prompt.
     memory_paths = _agents_md_paths()
@@ -349,7 +370,7 @@ async def _build_graph_async() -> Any:
         subagents=subagents,
         middleware=middleware,
         backend=build_backend_lazy(),
-        checkpointer=checkpointer,
+        checkpointer=_checkpointer,
         context_schema=VectoraContext,
         skills=skill_paths,
         store=_store,
@@ -357,62 +378,42 @@ async def _build_graph_async() -> Any:
         name="vectora",
     )
 
-    # E.B-12 — Fault tolerance: envolvemos o grafo com retry exponencial para
-    # erros transientes (rate-limit, timeout de rede, quota). O grafo interno
-    # (coder/search subagents) não é reexecutado desde o início — apenas a
-    # chamada de mais alto nível. Para rollback de filesystem em falhas do
-    # coder, use `coder_compensate(workspace_id)` no handler da exceção.
-    _graph = _wrap_with_retry(compiled)
-
+    # O grafo é consumido via `astream_events` no handler de chat para
+    # streaming de tokens em tempo real. NÃO envolvemos em `with_retry`
+    # (RunnableRetry): o retry precisa poder reexecutar a chamada de forma
+    # atômica, então bufferiza a saída inteira — o cliente só veria a resposta
+    # ao final, sem streaming. Além disso, num 429 o retry insistia 3x com
+    # backoff (até ~30s) antes de surgir o erro. Erros transientes do provider
+    # são tratados pelo `max_retries` do próprio modelo (nível da chamada LLM,
+    # não quebra o stream) e classificados/limpos em `adapters.classify_stream_error`.
     logger.info(
-        "agent_factory: grafo compilado (deepagents + %d tools + %d subagents + %d middleware)",
+        "agent_factory: grafo compilado (model=%r, deepagents + %d tools + %d subagents + %d middleware)",
+        model_id or "default",
         len(ALL_TOOLS),
         len(subagents),
         len(middleware),
     )
-    return _graph
+    return compiled
 
 
-def _wrap_with_retry(graph: Any) -> Any:
-    """Aplica retry com backoff exponencial ao grafo compilado.
+async def get_user_agent(user_id: str | None = None, model: str = "") -> Any:
+    """Retorna o grafo compilado para ``model`` (cacheado por modelo).
 
-    Captura erros transientes comuns de LLM providers:
-    - Rate limit / quota exceeded (HTTP 429)
-    - Timeout / ConnectionError de rede
-    - Erros de infraestrutura temporários (502/503/529)
-
-    O ``with_retry`` do LangGraph aceita ``retry_if_exception_type`` para
-    filtrar por tipo. Usamos ``(Exception,)`` (captura tudo) porque os
-    erros de provider variam por SDK — a lógica de backoff exponencial com
-    jitter já previne amplificação de erros em cascata.
-
-    Para erros de lógica do agente (inputs inválidos, falhas de parsing),
-    o timeout de 3 tentativas descarta a execução rapidamente.
+    ``model`` é o ``"provider:model"`` escolhido no chat (vazio = padrão). Cada
+    modelo tem seu grafo, construído sob demanda (uma vez) e cacheado; todos
+    compartilham o mesmo checkpointer/store. Inicialização thread-safe via
+    ``asyncio.Lock``. Registra a versão de tools/policy/skills do usuário.
     """
-    return graph.with_retry(
-        retry_if_exception_type=(Exception,),
-        wait_exponential_jitter=True,
-        exponential_jitter_params={"initial": 1.0, "max": 30.0},
-        stop_after_attempt=3,
-    )
-
-
-async def get_user_agent(user_id: str | None = None) -> Any:
-    """Retorna o grafo compilado (singleton compartilhado entre usuários).
-
-    Garante inicialização thread-safe via asyncio.Lock. Registra a versão
-    atual de tools/policy/skills do usuário para detectar necessidade de
-    rebind; quando muda, invalida o cache do LLM bound em llm_tools.
-    """
-    if _graph is None:
+    key = model or "__default__"
+    if key not in _graphs:
         async with _lock:
-            if _graph is None:
-                await _build_graph_async()
+            if key not in _graphs:
+                _graphs[key] = await _build_graph_async(model)
 
     if user_id:
         _track_versions(user_id)
 
-    return _graph
+    return _graphs[key]
 
 
 def _message_text(content: Any) -> str:
@@ -439,9 +440,9 @@ async def aget_thread_messages(thread_id: str) -> list[tuple[str, str]]:
 
     Lê o checkpoint do **mesmo** grafo que o chat escreve (deep-agent), o que
     é essencial: ``aget_state`` reconstrói os canais conforme o schema do grafo
-    e a leitura por um grafo diferente devolve ``messages`` vazio. Desembrulha o
-    retry wrapper (``_wrap_with_retry``) porque ``aget_state`` é método do
-    ``CompiledStateGraph``, não do ``RunnableRetry``.
+    e a leitura por um grafo diferente devolve ``messages`` vazio. O laço
+    abaixo desembrulha eventuais wrappers (``.bound``) até achar o
+    ``CompiledStateGraph``, que é quem expõe ``aget_state``.
 
     Filtra mensagens de tool e turnos AI sem texto (só tool-call) — devolve um
     transcript humano/assistente limpo.
@@ -574,14 +575,16 @@ async def aclose() -> None:
 
     Deve ser chamado no shutdown do FastAPI (lifespan).
     """
-    global _graph, _checkpointer_ctx
+    global _checkpointer_ctx, _checkpointer, _store
 
     async with _lock:
         if _checkpointer_ctx is None:
             return
         ctx = _checkpointer_ctx
         _checkpointer_ctx = None
-        _graph = None
+        _checkpointer = None
+        _store = None  # reaberto no próximo _ensure_infra
+        _graphs.clear()
         _version_tracker.clear()
         try:
             await ctx.__aexit__(None, None, None)
