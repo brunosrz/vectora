@@ -250,7 +250,14 @@ function StepToken(_props: StepProps) {
         <button
           type="button"
           className={segmentClass(mode === "login")}
-          onClick={() => setMode("login")}
+          onClick={() => {
+            setMode("login");
+            window.open(
+              "https://vectora.company/dashboard",
+              "_blank",
+              "noopener,noreferrer",
+            );
+          }}
         >
           {m.onboarding_token_mode_login()}
         </button>
@@ -830,7 +837,7 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
   return (
     <Dialog open onOpenChange={() => void 0}>
       <DialogContent
-        className="max-w-sm"
+        className="max-w-sm min-h-[420px]"
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -840,7 +847,9 @@ export function SetupWizard({ userId, onComplete }: SetupWizardProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <StepContent onValidityChange={setValid} />
+        <div className="min-h-[220px]" data-testid="step-content-area">
+          <StepContent onValidityChange={setValid} />
+        </div>
 
         <StepIndicator step={step} total={TOTAL_STEPS} />
 

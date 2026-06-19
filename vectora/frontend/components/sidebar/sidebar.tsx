@@ -526,6 +526,7 @@ export const Sidebar = memo(function Sidebar({
             </div>
             <Input
               type="search"
+              name="sessions-search-x"
               placeholder={m.sidebar_search_placeholder()}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
