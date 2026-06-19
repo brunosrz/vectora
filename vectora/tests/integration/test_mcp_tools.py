@@ -219,7 +219,7 @@ class TestMcpWebTools:
         await mas não a thread bloqueada, então rede lenta/bloqueada penduraria
         o teste até o timeout global. Validamos o nosso wrapper, não a uptime
         do Tavily (filosofia: testes não dependem de rede real)."""
-        import backend.tools.web as web
+        from backend.tools import web
 
         class _FakeSearch:
             def invoke(self, _args: object) -> dict:
@@ -233,8 +233,10 @@ class TestMcpWebTools:
             def invoke(self, _args: object) -> dict:
                 return {"results": [{"raw_content": "conteúdo extraído"}]}
 
-        monkeypatch.setattr(web, "_get_search_tool", lambda: _FakeSearch())
-        monkeypatch.setattr(web, "_get_extract_tool", lambda: _FakeExtract())
+        # Passa a classe direto: _get_search_tool() → _FakeSearch() (instância
+        # com .invoke). Equivalente à lambda, sem o PLW0108.
+        monkeypatch.setattr(web, "_get_search_tool", _FakeSearch)
+        monkeypatch.setattr(web, "_get_extract_tool", _FakeExtract)
 
     async def test_web_search_disabled_returns_message(self, monkeypatch):
         """Se web search desabilitado, deve retornar mensagem clara."""
