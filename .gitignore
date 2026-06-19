@@ -346,6 +346,7 @@ AbilitySystem_repo/
 /desktop/dist-electron
 /desktop/build-resources
 /vectora/electron/dist-electron/
+/vectora/electron/build-resources/dev-cert.pfx
 *.gen.ts
 *.exe
 *.blockmap

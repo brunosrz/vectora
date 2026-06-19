@@ -18,6 +18,7 @@ Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock)
 Instalar SCons: pip install scons (ou uv add --dev scons)
 """
 
+import base64
 import glob
 import os
 import re
@@ -90,7 +91,7 @@ def _open_log(name: str):
     """Abre `.scons-logs/<name>.txt` (gitignored) para o tee de lint/tests."""
     logdir = os.path.join(ROOT, ".scons-logs")
     os.makedirs(logdir, exist_ok=True)
-    return open(os.path.join(logdir, f"{name}.txt"), "w", encoding="utf-8")  # noqa: SIM115
+    return open(os.path.join(logdir, f"{name}.txt"), "w", encoding="utf-8")
 
 
 # ── Ações ─────────────────────────────────────────────────────────────────────
@@ -133,6 +134,45 @@ def _action_build_nuitka(target, source, env):
     _run(["uv", "run", "nuitka", f"--jobs={cpu}", "backend/launcher.py"])
 
 
+def _find_signtool() -> str | None:
+    """Localiza signtool.exe do Windows SDK ou PATH."""
+    if sys.platform != "win32":
+        return None
+    kits_root = r"C:\Program Files (x86)\Windows Kits\10\bin"
+    if os.path.isdir(kits_root):
+        for version_dir in sorted(os.listdir(kits_root), reverse=True):
+            for arch in ("x64", "x86"):
+                candidate = os.path.join(kits_root, version_dir, arch, "signtool.exe")
+                if os.path.isfile(candidate):
+                    return candidate
+    return shutil.which("signtool.exe")
+
+
+def _get_dev_cert_env() -> dict[str, str] | None:
+    """Retorna CSC_LINK + CSC_KEY_PASSWORD a partir de dev-cert.pfx, se existir."""
+    pfx_path = os.path.join(ROOT, "electron", "build-resources", "dev-cert.pfx")
+    if not os.path.isfile(pfx_path):
+        return None
+    password = os.environ.get("DEV_CSC_PASSWORD", "vectora-dev")
+    with open(pfx_path, "rb") as f:
+        pfx_b64 = base64.b64encode(f.read()).decode()
+    return {"CSC_LINK": pfx_b64, "CSC_KEY_PASSWORD": password}
+
+
+def _sign_binary(binary: str) -> None:
+    """Assina um PE do Windows com signtool.exe usando o dev-cert.pfx local."""
+    pfx_path = os.path.join(ROOT, "electron", "build-resources", "dev-cert.pfx")
+    if not os.path.isfile(pfx_path) or not os.path.isfile(binary):
+        return
+    signtool = _find_signtool()
+    if not signtool:
+        print(">> signtool.exe nao encontrado — assinatura manual ignorada")
+        return
+    password = os.environ.get("DEV_CSC_PASSWORD", "vectora-dev")
+    _run([signtool, "sign", "/f", pfx_path, "/p", password, "/fd", "SHA256", "/v", binary])
+    print(f">> assinado: {os.path.basename(binary)}")
+
+
 def _action_install_desktop(target, source, env):
     _run([PNPM, "--dir", "electron", "install", "--frozen-lockfile"])
 
@@ -151,7 +191,7 @@ def _free_desktop_dist() -> None:
     """
     if sys.platform != "win32":
         return
-    subprocess.run(  # noqa: S603 S607 — taskkill é builtin do Windows
+    subprocess.run(
         ["taskkill", "/F", "/IM", "vectora.exe", "/T"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -190,19 +230,31 @@ def _action_package(target, source, env, platform=""):
         cmd.append(flag)
     cmd.append(f"-c.directories.output={out_dir}")
 
-    # Assinatura: só quando há credenciais explícitas no ambiente (CI). Sem elas
-    # (build local), DESLIGAMOS a auto-descoberta de certificado — caso contrário
-    # o electron-builder vasculha o cert-store do Windows, acha qualquer cert e
-    # tenta assinar os sidecars, o que baixa o pacote legacy `winCodeSign-2.6.0`
-    # (com symlinks `darwin/*.dylib` que o 7za não consegue criar sem Modo de
-    # Desenvolvedor/admin) e aborta o build. Sem assinar, nada disso é baixado.
+    # Assinatura de código:
+    # 1. CI: usa CSC_LINK + CSC_KEY_PASSWORD (cert EV em base64 via secrets).
+    # 2. Dev local: usa dev-cert.pfx em build-resources/ (gerado por
+    #    scripts/create-dev-cert.ps1). Assina o binário Nuitka explicitamente
+    #    antes do electron-builder (extraResource) e passa o PFX ao builder.
+    # 3. Sem cert nenhum: desliga CSC_IDENTITY_AUTO_DISCOVERY para evitar que o
+    #    electron-builder vasculhe o cert-store e baixe winCodeSign legado.
     build_env: dict[str, str] = {}
     has_signing_creds = any(
         os.environ.get(k)
         for k in ("CSC_LINK", "WIN_CSC_LINK", "CSC_KEY_PASSWORD", "MAC_CSC_LINK")
     )
     if not has_signing_creds:
-        build_env["CSC_IDENTITY_AUTO_DISCOVERY"] = "false"
+        dev_env = _get_dev_cert_env() if sys.platform == "win32" else None
+        if dev_env:
+            build_env.update(dev_env)
+            # electron-builder assina o Electron + instaladores via CSC_LINK.
+            # O extraResource (vectora.exe Nuitka) é assinado aqui explicitamente.
+            nuitka_bin = os.path.join(ROOT, "dist-nuitka", "vectora.exe")
+            if os.path.isfile(nuitka_bin):
+                print(">> assinando binário Nuitka (extraResource) com dev-cert.pfx...")
+                _sign_binary(nuitka_bin)
+            print(">> assinando instaladores com dev-cert.pfx")
+        else:
+            build_env["CSC_IDENTITY_AUTO_DISCOVERY"] = "false"
     _run(cmd, env=build_env or None)
 
     # Copia só os instaladores finais de volta (não o win-unpacked/app.asar,
