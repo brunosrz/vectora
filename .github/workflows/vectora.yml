@@ -25,16 +25,12 @@ concurrency:
 
 permissions:
   contents: read
-  packages: write
-  id-token: write
 
 defaults:
   run:
     working-directory: vectora
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
   # 3.13: versão que o uv resolve (cpython-3.13) e a única suportada pelo
   # Nuitka 4.1.x. 3.14 só vira oficial no Nuitka 4.2.
   PYTHON_VERSION: "3.13"
@@ -170,60 +166,14 @@ jobs:
       - name: E2E tests
         run: uv run pytest tests/e2e/ -v --timeout=180 --tb=short
 
-  # ── 5. Docker Build & Push ──────────────────────────────────────────────
-  docker-build:
-    name: Docker Build & Push
-    runs-on: ubuntu-latest
-    needs: [test-unit, test-stress, test-external]
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log in to GHCR
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
-      - name: Extract version from pyproject.toml
-        id: version
-        run: echo "version=$(grep '^version = ' pyproject.toml | sed 's/version = \"\(.*\)\"/\1/')" >> "$GITHUB_OUTPUT"
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=tag
-            type=sha,format=long
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          # Dockerfile e contexto vivem em vectora/ (não na raiz do monorepo).
-          context: vectora
-          file: vectora/Dockerfile
-          # Publica em push para master e em tags v*; PRs só fazem build de verificação.
-          push: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')) }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VERSION=${{ steps.version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ── 6. Release Native Binaries (Nuitka onefile + Electron installers) ───
+  # ── 5. Release Native Binaries (Nuitka onefile + Electron installers) ───
   # Matriz cara: 4 SOs, incluindo macOS (multiplicador 10x de minutos) e
   # Windows (2x). Por isso roda SÓ em tags v* (release) ou disparo manual
   # (workflow_dispatch) — não em todo push, que estouraria a cota de Actions.
   # A PUBLICAÇÃO nas releases privadas só ocorre em tags v* (--publish always).
   release-native:
     name: Release native (${{ matrix.target }}/${{ matrix.arch }})
-    needs: docker-build
+    needs: [test-unit, test-stress, test-external]
     if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
