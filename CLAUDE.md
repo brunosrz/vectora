@@ -23,10 +23,10 @@ reescrever no diff.
 
 ## 2. Strings de UI sempre via i18n — nada hardcoded
 
-Qualquer string visível no chat passa por `useT()` e existe em
-`chat/lib/i18n/strings.csv.ts` nas 3 línguas (`en`, `es`, `pt-BR`).
-Adicionar string nova = adicionar 3 colunas no CSV. Mesma regra
-vale para `src/ui/` (rich/textual).
+Qualquer string visível no chat passa por `m()` de
+`@/lib/paraglide/messages` e existe em `messages/{en,es,pt}.json`
+nos 3 idiomas. Adicionar string nova = adicionar entrada nos 3 JSONs.
+`pnpm i18n:compile` regenera o módulo Paraglide.
 
 ## 3. TDD + type hints obrigatórios
 
@@ -55,7 +55,7 @@ sem código por tool nova.
 
 ## 7. Auth-first para tudo server
 
-Qualquer endpoint novo no `src/api/` considera permissões.
+Qualquer endpoint novo no `backend/api/` considera permissões.
 `Depends(get_current_user)` é o default. Rotas públicas
 (`/auth/*`, `/health`, `/license/*`, `/docs`) são whitelist
 explícita.

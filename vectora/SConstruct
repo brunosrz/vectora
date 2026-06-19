@@ -108,8 +108,9 @@ def _action_build_chat(target, source, env):
     # (a raiz, sem pnpm-workspace.yaml) → ERR_PNPM_IGNORED_BUILDS. Dentro de
     # chat/, o pnpm lê chat/pnpm-workspace.yaml e o gate passa.
     frontend_dir = os.path.join(ROOT, "frontend")
-    _run([PNPM, "install", "--frozen-lockfile"], cwd=frontend_dir)
-    _run([PNPM, "build"], cwd=frontend_dir)
+    node_env = {"NODE_NO_WARNINGS": "1"}
+    _run([PNPM, "install", "--frozen-lockfile"], env=node_env, cwd=frontend_dir)
+    _run([PNPM, "build"], env=node_env, cwd=frontend_dir)
 
     dist = os.path.join(ROOT, "frontend", "dist")
     if not os.path.isdir(dist) or not os.path.isfile(os.path.join(dist, "index.html")):

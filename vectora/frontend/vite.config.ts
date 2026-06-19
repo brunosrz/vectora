@@ -143,5 +143,9 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: false,
     target: "es2022",
+    chunkSizeWarningLimit: 1500,
+    rolldownOptions: {
+      checks: { pluginTimings: false },
+    },
   },
 });

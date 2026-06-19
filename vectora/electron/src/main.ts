@@ -51,6 +51,7 @@ interface UpdateStatus {
 
 let backend: ChildProcess | null = null;
 let backendPort: number | null = null;
+let backendPipePath: string | null = null; // Windows named pipe path (\\.\pipe\vectora-<pid>)
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let pendingDeepLink: string | null = null;
@@ -78,13 +79,17 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 /**
- * Transporte do backend: unix socket no loopback do SO em Linux/macOS
- * (``VECTORA_DESKTOP=1`` faz o backend escutar em ``~/.vectora/vectora.sock``);
- * no Windows ainda é TCP loopback (uvicorn não suporta UDS lá).
+ * Transporte do backend:
+ * - Linux/macOS: unix socket (~/.vectora/vectora.sock)
+ * - Windows: named pipe (\\.\pipe\vectora-<pid>) lido de stdout via VECTORA_IPC_PIPE
+ * - Fallback Windows (sem pipe ainda pronto): TCP loopback
  */
 function backendTransport(): http.RequestOptions {
   if (process.platform !== "win32") {
     return { socketPath: path.join(os.homedir(), ".vectora", "vectora.sock") };
+  }
+  if (backendPipePath) {
+    return { socketPath: backendPipePath };
   }
   return { host: "127.0.0.1", port: backendPort ?? undefined };
 }
@@ -211,7 +216,13 @@ async function startBackend(): Promise<void> {
     env,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  backend.stdout?.on("data", (b) => process.stdout.write(`[backend] ${b}`));
+  backend.stdout?.on("data", (b: Buffer) => {
+    const text = b.toString();
+    // Lê VECTORA_IPC_PIPE=<path> do stdout para usar named pipe no Windows.
+    const match = /VECTORA_IPC_PIPE=(.+)/.exec(text);
+    if (match) backendPipePath = match[1].trim();
+    process.stdout.write(`[backend] ${text}`);
+  });
   backend.stderr?.on("data", (b) => process.stderr.write(`[backend] ${b}`));
   backend.on("exit", handleBackendExit);
 }
@@ -242,6 +253,7 @@ async function restartBackend(): Promise<void> {
     treeKill(backend.pid);
     backend = null;
   }
+  backendPipePath = null;
   try {
     await startBackend();
     await waitForBackend();
@@ -277,7 +289,8 @@ async function waitForBackend(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 function createWindow(): void {
-  if (backendPort === null) throw new Error("Backend não iniciado.");
+  if (backendPort === null && !backendPipePath)
+    throw new Error("Backend não iniciado.");
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,

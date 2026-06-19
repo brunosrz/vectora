@@ -20,6 +20,7 @@ Configuração (operacional, para VPS via SSH):
 from __future__ import annotations
 
 import argparse
+import asyncio
 import contextlib
 import logging
 import os
@@ -318,9 +319,8 @@ def _run_start(args: argparse.Namespace) -> None:
     use_tls = bool(ssl_certfile and ssl_keyfile)
 
     # Transporte desktop é IPC real: sob VECTORA_DESKTOP=1 (Electron) o backend
-    # escuta num unix socket no loopback do SO — zero porta TCP no app desktop.
-    # Web/VPS mantém TCP (servidor de rede por design). Windows ainda usa TCP no
-    # loopback até a ponte de named pipe do Electron (Sprint IPC) ficar pronta.
+    # não expõe porta TCP ao SO. Em Linux/macOS usa unix socket; no Windows usa
+    # named pipe (ipc_pipe_win). Web/VPS mantém TCP (servidor de rede, por design).
     uds_path: str | None = None
     if os.environ.get("VECTORA_DESKTOP") and sys.platform != "win32":
         sock_dir = Path.home() / ".vectora"
@@ -359,6 +359,27 @@ def _run_start(args: argparse.Namespace) -> None:
             ssl_keyfile=ssl_keyfile,
         )
     server = uvicorn.Server(config)
+
+    # Windows + VECTORA_DESKTOP: named pipe em vez de TCP — nenhuma porta TCP é
+    # exposta ao SO. O Electron conecta via \\.\pipe\vectora-<pid>, lido de stdout.
+    if sys.platform == "win32" and os.environ.get("VECTORA_DESKTOP"):
+        from backend.services.ipc_pipe_win import PIPE_ENV_VAR, pipe_name, serve_pipe
+
+        _pipe = pipe_name()
+        os.environ[PIPE_ENV_VAR] = _pipe
+        print(f"{PIPE_ENV_VAR}={_pipe}", flush=True)
+
+        async def _run_win() -> None:
+            pipe_task = asyncio.create_task(serve_pipe(_pipe, "127.0.0.1", port))
+            try:
+                await server.serve()
+            finally:
+                pipe_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await pipe_task
+
+        asyncio.run(_run_win())
+        return
 
     # Sobe o servidor e, quando há display, a bandeja do sistema (Python). Sem
     # display (VPS/Docker) ou sem pystray, degrada para servidor puro. A bandeja
