@@ -345,4 +345,8 @@ AbilitySystem_repo/
 .vectora/
 /desktop/dist-electron
 /desktop/build-resources
+/vectora/electron/dist-electron/
 *.gen.ts
+*.exe
+*.blockmap
+*.msi
