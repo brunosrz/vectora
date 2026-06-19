@@ -18,17 +18,11 @@ async def _run_sessions_async() -> None:
 
     try:
         settings = Settings()
-        if settings.storage_mode == "complete" and settings.postgres_dsn:
-            from backend.services.session import PostgresSessionDB
+        from backend.services.session import SessionService
 
-            db = PostgresSessionDB()
-            sessions = await db.list_sessions(limit=200)
-        else:
-            from backend.services.session import SessionService
-
-            service = SessionService(settings)
-            await service.initialize()
-            sessions = await service.list_all()
+        service = SessionService(settings)
+        await service.initialize()
+        sessions = await service.list_all()
     except Exception as e:
         print(f"❌ Error listing sessions: {e}")
         sys.exit(1)

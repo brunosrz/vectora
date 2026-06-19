@@ -615,6 +615,14 @@ async def delete_safe_root(request: Request, root_id: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def _env_file():
+    from pathlib import Path
+
+    p = Path.home() / ".vectora" / ".env"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    return p
+
+
 @router.get("/storage")
 async def get_storage_status(request: Request) -> dict:
     """Retorna o status de saúde de todos os backends de storage.
@@ -779,33 +787,43 @@ async def update_storage_config(request: Request) -> dict:
             )
         runtime_settings.storage_mode = mode
 
+        from backend.cli.keys import upsert_env_key
         from backend.settings import settings as _s
 
         _s.storage_mode = mode  # type: ignore[assignment]
+        upsert_env_key(_env_file(), "STORAGE_MODE", mode)
         updated["storage_mode"] = mode
 
     if "postgres_dsn" in body:
+        from backend.cli.keys import upsert_env_key
         from backend.settings import settings as _s
 
         _s.postgres_dsn = body["postgres_dsn"]
-        updated["postgres_dsn"] = "***"  # não expõe DSN no response
+        upsert_env_key(_env_file(), "POSTGRES_DSN", body["postgres_dsn"])
+        updated["postgres_dsn"] = "***"
 
     if "qdrant_url" in body:
+        from backend.cli.keys import upsert_env_key
         from backend.settings import settings as _s
 
         _s.qdrant_url = body["qdrant_url"]
+        upsert_env_key(_env_file(), "QDRANT_URL", body["qdrant_url"])
         updated["qdrant_url"] = body["qdrant_url"]
 
     if "qdrant_api_key" in body:
+        from backend.cli.keys import upsert_env_key
         from backend.settings import settings as _s
 
         _s.qdrant_api_key = body["qdrant_api_key"]
+        upsert_env_key(_env_file(), "QDRANT_API_KEY", body["qdrant_api_key"])
         updated["qdrant_api_key"] = "***"
 
     if "redis_url" in body:
+        from backend.cli.keys import upsert_env_key
         from backend.settings import settings as _s
 
         _s.redis_url = body["redis_url"]
+        upsert_env_key(_env_file(), "REDIS_URL", body["redis_url"])
         updated["redis_url"] = "***"
 
     if "services" in body and isinstance(body["services"], dict):

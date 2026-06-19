@@ -505,10 +505,11 @@ async def storage_health() -> dict[str, Any]:
 
     # Config — resumo do modo de armazenamento e backends configurados
     # (sem expor segredos: apenas booleanos de "configurado").
+    from backend.services.runtime_settings import runtime_settings
     from backend.settings import settings as _s
 
     result["config"] = {
-        "storage_mode": _s.storage_mode,
+        "storage_mode": runtime_settings.storage_mode,
         "postgres_configured": bool(_s.postgres_dsn),
         "redis_configured": bool(_s.redis_url),
         "qdrant_configured": bool(_s.qdrant_url),

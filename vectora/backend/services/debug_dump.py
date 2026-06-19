@@ -79,19 +79,18 @@ async def generate_debug_dump(
 
             # Adicionar bancos de dados
             if include_databases:
-                data_dir = Path("data")
+                data_dir = settings.data_dir or (Path.home() / ".vectora" / "data")
                 if data_dir.exists():
                     for db_file in data_dir.glob("*.db"):
                         tar.add(str(db_file), arcname=f"data/{db_file.name}")
                         logger.debug(f"Adicionado: {db_file.name}")
 
-                    # Também adicionar .db-shm e .db-wal (WAL files)
                     for wal_file in data_dir.glob("*.db-*"):
                         tar.add(str(wal_file), arcname=f"data/{wal_file.name}")
 
             # Adicionar logs
             if include_logs:
-                log_dir = Path("logs")
+                log_dir = settings.logs_dir or (Path.home() / ".vectora" / "logs")
                 if log_dir.exists():
                     for log_file in log_dir.glob("*.jsonl"):
                         tar.add(str(log_file), arcname=f"logs/{log_file.name}")
@@ -101,7 +100,7 @@ async def generate_debug_dump(
                         tar.add(str(log_file), arcname=f"logs/{log_file.name}")
 
             # Adicionar .env (sem secrets, apenas configuração)
-            env_file = Path(".env")
+            env_file = settings.env_file or (Path.home() / ".vectora" / ".env")
             if env_file.exists():
                 # Ler .env e remover linhas com "KEY", "SECRET", "TOKEN"
                 with env_file.open() as f:
