@@ -324,24 +324,22 @@ def _action_lint(target, source, env):
 
 
 def _action_docker(target, source, env):
-    """Builda a imagem Docker local e sobe o stack do compose.
+    """Sobe a infraestrutura do Vectora (PostgreSQL, Redis, Qdrant).
 
-    O ``docker-compose.build.yml`` (override) acrescenta ``build:`` +
-    ``pull_policy: build`` ao serviço ``vectora``, então ``up --build`` builda
-    a imagem do Dockerfile local e NUNCA puxa a publicada no GHCR. O compose
-    base segue com ``image:`` puro para a VPS puxar a versão publicada. As
-    chaves do ``~/.vectora/.env`` (GOOGLE_API_KEY etc.) são carregadas para o
-    ambiente do ``docker compose`` substituir os ``${...}`` do compose.
+    O Vectora em si NÃO roda como container. Instale o binário no host
+    (``scons release`` gera o instalador) e configure ``~/.vectora/.env``
+    com os DSNs para conectar aos serviços abaixo.
     """
     # No Windows, o Docker Desktop pode retornar exit 0 mesmo com o daemon
     # Linux parado — a mensagem de erro vai para stderr. Verificamos o stderr
     # da probe explicitamente para detectar o pipe quebrado.
-    probe = subprocess.run(
+    probe = subprocess.run(  # noqa: S603 S607
         ["docker", "info"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
         cwd=ROOT,
         text=True,
+        check=False,
     )
     daemon_error = (
         probe.returncode != 0
@@ -359,33 +357,20 @@ def _action_docker(target, source, env):
     compose_env: dict[str, str] = {}
     dotenv = os.path.join(os.path.expanduser("~"), ".vectora", ".env")
     if os.path.isfile(dotenv):
-        with open(dotenv, encoding="utf-8") as f:
+        with open(dotenv, encoding="utf-8") as f:  # noqa: PTH123
             for line in f:
                 stripped = line.strip()
                 if stripped and not stripped.startswith("#") and "=" in stripped:
                     key, value = stripped.split("=", 1)
                     compose_env[key.strip()] = value.strip()
 
-    # Build + up em duas etapas explícitas com os DOIS arquivos de compose:
-    # o override `docker-compose.build.yml` redefine `image: vectora:dev` +
-    # `build:` + `pull_policy: build`, então o compose builda a imagem do
-    # Dockerfile local e NUNCA puxa a publicada no GHCR. Buildar `vectora`
-    # antes do up garante imagem local fresca e falha cedo (erro de build) em
-    # vez de subir uma imagem antiga; o `up` então só sobe (sem `--build`),
-    # usando a imagem recém-buildada. postgres/redis/qdrant seguem puxando suas
-    # imagens oficiais normalmente (o override não as toca).
-    compose_files = [
-        "-f", "docker-compose.yml",
-        "-f", "docker-compose.build.yml",
-    ]
-    _run(
-        ["docker", "compose", *compose_files, "build", "vectora"],
-        env=compose_env or None,
-    )
-    _run(
-        ["docker", "compose", *compose_files, "up", "-d"],
-        env=compose_env or None,
-    )
+    _run(["docker", "compose", "up", "-d"], env=compose_env or None)
+    print("\n>> Infraestrutura pronta. Configure ~/.vectora/.env:")
+    print(">>   STORAGE_MODE=complete")
+    print(">>   POSTGRES_DSN=postgresql+asyncpg://vectora:vectora@127.0.0.1:5432/vectora")
+    print(">>   REDIS_URL=redis://127.0.0.1:6379/0")
+    print(">>   QDRANT_URL=http://127.0.0.1:6333")
+    print(">> Depois execute: vectora start")
 
 
 def _action_clean(target, source, env):
@@ -416,7 +401,8 @@ def _action_help(target, source, env):
   Build
     scons package          build completo (frontend + Nuitka + Electron) +
                            instalador para o SO atual
-    scons docker           build da imagem Docker + docker compose up -d
+    scons docker           sobe infraestrutura (PostgreSQL, Redis, Qdrant);
+                           o Vectora roda no host como binário instalado
 
   Qualidade
     scons tests            suíte completa: vitest (frontend) + pytest (backend),

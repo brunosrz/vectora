@@ -1,83 +1,31 @@
 name: vectora
 
-# Vectora — Web Chat + API (FastAPI + Vite SPA) + Postgres + Redis + Qdrant
+# Stack de infraestrutura do Vectora — PostgreSQL + Redis + Qdrant.
 #
-# Sobe o Vectora já em modo "Completo" (storage_mode=complete), com
-# PostgreSQL, Redis e Qdrant prontos e conectados — o Setup Wizard detecta
-# essa configuração automaticamente e não pede para o usuário configurar
-# esses 3 serviços novamente.
+# O Vectora em si NÃO roda como container: instale o binário no host
+# (scons release gera o instalador; no Linux use o .deb ou .AppImage).
+# Os serviços abaixo ficam acessíveis em 127.0.0.1 nas portas padrão.
 #
-# Uso local (builda a imagem do código local — NÃO puxa a publicada):
-#   scons docker
-#   — ou, equivalente, com o override de build:
-#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
-#   Acesse http://localhost:8090 (VECTORA_PORT)
+# Uso (dev local + desktop):
+#   scons docker          → inicia os 3 serviços abaixo
+#   vectora start         → inicia o backend no host (lê ~/.vectora/.env)
 #
-# ATENÇÃO: `docker compose up -d` (só este arquivo) puxa a imagem PUBLICADA do
-# GHCR (ghcr.io/brunosrz/vectora) — use apenas para rodar a versão de produção,
-# não o código local. Para dev local, use `scons docker`.
+# Configure ~/.vectora/.env:
+#   STORAGE_MODE=complete
+#   POSTGRES_DSN=postgresql+asyncpg://vectora:vectora@127.0.0.1:5432/vectora
+#   REDIS_URL=redis://127.0.0.1:6379/0
+#   QDRANT_URL=http://127.0.0.1:6333
 #
-# Uso em VPS com Traefik:
-#   Defina VECTORA_DOMAIN no .env (ex: chat.meudominio.com)
-#   Certifique-se que a rede "traefik-public" já existe no host
-#   docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
+# Uso em VPS/servidor:
+#   1. Instale o Vectora: dpkg -i vectora.deb  (ou AppImage, ou rpm)
+#   2. Configure ~/.vectora/.env com os DSNs acima
+#   3. docker compose up -d    → sobe infra
+#   4. vectora start --headless → sobe o backend (systemd, supervisor, etc.)
 
 services:
-  vectora:
-    image: ghcr.io/brunosrz/vectora:latest
-    restart: unless-stopped
-    environment:
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - COHERE_API_KEY=${COHERE_API_KEY:-}
-      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - VECTORA_TOKEN=${VECTORA_TOKEN:-}
-      - PYTHONUNBUFFERED=1
-      - HOST=0.0.0.0
-      # Porta INTERNA do container (fixa 8080) — o healthcheck bate em
-      # localhost:8080 dentro do container. A porta do HOST é separada
-      # (ver `ports:` abaixo) para não colidir com o dev local.
-      - PORT=8080
-      # Storage mode "complete" — usa os serviços postgres/redis/qdrant deste
-      # mesmo compose. Os DSNs/URLs apontam para os hostnames dos serviços
-      # (rede interna do compose) e usam as credenciais padrão definidas
-      # abaixo em postgres.environment.
-      - STORAGE_MODE=${STORAGE_MODE:-complete}
-      - POSTGRES_DSN=${POSTGRES_DSN:-postgresql+asyncpg://vectora:vectora@postgres:5432/vectora}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
-      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
-    volumes:
-      - vectora-data:/root/.vectora
-    ports:
-      # HOST:CONTAINER — host 8090 por padrão (configurável via VECTORA_PORT).
-      # 3000/5173/8080 ficam reservadas para o dev local rodando no Windows.
-      - "${VECTORA_PORT:-8090}:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      qdrant:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
   postgres:
-    # pgvector/pgvector:pg16 (não postgres:16-alpine): o modo complete executa
-    # `CREATE EXTENSION IF NOT EXISTS vector` (backend/storage/migrations) e
-    # backend/storage/dev_stack.py também usa esta imagem — a oficial não traz a
-    # extensão pgvector e o startup falharia.
+    # pgvector/pgvector:pg16: necessário para CREATE EXTENSION vector
+    # (o postgres:16-alpine vanilla não traz pgvector — startup falharia).
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
@@ -86,6 +34,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-vectora}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vectora}"]
       interval: 10s
@@ -93,15 +43,15 @@ services:
       retries: 5
 
   redis:
-    # redis-stack-server (não redis:alpine): o cache LLM via langchain-redis usa
-    # os módulos RediSearch + RedisJSON (JSON.GET/FT.*), ausentes no Redis vanilla.
+    # redis-stack-server: inclui RediSearch + RedisJSON, usados pelo cache LLM
+    # (langchain-redis via FT.*/JSON.GET). O redis:alpine vanilla não os tem.
     image: redis/redis-stack-server:latest
     restart: unless-stopped
     volumes:
       - redis-data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
-      # Só fica healthy quando o RediSearch carregou — o cache LLM o exige e a
-      # app conecta no startup; sem isso há race com o ping respondendo antes.
       test: ["CMD-SHELL", "redis-cli MODULE LIST | grep -q search"]
       interval: 10s
       timeout: 5s
@@ -112,6 +62,8 @@ services:
     restart: unless-stopped
     volumes:
       - qdrant-data:/qdrant/storage
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/6333'"]
       interval: 10s
@@ -119,8 +71,6 @@ services:
       retries: 5
 
 volumes:
-  vectora-data:
-    driver: local
   postgres-data:
     driver: local
   redis-data:
