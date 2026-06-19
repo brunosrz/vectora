@@ -91,13 +91,11 @@ export async function apiMerge(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ branch }),
   });
-  return (await res
-    .json()
-    .catch(() => ({
-      status: "error",
-      message: "",
-      conflicts: [],
-    }))) as MergeResult;
+  return (await res.json().catch(() => ({
+    status: "error",
+    message: "",
+    conflicts: [],
+  }))) as MergeResult;
 }
 
 // ── Compare (estilo VS Code) ────────────────────────────────────────────────

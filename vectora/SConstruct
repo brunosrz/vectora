@@ -43,13 +43,49 @@ def _find_pnpm() -> str:
 PNPM = _find_pnpm()
 
 
-def _run(cmd: list[str], env: dict | None = None, cwd: str | None = None) -> None:
-    """Executa um comando, falha se o código de retorno for ≠ 0."""
+def _run(cmd: list[str], env: dict | None = None, cwd: str | None = None, log=None) -> None:
+    """Executa um comando, falha se o código de retorno for ≠ 0.
+
+    Com ``log`` (file handle), espelha stdout+stderr para o terminal E para o
+    arquivo (tee) — usado por `scons lint`/`scons tests` para gravar o log
+    completo em `.scons-logs/` (gitignored). O pipe desliga cores ANSI, deixando
+    o .txt limpo para colar/ler.
+    """
     merged = {**os.environ, **(env or {})}
-    print(f"\n>> {' '.join(str(c) for c in cmd)}")
-    result = subprocess.run(cmd, cwd=cwd or ROOT, env=merged)
-    if result.returncode != 0:
-        raise SystemExit(result.returncode)
+    header = f"\n>> {' '.join(str(c) for c in cmd)}"
+    print(header)
+    if log is None:
+        result = subprocess.run(cmd, cwd=cwd or ROOT, env=merged)
+        rc = result.returncode
+    else:
+        merged["PYTHONIOENCODING"] = "utf-8"
+        log.write(header + "\n")
+        log.flush()
+        proc = subprocess.Popen(
+            cmd,
+            cwd=cwd or ROOT,
+            env=merged,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+        )
+        for line in proc.stdout:  # type: ignore[union-attr]
+            sys.stdout.write(line)
+            log.write(line)
+        proc.wait()
+        rc = proc.returncode
+    if rc != 0:
+        raise SystemExit(rc)
+
+
+def _open_log(name: str):
+    """Abre `.scons-logs/<name>.txt` (gitignored) para o tee de lint/tests."""
+    logdir = os.path.join(ROOT, ".scons-logs")
+    os.makedirs(logdir, exist_ok=True)
+    return open(os.path.join(logdir, f"{name}.txt"), "w", encoding="utf-8")  # noqa: SIM115
 
 
 # ── Ações ─────────────────────────────────────────────────────────────────────
@@ -198,27 +234,37 @@ def _action_tests(target, source, env):
     # e o vitest importa os messages compilados. Sem isto, chaves i18n recém
     # adicionadas em `messages/*.json` ainda não existem no bundle gerado e o
     # vitest falha. O plugin do Vite só compila no dev/build, não no test puro.
-    _run([PNPM, "--dir", "frontend", "run", "i18n:compile"])
-    # Frontend primeiro: o vitest é rápido e falha cedo. `--coverage` usa o
-    # @vitest/coverage-v8 (relatório em frontend/coverage/).
-    _run([PNPM, "--dir", "frontend", "exec", "vitest", "run", "--coverage"])
-    _run([
-        "uv", "run", "pytest", "tests",
-        "--cov=backend",
-        "--cov-report=term-missing:skip-covered",
-        "--cov-report=html:htmlcov",
-        "--tb=short",
-    ])
+    with _open_log("tests") as log:
+        _run([PNPM, "--dir", "frontend", "run", "i18n:compile"], log=log)
+        # Frontend primeiro: o vitest é rápido e falha cedo. `--coverage` usa o
+        # @vitest/coverage-v8 (relatório em frontend/coverage/).
+        _run(
+            [PNPM, "--dir", "frontend", "exec", "vitest", "run", "--coverage"],
+            log=log,
+        )
+        # `term:skip-covered` (sem `-missing`): omite a coluna de linhas não
+        # cobertas — o detalhe linha-a-linha fica no htmlcov/. Mais limpo no
+        # terminal e no .txt.
+        _run([
+            "uv", "run", "pytest", "tests",
+            "--cov=backend",
+            "--cov-report=term:skip-covered",
+            "--cov-report=html:htmlcov",
+            "--tb=short",
+        ], log=log)
+    print("\n>> log completo (limpo) em .scons-logs/tests.txt")
 
 
 def _action_lint(target, source, env):
-    _run(["uv", "run", "ruff", "check", "backend", "tests"])
-    _run(["uv", "run", "ty", "check", "backend", "tests"])
-    # `typecheck` = i18n:compile (paraglide) + tsr generate (routeTree.gen.ts
-    # gitignored, gerado pelo plugin) + tsc --noEmit. Ambos os geradores são
-    # gitignored; rodar tsc puro falharia sem eles (e sem chaves i18n novas).
-    _run([PNPM, "--dir", "frontend", "run", "typecheck"])
-    _run([PNPM, "--dir", "frontend", "exec", "oxlint"])
+    with _open_log("lint") as log:
+        _run(["uv", "run", "ruff", "check", "backend", "tests"], log=log)
+        _run(["uv", "run", "ty", "check", "backend", "tests"], log=log)
+        # `typecheck` = i18n:compile (paraglide) + tsr generate (routeTree.gen.ts
+        # gitignored, gerado pelo plugin) + tsc --noEmit. Ambos os geradores são
+        # gitignored; rodar tsc puro falharia sem eles (e sem chaves i18n novas).
+        _run([PNPM, "--dir", "frontend", "run", "typecheck"], log=log)
+        _run([PNPM, "--dir", "frontend", "exec", "oxlint"], log=log)
+    print("\n>> log completo (limpo) em .scons-logs/lint.txt")
 
 
 def _action_docker(target, source, env):

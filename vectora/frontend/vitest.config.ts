@@ -6,6 +6,15 @@ export default defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
+    reporters: ["dot"],
+    onConsoleLog(log: string): false | void {
+      if (
+        log.includes("[Logger] Initialized") ||
+        log.includes("the given storage is currently unavailable")
+      ) {
+        return false;
+      }
+    },
     // Os specs do Playwright (e2e/*.spec.ts) NÃO são testes de vitest — usam o
     // runner do Playwright e o `@playwright/test`. Sem este exclude, o vitest
     // (include default `**/*.spec.ts`) tentaria rodá-los e o `scons tests`
@@ -16,6 +25,9 @@ export default defineConfig({
       reporter: ["text", "html"],
       reportsDirectory: "coverage",
       include: ["lib/**", "src/**", "components/**", "hooks/**"],
+      // Esconde do relatório de texto os arquivos já 100% cobertos (o html
+      // mantém tudo) — corta ruído na saída do `scons tests`.
+      skipFull: true,
       exclude: [
         "**/*.gen.ts",
         "**/*.d.ts",
@@ -24,6 +36,20 @@ export default defineConfig({
         // Saída auto-gerada do paraglide (messages compiladas + README/ignores):
         // não é código nosso e os arquivos não-JS quebram o remap do v8.
         "lib/paraglide/**",
+        // Não-testáveis: wiring de framework e arquivos puramente declarativos.
+        // Tudo que tem lógica testável continua incluído (e deve ser testado).
+        "src/main.tsx", // bootstrap do app
+        "src/router.tsx", // instancia o router
+        "src/routes/**", // árvore de rotas do TanStack (wiring)
+        "src/shims/**", // shims de next/* (compat)
+        "src/styles.css",
+        "components/providers/**", // context providers (wiring)
+        "components/icons/**", // SVG puro
+        "lib/monaco/**", // setup do editor Monaco (integração externa)
+        "lib/theme/**", // presets de tema (dados)
+        "lib/types/**", // arquivos só de tipos (sem runtime)
+        "**/*-skeleton.tsx", // skeletons de loading (apresentacional puro)
+        "**/*.css",
       ],
     },
   },
