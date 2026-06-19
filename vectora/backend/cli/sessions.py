@@ -18,11 +18,50 @@ async def _run_sessions_async() -> None:
 
     try:
         settings = Settings()
-        from backend.services.session import SessionService
+        # Threads são armazenados em checkpoints.db (usado pelo threads API handler).
+        # SessionService usa backend.db (arquivo diferente) — não lê sessões reais.
+        checkpoints_db = settings.vectora_home / "checkpoints.db"
+        if not checkpoints_db.exists():
+            sessions = []
+        else:
+            import aiosqlite
 
-        service = SessionService(settings)
-        await service.initialize()
-        sessions = await service.list_all()
+            async with aiosqlite.connect(str(checkpoints_db)) as db:
+                try:
+                    cursor = await db.execute(
+                        "SELECT thread_id, user_type, created_at, last_activity, "
+                        "message_count, extra FROM vectora_sessions "
+                        "ORDER BY last_activity DESC LIMIT 200"
+                    )
+                    rows = await cursor.fetchall()
+                except Exception:
+                    rows = []
+            sessions = []
+            for row in rows:
+                (
+                    thread_id,
+                    user_type,
+                    created_at,
+                    last_activity,
+                    message_count,
+                    extra_raw,
+                ) = row
+                try:
+                    import json as _json
+
+                    extra = _json.loads(extra_raw or "{}")
+                except Exception:
+                    extra = {}
+                sessions.append(
+                    {
+                        "thread_id": thread_id,
+                        "user_type": user_type,
+                        "created_at": created_at,
+                        "last_activity": last_activity,
+                        "message_count": message_count,
+                        **extra,
+                    }
+                )
     except Exception as e:
         print(f"❌ Error listing sessions: {e}")
         sys.exit(1)
