@@ -25,7 +25,7 @@ def _show_or_set(args: argparse.Namespace) -> None:
 
     set_values = getattr(args, "set_values", None)
     if set_values:
-        allowed_keys = {"active_provider", "active_model", "verbosity"}
+        allowed_keys = {"active_provider", "active_model"}
         for kv in set_values:
             if "=" not in kv:
                 print(f"❌ Invalid format '{kv}'. Use KEY=VALUE.")
@@ -37,12 +37,6 @@ def _show_or_set(args: argparse.Namespace) -> None:
                     f"❌ Unknown key '{key}'. Allowed: {', '.join(sorted(allowed_keys))}"
                 )
                 sys.exit(1)
-            if key == "verbosity":
-                try:
-                    value = int(value)  # type: ignore[assignment]
-                except ValueError:
-                    print(f"❌ verbosity must be an integer 0–5, got '{value}'")
-                    sys.exit(1)
             runtime_settings.set(key, value)
             print(f"✓ {key} = {value!r}")
         return
@@ -60,11 +54,10 @@ def _show_or_set(args: argparse.Namespace) -> None:
     descriptions = {
         "active_provider": "Active LLM provider",
         "active_model": "Active LLM model",
-        "verbosity": "Verbosity level (0–5)",
         "last_session_by_dir": "Session per directory mapping",
     }
 
-    for key in ("active_provider", "active_model", "verbosity"):
+    for key in ("active_provider", "active_model"):
         value = runtime_settings.get(key)
         table.add_row(key, str(value), descriptions.get(key, ""))
 

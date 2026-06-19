@@ -2,16 +2,13 @@
 
 Sets up structured JSON logging with correlation IDs for production observability.
 Supports multiple log levels, file rotation, and console output.
-Includes QueueHandler for real-time UI log streaming in Debug Mode.
 """
 
 import json
 import logging
-import logging.handlers
 import os
 from datetime import UTC, datetime
 from pathlib import Path
-from queue import Queue
 from typing import Any
 
 
@@ -198,41 +195,3 @@ def setup_logging(
     handler_file.setFormatter(formatter_json)
     handler_file.setLevel(getattr(logging, log_level))
     root_logger.addHandler(handler_file)
-
-
-def set_console_log_level(level: int) -> None:
-    """Ajusta o nível do StreamHandler do console em runtime.
-
-    Chamado pelo chat_loop quando o verbosity muda:
-    - verbosity == 0  → WARNING  (silencia INFO, só erros visíveis)
-    - verbosity >= 1  → INFO
-    - verbosity >= 4  → DEBUG
-    """
-    root_logger = logging.getLogger()
-    for handler in root_logger.handlers:
-        if isinstance(handler, logging.StreamHandler) and not isinstance(
-            handler, logging.FileHandler
-        ):
-            handler.setLevel(level)
-            break
-
-
-def setup_queue_handler(log_queue: Queue) -> None:
-    """
-    Add a QueueHandler to the root logger for Debug Mode UI streaming.
-
-    This allows the UI to consume logs in real-time via the queue.
-    Each log record is formatted as {level, logger, message, timestamp}.
-
-    Args:
-        log_queue: A queue.Queue instance to receive log records
-    """
-    root_logger = logging.getLogger()
-
-    handler_queue = logging.handlers.QueueHandler(log_queue)
-    formatter_text = TextFormatter(
-        fmt="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
-        datefmt="%H:%M:%S",
-    )
-    handler_queue.setFormatter(formatter_text)
-    root_logger.addHandler(handler_queue)

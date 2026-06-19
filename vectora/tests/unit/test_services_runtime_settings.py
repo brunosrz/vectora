@@ -38,7 +38,6 @@ class TestDefaults:
         rs = RuntimeSettings(path=tmp_settings_path)
         assert rs.active_provider == "google-genai"
         assert rs.active_model == "gemini-2.5-flash"
-        assert rs.debug_mode is False
 
     def test_get_unknown_key_returns_default(self, rs: RuntimeSettings) -> None:
         assert rs.get("chave_inexistente", "fallback") == "fallback"
@@ -110,29 +109,6 @@ class TestSetActiveModel:
 
 
 # ---------------------------------------------------------------------------
-# set_debug_mode
-# ---------------------------------------------------------------------------
-
-
-class TestSetDebugMode:
-    def test_enable_debug(self, rs: RuntimeSettings) -> None:
-        rs.set_debug_mode(True)
-        assert rs.debug_mode is True
-
-    def test_disable_debug(self, rs: RuntimeSettings) -> None:
-        rs.set_debug_mode(True)
-        rs.set_debug_mode(False)
-        assert rs.debug_mode is False
-
-    def test_debug_persists(self, tmp_settings_path: Path) -> None:
-        rs1 = RuntimeSettings(path=tmp_settings_path)
-        rs1.set_debug_mode(True)
-
-        rs2 = RuntimeSettings(path=tmp_settings_path)
-        assert rs2.debug_mode is True
-
-
-# ---------------------------------------------------------------------------
 # Tolerância a falhas
 # ---------------------------------------------------------------------------
 
@@ -152,7 +128,7 @@ class TestFaultTolerance:
         tmp_settings_path.write_text("", encoding="utf-8")
 
         rs = RuntimeSettings(path=tmp_settings_path)
-        assert rs.debug_mode is False
+        assert rs.active_provider == "google-genai"
 
     def test_partial_file_uses_defaults_for_missing_keys(
         self, tmp_settings_path: Path

@@ -28,7 +28,6 @@ _SETTINGS_FILE = Path.home() / ".vectora" / "settings.json"
 _DEFAULTS: dict = {
     "active_provider": "google-genai",
     "active_model": "gemini-2.5-flash",
-    "verbosity": 0,
     "theme": "dark",
     "language": "en",
 }
@@ -113,17 +112,6 @@ class RuntimeSettings:
         return str(self.get("active_model", "gemini-2.5-flash"))
 
     @property
-    def verbosity(self) -> int:
-        """Verbosity level 0-5. 0 = silent, 5 = full debug panel."""
-        raw = self.get("verbosity", 0)
-        return int(raw) if isinstance(raw, (int, float, str)) else 0
-
-    @property
-    def debug_mode(self) -> bool:
-        """Backward-compat: True when verbosity >= 5."""
-        return self.verbosity >= 5
-
-    @property
     def theme(self) -> str:
         """Tema ativo da TUI: 'dark' | 'light' | 'system' (ver `src/ui/theme.py`)."""
         raw = str(self.get("theme", "dark"))
@@ -197,14 +185,6 @@ class RuntimeSettings:
             self._data["active_model"] = model
             self._save()
         logger.info("runtime_settings: provider=%s model=%s", provider, model)
-
-    def set_verbosity(self, level: int) -> None:
-        """Define verbosity level (0-5) e persiste."""
-        self.set("verbosity", max(0, min(5, level)))
-
-    def set_debug_mode(self, enabled: bool) -> None:
-        """Backward-compat: liga/desliga verbosity entre 0 e 5."""
-        self.set_verbosity(5 if enabled else 0)
 
     def set_theme(self, theme: str) -> None:
         """Define o tema da TUI ('dark'|'light'|'system') e persiste.

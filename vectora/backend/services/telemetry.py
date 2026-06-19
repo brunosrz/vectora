@@ -342,15 +342,3 @@ class TelemetryService:
             "total_sessions": total_sessions,
             "correlation_id": self.correlation_id,
         }
-
-    def enable_debug_logging(self) -> None:
-        """Enable detailed debug logging."""
-        self.settings.debug_mode = True
-        logging.getLogger().setLevel(logging.DEBUG)
-        logger.info("Debug logging enabled")
-
-    def disable_debug_logging(self) -> None:
-        """Disable debug logging."""
-        self.settings.debug_mode = False
-        logging.getLogger().setLevel(getattr(logging, self.settings.log_level))
-        logger.info("Debug logging disabled")

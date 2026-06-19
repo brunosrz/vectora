@@ -27,21 +27,21 @@ afterEach(() => {
 });
 
 describe("isOnboardingDone", () => {
-  it("returns false when flag is not set", () => {
+  it("retorna false quando a flag não está setada", () => {
     expect(isOnboardingDone("u1")).toBe(false);
   });
 
-  it("returns true when user flag is marked", () => {
+  it("retorna true quando a flag do usuário está marcada", () => {
     localStorage.setItem("vectora:onboarding-done-u1", "1");
     expect(isOnboardingDone("u1")).toBe(true);
   });
 
-  it("isolates flag per user — another user flag does not apply", () => {
+  it("isola a flag por usuário — flag de outro userId não se aplica", () => {
     localStorage.setItem("vectora:onboarding-done-u1", "1");
     expect(isOnboardingDone("u2")).toBe(false);
   });
 
-  it("flag from unrelated userId does not grant access", () => {
+  it("erro: flag de userId não relacionado não concede acesso", () => {
     localStorage.setItem("vectora:onboarding-done-admin", "1");
     expect(isOnboardingDone("u1")).toBe(false);
     expect(isOnboardingDone("u2")).toBe(false);
@@ -49,12 +49,12 @@ describe("isOnboardingDone", () => {
 });
 
 describe("SetupWizard", () => {
-  it("renders step counter 1/7 on first step", async () => {
+  it("renderiza o contador do passo 1/7 no primeiro passo", async () => {
     render(<SetupWizard userId="u1" onComplete={vi.fn()} />);
     await waitFor(() => expect(screen.getByText("1 / 7")).toBeInTheDocument());
   });
 
-  it("content area has fixed min-height data-testid", async () => {
+  it("área de conteúdo tem data-testid com altura mínima fixa", async () => {
     const { container } = render(
       <SetupWizard userId="u2" onComplete={vi.fn()} />,
     );
@@ -72,19 +72,19 @@ describe("StepToken", () => {
     await waitFor(() => screen.getByText("1 / 7"));
     const next = () =>
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    next(); // step 0 → 1
+    next(); // passo 0 → 1
     await waitFor(() => screen.getByText("2 / 7"));
-    next(); // step 1 → 2
+    next(); // passo 1 → 2
     await waitFor(() => screen.getByText("3 / 7"));
   }
 
-  it("token input has autocomplete=off to disable browser autofill", async () => {
+  it("campo de token tem autocomplete=off para desabilitar autofill do browser", async () => {
     await renderAtStepToken();
     const input = screen.getByPlaceholderText("vct_…");
     expect(input).toHaveAttribute("autocomplete", "off");
   });
 
-  it("token input does not have any semantic autocomplete hint", async () => {
+  it("erro: campo de token não deve ter hint semântico de autocomplete", async () => {
     await renderAtStepToken();
     const input = screen.getByPlaceholderText("vct_…");
     expect(input).not.toHaveAttribute("autocomplete", "new-password");
@@ -92,7 +92,7 @@ describe("StepToken", () => {
     expect(input).not.toHaveAttribute("autocomplete", "email");
   });
 
-  it("'Sign in with account' button opens vectora.company in external browser", async () => {
+  it("botão 'Sign in with account' abre vectora.company no browser externo", async () => {
     const openSpy = vi.fn();
     vi.stubGlobal("open", openSpy);
     await renderAtStepToken();
@@ -107,7 +107,7 @@ describe("StepToken", () => {
     );
   });
 
-  it("'Sign in with account' must not open a localhost/internal URL", async () => {
+  it("erro: botão 'Sign in with account' não deve abrir URL interna ou localhost", async () => {
     const openSpy = vi.fn();
     vi.stubGlobal("open", openSpy);
     await renderAtStepToken();

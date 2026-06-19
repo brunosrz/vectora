@@ -13,7 +13,6 @@ Configuração (operacional, para VPS via SSH):
   vectora config redis <url>
   vectora storage <ação>         migrations, diagnóstico, backup/restore
   vectora auth <ação>            signup | login | logout | whoami | refresh
-  vectora traces                 spans de observabilidade
   vectora sessions               lista as sessões salvas
 """
 
@@ -81,14 +80,12 @@ def _build_parser() -> argparse.ArgumentParser:
   vectora start --headless             sobe sem janela (bandeja + backend + MCP)
   vectora start --port 9000            porta custom
   vectora config                       mostra a configuração atual
-  vectora config --set verbosity=2
   vectora config keys                  wizard de API keys + LLM provider
   vectora config docker up             sobe Postgres + Redis + Qdrant local
   vectora config qdrant https://… --api-key KEY
   vectora config redis redis://…
   vectora storage info                 status dos backends de dados
   vectora auth login                   autentica no servidor configurado
-  vectora traces                       mostra os últimos 50 spans
   vectora sessions                     lista as sessões salvas
 """,
     )
@@ -175,29 +172,7 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="KEY=VALUE",
         action="append",
         dest="set_values",
-        help=(
-            "Edita uma chave de settings. Repetível. "
-            "Chaves: active_provider, active_model, verbosity."
-        ),
-    )
-
-    # ── traces ────────────────────────────────────────────────────────────────
-    traces_p = sub.add_parser(
-        "traces",
-        help="Spans internos de observabilidade",
-        description="Mostra spans do trace store SQLite em ~/.vectora/traces.db.",
-    )
-    traces_p.add_argument(
-        "--session", "-s", metavar="ID", default=None, help="Filtra por session ID"
-    )
-    traces_p.add_argument(
-        "--last", "-n", type=int, default=50, metavar="N", help="Quantos spans (50)"
-    )
-    traces_p.add_argument(
-        "--json", action="store_true", dest="as_json", help="Saída como JSONL"
-    )
-    traces_p.add_argument(
-        "--clear", action="store_true", help="Apaga todos os spans (ou só --session)"
+        help="Edita uma chave de settings. Repetível. Chaves: active_provider, active_model.",
     )
 
     # ── sessions ──────────────────────────────────────────────────────────────
@@ -420,12 +395,6 @@ def run() -> None:
         from backend.cli.config import run_config
 
         run_config(args)
-        return
-
-    if command == "traces":
-        from backend.cli.traces import run_traces
-
-        run_traces(args)
         return
 
     if command == "sessions":

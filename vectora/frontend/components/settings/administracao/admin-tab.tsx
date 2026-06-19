@@ -1371,81 +1371,86 @@ function StoragePanel() {
         </div>
       </div>
 
-      {/* Cards de status — backends lite (sempre ativos) */}
-      <div className="grid grid-cols-1 gap-2">
-        {liteBackends.map(({ key, label }) => (
-          <div
-            key={key}
-            className="flex items-center justify-between rounded border px-3 py-2"
-          >
-            <div className="flex items-center gap-2">
-              <Database className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-xs">{label}</span>
-            </div>
-            {loading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
-            ) : health?.[key] ? (
-              <StorageStatusBadge status={health[key]!} />
-            ) : (
-              <span className="text-xs text-muted-foreground">—</span>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Backends do modo "completo" — desligados por padrão */}
-      <div className="space-y-2 pt-2 border-t">
-        <span className="text-xs font-medium text-muted-foreground">
-          Backends do modo completo (opcional)
-        </span>
+      {/* Cards de status — backends lite (só no modo lite) */}
+      {storageMode === "lite" && (
         <div className="grid grid-cols-1 gap-2">
-          <BackendConfigCard
-            title="Postgres"
-            status={health?.postgres}
-            testBackend="postgres"
-            fields={[
-              {
-                key: "postgres_dsn",
-                testKey: "dsn",
-                placeholder: "postgresql+asyncpg://user:pass@host:5432/vectora",
-              },
-            ]}
-            onSave={(v) => patchStorage(v)}
-          />
-          <BackendConfigCard
-            title="Redis"
-            status={health?.redis}
-            testBackend="redis"
-            fields={[
-              {
-                key: "redis_url",
-                testKey: "url",
-                placeholder: "redis://localhost:6379/0",
-              },
-            ]}
-            onSave={(v) => patchStorage(v)}
-          />
-          <BackendConfigCard
-            title="Qdrant"
-            status={undefined}
-            testBackend="qdrant"
-            fields={[
-              {
-                key: "qdrant_url",
-                testKey: "url",
-                placeholder: "http://localhost:6333",
-              },
-              {
-                key: "qdrant_api_key",
-                testKey: "api_key",
-                placeholder: "API key (opcional)",
-                type: "password",
-              },
-            ]}
-            onSave={(v) => patchStorage(v)}
-          />
+          {liteBackends.map(({ key, label }) => (
+            <div
+              key={key}
+              className="flex items-center justify-between rounded border px-3 py-2"
+            >
+              <div className="flex items-center gap-2">
+                <Database className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-xs">{label}</span>
+              </div>
+              {loading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+              ) : health?.[key] ? (
+                <StorageStatusBadge status={health[key]!} />
+              ) : (
+                <span className="text-xs text-muted-foreground">—</span>
+              )}
+            </div>
+          ))}
         </div>
-      </div>
+      )}
+
+      {/* Backends do modo completo (só no modo completo) */}
+      {storageMode === "complete" && (
+        <div className="space-y-2 pt-2 border-t">
+          <span className="text-xs font-medium text-muted-foreground">
+            Backends do modo completo
+          </span>
+          <div className="grid grid-cols-1 gap-2">
+            <BackendConfigCard
+              title="Postgres"
+              status={health?.postgres}
+              testBackend="postgres"
+              fields={[
+                {
+                  key: "postgres_dsn",
+                  testKey: "dsn",
+                  placeholder:
+                    "postgresql+asyncpg://user:pass@host:5432/vectora",
+                },
+              ]}
+              onSave={(v) => patchStorage(v)}
+            />
+            <BackendConfigCard
+              title="Redis"
+              status={health?.redis}
+              testBackend="redis"
+              fields={[
+                {
+                  key: "redis_url",
+                  testKey: "url",
+                  placeholder: "redis://localhost:6379/0",
+                },
+              ]}
+              onSave={(v) => patchStorage(v)}
+            />
+            <BackendConfigCard
+              title="Qdrant"
+              status={undefined}
+              testBackend="qdrant"
+              fields={[
+                {
+                  key: "qdrant_url",
+                  testKey: "url",
+                  placeholder: "http://localhost:6333",
+                },
+                {
+                  key: "qdrant_api_key",
+                  testKey: "api_key",
+                  placeholder: "API key (opcional)",
+                  type: "password",
+                },
+              ]}
+              onSave={(v) => patchStorage(v)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -80,9 +80,6 @@ class Settings(BaseSettings):
     # RUNTIME BEHAVIOR
     # ============================================================================
 
-    debug_mode: bool = False
-    """Enable debug logging and verbose output."""
-
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     """Application log level."""
 
@@ -141,10 +138,12 @@ class Settings(BaseSettings):
     # DATABASE CONNECTIONS — PostgreSQL (complete)
     # ============================================================================
 
-    postgres_dsn: str | None = None
+    postgres_dsn: str | None = (
+        "postgresql+asyncpg://vectora:vectora@127.0.0.1:5432/vectora"
+    )
     """AsyncPG connection string.
 
-    Exemplo: postgresql+asyncpg://vectora:senha@localhost:5432/vectora
+    Default aponta para o docker-compose padrão (postgres:5432, user/pass/db=vectora).
     Usado por checkpointer, store e vector store no modo complete.
 
     NUNCA usado para usuários/auth/sessões/settings/config — esses dados
@@ -181,10 +180,10 @@ class Settings(BaseSettings):
     # REDIS (complete)
     # ============================================================================
 
-    redis_url: str | None = None
+    redis_url: str | None = "redis://127.0.0.1:6379/0"
     """URL de conexão Redis.
 
-    Exemplo: redis://localhost:6379/0
+    Default aponta para o docker-compose padrão (redis:6379/0).
     Usado por KVCache, rate-limit, invalidação pub/sub e langchain-redis.
     """
 
@@ -214,10 +213,10 @@ class Settings(BaseSettings):
     # QDRANT (complete)
     # ============================================================================
 
-    qdrant_url: str | None = None
+    qdrant_url: str | None = "http://127.0.0.1:6333"
     """Endpoint REST do Qdrant.
 
-    Exemplo: http://localhost:6333
+    Default aponta para o docker-compose padrão (qdrant:6333).
     Usado como VectorStore alternativo ao LanceDB no modo complete.
     """
 
@@ -468,7 +467,7 @@ class Settings(BaseSettings):
             extra={
                 "version": self.version,
                 "llm_provider": self.llm_provider,
-                "debug_mode": self.debug_mode,
+                "storage_mode": self.storage_mode,
             },
         )
 
@@ -483,7 +482,7 @@ class Settings(BaseSettings):
         5. OS environment (already loaded)   ← variáveis de sistema
 
         Separação: settings.json armazena preferências não-secretas (provider, model,
-        debug_mode). ~/.vectora/.env guarda segredos (API keys). Projeto .env tem
+        log_level). ~/.vectora/.env guarda segredos (API keys). Projeto .env tem
         prioridade máxima para desenvolvimento local.
         """
         # Level 5 (lowest): Load embedded defaults.env via setdefault
@@ -502,7 +501,7 @@ class Settings(BaseSettings):
             logger.debug("defaults.env not found (normal for development)")
 
         # Level 3: Load ~/.vectora/settings.json (preferências de runtime não-secretas)
-        # Contém: active_provider, active_model, debug_mode — NÃO contém API keys.
+        # Contém: active_provider, active_model — NÃO contém API keys.
         # override=False (setdefault) para que o projeto .env ainda possa sobrescrever.
         _settings_json = Path.home() / ".vectora" / "settings.json"
         if _settings_json.exists():

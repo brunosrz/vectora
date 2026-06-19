@@ -214,19 +214,21 @@ class BackgroundEmbeddingWorker:
         # Polling adaptativo: _poll_interval cresce enquanto fila está vazia
         # e é resetado ao encontrar items (evita 12+ queries/min em idle).
         self._poll_interval: float = POLL_INTERVAL_MIN
+        self._queue: Any = None
 
     async def _get_queue(self) -> Any:
-        """Obtém a queue de acordo com ``settings.storage_mode``.
-
-        Lite  → ``EmbeddingQueue`` SQLAlchemy (SQLite/Postgres via DSN).
-        Complete → ``PostgresQueueDB`` com ``SELECT … FOR UPDATE SKIP LOCKED``
-                   para suporte multi-worker seguro.
-        """
+        """Obtém (e inicializa uma vez) a queue de acordo com storage_mode."""
+        if self._queue is not None:
+            return self._queue
         if self.config.storage_mode == "complete" and self.config.postgres_dsn:
             from backend.services.queue import PostgresQueueDB
 
-            return PostgresQueueDB()
-        return await get_embedding_queue(self.config.embedding_queue_dsn)
+            q = PostgresQueueDB()
+            await q._ensure_table()
+            self._queue = q
+        else:
+            self._queue = await get_embedding_queue(self.config.embedding_queue_dsn)
+        return self._queue
 
     async def start(self) -> None:
         """Inicia o worker como asyncio.Task."""

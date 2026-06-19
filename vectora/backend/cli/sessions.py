@@ -14,14 +14,21 @@ async def _run_sessions_async() -> None:
     from rich.table import Table
 
     from backend.services.runtime_settings import runtime_settings
-    from backend.services.session import SessionService
     from backend.settings import Settings
 
     try:
         settings = Settings()
-        service = SessionService(settings)
-        await service.initialize()
-        sessions = await service.list_all()
+        if settings.storage_mode == "complete" and settings.postgres_dsn:
+            from backend.services.session import PostgresSessionDB
+
+            db = PostgresSessionDB()
+            sessions = await db.list_sessions(limit=200)
+        else:
+            from backend.services.session import SessionService
+
+            service = SessionService(settings)
+            await service.initialize()
+            sessions = await service.list_all()
     except Exception as e:
         print(f"❌ Error listing sessions: {e}")
         sys.exit(1)
@@ -44,19 +51,19 @@ async def _run_sessions_async() -> None:
     table.add_column("Messages", justify="right", width=9)
     table.add_column("Directory", style="dim")
 
-    for s in sorted(sessions, key=lambda x: x.get("created_at", ""), reverse=True):
+    for s in sorted(sessions, key=lambda x: str(x.get("created_at", "")), reverse=True):
         tid = str(s.get("thread_id", "?"))
-        created = s.get("created_at", "")[:19].replace("T", " ")
+        created = str(s.get("created_at", ""))[:19].replace("T", " ")
         msgs = str(s.get("message_count", 0))
-        work_dir = s.get("working_directory") or "—"
+        work_dir_raw = str(s.get("working_directory") or "—")
+        work_dir = work_dir_raw
         try:
-            work_dir = str(Path(work_dir).relative_to(Path.home()))
-            work_dir = f"~/{work_dir}"
+            work_dir = f"~/{Path(work_dir_raw).relative_to(Path.home())}"
         except ValueError:
             pass
 
         marker = " [bold green]◀ active[/bold green]" if tid in active_ids else ""
-        table.add_row(tid, created, msgs, f"{work_dir}{marker}")
+        table.add_row(tid, created, msgs, f"{work_dir}{marker}")  # noqa: E501
 
     console.print(table)
 
