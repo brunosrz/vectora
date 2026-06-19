@@ -90,10 +90,8 @@ async def _run_sessions_async() -> None:
         msgs = str(s.get("message_count", 0))
         work_dir_raw = str(s.get("working_directory") or "—")
         work_dir = work_dir_raw
-        try:
+        with contextlib.suppress(ValueError):
             work_dir = f"~/{Path(work_dir_raw).relative_to(Path.home())}"
-        except ValueError:
-            pass
 
         marker = " [bold green]◀ active[/bold green]" if tid in active_ids else ""
         table.add_row(tid, created, msgs, f"{work_dir}{marker}")

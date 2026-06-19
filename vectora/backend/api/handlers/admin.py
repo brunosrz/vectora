@@ -18,6 +18,7 @@ import logging
 import os
 import platform
 import sys
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -615,9 +616,7 @@ async def delete_safe_root(request: Request, root_id: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _env_file():
-    from pathlib import Path
-
+def _env_file() -> Path:
     p = Path.home() / ".vectora" / ".env"
     p.parent.mkdir(parents=True, exist_ok=True)
     return p

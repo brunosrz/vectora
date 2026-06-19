@@ -60,7 +60,7 @@ describe("SetupWizard", () => {
     );
     await waitFor(() =>
       expect(
-        container.querySelector("[data-testid='step-content-area']"),
+        document.querySelector("[data-testid='step-content-area']"),
       ).not.toBeNull(),
     );
   });
