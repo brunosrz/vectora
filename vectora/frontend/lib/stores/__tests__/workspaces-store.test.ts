@@ -17,6 +17,12 @@ vi.mock("@/lib/utils/fetch-retry", async (importActual) => {
 
 const retryMock = fetchJsonWithRetry as unknown as Mock;
 
+// `error` da toast store é injetado como mock ESTÁVEL (via setState) e resetado
+// a cada teste. `vi.spyOn` vazaria: cada toast real faz setState e troca o
+// objeto de estado, então o spy do teste anterior continuaria contando.
+type ToastError = ReturnType<typeof useToastStore.getState>["error"];
+const toastError = vi.fn();
+
 function ws(id: string, over: Partial<WorkspaceInfo> = {}): WorkspaceInfo {
   return {
     id,
@@ -36,9 +42,10 @@ function jsonResponse(body: unknown, ok = true, status = 200): Response {
 }
 
 beforeEach(() => {
-  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   retryMock.mockReset();
+  toastError.mockReset();
+  useToastStore.setState({ error: toastError as unknown as ToastError });
   useWorkspacesStore.setState({
     workspaces: [],
     active_id: null,
@@ -100,22 +107,20 @@ describe("workspaces-store — hydrate", () => {
 
   // ── par de erro: payload malformado NÃO pode virar sucesso ──
   it("payload sem `workspaces` → status erro + toast", async () => {
-    const toast = vi.spyOn(useToastStore.getState(), "error");
     retryMock.mockResolvedValueOnce({ active_id: "x" });
     await useWorkspacesStore.getState().hydrate();
     const s = useWorkspacesStore.getState();
     expect(s.status).toBe("error");
     expect(s.error).toBeTruthy();
     expect(s.pending.hydrate).toBe(false);
-    expect(toast).toHaveBeenCalledOnce();
+    expect(toastError).toHaveBeenCalledOnce();
   });
 
   it("queda de rede → status erro + toast", async () => {
-    const toast = vi.spyOn(useToastStore.getState(), "error");
     retryMock.mockRejectedValueOnce(new Error("offline"));
     await useWorkspacesStore.getState().hydrate();
     expect(useWorkspacesStore.getState().status).toBe("error");
-    expect(toast).toHaveBeenCalledOnce();
+    expect(toastError).toHaveBeenCalledOnce();
   });
 });
 
@@ -140,7 +145,6 @@ describe("workspaces-store — create", () => {
   });
 
   it("HTTP !ok → ok:false com a mensagem do backend + toast", async () => {
-    const toast = vi.spyOn(useToastStore.getState(), "error");
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => jsonResponse({ message: "negado" }, false, 403)),
@@ -148,12 +152,11 @@ describe("workspaces-store — create", () => {
     const res = await useWorkspacesStore.getState().create("/x");
     expect(res.ok).toBe(false);
     expect(!res.ok && res.error).toBe("negado");
-    expect(toast).toHaveBeenCalledOnce();
+    expect(toastError).toHaveBeenCalledOnce();
     expect(useWorkspacesStore.getState().pending.create).toBe(false);
   });
 
   it("status != ok no corpo → ok:false (resposta inesperada)", async () => {
-    vi.spyOn(useToastStore.getState(), "error");
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => jsonResponse({ status: "fail" })),
@@ -177,14 +180,13 @@ describe("workspaces-store — trust / gitInit", () => {
   });
 
   it("gitInit com HTTP !ok → ok:false + toast, pending limpo", async () => {
-    const toast = vi.spyOn(useToastStore.getState(), "error");
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => jsonResponse({ message: "sem git" }, false, 500)),
     );
     const res = await useWorkspacesStore.getState().gitInit("a");
     expect(res.ok).toBe(false);
-    expect(toast).toHaveBeenCalledOnce();
+    expect(toastError).toHaveBeenCalledOnce();
     expect(useWorkspacesStore.getState().pending.gitInit).toBe(false);
   });
 });

@@ -20,6 +20,7 @@ Instalar SCons: pip install scons (ou uv add --dev scons)
 
 import glob
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,10 @@ import tempfile
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 ROOT = Dir(".").abspath
+
+# Sequências ANSI (cor/cursor) — strippadas ao gravar o .txt de log: o terminal
+# renderiza as cores, mas o arquivo deve ser texto limpo para colar/ler.
+_ANSI_RE = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
 def _find_pnpm() -> str:
@@ -74,7 +79,7 @@ def _run(cmd: list[str], env: dict | None = None, cwd: str | None = None, log=No
         )
         for line in proc.stdout:  # type: ignore[union-attr]
             sys.stdout.write(line)
-            log.write(line)
+            log.write(_ANSI_RE.sub("", line))
         proc.wait()
         rc = proc.returncode
     if rc != 0:
