@@ -242,11 +242,9 @@ def _action_tests(target, source, env):
             [PNPM, "--dir", "frontend", "exec", "vitest", "run", "--coverage"],
             log=log,
         )
-        # `term:skip-covered` (sem `-missing`): omite a coluna de linhas não
-        # cobertas — o detalhe linha-a-linha fica no htmlcov/. Mais limpo no
-        # terminal e no .txt.
         _run([
             "uv", "run", "pytest", "tests",
+            "-q",
             "--cov=backend",
             "--cov-report=term:skip-covered",
             "--cov-report=html:htmlcov",

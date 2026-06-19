@@ -137,3 +137,33 @@ agent_factory.py`): tools, subagents (`SUBAGENT_SPEC`), middleware
 (HITL via `HumanInTheLoopMiddleware`/`interrupt_on`), `context_schema`.
 Proibido reintroduzir StateGraph manual / orchestrator por nós. CLI é
 operacional (Rich + argparse em `backend/cli`), nunca TUI/Textual.
+
+## 18. Testes: TDD, foco no erro, reconstrução pelos testes
+
+A filosofia de testes (back e front) é vinculante:
+
+- **TDD** — teste antes da feature/fix. Bug → teste que reproduz primeiro;
+  feature → teste do comportamento antes da implementação.
+- **End-to-end de tudo** — testar o fluxo do início ao fim (entrada do
+  usuário/backend → processamento → saída observável), não só unidades isoladas.
+- **Reconstrução pelos testes** — se todo o código de produção sumisse e só
+  sobrassem os testes, deve ser possível reimplementar o sistema do zero
+  seguindo-os. Logo, os testes descrevem o contrato completo, não amostras.
+- **Foco no erro, não no acerto** — todo teste de caminho feliz tem o par de
+  caminho de erro. Passar valor inválido/borda **deve** falhar de forma
+  observável. Se o passo de erro **não** dá erro, o código está frouxo demais
+  (`any`, sem validação) — aperte os tipos/validações até o erro acontecer. O
+  par erro/borda entra no **mesmo** teste existente, não num teste novo.
+- **Edge cases obrigatórios** — vazio, nulo, limites, duplicado, ordem trocada,
+  payload malformado do backend, concorrência quando aplicável.
+- **Saída enxuta** — `scons tests` mostra no terminal **só** o que tem aviso ou
+  erro (com nome completo). Sucessos só incrementam o contador (dots), sem nome.
+- **React é testável** — componentes que montam dinamicamente a partir de dados
+  do backend (workbench: filesystem, git, etc.) são testados simulando a entrega
+  desses dados e verificando objetivamente (via testing-library/logging) que a
+  árvore montou como esperado — hidratação e render corretos, não só smoke.
+
+Critérios de "testável" (não-exaustivo): hooks, stores, infra, clients de API,
+utils, queries, e componentes que renderizam a partir de dados injetáveis.
+Arquivo testável com cobertura 0 é dívida — ver `exclude` do
+`frontend/vitest.config.ts` para o que é legitimamente não-testável (wiring).
