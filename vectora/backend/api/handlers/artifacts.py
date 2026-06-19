@@ -16,7 +16,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from backend.types.documents import ArtifactMetadata
+from backend.vtypes.documents import ArtifactMetadata
 
 logger = logging.getLogger(__name__)
 

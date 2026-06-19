@@ -354,7 +354,7 @@ async def _build_graph_async(model_id: str = "") -> Any:
 
     from backend.services.backends import build_backend_lazy
     from backend.services.skills import list_skill_paths
-    from backend.types.context import VectoraContext
+    from backend.vtypes.context import VectoraContext
 
     # Skills instaladas pelo usuário local (singleton compartilhado).
     # Paths absolutos — harness lê SKILL.md frontmatter on-demand.

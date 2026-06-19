@@ -30,7 +30,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from backend.types.skill import Skill
+from backend.vtypes.skill import Skill
 
 logger = logging.getLogger(__name__)
 

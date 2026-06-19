@@ -204,7 +204,7 @@ async def test_rewind_ok_on_git_repo(tmp_path: Path, mem_db):
 
     # Registra workspace no registry
     from backend.services.workspace import workspace_registry
-    from backend.types import Workspace
+    from backend.vtypes import Workspace
 
     ws = Workspace(
         id="ws-test", name="test", cwd=str(tmp_path), created_at=now, trusted=True

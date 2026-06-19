@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from backend.types.metrics import UIMetrics
+from backend.vtypes.metrics import UIMetrics
 
 __all__ = ["MemoryEntry", "UIMetrics"]
 

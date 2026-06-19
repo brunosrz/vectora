@@ -16,7 +16,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
 if TYPE_CHECKING:
-    from backend.types import Workspace
+    from backend.vtypes import Workspace
 
 logger = logging.getLogger(__name__)
 

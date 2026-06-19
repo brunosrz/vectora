@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar
 
-from backend.types import SafeRoot
+from backend.vtypes import SafeRoot
 
 logger = logging.getLogger(__name__)
 

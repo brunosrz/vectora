@@ -17,7 +17,7 @@ import hashlib
 
 import pytest
 
-from backend.types import Workspace
+from backend.vtypes import Workspace
 
 # ---------------------------------------------------------------------------
 # Fixture — workspace confiável apontando para tmp_path

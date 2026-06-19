@@ -29,7 +29,7 @@ import pytest
 class TestVectoraContext:
     def test_ctx_from_config_full(self):
         """Todos os campos são preenchidos corretamente."""
-        from backend.types.context import ctx_from_config
+        from backend.vtypes.context import ctx_from_config
 
         config = {
             "configurable": {
@@ -53,7 +53,7 @@ class TestVectoraContext:
 
     def test_ctx_from_config_empty(self):
         """Valores padrão quando config é None."""
-        from backend.types.context import ctx_from_config
+        from backend.vtypes.context import ctx_from_config
 
         ctx = ctx_from_config(None)
         assert ctx.user_id == "local"
@@ -62,7 +62,7 @@ class TestVectoraContext:
 
     def test_ctx_from_config_partial(self):
         """Campos ausentes recebem defaults."""
-        from backend.types.context import ctx_from_config
+        from backend.vtypes.context import ctx_from_config
 
         ctx = ctx_from_config({"configurable": {"user_id": "u2"}})
         assert ctx.user_id == "u2"
@@ -71,7 +71,7 @@ class TestVectoraContext:
 
     def test_ctx_locale_fallback(self):
         """``locale`` aceita ``language`` como alias."""
-        from backend.types.context import ctx_from_config
+        from backend.vtypes.context import ctx_from_config
 
         ctx = ctx_from_config({"configurable": {"language": "en-US"}})
         assert ctx.locale == "en-US"

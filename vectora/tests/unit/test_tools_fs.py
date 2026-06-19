@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from backend.types import Workspace
+from backend.vtypes import Workspace
 
 # ---------------------------------------------------------------------------
 # Helpers

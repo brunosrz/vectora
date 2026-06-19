@@ -34,7 +34,7 @@ from backend.api.schemas import (
     ToolSchema,
 )
 from backend.services import agent_factory
-from backend.types.context import ctx_from_config
+from backend.vtypes.context import ctx_from_config
 
 logger = logging.getLogger(__name__)
 

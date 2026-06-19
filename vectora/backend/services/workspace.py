@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import ClassVar
 
-from backend.types import Workspace
+from backend.vtypes import Workspace
 
 logger = logging.getLogger(__name__)
 
