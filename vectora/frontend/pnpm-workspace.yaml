@@ -12,7 +12,6 @@ allowBuilds:
   # decisão explícita de não rodar o build nativo — limpa o ERR_PNPM_IGNORED_BUILDS
   # sem compilar nada (prebuilt @img/sharp-* nem é baixado).
   sharp: false
-
 # Deprecação upstream aceita conscientemente: glob@11.1.0 é puxado transitivamente
 # por workbox-build@7.4.1 (via vite-plugin-pwa) só em build-time para gerar o
 # service worker. O mantenedor do glob deprecou os majors < 13, mas o glob 13 tem

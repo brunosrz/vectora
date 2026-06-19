@@ -303,6 +303,63 @@ def _build_sparse_embeddings() -> Any:
 # Asyncpg pool (F7 — complete mode)
 # ---------------------------------------------------------------------------
 
+_POSTGRES_SCHEMA = """
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS vectora_sessions (
+    thread_id     TEXT         PRIMARY KEY,
+    user_type     TEXT         NOT NULL DEFAULT 'human',
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    last_activity TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    message_count BIGINT       NOT NULL DEFAULT 0,
+    extra         JSONB        NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS vectora_checkpoint_artifacts (
+    id              TEXT         PRIMARY KEY,
+    thread_id       TEXT         NOT NULL,
+    checkpoint_id   TEXT         NOT NULL,
+    strategy        TEXT         NOT NULL DEFAULT 'git',
+    git_sha         TEXT,
+    snapshot_path   TEXT,
+    files_touched   JSONB        NOT NULL DEFAULT '[]',
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS shared_threads (
+    token       TEXT         PRIMARY KEY,
+    thread_id   TEXT         NOT NULL,
+    created_by  TEXT         NOT NULL DEFAULT '',
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    expires_at  TIMESTAMPTZ  NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS vectora_embedding_queue (
+    id           BIGSERIAL    PRIMARY KEY,
+    queue_id     TEXT         NOT NULL UNIQUE,
+    task_json    JSONB        NOT NULL,
+    status       TEXT         NOT NULL DEFAULT 'pending',
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    processed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_activity ON vectora_sessions(last_activity DESC);
+CREATE INDEX IF NOT EXISTS idx_artifacts_thread  ON vectora_checkpoint_artifacts(thread_id);
+CREATE INDEX IF NOT EXISTS idx_shares_thread     ON shared_threads(thread_id);
+CREATE INDEX IF NOT EXISTS idx_shares_expires    ON shared_threads(expires_at);
+CREATE INDEX IF NOT EXISTS ix_veq_status         ON vectora_embedding_queue(status);
+"""
+
+
+async def _ensure_postgres_schema(pool: Any) -> None:
+    """Cria todas as tabelas Postgres idempotentemente na primeira conexão."""
+    try:
+        async with pool.acquire() as conn:
+            await conn.execute(_POSTGRES_SCHEMA)
+        logger.info("storage/factory: schema Postgres garantido")
+    except Exception as exc:
+        logger.warning("storage/factory: erro ao garantir schema Postgres: %s", exc)
+
 
 async def get_pg_pool(dsn: str | None = None) -> Any:
     """Retorna (ou cria) o pool asyncpg compartilhado do modo complete.
@@ -342,6 +399,7 @@ async def get_pg_pool(dsn: str | None = None) -> Any:
     normalized = effective_dsn.replace("postgresql+asyncpg://", "postgresql://")
 
     _pg_pool = await asyncpg.create_pool(normalized, min_size=2, max_size=20)
+    await _ensure_postgres_schema(_pg_pool)
     logger.debug("storage/factory: asyncpg pool criado dsn=%s", normalized[:30] + "…")
     return _pg_pool
 

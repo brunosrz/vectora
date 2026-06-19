@@ -2957,8 +2957,7 @@ ubuntu]`).
 ## BLOCO U — Deep Agents (refactor do harness)
 
 > **Contexto.** Hoje o Vectora tem um harness **custom** sobre LangGraph:
-> `src/graph.py` compõe orchestrator (router via `structured_output`
-> `OrchestratorDecision`) + 2 subagents (coder, search) + nó `hitl_check` +
+> `src/graph.py` compõe orchestrator (router via `structured_output` > `OrchestratorDecision`) + 2 subagents (coder, search) + nó `hitl_check` +
 > pipeline RAG achatado + `parallel_dispatch` (C5). Cada agent cacheia o LLM
 > bindado por user (S6) via `services/llm_tools.py`. Os tool nodes
 > (`DiagnosticToolNode`) já são user-aware (S6).

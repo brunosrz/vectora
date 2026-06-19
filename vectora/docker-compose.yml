@@ -34,6 +34,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-vectora}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ../docker/postgres-init.sql:/docker-entrypoint-initdb.d/01-vectora-schema.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:

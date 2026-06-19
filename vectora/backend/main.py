@@ -75,18 +75,24 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Vectora — workspace de IA com RAG e MCP nativos",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""exemplos:
-  vectora                              imprime este help
   vectora start                        sobe backend + MCP + SPA (fullstack)
-  vectora start --headless             sobe sem janela (bandeja + backend + MCP)
-  vectora start --port 9000            porta custom
-  vectora config                       mostra a configuração atual
-  vectora config keys                  wizard de API keys + LLM provider
+  vectora start --headless             servidor headless (VPS/systemd)
+  vectora start --port 9000            porta customizada
+
+  vectora config                       mostra configuração completa
+  vectora config keys                  wizard: API keys + LLM provider
+  vectora config --set active_model=gemini-2.5-pro
+  vectora config --set storage_mode=complete
+  vectora config --set postgres_dsn=postgresql+asyncpg://user:pass@host/db
+  vectora config --set google_api_key=AIza...
   vectora config docker up             sobe Postgres + Redis + Qdrant local
   vectora config qdrant https://… --api-key KEY
   vectora config redis redis://…
-  vectora storage info                 status dos backends de dados
-  vectora auth login                   autentica no servidor configurado
+
+  vectora auth login                   autentica no servidor Vectora
   vectora sessions                     lista as sessões salvas
+  vectora storage info                 status dos backends de dados
+  vectora storage migrate upgrade      aplica migrations SQLite pendentes
 """,
     )
 
@@ -172,7 +178,12 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="KEY=VALUE",
         action="append",
         dest="set_values",
-        help="Edita uma chave de settings. Repetível. Chaves: active_provider, active_model.",
+        help=(
+            "Edita uma chave. Repetível. "
+            "LLM: active_provider, active_model. "
+            "Storage: storage_mode, postgres_dsn, redis_url, qdrant_url, qdrant_api_key. "
+            "API keys: google_api_key, openai_api_key, anthropic_api_key, cohere_api_key, tavily_api_key."
+        ),
     )
 
     # ── sessions ──────────────────────────────────────────────────────────────
