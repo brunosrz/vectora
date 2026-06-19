@@ -37,11 +37,6 @@ REQUIRES_COHERE = pytest.mark.skipif(
     not os.getenv("COHERE_API_KEY"),
     reason="COHERE_API_KEY não configurado",
 )
-REQUIRES_TAVILY = pytest.mark.skipif(
-    not os.getenv("TAVILY_API_KEY")
-    or os.getenv("ENABLE_WEB_SEARCH", "false").lower() != "true",
-    reason="TAVILY_API_KEY ou ENABLE_WEB_SEARCH não configurados",
-)
 
 
 # ============================================================================
@@ -217,6 +212,30 @@ class TestMcpFileTools:
 class TestMcpWebTools:
     """Testa ferramentas de web search e fetch URL."""
 
+    @pytest.fixture(autouse=True)
+    def _mock_tavily(self, monkeypatch):
+        """Mocka a rede do Tavily. O `web_search` é síncrono (requests, sem
+        timeout efetivo): rodando num executor, o asyncio.wait_for cancela o
+        await mas não a thread bloqueada, então rede lenta/bloqueada penduraria
+        o teste até o timeout global. Validamos o nosso wrapper, não a uptime
+        do Tavily (filosofia: testes não dependem de rede real)."""
+        import backend.tools.web as web
+
+        class _FakeSearch:
+            def invoke(self, _args: object) -> dict:
+                return {
+                    "results": [
+                        {"url": "https://py", "title": "Python", "content": "lang"}
+                    ]
+                }
+
+        class _FakeExtract:
+            def invoke(self, _args: object) -> dict:
+                return {"results": [{"raw_content": "conteúdo extraído"}]}
+
+        monkeypatch.setattr(web, "_get_search_tool", lambda: _FakeSearch())
+        monkeypatch.setattr(web, "_get_extract_tool", lambda: _FakeExtract())
+
     async def test_web_search_disabled_returns_message(self, monkeypatch):
         """Se web search desabilitado, deve retornar mensagem clara."""
         monkeypatch.setenv("ENABLE_WEB_SEARCH", "false")
@@ -231,13 +250,11 @@ class TestMcpWebTools:
             or len(result) > 0
         )
 
-    @REQUIRES_TAVILY
     async def test_web_search_tool_returns_results(self):
-        """web_search_tool deve retornar resultados quando configurado."""
+        """web_search_tool serializa os resultados do Tavily (mockado) como JSON."""
         from backend.mcp.server import web_search_tool
 
         result = await web_search_tool("Python programming language")
-        # Pode ser JSON de resultados ou erro — não deve ser vazio
         assert len(result) > 0
 
     async def test_fetch_url_tool_invalid_url(self):
