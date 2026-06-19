@@ -96,7 +96,7 @@ async def _run_sessions_async() -> None:
             pass
 
         marker = " [bold green]◀ active[/bold green]" if tid in active_ids else ""
-        table.add_row(tid, created, msgs, f"{work_dir}{marker}")  # noqa: E501
+        table.add_row(tid, created, msgs, f"{work_dir}{marker}")
 
     console.print(table)
 
