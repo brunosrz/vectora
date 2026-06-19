@@ -1,0 +1,140 @@
+"use client";
+
+import { memo } from "react";
+import type { Thread } from "@/lib/hooks/threads";
+import { m } from "@/lib/paraglide/messages";
+import { ThreadListSkeleton } from "./thread-list-skeleton";
+import { ThreadGroup } from "./thread-group";
+import { WorkspaceGroup } from "./workspace-group";
+import type { WorkspaceThreadGroup, GroupedThreads } from "./sidebar-utils";
+
+const scrollbarStyles = `
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .custom-scrollbar:hover {
+    scrollbar-color: var(--sidebar-primary, #7FC8FF) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+  }
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: var(--sidebar-primary, #7FC8FF);
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-primary, #99D3FF);
+  }
+`;
+
+interface ThreadListProps {
+  isLoading: boolean;
+  searchQuery: string;
+  filteredThreads: Thread[];
+  workspaceGroups: WorkspaceThreadGroup[];
+  orphans: Thread[];
+  grouped: GroupedThreads;
+  currentThreadId: string;
+  collapsedWorkspaces: Set<string>;
+  isSearching: boolean;
+  onSelectThread: (threadId: string) => void;
+  onDeleteThread: (threadId: string, e: React.MouseEvent) => void;
+  onToggleWorkspace: (workspaceId: string) => void;
+}
+
+export const ThreadList = memo(function ThreadList({
+  isLoading,
+  searchQuery,
+  filteredThreads,
+  workspaceGroups,
+  orphans,
+  grouped,
+  currentThreadId,
+  collapsedWorkspaces,
+  isSearching,
+  onSelectThread,
+  onDeleteThread,
+  onToggleWorkspace,
+}: ThreadListProps) {
+  const { today, yesterday, last7Days, older } = grouped;
+
+  return (
+    <>
+      <style>{scrollbarStyles}</style>
+      <nav className="flex-1 overflow-y-auto py-2 bg-gradient-to-b from-sidebar-accent/5 via-transparent to-sidebar-accent/10 custom-scrollbar">
+        {isLoading ? (
+          <ThreadListSkeleton />
+        ) : searchQuery && filteredThreads.length === 0 ? (
+          <div className="px-6 py-8 text-center text-sm text-muted-foreground bg-gradient-to-br from-card/10 via-card/5 to-transparent rounded-lg mx-3 shadow-depth-xs">
+            <div className="font-medium mb-1">{m.sidebar_no_results()}</div>
+            <div className="text-xs">{m.sidebar_no_results_hint()}</div>
+          </div>
+        ) : filteredThreads.length === 0 ? (
+          <div className="px-6 py-8 text-center text-sm text-muted-foreground bg-gradient-to-br from-card/10 via-card/5 to-transparent rounded-lg mx-3 shadow-depth-xs">
+            <div className="font-medium mb-1">
+              {m.sidebar_no_conversations()}
+            </div>
+            <div className="text-xs">{m.sidebar_no_conversations_hint()}</div>
+          </div>
+        ) : (
+          <>
+            {workspaceGroups.map((group) => (
+              <WorkspaceGroup
+                key={`wsg-${group.workspace.id}`}
+                workspace={group.workspace}
+                threads={group.threads}
+                isSearching={isSearching}
+                isCollapsed={collapsedWorkspaces.has(group.workspace.id)}
+                currentThreadId={currentThreadId}
+                onToggle={onToggleWorkspace}
+                onSelect={onSelectThread}
+                onDelete={onDeleteThread}
+              />
+            ))}
+
+            {orphans.length > 0 && (
+              <>
+                {workspaceGroups.length > 0 && (
+                  <h3 className="mt-4 px-6 text-xs font-semibold text-sidebar-accent-foreground/70 uppercase tracking-wider shadow-inset-light">
+                    {m.sidebar_group_other_conversations()}
+                  </h3>
+                )}
+                <ThreadGroup
+                  threads={today}
+                  label={m.sidebar_group_today()}
+                  currentThreadId={currentThreadId}
+                  onSelect={onSelectThread}
+                  onDelete={onDeleteThread}
+                />
+                <ThreadGroup
+                  threads={yesterday}
+                  label={m.sidebar_group_yesterday()}
+                  currentThreadId={currentThreadId}
+                  onSelect={onSelectThread}
+                  onDelete={onDeleteThread}
+                />
+                <ThreadGroup
+                  threads={last7Days}
+                  label={m.sidebar_group_last_7_days()}
+                  currentThreadId={currentThreadId}
+                  onSelect={onSelectThread}
+                  onDelete={onDeleteThread}
+                />
+                <ThreadGroup
+                  threads={older}
+                  label={m.sidebar_group_older()}
+                  currentThreadId={currentThreadId}
+                  onSelect={onSelectThread}
+                  onDelete={onDeleteThread}
+                />
+              </>
+            )}
+          </>
+        )}
+      </nav>
+    </>
+  );
+});
