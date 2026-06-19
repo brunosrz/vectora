@@ -1,9 +1,9 @@
-import { m } from "#/paraglide/messages";
+import { m } from '#/paraglide/messages'
 
 interface AgentBoxProps {
-  title: string;
-  sub: string;
-  color: string;
+  title: string
+  sub: string
+  color: string
 }
 
 function AgentBox({ title, sub, color }: AgentBoxProps) {
@@ -17,7 +17,7 @@ function AgentBox({ title, sub, color }: AgentBoxProps) {
       </span>
       <span className="w-full text-[11px] leading-4">{sub}</span>
     </div>
-  );
+  )
 }
 
 function AgenticDiagram() {
@@ -39,7 +39,7 @@ function AgenticDiagram() {
 
       <div
         className="flex flex-col items-center rounded-xl border-2 px-6 py-2 text-center"
-        style={{ borderColor: "var(--primary)", background: "#262626" }}
+        style={{ borderColor: 'var(--primary)', background: '#262626' }}
       >
         <span className="text-[14px] font-semibold leading-5 text-primary">
           Orchestrator
@@ -99,7 +99,7 @@ function AgenticDiagram() {
         />
       </div>
     </div>
-  );
+  )
 }
 
 const BULLETS = [
@@ -108,7 +108,7 @@ const BULLETS = [
   m.agentic_bullet_search,
   m.agentic_bullet_rag,
   m.agentic_bullet_parallel,
-];
+]
 
 export default function AgenticFlowSection() {
   return (
@@ -125,7 +125,7 @@ export default function AgenticFlowSection() {
             {BULLETS.map((fn, i) => (
               <li
                 key={i}
-                className={`flex items-start gap-3 text-[14px] leading-5 text-muted-foreground${i > 0 ? " pt-3" : ""}`}
+                className={`flex items-start gap-3 text-[14px] leading-5 text-muted-foreground${i > 0 ? ' pt-3' : ''}`}
               >
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[12px] font-medium text-primary">
                   {i + 1}
@@ -146,5 +146,5 @@ export default function AgenticFlowSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }

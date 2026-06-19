@@ -6,20 +6,20 @@
  */
 
 interface PageHeaderProps {
-  title: string;
-  subtitle?: string;
-  align?: "left" | "center";
-  children?: React.ReactNode;
+  title: string
+  subtitle?: string
+  align?: 'left' | 'center'
+  children?: React.ReactNode
 }
 
 export default function PageHeader({
   title,
   subtitle,
-  align = "center",
+  align = 'center',
   children,
 }: PageHeaderProps) {
   const alignment =
-    align === "center" ? "items-center text-center" : "items-start text-left";
+    align === 'center' ? 'items-center text-center' : 'items-start text-left'
   return (
     <div className={`flex flex-col gap-3 ${alignment}`}>
       <h1 className="text-2xl font-semibold leading-tight tracking-[-0.5px] text-foreground sm:text-3xl">
@@ -32,5 +32,5 @@ export default function PageHeader({
       )}
       {children}
     </div>
-  );
+  )
 }

@@ -1,18 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import LegalPage from "#/components/shared/LegalPage";
+import { createFileRoute } from '@tanstack/react-router'
+import LegalPage from '#/components/shared/LegalPage'
 
-export const Route = createFileRoute("/dpa")({
+export const Route = createFileRoute('/dpa')({
   head: () => ({
     meta: [
-      { title: "DPA — Vectora" },
+      { title: 'DPA — Vectora' },
       {
-        property: "og:image",
-        content: `/api/og?title=${encodeURIComponent("Data Processing Agreement")}&desc=${encodeURIComponent("Template EU DPA padrão ICC. LGPD e GDPR para Enterprise.")}`,
+        property: 'og:image',
+        content: `/api/og?title=${encodeURIComponent('Data Processing Agreement')}&desc=${encodeURIComponent('Template EU DPA padrão ICC. LGPD e GDPR para Enterprise.')}`,
       },
     ],
   }),
   component: DpaPage,
-});
+})
 
 function DpaPage() {
   return (
@@ -63,9 +63,9 @@ function DpaPage() {
       <h2>5. Direitos dos titulares</h2>
       <p>
         Solicitações de acesso, correção, portabilidade e exclusão podem ser
-        feitas em /dashboard/account ou via{" "}
+        feitas em /dashboard/account ou via{' '}
         <a href="mailto:privacy@vectora.company">privacy@vectora.company</a>.
       </p>
     </LegalPage>
-  );
+  )
 }

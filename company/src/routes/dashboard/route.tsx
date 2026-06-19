@@ -1,54 +1,54 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { getSession } from "#/server/fns/auth";
-import { getSupabaseBrowserClient } from "#/lib/supabase/client";
-import { useAuthStore } from "#/store/auth";
-import Sidebar from "#/components/dashboard/Sidebar";
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { getSession } from '#/server/fns/auth'
+import { getSupabaseBrowserClient } from '#/lib/supabase/client'
+import { useAuthStore } from '#/store/auth'
+import Sidebar from '#/components/dashboard/Sidebar'
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute('/dashboard')({
   beforeLoad: async ({ location }) => {
-    const user = await getSession();
+    const user = await getSession()
     if (!user) {
-      throw redirect({ to: "/login", search: { redirect: location.pathname } });
+      throw redirect({ to: '/login', search: { redirect: location.pathname } })
     }
-    return { user };
+    return { user }
   },
   head: () => ({
-    meta: [{ name: "robots", content: "noindex, nofollow" }],
+    meta: [{ name: 'robots', content: 'noindex, nofollow' }],
   }),
   component: DashboardLayout,
-});
+})
 
 function DashboardLayout() {
-  const qc = useQueryClient();
-  const uid = useAuthStore((s) => s.session?.id);
+  const qc = useQueryClient()
+  const uid = useAuthStore((s) => s.session?.id)
 
   useEffect(() => {
-    if (!uid) return;
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
+    if (!uid) return
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
 
     const channel = supabase
-      .channel("license_status")
+      .channel('license_status')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "*",
-          schema: "public",
-          table: "subscriptions",
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions',
           filter: `user_id=eq.${uid}`,
         },
         () => {
-          qc.invalidateQueries({ queryKey: ["subscription"] });
+          qc.invalidateQueries({ queryKey: ['subscription'] })
         },
       )
-      .subscribe();
+      .subscribe()
 
     return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [uid, qc]);
+      supabase.removeChannel(channel)
+    }
+  }, [uid, qc])
 
   return (
     <div className="flex min-h-screen">
@@ -59,5 +59,5 @@ function DashboardLayout() {
         </div>
       </main>
     </div>
-  );
+  )
 }

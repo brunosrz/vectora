@@ -1,18 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import LegalPage from "#/components/shared/LegalPage";
+import { createFileRoute } from '@tanstack/react-router'
+import LegalPage from '#/components/shared/LegalPage'
 
-export const Route = createFileRoute("/terms")({
+export const Route = createFileRoute('/terms')({
   head: () => ({
     meta: [
-      { title: "Termos de Uso — Vectora" },
+      { title: 'Termos de Uso — Vectora' },
       {
-        property: "og:image",
-        content: `/api/og?title=${encodeURIComponent("Termos de Uso")}&desc=${encodeURIComponent("Licença de uso, cancelamento, trial e limitações do Vectora.")}`,
+        property: 'og:image',
+        content: `/api/og?title=${encodeURIComponent('Termos de Uso')}&desc=${encodeURIComponent('Licença de uso, cancelamento, trial e limitações do Vectora.')}`,
       },
     ],
   }),
   component: TermsPage,
-});
+})
 
 function TermsPage() {
   return (
@@ -58,5 +58,5 @@ function TermsPage() {
         <a href="mailto:legal@vectora.company">legal@vectora.company</a>
       </p>
     </LegalPage>
-  );
+  )
 }

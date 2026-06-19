@@ -9,20 +9,20 @@
  */
 
 interface ContainerProps {
-  children: React.ReactNode;
-  size?: "default" | "prose";
-  className?: string;
+  children: React.ReactNode
+  size?: 'default' | 'prose'
+  className?: string
 }
 
 export default function Container({
   children,
-  size = "default",
-  className = "",
+  size = 'default',
+  className = '',
 }: ContainerProps) {
-  const maxWidth = size === "prose" ? "max-w-[720px]" : "max-w-[1024px]";
+  const maxWidth = size === 'prose' ? 'max-w-[720px]' : 'max-w-[1024px]'
   return (
     <div className={`mx-auto w-full ${maxWidth} px-4 sm:px-6 ${className}`}>
       {children}
     </div>
-  );
+  )
 }

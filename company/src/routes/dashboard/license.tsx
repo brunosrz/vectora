@@ -1,14 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { m } from "#/paraglide/messages";
+import { createFileRoute } from '@tanstack/react-router'
+import { m } from '#/paraglide/messages'
 import {
   LicenseStatus,
   LicenseHistory,
-} from "#/components/dashboard/LicenseStatus";
-import DashboardHeading from "#/components/dashboard/DashboardHeading";
+} from '#/components/dashboard/LicenseStatus'
+import DashboardHeading from '#/components/dashboard/DashboardHeading'
 
-export const Route = createFileRoute("/dashboard/license")({
+export const Route = createFileRoute('/dashboard/license')({
   component: LicensePage,
-});
+})
 
 function LicensePage() {
   return (
@@ -22,5 +22,5 @@ function LicensePage() {
         <LicenseHistory />
       </div>
     </div>
-  );
+  )
 }

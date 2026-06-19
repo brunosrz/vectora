@@ -1,13 +1,13 @@
-import * as Accordion from "@radix-ui/react-accordion";
-import { ChevronDown } from "lucide-react";
+import * as Accordion from '@radix-ui/react-accordion'
+import { ChevronDown } from 'lucide-react'
 
 export interface FaqItem {
-  question: string;
-  answer: string;
+  question: string
+  answer: string
 }
 
 interface FaqAccordionProps {
-  items: FaqItem[];
+  items: FaqItem[]
 }
 
 export default function FaqAccordion({ items }: FaqAccordionProps) {
@@ -36,5 +36,5 @@ export default function FaqAccordion({ items }: FaqAccordionProps) {
         </Accordion.Item>
       ))}
     </Accordion.Root>
-  );
+  )
 }

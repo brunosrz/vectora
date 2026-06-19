@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { m } from "#/paraglide/messages";
-import ApiKeysList from "#/components/dashboard/ApiKeysList";
-import DashboardHeading from "#/components/dashboard/DashboardHeading";
+import { createFileRoute } from '@tanstack/react-router'
+import { m } from '#/paraglide/messages'
+import ApiKeysList from '#/components/dashboard/ApiKeysList'
+import DashboardHeading from '#/components/dashboard/DashboardHeading'
 
-export const Route = createFileRoute("/dashboard/api-keys")({
+export const Route = createFileRoute('/dashboard/api-keys')({
   component: ApiKeysPage,
-});
+})
 
 function ApiKeysPage() {
   return (
@@ -16,5 +16,5 @@ function ApiKeysPage() {
       />
       <ApiKeysList />
     </div>
-  );
+  )
 }

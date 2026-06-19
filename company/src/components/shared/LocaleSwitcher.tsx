@@ -1,18 +1,18 @@
-import { getLocale, locales, setLocale } from "#/paraglide/runtime";
-import { m } from "#/paraglide/messages";
+import { getLocale, locales, setLocale } from '#/paraglide/runtime'
+import { m } from '#/paraglide/messages'
 
 const LOCALE_LABELS: Record<string, string> = {
-  pt: "PT",
-  en: "EN",
-  es: "ES",
-  fr: "FR",
-  it: "IT",
-  de: "DE",
-  ru: "RU",
-};
+  pt: 'PT',
+  en: 'EN',
+  es: 'ES',
+  fr: 'FR',
+  it: 'IT',
+  de: 'DE',
+  ru: 'RU',
+}
 
 export default function LocaleSwitcher() {
-  const current = getLocale();
+  const current = getLocale()
 
   return (
     <div className="relative">
@@ -29,5 +29,5 @@ export default function LocaleSwitcher() {
         ))}
       </select>
     </div>
-  );
+  )
 }

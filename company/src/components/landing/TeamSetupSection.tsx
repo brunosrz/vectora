@@ -1,37 +1,37 @@
-import { m } from "#/paraglide/messages";
-import { Server, User, Users, FolderOpen } from "lucide-react";
+import { m } from '#/paraglide/messages'
+import { Server, User, Users, FolderOpen } from 'lucide-react'
 
 const STEPS = [
   {
     Icon: Server,
-    titleKey: "team_step1_title" as const,
-    descKey: "team_step1_desc" as const,
-    iconBg: "rgba(121,184,255,0.1)",
-    iconColor: "var(--primary)",
-    badges: ["PostgreSQL", "Qdrant", "Redis"],
+    titleKey: 'team_step1_title' as const,
+    descKey: 'team_step1_desc' as const,
+    iconBg: 'rgba(121,184,255,0.1)',
+    iconColor: 'var(--primary)',
+    badges: ['PostgreSQL', 'Qdrant', 'Redis'],
   },
   {
     Icon: User,
-    titleKey: "team_step2_title" as const,
-    descKey: "team_step2_desc" as const,
-    iconBg: "rgba(173,70,255,0.1)",
-    iconColor: "var(--accent-purple)",
+    titleKey: 'team_step2_title' as const,
+    descKey: 'team_step2_desc' as const,
+    iconBg: 'rgba(173,70,255,0.1)',
+    iconColor: 'var(--accent-purple)',
   },
   {
     Icon: Users,
-    titleKey: "team_step3_title" as const,
-    descKey: "team_step3_desc" as const,
-    iconBg: "rgba(78,201,160,0.1)",
-    iconColor: "var(--accent-green)",
+    titleKey: 'team_step3_title' as const,
+    descKey: 'team_step3_desc' as const,
+    iconBg: 'rgba(78,201,160,0.1)',
+    iconColor: 'var(--accent-green)',
   },
   {
     Icon: FolderOpen,
-    titleKey: "team_step4_title" as const,
-    descKey: "team_step4_desc" as const,
-    iconBg: "rgba(226,192,141,0.1)",
-    iconColor: "var(--accent-amber)",
+    titleKey: 'team_step4_title' as const,
+    descKey: 'team_step4_desc' as const,
+    iconBg: 'rgba(226,192,141,0.1)',
+    iconColor: 'var(--accent-amber)',
   },
-];
+]
 
 export default function TeamSetupSection() {
   return (
@@ -44,7 +44,7 @@ export default function TeamSetupSection() {
         {/* 4 cards lado a lado — largura fixa ditada pela linha de badges */}
         <div className="flex w-full flex-wrap justify-center gap-2">
           {STEPS.map((step, i) => {
-            const { Icon } = step;
+            const { Icon } = step
             return (
               <div
                 key={i}
@@ -73,7 +73,7 @@ export default function TeamSetupSection() {
                   {m[step.descKey]()}
                 </p>
 
-                {"badges" in step && step.badges && (
+                {'badges' in step && step.badges && (
                   <div className="flex items-center gap-1.5">
                     {step.badges.map((b) => (
                       <span
@@ -86,7 +86,7 @@ export default function TeamSetupSection() {
                   </div>
                 )}
               </div>
-            );
+            )
           })}
         </div>
 
@@ -96,5 +96,5 @@ export default function TeamSetupSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }

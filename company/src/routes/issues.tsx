@@ -1,43 +1,43 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { m } from "#/paraglide/messages";
-import Turnstile from "#/components/shared/Turnstile";
-import Container from "#/components/shared/Container";
-import PageHeader from "#/components/shared/PageHeader";
-import { submitIssue, listOpenIssues } from "#/server/fns/issues";
-import type { IssueListItem } from "#/server/fns/issues";
-import { toast } from "sonner";
+import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { m } from '#/paraglide/messages'
+import Turnstile from '#/components/shared/Turnstile'
+import Container from '#/components/shared/Container'
+import PageHeader from '#/components/shared/PageHeader'
+import { submitIssue, listOpenIssues } from '#/server/fns/issues'
+import type { IssueListItem } from '#/server/fns/issues'
+import { toast } from 'sonner'
 
-export const Route = createFileRoute("/issues")({
+export const Route = createFileRoute('/issues')({
   head: () => ({
     meta: [
       { title: m.page_issues_title() },
       {
-        property: "og:image",
-        content: `/api/og?title=${encodeURIComponent(m.page_issues_title())}&desc=${encodeURIComponent("Reporte bugs, envie feedback ou sugira features para o Vectora.")}`,
+        property: 'og:image',
+        content: `/api/og?title=${encodeURIComponent(m.page_issues_title())}&desc=${encodeURIComponent('Reporte bugs, envie feedback ou sugira features para o Vectora.')}`,
       },
     ],
   }),
   loader: async () => ({ issues: await listOpenIssues() }),
   component: IssuesPage,
-});
+})
 
-const CATEGORIES = ["bug", "feedback", "feature"] as const;
-type Category = (typeof CATEGORIES)[number];
+const CATEGORIES = ['bug', 'feedback', 'feature'] as const
+type Category = (typeof CATEGORIES)[number]
 
 const CATEGORY_LABELS: Record<Category, string> = {
-  bug: "Bug",
-  feedback: "Feedback",
-  feature: "Feature request",
-};
+  bug: 'Bug',
+  feedback: 'Feedback',
+  feature: 'Feature request',
+}
 
 function IssueForm() {
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<Category>("bug");
-  const [description, setDescription] = useState("");
-  const [email, setEmail] = useState("");
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [title, setTitle] = useState('')
+  const [category, setCategory] = useState<Category>('bug')
+  const [description, setDescription] = useState('')
+  const [email, setEmail] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -51,26 +51,26 @@ function IssueForm() {
         },
       }),
     onSuccess: () => {
-      toast.success(m.issues_success());
-      setTitle("");
-      setDescription("");
-      setEmail("");
-      setTurnstileToken(null);
+      toast.success(m.issues_success())
+      setTitle('')
+      setDescription('')
+      setEmail('')
+      setTurnstileToken(null)
     },
     onError: () => toast.error(m.error_generic()),
-  });
+  })
 
   const canSubmit =
     title.length >= 3 &&
     description.length >= 10 &&
     turnstileToken !== null &&
-    !mutation.isPending;
+    !mutation.isPending
 
   return (
     <form
       onSubmit={(e) => {
-        e.preventDefault();
-        if (canSubmit) mutation.mutate();
+        e.preventDefault()
+        if (canSubmit) mutation.mutate()
       }}
       className="space-y-5"
     >
@@ -100,8 +100,8 @@ function IssueForm() {
               onClick={() => setCategory(c)}
               className={`rounded-lg border px-3 py-1.5 text-sm transition-all ${
                 category === c
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground/90"
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground/90'
               }`}
             >
               {CATEGORY_LABELS[c]}
@@ -147,7 +147,7 @@ function IssueForm() {
         {mutation.isPending ? m.form_submitting() : m.issues_submit()}
       </button>
     </form>
-  );
+  )
 }
 
 function IssuesList({ issues }: { issues: IssueListItem[] }) {
@@ -186,11 +186,11 @@ function IssuesList({ issues }: { issues: IssueListItem[] }) {
         </ul>
       )}
     </section>
-  );
+  )
 }
 
 function IssuesPage() {
-  const { issues } = Route.useLoaderData();
+  const { issues } = Route.useLoaderData()
   return (
     <Container size="prose" className="py-16">
       <div className="mb-10">
@@ -203,5 +203,5 @@ function IssuesPage() {
       <IssueForm />
       <IssuesList issues={issues} />
     </Container>
-  );
+  )
 }

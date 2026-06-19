@@ -1,18 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import LegalPage from "#/components/shared/LegalPage";
+import { createFileRoute } from '@tanstack/react-router'
+import LegalPage from '#/components/shared/LegalPage'
 
-export const Route = createFileRoute("/cookies")({
+export const Route = createFileRoute('/cookies')({
   head: () => ({
     meta: [
-      { title: "Política de Cookies — Vectora" },
+      { title: 'Política de Cookies — Vectora' },
       {
-        property: "og:image",
-        content: `/api/og?title=${encodeURIComponent("Política de Cookies")}&desc=${encodeURIComponent("Apenas cookies essenciais de autenticação. Sem rastreamento.")}`,
+        property: 'og:image',
+        content: `/api/og?title=${encodeURIComponent('Política de Cookies')}&desc=${encodeURIComponent('Apenas cookies essenciais de autenticação. Sem rastreamento.')}`,
       },
     ],
   }),
   component: CookiesPage,
-});
+})
 
 function CookiesPage() {
   return (
@@ -40,5 +40,5 @@ function CookiesPage() {
         encerrará sua sessão.
       </p>
     </LegalPage>
-  );
+  )
 }

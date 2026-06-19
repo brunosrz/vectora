@@ -1,11 +1,11 @@
-import { Link } from "@tanstack/react-router";
-import { m } from "#/paraglide/messages";
-import Logo from "./Logo";
+import { Link } from '@tanstack/react-router'
+import { m } from '#/paraglide/messages'
+import Logo from './Logo'
 
 export default function Footer() {
-  const year = new Date().getFullYear();
+  const year = new Date().getFullYear()
 
-  const linkClass = "transition-colors hover:text-foreground";
+  const linkClass = 'transition-colors hover:text-foreground'
 
   return (
     <footer className="bg-muted">
@@ -105,5 +105,5 @@ export default function Footer() {
         </span>
       </div>
     </footer>
-  );
+  )
 }

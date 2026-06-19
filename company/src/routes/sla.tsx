@@ -1,18 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import LegalPage from "#/components/shared/LegalPage";
+import { createFileRoute } from '@tanstack/react-router'
+import LegalPage from '#/components/shared/LegalPage'
 
-export const Route = createFileRoute("/sla")({
+export const Route = createFileRoute('/sla')({
   head: () => ({
     meta: [
-      { title: "SLA — Vectora" },
+      { title: 'SLA — Vectora' },
       {
-        property: "og:image",
-        content: `/api/og?title=${encodeURIComponent("Acordo de Nível de Serviço")}&desc=${encodeURIComponent("Uptime ≥ 99.5% para validate-license. Latência p95 < 500ms.")}`,
+        property: 'og:image',
+        content: `/api/og?title=${encodeURIComponent('Acordo de Nível de Serviço')}&desc=${encodeURIComponent('Uptime ≥ 99.5% para validate-license. Latência p95 < 500ms.')}`,
       },
     ],
   }),
   component: SlaPage,
-});
+})
 
 function SlaPage() {
   return (
@@ -55,5 +55,5 @@ function SlaPage() {
         próxima fatura.
       </p>
     </LegalPage>
-  );
+  )
 }

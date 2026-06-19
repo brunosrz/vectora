@@ -9,11 +9,11 @@ import {
   Text,
   Link,
   Hr,
-} from "@react-email/components";
+} from '@react-email/components'
 
 interface WelcomeEmailProps {
-  name: string;
-  trialEndsAt: string;
+  name: string
+  trialEndsAt: string
 }
 
 export default function WelcomeEmail({ name, trialEndsAt }: WelcomeEmailProps) {
@@ -26,7 +26,7 @@ export default function WelcomeEmail({ name, trialEndsAt }: WelcomeEmailProps) {
           <Heading style={h1}>Vectora</Heading>
           <Text style={text}>Olá, {name}!</Text>
           <Text style={text}>
-            Seu trial de 30 dias começou. Você tem acesso completo ao plano{" "}
+            Seu trial de 30 dias começou. Você tem acesso completo ao plano{' '}
             <strong>Plus</strong> até <strong>{trialEndsAt}</strong>.
           </Text>
           <Section style={card}>
@@ -51,7 +51,7 @@ export default function WelcomeEmail({ name, trialEndsAt }: WelcomeEmailProps) {
           </Link>
           <Hr style={hr} />
           <Text style={footer}>
-            Vectora ·{" "}
+            Vectora ·{' '}
             <Link href="https://vectora.company" style={footerLink}>
               vectora.company
             </Link>
@@ -59,49 +59,49 @@ export default function WelcomeEmail({ name, trialEndsAt }: WelcomeEmailProps) {
         </Container>
       </Body>
     </Html>
-  );
+  )
 }
 
 const body = {
-  backgroundColor: "#0a0e1a",
-  fontFamily: "ui-monospace, monospace",
-};
-const container = { maxWidth: "560px", margin: "0 auto", padding: "32px 24px" };
+  backgroundColor: '#0a0e1a',
+  fontFamily: 'ui-monospace, monospace',
+}
+const container = { maxWidth: '560px', margin: '0 auto', padding: '32px 24px' }
 const h1 = {
-  color: "#ffffff",
-  fontSize: "24px",
-  fontWeight: "700",
-  marginBottom: "24px",
-};
+  color: '#ffffff',
+  fontSize: '24px',
+  fontWeight: '700',
+  marginBottom: '24px',
+}
 const text = {
-  color: "#94a3b8",
-  fontSize: "14px",
-  lineHeight: "1.6",
-  margin: "8px 0",
-};
+  color: '#94a3b8',
+  fontSize: '14px',
+  lineHeight: '1.6',
+  margin: '8px 0',
+}
 const card = {
-  backgroundColor: "#0f172a",
-  borderRadius: "12px",
-  padding: "16px 20px",
-  margin: "20px 0",
-};
+  backgroundColor: '#0f172a',
+  borderRadius: '12px',
+  padding: '16px 20px',
+  margin: '20px 0',
+}
 const cardText = {
-  color: "#cbd5e1",
-  fontSize: "13px",
-  lineHeight: "1.8",
-  margin: "4px 0",
-};
+  color: '#cbd5e1',
+  fontSize: '13px',
+  lineHeight: '1.8',
+  margin: '4px 0',
+}
 const button = {
-  display: "inline-block",
-  backgroundColor: "#3b82f6",
-  color: "#ffffff",
-  padding: "12px 24px",
-  borderRadius: "12px",
-  textDecoration: "none",
-  fontSize: "14px",
-  fontWeight: "600",
-  margin: "16px 0",
-};
-const hr = { borderColor: "#1e293b", margin: "24px 0" };
-const footer = { color: "#475569", fontSize: "12px" };
-const footerLink = { color: "#3b82f6" };
+  display: 'inline-block',
+  backgroundColor: '#3b82f6',
+  color: '#ffffff',
+  padding: '12px 24px',
+  borderRadius: '12px',
+  textDecoration: 'none',
+  fontSize: '14px',
+  fontWeight: '600',
+  margin: '16px 0',
+}
+const hr = { borderColor: '#1e293b', margin: '24px 0' }
+const footer = { color: '#475569', fontSize: '12px' }
+const footerLink = { color: '#3b82f6' }

@@ -1,11 +1,11 @@
-import { m } from "#/paraglide/messages";
-import Container from "#/components/shared/Container";
-import PageHeader from "#/components/shared/PageHeader";
+import { m } from '#/paraglide/messages'
+import Container from '#/components/shared/Container'
+import PageHeader from '#/components/shared/PageHeader'
 
 interface LegalPageProps {
-  title: string;
-  lastUpdated: string;
-  children: React.ReactNode;
+  title: string
+  lastUpdated: string
+  children: React.ReactNode
 }
 
 export default function LegalPage({
@@ -23,5 +23,5 @@ export default function LegalPage({
         {children}
       </div>
     </Container>
-  );
+  )
 }

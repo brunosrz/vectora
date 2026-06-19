@@ -1,18 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import LegalPage from "#/components/shared/LegalPage";
+import { createFileRoute } from '@tanstack/react-router'
+import LegalPage from '#/components/shared/LegalPage'
 
-export const Route = createFileRoute("/privacy")({
+export const Route = createFileRoute('/privacy')({
   head: () => ({
     meta: [
-      { title: "Política de Privacidade — Vectora" },
+      { title: 'Política de Privacidade — Vectora' },
       {
-        property: "og:image",
-        content: `/api/og?title=${encodeURIComponent("Política de Privacidade")}&desc=${encodeURIComponent("Como o Vectora coleta, usa e protege seus dados. LGPD e GDPR compliant.")}`,
+        property: 'og:image',
+        content: `/api/og?title=${encodeURIComponent('Política de Privacidade')}&desc=${encodeURIComponent('Como o Vectora coleta, usa e protege seus dados. LGPD e GDPR compliant.')}`,
       },
     ],
   }),
   component: PrivacyPage,
-});
+})
 
 function PrivacyPage() {
   return (
@@ -57,5 +57,5 @@ function PrivacyPage() {
         <a href="mailto:privacy@vectora.company">privacy@vectora.company</a>
       </p>
     </LegalPage>
-  );
+  )
 }

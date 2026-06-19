@@ -1,61 +1,61 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { z } from "zod";
-import { m } from "#/paraglide/messages";
-import AuthLayout from "#/components/shared/AuthLayout";
-import { getSession, signIn, sendMagicLink } from "#/server/fns/auth";
-import { toast } from "sonner";
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { z } from 'zod'
+import { m } from '#/paraglide/messages'
+import AuthLayout from '#/components/shared/AuthLayout'
+import { getSession, signIn, sendMagicLink } from '#/server/fns/auth'
+import { toast } from 'sonner'
 
-const SearchSchema = z.object({ redirect: z.string().optional() });
+const SearchSchema = z.object({ redirect: z.string().optional() })
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute('/login')({
   validateSearch: SearchSchema,
   beforeLoad: async () => {
-    const user = await getSession();
-    if (user) throw { redirect: { to: "/dashboard" } };
+    const user = await getSession()
+    if (user) throw { redirect: { to: '/dashboard' } }
   },
   head: () => ({ meta: [{ title: m.page_login_title() }] }),
   component: LoginPage,
-});
+})
 
 const AUTH_ERROR_MAP: Partial<Record<string, () => string>> = {
-  "Invalid login credentials": m.error_invalid_credentials,
-  "Email not confirmed": m.error_email_not_confirmed,
-};
+  'Invalid login credentials': m.error_invalid_credentials,
+  'Email not confirmed': m.error_email_not_confirmed,
+}
 
 function LoginPage() {
-  const navigate = useNavigate();
-  const { redirect } = Route.useSearch();
+  const navigate = useNavigate()
+  const { redirect } = Route.useSearch()
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const loginMutation = useMutation({
     mutationFn: () => signIn({ data: { email, password } }),
     onSuccess: () =>
-      navigate({ to: (redirect ?? "/dashboard") as "/dashboard" }),
+      navigate({ to: (redirect ?? '/dashboard') as '/dashboard' }),
     onError: (err: Error) => {
-      const msgFn = AUTH_ERROR_MAP[err.message];
-      toast.error(msgFn ? msgFn() : m.error_generic());
+      const msgFn = AUTH_ERROR_MAP[err.message]
+      toast.error(msgFn ? msgFn() : m.error_generic())
     },
-  });
+  })
 
   const magicLinkMutation = useMutation({
     mutationFn: () => sendMagicLink({ data: { email } }),
     onSuccess: () => toast.success(m.login_magic_sent()),
     onError: () => toast.error(m.error_generic()),
-  });
+  })
 
   const canSubmit =
-    email.includes("@") && password.length >= 1 && !loginMutation.isPending;
+    email.includes('@') && password.length >= 1 && !loginMutation.isPending
 
   return (
     <AuthLayout heading={m.login_heading()}>
       <form
         onSubmit={(e) => {
-          e.preventDefault();
-          if (canSubmit) loginMutation.mutate();
+          e.preventDefault()
+          if (canSubmit) loginMutation.mutate()
         }}
         className="space-y-4"
       >
@@ -80,7 +80,7 @@ function LoginPage() {
             </label>
             <button
               type="button"
-              disabled={!email.includes("@") || magicLinkMutation.isPending}
+              disabled={!email.includes('@') || magicLinkMutation.isPending}
               onClick={() => magicLinkMutation.mutate()}
               className="text-xs text-primary hover:text-primary transition-colors disabled:opacity-40"
             >
@@ -115,5 +115,5 @@ function LoginPage() {
         </Link>
       </p>
     </AuthLayout>
-  );
+  )
 }

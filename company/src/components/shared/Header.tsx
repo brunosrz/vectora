@@ -1,43 +1,43 @@
-import { useState, useRef, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
-import { m } from "#/paraglide/messages";
-import { useAuthStore } from "#/store/auth";
-import { getLocale, locales, setLocale } from "#/paraglide/runtime";
-import Logo from "./Logo";
-import ThemeToggle from "./ThemeToggle";
+import { useState, useRef, useEffect } from 'react'
+import { Link } from '@tanstack/react-router'
+import { Menu, X } from 'lucide-react'
+import { m } from '#/paraglide/messages'
+import { useAuthStore } from '#/store/auth'
+import { getLocale, locales, setLocale } from '#/paraglide/runtime'
+import Logo from './Logo'
+import ThemeToggle from './ThemeToggle'
 
 const LOCALE_LABELS: Record<string, string> = {
-  pt: "PT",
-  en: "EN",
-  es: "ES",
-  fr: "FR",
-  it: "IT",
-  de: "DE",
-  ru: "RU",
-};
+  pt: 'PT',
+  en: 'EN',
+  es: 'ES',
+  fr: 'FR',
+  it: 'IT',
+  de: 'DE',
+  ru: 'RU',
+}
 
 /** Pill compartilhada: fundo card + borda-raio 16 px + sombra sutil */
 const pill =
-  "flex items-center justify-center bg-card rounded-2xl shadow-[0px_1px_3px_rgba(24,25,28,0.3),0px_1px_2px_-1px_rgba(24,25,28,0.3)]";
+  'flex items-center justify-center bg-card rounded-2xl shadow-[0px_1px_3px_rgba(24,25,28,0.3),0px_1px_2px_-1px_rgba(24,25,28,0.3)]'
 
 export default function Header() {
-  const session = useAuthStore((s) => s.session);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [localeOpen, setLocaleOpen] = useState(false);
-  const localeRef = useRef<HTMLDivElement>(null);
-  const locale = getLocale();
+  const session = useAuthStore((s) => s.session)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [localeOpen, setLocaleOpen] = useState(false)
+  const localeRef = useRef<HTMLDivElement>(null)
+  const locale = getLocale()
 
   useEffect(() => {
-    if (!localeOpen) return;
+    if (!localeOpen) return
     const handler = (e: MouseEvent) => {
       if (localeRef.current && !localeRef.current.contains(e.target as Node)) {
-        setLocaleOpen(false);
+        setLocaleOpen(false)
       }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [localeOpen]);
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [localeOpen])
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
@@ -58,7 +58,7 @@ export default function Header() {
           <Link
             to="/pricing"
             className="text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
+            activeProps={{ className: 'text-foreground' }}
           >
             {m.nav_pricing()}
           </Link>
@@ -73,7 +73,7 @@ export default function Header() {
           <Link
             to="/faq"
             className="text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
+            activeProps={{ className: 'text-foreground' }}
           >
             {m.nav_faq()}
           </Link>
@@ -105,13 +105,13 @@ export default function Header() {
                     aria-selected={l === locale}
                     type="button"
                     onClick={() => {
-                      setLocale(l);
-                      setLocaleOpen(false);
+                      setLocale(l)
+                      setLocaleOpen(false)
                     }}
                     className={`flex w-full cursor-pointer items-center justify-center px-3 py-2 text-sm transition-colors hover:bg-muted ${
                       l === locale
-                        ? "font-medium text-primary"
-                        : "text-muted-foreground"
+                        ? 'font-medium text-primary'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     {LOCALE_LABELS[l] ?? l.toUpperCase()}
@@ -239,8 +239,8 @@ export default function Header() {
                     onClick={() => setLocale(l)}
                     className={`rounded-xl px-2.5 py-1 text-xs transition-colors ${
                       l === locale
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card text-foreground/80 hover:bg-muted"
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card text-foreground/80 hover:bg-muted'
                     }`}
                   >
                     {LOCALE_LABELS[l] ?? l.toUpperCase()}
@@ -252,5 +252,5 @@ export default function Header() {
         </nav>
       )}
     </header>
-  );
+  )
 }

@@ -1,6 +1,6 @@
 allowBuilds:
-  "@sentry-internal/node-cpu-profiler": true
-  "@sentry/cli": true
+  '@sentry-internal/node-cpu-profiler': true
+  '@sentry/cli': true
   esbuild: true
   unrs-resolver: true
 
@@ -11,23 +11,23 @@ allowBuilds:
 # funcionam (build verde); só os usamos para renderizar os templates de email
 # em emails/*.tsx. Silenciar os warnings aqui evita ruído sem mascarar nada.
 allowedDeprecatedVersions:
-  "@react-email/components": "1.0.12"
-  "@react-email/body": "*"
-  "@react-email/button": "*"
-  "@react-email/code-block": "*"
-  "@react-email/code-inline": "*"
-  "@react-email/column": "*"
-  "@react-email/container": "*"
-  "@react-email/font": "*"
-  "@react-email/head": "*"
-  "@react-email/heading": "*"
-  "@react-email/hr": "*"
-  "@react-email/html": "*"
-  "@react-email/img": "*"
-  "@react-email/link": "*"
-  "@react-email/markdown": "*"
-  "@react-email/preview": "*"
-  "@react-email/row": "*"
-  "@react-email/section": "*"
-  "@react-email/tailwind": "*"
-  "@react-email/text": "*"
+  '@react-email/components': '1.0.12'
+  '@react-email/body': '*'
+  '@react-email/button': '*'
+  '@react-email/code-block': '*'
+  '@react-email/code-inline': '*'
+  '@react-email/column': '*'
+  '@react-email/container': '*'
+  '@react-email/font': '*'
+  '@react-email/head': '*'
+  '@react-email/heading': '*'
+  '@react-email/hr': '*'
+  '@react-email/html': '*'
+  '@react-email/img': '*'
+  '@react-email/link': '*'
+  '@react-email/markdown': '*'
+  '@react-email/preview': '*'
+  '@react-email/row': '*'
+  '@react-email/section': '*'
+  '@react-email/tailwind': '*'
+  '@react-email/text': '*'

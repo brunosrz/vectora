@@ -6,8 +6,8 @@
  */
 
 interface DashboardHeadingProps {
-  title: string;
-  subtitle?: string;
+  title: string
+  subtitle?: string
 }
 
 export default function DashboardHeading({
@@ -21,5 +21,5 @@ export default function DashboardHeading({
         <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
       )}
     </div>
-  );
+  )
 }
