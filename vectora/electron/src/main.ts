@@ -59,9 +59,15 @@ let updateReady = false;
 
 const PROTOCOL = "vectora";
 const APP_SCHEME = "vectora-app"; // origem da SPA no desktop (IPC, sem TCP)
-const READINESS_TIMEOUT_MS = 30_000;
+// 90s: cobre extração do Nuitka onefile no primeiro boot (100-200 MB → %TEMP%)
+// e scan do Windows Defender em binário novo não reconhecido.
+const READINESS_TIMEOUT_MS = 90_000;
 const HEALTH_BASE_DELAY_MS = 200;
 const HEALTH_MAX_DELAY_MS = 2_000;
+
+// Últimas linhas de stdout/stderr do backend — exibidas no dialog de erro.
+const _backendLog: string[] = [];
+const _MAX_LOG_LINES = 60;
 
 // O scheme da SPA precisa ser registrado ANTES de app.whenReady(). Habilita
 // fetch/SSE e trata a origem como segura (Secure Context: crypto.randomUUID).
@@ -221,9 +227,16 @@ async function startBackend(): Promise<void> {
     // Lê VECTORA_IPC_PIPE=<path> do stdout para usar named pipe no Windows.
     const match = /VECTORA_IPC_PIPE=(.+)/.exec(text);
     if (match) backendPipePath = match[1].trim();
+    _backendLog.push(text);
+    if (_backendLog.length > _MAX_LOG_LINES) _backendLog.shift();
     process.stdout.write(`[backend] ${text}`);
   });
-  backend.stderr?.on("data", (b) => process.stderr.write(`[backend] ${b}`));
+  backend.stderr?.on("data", (b: Buffer) => {
+    const text = b.toString();
+    _backendLog.push(text);
+    if (_backendLog.length > _MAX_LOG_LINES) _backendLog.shift();
+    process.stderr.write(`[backend] ${text}`);
+  });
   backend.on("exit", handleBackendExit);
 }
 
@@ -272,16 +285,29 @@ async function restartBackend(): Promise<void> {
 /**
  * Health-check com backoff exponencial. Cada falha dobra o delay até
  * ``HEALTH_MAX_DELAY_MS``, capado no ``READINESS_TIMEOUT_MS`` global.
+ * Falha imediatamente se o processo backend já terminou (crash no startup).
  */
 async function waitForBackend(): Promise<void> {
   const deadline = Date.now() + READINESS_TIMEOUT_MS;
   let delay = HEALTH_BASE_DELAY_MS;
   while (Date.now() < deadline) {
+    // Detecta crash de startup sem esperar o timeout completo.
+    if (backend !== null && backend.exitCode !== null) {
+      const logs = _backendLog.slice(-20).join("").trim();
+      throw new Error(
+        `Backend encerrou inesperadamente (code=${backend.exitCode}).` +
+          (logs ? `\n\nÚltimos logs:\n${logs}` : ""),
+      );
+    }
     if (await pingBackend()) return;
     await new Promise((r) => setTimeout(r, delay));
     delay = Math.min(delay * 2, HEALTH_MAX_DELAY_MS);
   }
-  throw new Error(`Backend não respondeu em ${READINESS_TIMEOUT_MS}ms.`);
+  const logs = _backendLog.slice(-20).join("").trim();
+  throw new Error(
+    `Backend não respondeu em ${READINESS_TIMEOUT_MS / 1000}s.` +
+      (logs ? `\n\nÚltimos logs:\n${logs}` : ""),
+  );
 }
 
 // ---------------------------------------------------------------------------

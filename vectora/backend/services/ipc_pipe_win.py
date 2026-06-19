@@ -35,7 +35,7 @@ class _TCPSide(asyncio.Protocol):
         if isinstance(transport, asyncio.WriteTransport) and not transport.is_closing():
             transport.write(data)
 
-    def connection_lost(self, exc: BaseException | None) -> None:  # noqa: ARG002
+    def connection_lost(self, exc: BaseException | None) -> None:
         transport = self._pipe._transport
         if transport and not transport.is_closing():
             transport.close()
