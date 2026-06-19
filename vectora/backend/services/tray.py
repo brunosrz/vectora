@@ -17,12 +17,20 @@ import os
 import sys
 import threading
 import webbrowser
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import uvicorn
 
 logger = logging.getLogger(__name__)
+
+_ASSETS_DIR = Path(__file__).parent.parent / "assets"
+_ICON_PNG = _ASSETS_DIR / "vectora.png"
+_ICON_ICO = _ASSETS_DIR / "vectora.ico"
+
+_PURPLE = (124, 58, 237)
+_WHITE = (255, 255, 255)
 
 
 def _has_display() -> bool:
@@ -36,15 +44,53 @@ def _has_display() -> bool:
     return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
 
 
+def _enable_dark_mode_win32() -> None:
+    """Ativa dark mode para menus Win32 via UxTheme ordinal 135 (Windows 10+).
+
+    SetPreferredAppMode(2 = PreferDark) afeta o tema dos menus de contexto
+    gerados pelo Win32, incluindo o menu do tray. FlushMenuThemes() aplica
+    imediatamente para janelas existentes.
+    """
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        from typing import cast
+
+        uxtheme = cast(Any, ctypes.WinDLL("uxtheme"))
+        set_mode = uxtheme[135]  # SetPreferredAppMode — ordinal não documentado
+        set_mode.restype = ctypes.c_int
+        set_mode(2)  # PreferDark = 2
+        uxtheme[136]()  # FlushMenuThemes
+    except Exception as exc:
+        logger.debug("tray: dark mode win32 indisponível: %s", exc)
+
+
 def _build_icon_image() -> Any:
-    """Gera um ícone simples (quadrado roxo com 'V') sem depender de asset."""
-    from PIL import Image, ImageDraw
+    """Carrega o ícone real do Vectora; fallback para quadrado roxo com 'V'."""
+    from PIL import Image
+
+    resample = getattr(getattr(Image, "Resampling", None), "LANCZOS", None) or getattr(
+        Image, "LANCZOS", 1
+    )
+
+    for path in (_ICON_PNG, _ICON_ICO):
+        if path.exists():
+            try:
+                img = Image.open(path).convert("RGBA")
+                img = img.resize((64, 64), resample)
+                return img
+            except Exception as exc:
+                logger.debug("tray: falha ao carregar %s: %s", path, exc)
+
+    # Fallback — quadrado roxo com 'V'
+    from PIL import ImageDraw
 
     size = 64
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    draw.rounded_rectangle([4, 4, size - 4, size - 4], radius=12, fill=(124, 58, 237))
-    draw.text((22, 18), "V", fill=(255, 255, 255))
+    draw.rounded_rectangle([4, 4, size - 4, size - 4], radius=12, fill=_PURPLE)
+    draw.text((22, 18), "V", fill=_WHITE)
     return img
 
 
@@ -90,6 +136,8 @@ def run_server_with_tray(
         server.run()
         return
 
+    _enable_dark_mode_win32()
+
     server_thread = threading.Thread(target=server.run, name="uvicorn", daemon=True)
     server_thread.start()
 
@@ -106,6 +154,7 @@ def run_server_with_tray(
         "Vectora",
         menu=pystray.Menu(
             pystray.MenuItem("Abrir Vectora", _open, default=True),
+            pystray.Menu.SEPARATOR,
             pystray.MenuItem("Sair", _quit),
         ),
     )

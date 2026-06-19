@@ -99,6 +99,7 @@ exclude = ["chat"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "backend/defaults.env" = "backend/defaults.env"
+"backend/assets" = "backend/assets"
 
 [tool.ruff]
 line-length = 88

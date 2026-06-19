@@ -26,6 +26,7 @@ e delega para ``src.main:run``.
 # nuitka-project: --output-filename=vectora
 # nuitka-project: --output-dir={MAIN_DIRECTORY}/../dist-nuitka
 # nuitka-project: --include-data-dir={MAIN_DIRECTORY}/../frontend/dist=chat_static
+# nuitka-project: --include-data-dir={MAIN_DIRECTORY}/assets=backend/assets
 # nuitka-project: --nofollow-import-to=mypy
 # nuitka-project: --nofollow-import-to=pytest
 # nuitka-project: --nofollow-import-to=_pytest
