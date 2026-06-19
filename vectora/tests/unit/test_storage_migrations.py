@@ -32,20 +32,20 @@ class TestMigrationRunner:
         assert isinstance(statuses, list)
 
     @pytest.mark.asyncio
-    async def test_upgrade_noop_when_no_sql(self, runner_conn):
+    async def test_upgrade_noop_when_no_sql(self, runner_conn, tmp_path):
         """upgrade() sem migrations pendentes não levanta exceção."""
         from backend.storage.migrations.runner import MigrationRunner
 
-        runner = MigrationRunner(runner_conn)
+        runner = MigrationRunner(runner_conn, migrations_dir=tmp_path)
         applied = await runner.upgrade()
         assert isinstance(applied, list)
 
     @pytest.mark.asyncio
-    async def test_schema_migrations_table_created(self, runner_conn):
+    async def test_schema_migrations_table_created(self, runner_conn, tmp_path):
         """Tabela schema_migrations é criada ao instanciar runner."""
         from backend.storage.migrations.runner import MigrationRunner
 
-        runner = MigrationRunner(runner_conn)
+        runner = MigrationRunner(runner_conn, migrations_dir=tmp_path)
         await runner.upgrade()  # força criação da tabela
 
         cur = await runner_conn.execute(

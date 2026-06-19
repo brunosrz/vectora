@@ -66,18 +66,16 @@ describe("SetupWizard", () => {
   });
 });
 
-describe("StepToken", () => {
-  async function renderAtStepToken() {
-    render(<SetupWizard userId="u3" onComplete={vi.fn()} />);
-    await waitFor(() => screen.getByText("1 / 7"));
-    const next = () =>
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    next(); // passo 0 → 1
-    await waitFor(() => screen.getByText("2 / 7"));
-    next(); // passo 1 → 2
-    await waitFor(() => screen.getByText("3 / 7"));
-  }
+async function renderAtStepToken() {
+  render(<SetupWizard userId="u3" onComplete={vi.fn()} />);
+  await waitFor(() => screen.getByText("1 / 7"));
+  fireEvent.click(screen.getByRole("button", { name: "Next" })); // passo 0 → 1
+  await waitFor(() => screen.getByText("2 / 7"));
+  fireEvent.click(screen.getByRole("button", { name: "Next" })); // passo 1 → 2
+  await waitFor(() => screen.getByText("3 / 7"));
+}
 
+describe("StepToken", () => {
   it("campo de token tem autocomplete=off para desabilitar autofill do browser", async () => {
     await renderAtStepToken();
     const input = screen.getByPlaceholderText("vct_…");
