@@ -38,6 +38,7 @@ e delega para ``src.main:run``.
 # nuitka-project: --nofollow-import-to=IPython
 # nuitka-project: --nofollow-import-to=black
 # nuitka-project: --nofollow-import-to=isort
+# nuitka-project: --include-module=backend.services.ipc_pipe_win
 
 from __future__ import annotations
 
