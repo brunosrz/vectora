@@ -207,19 +207,17 @@ async def call_llm(state: State, config: RunnableConfig) -> dict:
 
 ```
 src/
-├── agent.py          # AgentManager — main orchestrator
-├── graph.py          # LangGraph graph builder
-├── state.py          # TypedDict State
-├── context.py        # Context schema
-├── main.py           # CLI entry point
+├── main.py           # CLI entry point (dispatcher: start + config/auth/...)
+├── launcher.py       # Nuitka binary entry (license gate → main.run)
 ├── version.py        # Dynamic version via importlib.metadata
-├── config/           # Settings (Pydantic), defaults.env
-├── nodes/            # LangGraph nodes (engine, debug)
-├── tools/            # 14 tools (fs, rag, web, memory, mcp)
-├── mcp/              # MCP Server, Client, VectoraProxy
-├── agents/           # Orchestrator + specialized agents + identity
-├── services/         # Services (queue, memory, checkpoint, security...)
-├── ui/               # TUI (chat, commands, setup wizard)
+├── settings.py       # Settings (Pydantic)
+├── api/              # FastAPI app, handlers, middleware (+ /mcp mount)
+├── cli/              # Operational CLI (Rich): keys, docker, qdrant, redis, storage, traces, sessions
+├── services/         # agent_factory (deep-agent), queue, memory, checkpoint, security...
+├── agents/           # Subagent specs (coder/search) + identity
+├── nodes/            # tools.py — ALL_TOOLS aggregator
+├── tools/            # tools (fs, rag, web, memory, git, gh, mcp, workspace)
+├── mcp/              # MCP server (mounted at /mcp), client, proxy
 └── testing/          # Fixtures, mocks, message factories
 ```
 
@@ -291,13 +289,19 @@ gh pr create --title "feat: my feature" --body "Description..."
 
 ---
 
-## Adding a New LangGraph Node
+## Adding a Subagent (deep-agent)
 
-1. Implement the node function in `src/nodes/engine.py`
-2. Register in the builder in `src/graph.py` with `builder.add_node()`
-3. Add edges (`add_edge` or `add_conditional_edges`)
-4. Update `State` in `src/state.py` if the node needs a new field
-5. Write tests in `tests/integration/test_graph_execution.py`
+The runtime graph is built by `create_deep_agent`
+(`src/services/agent_factory.py`) — there are no hand-written graph nodes. To
+add a specialist:
+
+1. Define its `SUBAGENT_SPEC` (name, description, system_prompt, tools) in
+   `src/agents/<name>.py`
+2. Add it to `agent_factory._subagent_specs()`
+3. Write tests in `tests/unit/test_agents_<name>.py`
+
+For human approval on a sensitive tool, configure `interrupt_on=` /
+`HumanInTheLoopMiddleware` (`src/services/middleware.py`) — never a manual node.
 
 ---
 

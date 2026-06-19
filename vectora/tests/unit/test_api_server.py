@@ -144,6 +144,45 @@ class TestRoutes:
 
 
 # ---------------------------------------------------------------------------
+# MCP sempre-ativo (Sprint 2) — montado em /mcp + lifespan composto
+# ---------------------------------------------------------------------------
+
+
+class TestMcpMount:
+    """O MCP sobe com todo boot do backend, montado em /mcp, e o ``_lifespan``
+    do FastAPI compõe o bootstrap de env do MCP — o Starlette NÃO roda o
+    lifespan de um sub-app montado, então sem isso o lifespan do MCP nunca
+    executa no `vectora start`."""
+
+    def test_mcp_mounted_at_slash_mcp(self, headless_app):
+        paths = [r.path for r in headless_app.routes]
+        assert "/mcp" in paths, "MCP não montado em /mcp"
+
+    def test_api_tools_schema_route_exists(self, headless_app):
+        paths = [r.path for r in headless_app.routes]
+        assert "/api/tools/schema" in paths
+
+    def test_lifespan_runs_mcp_env_bootstrap(self, headless_app, monkeypatch):
+        import backend.mcp.env_bootstrap as eb
+
+        called = {"value": False}
+
+        def _fake_bootstrap() -> bool:
+            called["value"] = True
+            return False
+
+        monkeypatch.setattr(eb, "bootstrap_env_from_mcp", _fake_bootstrap)
+
+        with TestClient(headless_app, raise_server_exceptions=False):
+            pass
+
+        assert called["value"], (
+            "_lifespan não compôs o bootstrap de env do MCP — o lifespan do "
+            "MCP montado em /mcp nunca roda no boot do backend."
+        )
+
+
+# ---------------------------------------------------------------------------
 # GetTools (endpoint síncrono — pode testar sem graph)
 # ---------------------------------------------------------------------------
 

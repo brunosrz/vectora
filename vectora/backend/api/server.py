@@ -181,6 +181,18 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao configurar LangSmith tracing: %s", exc)
 
+    # MCP sempre-ativo: o MCP é montado em /mcp, mas o Starlette não roda o
+    # lifespan de sub-apps montados. Compomos aqui a parte do lifespan do MCP
+    # que importa no boot — persistir em ~/.vectora/.env as keys vindas do
+    # ambiente (ex.: GOOGLE_API_KEY passada ao `vectora start`).
+    try:
+        from backend.mcp.env_bootstrap import bootstrap_env_from_mcp
+
+        if bootstrap_env_from_mcp():
+            logger.info("api/server: keys do MCP persistidas a partir do ambiente")
+    except Exception as exc:
+        logger.warning("api/server: bootstrap de env do MCP falhou: %s", exc)
+
     # C14 — Setup wizard: avisa o operador se ainda não há usuários cadastrados
     try:
         from backend.services.auth import has_users as _has_users
