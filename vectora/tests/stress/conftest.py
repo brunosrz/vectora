@@ -1,7 +1,7 @@
-"""Fixtures compartilhadas para testes de integração — session 1212.
+"""Fixtures compartilhadas para testes de stress — infra local, sem APIs externas.
 
-Todos os testes de integração usam a session 1212 como thread_id fixo.
-A fixture `integration_cleanup` limpa os dados desta session antes da suite.
+Constantes da session 1212 e helpers de limpeza/embedding direto reusados pela
+suite de stress (filas, contagem de tokens, concorrência).
 """
 
 from __future__ import annotations
@@ -10,13 +10,11 @@ import asyncio
 import logging
 
 import pytest
-from langchain_core.messages import HumanMessage
-from langgraph.graph.state import RunnableConfig
 
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# Constants exportadas — use em test_lifecycle.py e test_mcp_tools.py
+# Constants exportadas
 # ============================================================================
 
 TEST_THREAD_ID = "1212"
@@ -46,7 +44,7 @@ REQUIRES_BOTH = pytest.mark.skipif(
 
 
 # ============================================================================
-# Limpeza da session 1212 — roda UMA VEZ antes da suite de integração
+# Limpeza da session 1212
 # ============================================================================
 
 
@@ -54,7 +52,6 @@ async def _cleanup_session_1212() -> None:
     """Remove dados de teste da session 1212: checkpoints + LanceDB + traces."""
     from backend.settings import settings
 
-    # 1. Limpa checkpoints SQLite (tabelas checkpoints + writes do LangGraph)
     try:
         import aiosqlite
 
@@ -70,7 +67,6 @@ async def _cleanup_session_1212() -> None:
     except Exception as e:
         logger.warning(f"Não foi possível limpar checkpoints: {e}")
 
-    # 2. Limpa coleção LanceDB de teste
     try:
         import lancedb
 
@@ -84,7 +80,6 @@ async def _cleanup_session_1212() -> None:
     except Exception as e:
         logger.warning(f"Não foi possível limpar LanceDB: {e}")
 
-    # 3. Limpa traces da session 1212
     try:
         from backend.services.tracer import tracer
 
@@ -96,76 +91,13 @@ async def _cleanup_session_1212() -> None:
 
 @pytest.fixture(scope="session", autouse=False)
 def integration_cleanup() -> None:  # type: ignore[return]
-    """Limpeza síncrona (scope=session) — chame explicitamente nos testes de integração.
-
-    Usa asyncio.run() para não conflitar com o event loop do pytest-asyncio.
-    """
+    """Limpeza síncrona (scope=session) — chame explicitamente nos testes."""
     asyncio.run(_cleanup_session_1212())
 
 
 # ============================================================================
-# Fixtures de graph — function scope (uma conexão por teste)
+# Helpers exportados
 # ============================================================================
-
-
-@pytest.fixture
-async def lifecycle_graph():
-    """Graph com checkpointer real (settings.db_dsn) para testes de lifecycle.
-
-    Cada teste abre e fecha sua própria conexão SQLite, mas compartilham o
-    mesmo arquivo de banco — portanto o histórico persiste entre testes.
-    """
-    from backend.graph import build_graph
-    from backend.services.checkpoint import Checkpointer
-
-    async with Checkpointer() as cp:
-        graph = build_graph(cp)
-        yield graph
-
-
-@pytest.fixture
-def lifecycle_config() -> RunnableConfig:
-    """RunnableConfig para session 1212 com Context correto."""
-    from backend.context import Context
-
-    context = Context(user_type="test", thread_id=TEST_THREAD_ID)
-    return RunnableConfig(
-        configurable={
-            "thread_id": TEST_THREAD_ID,
-            "context": context,
-        }
-    )
-
-
-# ============================================================================
-# Helpers exportados — importáveis nos arquivos de teste
-# ============================================================================
-
-
-async def invoke_graph(graph, config: RunnableConfig, user_input: str) -> str:
-    """Invoca o graph e retorna a resposta de texto do assistente.
-
-    Extrai o último AIMessage (ou mensagem não-Human) do estado resultante.
-    """
-    result = await graph.ainvoke(
-        {
-            "messages": [HumanMessage(content=user_input)],
-            "session_metadata": {"thread_id": TEST_SESSION_ID},
-        },
-        config=config,
-    )
-    messages = result.get("messages", [])
-    for msg in reversed(messages):
-        if not isinstance(msg, HumanMessage) and hasattr(msg, "content"):
-            content = msg.content
-            if isinstance(content, list):
-                # Gemini retorna lista de dicts com "text"
-                return " ".join(
-                    item.get("text", "") if isinstance(item, dict) else str(item)
-                    for item in content
-                )
-            return str(content)
-    return ""
 
 
 async def embed_direct(text: str, collection: str) -> None:

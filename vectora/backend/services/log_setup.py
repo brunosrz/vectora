@@ -82,7 +82,7 @@ class _BackgroundConsoleFilter(logging.Filter):
         {
             "backend.services.background",
             "backend.services.queue",
-            "backend.graph",
+            "backend.services.agent_factory",
             "backend.agents.orchestrator",
             "backend.tools",
             "backend.api.handlers.chat",

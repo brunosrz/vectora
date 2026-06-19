@@ -250,30 +250,14 @@ runtime_settings = RuntimeSettings()
 # ── Orquestração de troca de modelo ──────────────────────────────────────────
 
 
-def _reset_llm_singletons() -> None:
-    """Zera singletons de LLM dos agentes para forçar recriação com novo provider/model."""
+def _invalidate_default_graph() -> None:
+    """Invalida o grafo deep-agent do modelo padrão após troca de provider/model."""
     try:
-        import backend.agents.coder as _c
-        import backend.agents.orchestrator as _o
-        import backend.agents.search as _s
-        import backend.nodes.web_curation as _wc
+        from backend.services.agent_factory import reset_default_graph
 
-        _o._orchestrator_llm = None
-        _o._synthesis_llm = None
-        logger.debug("orchestrator singletons resetados")
-
-        _c._coder_llm = None
-        logger.debug("coder singletons resetados")
-
-        _s._search_llm = None
-        logger.debug("search singletons resetados")
-
-        _wc._judge_llm = None
-        logger.debug("web_curation singletons resetados")
-
-        logger.info("Todos os LLM singletons foram resetados com sucesso")
+        reset_default_graph()
     except Exception as e:
-        logger.warning("Erro ao resetar LLM singletons: %s", e)
+        logger.warning("Erro ao invalidar grafo do modelo padrão: %s", e)
 
 
 def apply_model_change(provider: str, model: str) -> None:
@@ -295,6 +279,6 @@ def apply_model_change(provider: str, model: str) -> None:
     except Exception as e:
         logger.warning("Erro ao atualizar settings singleton: %s", e)
 
-    # 4. Reseta singletons dos agentes -> próxima chamada cria novo LLM
-    _reset_llm_singletons()
+    # 4. Invalida o grafo do modelo padrão -> próxima chamada recompila com o novo LLM
+    _invalidate_default_graph()
     logger.info("Model aplicado: provider=%s model=%s", provider, model)

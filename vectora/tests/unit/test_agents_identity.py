@@ -4,11 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.agents._identity import (
-    VECTORA_IDENTITY,
-    build_user_context_block,
-    detect_system_language,
-)
+from backend.agents._identity import VECTORA_IDENTITY, detect_system_language
 
 # ---------------------------------------------------------------------------
 # VECTORA_IDENTITY (constante)
@@ -145,78 +141,3 @@ class TestDetectSystemLanguage:
             _locale, "getlocale", lambda *a, **kw: ("Portuguese_Brazil", "1252")
         )
         assert detect_system_language() == "Portuguese_Brazil"
-
-
-# ---------------------------------------------------------------------------
-# build_user_context_block — montagem do bloco
-# ---------------------------------------------------------------------------
-
-
-class TestBuildUserContextBlock:
-    def test_returns_empty_for_none_config(self):
-        assert build_user_context_block(None) == ""
-
-    def test_returns_empty_for_empty_dict(self):
-        assert build_user_context_block({}) == ""
-
-    def test_returns_empty_when_neither_name_nor_language(self):
-        assert build_user_context_block({"thread_id": "abc"}) == ""
-
-    def test_includes_name_line(self):
-        block = build_user_context_block({"user_name": "Bruno Soares"})
-        assert "## Contexto do usuário atual" in block
-        assert "Bruno Soares" in block
-        assert "**Nome:**" in block
-
-    def test_includes_language_line(self):
-        block = build_user_context_block({"language": "pt_BR"})
-        assert "## Contexto do usuário atual" in block
-        assert "`pt_BR`" in block
-        assert "**Idioma preferido:**" in block
-
-    def test_includes_both_when_present(self):
-        block = build_user_context_block(
-            {"user_name": "Maria José", "language": "es-419"}
-        )
-        assert "Maria José" in block
-        assert "`es-419`" in block
-
-    def test_locale_string_is_passed_raw(self):
-        """Qualquer formato do SO entra literal — sem dicionário de mapeamento."""
-        for raw in ("pt_BR", "es-419", "en_US", "pt-br", "pt-pt", "Portuguese_Brazil"):
-            block = build_user_context_block({"language": raw})
-            assert f"`{raw}`" in block
-
-    def test_strips_whitespace_around_name(self):
-        block = build_user_context_block({"user_name": "  Bruno  "})
-        # O bloco contém o nome após strip, mas o helper apenas remove
-        # whitespace nas pontas — espaços internos devem ser preservados.
-        assert "Bruno" in block
-        # Não há os 2 espaços extras no início
-        assert "  Bruno  " not in block
-
-    def test_name_with_accents_and_apostrophe(self):
-        """UTF-8 livre — sem rejeição de acentos, ç, apóstrofo, espaço."""
-        names = ["João D'Ávila", "Maria José", "François", "Iñaki", "山田太郎"]
-        for n in names:
-            block = build_user_context_block({"user_name": n})
-            assert n in block
-
-    def test_ignores_empty_string_values(self):
-        """user_name="" e language="" não devem produzir linhas vazias."""
-        assert build_user_context_block({"user_name": "", "language": ""}) == ""
-
-    def test_does_not_leak_other_configurable_fields(self):
-        """Apenas user_name e language são consumidos — workspace_id e cia ignorados."""
-        block = build_user_context_block(
-            {
-                "user_name": "Bruno",
-                "language": "pt_BR",
-                "workspace_id": "ws-secret",
-                "thread_id": "thread-secret",
-                "user_id": "user-secret",
-            }
-        )
-        assert "ws-secret" not in block
-        assert "thread-secret" not in block
-        assert "user-secret" not in block

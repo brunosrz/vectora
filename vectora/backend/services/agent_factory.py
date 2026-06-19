@@ -8,9 +8,9 @@ Arquitetura:
     - Agente principal (orchestrator) construído via create_deep_agent.
     - Subagents "coder" e "search" como SubAgent dicts; prompts importados
       de src/agents/{coder,search}.py (E.B-2 extrai specs para módulos próprios).
-    - HITL por middleware: E.B-3 adiciona HumanInTheLoopMiddleware com leitura
-      de permission_mode via runtime config. Nesta versão o HITL está desabilitado
-      — interrupt_on omitido. # TODO: E.B-3
+    - HITL por middleware: build_middleware_stack monta o
+      HumanInTheLoopMiddleware conforme o permission_mode, adicionado ao stack
+      passado a create_deep_agent (padrão canônico do deepagents).
     - Checkpointer: AsyncSqliteSaver (F4 migra para AsyncPostgresSaver em
       STORAGE_MODE=complete).
     - Singleton compartilhado entre todos os usuários; versionamento por user
@@ -475,6 +475,19 @@ async def aget_thread_messages(thread_id: str) -> list[tuple[str, str]]:
         role = "human" if msg_type == "human" else "assistant"
         out.append((role, text))
     return out
+
+
+def reset_default_graph() -> None:
+    """Invalida o grafo do modelo padrão após troca de provider/model.
+
+    ``apply_model_change`` muda o provider/modelo padrão (env/settings); o grafo
+    ``"__default__"`` foi compilado com o LLM antigo e fica stale. O cache por
+    modelo explícito (``"provider:model"``) continua válido. Requests em voo que
+    já seguram o grafo antigo não são afetados — o próximo ``get_user_agent()``
+    sem modelo recompila com o novo padrão.
+    """
+    _graphs.pop("__default__", None)
+    logger.info("agent_factory: grafo do modelo padrão invalidado (troca de modelo)")
 
 
 def _track_versions(user_id: str) -> None:

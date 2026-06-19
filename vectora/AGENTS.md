@@ -46,9 +46,9 @@ Each layer has a single responsibility. The application does not depend directly
 
 All I/O-bound operations (database, network, LLM, filesystem) must be `async/await`. Never use `subprocess.run` (synchronous) — use `asyncio.create_subprocess_shell`. Never use `requests` — use `httpx` or async clients. Blocking the main thread is a bug.
 
-### 3.4. LangGraph: Pure, Independent Nodes
+### 3.4. Deep-Agent Architecture
 
-Graph nodes (`call_llm`, `tools`, `process_retrieval`, `sub_node`) read and write exclusively from/to the `State` passed by LangGraph. Never access global state inside a node. Never make synchronous calls inside nodes. Each node must be independently testable.
+The runtime graph is built with `create_deep_agent` (`backend/services/agent_factory.py`) — never a hand-rolled `StateGraph`/orchestrator-by-nodes. New agent behavior enters as: tools (`@tool`), subagents (`SUBAGENT_SPEC`), middleware (HITL via `HumanInTheLoopMiddleware`/`interrupt_on`), or `context_schema` fields. Tools are the extension point — defensive, independently testable, schema-first via `metadata={"render_hint": ...}`.
 
 ### 3.5. Tools: Defensive by Default
 
@@ -106,12 +106,11 @@ Before running `git commit`, verify:
 | File                                | Purpose                                      |
 | ----------------------------------- | -------------------------------------------- |
 | `src/settings.py`                   | Single source of truth for configuration     |
-| `src/graph.py`                      | LangGraph graph builder                      |
-| `src/nodes/engine.py`               | Node implementations                         |
-| `src/agents/orchestrator.py`        | Intent classification and routing            |
+| `src/services/agent_factory.py`     | Deep-agent factory (create_deep_agent)       |
+| `src/agents/{coder,search}.py`      | Subagent SUBAGENT_SPEC + prompts             |
 | `src/agents/_identity.py`           | Shared identity block for all agents         |
-| `src/nodes/tools.py`                | Registry of all 15 tools                     |
-| `src/mcp/server.py`                 | MCP Server (FastMCP, 13 tools, 4 resources)  |
+| `src/nodes/tools.py`                | Registry of all tools (ALL_TOOLS)            |
+| `src/mcp/server.py`                 | MCP Server (FastMCP, mounted at /mcp)        |
 | `src/services/security.py`          | Blacklist, path validation, ReDoS protection |
-| `src/ui/setup_wizard.py`            | Interactive onboarding wizard                |
+| `src/cli/`                          | Operational CLI (keys, docker, storage)      |
 | `integrations/paperclip/@AGENTS.md` | Multi-agent integration protocol             |

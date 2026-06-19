@@ -68,8 +68,7 @@ def test_cli_parser_accepts_ssl_flags():
     parser = _build_parser()
     args = parser.parse_args(
         [
-            "server",
-            "web",
+            "start",
             "--ssl-certfile",
             "cert.pem",
             "--ssl-keyfile",
@@ -84,7 +83,7 @@ def test_cli_parser_ssl_flags_default_none():
     from backend.main import _build_parser
 
     parser = _build_parser()
-    args = parser.parse_args(["server", "web"])
+    args = parser.parse_args(["start"])
     assert args.ssl_certfile is None
     assert args.ssl_keyfile is None
 

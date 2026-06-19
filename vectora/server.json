@@ -13,9 +13,8 @@
       "identifier": "vectora-agent",
       "version": "0.1.0",
       "transport": {
-        "type": "stdio",
-        "command": "vectora",
-        "args": ["server", "--mode", "stdio"]
+        "type": "sse",
+        "url": "http://localhost:8080/mcp/sse"
       },
       "environmentVariables": [
         {

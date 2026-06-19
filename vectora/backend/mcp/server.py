@@ -921,28 +921,24 @@ logger.info("4 resources registered: context, history, status, collections")
 _SSE_HEARTBEAT_INTERVAL = 25  # segundos — abaixo do timeout típico de 30-60s
 
 
-def _run_sse_with_heartbeat(mcp_instance: Any, host: str, port: int) -> None:
-    """Roda o servidor SSE com heartbeat de 25s injetado no EventSourceResponse.
+def _enable_sse_heartbeat() -> None:
+    """Injeta ping de 25s no ``EventSourceResponse`` (sse-starlette + mcp.server.sse).
 
-    Firewalls e load-balancers costumam fechar conexões HTTP idle após 30-60s.
-    O SSE usa um único stream HTTP persistente — sem tráfego, a conexão é
-    silenciosamente dropada. O parâmetro ``ping`` do sse-starlette envia uma
-    linha de comentário SSE (": ping\\n\\n") a cada N segundos, mantendo o
-    stream vivo sem modificar o protocolo MCP.
-
-    Estratégia: monkey-patch no ``EventSourceResponse`` do sse-starlette e do
-    módulo mcp.server.sse *antes* de criar o Starlette app, para que todas as
-    conexões SSE já nasçam com ping habilitado.
+    Firewalls e load-balancers fecham conexões HTTP idle após 30-60s. O SSE usa
+    um único stream HTTP persistente — sem tráfego, a conexão é silenciosamente
+    dropada. Monkey-patch idempotente aplicado antes de construir o ASGI app.
     """
-    import anyio
-    import uvicorn
-
     try:
         import sse_starlette.sse as _sse_mod
         from sse_starlette.sse import EventSourceResponse as _OrigESR
 
+        if getattr(_OrigESR, "_vectora_heartbeat", False):
+            return  # já aplicado
+
         class _ESRWithHeartbeat(_OrigESR):
             """EventSourceResponse que força ping=25s em todas as conexões SSE."""
+
+            _vectora_heartbeat = True
 
             def __init__(
                 self, *args: Any, ping: int | None = None, **kwargs: Any
@@ -953,7 +949,6 @@ def _run_sse_with_heartbeat(mcp_instance: Any, host: str, port: int) -> None:
                     **kwargs,
                 )
 
-        # Substituir em sse_starlette.sse e em mcp.server.sse (já importado)
         _sse_mod.EventSourceResponse = _ESRWithHeartbeat  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
         with contextlib.suppress(Exception):
             import mcp.server.sse as _mcp_sse  # type: ignore[import-untyped]
@@ -964,150 +959,13 @@ def _run_sse_with_heartbeat(mcp_instance: Any, host: str, port: int) -> None:
     except ImportError:
         logger.warning("sse-starlette not available — SSE heartbeat disabled")
 
-    async def _serve() -> None:
-        from starlette.applications import Starlette
-        from starlette.requests import Request
-        from starlette.responses import JSONResponse
-        from starlette.routing import Mount, Route
 
-        async def _tools_schema_http(request: Request) -> JSONResponse:
-            """GET /api/tools/schema — para a Discovery Layer da Web UI (D1.1)."""
-            from backend.nodes.tools import ALL_TOOLS
+def mcp_asgi_app() -> Any:
+    """ASGI app do MCP (SSE) com heartbeat, para montar em ``/mcp`` no FastAPI.
 
-            tools_data = []
-            for t in ALL_TOOLS:
-                schema: dict = {}
-                try:
-                    args_schema = getattr(t, "args_schema", None)
-                    if args_schema is not None and hasattr(
-                        args_schema, "model_json_schema"
-                    ):
-                        schema = args_schema.model_json_schema()
-                except Exception:
-                    pass
-                tools_data.append(
-                    {
-                        "name": t.name,
-                        "description": (t.description or "").split("\n")[0][:200],
-                        "args_schema": schema,
-                        "render_hint": (t.extras or {}).get("render_hint", "json"),
-                    }
-                )
-
-            return JSONResponse(
-                {
-                    "version": "1",
-                    "tool_count": len(tools_data),
-                    "tools": tools_data,
-                }
-            )
-
-        sse_app = mcp_instance.sse_app()
-        # Montar o endpoint HTTP de schema antes do app SSE
-        starlette_app = Starlette(
-            routes=[
-                Route("/api/tools/schema", _tools_schema_http, methods=["GET"]),
-                Mount("/", app=sse_app),
-            ]
-        )
-
-        config = uvicorn.Config(
-            starlette_app,
-            host=host,
-            port=port,
-            timeout_keep_alive=120,  # keep-alive HTTP generoso para SSE
-            log_level="warning",
-        )
-        server = uvicorn.Server(config)
-        await server.serve()
-
-    anyio.run(_serve)
-
-
-# ============================================================================
-# ENTRY POINT
-# ============================================================================
-
-
-def run() -> None:
-    """Start Vectora as MCP server with configurable transport.
-
-    Entry point: vectora-mcp → vectora.mcp.server:run
-
-    Suporta dois modos de transport via env var MCP_TRANSPORT:
-    - "stdio" (default): para clientes locais (Claude Desktop, Claude Code)
-    - "sse": para múltiplos agentes remotos via HTTP/SSE (Paperclip, etc.)
-
-    Em modo stdio:
-        Lê/escreve JSON-RPC via stdin/stdout. Logs vão para arquivo.
-        Status feedback via stderr (não interfere com protocolo).
-
-    Em modo sse:
-        Escuta em MCP_HOST:MCP_PORT (default: 0.0.0.0:8000).
-        Múltiplos agentes podem conectar simultaneamente via HTTP.
-        Cada agente passa seu próprio thread_id para isolamento de sessão.
+    O MCP passa a subir junto de todo boot do backend (``vectora start``) —
+    sem processo separado. Agentes externos (Claude Desktop/Code) conectam em
+    ``http://host:port/mcp`` mesmo com a janela do app oculta.
     """
-    import os
-
-    from rich.console import Console
-    from rich.panel import Panel
-
-    transport = os.getenv("MCP_TRANSPORT", "stdio").lower()
-    host = os.getenv("MCP_HOST", "0.0.0.0")  # noqa: S104  # nosec B104
-    port = int(os.getenv("MCP_PORT", "8000"))
-
-    # stderr é seguro — em stdio, stdout é reservado ao JSON-RPC
-    err_console = Console(stderr=True)
-
-    if transport == "sse":
-        err_console.print(
-            Panel(
-                "[bold green]✓ Vectora MCP Server pronto (Multi-Agent)[/bold green]\n"
-                f"[dim]Transport:[/dim] SSE HTTP  [dim]Endpoint:[/dim] http://{host}:{port}/sse\n"
-                "[dim]Tools:[/dim] 14  [dim]Resources:[/dim] 4\n"
-                f"[dim]Logs:[/dim] {_log_dir / 'mcp.log'}\n"
-                "[yellow]⚡ Múltiplos agentes podem conectar simultaneamente[/yellow]",
-                title="[bold cyan]Vectora MCP (Multi-Agent Hub)[/bold cyan]",
-                border_style="cyan",
-            )
-        )
-        logger.info(
-            "Starting Vectora MCP server",
-            extra={"transport": "sse", "host": host, "port": port},
-        )
-    else:
-        err_console.print(
-            Panel(
-                "[bold green]✓ Vectora MCP Server pronto[/bold green]\n"
-                "[dim]Transport:[/dim] stdio JSON-RPC  "
-                "[dim]Tools:[/dim] 14  [dim]Resources:[/dim] 4\n"
-                f"[dim]Logs:[/dim] {_log_dir / 'mcp.log'}",
-                title="[bold cyan]Vectora MCP[/bold cyan]",
-                border_style="cyan",
-            )
-        )
-        logger.info("Starting Vectora MCP server", extra={"transport": "stdio"})
-
-    logger.info("Tools: 14 | Resources: 4")
-
-    try:
-        if transport == "sse":
-            # FastMCP SSE: HTTP transport para múltiplos agentes remotos.
-            # Configura host/port e injeta heartbeat de 25s para evitar que
-            # firewalls fechem conexões SSE idle após 30-60s.
-            mcp.settings.host = host
-            mcp.settings.port = port
-            _run_sse_with_heartbeat(mcp, host, port)
-        else:
-            # stdio JSON-RPC (default) — Claude Desktop, Claude Code
-            mcp.run(transport="stdio")
-    except KeyboardInterrupt:
-        logger.info("Vectora MCP server stopped by user")
-        sys.exit(0)
-    except Exception:
-        logger.exception("Fatal error in Vectora MCP server")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    run()
+    _enable_sse_heartbeat()
+    return mcp.sse_app()

@@ -10,13 +10,11 @@ import asyncio
 import logging
 
 import pytest
-from langchain_core.messages import HumanMessage
-from langgraph.graph.state import RunnableConfig
 
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# Constants exportadas — use em test_lifecycle.py e test_mcp_tools.py
+# Constants exportadas — use em test_mcp_tools.py
 # ============================================================================
 
 TEST_THREAD_ID = "1212"
@@ -104,68 +102,8 @@ def integration_cleanup() -> None:  # type: ignore[return]
 
 
 # ============================================================================
-# Fixtures de graph — function scope (uma conexão por teste)
-# ============================================================================
-
-
-@pytest.fixture
-async def lifecycle_graph():
-    """Graph com checkpointer real (settings.db_dsn) para testes de lifecycle.
-
-    Cada teste abre e fecha sua própria conexão SQLite, mas compartilham o
-    mesmo arquivo de banco — portanto o histórico persiste entre testes.
-    """
-    from backend.graph import build_graph
-    from backend.services.checkpoint import Checkpointer
-
-    async with Checkpointer() as cp:
-        graph = build_graph(cp)
-        yield graph
-
-
-@pytest.fixture
-def lifecycle_config() -> RunnableConfig:
-    """RunnableConfig para session 1212 com Context correto."""
-    from backend.context import Context
-
-    context = Context(user_type="test", thread_id=TEST_THREAD_ID)
-    return RunnableConfig(
-        configurable={
-            "thread_id": TEST_THREAD_ID,
-            "context": context,
-        }
-    )
-
-
-# ============================================================================
 # Helpers exportados — importáveis nos arquivos de teste
 # ============================================================================
-
-
-async def invoke_graph(graph, config: RunnableConfig, user_input: str) -> str:
-    """Invoca o graph e retorna a resposta de texto do assistente.
-
-    Extrai o último AIMessage (ou mensagem não-Human) do estado resultante.
-    """
-    result = await graph.ainvoke(
-        {
-            "messages": [HumanMessage(content=user_input)],
-            "session_metadata": {"thread_id": TEST_SESSION_ID},
-        },
-        config=config,
-    )
-    messages = result.get("messages", [])
-    for msg in reversed(messages):
-        if not isinstance(msg, HumanMessage) and hasattr(msg, "content"):
-            content = msg.content
-            if isinstance(content, list):
-                # Gemini retorna lista de dicts com "text"
-                return " ".join(
-                    item.get("text", "") if isinstance(item, dict) else str(item)
-                    for item in content
-                )
-            return str(content)
-    return ""
 
 
 async def embed_direct(text: str, collection: str) -> None:

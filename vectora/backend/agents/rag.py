@@ -1,37 +1,14 @@
-"""RAG Agent — Referências de arquitetura e curador de workspace.
+"""RAG Curator — síntese de conhecimento e atualização do MANIFEST.md.
 
-O "agente RAG" do Vectora é implementado como um **subgrafo LangGraph**
-de múltiplos nós em `src/nodes/rag_subgraph.py`, não como uma função
-de agente única (como `coder` e `search`). Isso reflete a diferença
-arquitetural: o RAG é um pipeline de recuperação/decisão/reranking/injeção,
-não uma sessão LLM em loop.
+``curate_workspace_knowledge(workspace_id)`` é chamado pelo
+BackgroundEmbeddingWorker após cada batch de ingestão (debounce ≥ 30s). Faz 1
+LLM call por flush para resumir o conhecimento adicionado e atualizar o
+MANIFEST.md do workspace, then bump da versão para o agente recarregar o
+contexto no próximo turno.
 
-Fluxo interno do subgrafo:
-  START → rag_expand_query → rag_retrieve → rag_decide_node
-            ├── (score ≥ 0.7) → rag_inject → END
-            ├── (score ≥ 0.4) → rag_rerank → rag_search_audit → rag_inject → END
-            └── (score < 0.4) → rag_websearch → rag_search_audit → rag_inject → END
-
-  rag_search_audit: Search Agent valida os docs pós-rerank. Pode chamar
-  manage_retriever (delete), fetch_url e embedding (bucket "search") para
-  corrigir a base antes do inject. Score alto (≥ 0.7) vai direto.
-
-Integração no grafo principal (`graph.py`):
-  orchestrator (routing_decision="rag") → rag_subgraph → orchestrator (síntese)
-
-Para construir o subgrafo, use:
-  from vectora.nodes.rag_subgraph import build_rag_subgraph
-  rag_subgraph = build_rag_subgraph()
-
-O orchestrator delega ao `rag_subgraph` quando `routing_decision == "rag"`.
-Após o subgrafo injetar o contexto como SystemMessage(name="rag_context"),
-o orchestrator é re-invocado e entra no caminho de síntese determinístico
-(`_is_post_rag()` → `_synthesize_after_rag()` → END).
-
-Curator (B4):
-  `curate_workspace_knowledge(workspace_id)` é chamado pelo BackgroundEmbeddingWorker
-  após cada batch de ingestão (debounce 30s). Faz 1 LLM call por batch para
-  resumir o conhecimento adicionado e atualizar o MANIFEST.md do workspace.
+A recuperação/decisão/reranking do RAG em runtime mora nas tools
+(``backend/tools/rag.py``: ``vector_search``, ``embedding``, ``ingest_docs``,
+``manage_retriever``), consumidas pelo deep-agent.
 """
 
 from __future__ import annotations
@@ -40,10 +17,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Re-exporta build_rag_subgraph para importação unificada via agents.*
-from backend.nodes.rag_subgraph import build_rag_subgraph
+__all__ = ["curate_workspace_knowledge"]
 
-__all__ = ["build_rag_subgraph", "curate_workspace_knowledge"]
+
+async def _list_collections() -> list[str]:
+    """Lista todas as tabelas LanceDB existentes. Retorna [] em qualquer falha."""
+    from backend.settings import settings
+
+    try:
+        import lancedb
+    except ImportError:
+        return []
+    if settings.lancedb_dir is None:
+        return []
+    try:
+        db = await lancedb.connect_async(str(settings.lancedb_dir))
+        return list((await db.list_tables()).tables)
+    except Exception:
+        logger.debug("_list_collections: falha ao listar tabelas", exc_info=True)
+        return []
+
 
 # ---------------------------------------------------------------------------
 # RAG Curator (B4)
@@ -72,10 +65,10 @@ async def curate_workspace_knowledge(workspace_id: str) -> str:
 
     Fluxo:
     1. Lê o MANIFEST.md existente (se houver) para contexto acumulado
-    2. Amostra docs recentemente indexados do LanceDB (via vector_search)
+    2. Amostra docs recentemente indexados do LanceDB
     3. LLM sintetiza o que foi adicionado em linguagem natural
-    4. Escreve MANIFEST.md atualizado + buckets/<bucket>.md
-    5. Chama workspace_registry.bump_version() → orchestrator recarrega contexto
+    4. Escreve MANIFEST.md atualizado
+    5. Chama workspace_registry.bump_version() → agente recarrega contexto
 
     Args:
         workspace_id: ID do workspace a curar
@@ -149,7 +142,7 @@ async def curate_workspace_knowledge(workspace_id: str) -> str:
         )
         manifest_path.write_text(frontmatter + manifest_content, encoding="utf-8")
 
-        # Bump de versão — orchestrator detecta e recarrega contexto
+        # Bump de versão — o agente detecta e recarrega contexto
         new_version = workspace_registry.bump_version(workspace_id)
         logger.info(
             "curator: MANIFEST.md atualizado para workspace %s (v%d)",
@@ -170,8 +163,6 @@ async def _sample_recent_docs(workspace_id: str, max_docs: int = 20) -> list[dic
     try:
         import asyncio
         import json
-
-        from backend.nodes.rag_subgraph import _list_collections
 
         collections = await _list_collections()
         if not collections:

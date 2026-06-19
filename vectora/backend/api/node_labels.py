@@ -1,37 +1,27 @@
 """Mapeamento de nome interno de nó do grafo → label legível para o usuário.
 
 Usado pelo frontend para mostrar progresso semântico durante o streaming:
-  "Analisando..." em vez de "orchestrator"
-  "Pesquisando na web…" em vez de "search_agent"
+  "Analisando..." em vez de "model"
+  "Executando ferramentas…" em vez de "tools"
+
+Os nós são os do deep-agent (``create_deep_agent``): o nó do modelo, o nó de
+tools, o agente principal (``vectora``) e os sub-agents (``coder``/``search``).
 """
 
 from __future__ import annotations
 
 NODE_LABELS: dict[str, str] = {
-    # Nós deepagents (E.B-1+)
     "model": "Analisando...",
     "tools": "Executando ferramentas…",
     "vectora": "Processando…",
-    # Nós legacy (src/graph.py — mantidos até E5 cleanup)
-    "orchestrator": "Analisando...",
-    "invoke_llm": "Gerando resposta…",
-    "search_agent": "Pesquisando na web…",
-    "rag_agent": "Consultando base de documentos…",
-    "coder_agent": "Escrevendo código…",
-    "finalize": "Finalizando…",
-    "hitl": "Aguardando aprovação…",
-    "rag_subgraph": "Recuperando documentos relevantes…",
-    "web_curation": "Filtrando resultados…",
-    "parallel_executor": "Executando tarefas em paralelo…",
-    "results_aggregator": "Agregando resultados…",
+    "coder": "Escrevendo código…",
+    "search": "Pesquisando…",
 }
 
-# Labels para quando o orchestrator decidiu delegar para um agente específico
+# Labels para quando o agente principal delega a um sub-agent via `task`.
 _ROUTING_LABELS: dict[str, str] = {
-    "search_agent": "Roteando para busca web…",
-    "rag_agent": "Roteando para base de conhecimento…",
-    "coder_agent": "Roteando para agente de código…",
-    "finalize": "Finalizando…",
+    "search": "Roteando para busca…",
+    "coder": "Roteando para agente de código…",
 }
 
 _GENERIC_LABEL = "Processando…"
@@ -43,5 +33,5 @@ def get_node_label(node: str) -> str:
 
 
 def get_routing_label(delegate_to: str) -> str:
-    """Retorna o label de roteamento quando o orchestrator delega para um agente."""
+    """Retorna o label de roteamento quando o agente delega a um sub-agent."""
     return _ROUTING_LABELS.get(delegate_to, f"Roteando para {delegate_to}…")

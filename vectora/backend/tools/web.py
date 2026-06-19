@@ -3,10 +3,9 @@
 Migrado de `tavily-python` para `langchain-tavily` (TavilySearch / TavilyExtract).
 
 Os wrappers `@tool web_search` e `fetch_url` preservam nome e formato de saída
-— JSON list para `web_search`, texto puro para `fetch_url` — exigidos pelo
-cascading downstream (`process_retrieval`, `rag_subgraph`). A migração apenas
-troca o backend e desbloqueia novos parâmetros (topic, time_range, filtros de
-domínio), sem mexer no contrato com o resto do grafo.
+— JSON list para `web_search`, texto puro para `fetch_url` — consumidos pelo
+deep-agent. A migração troca o backend e desbloqueia novos parâmetros (topic,
+time_range, filtros de domínio), sem mexer no contrato das tools.
 """
 
 from __future__ import annotations

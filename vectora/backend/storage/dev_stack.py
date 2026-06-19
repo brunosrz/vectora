@@ -224,6 +224,34 @@ def stack_down() -> StackResult:
     return result
 
 
+def _running_containers() -> set[str]:
+    proc = _run(["docker", "ps", "--format", "{{.Names}}"])
+    if proc.returncode != 0:
+        return set()
+    return {line.strip() for line in proc.stdout.splitlines() if line.strip()}
+
+
+def stack_status() -> StackResult:
+    """Estado de cada serviço da infra local: rodando, parado ou ausente."""
+    result = StackResult(ok=True)
+
+    if not _docker_available():
+        result.ok = False
+        result.messages.append("Docker não encontrado ou daemon parado.")
+        return result
+
+    existing = _existing_containers()
+    running = _running_containers()
+    for spec in SERVICES:
+        if spec.name in running:
+            result.messages.append(f"{spec.name}: rodando")
+        elif spec.name in existing:
+            result.messages.append(f"{spec.name}: parado")
+        else:
+            result.messages.append(f"{spec.name}: ausente")
+    return result
+
+
 def connection_urls() -> dict[str, str]:
     """URLs de conexão da stack local — as mesmas do defaults.env."""
     return {

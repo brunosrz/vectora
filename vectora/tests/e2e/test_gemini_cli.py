@@ -138,14 +138,11 @@ class TestGeminiCliConfig:
             f"Conteúdo atual: {GEMINI_SETTINGS_PATH.read_text()}"
         )
 
-    def test_vectora_mcp_command_configured_correctly(self):
-        """O comando MCP deve iniciar o servidor MCP do vectora.
+    def test_vectora_mcp_endpoint_configured_correctly(self):
+        """O MCP do vectora é sempre-ativo, montado em /mcp (SSE).
 
-        O único entry-point do pacote é 'vectora' (vectora.main:run).
-        Para iniciar o servidor MCP, o subcomando correto é 'server mcp'.
-        Formatos aceitos:
-          - command='vectora', args=['server', 'mcp', ...]
-          - command='uv', args=[..., 'vectora', 'server', 'mcp', ...]
+        Não há mais MCP stdio standalone — a config do cliente aponta para a
+        URL ``/mcp/sse`` do servidor em execução (subido por ``vectora start``).
         """
         data = json.loads(GEMINI_SETTINGS_PATH.read_text(encoding="utf-8"))
         # Busca a entrada vectora de forma case-insensitive
@@ -154,23 +151,12 @@ class TestGeminiCliConfig:
         assert vectora_key is not None, "vectora não encontrado em mcpServers"
         vectora_config = servers[vectora_key]
 
-        assert "command" in vectora_config, "vectora não tem campo 'command'"
-        cmd = vectora_config["command"]
-        args = vectora_config.get("args", [])
-
-        # Formato canônico: command="vectora", args=["server", "mcp", ...]
-        # Também aceita via uv: command="uv", args=[..., "vectora", "server", "mcp", ...]
-        is_canonical = (
-            cmd == "vectora"
-            and len(args) >= 2
-            and args[0] == "server"
-            and args[1] == "mcp"
+        assert "url" in vectora_config, (
+            "vectora não tem campo 'url' — o MCP é servido via SSE em /mcp/sse."
         )
-        is_uv = cmd == "uv" and "vectora" in args and "server" in args and "mcp" in args
-        assert is_canonical or is_uv, (
-            f"Comando inválido: '{cmd}' args={args}. "
-            "Esperado: command='vectora' args=['server', 'mcp', ...] "
-            "ou command='uv' com 'vectora', 'server' e 'mcp' nos args."
+        url = str(vectora_config["url"]).rstrip("/")
+        assert url.endswith("/mcp/sse"), (
+            f"URL MCP inesperada: '{url}'. Esperado terminar em '/mcp/sse'."
         )
 
     def test_vectora_mcp_project_path_exists(self):

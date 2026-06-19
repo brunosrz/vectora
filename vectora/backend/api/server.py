@@ -383,6 +383,47 @@ def create_app(serve_static: bool = True) -> FastAPI:
     # REST API v1 — jobs assíncronos
     app.include_router(v1_jobs_router)
 
+    # ── MCP server (sempre-ativo, montado em /mcp) ────────────────────────────
+    # Sobe junto de todo boot do backend (vectora start) reusando a MESMA
+    # instância FastMCP — sem processo separado. Agentes externos (Claude
+    # Desktop/Code) conectam em /mcp mesmo com a janela do app oculta. Montado
+    # ANTES do catch-all da SPA para que /mcp/* não caia no index.html.
+    try:
+        from backend.mcp.server import mcp_asgi_app
+
+        app.mount("/mcp", mcp_asgi_app())
+        logger.info("api/server: MCP montado em /mcp")
+    except Exception as exc:
+        logger.warning("api/server: falha ao montar MCP em /mcp: %s", exc)
+
+    # ── Discovery Layer — schema das tools (Web UI D1.1) ──────────────────────
+    @app.get("/api/tools/schema")
+    async def tools_schema() -> dict:
+        from backend.nodes.tools import ALL_TOOLS
+
+        tools_data = []
+        for t in ALL_TOOLS:
+            schema: dict = {}
+            try:
+                args_schema = getattr(t, "args_schema", None)
+                if args_schema is not None and hasattr(
+                    args_schema, "model_json_schema"
+                ):
+                    schema = args_schema.model_json_schema()
+            except Exception:
+                pass
+            tools_data.append(
+                {
+                    "name": t.name,
+                    "description": (t.description or "").split("\n")[0][:200],
+                    "args_schema": schema,
+                    "render_hint": (getattr(t, "extras", None) or {}).get(
+                        "render_hint", "json"
+                    ),
+                }
+            )
+        return {"version": "1", "tool_count": len(tools_data), "tools": tools_data}
+
     # ── Health + Metrics ──────────────────────────────────────────────────────
 
     @app.get("/health")

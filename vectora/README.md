@@ -68,55 +68,45 @@ cp .env.example .env
 # Instalar dependências do frontend (SPA Vite)
 pnpm --dir frontend install
 
-# Terminal 1 — backend (FastAPI, porta 8080)
-uv run vectora server web --port 8080
+# Terminal 1 — backend completo + MCP (/mcp) + SPA (porta 8080)
+uv run vectora start --port 8080
 # Terminal 2 — frontend dev (Vite, porta 3000, faz proxy p/ a API)
 pnpm --dir frontend dev
 ```
 
 Abra `http://localhost:3000`. O primeiro usuário a se cadastrar vira administrador root.
 
-### Somente CLI (sem frontend web)
+### CLI de operação (VPS via SSH)
+
+O frontend cobre toda a configuração, mas em VPS via SSH a CLI Rich expõe o
+essencial:
 
 ```bash
-# Chat textual interativo
-uv run vectora chat
-
-# Servidor MCP (stdio — para Claude Code / Claude Desktop)
-uv run vectora server mcp --transport stdio
-
-# Somente API — sem servir a SPA nem proxy de frontend
-uv run vectora server headless --port 8080
+uv run vectora config keys         # wizard de API keys + provider de LLM
+uv run vectora config docker up    # sobe Postgres + Redis + Qdrant local
+uv run vectora start --headless    # backend + MCP, sem janela (bandeja)
 ```
 
 ---
 
 ## Integração MCP
 
-Adicione ao `.mcp.json` do seu projeto ou `~/.claude/mcp.json` globalmente:
+O MCP server sobe **junto** com o Vectora (`vectora start`), montado em `/mcp`
+— não há processo MCP separado. Conecte qualquer cliente MCP (Claude
+Code/Desktop) à URL `/mcp/sse` do seu Vectora em execução:
 
 ```json
 {
   "mcpServers": {
     "Vectora": {
-      "command": "uv",
-      "args": ["run", "vectora", "server", "mcp", "--transport", "stdio"]
+      "url": "http://localhost:8080/mcp/sse"
     }
   }
 }
 ```
 
-Servidor MCP remoto via SSE:
-
-```json
-{
-  "mcpServers": {
-    "Vectora": {
-      "url": "https://vectora.seudominio.com/mcp/sse"
-    }
-  }
-}
-```
+Em produção, use a URL pública (HTTPS) do seu servidor:
+`https://vectora.seudominio.com/mcp/sse`.
 
 ---
 
@@ -189,23 +179,20 @@ docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
 vectora [comando] [opções]
 
 Comandos:
-  (padrão) / chat      Chat textual interativo (retoma a última sessão)
-  server chat          FastAPI + chat web (serve Next.js embutido ou faz proxy para o dev server)
-  server mcp           Servidor MCP (transporte stdio ou SSE)
-  server headless      FastAPI somente — sem chat, sem proxy (para integrações de API pura)
-  setup                Wizard de configuração inicial interativo
-  license              Exibir ou gerenciar status da licença
-  auth                 Login / logout / whoami
-  traces               Ver rastros internos de observabilidade
+  (sem args)           Imprime este help
+  start                Backend completo + MCP (/mcp) + SPA (fullstack)
+  start --headless     Sobe sem janela (bandeja + backend + MCP)
+  config               Mostra/edita settings; subcomandos: keys, docker, qdrant, redis
+  storage              Migrations, diagnóstico, backup/restore, wizard BaaS
+  auth                 signup / login / logout / whoami / refresh
+  traces               Ver spans internos de observabilidade
   sessions             Listar todas as sessões salvas
-  config               Exibir ou editar configurações
 
-Opções globais:
-  --model <nome>       Trocar provedor/modelo LLM (ex: gemini-2.5-flash)
-  --new                Forçar nova sessão de conversa
-  --session <id>       Retomar sessão específica
-  --verbosity <0-5>    Nível de detalhe da saída
-  --port <n>           Porta para comandos de servidor (padrão: 8080)
+Opções de start:
+  --headless           Não abre janela (mantém backend + MCP + bandeja)
+  --host <host>        Host de escuta (padrão: 0.0.0.0)
+  --port <n>           Porta (padrão: 8080)
+  --ssl-certfile/-keyfile <pem>   TLS (serve em https://)
 ```
 
 ---

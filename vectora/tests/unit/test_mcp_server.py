@@ -149,14 +149,16 @@ class TestGetServerStatus:
 
 
 class TestGetThreadContext:
+    """``get_thread_context`` lê as mensagens via ``agent_factory.
+    aget_thread_messages`` — o único grafo (deep-agent) que escreveu o
+    checkpoint sabe reconstruir o canal ``messages``."""
+
     @pytest.mark.asyncio
     async def test_empty_thread_returns_empty_status(self):
-        mock_checkpointer = AsyncMock()
-        mock_checkpointer.__aenter__ = AsyncMock(return_value=mock_checkpointer)
-        mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
-        mock_checkpointer.aget = AsyncMock(return_value=None)
-
-        with patch("backend.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch(
+            "backend.services.agent_factory.aget_thread_messages",
+            new=AsyncMock(return_value=[]),
+        ):
             result = await srv.get_thread_context("999")
 
         data = json.loads(result)
@@ -165,21 +167,10 @@ class TestGetThreadContext:
 
     @pytest.mark.asyncio
     async def test_active_thread_returns_message_count(self):
-        mock_msg = MagicMock()
-        mock_msg.__class__.__name__ = "HumanMessage"
-        state_values = {
-            "values": {
-                "messages": [mock_msg, mock_msg],
-                "summarized_history": "resumo",
-            }
-        }
-
-        mock_checkpointer = AsyncMock()
-        mock_checkpointer.__aenter__ = AsyncMock(return_value=mock_checkpointer)
-        mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
-        mock_checkpointer.aget = AsyncMock(return_value=state_values)
-
-        with patch("backend.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch(
+            "backend.services.agent_factory.aget_thread_messages",
+            new=AsyncMock(return_value=[("human", "oi"), ("assistant", "olá")]),
+        ):
             result = await srv.get_thread_context("1")
 
         data = json.loads(result)
@@ -188,12 +179,10 @@ class TestGetThreadContext:
 
     @pytest.mark.asyncio
     async def test_exception_returns_error_status(self):
-        mock_checkpointer = AsyncMock()
-        mock_checkpointer.__aenter__ = AsyncMock(return_value=mock_checkpointer)
-        mock_checkpointer.__aexit__ = AsyncMock(return_value=False)
-        mock_checkpointer.aget = AsyncMock(side_effect=RuntimeError("db error"))
-
-        with patch("backend.mcp.server.Checkpointer", return_value=mock_checkpointer):
+        with patch(
+            "backend.services.agent_factory.aget_thread_messages",
+            new=AsyncMock(side_effect=RuntimeError("db error")),
+        ):
             result = await srv.get_thread_context("1")
 
         data = json.loads(result)
@@ -449,59 +438,5 @@ class TestMcpToolWrappers:
         mock_wt.assert_called_once()
 
 
-# ---------------------------------------------------------------------------
-# run() entry point
-# ---------------------------------------------------------------------------
-
-
-class TestRun:
-    def test_run_stdio_transport(self):
-        """run() com transport=stdio chama mcp.run(transport='stdio')."""
-        with (
-            patch.dict("os.environ", {"MCP_TRANSPORT": "stdio"}, clear=False),
-            patch.object(srv.mcp, "run") as mock_run,
-            patch("rich.console.Console"),
-        ):
-            srv.run()
-
-        mock_run.assert_called_once_with(transport="stdio")
-
-    def test_run_sse_transport(self):
-        """run() com MCP_TRANSPORT=sse chama _run_sse_with_heartbeat (D2)."""
-        with (
-            patch.dict(
-                "os.environ",
-                {"MCP_TRANSPORT": "sse", "MCP_HOST": "127.0.0.1", "MCP_PORT": "9000"},
-                clear=False,
-            ),
-            patch.object(srv, "_run_sse_with_heartbeat") as mock_heartbeat,
-            patch("rich.console.Console"),
-        ):
-            srv.run()
-
-        # D2: SSE agora usa _run_sse_with_heartbeat em vez de mcp.run(transport="sse")
-        mock_heartbeat.assert_called_once_with(srv.mcp, "127.0.0.1", 9000)
-
-    def test_run_keyboard_interrupt_exits_0(self):
-        """KeyboardInterrupt durante mcp.run() → sys.exit(0)."""
-        with (
-            patch.dict("os.environ", {"MCP_TRANSPORT": "stdio"}, clear=False),
-            patch.object(srv.mcp, "run", side_effect=KeyboardInterrupt),
-            patch("rich.console.Console"),
-            pytest.raises(SystemExit) as exc_info,
-        ):
-            srv.run()
-
-        assert exc_info.value.code == 0
-
-    def test_run_exception_exits_1(self):
-        """Exceção inesperada durante mcp.run() → sys.exit(1)."""
-        with (
-            patch.dict("os.environ", {"MCP_TRANSPORT": "stdio"}, clear=False),
-            patch.object(srv.mcp, "run", side_effect=RuntimeError("crash")),
-            patch("rich.console.Console"),
-            pytest.raises(SystemExit) as exc_info,
-        ):
-            srv.run()
-
-        assert exc_info.value.code == 1
+# O MCP é sempre-ativo, montado em /mcp pelo FastAPI (backend.api.server) — não
+# há mais entry point standalone `run()` nem transporte stdio/SSE separado.

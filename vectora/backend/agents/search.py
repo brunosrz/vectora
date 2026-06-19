@@ -1,32 +1,19 @@
-"""Search Worker — LLM especializado em busca web e RAG.
+"""Search Worker — spec do sub-agent especializado em busca web e RAG.
 
-Recebe ALL_TOOLS — a especialidade vem do system prompt, não de restrição de ferramentas.
-Objetivo: pesquisar informações atuais + consultar e indexar base vetorial.
+Recebe ALL_TOOLS — a especialidade vem do system prompt, não de restrição de
+ferramentas. Objetivo: pesquisar informações atuais + consultar e indexar base
+vetorial.
 
-``SUBAGENT_SPEC`` é o dict canônico consumido por ``agent_factory._subagent_specs()``.
-Exportado para que o factory não precise duplicar descrição/ferramentas.
+``SUBAGENT_SPEC`` é o dict canônico consumido por
+``agent_factory._subagent_specs()`` em ``create_deep_agent``.
 """
 
 from __future__ import annotations
 
-import logging
-from typing import TYPE_CHECKING, Any
-
-from langchain_core.messages import AIMessage
+from typing import Any
 
 from backend.agents._identity import VECTORA_IDENTITY
-from backend.nodes.base import invoke_llm
 from backend.nodes.tools import MEMORY_TOOLS, RAG_TOOLS, SEARCH_TOOLS
-from backend.services.llm_tools import get_user_bound_llm, user_id_from_config
-from backend.services.utils import load_llm
-from backend.types import SearchResult
-
-if TYPE_CHECKING:
-    from langchain_core.runnables import Runnable, RunnableConfig
-
-    from backend.state import State
-
-logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = f"""{VECTORA_IDENTITY}
 
@@ -63,8 +50,8 @@ Tem acesso a **todas as ferramentas** do Vectora.
 ### Estratégia RAG-first
 1. **Prefira `vector_search`** se o tema já foi pesquisado antes — é instantâneo (local)
 2. Use `web_search` para informações atuais ou não indexadas
-3. Após `web_search` ou `fetch_url`, o `process_retrieval` faz cascading automático
-   para LanceDB — **não chame `embedding` manualmente** depois de uma busca web
+3. Após `web_search` ou `fetch_url`, persista fontes canônicas com `embedding`
+   (`collection="search"`) quando o conteúdo for autoritativo
 
 ### ingest_docs vs embedding
 - **`ingest_docs`**: para pastas inteiras ou múltiplos arquivos → responde "indexados N chunks"
@@ -84,12 +71,6 @@ Quando `ingest_docs` ou `embedding` retornarem `"status": "fire_and_forget"`, os
 **URLs explícitas → `fetch_url`, não `vector_search`:**
 - Se o usuário fornecer uma URL como `https://linkedin.com/in/...`, use `fetch_url` diretamente.
 - Não converta URLs em queries vetoriais.
-
-**Curadoria automática de buscas web:**
-- Resultados de `web_search` passam por um gate (reranker + LLM judge) antes de serem
-  persistidos no bucket `web_cache`. Você NÃO precisa chamar `embedding` manualmente
-  após uma busca — o cascading curado cuida disso, e só persiste o que é relevante.
-- O bucket `web_cache` é separado do `articles` (docs curados pelo usuário).
 
 **Reavaliação e correção do RAG:**
 - Se o usuário fornecer a fonte canônica de um tema (o repositório certo, a doc
@@ -118,121 +99,3 @@ SUBAGENT_SPEC: dict[str, Any] = {
     "system_prompt": SYSTEM_PROMPT,
     "tools": SEARCH_TOOLS + MEMORY_TOOLS + RAG_TOOLS,
 }
-
-_search_llm = None
-
-
-def _get_search_llm() -> Runnable:
-    global _search_llm
-    if _search_llm is None:
-        tools = SUBAGENT_SPEC["tools"]
-        _search_llm = load_llm().bind_tools(tools)  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
-        logger.debug("search_worker LLM inicializado com %d tools", len(tools))
-    return _search_llm
-
-
-# ---------------------------------------------------------------------------
-# Nós do grafo
-# ---------------------------------------------------------------------------
-
-
-async def search_finalize(state: State) -> dict:
-    """Extrai resultado estruturado da sessão de busca e prepara para síntese.
-
-    Roda após o search concluir (sem mais tool_calls). Analisa o histórico de
-    mensagens heuristicamente para produzir um SearchResult sem custo de LLM:
-    - `sources`         → URLs de fetch_url + domínios de web_search
-    - `web_search_used` → True se web_search ou fetch_url foram chamados
-    - `confidence`      → 0.8 com fontes, 0.5 sem
-    - `summary`         → último AIMessage do search sem tool_calls
-
-    Quando `rag_pending=True` (search foi invocado pelo pipeline RAG com score
-    baixo), converte o resultado em `rag_docs` e limpa o flag — o grafo então
-    roteia para `rag_inject` em vez do orchestrator.
-
-    O resultado fica em `state["search_result"]` para o orchestrator sintetizar
-    (caminho normal) ou em `state["rag_docs"]` para o rag_inject (caminho RAG).
-    """
-    messages = list(state.get("messages", []))
-
-    sources: list[str] = []
-    web_search_used = False
-    _web_ops = frozenset(
-        {"web_search", "web_search_tool", "fetch_url", "fetch_url_tool"}
-    )
-
-    for msg in messages:
-        if not isinstance(msg, AIMessage):
-            continue
-        tool_calls = getattr(msg, "tool_calls", None) or []
-        for tc in tool_calls:
-            name = tc.get("name", "") if isinstance(tc, dict) else ""
-            args = tc.get("args", {}) if isinstance(tc, dict) else {}
-            if name in _web_ops:
-                web_search_used = True
-                url = str(args.get("url") or args.get("query", "")).strip()
-                if url and url not in sources:
-                    sources.append(url)
-
-    summary = ""
-    for msg in reversed(messages):
-        if isinstance(msg, AIMessage) and not getattr(msg, "tool_calls", None):
-            c = msg.content
-            summary = c if isinstance(c, str) else str(c)
-            break
-
-    result = SearchResult(
-        summary=summary or "Pesquisa concluída.",
-        sources=sources,
-        confidence=0.8 if sources else 0.5,
-        web_search_used=web_search_used,
-    )
-
-    logger.info(
-        "search_finalize: %d fontes, web=%s, rag_pending=%s",
-        len(sources),
-        web_search_used,
-        bool(state.get("rag_pending")),
-    )
-
-    if state.get("rag_pending"):
-        # Converte o resultado do search em rag_docs para o rag_inject processar.
-        # O summary do search agent vira o page_content do documento de contexto.
-        from backend.state import Document
-
-        doc: Document = {
-            "page_content": summary or "Pesquisa web concluída sem resultado textual.",
-            "metadata": {
-                "source": ", ".join(sources) if sources else "web_search",
-                "origin": "web_search",
-                "confidence": result.confidence,
-            },
-            "relevance_score": result.confidence,
-        }
-        existing = list(state.get("rag_docs") or [])
-        return {
-            "search_result": result,
-            "rag_docs": [*existing, doc],
-            "rag_pending": False,  # limpa o flag
-        }
-
-    return {"search_result": result}
-
-
-async def search(state: State, config: RunnableConfig = None) -> dict:  # type: ignore[assignment]  # ty: ignore[invalid-parameter-default]
-    """Agent de busca: responde usando web_search, fetch_url e vector_search.
-
-    O LLM decide autonomamente quais ferramentas usar com base na pergunta.
-    Após as ferramentas executarem (via search_tools node), o resultado é
-    processado pelo process_retrieval para cascading automático no LanceDB.
-
-    O LLM é bindado ao toolset do usuário (built-ins permitidas + MCP) a partir
-    do user_id do config. Quando recebe orchestrator_task, injeta a instrução no
-    topo do system prompt.
-    """
-    task = state.get("orchestrator_task")
-    task_block = f"\n\n## Task delegada pelo Orchestrator\n{task}" if task else ""
-
-    logger.info("search: processando mensagem%s", " (task delegada)" if task else "")
-    llm = await get_user_bound_llm(user_id_from_config(config))
-    return await invoke_llm(llm, state, system_prompt=SYSTEM_PROMPT + task_block)

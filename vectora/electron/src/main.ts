@@ -2,9 +2,11 @@
  * Vectora Desktop — main process.
  *
  * Responsabilidades:
- * - Spawn do binário Nuitka (``vectora-core``) como sidecar com porta efêmera.
+ * - Spawn do binário Nuitka (``vectora-core``) como sidecar (VECTORA_DESKTOP=1).
+ * - Transporte IPC: unix socket (Linux/macOS) / TCP loopback (Windows). A SPA
+ *   carrega de ``vectora-app://app/`` e o main encaminha tudo ao backend, sem
+ *   expor porta TCP no desktop (em Linux/macOS).
  * - Health-check com retry exponencial antes de carregar a janela.
- * - BrowserWindow apontando para ``http://127.0.0.1:<port>/``.
  * - Tray icon com menu (Open / Restart Backend / Quit).
  * - Deep-link ``vectora://`` (signin magic-link, deep-link de workspace).
  * - IPC tipado (``contextBridge``) exposto via ``preload.ts``.
@@ -23,11 +25,15 @@ import {
   dialog,
   ipcMain,
   nativeImage,
+  protocol,
   shell,
 } from "electron";
 import { autoUpdater } from "electron-updater";
+import * as http from "http";
 import * as net from "net";
+import * as os from "os";
 import * as path from "path";
+import { Readable } from "stream";
 // tree-kill ships its own types — no @types/tree-kill needed.
 import treeKill = require("tree-kill");
 
@@ -51,9 +57,110 @@ let pendingDeepLink: string | null = null;
 let updateReady = false;
 
 const PROTOCOL = "vectora";
+const APP_SCHEME = "vectora-app"; // origem da SPA no desktop (IPC, sem TCP)
 const READINESS_TIMEOUT_MS = 30_000;
 const HEALTH_BASE_DELAY_MS = 200;
 const HEALTH_MAX_DELAY_MS = 2_000;
+
+// O scheme da SPA precisa ser registrado ANTES de app.whenReady(). Habilita
+// fetch/SSE e trata a origem como segura (Secure Context: crypto.randomUUID).
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: APP_SCHEME,
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+      corsEnabled: true,
+    },
+  },
+]);
+
+/**
+ * Transporte do backend: unix socket no loopback do SO em Linux/macOS
+ * (``VECTORA_DESKTOP=1`` faz o backend escutar em ``~/.vectora/vectora.sock``);
+ * no Windows ainda é TCP loopback (uvicorn não suporta UDS lá).
+ */
+function backendTransport(): http.RequestOptions {
+  if (process.platform !== "win32") {
+    return { socketPath: path.join(os.homedir(), ".vectora", "vectora.sock") };
+  }
+  return { host: "127.0.0.1", port: backendPort ?? undefined };
+}
+
+const _HOP_BY_HOP = new Set([
+  "transfer-encoding",
+  "connection",
+  "content-encoding",
+  "content-length",
+  "keep-alive",
+]);
+
+/**
+ * Encaminha um request do scheme ``vectora-app://`` para o backend pelo
+ * transporte IPC, fazendo streaming da resposta (incl. SSE). ``vectora-app://
+ * app/<path>`` → backend ``/<path>``.
+ */
+async function forwardToBackend(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const headers: Record<string, string> = {};
+  request.headers.forEach((value, key) => {
+    if (!_HOP_BY_HOP.has(key.toLowerCase())) headers[key] = value;
+  });
+
+  const body =
+    request.method !== "GET" && request.method !== "HEAD"
+      ? Buffer.from(await request.arrayBuffer())
+      : undefined;
+
+  return new Promise<Response>((resolve) => {
+    const req = http.request(
+      {
+        ...backendTransport(),
+        method: request.method,
+        path: url.pathname + url.search,
+        headers,
+      },
+      (res) => {
+        const respHeaders = new Headers();
+        for (const [key, value] of Object.entries(res.headers)) {
+          if (value == null || _HOP_BY_HOP.has(key.toLowerCase())) continue;
+          respHeaders.set(key, Array.isArray(value) ? value.join(", ") : value);
+        }
+        const stream = Readable.toWeb(res) as unknown as ReadableStream;
+        resolve(
+          new Response(stream, {
+            status: res.statusCode ?? 502,
+            headers: respHeaders,
+          }),
+        );
+      },
+    );
+    req.on("error", (err) =>
+      resolve(
+        new Response(`Backend indisponível: ${err.message}`, { status: 502 }),
+      ),
+    );
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+/** Health-check do backend pelo transporte IPC (UDS ou TCP). */
+function pingBackend(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const req = http.request(
+      { ...backendTransport(), method: "GET", path: "/health" },
+      (res) => {
+        res.resume();
+        resolve((res.statusCode ?? 500) < 400);
+      },
+    );
+    req.on("error", () => resolve(false));
+    req.end();
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Backend lifecycle
@@ -100,7 +207,7 @@ async function startBackend(): Promise<void> {
     VECTORA_PORT: String(backendPort),
     VECTORA_DESKTOP: "1",
   };
-  backend = spawn(backendPath(), ["server", "chat"], {
+  backend = spawn(backendPath(), ["start"], {
     env,
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -137,9 +244,9 @@ async function restartBackend(): Promise<void> {
   }
   try {
     await startBackend();
-    await waitForBackend(backendPort!);
-    if (mainWindow && backendPort !== null) {
-      void mainWindow.loadURL(`http://127.0.0.1:${backendPort}/`);
+    await waitForBackend();
+    if (mainWindow) {
+      void mainWindow.loadURL(`${APP_SCHEME}://app/`);
     }
   } catch (err) {
     dialog.showErrorBox(
@@ -154,16 +261,11 @@ async function restartBackend(): Promise<void> {
  * Health-check com backoff exponencial. Cada falha dobra o delay até
  * ``HEALTH_MAX_DELAY_MS``, capado no ``READINESS_TIMEOUT_MS`` global.
  */
-async function waitForBackend(port: number): Promise<void> {
+async function waitForBackend(): Promise<void> {
   const deadline = Date.now() + READINESS_TIMEOUT_MS;
   let delay = HEALTH_BASE_DELAY_MS;
   while (Date.now() < deadline) {
-    try {
-      const ok = await fetch(`http://127.0.0.1:${port}/health`);
-      if (ok.ok) return;
-    } catch {
-      // ignora — backend ainda subindo
-    }
+    if (await pingBackend()) return;
     await new Promise((r) => setTimeout(r, delay));
     delay = Math.min(delay * 2, HEALTH_MAX_DELAY_MS);
   }
@@ -195,7 +297,8 @@ function createWindow(): void {
   // Inject app version no preload sem precisar recompilar.
   process.env.VECTORA_APP_VERSION = app.getVersion();
 
-  void mainWindow.loadURL(`http://127.0.0.1:${backendPort}/`);
+  // Carrega a SPA pela origem IPC — zero porta TCP exposta (UDS em Linux/macOS).
+  void mainWindow.loadURL(`${APP_SCHEME}://app/`);
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
     if (pendingDeepLink) {
@@ -408,9 +511,12 @@ app.on("open-url", (event, url) => {
 app.whenReady().then(async () => {
   registerDeepLinkProtocol();
   registerIpc();
+  // Ponte IPC: serve a SPA e encaminha /auth, /vectora.*, /mcp, SSE… ao backend
+  // pelo unix socket (Linux/macOS) ou TCP loopback (Windows).
+  protocol.handle(APP_SCHEME, (req) => forwardToBackend(req));
   try {
     await startBackend();
-    await waitForBackend(backendPort!);
+    await waitForBackend();
     createWindow();
     createTray();
     setupAutoUpdater();

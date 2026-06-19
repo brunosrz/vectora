@@ -1,14 +1,17 @@
-"""Setup Wizard — Configuração interativa do Vectora.
+"""``vectora config keys`` — configuração interativa de API keys e LLM provider.
 
 Fluxo em 3 etapas:
   1. Cohere API key  — obrigatório (embeddings + reranking RAG)
   2. Tavily API key  — obrigatório (busca web em tempo real)
-  3. LLM provider    — escolha: Gemini (free), Cohere (free, usa key acima),
-                       OpenAI (paid), Anthropic (paid), Ollama (local, sem key)
+  3. LLM provider    — Gemini (free), Cohere (free, usa key acima), OpenAI (paid),
+                       Anthropic (paid), Ollama (local, sem key)
      └─ Ollama: pede o nome do model que o usuário já tem instalado
 
-Ao final: testa a conexão com o LLM e lança o chat.
+Ao final testa a conexão com o LLM e persiste em ``~/.vectora/.env`` +
+``~/.vectora/settings.json``.
 """
+
+from __future__ import annotations
 
 import asyncio
 import getpass
@@ -24,9 +27,6 @@ from rich.table import Table
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Configuração dos providers de LLM
-# ---------------------------------------------------------------------------
 LLM_PROVIDERS: dict[str, dict[str, str]] = {
     "1": {
         "name": "Google Gemini",
@@ -40,7 +40,7 @@ LLM_PROVIDERS: dict[str, dict[str, str]] = {
         "name": "Cohere",
         "tier": "free",
         "provider_id": "cohere",
-        "env_var": "COHERE_API_KEY",  # mesma key já pedida no passo 1
+        "env_var": "COHERE_API_KEY",
         "url": "https://dashboard.cohere.com/api-keys",
         "default_model": "command-a-03-2025",
     },
@@ -66,18 +66,18 @@ LLM_PROVIDERS: dict[str, dict[str, str]] = {
         "provider_id": "ollama",
         "env_var": "",
         "url": "https://ollama.ai",
-        "default_model": "",  # usuário informa o model instalado
+        "default_model": "",
     },
 }
 
 
 # ---------------------------------------------------------------------------
-# Helpers de persistência
+# Persistência (~/.vectora/.env e settings.json)
 # ---------------------------------------------------------------------------
 
 
-def _upsert_env_key(env_file: Path, key: str, value: str) -> None:
-    """Insere ou atualiza uma KEY=value no arquivo .env."""
+def upsert_env_key(env_file: Path, key: str, value: str) -> None:
+    """Insere ou atualiza uma ``KEY=value`` no arquivo .env (idempotente)."""
     lines: list[str] = []
     found = False
     if env_file.exists():
@@ -92,28 +92,25 @@ def _upsert_env_key(env_file: Path, key: str, value: str) -> None:
     env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _save_keys_to_env(keys: dict[str, str]) -> None:
-    """Salva as API keys em ~/.vectora/.env."""
+def save_keys_to_env(keys: dict[str, str]) -> None:
+    """Salva as API keys em ``~/.vectora/.env``."""
     env_file = Path.home() / ".vectora" / ".env"
     env_file.parent.mkdir(parents=True, exist_ok=True)
     for key, value in keys.items():
         if value:
-            _upsert_env_key(env_file, key, value)
+            upsert_env_key(env_file, key, value)
 
 
 def _save_provider_to_settings(provider_id: str, model: str) -> None:
-    """Salva provider e model ativos em ~/.vectora/settings.json."""
+    """Salva provider e model ativos em ``~/.vectora/settings.json``."""
     from backend.services.runtime_settings import runtime_settings
 
     runtime_settings.set_active_model(provider_id, model)
-    logger.info(
-        "Provider salvo",
-        extra={"provider": provider_id, "model": model},
-    )
+    logger.info("Provider salvo", extra={"provider": provider_id, "model": model})
 
 
 # ---------------------------------------------------------------------------
-# Carregamento de LLM para teste de conexão
+# Teste de conexão
 # ---------------------------------------------------------------------------
 
 
@@ -141,7 +138,7 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
     if provider_id == "cohere":
         from langchain_cohere import ChatCohere
 
-        # NÃO usar SecretStr — causa 401 (langchain-core str(SecretStr) → "**********")
+        # NÃO usar SecretStr — causa 401 (langchain-core str(SecretStr) → "**********").
         return ChatCohere(
             cohere_api_key=api_key,  # ty: ignore[invalid-argument-type]
             model=model,
@@ -156,8 +153,45 @@ def _load_llm_for_test(provider_id: str, model: str, api_key: str | None) -> Any
     raise ValueError(msg)
 
 
+async def _test_connection(
+    console: Console,
+    provider_id: str,
+    model: str,
+    api_key: str | None,
+) -> None:
+    """Testa a conexão com o LLM escolhido."""
+    console.print("[bold]Testando conexão...[/bold]\n")
+
+    try:
+        llm = _load_llm_for_test(provider_id, model, api_key)
+        with console.status(
+            "[bold cyan]Conectando ao LLM...[/bold cyan]", spinner="dots"
+        ):
+            response = await llm.ainvoke("Say 'Connected!' in one word.")
+        console.print(
+            Panel(
+                f"[green]✓ Conexão bem-sucedida![/green]\n"
+                f"[cyan]Resposta: {response.content}[/cyan]",
+                title="[bold green]Teste de Conexão[/bold green]",
+                style="green",
+                expand=False,
+            )
+        )
+        console.print()
+    except Exception as exc:
+        console.print(
+            Panel(
+                f"[red]{exc!s}[/red]",
+                title="[bold red]✗ Conexão Falhou[/bold red]",
+                style="red",
+            )
+        )
+        logger.exception("Teste de conexão falhou")
+        sys.exit(1)
+
+
 # ---------------------------------------------------------------------------
-# Etapa 1 — Cohere API Key (sempre obrigatório)
+# Etapas do wizard
 # ---------------------------------------------------------------------------
 
 
@@ -169,22 +203,14 @@ async def _step_cohere_key(console: Console) -> str:
     console.print(
         "\n[bold]Cohere é obrigatório[/bold] — fornece os embeddings e o reranker "
         "usados pelo RAG (busca vetorial semântica).\n"
-        "Plano gratuito disponível: "
-        "[cyan]https://dashboard.cohere.com/api-keys[/cyan]\n"
+        "Plano gratuito: [cyan]https://dashboard.cohere.com/api-keys[/cyan]\n"
     )
-
     api_key = getpass.getpass("Cohere API key (oculta): ").strip()
     if not api_key:
         console.print("[red]Cohere API key é obrigatória.[/red]")
         sys.exit(1)
-
     console.print("[green]✓ Cohere key recebida.[/green]\n")
     return api_key
-
-
-# ---------------------------------------------------------------------------
-# Etapa 2 — Tavily API Key (sempre obrigatório)
-# ---------------------------------------------------------------------------
 
 
 async def _step_tavily_key(console: Console) -> str:
@@ -193,23 +219,16 @@ async def _step_tavily_key(console: Console) -> str:
         Rule("[bold cyan]Passo 2 de 3 — Tavily API Key[/bold cyan]", style="cyan")
     )
     console.print(
-        "\n[bold]Tavily é obrigatório[/bold] — fornece busca web em tempo real "
-        "e extração de conteúdo de URLs.\n"
-        "Plano gratuito disponível: [cyan]https://tavily.com[/cyan]\n"
+        "\n[bold]Tavily é obrigatório[/bold] — busca web em tempo real e extração "
+        "de conteúdo de URLs.\n"
+        "Plano gratuito: [cyan]https://tavily.com[/cyan]\n"
     )
-
     api_key = getpass.getpass("Tavily API key (oculta): ").strip()
     if not api_key:
         console.print("[red]Tavily API key é obrigatória.[/red]")
         sys.exit(1)
-
     console.print("[green]✓ Tavily key recebida.[/green]\n")
     return api_key
-
-
-# ---------------------------------------------------------------------------
-# Etapa 3 — Seleção do LLM provider
-# ---------------------------------------------------------------------------
 
 
 async def _step_select_llm(
@@ -218,7 +237,7 @@ async def _step_select_llm(
     """Seleciona o provider de LLM e coleta model/key.
 
     Returns:
-        (provider_id, model, api_key_or_None)
+        ``(provider_id, model, api_key_or_None)``.
     """
     console.print(
         Rule("[bold cyan]Passo 3 de 3 — Provider de LLM[/bold cyan]", style="cyan")
@@ -243,7 +262,6 @@ async def _step_select_llm(
     console.print(table)
     console.print()
 
-    # Seleção do provider
     provider_choice = None
     while provider_choice not in LLM_PROVIDERS:
         raw = (await asyncio.to_thread(input, "Escolha o provider (1-5): ")).strip()
@@ -256,10 +274,9 @@ async def _step_select_llm(
     provider_id = provider_info["provider_id"]
     console.print(f"\n[green]✓ {provider_info['name']} selecionado.[/green]\n")
 
-    # Ollama — pede o model instalado pelo usuário
     if provider_id == "ollama":
         console.print(
-            "[bold]Ollama[/bold] usa modelos que você instalou localmente.\n"
+            "[bold]Ollama[/bold] usa modelos instalados localmente.\n"
             "Execute [cyan]ollama list[/cyan] para ver os disponíveis.\n"
             "Exemplos: [dim]llama3:8b  mistral  codellama  qwen2.5:7b[/dim]\n"
         )
@@ -270,12 +287,10 @@ async def _step_select_llm(
         console.print(f"[green]✓ Model: {model}[/green]\n")
         return provider_id, model, None
 
-    # Cohere como LLM — reutiliza a key já coletada no passo 1
     if provider_id == "cohere":
         console.print("[dim]Reutilizando a Cohere API key do passo 1.[/dim]\n")
         return provider_id, provider_info["default_model"], cohere_key
 
-    # Demais providers — pede API key
     console.print(
         f"[bold]{provider_info['name']} API key:[/bold]\n"
         f"[cyan]{provider_info['url']}[/cyan]\n"
@@ -284,54 +299,8 @@ async def _step_select_llm(
     if not api_key:
         console.print(f"[red]API key é obrigatória para {provider_info['name']}.[/red]")
         sys.exit(1)
-
     console.print(f"[green]✓ {provider_info['name']} key recebida.[/green]\n")
     return provider_id, provider_info["default_model"], api_key
-
-
-# ---------------------------------------------------------------------------
-# Teste de conexão
-# ---------------------------------------------------------------------------
-
-
-async def _test_connection(
-    console: Console,
-    provider_id: str,
-    model: str,
-    api_key: str | None,
-) -> None:
-    """Testa a conexão com o LLM escolhido."""
-    console.print("[bold]Testando conexão...[/bold]\n")
-
-    try:
-        llm = _load_llm_for_test(provider_id, model, api_key)
-
-        with console.status(
-            "[bold cyan]Conectando ao LLM...[/bold cyan]", spinner="dots"
-        ):
-            response = await llm.ainvoke("Say 'Connected!' in one word.")
-
-        console.print(
-            Panel(
-                f"[green]✓ Conexão bem-sucedida![/green]\n"
-                f"[cyan]Resposta: {response.content}[/cyan]",
-                title="[bold green]Teste de Conexão[/bold green]",
-                style="green",
-                expand=False,
-            )
-        )
-        console.print()
-
-    except Exception as exc:
-        console.print(
-            Panel(
-                f"[red]{exc!s}[/red]",
-                title="[bold red]✗ Conexão Falhou[/bold red]",
-                style="red",
-            )
-        )
-        logger.exception("Teste de conexão falhou")
-        sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -340,12 +309,12 @@ async def _test_connection(
 
 
 async def run_setup() -> None:
-    """Executa o wizard completo de configuração."""
+    """Executa o wizard completo de configuração de keys + LLM provider."""
     console = Console()
 
     console.print(
         Panel(
-            "[bold cyan]Vectora Setup Wizard[/bold cyan]\n"
+            "[bold cyan]Vectora — Configuração de API Keys[/bold cyan]\n"
             "[dim]Configure suas API keys e escolha o LLM provider[/dim]",
             style="bold blue",
             expand=False,
@@ -353,19 +322,12 @@ async def run_setup() -> None:
     )
     console.print()
 
-    # Passo 1 — Cohere (sempre obrigatório)
     cohere_key = await _step_cohere_key(console)
-
-    # Passo 2 — Tavily (sempre obrigatório)
     tavily_key = await _step_tavily_key(console)
-
-    # Passo 3 — LLM provider
     provider_id, model, llm_api_key = await _step_select_llm(console, cohere_key)
 
-    # Teste de conexão com o LLM
     await _test_connection(console, provider_id, model, llm_api_key)
 
-    # Salvar keys em ~/.vectora/.env
     keys_to_save: dict[str, str] = {
         "COHERE_API_KEY": cohere_key,
         "TAVILY_API_KEY": tavily_key,
@@ -382,7 +344,7 @@ async def run_setup() -> None:
         if env_var:
             keys_to_save[env_var] = llm_api_key
 
-    _save_keys_to_env(keys_to_save)
+    save_keys_to_env(keys_to_save)
     _save_provider_to_settings(provider_id, model)
 
     console.print(
@@ -398,10 +360,6 @@ async def run_setup() -> None:
     console.print()
 
 
-def run_setup_sync() -> None:
-    """Entry point síncrono para o setup wizard."""
+def run_keys() -> None:
+    """Entry point síncrono de ``vectora config keys``."""
     asyncio.run(run_setup())
-
-
-if __name__ == "__main__":
-    run_setup_sync()

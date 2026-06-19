@@ -20,22 +20,19 @@ RUN --mount=type=cache,target=/pnpm-store \
 COPY frontend/ ./
 RUN pnpm build
 
-# ── Stage 1: Python builder ─────────────────────────────────────────────────
-FROM python:3.13-slim AS builder
+# ── Stage 1: Nuitka builder (compila o backend para binário C) ──────────────
+# Produto pago de código fechado: o runtime NÃO recebe nenhum `.py` do backend.
+# Compilamos `backend/launcher.py` → binário onefile `vectora` (as diretivas
+# `nuitka-project:` vivem no próprio launcher.py). A SPA Vite é embutida no
+# binário como `chat_static/` via --include-data-dir.
+FROM python:3.13-slim AS nuitka-builder
 
-ARG VERSION=0.1.0
-
-# IMPORTANTE: o WORKDIR do builder DEVE ser igual ao do runtime (/app). O uv
-# instala o projeto em modo editable — o arquivo `_editable_impl_*.pth` grava o
-# caminho ABSOLUTO da raiz (ex.: /app) em sys.path, e os console scripts do venv
-# (ex.: `vectora`) recebem um shebang com o caminho ABSOLUTO do python do venv.
-# Se o builder usasse /build e o runtime /app, o .pth apontaria para /build
-# (inexistente no runtime → `import backend` falha) e o shebang para
-# /build/.venv/bin/python (inexistente → o entrypoint não executa).
 WORKDIR /app
 
+# build-essential: compilador C que o Nuitka usa. patchelf: exigido pelo modo
+# onefile no Linux (reescreve o RPATH do binário). ccache: acelera rebuilds.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+    build-essential patchelf ccache curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -47,30 +44,36 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY backend/ ./backend/
 COPY README.md ./
+# A SPA precisa existir em frontend/dist no momento da compilação — o Nuitka
+# a embute no binário (--include-data-dir aponta para ../frontend/dist).
+COPY --from=frontend-builder /build/frontend/dist /app/frontend/dist
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
-# ── Stage 2: Runtime ────────────────────────────────────────────────────────
+# Compila o binário onefile. As flags estão no launcher.py (nuitka-project:);
+# --assume-yes-for-downloads evita prompt do gcc/ccache em ambiente não-tty.
+RUN --mount=type=cache,target=/root/.cache/ccache \
+    uv run python -m nuitka --assume-yes-for-downloads backend/launcher.py
+
+# ── Stage 2: Runtime (só o binário compilado, sem fonte Python) ─────────────
 FROM python:3.13-slim
 
 ARG VERSION=0.1.0
 
 WORKDIR /app
 
-# GitPython (backend/tools/git.py) exige o binário `git` no PATH em runtime — sem ele
-# o backend crasha no import ("Bad git executable"). O python:slim não traz git.
+# GitPython (backend/tools/git.py) exige o binário `git` no PATH em runtime — sem
+# ele o backend crasha no import ("Bad git executable"). O slim não traz git.
 RUN apt-get update && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/.venv /app/.venv
-COPY --from=builder /app/backend /app/backend
-COPY --from=builder /app/pyproject.toml /app/pyproject.toml
-COPY --from=frontend-builder /build/frontend/dist /app/frontend/dist
+# Apenas o binário compilado entra no runtime — nenhum `.py` do backend, nenhum
+# venv, nenhuma fonte. A SPA Vite já está embutida no binário (chat_static).
+COPY --from=nuitka-builder /app/dist-nuitka/vectora /usr/local/bin/vectora
 
 RUN mkdir -p /root/.vectora && chmod 700 /root/.vectora
 
-ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1 \
     LOG_LEVEL=INFO \
     VERSION=${VERSION}
 
@@ -79,4 +82,6 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
 
-ENTRYPOINT ["vectora", "server", "web"]
+# Sem display no container → vectora start degrada para servidor puro
+# (backend + MCP em /mcp + SPA), sem bandeja nem janela.
+ENTRYPOINT ["vectora", "start"]

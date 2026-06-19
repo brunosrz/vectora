@@ -36,7 +36,6 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "langsmith>=0.8.5",
     "deepagents>=0.6.3",
-    "textual>=0.83",
     "pathspec>=1.1.1",
     "watchdog>=4.0",
     "langchain-text-splitters>=1.1.2",
@@ -72,6 +71,8 @@ dependencies = [
     "nuitka[all]>=4.1.2",
     "scons>=4.10.1",
     "send2trash>=2.1.0",
+    "pystray>=0.19.5",
+    "pillow>=11.0",
     "redis[hiredis]>=5.0",
     "asyncpg>=0.29",
     "langchain-qdrant>=0.2",
@@ -144,11 +145,12 @@ ignore = [
 "backend/agents/*.py" = ["PLR0911"]
 "backend/nodes/engine.py" = ["E501"]
 "backend/nodes/base.py" = ["PLR0911"]
-"backend/ui/setup_wizard.py" = ["S603", "RUF006"]
 "backend/services/checkpoint.py" = ["N802"]
-# Wizard interativo de CLI: input() bloqueante é o comportamento correto (nada
-# mais roda no loop durante o prompt).
-"backend/main.py" = ["ASYNC250"]
+# Wizards interativos de CLI: getpass/input() bloqueante é o comportamento
+# correto (nada mais roda no loop durante o prompt). S603 cobre o teste de
+# conexão que carrega o LLM; RUF006 o create_task do streaming de status.
+"backend/cli/keys.py" = ["S603", "RUF006", "ASYNC250"]
+"backend/cli/storage.py" = ["ASYNC250"]
 # Nomes de tabela vêm de _SQLITE_TABLES hardcoded (não user input); asserts de
 # narrowing de tipo em script de migração. SIM118/SIM401: as linhas operam
 # sobre sqlite3.Row (não dict) — `.keys()` é obrigatório e `.get()` não existe.

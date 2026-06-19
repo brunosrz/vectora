@@ -9,10 +9,11 @@ Interface web do **Vectora Agent** — SPA Vite + TanStack Router (TypeScript) s
 ```
 Browser
   ↓ HTTP / SSE / WebSocket (mesmo origin)
-FastAPI (vectora server web)
-  ├── /            — Vite SPA (chat/dist/ via StaticFiles)
+FastAPI (vectora start)
+  ├── /            — Vite SPA (frontend/dist/ via StaticFiles)
   ├── /auth/*      — autenticação JWT + cookies httpOnly
   ├── /vectora.*   — ConnectRPC handlers (chat, workspaces, terminal)
+  ├── /mcp         — MCP server (sempre-ativo, SSE)
   └── /admin/*     — painel de administração
         ↓ LangGraph (astream_events v2)
   agent_factory.get_user_agent() → DeepAgent
@@ -26,7 +27,7 @@ para o FastAPI (`:8080`). Em produção, tudo roda na mesma porta.
 ## Pré-requisitos
 
 - [Node.js 22+](https://nodejs.org/) e [pnpm 11+](https://pnpm.io/)
-- Vectora Agent rodando (`vectora server web` ou `vectora server headless`)
+- Vectora Agent rodando (`vectora start`, ou `vectora start --headless` para só a API)
 
 ---
 
@@ -41,7 +42,7 @@ cp .env.example .env.local
 # NEXT_PUBLIC_VECTORA_API_URL=http://localhost:8080
 
 # 3. Inicie o Vectora Agent em outro terminal
-vectora server headless   # ou: uv run vectora server headless
+vectora start --headless   # ou: uv run vectora start --headless
 
 # 4. Inicie o chat
 pnpm dev
@@ -152,5 +153,5 @@ Adicionar uma nova tool no agente com `metadata={"render_hint": "table"}` funcio
 ## Relacionado
 
 - [Vectora Agent](../README.md) — o agente que o chat consome
-- `vectora server web` — serve agent + Vite SPA em um único processo
-- `vectora server headless` — serve só o agent (sem static files)
+- `vectora start` — backend + MCP (/mcp) + Vite SPA em um único processo
+- `vectora start --headless` — sobe sem janela (bandeja + backend + MCP)

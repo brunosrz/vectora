@@ -144,40 +144,36 @@ class TestNodeLabels:
         assert isinstance(label, str)
         assert len(label) > 0
 
-    def test_get_node_label_orchestrator(self):
+    def test_get_node_label_model(self):
         from backend.api.node_labels import get_node_label
 
-        assert get_node_label("orchestrator") == "Analisando..."
+        assert get_node_label("model") == "Analisando..."
 
-    def test_get_node_label_search_agent(self):
+    def test_get_node_label_search(self):
         from backend.api.node_labels import get_node_label
 
-        assert get_node_label("search_agent") == "Pesquisando na web…"
+        assert get_node_label("search") == "Pesquisando…"
 
-    def test_get_node_label_rag_agent(self):
+    def test_get_node_label_tools(self):
         from backend.api.node_labels import get_node_label
 
-        label = get_node_label("rag_agent")
-        assert (
-            "documento" in label.lower()
-            or "rag" in label.lower()
-            or "base" in label.lower()
-        )
+        label = get_node_label("tools")
+        assert "ferramenta" in label.lower()
 
-    def test_get_node_label_coder_agent(self):
+    def test_get_node_label_coder(self):
         from backend.api.node_labels import get_node_label
 
-        label = get_node_label("coder_agent")
+        label = get_node_label("coder")
         assert (
             "código" in label.lower()
             or "coder" in label.lower()
             or "programa" in label.lower()
         )
 
-    def test_get_node_label_invoke_llm(self):
+    def test_get_node_label_main_agent(self):
         from backend.api.node_labels import get_node_label
 
-        label = get_node_label("invoke_llm")
+        label = get_node_label("vectora")
         assert isinstance(label, str)
         assert len(label) > 0
 
@@ -192,14 +188,14 @@ class TestNodeLabels:
         from backend.api.node_labels import NODE_LABELS
 
         assert isinstance(NODE_LABELS, dict)
-        assert "orchestrator" in NODE_LABELS
-        assert "search_agent" in NODE_LABELS
+        assert "model" in NODE_LABELS
+        assert "coder" in NODE_LABELS
 
     def test_node_label_routing_decision(self):
-        """Label especial quando orchestrator decide delegar para search_agent."""
+        """Label especial quando o agente delega ao sub-agent de busca."""
         from backend.api.node_labels import get_routing_label
 
-        label = get_routing_label("search_agent")
+        label = get_routing_label("search")
         assert (
             "busca" in label.lower()
             or "pesquisa" in label.lower()
