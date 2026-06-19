@@ -127,7 +127,7 @@ async def test_pipe_side_encaminha_dados_apos_tcp(monkeypatch):
 async def test_pipe_side_fecha_quando_tcp_falha(monkeypatch):
     """Se o uvicorn TCP não estiver acessível, a pipe fecha graciosamente."""
 
-    async def fail_create_conn(proto_factory, host, port):  # noqa: ARG001
+    async def fail_create_conn(proto_factory, host, port):
         raise OSError("connection refused")
 
     loop = asyncio.get_event_loop()
@@ -262,11 +262,16 @@ async def test_serve_pipe_proxies_http():
         def data_received(self, data: bytes) -> None:
             received.append(data)
 
-    _create_pipe = getattr(loop, "create_pipe_connection")  # ProactorEventLoop only
-    _dummy_tr, _ = await _create_pipe(asyncio.Protocol, _pipe)  # ty: ignore[call-non-callable]
-    transport2, _ = await _create_pipe(_ClientProto, _pipe)  # ty: ignore[call-non-callable]
+    from typing import Any
 
-    _write = getattr(transport2, "write")
+    _loop_proactor: Any = (
+        loop  # ProactorEventLoop only — não declarado em AbstractEventLoop
+    )
+    _create_pipe = _loop_proactor.create_pipe_connection
+    _dummy_tr, _ = await _create_pipe(asyncio.Protocol, _pipe)
+    transport2, _ = await _create_pipe(_ClientProto, _pipe)
+
+    _write = transport2.write
     _write(b"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n")
     transport, protocol = _dummy_tr, _
     await asyncio.sleep(0.2)

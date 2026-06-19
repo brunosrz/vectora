@@ -35,8 +35,7 @@ class _TCPSide(asyncio.Protocol):
         if isinstance(transport, asyncio.WriteTransport) and not transport.is_closing():
             transport.write(data)
 
-    def connection_lost(self, exc: BaseException | None) -> None:
-        _ = exc
+    def connection_lost(self, exc: BaseException | None) -> None:  # noqa: ARG002
         transport = self._pipe._transport
         if transport and not transport.is_closing():
             transport.close()
@@ -55,10 +54,11 @@ class _PipeSide(asyncio.Protocol):
         self._transport: asyncio.BaseTransport | None = None
         self._tcp_transport: asyncio.WriteTransport | None = None
         self._pending: list[bytes] = []
+        self._connect_task: asyncio.Task[None] | None = None
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         self._transport = transport
-        asyncio.ensure_future(self._connect_tcp())
+        self._connect_task = asyncio.ensure_future(self._connect_tcp())
 
     async def _connect_tcp(self) -> None:
         loop = asyncio.get_running_loop()
@@ -85,7 +85,7 @@ class _PipeSide(asyncio.Protocol):
         else:
             self._pending.append(data)
 
-    def connection_lost(self, exc: BaseException | None) -> None:  # noqa: ARG002
+    def connection_lost(self, exc: BaseException | None) -> None:
         if self._tcp_transport and not self._tcp_transport.is_closing():
             self._tcp_transport.close()
 
@@ -107,9 +107,12 @@ async def serve_pipe(pipe_path: str, tcp_host: str, tcp_port: int) -> None:
             "serve_pipe requer asyncio.ProactorEventLoop. "
             f"Loop atual: {type(loop).__name__}"
         )
-    from typing import Any, cast
+    from typing import Any
 
-    _start = cast(Any, getattr(loop, "start_serving_pipe"))
+    _loop_proactor: Any = (
+        loop  # ProactorEventLoop — AbstractEventLoop não expõe a API de pipe
+    )
+    _start = _loop_proactor.start_serving_pipe
     servers: list = await _start(
         lambda: _PipeSide(tcp_host, tcp_port),
         pipe_path,

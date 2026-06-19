@@ -66,7 +66,7 @@ def test_has_display_linux_com_wayland_true(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_build_icon_image_carrega_png_real(tmp_path: Path) -> None:
-    """Quando o PNG existe, carrega e redimensiona para 64×64."""
+    """Quando o PNG existe, carrega e redimensiona para 64x64."""
     from PIL import Image
 
     png = tmp_path / "vectora.png"
@@ -86,7 +86,7 @@ def test_build_icon_image_carrega_png_real(tmp_path: Path) -> None:
 
 
 def test_build_icon_image_fallback_sem_arquivo(tmp_path: Path) -> None:
-    """Sem arquivos de ícone, retorna o quadrado roxo de fallback 64×64."""
+    """Sem arquivos de ícone, retorna o quadrado roxo de fallback 64x64."""
     with (
         patch("backend.services.tray._ICON_PNG", tmp_path / "nope.png"),
         patch("backend.services.tray._ICON_ICO", tmp_path / "nope.ico"),

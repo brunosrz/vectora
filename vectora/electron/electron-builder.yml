@@ -146,6 +146,12 @@ deb:
 appImage:
   license: ../LICENSE
 
+msi:
+  # LGHT1105: ICE validation exige privilégio de admin ou política do SO específica.
+  # -sw1105 suprime o aviso para que light.exe não falhe em builds locais/CI sem admin.
+  additionalWixArgs:
+    - "-sw1105"
+
 nsis:
   oneClick: false
   perMachine: false

@@ -57,7 +57,7 @@ def _enable_dark_mode_win32() -> None:
         import ctypes
         from typing import cast
 
-        uxtheme = cast(Any, ctypes.WinDLL("uxtheme"))
+        uxtheme = cast("Any", ctypes.WinDLL("uxtheme"))
         set_mode = uxtheme[135]  # SetPreferredAppMode — ordinal não documentado
         set_mode.restype = ctypes.c_int
         set_mode(2)  # PreferDark = 2
@@ -77,9 +77,7 @@ def _build_icon_image() -> Any:
     for path in (_ICON_PNG, _ICON_ICO):
         if path.exists():
             try:
-                img = Image.open(path).convert("RGBA")
-                img = img.resize((64, 64), resample)
-                return img
+                return Image.open(path).convert("RGBA").resize((64, 64), resample)
             except Exception as exc:
                 logger.debug("tray: falha ao carregar %s: %s", path, exc)
 
