@@ -29,11 +29,11 @@ def _resolve_path(obj: object, path: str) -> object:
         if isinstance(part, int):
             if not isinstance(current, list) or part >= len(current):
                 raise KeyError(f"índice [{part}] fora do limite")
-            current = cast(list[Any], current)[part]
+            current = cast("list[Any]", current)[part]
         elif isinstance(current, dict):
             if part not in current:
                 raise KeyError(f"chave ausente: {part!r}")
-            current = cast(dict[str, Any], current)[part]
+            current = cast("dict[str, Any]", current)[part]
         else:
             raise KeyError(f"não é possível navegar em {type(current).__name__}")
     return current

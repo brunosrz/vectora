@@ -16,6 +16,12 @@ import { afterEach } from "vitest";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom/vitest";
 
+// monaco-editor chama document.queryCommandSupported() no carregamento —
+// jsdom não implementa esse método legado, então precisamos de um stub.
+if (typeof document !== "undefined" && !document.queryCommandSupported) {
+  document.queryCommandSupported = () => false;
+}
+
 class MemoryStorage implements Storage {
   private store = new Map<string, string>();
   get length(): number {

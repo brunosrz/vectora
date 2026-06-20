@@ -39,6 +39,7 @@ from backend.api.handlers.admin import router as admin_router
 from backend.api.handlers.artifacts import router as artifacts_router
 from backend.api.handlers.auth import router as auth_router
 from backend.api.handlers.chat import router as chat_router
+from backend.api.handlers.heartbreak import router as heartbreak_router
 from backend.api.handlers.license import router as license_router
 from backend.api.handlers.memory import router as memory_router
 from backend.api.handlers.oauth import router as oauth_router
@@ -405,6 +406,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(tools_router)
     app.include_router(terminal_router)
     app.include_router(routines_router)
+    app.include_router(heartbreak_router)
     # REST API v1 — structured output endpoints
     app.include_router(v1_extract_router)
     app.include_router(v1_classify_router)

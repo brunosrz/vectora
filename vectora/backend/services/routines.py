@@ -259,7 +259,7 @@ class RoutineScheduler:
 
             logger.info(
                 "routines: executando rotina",
-                extra={"id": routine.id, "name": routine.name},
+                extra={"id": routine.id, "routine_name": routine.name},
             )
             now = datetime.now(UTC)
             nxt = schedule_next(routine.cron_expr, now)

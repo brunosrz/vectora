@@ -21,10 +21,9 @@ async def base64_encode(text: str, operation: str = "encode") -> str:
     try:
         if operation == "encode":
             return base64.b64encode(text.encode()).decode()
-        elif operation == "decode":
+        if operation == "decode":
             return base64.b64decode(text).decode()
-        else:
-            return f"error: operação inválida: {operation!r}. Use 'encode' ou 'decode'."
+        return f"error: operação inválida: {operation!r}. Use 'encode' ou 'decode'."
     except Exception as e:
         logger.exception("base64_encode falhou", extra={"operation": operation})
         return f"error: {e}"

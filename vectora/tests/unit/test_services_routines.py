@@ -10,7 +10,7 @@ Verifica que:
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock  # noqa: F401
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -38,7 +38,7 @@ class TestScheduleNext:
     def test_invalid_cron_raises(self) -> None:
         from backend.services.routines import schedule_next
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             schedule_next("invalid cron", datetime.now(UTC))
 
 

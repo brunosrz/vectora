@@ -90,7 +90,7 @@ class TestHashText:
         from backend.tools.native.hash import hash_text
 
         result = await hash_text.ainvoke({"text": "world", "algorithm": "md5"})
-        expected = hashlib.md5(b"world").hexdigest()
+        expected = hashlib.md5(b"world").hexdigest()  # noqa: S324
         assert result == expected
 
     @pytest.mark.asyncio
@@ -264,7 +264,7 @@ class TestHttpRequest:
                 pass
 
         class _FakeClient:
-            async def __aenter__(self) -> "_FakeClient":
+            async def __aenter__(self) -> _FakeClient:
                 return self
 
             async def __aexit__(self, *_: object) -> None:
@@ -288,7 +288,7 @@ class TestHttpRequest:
         from backend.tools.native.http import http_request
 
         class _ErrorClient:
-            async def __aenter__(self) -> "_ErrorClient":
+            async def __aenter__(self) -> _ErrorClient:
                 return self
 
             async def __aexit__(self, *_: object) -> None:

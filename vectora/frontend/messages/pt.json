@@ -776,5 +776,13 @@
   "routines_last_run": "Última execução",
   "routines_never": "Nunca",
   "routines_create_error": "Erro ao criar rotina",
-  "routines_delete_error": "Erro ao remover rotina"
+  "routines_delete_error": "Erro ao remover rotina",
+  "heartbreak_indicator_label": "Heartbreak ativo",
+  "heartbreak_sessions_label": "sessão ativa",
+  "heartbreak_sessions_label_plural": "sessões ativas",
+  "heartbreak_stop": "Encerrar sessão",
+  "heartbreak_new": "Nova sessão",
+  "heartbreak_instruction_label": "Instrução",
+  "heartbreak_runs": "execuções",
+  "heartbreak_empty": "Nenhuma sessão ativa"
 }

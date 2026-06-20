@@ -68,7 +68,7 @@ def _user_id(request: Request) -> int:
     return int(user.id)
 
 
-def _to_out(r: "Routine") -> RoutineOut:
+def _to_out(r: Routine) -> RoutineOut:
     return RoutineOut(
         id=r.id,
         user_id=r.user_id,

@@ -18,7 +18,7 @@ async def http_request(
     method: str = "GET",
     headers: dict[str, str] | None = None,
     body: str | None = None,
-    timeout: float = 15.0,
+    timeout_s: float = 15.0,
 ) -> str:
     """Executa uma requisição HTTP e retorna status + body.
 
@@ -29,10 +29,10 @@ async def http_request(
         method: Método HTTP — GET, POST, PUT, PATCH, DELETE.
         headers: Cabeçalhos opcionais.
         body: Corpo da requisição (para POST/PUT).
-        timeout: Timeout em segundos (padrão 15).
+        timeout_s: Timeout em segundos (padrão 15).
     """
     try:
-        kwargs: dict[str, Any] = {"timeout": timeout}
+        kwargs: dict[str, Any] = {"timeout": timeout_s}
         if headers:
             kwargs["headers"] = headers
         if body:
