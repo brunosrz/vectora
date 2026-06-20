@@ -961,6 +961,24 @@ def _parse_unified_diff(diff_text: str) -> list[DiffHunk]:
     return hunks
 
 
+def _untracked_as_diff(content: str, path: str) -> list[DiffHunk]:
+    """Gera hunks de diff sintético para arquivo untracked (puro adição).
+
+    Arquivos não rastreados pelo git não aparecem em ``git diff HEAD``.
+    Esta função formata o conteúdo como se fosse um diff ``+`` completo,
+    permitindo que o diff-tab exiba o arquivo untracked como adição total.
+    """
+    if not content:
+        return []
+    lines = content.splitlines()
+    n = len(lines)
+    hunk = DiffHunk(
+        header=f"@@ -0,0 +1,{n} @@",
+        lines=[f"+{line}" for line in lines],
+    )
+    return [hunk]
+
+
 def _parse_porcelain_v1(raw: str) -> list[tuple[str, str, str]]:
     """Faz parse de ``git status --porcelain=v1 -uall`` em (staged, unstaged, path).
 
@@ -1109,7 +1127,29 @@ async def workspace_git_diff_file(
         return DiffFileResponse(path=path, hunks=[])
 
     try:
-        diff_text = repo.git.diff("HEAD", "--", path) or ""
+        status_line = repo.git.status("--porcelain=v1", "--", path) or ""
+        is_untracked = status_line.lstrip().startswith("??")
+    except Exception:
+        is_untracked = False
+
+    if is_untracked:
+        from pathlib import Path as _Path
+
+        filepath = _Path(ws.cwd) / path
+        try:
+            content = filepath.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            content = ""
+        return DiffFileResponse(path=path, hunks=_untracked_as_diff(content, path))
+
+    try:
+        porcelain = repo.git.status("--porcelain=v1", "--", path) or ""
+        is_staged_only = porcelain and porcelain[0] not in (" ", "?")
+        diff_text = (
+            repo.git.diff("--cached", "HEAD", "--", path) or ""
+            if is_staged_only and not repo.git.diff("HEAD", "--", path)
+            else repo.git.diff("HEAD", "--", path) or ""
+        )
     except Exception:
         diff_text = ""
 

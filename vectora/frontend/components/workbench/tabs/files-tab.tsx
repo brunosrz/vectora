@@ -993,6 +993,53 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
     permanent: boolean;
   } | null>(null);
 
+  // ── Edição inline do viewer ──────────────────────────────────────────────
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleStartEdit = useCallback(() => {
+    setEditContent(openContent?.content ?? "");
+    setIsEditing(true);
+  }, [openContent]);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setEditContent("");
+  }, []);
+
+  const handleSaveEdit = useCallback(
+    async (force = false) => {
+      if (!wsId || !openPath) return;
+      setSaving(true);
+      const sha = force ? null : (openContent?.sha256 ?? null);
+      const result = await apiUpdateFile(wsId, openPath, editContent, sha);
+      setSaving(false);
+      if (result.ok) {
+        setIsEditing(false);
+        const refreshed = await fetchFile(wsId, openPath);
+        if (refreshed) setFileContent(wsId, openPath, refreshed);
+        useToastStore.getState().success(m.workbench_files_save());
+      } else if (result.conflict) {
+        useToastStore.getState().error(m.workbench_files_conflict_title(), {
+          action: {
+            label: m.workbench_files_force_save(),
+            onClick: () => void handleSaveEdit(true),
+          },
+        });
+      } else {
+        useToastStore.getState().error(m.workbench_files_save_error());
+      }
+    },
+    [wsId, openPath, openContent, editContent, setFileContent],
+  );
+
+  // Reset estado de edição ao trocar de arquivo.
+  useEffect(() => {
+    setIsEditing(false);
+    setEditContent("");
+  }, [openPath]);
+
   // ── Busca em conteúdo (A.5) ─────────────────────────────────────────────
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1588,6 +1635,23 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                     <History className="w-3 h-3" />
                   </button>
                 )}
+                {openPath &&
+                  openContent?.kind !== "binary" &&
+                  !openContent?.truncated && (
+                    <button
+                      onClick={isEditing ? handleCancelEdit : handleStartEdit}
+                      className={`p-0.5 rounded transition-colors ${isEditing ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                      title={
+                        isEditing
+                          ? m.workbench_files_cancel()
+                          : m.workbench_files_edit()
+                      }
+                      aria-pressed={isEditing}
+                      data-editing={isEditing ? "true" : "false"}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
                 {openPath && (
                   <button
                     onClick={() => openWindow(wsId, openPath)}
@@ -1694,6 +1758,38 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
                       </div>
                     );
                   })}
+                </div>
+              ) : isEditing ? (
+                <div className="flex flex-col gap-1 h-full">
+                  <textarea
+                    className="flex-1 w-full font-mono text-xs bg-muted/20 border border-border/60 rounded p-2 resize-none outline-none focus:border-primary min-h-[12rem]"
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    spellCheck={false}
+                    data-testid="inline-editor-textarea"
+                  />
+                  <div className="flex gap-2 justify-end shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancelEdit}
+                      className="h-6 text-xs"
+                    >
+                      {m.workbench_files_cancel()}
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={saving}
+                      onClick={() => void handleSaveEdit()}
+                      className="h-6 text-xs"
+                    >
+                      {saving ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        m.workbench_files_save()
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <pre className="text-xs font-mono whitespace-pre-wrap break-all">

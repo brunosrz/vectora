@@ -103,3 +103,56 @@ def test_diff_file_status_only_defaults_flags_to_none() -> None:
     assert f.staged_change is None
     assert f.unstaged_change is None
     assert f.untracked is False
+
+
+# ---------------------------------------------------------------------------
+# Sprint 6 — FS-2A: arquivo untracked exibido como diff puro de adição
+# ---------------------------------------------------------------------------
+
+
+def test_untracked_as_diff_single_line() -> None:
+    """Arquivo untracked com 1 linha gera 1 hunk com header @@ -0,0 +1,1 @@."""
+    from backend.api.handlers.workspaces import _untracked_as_diff
+
+    hunks = _untracked_as_diff("hello\n", "src/new.py")
+    assert len(hunks) == 1
+    assert hunks[0].header == "@@ -0,0 +1,1 @@"
+    assert hunks[0].lines == ["+hello"]
+
+
+def test_untracked_as_diff_multiline() -> None:
+    """Arquivo untracked multiline gera linhas prefixadas com +."""
+    from backend.api.handlers.workspaces import _untracked_as_diff
+
+    content = "linha1\nlinha2\nlinha3\n"
+    hunks = _untracked_as_diff(content, "file.py")
+    assert hunks[0].header == "@@ -0,0 +1,3 @@"
+    assert hunks[0].lines == ["+linha1", "+linha2", "+linha3"]
+
+
+def test_untracked_as_diff_empty_content() -> None:
+    """Arquivo vazio retorna lista vazia de hunks."""
+    from backend.api.handlers.workspaces import _untracked_as_diff
+
+    hunks = _untracked_as_diff("", "empty.py")
+    assert hunks == []
+
+
+def test_untracked_as_diff_no_trailing_newline() -> None:
+    """Conteúdo sem newline final deve incluir todas as linhas."""
+    from backend.api.handlers.workspaces import _untracked_as_diff
+
+    hunks = _untracked_as_diff("abc", "x.py")
+    assert hunks[0].lines == ["+abc"]
+    assert hunks[0].header == "@@ -0,0 +1,1 @@"
+
+
+def test_parse_unified_diff_staged_only() -> None:
+    """Diff de arquivo staged (git diff --cached HEAD) produz hunks corretos."""
+    from backend.api.handlers.workspaces import _parse_unified_diff
+
+    diff = "@@ -0,0 +1,2 @@\n+nova linha 1\n+nova linha 2\n"
+    hunks = _parse_unified_diff(diff)
+    assert len(hunks) == 1
+    assert "+nova linha 1" in hunks[0].lines
+    assert "+nova linha 2" in hunks[0].lines
