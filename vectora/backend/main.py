@@ -23,9 +23,12 @@ import asyncio
 import contextlib
 import logging
 import os
+import signal
 import socket
 import sys
+import warnings
 from pathlib import Path
+from typing import Any
 
 
 def _find_free_port(preferred: int | None = None) -> int:
@@ -60,6 +63,30 @@ from backend.services.log_setup import setup_logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Terminal shutdown helpers
+# ---------------------------------------------------------------------------
+
+
+def _install_terminal_signals(server: Any, icon_ref: list[Any]) -> None:
+    """Instala handlers de SIGINT/SIGTERM/SIGHUP para shutdown limpo em modo TTY.
+
+    Chamado apenas quando o processo foi iniciado por um terminal interativo
+    (sys.stdin.isatty()) e não está sob Electron (VECTORA_DESKTOP). No VPS/
+    Docker sem TTY, o uvicorn gerencia os próprios sinais.
+    """
+
+    def _shutdown(_signum: int, _frame: Any) -> None:
+        server.should_exit = True
+        if icon_ref[0] is not None:
+            icon_ref[0].stop()
+
+    signal.signal(signal.SIGINT, _shutdown)
+    signal.signal(signal.SIGTERM, _shutdown)
+    if hasattr(signal, "SIGHUP"):
+        signal.signal(signal.SIGHUP, _shutdown)  # type: ignore[attr-defined]
 
 
 # ---------------------------------------------------------------------------
@@ -272,6 +299,11 @@ def _run_start(args: argparse.Namespace) -> None:
     Em ``--headless`` registra ``VECTORA_HEADLESS=1`` para a bandeja/Electron
     decidirem não abrir janela; o servidor em si é idêntico.
     """
+    warnings.filterwarnings(
+        "ignore", category=DeprecationWarning, module="deepagents.*"
+    )
+    warnings.filterwarnings("ignore", category=DeprecationWarning, module="langchain.*")
+
     import uvicorn
 
     from backend.api.server import create_app
@@ -372,7 +404,16 @@ def _run_start(args: argparse.Namespace) -> None:
     # bloqueia a main thread até "Sair"; o servidor roda em thread de fundo.
     from backend.services.tray import run_server_with_tray
 
-    run_server_with_tray(server, f"{scheme}://localhost:{port}", headless=args.headless)
+    icon_ref: list[Any] = [None]
+    if sys.stdin.isatty() and not os.environ.get("VECTORA_DESKTOP"):
+        _install_terminal_signals(server, icon_ref)
+
+    run_server_with_tray(
+        server,
+        f"{scheme}://localhost:{port}",
+        headless=args.headless,
+        icon_ref=icon_ref,
+    )
 
     # Retorno do tray/servidor = shutdown concluído. No Windows, threads
     # não-daemon de libs externas (langsmith, httpx, SQLite do tracer, Cohere

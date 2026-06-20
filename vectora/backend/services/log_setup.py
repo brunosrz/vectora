@@ -162,24 +162,20 @@ def setup_logging(
             "urllib3",
             "requests",
             "asyncio",
-            # Cohere SDK e SQLite async driver
             "cohere",
             "cohere.client",
             "cohere.base_client",
             "aiosqlite",
-            # HuggingFace Hub — transitiva do langchain-cohere (tokenizers);
-            # aviso de rate limit é ruído para o usuário final
             "huggingface_hub",
             "huggingface_hub.utils",
             "huggingface_hub.utils._http",
-            # LangSmith — rate-limit 429 quando o plano gratuito atinge o teto
-            # mensal; o trace não é crítico para a operação do agente.
             "langsmith",
             "langsmith.client",
-            # uvicorn — access logs (200 OK por request) são ruído em dev.
-            # uvicorn.error mantém erros reais (5xx, exceptions no startup).
             "uvicorn.access",
             "fastapi",
+            # deepagents harness emite "Merging HarnessProfile" e similares
+            "deepagents",
+            "deepagents.profiles.harness.harness_profiles",
         ]
         for logger_name in silent_loggers:
             logging.getLogger(logger_name).setLevel(logging.CRITICAL)

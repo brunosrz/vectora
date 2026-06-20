@@ -18,10 +18,14 @@ import sys
 import threading
 import webbrowser
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
-if TYPE_CHECKING:
-    import uvicorn
+
+class _ServerLike(Protocol):
+    should_exit: bool
+
+    def run(self) -> None: ...
+
 
 logger = logging.getLogger(__name__)
 
@@ -93,10 +97,11 @@ def _build_icon_image() -> Any:
 
 
 def run_server_with_tray(
-    server: uvicorn.Server,
+    server: _ServerLike,
     url: str,
     *,
     headless: bool,
+    icon_ref: list[Any] | None = None,
 ) -> None:
     """Sobe o ``uvicorn.Server`` e, quando possível, uma bandeja do sistema.
 
@@ -104,6 +109,9 @@ def run_server_with_tray(
         server: ``uvicorn.Server`` já configurado (config pronta).
         url: URL local da SPA para a ação "Abrir Vectora".
         headless: se ``True``, não abre o navegador no start (só a bandeja).
+        icon_ref: lista mutável de tamanho 1; quando preenchida, recebe a
+            referência ao ``pystray.Icon`` criado, permitindo que handlers
+            de sinal externos chamem ``icon_ref[0].stop()``.
 
     Sem display ou sem pystray/Pillow, roda o servidor puro na main thread
     (bloqueante) e retorna ao encerrar.
@@ -156,6 +164,9 @@ def run_server_with_tray(
             pystray.MenuItem("Sair", _quit),
         ),
     )
+
+    if icon_ref is not None:
+        icon_ref[0] = icon
 
     if not headless:
         # Abre a SPA assim que o servidor estiver de pé.

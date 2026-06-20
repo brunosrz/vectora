@@ -127,6 +127,6 @@ def _register_profiles() -> None:
     )
     logger.debug("profiles: perfil Ollama registrado")
 
-    logger.info(
+    logger.debug(
         "profiles: 3 perfis de harness registrados (anthropic, google_genai, ollama)"
     )
