@@ -114,6 +114,11 @@ def integration_cleanup() -> None:  # type: ignore[return]
 @pytest.fixture(scope="session")
 def _storage_stack_ok() -> bool:
     """Tenta subir o stack local via Docker (best-effort). Retorna True se Docker disponível."""
+    import os
+
+    if os.getenv("CI"):
+        return False
+
     from backend.storage.dev_stack import _docker_available, stack_up
 
     if not _docker_available():
