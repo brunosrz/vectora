@@ -7,12 +7,19 @@ erro por comando conforme o padrão de TDD do projeto.
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 import pytest
+from rich.console import Console as _Console
 
 from backend.cli import infra, keys
 from backend.main import _build_parser
+
+
+def _null_console(*_a: object, **_kw: object) -> _Console:
+    return _Console(file=io.StringIO())
+
 
 # ---------------------------------------------------------------------------
 # Parser — TUI removido, start/config presentes
@@ -25,9 +32,9 @@ def test_parser_sem_subcomando_nao_define_command():
     assert getattr(args, "command", None) is None
 
 
-def test_parser_remove_chat_e_server():
+def test_parser_remove_chat_e_server(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.stderr", io.StringIO())
     parser = _build_parser()
-    # chat e server foram removidos — argparse aborta com SystemExit.
     with pytest.raises(SystemExit):
         parser.parse_args(["chat"])
     with pytest.raises(SystemExit):
@@ -109,9 +116,10 @@ def test_run_docker_status_ok(monkeypatch, capsys):
     assert "rodando" in capsys.readouterr().out
 
 
-def test_run_docker_falha_sai_com_erro(monkeypatch):
+def test_run_docker_falha_sai_com_erro(monkeypatch: pytest.MonkeyPatch) -> None:
     from backend.storage.dev_stack import StackResult
 
+    monkeypatch.setattr("backend.cli.infra.Console", _null_console)
     monkeypatch.setattr(
         "backend.storage.dev_stack.stack_up",
         lambda: StackResult(ok=False, messages=["Docker não encontrado"]),
@@ -125,10 +133,13 @@ def test_run_docker_falha_sai_com_erro(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_run_qdrant_ok_persiste_env(monkeypatch, tmp_path: Path):
+def test_run_qdrant_ok_persiste_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr("backend.cli.infra.Console", _null_console)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
 
-    async def _ok(url, api_key):
+    async def _ok(url: str, api_key: str | None) -> None:
         return None
 
     monkeypatch.setattr(infra, "_test_qdrant", _ok)
@@ -140,15 +151,19 @@ def test_run_qdrant_ok_persiste_env(monkeypatch, tmp_path: Path):
     assert "STORAGE_MODE=complete" in env
 
 
-def test_run_qdrant_sem_url_sai(monkeypatch):
+def test_run_qdrant_sem_url_sai(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("backend.cli.infra.Console", _null_console)
     with pytest.raises(SystemExit):
         infra.run_qdrant("", None)
 
 
-def test_run_redis_falha_conexao_sai(monkeypatch, tmp_path: Path):
+def test_run_redis_falha_conexao_sai(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr("backend.cli.infra.Console", _null_console)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
 
-    async def _boom(url):
+    async def _boom(url: str) -> None:
         raise ConnectionError("recusado")
 
     monkeypatch.setattr(infra, "_test_redis", _boom)
