@@ -93,11 +93,8 @@ def test_shutdown_no_error_when_icon_is_none() -> None:
 _SIGHUP: int | None = getattr(signal, "SIGHUP", None)
 
 
-@pytest.mark.skipif(_SIGHUP is None, reason="SIGHUP Unix-only")
-def test_shutdown_sighup_registered_on_unix() -> None:
-    """SIGHUP (terminal fechado) também dispara shutdown em Unix."""
-    assert _SIGHUP is not None
-
+def test_shutdown_sighup_handling() -> None:
+    """SIGHUP registrado em Unix; em Windows verifica que SIGINT/SIGTERM continuam ok."""
     from backend.main import _install_terminal_signals
 
     server = _FakeServer()
@@ -105,17 +102,23 @@ def test_shutdown_sighup_registered_on_unix() -> None:
 
     orig_int = signal.getsignal(signal.SIGINT)
     orig_term = signal.getsignal(signal.SIGTERM)
-    orig_hup = signal.getsignal(_SIGHUP)
     try:
         _install_terminal_signals(server, icon_ref)
-        handler = _get_handler(_SIGHUP)
-        assert callable(handler)
-        handler(_SIGHUP, None)
-        assert server.should_exit is True
+        if _SIGHUP is not None:
+            orig_hup = signal.getsignal(_SIGHUP)
+            try:
+                handler = _get_handler(_SIGHUP)
+                assert callable(handler)
+                handler(_SIGHUP, None)
+                assert server.should_exit is True
+            finally:
+                signal.signal(_SIGHUP, orig_hup)
+        else:
+            handler = _get_handler(signal.SIGINT)
+            assert callable(handler)
     finally:
         signal.signal(signal.SIGINT, orig_int)
         signal.signal(signal.SIGTERM, orig_term)
-        signal.signal(_SIGHUP, orig_hup)
 
 
 def test_tray_exposes_icon_via_icon_ref() -> None:

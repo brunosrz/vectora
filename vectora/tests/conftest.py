@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import os
 import sys
-import threading
 from typing import Any
 
 # Capturado em pytest_sessionfinish e usado no pytest_unconfigure: o
@@ -56,20 +55,6 @@ def pytest_unconfigure(config: Any) -> None:
     # coleta de resultados do processo controlador. Só o principal encerra.
     if hasattr(config, "workerinput"):
         return
-
-    main = threading.main_thread()
-    alive = [
-        t
-        for t in threading.enumerate()
-        if t is not main and not t.daemon and t.is_alive()
-    ]
-    if alive:
-        names = ", ".join(sorted(t.name for t in alive))
-        print(
-            f"\n[conftest] {len(alive)} thread(s) não-daemon viva(s) no shutdown "
-            f"(forçando os._exit para não travar a CI): {names}",
-            file=sys.stderr,
-        )
 
     sys.stdout.flush()
     sys.stderr.flush()

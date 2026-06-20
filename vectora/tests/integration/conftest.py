@@ -113,17 +113,24 @@ def integration_cleanup() -> None:  # type: ignore[return]
 
 @pytest.fixture(scope="session")
 def _storage_stack_ok() -> bool:
-    """Tenta subir o stack local via Docker (best-effort). Retorna True se Docker disponível."""
+    """True se Postgres (5432), Redis (6379) e Qdrant (6333) respondem na porta."""
     import os
+    import socket
 
     if os.getenv("CI"):
         return False
 
     from backend.storage.dev_stack import _docker_available, stack_up
 
-    if not _docker_available():
-        return False
-    stack_up()  # ignora erros — containers podem já estar rodando
+    if _docker_available():
+        stack_up()  # best-effort: sobe se parado, ignora erros
+
+    for port in (5432, 6379, 6333):
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=3):
+                pass
+        except OSError:
+            return False
     return True
 
 
