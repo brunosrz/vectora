@@ -23,6 +23,7 @@ import {
 import { ResizableDialogContent } from "@/components/ui/resizable-dialog";
 import { useAdministracaoDialogStore } from "@/lib/stores/administracao-dialog-store";
 import { m as msg } from "@/lib/paraglide/messages";
+import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 const AdminTab = lazy(() =>
   import("./admin-tab").then((m) => ({ default: m.AdminTab })),
 );
@@ -44,9 +45,10 @@ export function AdminDialog() {
       <ResizableDialogContent
         storageKey="administracao"
         defaultWidth={640}
-        defaultHeight={480}
+        defaultHeight={520}
         className="p-6 gap-4"
       >
+        <SettingsGroupTabs active="admin" />
         <DialogHeader>
           <DialogTitle>{msg.admin_dialog_title()}</DialogTitle>
           <DialogDescription className="sr-only">

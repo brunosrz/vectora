@@ -51,7 +51,7 @@ async function fetchMemories(
   limit = 50,
   offset = 0,
 ): Promise<ListMemoriesResponse> {
-  const res = await fetch(`/memory/?limit=${limit}&offset=${offset}`);
+  const res = await fetch(`/memory?limit=${limit}&offset=${offset}`);
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   return res.json();
 }
@@ -73,12 +73,12 @@ async function deleteMemory(key: string): Promise<void> {
 }
 
 async function clearAllMemories(): Promise<void> {
-  const res = await fetch(`/memory/`, { method: "DELETE" });
+  const res = await fetch(`/memory`, { method: "DELETE" });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
 }
 
 async function createMemory(key: string, content: string): Promise<void> {
-  const res = await fetch(`/memory/`, {
+  const res = await fetch(`/memory`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, content }),

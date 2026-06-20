@@ -31,6 +31,7 @@ import {
   useEnvironmentDialogStore,
   type EnvironmentTab,
 } from "@/lib/stores/environment-dialog-store";
+import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 
 const EnvsTab = lazy(() =>
   import("./tabs/envs-tab").then((m) => ({ default: m.EnvsTab })),
@@ -64,10 +65,12 @@ export function EnvironmentDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <ResizableDialogContent
+        storageKey="environment"
         defaultWidth={560}
-        defaultHeight={560}
+        defaultHeight={520}
         className="p-6 gap-4"
       >
+        <SettingsGroupTabs active="environment" />
         <DialogHeader>
           <DialogTitle>Ambiente</DialogTitle>
           <DialogDescription className="sr-only">

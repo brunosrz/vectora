@@ -32,6 +32,7 @@ import {
   usePreferenciasDialogStore,
   type PreferenciasTab,
 } from "@/lib/stores/preferencias-dialog-store";
+import { SettingsGroupTabs } from "@/components/settings/settings-group-tabs";
 
 const ContaTab = lazy(() =>
   import("./tabs/conta-tab").then((m) => ({ default: m.ContaTab })),
@@ -67,9 +68,10 @@ export function PreferenciasDialog() {
       <ResizableDialogContent
         storageKey="preferencias"
         defaultWidth={560}
-        defaultHeight={440}
+        defaultHeight={520}
         className="p-6 gap-4"
       >
+        <SettingsGroupTabs active="preferencias" />
         <DialogHeader>
           <DialogTitle>Preferências</DialogTitle>
           <DialogDescription className="sr-only">
