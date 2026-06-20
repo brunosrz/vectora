@@ -7,6 +7,8 @@ Agrupa todas as ferramentas do agente em módulos temáticos:
 - fs       → file_read, file_edit, file_write, grep, list_dir, terminal
 - memory   → save_memory, get_memory, delete_memory
 - mcp      → call_mcp_tool
+- native   → time_now, time_parse, hash_text, base64_encode, regex_test,
+             json_query, jwt_decode, http_request
 
 Este __init__.py re-exporta tudo para manter compatibilidade retroativa
 com qualquer código que importe direto de `tools`.
@@ -20,6 +22,16 @@ from backend.settings import settings
 from backend.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
 from backend.tools.mcp import call_mcp_tool
 from backend.tools.memory import delete_memory, get_memory, save_memory
+from backend.tools.native import (
+    base64_encode,
+    hash_text,
+    http_request,
+    json_query,
+    jwt_decode,
+    regex_test,
+    time_now,
+    time_parse,
+)
 from backend.tools.rag import (
     embedding,
     ingest_docs,
@@ -47,6 +59,20 @@ def _build_tools_list() -> list[BaseTool]:
     # Filesystem + Terminal
     tools.extend([file_read, file_edit, file_write, grep, list_dir, terminal])
 
+    # Native utilities
+    tools.extend(
+        [
+            time_now,
+            time_parse,
+            hash_text,
+            base64_encode,
+            regex_test,
+            json_query,
+            jwt_decode,
+            http_request,
+        ]
+    )
+
     # MCP
     if settings.enable_mcp:
         tools.append(call_mcp_tool)
@@ -67,6 +93,7 @@ TOOLS_BY_NAME: dict[str, BaseTool] = {t.name: t for t in TOOLS}
 __all__ = [
     "TOOLS",
     "TOOLS_BY_NAME",
+    "base64_encode",
     "call_mcp_tool",
     "delete_memory",
     "embedding",
@@ -77,11 +104,18 @@ __all__ = [
     "get_memory",
     "get_tools",
     "grep",
+    "hash_text",
+    "http_request",
     "ingest_docs",
+    "json_query",
+    "jwt_decode",
     "list_dir",
     "manage_retriever",
+    "regex_test",
     "save_memory",
     "terminal",
+    "time_now",
+    "time_parse",
     "vector_search",
     "web_search",
 ]
