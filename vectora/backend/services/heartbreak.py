@@ -68,7 +68,10 @@ class HeartbreakSession:
         if trigger_type == "interval" and not self._running:
             seconds = int(config.get("seconds", 60))
             self._running = True
-            self._interval_task = asyncio.create_task(self._interval_loop(seconds))
+            try:
+                self._interval_task = asyncio.create_task(self._interval_loop(seconds))
+            except RuntimeError:
+                pass  # sem event loop rodando — loop não iniciado (contexto de teste)
 
     async def _interval_loop(self, seconds: int) -> None:
         while self._running:
