@@ -100,6 +100,8 @@ export interface SettingsState {
   sidebarWidth: number;
   /** Lado da sidebar de sessões; workbench fica no lado oposto. */
   sidebarPosition: SidebarPosition;
+  /** Modo chat puro: oculta workbench, WorkspaceSelector e tools de filesystem. */
+  chatMode: boolean;
 
   // Ações
   setShowToolCalls: (v: boolean) => void;
@@ -117,6 +119,7 @@ export interface SettingsState {
   setFastMode: (v: boolean) => void;
   setSidebarWidth: (v: number) => void;
   setSidebarPosition: (v: SidebarPosition) => void;
+  setChatMode: (v: boolean) => void;
   resetSettings: () => void;
 }
 
@@ -144,6 +147,7 @@ const DEFAULTS = {
   fastMode: false,
   sidebarWidth: 224,
   sidebarPosition: "left" as SidebarPosition,
+  chatMode: false,
 };
 
 // ---------------------------------------------------------------------------
@@ -200,6 +204,7 @@ export const useSettingsStore = create<SettingsState>()(
           ),
         }),
       setSidebarPosition: (v) => set({ sidebarPosition: v }),
+      setChatMode: (v) => set({ chatMode: v }),
       resetSettings: () => set({ ...DEFAULTS, language: detectLanguage() }),
     }),
     {
@@ -228,6 +233,7 @@ export const useSettingsStore = create<SettingsState>()(
         reasoningEffort: state.reasoningEffort,
         fastMode: state.fastMode,
         sidebarWidth: state.sidebarWidth,
+        chatMode: state.chatMode,
       }),
     },
   ),

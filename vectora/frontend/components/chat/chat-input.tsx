@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { Send } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +27,7 @@ import { WorkspaceSelector } from "@/components/sidebar/workspace-selector";
 import { ModelSelector } from "./model-selector";
 import { VscodeIcon } from "@/components/icons/vscode-icon";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import type { ImageAttachment } from "@/lib/types";
@@ -164,6 +165,8 @@ export function ChatInput({
   onAtMentionSelect,
 }: ChatInputProps) {
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
+  const chatMode = useSettingsStore((s) => s.chatMode);
+  const setChatMode = useSettingsStore((s) => s.setChatMode);
   // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
@@ -384,10 +387,37 @@ export function ChatInput({
                 onAddFiles={onFileButtonClick}
               />
               <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
-              <WorkspaceSelector compact />
-              {wsId && <VscodeMenu workspaceId={wsId} />}
-              <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
+              {!chatMode && (
+                <>
+                  <WorkspaceSelector compact />
+                  {wsId && <VscodeMenu workspaceId={wsId} />}
+                  <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
+                </>
+              )}
               <PermissionModeMenu />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setChatMode(!chatMode)}
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    aria-label={
+                      chatMode ? m.chat_mode_disable() : m.chat_mode_enable()
+                    }
+                    data-chatmode={chatMode ? "on" : "off"}
+                  >
+                    {chatMode ? (
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    ) : (
+                      <LayoutDashboard className="w-3.5 h-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {chatMode ? m.chat_mode_disable() : m.chat_mode_enable()}
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             <div className="flex items-center gap-1 min-w-0 justify-end">

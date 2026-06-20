@@ -92,6 +92,7 @@ function SessionPage() {
   const setSidebarWidth = useSettingsStore((s) => s.setSidebarWidth);
   const sidebarPosition = useSettingsStore((s) => s.sidebarPosition);
   const sidebarOnRight = sidebarPosition === "right";
+  const chatMode = useSettingsStore((s) => s.chatMode);
   const sidebarWrapRef = useRef<HTMLDivElement>(null);
   const draggingSidebar = useRef(false);
 
@@ -369,7 +370,7 @@ function SessionPage() {
           <HorizontalSplit
             className="flex-1 min-w-0"
             side={sidebarOnRight ? "left" : "right"}
-            showRight={hydrated && workbenchOpen}
+            showRight={hydrated && workbenchOpen && !chatMode}
             rightSize={splitSize}
             onResize={setSplitSize}
             left={
@@ -401,9 +402,11 @@ function SessionPage() {
               />
             }
           />
-          <div className={`shrink-0 ${sidebarOnRight ? "order-first" : ""}`}>
-            <WorkbenchNavBar threadId={threadId} />
-          </div>
+          {!chatMode && (
+            <div className={`shrink-0 ${sidebarOnRight ? "order-first" : ""}`}>
+              <WorkbenchNavBar threadId={threadId} />
+            </div>
+          )}
         </div>
       </div>
 

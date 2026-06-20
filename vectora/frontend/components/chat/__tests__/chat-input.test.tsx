@@ -5,7 +5,7 @@
  * (enviar dentro da linha do input).
  */
 
-import { describe, expect, it, afterEach, vi } from "vitest";
+import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import {
   render as rtlRender,
   screen,
@@ -16,7 +16,34 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ChatInput } from "../chat-input";
 import { m } from "@/lib/paraglide/messages";
 
-afterEach(cleanup);
+// Estado mockável para chatMode
+const mockSettings = { chatMode: false, setChatMode: vi.fn() };
+
+vi.mock("@/lib/stores/settings-store", () => ({
+  useSettingsStore: (selector: (s: typeof mockSettings) => unknown) =>
+    selector(mockSettings),
+}));
+
+const mockWsState = {
+  workspaces: [],
+  active_id: null,
+  getActive: () => null,
+  setActive: vi.fn(),
+  addWorkspace: vi.fn(),
+  removeWorkspace: vi.fn(),
+  updateWorkspace: vi.fn(),
+};
+
+vi.mock("@/lib/stores/workspaces-store", () => ({
+  useWorkspacesStore: (selector: (s: typeof mockWsState) => unknown) =>
+    selector(mockWsState),
+}));
+
+afterEach(() => {
+  cleanup();
+  mockSettings.chatMode = false;
+  mockSettings.setChatMode.mockReset();
+});
 
 // ChatInput usa Tooltip — precisa do provider no entorno.
 function render(ui: React.ReactElement) {
@@ -87,5 +114,53 @@ describe("ChatInput", () => {
       target: { value: "novo" },
     });
     expect(onInputChange).toHaveBeenCalledWith("novo");
+  });
+
+  // Sprint 4 — Modo Chat
+  it("botão de toggle de modo chat está sempre visível", () => {
+    render(<ChatInput {...baseProps()} />);
+    const toggle = document.querySelector("[data-chatmode]");
+    expect(toggle).toBeTruthy();
+  });
+
+  it("em chatMode=false o botão tem aria-label de ativar modo chat", () => {
+    mockSettings.chatMode = false;
+    render(<ChatInput {...baseProps()} />);
+    const toggle = document.querySelector("[data-chatmode='off']");
+    expect(toggle).toBeTruthy();
+    expect(toggle?.getAttribute("aria-label")).toBe(m.chat_mode_enable());
+  });
+
+  it("em chatMode=true o botão tem aria-label de desativar modo chat", () => {
+    mockSettings.chatMode = true;
+    render(<ChatInput {...baseProps()} />);
+    const toggle = document.querySelector("[data-chatmode='on']");
+    expect(toggle).toBeTruthy();
+    expect(toggle?.getAttribute("aria-label")).toBe(m.chat_mode_disable());
+  });
+
+  it("clicar no toggle chama setChatMode com valor invertido", () => {
+    mockSettings.chatMode = false;
+    render(<ChatInput {...baseProps()} />);
+    const toggle = document.querySelector(
+      "[data-chatmode]",
+    ) as HTMLButtonElement;
+    fireEvent.click(toggle);
+    expect(mockSettings.setChatMode).toHaveBeenCalledWith(true);
+  });
+
+  it("em chatMode=true WorkspaceSelector não está no DOM", () => {
+    mockSettings.chatMode = true;
+    render(<ChatInput {...baseProps()} />);
+    // WorkspaceSelector renderiza um button com role combobox ou com
+    // aria-label relacionado a workspace — em chatMode deve estar ausente.
+    // Verificamos indiretamente: sem nenhum elemento data-testid="workspace-selector"
+    // e que o toggle data-chatmode='on' existe
+    expect(document.querySelector("[data-chatmode='on']")).toBeTruthy();
+    // O único seletor de workspace visível seria o WorkspaceSelector —
+    // em chatMode deve estar ausente do DOM
+    expect(
+      document.querySelector("[data-testid='workspace-selector']"),
+    ).toBeNull();
   });
 });

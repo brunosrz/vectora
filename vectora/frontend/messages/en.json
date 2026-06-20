@@ -682,6 +682,8 @@
   "tooltip_chat_audio": "Send audio message",
   "tooltip_chat_stop": "Stop generation",
   "tooltip_chat_send": "Send message (Ctrl+Enter)",
+  "chat_mode_enable": "Chat Mode — hide workbench and workspace",
+  "chat_mode_disable": "Dev Mode — show workbench and workspace",
   "tooltip_chat_add_files": "Add files · folders · commands",
   "tooltip_sidebar_new_chat": "New chat",
   "tooltip_sidebar_settings": "Settings",

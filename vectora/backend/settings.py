@@ -114,6 +114,13 @@ class Settings(BaseSettings):
                QDRANT_URL e REDIS_URL configurados).
     """
 
+    chat_mode: bool = False
+    """Modo chat puro: desativa workspace e tools de filesystem no agente.
+
+    Quando True, o frontend oculta WorkspaceSelector e workbench.
+    O backend exclui tools de filesystem/workspace do HarnessProfile.
+    """
+
     # ============================================================================
     # DATABASE CONNECTIONS — SQLite (lite)
     # ============================================================================
