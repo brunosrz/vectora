@@ -1,6 +1,8 @@
-"""Tests for src/services/memory.py"""
+"""Tests for src/services/memory.py e GET/POST/PUT/DELETE /memory (HTTP)."""
 
 from __future__ import annotations
+
+import os
 
 import pytest
 
@@ -102,3 +104,91 @@ class TestMemoryStore:
         db = tmp_path / "mem.db"
         store = MemoryStore(f"file:///{db}")
         assert not store.db_dsn.startswith("file:///")
+
+
+# ── HTTP API (/memory) com SQLite real ───────────────────────────────────────
+
+
+@pytest.fixture
+async def memory_client(tmp_path, monkeypatch):
+    """TestClient com MemoryStore real (tmp SQLite) e auth desabilitada.
+
+    _get_user_id() retorna "user:local" quando request.state.user é None.
+    """
+    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+
+    from backend.services import memory as mem_mod
+
+    store = MemoryStore(db_dsn=str(tmp_path / "mem_test.db"))
+    await store.initialize()
+    monkeypatch.setattr(mem_mod, "_memory_store", store)
+
+    from fastapi.testclient import TestClient
+
+    from backend.api.server import create_app
+
+    app = create_app(serve_static=False)
+    yield TestClient(app, raise_server_exceptions=False)
+
+    os.environ.pop("VECTORA_AUTH_REQUIRED", None)
+
+
+class TestMemoryAPI:
+    def test_list_empty(self, memory_client):
+        r = memory_client.get("/memory")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["total"] == 0
+        assert body["memories"] == []
+
+    def test_list_returns_saved(self, memory_client):
+        memory_client.post("/memory", json={"key": "k1", "content": "v1"})
+        r = memory_client.get("/memory")
+        assert r.status_code == 200
+        assert r.json()["total"] == 1
+        assert r.json()["memories"][0]["key"] == "k1"
+
+    def test_create_returns_201(self, memory_client):
+        r = memory_client.post("/memory", json={"key": "nova", "content": "c"})
+        assert r.status_code == 201
+        assert r.json()["key"] == "nova"
+
+    def test_create_duplicate_returns_409(self, memory_client):
+        memory_client.post("/memory", json={"key": "dup", "content": "a"})
+        r = memory_client.post("/memory", json={"key": "dup", "content": "b"})
+        assert r.status_code == 409
+
+    def test_update_existing(self, memory_client):
+        memory_client.post("/memory", json={"key": "upd", "content": "antes"})
+        r = memory_client.put("/memory/upd", json={"content": "depois"})
+        assert r.status_code == 200
+        r2 = memory_client.get("/memory/upd")
+        assert r2.status_code == 200
+        assert r2.json()["content"] == "depois"
+
+    def test_update_missing_returns_404(self, memory_client):
+        r = memory_client.put("/memory/inexistente", json={"content": "x"})
+        assert r.status_code == 404
+
+    def test_delete_key(self, memory_client):
+        memory_client.post("/memory", json={"key": "del", "content": "v"})
+        r = memory_client.delete("/memory/del")
+        assert r.status_code == 200
+        assert memory_client.get("/memory/del").status_code == 404
+
+    def test_delete_missing_returns_404(self, memory_client):
+        r = memory_client.delete("/memory/nunca_existiu")
+        assert r.status_code == 404
+
+    def test_clear_all(self, memory_client):
+        for i in range(3):
+            memory_client.post("/memory", json={"key": f"c{i}", "content": "x"})
+        r = memory_client.delete("/memory")
+        assert r.status_code == 200
+        assert r.json()["deleted"] == 3
+        assert memory_client.get("/memory").json()["total"] == 0
+
+    def test_clear_empty_returns_zero(self, memory_client):
+        r = memory_client.delete("/memory")
+        assert r.status_code == 200
+        assert r.json()["deleted"] == 0
