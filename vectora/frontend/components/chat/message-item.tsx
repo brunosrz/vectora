@@ -979,83 +979,57 @@ export const MessageItem = memo(
                   {message.ragCitations && message.ragCitations.length > 0 && (
                     <RagCitationList citations={message.ragCitations} />
                   )}
-
-                  {/* Metadata — duração total, tokens e custo estimado */}
-                  {!message.isThinking && message.thinkingDuration != null && (
-                    <div className="flex items-center justify-end gap-2 mt-1 text-xs text-muted-foreground font-mono">
-                      <span
-                        title={new Date(message.timestamp).toLocaleString()}
-                      >
-                        {formatDistanceToNow(new Date(message.timestamp), {
-                          addSuffix: true,
-                          locale: DATE_FNS_LOCALES[uiLang] ?? enUS,
-                        })}
-                      </span>
-                      <span>•</span>
-                      <span>
-                        {(message.thinkingDuration / 1000).toFixed(1)}s
-                      </span>
-                      {message.usageMetadata?.total_tokens && (
-                        <>
-                          <span>•</span>
-                          <span>
-                            {(
-                              message.usageMetadata.total_tokens / 1000
-                            ).toFixed(1)}
-                            k tokens
-                          </span>
-                        </>
-                      )}
-                      {modelId &&
-                        message.usageMetadata?.input_tokens != null &&
-                        message.usageMetadata?.output_tokens != null && (
-                          <>
-                            <span>•</span>
-                            <span
-                              className="text-muted-foreground/70"
-                              title={`Custo estimado: ${formatCost(estimateCost(modelId, message.usageMetadata.input_tokens, message.usageMetadata.output_tokens ?? 0))}`}
-                            >
-                              {formatCost(
-                                estimateCost(
-                                  modelId,
-                                  message.usageMetadata.input_tokens,
-                                  message.usageMetadata.output_tokens ?? 0,
-                                ),
-                              )}
-                            </span>
-                          </>
-                        )}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
 
-            {/* A.2d — Botão de rewind para mensagens do usuário */}
-            {message.role === "user" &&
-              !isEditing &&
-              workspaceId &&
-              humanMessageIndex !== undefined && (
-                <>
-                  <div className="flex justify-end mt-0.5">
-                    <TooltipProvider delayDuration={300}>
+            {/* Botões de ação para mensagens do usuário (copy + rewind) */}
+            {message.role === "user" && !isEditing && (
+              <>
+                <TooltipProvider delayDuration={300}>
+                  <div className="flex justify-end items-center gap-0.5 mt-0.5 opacity-0 group-hover/message:opacity-100 transition-opacity duration-150">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onCopy(message.content, message.id)}
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                          aria-label={m.chat_copy()}
+                        >
+                          {copiedId === message.id ? (
+                            <Check className="w-3 h-3" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {copiedId === message.id
+                          ? m.chat_copied()
+                          : m.chat_copy()}
+                      </TooltipContent>
+                    </Tooltip>
+                    {workspaceId && humanMessageIndex !== undefined && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setRewindOpen(true)}
-                            className="h-7 w-7 opacity-0 group-hover/message:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
                             aria-label={m.chat_rewind()}
                           >
-                            <RotateCcw className="w-3.5 h-3.5" />
+                            <RotateCcw className="w-3 h-3" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>{m.chat_rewind()}</TooltipContent>
                       </Tooltip>
-                    </TooltipProvider>
+                    )}
                   </div>
+                </TooltipProvider>
 
+                {workspaceId && humanMessageIndex !== undefined && (
                   <Dialog open={rewindOpen} onOpenChange={setRewindOpen}>
                     <DialogContent>
                       <DialogHeader>
@@ -1087,164 +1061,187 @@ export const MessageItem = memo(
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                </>
-              )}
+                )}
+              </>
+            )}
 
             {message.role === "assistant" && (
               <>
                 <TooltipProvider delayDuration={300}>
-                  <div className="flex gap-0.5 items-center flex-wrap">
-                    {/* M5 — Botão de retry para mensagens de erro */}
-                    {message.isError && onRetry && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={onRetry}
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            aria-label={m.chat_retry()}
-                          >
-                            <RefreshCw className="w-3.5 h-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{m.chat_retry()}</TooltipContent>
-                      </Tooltip>
-                    )}
-
-                    {!message.isThinking && !message.isError && (
-                      <>
+                  <div className="flex items-center justify-between mt-0.5 opacity-0 group-hover/message:opacity-100 transition-opacity duration-150">
+                    <div className="flex gap-0.5 items-center flex-wrap">
+                      {/* M5 — Botão de retry para mensagens de erro */}
+                      {message.isError && onRetry && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() =>
-                                onCopy(message.content, message.id)
-                              }
-                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              aria-label={m.chat_copy()}
+                              onClick={onRetry}
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              aria-label={m.chat_retry()}
                             >
-                              {copiedId === message.id ? (
-                                <Check className="w-3.5 h-3.5" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5" />
-                              )}
+                              <RefreshCw className="w-3 h-3" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>
-                            {copiedId === message.id
-                              ? m.chat_copied()
-                              : m.chat_copy()}
-                          </TooltipContent>
+                          <TooltipContent>{m.chat_retry()}</TooltipContent>
                         </Tooltip>
+                      )}
 
-                        {isLastAssistant && (
+                      {!message.isThinking && !message.isError && (
+                        <>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={onRegenerate}
-                                disabled={isRegenerating}
-                                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                aria-label={m.chat_regenerate()}
+                                onClick={() =>
+                                  onCopy(message.content, message.id)
+                                }
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                aria-label={m.chat_copy()}
                               >
-                                <RefreshCw
-                                  className={`w-3.5 h-3.5 ${isRegenerating ? "animate-spin" : ""}`}
+                                {copiedId === message.id ? (
+                                  <Check className="w-3 h-3" />
+                                ) : (
+                                  <Copy className="w-3 h-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {copiedId === message.id
+                                ? m.chat_copied()
+                                : m.chat_copy()}
+                            </TooltipContent>
+                          </Tooltip>
+
+                          {isLastAssistant && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={onRegenerate}
+                                  disabled={isRegenerating}
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  aria-label={m.chat_regenerate()}
+                                >
+                                  <RefreshCw
+                                    className={`w-3 h-3 ${isRegenerating ? "animate-spin" : ""}`}
+                                  />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {m.chat_regenerate()}
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </>
+                      )}
+
+                      {!message.isThinking && message.runId && (
+                        <>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  onFeedback(
+                                    message.id,
+                                    "positive",
+                                    feedbackComment[message.id],
+                                  )
+                                }
+                                aria-pressed={message.feedback === "positive"}
+                                aria-label={m.chat_feedback_good()}
+                                className={`h-6 w-6 ${message.feedback === "positive" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                              >
+                                <ThumbsUp
+                                  className="w-3 h-3"
+                                  aria-hidden="true"
+                                  fill={
+                                    message.feedback === "positive"
+                                      ? "currentColor"
+                                      : "none"
+                                  }
                                 />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {m.chat_regenerate()}
+                              {m.chat_feedback_good()}
                             </TooltipContent>
                           </Tooltip>
-                        )}
-                      </>
-                    )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  onFeedback(
+                                    message.id,
+                                    "negative",
+                                    feedbackComment[message.id],
+                                  )
+                                }
+                                aria-pressed={message.feedback === "negative"}
+                                aria-label={m.chat_feedback_bad()}
+                                className={`h-6 w-6 ${message.feedback === "negative" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                              >
+                                <ThumbsDown
+                                  className="w-3 h-3"
+                                  aria-hidden="true"
+                                  fill={
+                                    message.feedback === "negative"
+                                      ? "currentColor"
+                                      : "none"
+                                  }
+                                />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {m.chat_feedback_bad()}
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onToggleComment(message.id)}
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                aria-label={m.chat_feedback_comment()}
+                              >
+                                <MessageSquare className="w-3 h-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {m.chat_feedback_comment()}
+                            </TooltipContent>
+                          </Tooltip>
+                        </>
+                      )}
+                    </div>
 
-                    {!message.isThinking && message.runId && (
-                      <>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                onFeedback(
-                                  message.id,
-                                  "positive",
-                                  feedbackComment[message.id],
-                                )
-                              }
-                              aria-pressed={message.feedback === "positive"}
-                              aria-label={m.chat_feedback_good()}
-                              className={`h-7 w-7 ${message.feedback === "positive" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                            >
-                              <ThumbsUp
-                                className="w-3.5 h-3.5"
-                                aria-hidden="true"
-                                fill={
-                                  message.feedback === "positive"
-                                    ? "currentColor"
-                                    : "none"
-                                }
-                              />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {m.chat_feedback_good()}
-                          </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                onFeedback(
-                                  message.id,
-                                  "negative",
-                                  feedbackComment[message.id],
-                                )
-                              }
-                              aria-pressed={message.feedback === "negative"}
-                              aria-label={m.chat_feedback_bad()}
-                              className={`h-7 w-7 ${message.feedback === "negative" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                            >
-                              <ThumbsDown
-                                className="w-3.5 h-3.5"
-                                aria-hidden="true"
-                                fill={
-                                  message.feedback === "negative"
-                                    ? "currentColor"
-                                    : "none"
-                                }
-                              />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {m.chat_feedback_bad()}
-                          </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onToggleComment(message.id)}
-                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              aria-label={m.chat_feedback_comment()}
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {m.chat_feedback_comment()}
-                          </TooltipContent>
-                        </Tooltip>
-                      </>
-                    )}
+                    {/* Metadata (timestamp + duração) ao lado dos botões */}
+                    {!message.isThinking &&
+                      message.thinkingDuration != null && (
+                        <span
+                          className="text-[10px] text-muted-foreground/50 font-mono tabular-nums"
+                          title={new Date(message.timestamp).toLocaleString()}
+                        >
+                          {formatDistanceToNow(new Date(message.timestamp), {
+                            addSuffix: true,
+                            locale: DATE_FNS_LOCALES[uiLang] ?? enUS,
+                          })}
+                          {" · "}
+                          {(message.thinkingDuration / 1000).toFixed(1)}s
+                          {modelId &&
+                            message.usageMetadata?.input_tokens != null &&
+                            message.usageMetadata?.output_tokens != null &&
+                            ` · ${formatCost(estimateCost(modelId, message.usageMetadata.input_tokens, message.usageMetadata.output_tokens ?? 0))}`}
+                        </span>
+                      )}
                   </div>
                 </TooltipProvider>
 
