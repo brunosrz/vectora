@@ -761,5 +761,20 @@
   "workspace_ingest_types_markdown": "Markdown",
   "workbench_memory_activity": "Actividad",
   "workbench_memory_indexing": "Indexando",
-  "workbench_memory_searching": "Buscando"
+  "workbench_memory_searching": "Buscando",
+  "routines_tab_label": "Rutinas",
+  "routines_empty": "No hay rutinas configuradas",
+  "routines_new": "Nueva rutina",
+  "routines_name_label": "Nombre",
+  "routines_instruction_label": "Instrucción",
+  "routines_cron_label": "Expresión cron",
+  "routines_enabled_label": "Habilitada",
+  "routines_delete_confirm": "¿Eliminar rutina?",
+  "routines_save": "Guardar",
+  "routines_cancel": "Cancelar",
+  "routines_next_run": "Próxima ejecución",
+  "routines_last_run": "Última ejecución",
+  "routines_never": "Nunca",
+  "routines_create_error": "Error al crear rutina",
+  "routines_delete_error": "Error al eliminar rutina"
 }

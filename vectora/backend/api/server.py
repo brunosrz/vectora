@@ -43,6 +43,7 @@ from backend.api.handlers.license import router as license_router
 from backend.api.handlers.memory import router as memory_router
 from backend.api.handlers.oauth import router as oauth_router
 from backend.api.handlers.plugins import router as plugins_router
+from backend.api.handlers.routines import router as routines_router
 from backend.api.handlers.share import router as share_router
 from backend.api.handlers.skills import router as skills_router
 from backend.api.handlers.terminal import router as terminal_router
@@ -266,10 +267,24 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar embedding worker: %s", exc)
 
+    # Modo Rotina: scheduler de tarefas agendadas (cron)
+    try:
+        from backend.services.routines import get_scheduler
+
+        get_scheduler().start()
+    except Exception as exc:
+        logger.warning("api/server: falha ao iniciar routine scheduler: %s", exc)
+
     try:
         yield
     finally:
         logger.info("api/server: shutdown — fechando recursos")
+        try:
+            from backend.services.routines import get_scheduler as _gs
+
+            _gs().stop()
+        except Exception:
+            pass
         license_task.cancel()
         try:
             from backend.services.cache_sync import stop_cache_sync
@@ -389,6 +404,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(license_router)
     app.include_router(tools_router)
     app.include_router(terminal_router)
+    app.include_router(routines_router)
     # REST API v1 — structured output endpoints
     app.include_router(v1_extract_router)
     app.include_router(v1_classify_router)

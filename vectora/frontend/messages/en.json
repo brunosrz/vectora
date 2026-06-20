@@ -761,5 +761,20 @@
   "workspace_ingest_types_markdown": "Markdown",
   "workbench_memory_activity": "Activity",
   "workbench_memory_indexing": "Indexing",
-  "workbench_memory_searching": "Searching"
+  "workbench_memory_searching": "Searching",
+  "routines_tab_label": "Routines",
+  "routines_empty": "No routines configured",
+  "routines_new": "New routine",
+  "routines_name_label": "Name",
+  "routines_instruction_label": "Instruction",
+  "routines_cron_label": "Cron expression",
+  "routines_enabled_label": "Enabled",
+  "routines_delete_confirm": "Remove routine?",
+  "routines_save": "Save",
+  "routines_cancel": "Cancel",
+  "routines_next_run": "Next run",
+  "routines_last_run": "Last run",
+  "routines_never": "Never",
+  "routines_create_error": "Error creating routine",
+  "routines_delete_error": "Error removing routine"
 }

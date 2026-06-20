@@ -82,6 +82,7 @@ dependencies = [
     "langchain-google-genai>=2.0",
     "fakeredis>=2.26",
     "pyjwt>=2.10",
+    "croniter>=5.0",
     "langchain-redis>=0.2.5",
     "langgraph-checkpoint-postgres>=3.1.0",
     "psycopg[binary]>=3.3.4",

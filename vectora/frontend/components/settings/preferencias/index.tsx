@@ -44,6 +44,9 @@ const PreferenciasTab = lazy(() =>
     default: m.PreferenciasTab,
   })),
 );
+const RotinasTab = lazy(() =>
+  import("./tabs/rotinas-tab").then((m) => ({ default: m.RotinasTab })),
+);
 
 function TabFallback() {
   return (
@@ -89,6 +92,9 @@ export function PreferenciasDialog() {
             <TabsTrigger value="conta" className="rounded-md text-xs">
               Conta
             </TabsTrigger>
+            <TabsTrigger value="rotinas" className="rounded-md text-xs">
+              Rotinas
+            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto pt-4">
@@ -101,6 +107,9 @@ export function PreferenciasDialog() {
               </TabsContent>
               <TabsContent value="conta" className="mt-0">
                 <ContaTab />
+              </TabsContent>
+              <TabsContent value="rotinas" className="mt-0">
+                <RotinasTab />
               </TabsContent>
             </Suspense>
           </div>
