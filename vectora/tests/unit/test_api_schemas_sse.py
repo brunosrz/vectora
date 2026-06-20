@@ -126,6 +126,29 @@ class TestHITLEvent:
         assert e.interrupt_id == "int-1"
 
 
+class TestMessageBreakEvent:
+    def test_encode_type_discriminator(self):
+        from backend.api.schemas import MessageBreakEvent, encode_event
+
+        line = encode_event(MessageBreakEvent())
+        import json
+
+        data = json.loads(line.removeprefix("data: ").strip())
+        assert data["type"] == "message_break"
+
+    def test_no_extra_fields(self):
+        from backend.api.schemas import MessageBreakEvent
+
+        assert MessageBreakEvent().model_dump() == {}
+
+    def test_in_serializable_list(self):
+        from backend.api.schemas import MessageBreakEvent, encode_event
+
+        line = encode_event(MessageBreakEvent())
+        assert line.startswith("data: ")
+        assert line.endswith("\n\n")
+
+
 class TestUIMetricsEvent:
     def test_defaults(self):
         from backend.api.schemas import UIMetricsEvent

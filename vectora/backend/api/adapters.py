@@ -20,6 +20,7 @@ from backend.api.schemas import (
     DoneEvent,
     ErrorEvent,
     HITLEvent,
+    MessageBreakEvent,
     NodeEvent,
     RagCitation,
     RagCitationEvent,
@@ -307,6 +308,11 @@ def adapt_stream(
         node_start_times: dict[str, float] = {}
         import time
 
+        # Multi-bubble: rastreia o nó que gera tokens para emitir message_break
+        # quando o nó muda e já há tokens na bolha atual.
+        current_token_node: str | None = None
+        token_buffer_nonempty = False
+
         try:
             async for event in events:
                 kind = event.get("event", "")
@@ -377,6 +383,21 @@ def adapt_stream(
                 payload = langgraph_event_to_payload(event)
                 if payload is None:
                     continue
+
+                # Multi-bubble: emite message_break quando o nó emissor de tokens muda
+                # e a bolha atual já tem conteúdo. Garante bolhas separadas por nó.
+                if isinstance(payload, TokenEvent):
+                    node_name = payload.node or ""
+                    if (
+                        token_buffer_nonempty
+                        and node_name
+                        and node_name != current_token_node
+                    ):
+                        yield encode_event(MessageBreakEvent())
+                        token_buffer_nonempty = False
+                    if node_name:
+                        current_token_node = node_name
+                    token_buffer_nonempty = True
 
                 # Injeta duration_ms nos NodeEvent de fim
                 if isinstance(payload, NodeEvent) and payload.status == "finished":

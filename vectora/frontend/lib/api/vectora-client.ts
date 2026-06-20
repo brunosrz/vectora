@@ -120,7 +120,8 @@ export type StreamEvent =
       citations: Array<{ index: number; source: string; chunk: string }>;
     }
   | { type: "error"; message: string; code?: string }
-  | { type: "done"; thread_id: string; run_id?: string };
+  | { type: "done"; thread_id: string; run_id?: string }
+  | { type: "message_break" };
 
 export interface Thread {
   id: string;

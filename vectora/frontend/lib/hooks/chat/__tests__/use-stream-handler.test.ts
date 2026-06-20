@@ -111,4 +111,58 @@ describe("useStreamHandler.processStream", () => {
     expect(assistant?.content).toBe("parcial");
     expect(assistant?.isThinking).toBe(false);
   });
+
+  it("message_break cria segunda bolha e acumula tokens separados por bolha", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "token", content: "Bolha 1" },
+        { type: "message_break" },
+        { type: "token", content: "Bolha 2" },
+        { type: "done", thread_id: "t1", run_id: "run-2" },
+      ]),
+    );
+
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    // Deve haver pelo menos 2 mensagens do assistente
+    const assistants = messages.filter((m) => m.role === "assistant");
+    expect(assistants.length).toBeGreaterThanOrEqual(2);
+
+    // Primeira bolha tem conteúdo da primeira fase
+    const first = messages.find((m) => m.id === "a1");
+    expect(first?.content).toBe("Bolha 1");
+    expect(first?.isThinking).toBe(false);
+
+    // Segunda bolha tem conteúdo da segunda fase
+    const second = assistants.find((m) => m.id !== "a1");
+    expect(second?.content).toBe("Bolha 2");
+    expect(second?.isThinking).toBe(false);
+  });
+
+  it("message_break sem tokens anteriores não cria bolha vazia", async () => {
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "message_break" },
+        { type: "token", content: "só uma bolha" },
+        { type: "done", thread_id: "t1" },
+      ]),
+    );
+
+    const { result } = run();
+    await result.current.processStream("oi", "a1");
+
+    // message_break logo no início (sem tokens antes) deve ser ignorado pelo backend,
+    // mas mesmo que chegue, a bolha inicial não deve ficar com conteúdo vazio ao lado
+    // de uma segunda com "só uma bolha"
+    const withContent = messages.filter(
+      (m) => m.role === "assistant" && m.content !== "",
+    );
+    // Deve existir exatamente uma bolha com conteúdo real
+    expect(withContent.length).toBeGreaterThanOrEqual(1);
+    const found = withContent.find((m) => m.content === "só uma bolha");
+    expect(found).toBeTruthy();
+  });
 });

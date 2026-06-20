@@ -93,4 +93,71 @@ describe("MessageItem", () => {
     fireEvent.click(copyBtn!);
     expect(onCopy).toHaveBeenCalledWith("texto", "x9");
   });
+
+  // Sprint 3b — botão copiar em mensagens do usuário
+  it("mensagem do usuário tem botão copiar (3b)", () => {
+    const onCopy = vi.fn();
+    render(
+      <MessageItem
+        {...baseProps(
+          msg({ id: "u1", role: "user", content: "minha pergunta" }),
+          {
+            onCopy,
+          },
+        )}
+      />,
+    );
+    const copyBtn = screen
+      .getAllByRole("button")
+      .find((b) => /copiar|copy/i.test(b.getAttribute("aria-label") ?? ""));
+    expect(copyBtn).toBeTruthy();
+    fireEvent.click(copyBtn!);
+    expect(onCopy).toHaveBeenCalledWith("minha pergunta", "u1");
+  });
+
+  // Sprint 3c — botões assistente usam h-6 w-6 (não h-7 w-7)
+  it("botões do assistente usam h-6 w-6 (3c)", () => {
+    const { container } = render(
+      <MessageItem
+        {...baseProps(
+          msg({ id: "a2", role: "assistant", content: "resposta" }),
+        )}
+      />,
+    );
+    const buttons = container.querySelectorAll("button");
+    const actionBtns = Array.from(buttons).filter(
+      (b) => b.className.includes("h-6") && b.className.includes("w-6"),
+    );
+    expect(actionBtns.length).toBeGreaterThan(0);
+    // Nenhum botão de ação deve usar h-7 w-7
+    const oldSizeBtns = Array.from(buttons).filter(
+      (b) => b.className.includes("h-7") && b.className.includes("w-7"),
+    );
+    expect(oldSizeBtns).toHaveLength(0);
+  });
+
+  // Sprint 3a — metadata (timestamp) fica na barra de botões, não na bolha de conteúdo
+  it("metadata de duração está na barra justify-between, não na bolha de markdown (3a)", () => {
+    const { container } = render(
+      <MessageItem
+        {...baseProps(
+          msg({
+            id: "a3",
+            role: "assistant",
+            content: "texto da resposta",
+            isThinking: false,
+            thinkingDuration: 3000,
+          }),
+        )}
+      />,
+    );
+    expect(screen.getByText("texto da resposta")).toBeInTheDocument();
+    // Barra de botões usa justify-between para posicionar botões + metadata
+    const metaBar = container.querySelector("[class*='justify-between']");
+    expect(metaBar).toBeTruthy();
+    // Span de metadata está dentro da barra (classe tabular-nums)
+    const metaSpan = metaBar?.querySelector("[class*='tabular-nums']");
+    expect(metaSpan).toBeTruthy();
+    expect(metaSpan?.textContent).toMatch(/3\.0s/);
+  });
 });

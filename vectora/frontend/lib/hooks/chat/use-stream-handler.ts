@@ -162,6 +162,9 @@ export function useStreamHandler({
         ensureMessageExists(prev, assistantMessageId, baseAssistantMessage),
       );
 
+      // activeId rastreia a bolha corrente; muda ao receber message_break.
+      let activeId = assistantMessageId;
+
       let assistantContent = "";
       let resolvedRunId: string | undefined;
       // UX-15 — primeiro evento recebido = conexão SSE estabelecida
@@ -188,6 +191,7 @@ export function useStreamHandler({
       // M2 — Token buffering: acumula tokens dentro de um animation frame (≤16ms)
       // e faz um único setMessages por frame. Evita layout thrashing em modelos
       // rápidos como Gemini Flash (100+ tokens/s → 6+ setMessages por frame sem buffer).
+      // Closures capturam activeId por referência — flush sempre vai para a bolha atual.
       let pendingTokenBatch = "";
       let flushScheduled = false;
 
@@ -203,7 +207,7 @@ export function useStreamHandler({
           pendingTokenBatch = "";
           flushScheduled = false;
           setMessages((prev) =>
-            updateMessageInList(prev, assistantMessageId, (m) => ({
+            updateMessageInList(prev, activeId, (m) => ({
               ...m,
               content: (typeof m.content === "string" ? m.content : "") + batch,
             })),
@@ -218,7 +222,7 @@ export function useStreamHandler({
         pendingTokenBatch = "";
         flushScheduled = false;
         setMessages((prev) =>
-          updateMessageInList(prev, assistantMessageId, (m) => ({
+          updateMessageInList(prev, activeId, (m) => ({
             ...m,
             content: (typeof m.content === "string" ? m.content : "") + batch,
           })),
@@ -267,7 +271,39 @@ export function useStreamHandler({
           // de eventos que dependem do estado (ex: tool_call, done)
           flushNow();
 
-          await handleEvent(event, assistantMessageId, setMessages, threadId);
+          // Multi-bubble: quebra de bolha — finaliza activeId e cria nova mensagem
+          if (event.type === "message_break") {
+            setMessages((prev) =>
+              updateMessageInList(prev, activeId, (m) =>
+                m.isThinking
+                  ? {
+                      ...m,
+                      isThinking: false,
+                      thinkingDuration:
+                        m.thinkingStartTime !== undefined
+                          ? Date.now() - m.thinkingStartTime
+                          : undefined,
+                    }
+                  : m,
+              ),
+            );
+            const newId = `${Date.now()}-${Math.random()}`;
+            activeId = newId;
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: newId,
+                role: "assistant" as const,
+                content: "",
+                timestamp: new Date(),
+                isThinking: true,
+                thinkingStartTime: Date.now(),
+              },
+            ]);
+            continue;
+          }
+
+          await handleEvent(event, activeId, setMessages, threadId);
 
           if (event.type === "done") {
             resolvedRunId = event.run_id || undefined;
@@ -282,7 +318,7 @@ export function useStreamHandler({
             flushNow();
             const friendly = streamErrorMessage(event.code);
             setMessages((prev) =>
-              updateMessageInList(prev, assistantMessageId, (m) => ({
+              updateMessageInList(prev, activeId, (m) => ({
                 ...m,
                 content: friendly,
                 isError: true,
@@ -307,7 +343,7 @@ export function useStreamHandler({
         if ((err as { name?: string }).name === "AbortError") {
           // Interrompido pelo usuário — não é um erro; encerra o thinking timer
           setMessages((prev) =>
-            updateMessageInList(prev, assistantMessageId, (m) => ({
+            updateMessageInList(prev, activeId, (m) => ({
               ...m,
               isThinking: false,
               thinkingDuration:
@@ -324,7 +360,7 @@ export function useStreamHandler({
           // recebido; sem conteúdo, mostra mensagem genérica localizada e
           // marca isError (retry), nunca o texto cru da exceção.
           setMessages((prev) =>
-            updateMessageInList(prev, assistantMessageId, (m) => ({
+            updateMessageInList(prev, activeId, (m) => ({
               ...m,
               content: assistantContent || streamErrorMessage(undefined),
               isError: !assistantContent,
@@ -340,9 +376,9 @@ export function useStreamHandler({
         // UX-18 — qualquer saída conhecida do loop desmarca a thread como
         // "streaming em andamento" (só sobra marcado o caso de aba fechada).
         markStreamEnded(threadId);
-        // Defesa em profundidade: garante que o spinner sempre encerra
+        // Defesa em profundidade: garante que o spinner sempre encerra na bolha ativa
         setMessages((prev) =>
-          updateMessageInList(prev, assistantMessageId, (m) =>
+          updateMessageInList(prev, activeId, (m) =>
             m.isThinking
               ? {
                   ...m,

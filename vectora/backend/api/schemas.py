@@ -210,6 +210,13 @@ class DoneEvent(BaseModel):
     run_id: str = ""
 
 
+class MessageBreakEvent(BaseModel):
+    """Sinaliza quebra de bolha: o agente começou a emitir tokens de um nó diferente.
+
+    O frontend cria uma nova mensagem do assistente ao receber este evento.
+    """
+
+
 # ---------------------------------------------------------------------------
 # Envelope de streaming
 # ---------------------------------------------------------------------------
@@ -229,6 +236,7 @@ StreamChatEventPayload = (
     | RagCitationEvent
     | ErrorEvent
     | DoneEvent
+    | MessageBreakEvent
 )
 
 _TYPE_MAP: dict[type, str] = {
@@ -243,6 +251,7 @@ _TYPE_MAP: dict[type, str] = {
     RagCitationEvent: "rag_citations",
     ErrorEvent: "error",
     DoneEvent: "done",
+    MessageBreakEvent: "message_break",
 }
 
 
