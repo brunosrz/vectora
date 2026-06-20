@@ -79,6 +79,8 @@ const mockWorkbench = {
     },
     filter: "",
     entriesByDir: { "": [] },
+    expandedDirs: [] as string[],
+    fetchedAt: {} as Record<string, number>,
   }),
   getDiff: (_: string) => ({
     summary: null,
@@ -87,6 +89,8 @@ const mockWorkbench = {
     hunksByFile: {},
     fileFetchedAt: {},
   }),
+  toggleExpanded: vi.fn(),
+  setFilesEntries: vi.fn(),
   setFilesFilter: vi.fn(),
   setOpenFile: vi.fn(),
   setFileContent: vi.fn(),
