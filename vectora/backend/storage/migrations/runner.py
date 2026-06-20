@@ -158,7 +158,9 @@ class MigrationRunner:
         migrations_dir: str | Path | None = None,
     ) -> None:
         self._conn = conn
-        self._dir = Path(migrations_dir) if migrations_dir else Path(__file__).parent
+        self._dir = (
+            Path(migrations_dir) if migrations_dir else Path(__file__).parent / "sqlite"
+        )
 
     # ------------------------------------------------------------------
     # Inicialização

@@ -106,6 +106,130 @@ def integration_cleanup() -> None:  # type: ignore[return]
 # ============================================================================
 
 
+# ============================================================================
+# Storage integration fixtures — Postgres, Redis, Qdrant
+# ============================================================================
+
+
+@pytest.fixture(scope="session")
+def _storage_stack_ok() -> bool:
+    """Tenta subir o stack local via Docker (best-effort). Retorna True se Docker disponível."""
+    from backend.storage.dev_stack import _docker_available, stack_up
+
+    if not _docker_available():
+        return False
+    stack_up()  # ignora erros — containers podem já estar rodando
+    return True
+
+
+@pytest.fixture(scope="session")
+def pg_dsn() -> str:
+    from backend.storage.dev_stack import DEFAULT_POSTGRES_DSN
+
+    return DEFAULT_POSTGRES_DSN.replace("postgresql+asyncpg://", "postgresql://")
+
+
+@pytest.fixture(scope="session")
+def redis_url() -> str:
+    from backend.storage.dev_stack import DEFAULT_REDIS_URL
+
+    return DEFAULT_REDIS_URL
+
+
+@pytest.fixture(scope="session")
+def qdrant_url() -> str:
+    from backend.storage.dev_stack import DEFAULT_QDRANT_URL
+
+    return DEFAULT_QDRANT_URL
+
+
+@pytest.fixture
+async def pg_pool(_storage_stack_ok: bool, pg_dsn: str):
+    """Pool asyncpg para testes de integração. Skip se Postgres indisponível."""
+    if not _storage_stack_ok:
+        pytest.skip("Docker indisponível — Postgres não iniciado")
+
+    import asyncio
+
+    import asyncpg
+
+    pool = None
+    for attempt in range(15):
+        try:
+            pool = await asyncpg.create_pool(
+                pg_dsn, min_size=1, max_size=3, command_timeout=10
+            )
+            break
+        except Exception:
+            if attempt == 14:
+                pytest.skip("Postgres não respondeu após 15 tentativas")
+            await asyncio.sleep(1)
+
+    assert pool is not None
+    yield pool
+    await pool.close()
+
+
+@pytest.fixture
+async def pg_conn(pg_pool):
+    """Conexão asyncpg isolada por teste."""
+    async with pg_pool.acquire() as conn:
+        yield conn
+
+
+@pytest.fixture
+async def redis_client(_storage_stack_ok: bool, redis_url: str):
+    """Cliente redis.asyncio para testes de integração. Skip se Redis indisponível."""
+    if not _storage_stack_ok:
+        pytest.skip("Docker indisponível — Redis não iniciado")
+
+    import asyncio
+
+    import redis.asyncio as aredis
+
+    client = aredis.from_url(redis_url)
+    for attempt in range(15):
+        try:
+            await client.ping()  # ty: ignore[invalid-await]  # redis stub retorna Awaitable[bool]|bool
+            break
+        except Exception:
+            if attempt == 14:
+                await client.aclose()
+                pytest.skip("Redis não respondeu após 15 tentativas")
+            await asyncio.sleep(1)
+
+    yield client
+    await client.aclose()
+
+
+@pytest.fixture
+def qdrant_client(_storage_stack_ok: bool, qdrant_url: str):
+    """QdrantClient síncrono para testes de integração. Skip se Qdrant indisponível."""
+    if not _storage_stack_ok:
+        pytest.skip("Docker indisponível — Qdrant não iniciado")
+
+    import time
+
+    from qdrant_client import QdrantClient
+
+    client = QdrantClient(url=qdrant_url, api_key="vectora", timeout=10)
+    for attempt in range(15):
+        try:
+            client.get_collections()
+            break
+        except Exception:
+            if attempt == 14:
+                pytest.skip("Qdrant não respondeu após 15 tentativas")
+            time.sleep(1)
+
+    return client
+
+
+# ============================================================================
+# Helpers exportados — importáveis nos arquivos de teste
+# ============================================================================
+
+
 async def embed_direct(text: str, collection: str) -> None:
     """Embeda texto diretamente no LanceDB (bypass da fila — só para testes).
 

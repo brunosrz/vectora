@@ -1,6 +1,4 @@
 -- Migration 0001: tabelas de autenticação e auditoria
--- Extrai CREATE TABLE de src/services/auth.py (_ensure_schema)
--- Compatible com checkpoints.db e vectora.db
 
 -- up
 CREATE TABLE IF NOT EXISTS users (

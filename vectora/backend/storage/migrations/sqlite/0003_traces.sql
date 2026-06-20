@@ -1,5 +1,4 @@
--- Migration 0003: tabela de spans de observabilidade
--- Extrai CREATE TABLE de src/services/tracer.py (_SCHEMA)
+-- Migration 0003: spans de observabilidade (SQLite)
 
 -- up
 CREATE TABLE IF NOT EXISTS spans (

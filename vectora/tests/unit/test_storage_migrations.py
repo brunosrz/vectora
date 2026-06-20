@@ -1,6 +1,6 @@
-"""Tests — storage/migrations/runner.py (F2) e data_migration.py (F12).
+"""Tests — storage/migrations/runner.py e data_migration.py.
 
-Runner: status / upgrade / downgrade usando SQL inline (sem arquivos .sql).
+Runner SQLite: usa as migrations em storage/migrations/sqlite/*.sql.
 DataMigration: dry-run em memória.
 """
 
@@ -23,29 +23,52 @@ class TestMigrationRunner:
         await conn.close()
 
     @pytest.mark.asyncio
-    async def test_status_empty(self, runner_conn):
+    async def test_status_lists_pending_migrations(self, runner_conn):
+        """status() lista as migrations SQLite como pendentes num banco vazio."""
         from backend.storage.migrations.runner import MigrationRunner
 
         runner = MigrationRunner(runner_conn)
         statuses = await runner.status()
-        # Sem migrations SQL a listar — lista pode estar vazia
         assert isinstance(statuses, list)
+        assert len(statuses) >= 1
+        assert all(not s.applied for s in statuses)
 
     @pytest.mark.asyncio
-    async def test_upgrade_noop_when_no_sql(self, runner_conn, tmp_path):
-        """upgrade() sem migrations pendentes não levanta exceção."""
+    async def test_status_shows_applied_after_upgrade(self, runner_conn):
+        """status() mostra applied=True após upgrade() rodar."""
         from backend.storage.migrations.runner import MigrationRunner
 
-        runner = MigrationRunner(runner_conn, migrations_dir=tmp_path)
-        applied = await runner.upgrade()
-        assert isinstance(applied, list)
+        runner = MigrationRunner(runner_conn)
+        await runner.upgrade()
+        statuses = await runner.status()
+        assert all(s.applied for s in statuses)
 
     @pytest.mark.asyncio
-    async def test_schema_migrations_table_created(self, runner_conn, tmp_path):
+    async def test_upgrade_applies_sqlite_migrations(self, runner_conn):
+        """upgrade() aplica as migrations SQLite e retorna lista de versões."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        runner = MigrationRunner(runner_conn)
+        applied = await runner.upgrade()
+        assert isinstance(applied, list)
+        assert len(applied) >= 1
+
+    @pytest.mark.asyncio
+    async def test_upgrade_idempotent(self, runner_conn):
+        """Segunda chamada a upgrade() não re-aplica migrations já aplicadas."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        runner = MigrationRunner(runner_conn)
+        await runner.upgrade()
+        second = await runner.upgrade()
+        assert second == []
+
+    @pytest.mark.asyncio
+    async def test_schema_migrations_table_created(self, runner_conn):
         """Tabela schema_migrations é criada ao instanciar runner."""
         from backend.storage.migrations.runner import MigrationRunner
 
-        runner = MigrationRunner(runner_conn, migrations_dir=tmp_path)
+        runner = MigrationRunner(runner_conn)
         await runner.upgrade()  # força criação da tabela
 
         cur = await runner_conn.execute(

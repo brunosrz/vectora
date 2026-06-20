@@ -1,5 +1,4 @@
--- Migration 0002: tabelas de sessões, checkpoints e compartilhamento
--- Extrai CREATE TABLE de src/api/handlers/threads.py e share.py
+-- Migration 0002: sessões, checkpoints e compartilhamento (SQLite)
 
 -- up
 CREATE TABLE IF NOT EXISTS vectora_sessions (

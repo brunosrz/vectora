@@ -1,5 +1,4 @@
--- Migration 0004: tabela de segredos cifrados por usuário
--- Extrai CREATE TABLE de src/services/secrets/internal.py
+-- Migration 0004: segredos cifrados por usuário (SQLite)
 
 -- up
 CREATE TABLE IF NOT EXISTS secrets (
