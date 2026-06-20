@@ -22,8 +22,8 @@ export const ThreadGroup = memo(function ThreadGroup({
   if (threads.length === 0) return null;
 
   return (
-    <div className="mt-3 first:mt-1">
-      <h3 className="px-4 text-[10px] font-medium text-muted-foreground/50 uppercase tracking-wider mb-0.5">
+    <div className="mt-2 first:mt-0">
+      <h3 className="px-4 text-[10px] font-medium text-muted-foreground/50 uppercase tracking-wider mb-0">
         {label}
       </h3>
       <div className="px-2 space-y-0.5">

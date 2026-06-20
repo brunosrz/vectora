@@ -41,7 +41,7 @@ export const ThreadItem = memo(function ThreadItem({
 
   return (
     <div
-      className={`group flex items-center gap-2 px-2 py-1.5 text-sm w-full rounded-md transition-colors duration-150 cursor-pointer ${
+      className={`group flex items-center gap-2 px-2 py-1 text-sm w-full rounded-md transition-colors duration-150 cursor-pointer ${
         isActive
           ? "bg-muted/60 text-foreground"
           : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
@@ -55,7 +55,7 @@ export const ThreadItem = memo(function ThreadItem({
         ) : (
           <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-transparent" />
         )}
-        <span className="truncate text-[13px] leading-5">{title}</span>
+        <span className="truncate text-[12px] leading-5">{title}</span>
       </div>
       <button
         onClick={(e) => onDelete(thread.thread_id, e)}

@@ -17,7 +17,7 @@ export const SessionSearch = memo(function SessionSearch({
   onClear,
 }: SessionSearchProps) {
   return (
-    <div className="px-3 py-2 bg-gradient-to-r from-sidebar-accent/5 via-transparent to-transparent">
+    <div className="px-3 py-1.5 bg-gradient-to-r from-sidebar-accent/5 via-transparent to-transparent">
       <div className="relative group">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
           <Search className="w-4 h-4 text-muted-foreground/70 group-focus-within:text-primary transition-all duration-200" />

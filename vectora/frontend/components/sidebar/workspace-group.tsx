@@ -42,7 +42,7 @@ export const WorkspaceGroup = memo(function WorkspaceGroup({
             ? m.sidebar_workspace_collapse()
             : m.sidebar_workspace_expand()
         }
-        className="w-full flex items-center gap-1.5 px-3 py-1 mb-2 text-xs font-semibold text-sidebar-accent-foreground uppercase tracking-wider shadow-inset-light hover:text-foreground transition-colors rounded-md"
+        className="w-full flex items-center gap-1.5 px-3 py-0.5 mb-1 text-xs font-semibold text-sidebar-accent-foreground uppercase tracking-wider shadow-inset-light hover:text-foreground transition-colors rounded-md"
       >
         {expanded ? (
           <ChevronDown className="w-3 h-3 shrink-0" />
@@ -58,7 +58,7 @@ export const WorkspaceGroup = memo(function WorkspaceGroup({
         </span>
       </button>
       {expanded && (
-        <div className="space-y-2 pl-2">
+        <div className="space-y-0.5 pl-2">
           {threads.map((thread) => (
             <ThreadItem
               key={thread.thread_id}
