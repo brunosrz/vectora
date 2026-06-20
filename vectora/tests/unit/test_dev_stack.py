@@ -96,6 +96,72 @@ def test_connection_urls_mapeia_constantes() -> None:
 
 
 # ---------------------------------------------------------------------------
+# connection_defaults — pré-preenchimento do Setup Wizard
+# ---------------------------------------------------------------------------
+
+
+def test_connection_defaults_traz_url_e_start_command() -> None:
+    """Cada serviço expõe a URL default e o comando self-hosted que o sobe."""
+    from backend.storage.dev_stack import connection_defaults
+
+    defaults = connection_defaults()
+    assert defaults["postgres"]["url"] == DEFAULT_POSTGRES_DSN
+    assert defaults["redis"]["url"] == DEFAULT_REDIS_URL
+    assert defaults["qdrant"]["url"] == DEFAULT_QDRANT_URL
+    # Qdrant também traz a API key (auth-first).
+    assert defaults["qdrant"]["api_key"] == DEFAULT_QDRANT_API_KEY
+    # Todos trazem o comando self-hosted (docker compose up -d <serviço>).
+    for service in ("postgres", "redis", "qdrant"):
+        cmd = defaults[service]["start_command"]
+        assert "docker compose up -d" in cmd
+        assert service in cmd
+
+
+def test_connection_defaults_url_redis_tem_senha() -> None:
+    """Borda: a URL default do Redis embute a senha que o compose configura.
+
+    Sem senha na URL, o auto-test do wizard falha no AUTH contra o Redis que
+    o compose sobe com --requirepass.
+    """
+    from backend.storage.dev_stack import connection_defaults
+
+    redis_url = connection_defaults()["redis"]["url"]
+    assert redis_url.startswith("redis://:")  # redis://:<senha>@host
+    assert "@" in redis_url
+
+
+# ---------------------------------------------------------------------------
+# docker-compose.yml ↔ defaults — credenciais consistentes
+# ---------------------------------------------------------------------------
+
+
+def _redis_password_from_url(url: str) -> str:
+    # redis://:<senha>@host:porta/db
+    return url.split("://:", 1)[1].split("@", 1)[0]
+
+
+def test_compose_redis_exige_senha_dos_defaults() -> None:
+    """O Redis do compose sobe com a MESMA senha embutida em DEFAULT_REDIS_URL.
+
+    Garante que `docker compose up` + defaults do Vectora conectam sem ajuste:
+    o auto-test do wizard fica verde sozinho.
+    """
+    compose = (REPO_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    password = _redis_password_from_url(DEFAULT_REDIS_URL)
+    assert "--requirepass" in compose, "compose redis precisa de --requirepass"
+    assert password in compose, (
+        f"senha {password!r} do DEFAULT_REDIS_URL ausente no compose"
+    )
+
+
+def test_compose_qdrant_define_api_key_dos_defaults() -> None:
+    """O Qdrant do compose sobe com a MESMA API key de DEFAULT_QDRANT_API_KEY."""
+    compose = (REPO_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    assert "QDRANT__SERVICE__API_KEY" in compose
+    assert DEFAULT_QDRANT_API_KEY in compose
+
+
+# ---------------------------------------------------------------------------
 # docker run — estrutura dos comandos
 # ---------------------------------------------------------------------------
 

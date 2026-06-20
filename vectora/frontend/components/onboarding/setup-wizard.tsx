@@ -360,6 +360,15 @@ interface ServiceFieldConfig {
   testKey: string;
   placeholder: string;
   type?: string;
+  /** Serviço expõe campo de API key (Qdrant). */
+  hasApiKey?: boolean;
+}
+
+/** Config default por serviço (vem de GET /admin/storage/defaults). */
+interface ServiceDefaults {
+  url?: string;
+  api_key?: string;
+  start_command?: string;
 }
 
 const SERVICE_FIELDS: ServiceFieldConfig[] = [
@@ -383,23 +392,40 @@ const SERVICE_FIELDS: ServiceFieldConfig[] = [
     fieldKey: "qdrant_url",
     testKey: "url",
     placeholder: "http://localhost:6333",
+    hasApiKey: true,
   },
 ];
 
 function ServiceConnectionCard({
   config,
+  defaults,
   onConnectedChange,
 }: {
   config: ServiceFieldConfig;
+  defaults?: ServiceDefaults;
   onConnectedChange?: (service: string, ok: boolean) => void;
 }) {
   const [value, setValue] = useState("");
+  const [apiKey, setApiKey] = useState("");
   const [selfHosted, setSelfHosted] = useState(false);
   const [startCommand, setStartCommand] = useState("");
   const [testResult, setTestResult] = useState<StorageTestResult | null>(null);
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Pré-preenche com os defaults reais (mesma config que `docker compose up`
+  // cria) — URL, API key e o comando self-hosted, já com o toggle ligado. O
+  // usuário só clica em Testar/Salvar; nada de digitar credencial conhecida.
+  useEffect(() => {
+    if (!defaults) return;
+    if (defaults.url) setValue(defaults.url);
+    if (defaults.api_key) setApiKey(defaults.api_key);
+    if (defaults.start_command) {
+      setSelfHosted(true);
+      setStartCommand(defaults.start_command);
+    }
+  }, [defaults]);
 
   const handleTest = async () => {
     const v = value.trim();
@@ -412,6 +438,9 @@ function ServiceConnectionCard({
         backend: config.service,
         [config.testKey]: v,
       };
+      if (config.hasApiKey && apiKey.trim()) {
+        body.api_key = apiKey.trim();
+      }
       if (selfHosted && startCommand.trim()) {
         body.self_hosted = true;
         body.start_command = startCommand.trim();
@@ -436,6 +465,9 @@ function ServiceConnectionCard({
     setSaving(true);
     try {
       const body: Record<string, unknown> = { [config.fieldKey]: v };
+      if (config.hasApiKey && apiKey.trim()) {
+        body.qdrant_api_key = apiKey.trim();
+      }
       if (selfHosted || startCommand.trim()) {
         body.services = {
           [config.service]: {
@@ -468,6 +500,16 @@ function ServiceConnectionCard({
         placeholder={config.placeholder}
         className="h-7 text-xs font-mono"
       />
+      {config.hasApiKey && (
+        <Input
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          autoComplete="new-password"
+          placeholder={m.onboarding_mode_api_key_placeholder()}
+          className="h-7 text-xs font-mono"
+        />
+      )}
       <label className="flex items-center gap-2 text-xs text-muted-foreground">
         <Switch checked={selfHosted} onCheckedChange={setSelfHosted} />
         {m.onboarding_mode_self_hosted()}
@@ -549,9 +591,19 @@ function StepMode({ onValidityChange }: StepProps) {
   const [preconfiguredTests, setPreconfiguredTests] = useState<
     Record<string, StorageTestResult | null>
   >({});
+  // Config default por serviço (URL, API key, comando self-hosted) para
+  // pré-preencher os cards de conexão manual — fonte única no backend.
+  const [defaults, setDefaults] = useState<Record<string, ServiceDefaults>>({});
 
   const handleConnectedChange = useCallback((service: string, ok: boolean) => {
     setConnected((prev) => ({ ...prev, [service]: ok }));
+  }, []);
+
+  useEffect(() => {
+    fetch("/admin/storage/defaults", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data: Record<string, ServiceDefaults>) => setDefaults(data ?? {}))
+      .catch(() => void 0);
   }, []);
 
   useEffect(() => {
@@ -699,6 +751,7 @@ function StepMode({ onValidityChange }: StepProps) {
               <ServiceConnectionCard
                 key={cfg.service}
                 config={cfg}
+                defaults={defaults[cfg.service]}
                 onConnectedChange={handleConnectedChange}
               />
             ),

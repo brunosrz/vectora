@@ -640,6 +640,26 @@ async def get_storage_status(request: Request) -> dict:
     return await storage_health()
 
 
+@router.get("/storage/defaults")
+async def get_storage_defaults(request: Request) -> dict:
+    """Config default de cada serviço self-hosted para pré-preencher o wizard.
+
+    Fonte única: ``dev_stack.connection_defaults()`` — as mesmas credenciais
+    que o ``docker compose up`` cria. O Setup Wizard usa isto para preencher
+    URL, API key (Qdrant) e o comando self-hosted, deixando a conexão
+    automática sem digitação.
+
+    Returns:
+        ``{"redis": {"url": "...", "start_command": "..."}, ...}``
+    """
+    user = _get_user(request)
+    require_admin(user)
+
+    from backend.storage.dev_stack import connection_defaults
+
+    return connection_defaults()
+
+
 @router.post("/storage/test")
 async def test_storage_connection(request: Request) -> dict:
     """Testa a conexão ao backend de storage especificado no body.

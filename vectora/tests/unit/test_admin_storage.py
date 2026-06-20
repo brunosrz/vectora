@@ -47,6 +47,33 @@ class TestAdminStorageGet:
         assert resp.status_code in (200, 401, 403, 404)
 
 
+class TestAdminStorageDefaults:
+    """GET /admin/storage/defaults entrega config default para pré-preencher."""
+
+    @pytest.mark.asyncio
+    async def test_endpoint_exists(self, admin_client):
+        """Endpoint registrado — responde HTTP (200 com auth, 401/403 sem)."""
+        resp = await admin_client.get("/admin/storage/defaults")
+        assert resp.status_code in (200, 401, 403, 404)
+
+    def test_connection_defaults_shape(self):
+        """A fonte (dev_stack.connection_defaults) traz url + start_command.
+
+        O endpoint só repassa isto; testar a fonte cobre o contrato sem
+        depender de auth montado no client de teste.
+        """
+        from backend.storage.dev_stack import connection_defaults
+
+        defaults = connection_defaults()
+        assert set(defaults) == {"postgres", "redis", "qdrant"}
+        for service in ("postgres", "redis", "qdrant"):
+            assert defaults[service]["url"]
+            assert "docker compose up -d" in defaults[service]["start_command"]
+        # Qdrant é o único com API key (auth-first).
+        assert defaults["qdrant"]["api_key"] == "vectora"
+        assert "api_key" not in defaults["redis"]
+
+
 class TestAdminStorageTest:
     """POST /admin/storage/test verifica conectividade com DSN."""
 

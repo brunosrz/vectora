@@ -359,6 +359,7 @@
   "onboarding_mode_complete_desc": "PostgreSQL + Qdrant + Redis — requer configurar as conexões.",
   "onboarding_mode_self_hosted": "Self-hosted (permitir que o Vectora inicie esse serviço)",
   "onboarding_mode_start_command_placeholder": "Comando de start (ex: docker compose up -d postgres)",
+  "onboarding_mode_api_key_placeholder": "API key (ex: vectora)",
   "onboarding_mode_test": "Testar conexão",
   "onboarding_mode_save": "Salvar",
   "onboarding_mode_validation_warning": "Teste a conexão de PostgreSQL, Redis e Qdrant com sucesso antes de continuar.",

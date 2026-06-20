@@ -292,3 +292,37 @@ def connection_urls() -> dict[str, str]:
         "QDRANT_URL": DEFAULT_QDRANT_URL,
         "QDRANT_API_KEY": DEFAULT_QDRANT_API_KEY,
     }
+
+
+#: Comando self-hosted que sobe cada serviço — bate com o ``docker-compose.yml``
+#: da raiz (mesmo arquivo usado por ``scons docker``). O Setup Wizard preenche o
+#: campo "Comando de start" com isto.
+DEFAULT_START_COMMANDS: dict[str, str] = {
+    "postgres": "docker compose up -d postgres",
+    "redis": "docker compose up -d redis",
+    "qdrant": "docker compose up -d qdrant",
+}
+
+
+def connection_defaults() -> dict[str, dict[str, str]]:
+    """Config default por serviço para pré-preencher o Setup Wizard.
+
+    Fonte única dos valores que ``docker compose up`` cria — URL, API key
+    (Qdrant) e o comando self-hosted que sobe o serviço. O wizard preenche os
+    campos com isto para conexão automática sem digitação manual.
+    """
+    return {
+        "postgres": {
+            "url": DEFAULT_POSTGRES_DSN,
+            "start_command": DEFAULT_START_COMMANDS["postgres"],
+        },
+        "redis": {
+            "url": DEFAULT_REDIS_URL,
+            "start_command": DEFAULT_START_COMMANDS["redis"],
+        },
+        "qdrant": {
+            "url": DEFAULT_QDRANT_URL,
+            "api_key": DEFAULT_QDRANT_API_KEY,
+            "start_command": DEFAULT_START_COMMANDS["qdrant"],
+        },
+    }

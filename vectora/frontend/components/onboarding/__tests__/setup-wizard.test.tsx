@@ -117,3 +117,85 @@ describe("StepToken", () => {
     expect(url).not.toMatch(/localhost|127\.0\.0\.1/);
   });
 });
+
+function mockStorageFetch(opts: {
+  defaultsOk: boolean;
+}): ReturnType<typeof vi.fn> {
+  const defaults = {
+    postgres: {
+      url: "postgresql+asyncpg://vectora:vectora@localhost:5432/vectora",
+      start_command: "docker compose up -d postgres",
+    },
+    redis: {
+      url: "redis://:vectora@localhost:6379/0",
+      start_command: "docker compose up -d redis",
+    },
+    qdrant: {
+      url: "http://localhost:6333",
+      api_key: "vectora",
+      start_command: "docker compose up -d qdrant",
+    },
+  };
+  return vi.fn(async (url: string) => {
+    const u = String(url);
+    if (u.includes("/admin/storage/defaults")) {
+      return {
+        ok: opts.defaultsOk,
+        json: async () => (opts.defaultsOk ? defaults : {}),
+      };
+    }
+    if (u.includes("/admin/storage")) {
+      return {
+        ok: true,
+        json: async () => ({
+          config: {
+            storage_mode: "lite",
+            postgres_configured: false,
+            redis_configured: false,
+            qdrant_configured: false,
+          },
+        }),
+      };
+    }
+    return { ok: true, json: async () => ({ has_token: false, mode: "lite" }) };
+  });
+}
+
+async function renderAtStepMode() {
+  render(<SetupWizard userId="u-mode" onComplete={vi.fn()} />);
+  await waitFor(() => screen.getByText("1 / 7"));
+  for (let i = 0; i < 3; i++) {
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+  }
+  await waitFor(() => screen.getByText("4 / 7"));
+  fireEvent.click(screen.getByText("Complete")); // modo completo → cards
+}
+
+describe("StepMode — pré-preenchimento com defaults reais", () => {
+  it("pré-preenche o card com a URL default e o comando self-hosted", async () => {
+    vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: true }));
+    await renderAtStepMode();
+
+    await waitFor(() =>
+      expect(
+        screen.getByDisplayValue("redis://:vectora@localhost:6379/0"),
+      ).toBeInTheDocument(),
+    );
+    // Comando self-hosted também vem preenchido (toggle ligado).
+    expect(
+      screen.getByDisplayValue("docker compose up -d redis"),
+    ).toBeInTheDocument();
+    // Qdrant traz a API key default no campo dedicado.
+    expect(screen.getByDisplayValue("vectora")).toBeInTheDocument();
+  });
+
+  it("erro: sem defaults do backend, o card fica vazio (só placeholder)", async () => {
+    vi.stubGlobal("fetch", mockStorageFetch({ defaultsOk: false }));
+    await renderAtStepMode();
+
+    const input = (await screen.findByPlaceholderText(
+      "redis://localhost:6379/0",
+    )) as HTMLInputElement;
+    expect(input.value).toBe("");
+  });
+});
