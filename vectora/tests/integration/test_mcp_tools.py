@@ -352,7 +352,7 @@ class TestMcpProtocol:
                 bufsize=1,
             )
         except FileNotFoundError:
-            pytest.skip("vectora-mcp command não disponível")
+            pytest.fail("vectora-mcp command não disponível")
 
         try:
             # Initialize
@@ -369,8 +369,8 @@ class TestMcpProtocol:
             if response:
                 assert "result" in response or "error" in response
         except Exception as e:
-            logger.warning(f"MCP protocol test skipped: {e}")
-            pytest.skip(f"MCP subprocess não respondeu: {e}")
+            logger.warning(f"MCP protocol test failed: {e}")
+            pytest.fail(f"MCP subprocess não respondeu: {e}")
         finally:
             proc.terminate()
             try:

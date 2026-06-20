@@ -273,7 +273,7 @@ class TestGeminiCallsVectora:
                 "Spans MCP devem ter duration_ms"
             )
         else:
-            pytest.skip(
+            pytest.fail(
                 "Nenhum trace MCP encontrado — Gemini pode não ter chamado o MCP. "
                 "Verifique a configuração em ~/.gemini/settings.json"
             )
@@ -366,7 +366,7 @@ class TestVectoraMcpServerDirectly:
                 bufsize=1,
             )
         except FileNotFoundError:
-            pytest.skip("vectora-mcp command não disponível")
+            pytest.fail("vectora-mcp command não disponível")
 
         try:
             # Envia initialize e aguarda resposta ou timeout
@@ -460,4 +460,4 @@ class TestVectoraMcpServerDirectly:
                 f"Importação do servidor MCP falhou: {result.stderr[:200]}"
             )
         else:
-            pytest.skip("Python do venv não identificado")
+            pytest.fail("Python do venv não identificado")

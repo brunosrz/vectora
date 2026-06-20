@@ -172,7 +172,7 @@ async def get_memory_by_key(request: Request, key: str) -> MemoryItem:
                 status_code=404, detail=f"Memória '{key}' não encontrada"
             )
         return MemoryItem(
-            key=mem["key"],
+            key=key,
             content=mem["content"],
             metadata=mem.get("metadata") or {},
             updated_at=mem.get("updated_at", ""),
