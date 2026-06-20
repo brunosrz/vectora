@@ -19,8 +19,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 # ---------------------------------------------------------------------------
 # E.B-5 — VectoraContext
 # ---------------------------------------------------------------------------
@@ -332,11 +330,8 @@ class TestBuildBackend:
         """build_backend() deve criar CompositeBackend sem erros."""
         from backend.services.backends import build_backend
 
-        try:
-            backend = build_backend(workspace_id=None, user_id="u1")
-            assert backend is not None
-        except ImportError:
-            pytest.skip("deepagents.backends não disponível no ambiente de test")
+        backend = build_backend(workspace_id=None, user_id="u1")
+        assert backend is not None
 
 
 # ---------------------------------------------------------------------------

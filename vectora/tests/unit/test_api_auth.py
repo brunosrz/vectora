@@ -484,8 +484,13 @@ class TestChangePasswordEndpoint:
 
 
 class TestEnvOverridesEndpoints:
+    @pytest.fixture(autouse=True)
+    def _setup_root(self, root_tokens):
+        """Garante que o usuário root existe e guarda o token cacheado."""
+        self._cached_access, *_ = root_tokens
+
     def _get_fresh_token(self, client) -> str:
-        """Obtém um token válido para os testes, lidando com senha que pode ter mudado."""
+        """Obtém token válido, lidando com senha que pode ter sido trocada."""
         for pwd in ("rootpassword1234", "novasenha5678!"):
             r = client.post(
                 "/auth/signin",
@@ -493,7 +498,14 @@ class TestEnvOverridesEndpoints:
             )
             if r.status_code == 200:
                 return r.json()["access_token"]
-        pytest.skip("Não foi possível obter token válido para teste de envs")
+        # Fallback: token cacheado do fixture root_tokens (pode ainda ser válido)
+        r = client.get(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {self._cached_access}"},
+        )
+        if r.status_code == 200:
+            return self._cached_access
+        pytest.fail("Não foi possível obter token válido para teste de envs")
 
     def test_get_envs_empty_initially(self, client):
         access = self._get_fresh_token(client)
@@ -550,6 +562,11 @@ class TestEnvOverridesEndpoints:
 
 
 class TestAdminEndpoints:
+    @pytest.fixture(autouse=True)
+    def _setup_root(self, root_tokens):
+        """Garante que o usuário root existe e guarda o token cacheado."""
+        self._cached_access, *_ = root_tokens
+
     def _get_root_token(self, client) -> str:
         for pwd in ("rootpassword1234", "novasenha5678!"):
             r = client.post(
@@ -558,7 +575,14 @@ class TestAdminEndpoints:
             )
             if r.status_code == 200:
                 return r.json()["access_token"]
-        pytest.skip("Não foi possível obter token root")
+        # Fallback: token cacheado do fixture root_tokens
+        r = client.get(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {self._cached_access}"},
+        )
+        if r.status_code == 200:
+            return self._cached_access
+        pytest.fail("Não foi possível obter token root")
 
     def test_list_users_as_root(self, client):
         token = self._get_root_token(client)
