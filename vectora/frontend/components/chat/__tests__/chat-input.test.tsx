@@ -40,11 +40,15 @@ vi.mock("@/lib/stores/settings-store", () => ({
 const mockWsState = {
   workspaces: [],
   active_id: null,
+  status: "idle" as const,
+  error: null,
   getActive: () => null,
   setActive: vi.fn(),
   addWorkspace: vi.fn(),
   removeWorkspace: vi.fn(),
   updateWorkspace: vi.fn(),
+  hydrate: vi.fn(),
+  trust: vi.fn(),
 };
 
 vi.mock("@/lib/stores/workspaces-store", () => ({
