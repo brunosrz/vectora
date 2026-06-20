@@ -47,15 +47,14 @@ services:
       retries: 5
 
   redis:
-    # redis-stack-server: inclui RediSearch + RedisJSON, usados pelo cache LLM
-    # (langchain-redis via FT.*/JSON.GET). O redis:alpine vanilla não os tem.
-    image: redis/redis-stack-server:latest
+    image: redis:7-alpine
     restart: unless-stopped
-    environment:
-      # Auth-first: senha exigida mesmo em dev, igual ao defaults.env
-      # (REDIS_URL=redis://:vectora@...). redis-stack-server passa REDIS_ARGS
-      # ao redis-server na inicialização.
-      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD:-vectora}
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-vectora}
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
     volumes:
       - redis-data:/data
     ports:
@@ -64,7 +63,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "redis-cli -a ${REDIS_PASSWORD:-vectora} MODULE LIST | grep -q search",
+          "redis-cli -a ${REDIS_PASSWORD:-vectora} ping | grep -q PONG",
         ]
       interval: 10s
       timeout: 5s

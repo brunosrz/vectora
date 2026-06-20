@@ -84,10 +84,7 @@ def _build_cache() -> Any:
                 "cache_llm: redis_url configurado mas inacessível — InMemoryCache"
             )
         elif not _redis_supports_cache(url):
-            logger.warning(
-                "cache_llm: Redis sem RediSearch/RedisJSON — InMemoryCache "
-                "(use redis-stack-server para o cache distribuído)"
-            )
+            logger.info("cache_llm: Redis sem RediSearch/RedisJSON — InMemoryCache")
         else:
             try:
                 return _build_redis_cache(url)
