@@ -8,17 +8,20 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { NewChatButton } from "./new-chat-button";
 import { m } from "@/lib/paraglide/messages";
 
 interface SidebarHeaderProps {
   onToggle: () => void;
+  onNewChat?: () => void;
 }
 
 export const SidebarHeader = memo(function SidebarHeader({
   onToggle,
+  onNewChat,
 }: SidebarHeaderProps) {
   return (
-    <div className="px-3 pt-[13px] pb-[14px] border-b border-border/60 bg-gradient-to-r from-sidebar-accent/20 via-sidebar-accent/10 to-transparent">
+    <div className="px-2 pt-2 pb-2 border-b border-border/40">
       <div className="flex items-center justify-between">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -27,16 +30,23 @@ export const SidebarHeader = memo(function SidebarHeader({
               size="icon"
               onClick={onToggle}
               aria-label={m.sidebar_collapse()}
-              className="hover:bg-sidebar-primary/10 hover:text-sidebar-primary transition-all duration-200 shadow-depth-xs hover:shadow-depth-hover rounded-lg"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors duration-150 rounded-md"
             >
-              <PanelLeftClose className="w-5 h-5" />
+              <PanelLeftClose className="w-4 h-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{m.sidebar_collapse()}</TooltipContent>
         </Tooltip>
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+
+        <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-widest select-none">
           {m.sidebar_title()}
         </span>
+
+        {onNewChat ? (
+          <NewChatButton onClick={onNewChat} />
+        ) : (
+          <div className="w-7" />
+        )}
       </div>
     </div>
   );

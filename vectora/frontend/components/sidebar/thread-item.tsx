@@ -7,7 +7,7 @@ import { queryClient } from "../../src/router";
 import { getHistory, listThreads } from "@/lib/api/vectora-client";
 import { threadsQueryKey } from "@/lib/queries/threads";
 import { m } from "@/lib/paraglide/messages";
-import { getRelativeTime } from "./sidebar-utils";
+import { useStreamingStore } from "@/lib/stores/streaming-store";
 
 interface ThreadItemProps {
   thread: Thread;
@@ -22,8 +22,9 @@ export const ThreadItem = memo(function ThreadItem({
   onSelect,
   onDelete,
 }: ThreadItemProps) {
-  const threadDate = new Date(thread.updated_at || thread.created_at);
   const title = thread.metadata?.title || m.sidebar_new_conversation();
+  const streamingThreadId = useStreamingStore((s) => s.streamingThreadId);
+  const isStreaming = thread.thread_id === streamingThreadId;
 
   const handleMouseEnter = () => {
     void queryClient.prefetchQuery({
@@ -40,25 +41,27 @@ export const ThreadItem = memo(function ThreadItem({
 
   return (
     <div
-      className={`group flex items-center gap-3 px-3 py-2.5 text-sm w-full rounded-lg transition-all duration-200 cursor-pointer shadow-depth-xs ${
+      className={`group flex items-center gap-2 px-2 py-1.5 text-sm w-full rounded-md transition-colors duration-150 cursor-pointer ${
         isActive
-          ? "bg-[#7FC8FF]/15 text-sidebar-foreground shadow-depth-sm border border-[#7FC8FF]/40"
-          : "text-sidebar-foreground"
+          ? "bg-muted/60 text-foreground"
+          : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
       }`}
       onClick={() => onSelect(thread.thread_id)}
       onMouseEnter={handleMouseEnter}
     >
-      <div className="flex-1 min-w-0">
-        <div className="truncate font-medium">{title}</div>
-        <div className="text-xs text-muted-foreground mt-0.5">
-          {getRelativeTime(threadDate)}
-        </div>
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        {isStreaming ? (
+          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+        ) : (
+          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-transparent" />
+        )}
+        <span className="truncate text-[13px] leading-5">{title}</span>
       </div>
       <button
         onClick={(e) => onDelete(thread.thread_id, e)}
-        className="opacity-0 group-hover:opacity-100 transition-all duration-200 p-1 rounded-md hover:bg-destructive/10"
+        className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 p-1 rounded hover:bg-destructive/10 shrink-0"
       >
-        <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+        <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
       </button>
     </div>
   );

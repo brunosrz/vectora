@@ -284,15 +284,6 @@ export function ChatInput({
                     className="hidden"
                   />
 
-                  {/* Menu + (anexos / pasta / comandos) — R3.
-                      Permanece visível durante o streaming: anexar arquivo,
-                      indexar pasta no RAG etc. não conflitam com a resposta em
-                      curso (antes sumia, deslocando o layout). */}
-                  <PlusMenu
-                    disabled={!userId || offline}
-                    onAddFiles={onFileButtonClick}
-                  />
-
                   <Textarea
                     ref={textareaRef}
                     data-testid="chat-input"
@@ -388,6 +379,11 @@ export function ChatInput({
               contexto acima do input (poluição visual desnecessária). */}
           <div className="flex items-center justify-between gap-2 mt-1 px-1 flex-nowrap">
             <div className="flex items-center gap-1 min-w-0">
+              <PlusMenu
+                disabled={!userId || offline}
+                onAddFiles={onFileButtonClick}
+              />
+              <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
               <WorkspaceSelector compact />
               {wsId && <VscodeMenu workspaceId={wsId} />}
               <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />

@@ -22,11 +22,11 @@ export const ThreadGroup = memo(function ThreadGroup({
   if (threads.length === 0) return null;
 
   return (
-    <div className="mt-4 px-3 first:mt-0">
-      <h3 className="px-3 text-xs font-semibold text-sidebar-accent-foreground uppercase tracking-wider mb-2 shadow-inset-light">
+    <div className="mt-3 first:mt-1">
+      <h3 className="px-4 text-[10px] font-medium text-muted-foreground/50 uppercase tracking-wider mb-0.5">
         {label}
       </h3>
-      <div className="space-y-2">
+      <div className="px-2 space-y-0.5">
         {threads.map((thread) => (
           <ThreadItem
             key={thread.thread_id}

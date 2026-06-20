@@ -6,7 +6,6 @@ import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { groupThreads, groupThreadsByWorkspace } from "./sidebar-utils";
 import { CollapsedSidebar } from "./collapsed-sidebar";
 import { SidebarHeader } from "./sidebar-header";
-import { NewChatButton } from "./new-chat-button";
 import { SessionSearch } from "./session-search";
 import { ThreadList } from "./thread-list";
 import { SidebarFooter } from "./sidebar-footer";
@@ -96,10 +95,8 @@ export const Sidebar = memo(function Sidebar({
         onClick={onToggle}
         aria-hidden
       />
-      <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-full bg-gradient-to-b from-sidebar via-sidebar-light to-sidebar-lighter border-r border-border/60 flex-col shadow-depth-md">
-        <SidebarHeader onToggle={onToggle} />
-
-        {onNewChat && <NewChatButton onClick={onNewChat} />}
+      <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-full bg-sidebar border-r border-border/40 flex-col">
+        <SidebarHeader onToggle={onToggle} onNewChat={onNewChat} />
 
         <SessionSearch
           value={searchQuery}

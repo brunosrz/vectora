@@ -30,6 +30,7 @@ import { useThreadMessages } from "@/lib/hooks/chat/use-thread-messages";
 import { estimateTokens } from "@/lib/utils/tokens";
 import { CONTEXT_BLOCK_PCT, CONTEXT_WARN_PCT } from "@/lib/utils/usage";
 import { useThreadsStore } from "@/lib/stores/threads-store";
+import { useStreamingStore } from "@/lib/stores/streaming-store";
 import { useSettingsStore, type Lang } from "@/lib/stores/settings-store";
 import { useRouter } from "next/navigation";
 import { useToastStore } from "@/lib/stores/toast-store";
@@ -371,6 +372,7 @@ export function ChatInterface({
       decision: "approve" | "reject" | `edit:${string}`,
     ) => {
       uiDispatch({ type: "START_SEND" });
+      useStreamingStore.getState().setStreaming(threadId);
       try {
         const { assistantContent } = await processResume(
           { thread_id: threadId, interrupt_id: interruptId, decision },
@@ -387,6 +389,7 @@ export function ChatInterface({
         console.error("Erro ao retomar após HITL:", error);
       } finally {
         uiDispatch({ type: "FINISH_SEND" });
+        useStreamingStore.getState().setStreaming(null);
       }
     },
     [processResume, threadId, onThreadUpdate, customTitle, uiDispatch],
@@ -599,6 +602,7 @@ export function ChatInterface({
   const processMessage = useCallback(
     async (content: string, files: ImageAttachment[], userMessage: Message) => {
       uiDispatch({ type: "START_SEND" });
+      useStreamingStore.getState().setStreaming(threadId);
       // START_SEND zera o input no reducer; descarta também o rascunho
       // persistido para a mensagem enviada não reaparecer no reload.
       useChatInputStore.getState().clearDraft(threadId);
@@ -704,6 +708,7 @@ export function ChatInterface({
         }
       } finally {
         uiDispatch({ type: "FINISH_SEND" });
+        useStreamingStore.getState().setStreaming(null);
       }
     },
     [
