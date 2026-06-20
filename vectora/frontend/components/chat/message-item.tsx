@@ -588,7 +588,14 @@ export const MessageItem = memo(
         ),
 
         // Custom code renderer - handles both inline code and code blocks
-        code: ({ node, inline, className, children, ...props }: any) => {
+        code: ({
+          node,
+          inline,
+          className,
+          children,
+          jsx: _jsx,
+          ...props
+        }: any) => {
           const match = /language-(\w+)/.exec(className || "");
           const language = match ? match[1] : "text";
           const codeString = String(children).replace(/\n$/, "");

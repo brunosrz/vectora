@@ -7,6 +7,7 @@ import {
   cleanup,
   waitFor,
   fireEvent,
+  act,
 } from "@testing-library/react";
 import { SetupWizard, isOnboardingDone } from "../setup-wizard";
 
@@ -168,7 +169,9 @@ async function renderAtStepMode() {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
   }
   await waitFor(() => screen.getByText("4 / 7"));
-  fireEvent.click(screen.getByText("Complete")); // modo completo → cards
+  await act(async () => {
+    fireEvent.click(screen.getByText("Complete")); // modo completo → cards
+  });
 }
 
 describe("StepMode — pré-preenchimento com defaults reais", () => {

@@ -148,8 +148,13 @@ class TestRedisChatHistory:
         assert result is None
 
     @pytest.mark.storage
-    def test_get_chat_history_returns_history_object(self, redis_url, monkeypatch):
+    def test_get_chat_history_returns_history_object(
+        self, _storage_stack_ok, redis_url, monkeypatch
+    ):
         """Com backend=redis e Redis acessível, retorna RedisChatMessageHistory."""
+        if not _storage_stack_ok:
+            pytest.skip("Docker indisponível — Redis não iniciado")
+
         from langchain_redis import RedisChatMessageHistory
 
         import backend.settings as _s

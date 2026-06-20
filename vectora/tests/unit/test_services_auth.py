@@ -34,7 +34,7 @@ def isolate_db(tmp_path, monkeypatch):
 
     monkeypatch.setattr(auth_mod, "_db_conn", None)
     monkeypatch.setattr(
-        auth_mod, "_get_secret", lambda: "test-secret-key-for-unit-tests"
+        auth_mod, "_get_secret", lambda: "test-secret-key-for-unit-tests-xx"
     )
 
     # Apontar _get_db para o banco temporário
@@ -155,7 +155,7 @@ class TestJWT:
             "exp": datetime.now(UTC) - timedelta(seconds=1),
         }
         expired_token = jwt.encode(
-            payload, "test-secret-key-for-unit-tests", algorithm="HS256"
+            payload, "test-secret-key-for-unit-tests-xx", algorithm="HS256"
         )
 
         from backend.services.auth import decode_access_token

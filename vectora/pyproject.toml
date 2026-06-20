@@ -206,6 +206,10 @@ filterwarnings = [
     "ignore::ResourceWarning",
     # Coroutines criadas dentro de mocks/streams de teste que não são aguardadas.
     "ignore:coroutine .* was never awaited:RuntimeWarning",
+    # QdrantClient avisa quando api_key é usado sem HTTPS — esperado em testes locais.
+    "ignore:Api key is used with an insecure connection:UserWarning",
+    # PyJWT avisa sobre chaves HMAC curtas em tokens de teste.
+    "ignore:The HMAC key is.*bytes long.*below the minimum:Warning",
 ]
 markers = [
     "e2e: testes end-to-end com APIs reais (requer env vars e gemini CLI)",

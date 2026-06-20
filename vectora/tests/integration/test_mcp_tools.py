@@ -135,21 +135,20 @@ class TestMcpFileTools:
     """
 
     @pytest.fixture
-    def project_tmp_dir(self, tmp_path, monkeypatch):
+    def project_tmp_dir(self, monkeypatch):
         """Cria dir temporário dentro do projeto e ajusta cwd para o projeto."""
-        import os
+        import contextlib
+        import shutil
         from pathlib import Path
 
         project_root = Path(__file__).parent.parent.parent
         monkeypatch.chdir(project_root)
-        # Usa o data/ do projeto que já é permitido
         test_dir = project_root / "data" / "test_mcp_tmp"
         test_dir.mkdir(parents=True, exist_ok=True)
         yield test_dir
-        # Cleanup
-        import shutil
-
         shutil.rmtree(test_dir, ignore_errors=True)
+        with contextlib.suppress(OSError):
+            test_dir.parent.rmdir()
 
     async def test_file_read_tool_reads_existing_file(self, project_tmp_dir):
         """file_read_tool deve ler um arquivo dentro do projeto."""
