@@ -73,13 +73,13 @@ class TestQdrantConnectivity:
             ],
         )
 
-        results = qdrant_client.search(
+        response = qdrant_client.query_points(
             collection_name=name,
-            query_vector=[1.0, 0.0, 0.0, 0.0],
+            query=[1.0, 0.0, 0.0, 0.0],
             limit=1,
         )
-        assert len(results) == 1
-        assert results[0].id == 1
+        assert len(response.points) == 1
+        assert response.points[0].id == 1
 
         qdrant_client.delete_collection(name)
 
@@ -100,9 +100,9 @@ class TestQdrantConnectivity:
         from qdrant_client.http.exceptions import UnexpectedResponse
 
         with pytest.raises(UnexpectedResponse):
-            qdrant_client.search(
+            qdrant_client.query_points(
                 collection_name=name,
-                query_vector=[1.0, 0.0],  # dimensão errada (2 em vez de 4)
+                query=[1.0, 0.0],  # dimensão errada (2 em vez de 4)
                 limit=1,
             )
 

@@ -15,6 +15,7 @@ Estratégia do ``up``:
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess  # nosec B404 — apenas comandos docker montados internamente
 from dataclasses import dataclass, field
@@ -149,6 +150,29 @@ def _existing_containers() -> set[str]:
     return {line.strip() for line in proc.stdout.splitlines() if line.strip()}
 
 
+def _container_matches_spec(name: str, spec: ServiceSpec) -> bool:
+    """True se o container existente foi criado com o ``command`` do spec atual.
+
+    Compara o ``Config.Cmd`` do container com ``spec.command``. Quando o spec
+    muda (ex.: adição de ``--requirepass``), um container antigo roda com a
+    config anterior — reiniciá-lo via ``docker start`` propaga a divergência
+    (no caso do Redis, AUTH falha porque o servidor subiu sem senha). Specs sem
+    ``command`` (Postgres/Qdrant configuram via env) não têm o que comparar e
+    sempre batem. Falha do ``docker inspect`` é tratada como divergência para
+    forçar recriação por segurança.
+    """
+    if not spec.command:
+        return True
+    proc = _run(["docker", "inspect", "--format", "{{json .Config.Cmd}}", name])
+    if proc.returncode != 0:
+        return False
+    try:
+        actual = json.loads(proc.stdout.strip()) or []
+    except (json.JSONDecodeError, ValueError):
+        return False
+    return list(actual) == list(spec.command)
+
+
 def stack_up() -> StackResult:
     """Sobe Postgres, Redis e Qdrant — compose quando disponível, docker run senão."""
     result = StackResult(ok=True)
@@ -173,6 +197,14 @@ def stack_up() -> StackResult:
 
     existing = _existing_containers()
     for spec in SERVICES:
+        # Container existente cujo command divergiu do spec (ex.: legado sem
+        # --requirepass) é removido para ser recriado com a config atual. O
+        # volume nomeado persiste, então nenhum dado é perdido.
+        if spec.name in existing and not _container_matches_spec(spec.name, spec):
+            _run(["docker", "rm", "-f", spec.name])
+            existing.discard(spec.name)
+            result.messages.append(f"{spec.name}: config divergente — recriando")
+
         if spec.name in existing:
             proc = _run(["docker", "start", spec.name])
             action = "start"

@@ -136,6 +136,92 @@ def test_parser_aceita_storage_up_down() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Drift de container — recriar quando o command divergiu do spec
+# ---------------------------------------------------------------------------
+
+
+def test_container_matches_spec_quando_cmd_igual(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Container cujo Cmd bate com o spec não precisa de recriação."""
+    import json
+
+    from backend.storage import dev_stack
+
+    redis = next(s for s in SERVICES if s.name == "vectora-redis")
+
+    def _fake_run(cmd: list[str]):
+        class _P:
+            returncode = 0
+            stdout = json.dumps(list(redis.command))
+
+        return _P()
+
+    monkeypatch.setattr(dev_stack, "_run", _fake_run)
+    assert dev_stack._container_matches_spec("vectora-redis", redis) is True
+
+
+def test_container_nao_bate_quando_falta_requirepass(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Erro/borda: container legado sem --requirepass diverge e deve ser recriado.
+
+    Reproduz o AUTH error: um vectora-redis criado antes da senha no spec roda
+    sem --requirepass; a URL default (redis://:vectora@...) então falha no AUTH.
+    """
+    import json
+
+    from backend.storage import dev_stack
+
+    redis = next(s for s in SERVICES if s.name == "vectora-redis")
+    legacy_cmd = ["redis-server", "--appendonly", "yes"]  # sem --requirepass
+
+    def _fake_run(cmd: list[str]):
+        class _P:
+            returncode = 0
+            stdout = json.dumps(legacy_cmd)
+
+        return _P()
+
+    monkeypatch.setattr(dev_stack, "_run", _fake_run)
+    assert dev_stack._container_matches_spec("vectora-redis", redis) is False
+
+
+def test_container_matches_spec_sem_command_sempre_true(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Specs sem command (Postgres/Qdrant) não checam Cmd — nada a comparar."""
+    from backend.storage import dev_stack
+
+    postgres = next(s for s in SERVICES if s.name == "vectora-postgres")
+
+    def _fail(cmd: list[str]):  # não deve ser chamado
+        raise AssertionError("não deveria inspecionar container sem command")
+
+    monkeypatch.setattr(dev_stack, "_run", _fail)
+    assert dev_stack._container_matches_spec("vectora-postgres", postgres) is True
+
+
+def test_container_matches_spec_inspect_falha_recria(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Borda: se docker inspect falha, trata como divergente (recria por segurança)."""
+    from backend.storage import dev_stack
+
+    redis = next(s for s in SERVICES if s.name == "vectora-redis")
+
+    def _fake_run(cmd: list[str]):
+        class _P:
+            returncode = 1
+            stdout = ""
+
+        return _P()
+
+    monkeypatch.setattr(dev_stack, "_run", _fake_run)
+    assert dev_stack._container_matches_spec("vectora-redis", redis) is False
+
+
+# ---------------------------------------------------------------------------
 # Probe de conectividade — fallback para memória com redis fora do ar
 # ---------------------------------------------------------------------------
 
