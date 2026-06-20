@@ -150,11 +150,13 @@ class TestRoutineCRUD:
             "updated_at": "2024-01-01T00:00:00",
         }
 
+        mock_cursor = AsyncMock(lastrowid=1)
+        mock_cursor.fetchone = AsyncMock(return_value=_ROW)
+
         mock_conn = AsyncMock()
         mock_conn.__aenter__ = AsyncMock(return_value=mock_conn)
         mock_conn.__aexit__ = AsyncMock(return_value=None)
-        mock_conn.execute = AsyncMock(return_value=AsyncMock(lastrowid=1))
-        mock_conn.fetchone = AsyncMock(return_value=_ROW)
+        mock_conn.execute = AsyncMock(return_value=mock_cursor)
         mock_conn.commit = AsyncMock()
 
         import backend.services.routines as _mod
