@@ -1,4 +1,119 @@
-# Padrões de Engenharia (vinculantes)
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
+
+## Comandos essenciais
+
+Build e testes rodam via **SCons** dentro de `vectora/` (requer `uv` e `pnpm`):
+
+```powershell
+cd vectora
+
+scons tests          # vitest (frontend) + pytest (backend) — sem cobertura
+scons coverage       # mesma suíte com relatório de cobertura
+scons lint           # ruff + ty + tsc + oxlint
+scons docker         # sobe PostgreSQL + Redis + Qdrant via docker compose
+scons clean          # remove outputs de build
+```
+
+Rodar teste específico (Python):
+
+```powershell
+cd vectora
+uv run pytest tests/unit/test_services_auth.py -q --tb=short
+uv run pytest tests/ -k "test_chat" -q --tb=short
+```
+
+Rodar teste específico (frontend):
+
+```powershell
+cd vectora/frontend
+pnpm exec vitest run src/components/chat/__tests__/message-item.test.tsx
+```
+
+Verificar tipos e lint separados:
+
+```powershell
+cd vectora
+uv run ruff check backend tests          # lint Python
+uv run ty check backend tests            # type check Python
+pnpm --dir frontend run typecheck        # i18n:compile + tsc --noEmit
+pnpm --dir frontend exec oxlint          # lint TypeScript
+```
+
+Compilar mensagens i18n (obrigatório antes do vitest quando mensagens mudam):
+
+```powershell
+pnpm --dir vectora/frontend run i18n:compile
+```
+
+Iniciar o backend em dev:
+
+```powershell
+cd vectora && uv run vectora start
+```
+
+---
+
+## Arquitetura
+
+### Monorepo
+
+```
+vectora/          ← produto principal (Python backend + React frontend)
+  backend/        ← FastAPI + LangGraph + deep-agent
+  frontend/       ← Vite + React + TanStack Router
+  tests/          ← pytest (unit/ integration/ e2e/ stress/)
+  docker-compose.yml
+  SConstruct      ← build orchestrator (SCons)
+company/          ← site/dashboard externo (Nuxt/TanStack Start) — separado
+```
+
+### Backend (`vectora/backend/`)
+
+Entrada: `backend/main.py` → `backend/api/server.py` (FastAPI).
+
+Camadas:
+
+- **`api/`** — routers FastAPI (`handlers/`) + schemas Pydantic (`schemas.py`). Todo endpoint usa `Depends(get_current_user)`; rotas públicas são whitelist explícita.
+- **`services/`** — lógica de negócio. Peças centrais:
+  - `agent_factory.py` — `create_deep_agent` (padrão canônico deepagents); constrói o agente com tools, subagents, middleware HITL e checkpointer.
+  - `profiles.py` — `HarnessProfile` por harness (skills, tools policy).
+  - `cache_llm.py` — detecta RediSearch/RedisJSON; usa `RedisCache` se disponível, `InMemoryCache` como fallback.
+  - `kv.py` — acesso ao Redis (chat history, KV geral).
+- **`storage/`** — factories singleton para dois modos:
+  - `lite` (default): SQLite (`aiosqlite`) + LanceDB (vetores)
+  - `complete`: PostgreSQL (`asyncpg`) + Qdrant + Redis
+  - Usuários/auth/settings **sempre** em SQLite, independente do modo.
+- **`tools/`** — tools LangChain registradas no agente: `fs.py`, `git.py`, `web.py`, `rag.py`, `mcp.py`, etc.
+- **`agents/`** — specs de subagents (coder, search) + identidade do agente.
+- **`nodes/`** — nós LangGraph do engine de chat.
+- **`mcp/`** — servidor MCP montado em `/mcp` no mesmo processo FastAPI.
+
+Configuração: `backend/settings.py` (Pydantic Settings). Hierarquia: `defaults.env` → `.env` → `~/.vectora/.env`.
+
+### Frontend (`vectora/frontend/`)
+
+Vite + React + TanStack Router. SPA servida pelo FastAPI em produção (`StaticFiles`).
+
+- **i18n**: Paraglide JS — `m()` de `@/lib/paraglide/messages`. Nunca string hardcoded. `pnpm i18n:compile` gera o módulo (gitignored).
+- **stores**: Zustand em `frontend/lib/stores/`.
+- **chat hooks**: `frontend/lib/hooks/chat/` — `use-stream-handler.ts` consome SSE do backend.
+- **workbench**: tabs filesystem/git/diff/plan em `frontend/components/workbench/`.
+
+### Desktop
+
+Electron em `electron/`. Comunica com o backend via IPC (named pipe/unix socket), nunca TCP. `VECTORA_DESKTOP=1` ativa o modo desktop.
+
+### Docker (dev)
+
+`vectora/docker-compose.yml` sobe PostgreSQL (`pgvector/pgvector:pg16`) + Redis (`redis/redis-stack-server`) + Qdrant. Credenciais default = `vectora` (alinhadas com `backend/defaults.env`). O backend roda no host, não como container.
+
+---
+
+## Padrões de Engenharia (vinculantes)
 
 Estes padrões valem para tudo — código, commits, comentários, docs,
 planejamento, mensagens de PR, hooks de pre-commit, e qualquer
