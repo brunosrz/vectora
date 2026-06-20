@@ -101,6 +101,7 @@ const FETCH_MOCK = vi.fn(async (url: string, opts?: RequestInit) => {
 });
 
 beforeEach(() => {
+  FETCH_MOCK.mockClear();
   vi.stubGlobal("fetch", FETCH_MOCK);
   ROUTINES.length = 0;
   MEMORIES.length = 0;
@@ -270,7 +271,10 @@ describe("MemoriaTab", () => {
 
     await waitFor(() => {
       const calls = FETCH_MOCK.mock.calls;
-      const postCall = calls.find(([, o]) => o?.method === "POST");
+      const postCall = calls.find(
+        ([url, o]) =>
+          o?.method === "POST" && String(url).match(/\/memory(\?|$)/),
+      );
       expect(postCall).toBeTruthy();
       const body = JSON.parse(String(postCall![1]!.body));
       expect(body.content).toBe("nova memória de teste");
