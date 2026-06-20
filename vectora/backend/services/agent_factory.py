@@ -271,6 +271,7 @@ _checkpointer_ctx: Any = None
 _checkpointer: Any = None
 _store: Any = None
 _lock = asyncio.Lock()
+_profiles_registered: bool = False
 
 # Rastreia (tools_version, policy_version, skills_version) por usuário.
 # Quando qualquer versão muda, o cache de LLM do usuário é invalidado.
@@ -338,11 +339,12 @@ async def _build_graph_async(model_id: str = "") -> Any:
 
     system_prompt = _build_session_system_prompt()
 
-    # Registra perfis de harness por provider (Anthropic/Gemini/Ollama).
-    # Idempotente — safe chamar múltiplas vezes.
-    from backend.services.profiles import _register_profiles
+    global _profiles_registered
+    if not _profiles_registered:
+        from backend.services.profiles import _register_profiles
 
-    _register_profiles()
+        _register_profiles()
+        _profiles_registered = True
 
     # Middleware stack: HumanInTheLoopMiddleware com mode="ask" para o
     # singleton compartilhado. create_deep_agent já adiciona
