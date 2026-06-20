@@ -7,6 +7,8 @@ disponível; do contrário, todos os testes são pulados.
 
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 
@@ -31,10 +33,8 @@ class TestQdrantConnectivity:
         from qdrant_client.models import Distance, VectorParams
 
         name = "_test_vectora_integration"
-        try:
+        with contextlib.suppress(Exception):
             qdrant_client.delete_collection(name)
-        except Exception:
-            pass
 
         qdrant_client.create_collection(
             collection_name=name,
@@ -56,10 +56,8 @@ class TestQdrantConnectivity:
         from qdrant_client.models import Distance, PointStruct, VectorParams
 
         name = "_test_vectora_search"
-        try:
+        with contextlib.suppress(Exception):
             qdrant_client.delete_collection(name)
-        except Exception:
-            pass
 
         qdrant_client.create_collection(
             collection_name=name,
@@ -91,17 +89,17 @@ class TestQdrantConnectivity:
         from qdrant_client.models import Distance, VectorParams
 
         name = "_test_dim_error"
-        try:
+        with contextlib.suppress(Exception):
             qdrant_client.delete_collection(name)
-        except Exception:
-            pass
 
         qdrant_client.create_collection(
             collection_name=name,
             vectors_config=VectorParams(size=4, distance=Distance.COSINE),
         )
 
-        with pytest.raises(Exception):
+        from qdrant_client.http.exceptions import UnexpectedResponse
+
+        with pytest.raises(UnexpectedResponse):
             qdrant_client.search(
                 collection_name=name,
                 query_vector=[1.0, 0.0],  # dimensão errada (2 em vez de 4)
