@@ -108,13 +108,8 @@ def docker_run_cmd(spec: ServiceSpec) -> list[str]:
 
 
 def compose_file() -> Path | None:
-    """Localiza um ``compose.dev.yml`` opcional na raiz do repo (hook de dev).
-
-    Por padrão não existe — o caminho normal usa ``docker run`` (SERVICES).
-    O ``docker-compose.yml`` da raiz é de produção (sobe a app inteira) e
-    não serve para ``storage up``, por isso não é usado aqui.
-    """
-    candidate = Path(__file__).resolve().parent.parent.parent / "compose.dev.yml"
+    """Localiza o ``docker-compose.yml`` do repo (infra: postgres, redis, qdrant)."""
+    candidate = Path(__file__).resolve().parent.parent.parent / "docker-compose.yml"
     return candidate if candidate.is_file() else None
 
 
