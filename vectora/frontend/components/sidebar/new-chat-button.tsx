@@ -17,24 +17,24 @@ export const NewChatButton = memo(function NewChatButton({
   const label = offline ? m.network_disabled_offline() : m.sidebar_new_chat();
 
   return (
-    <div className="px-3 pt-2 pb-0">
+    <div className="px-3 py-1.5">
       <button
         onClick={onClick}
         disabled={offline}
         aria-label={label}
-        className={`group w-full inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-2 px-3 py-2 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-md text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-primary/15 disabled:hover:to-primary/5 disabled:hover:border-primary/30`}
+        className={`group w-full h-10 inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-2 pl-3 pr-3 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-lg text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="14"
-          height="14"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`text-primary ${sidebarOnRight ? "order-last" : ""}`}
+          className={`shrink-0 text-primary ${sidebarOnRight ? "order-last" : ""}`}
         >
           <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
         </svg>
