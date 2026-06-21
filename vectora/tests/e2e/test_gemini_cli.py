@@ -446,7 +446,7 @@ class TestVectoraMcpServerDirectly:
                 )
             except FileNotFoundError:
                 pytest.fail("Python do venv não encontrado")
-                return
+                raise  # satisfaz o type-checker (pytest.fail levanta, mas Pyright não sabe)
 
             collected: list[tuple[str, str]] = []
             done = threading.Event()
