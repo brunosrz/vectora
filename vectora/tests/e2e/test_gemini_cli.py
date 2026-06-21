@@ -201,7 +201,6 @@ class TestGeminiCallsVectora:
             pytest.fail("vectora não encontrado em mcpServers do settings.json")
 
     @pytest.mark.timeout(120)
-    @pytest.mark.flaky(reruns=2)
     def test_gemini_basic_response_with_mcp(self):
         """Gemini CLI deve responder a prompt básico (verifica que MCP não trava)."""
         output = _run_gemini("Olá! Responda apenas com: Olá do Gemini!", timeout=60)
@@ -210,7 +209,6 @@ class TestGeminiCallsVectora:
         assert "[ERROR]" not in output, "Gemini CLI não encontrado"
 
     @pytest.mark.timeout(150)
-    @pytest.mark.flaky(reruns=2)
     def test_gemini_delegates_to_vectora_mcp(self):
         """Gemini deve usar delegate_task_to_vectora para tarefa que o força a isso."""
         prompt = (
@@ -235,7 +233,6 @@ class TestGeminiCallsVectora:
         )
 
     @pytest.mark.timeout(150)
-    @pytest.mark.flaky(reruns=2)
     def test_vectora_records_trace_from_gemini_call(self):
         """Após chamada MCP do Gemini, o Vectora deve ter gravado traces."""
         import asyncio
@@ -275,7 +272,6 @@ class TestGeminiCallsVectora:
             )
 
     @pytest.mark.timeout(150)
-    @pytest.mark.flaky(reruns=2)
     def test_gemini_uses_vectora_for_complex_task(self):
         """Prompt complexo deve acionar o Vectora via MCP para RAG/análise."""
         prompt = (
@@ -437,17 +433,43 @@ class TestVectoraMcpServerDirectly:
         )
 
         if venv_python:
-            # O wheel empacota o código como `src` (pyproject packages=["src"]),
-            # então o módulo real é src.mcp.server — não vectora.mcp.server.
-            result = subprocess.run(
-                [venv_python, "-c", "from backend.mcp.server import mcp; print('OK')"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                check=False,
-            )
-            assert "OK" in result.stdout or result.returncode == 0, (
-                f"Importação do servidor MCP falhou: {result.stderr[:200]}"
+            try:
+                proc = subprocess.Popen(
+                    [
+                        venv_python,
+                        "-c",
+                        "from backend.mcp.server import mcp; print('OK')",
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+            except FileNotFoundError:
+                pytest.fail("Python do venv não encontrado")
+                return
+
+            collected: list[tuple[str, str]] = []
+            done = threading.Event()
+
+            def _collect() -> None:
+                try:
+                    out, err = proc.communicate()
+                    collected.append((out, err))
+                except Exception:
+                    pass
+                finally:
+                    done.set()
+
+            t = threading.Thread(target=_collect, daemon=True)
+            t.start()
+
+            if not done.wait(30):
+                proc.kill()
+                pytest.fail("Importação do servidor MCP não concluiu em 30s")
+
+            stdout, stderr = collected[0] if collected else ("", "")
+            assert "OK" in stdout or proc.returncode == 0, (
+                f"Importação do servidor MCP falhou: {stderr[:200]}"
             )
         else:
             pytest.fail("Python do venv não identificado")
