@@ -787,5 +787,7 @@
   "heartbreak_new": "Nova sessão",
   "heartbreak_instruction_label": "Instrução",
   "heartbreak_runs": "execuções",
-  "heartbreak_empty": "Nenhuma sessão ativa"
+  "heartbreak_empty": "Nenhuma sessão ativa",
+  "mode_chat": "Chat",
+  "mode_dev": "Dev"
 }

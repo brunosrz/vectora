@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { LayoutDashboard, MessageSquare, Send } from "lucide-react";
+import { Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -166,7 +166,6 @@ export function ChatInput({
 }: ChatInputProps) {
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   const chatMode = useSettingsStore((s) => s.chatMode);
-  const setChatMode = useSettingsStore((s) => s.setChatMode);
   // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
@@ -395,29 +394,6 @@ export function ChatInput({
                 </>
               )}
               <PermissionModeMenu />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setChatMode(!chatMode)}
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                    aria-label={
-                      chatMode ? m.chat_mode_disable() : m.chat_mode_enable()
-                    }
-                    data-chatmode={chatMode ? "on" : "off"}
-                  >
-                    {chatMode ? (
-                      <MessageSquare className="w-3.5 h-3.5" />
-                    ) : (
-                      <LayoutDashboard className="w-3.5 h-3.5" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {chatMode ? m.chat_mode_disable() : m.chat_mode_enable()}
-                </TooltipContent>
-              </Tooltip>
             </div>
 
             <div className="flex items-center gap-1 min-w-0 justify-end">

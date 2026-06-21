@@ -8,6 +8,7 @@ import { CollapsedSidebar } from "./collapsed-sidebar";
 import { SidebarHeader } from "./sidebar-header";
 import { NewChatButton } from "./new-chat-button";
 import { SessionSearch } from "./session-search";
+import { SidebarModeToggle } from "./sidebar-mode-toggle";
 import { ThreadList } from "./thread-list";
 import { SidebarFooter } from "./sidebar-footer";
 
@@ -106,6 +107,8 @@ export const Sidebar = memo(function Sidebar({
           onChange={setSearchQuery}
           onClear={handleClearSearch}
         />
+
+        <SidebarModeToggle />
 
         <ThreadList
           isLoading={isLoading}

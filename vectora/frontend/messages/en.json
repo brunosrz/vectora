@@ -787,5 +787,7 @@
   "heartbreak_new": "New session",
   "heartbreak_instruction_label": "Instruction",
   "heartbreak_runs": "runs",
-  "heartbreak_empty": "No active sessions"
+  "heartbreak_empty": "No active sessions",
+  "mode_chat": "Chat",
+  "mode_dev": "Dev"
 }
