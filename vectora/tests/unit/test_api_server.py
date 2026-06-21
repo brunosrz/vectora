@@ -110,9 +110,23 @@ class TestMetrics:
 # ---------------------------------------------------------------------------
 
 
+def _collect_route_paths(routes) -> list[str]:
+    """Coleta paths recursivamente — FastAPI 0.138 usa _IncludedRouter sem .path."""
+    paths: list[str] = []
+    for r in routes:
+        if hasattr(r, "path") and r.path is not None:
+            paths.append(r.path)
+        orig = getattr(r, "original_router", None)
+        if orig is not None and hasattr(orig, "routes"):
+            paths.extend(_collect_route_paths(orig.routes))
+        elif hasattr(r, "routes") and r.routes:
+            paths.extend(_collect_route_paths(r.routes))
+    return paths
+
+
 class TestRoutes:
     def _route_paths(self, app) -> list[str]:
-        return [r.path for r in app.routes if hasattr(r, "path")]
+        return _collect_route_paths(app.routes)
 
     def test_stream_chat_route_exists(self, headless_app):
         paths = self._route_paths(headless_app)
@@ -155,11 +169,11 @@ class TestMcpMount:
     executa no `vectora start`."""
 
     def test_mcp_mounted_at_slash_mcp(self, headless_app):
-        paths = [r.path for r in headless_app.routes if hasattr(r, "path")]
+        paths = _collect_route_paths(headless_app.routes)
         assert "/mcp" in paths, "MCP não montado em /mcp"
 
     def test_api_tools_schema_route_exists(self, headless_app):
-        paths = [r.path for r in headless_app.routes if hasattr(r, "path")]
+        paths = _collect_route_paths(headless_app.routes)
         assert "/api/tools/schema" in paths
 
     def test_lifespan_runs_mcp_env_bootstrap(self, headless_app, monkeypatch):

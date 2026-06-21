@@ -18,9 +18,24 @@ from __future__ import annotations
 
 import json
 import os
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+
+def _collect_route_paths(routes: list[Any]) -> list[str]:
+    paths: list[str] = []
+    for r in routes:
+        if hasattr(r, "path") and r.path is not None:
+            paths.append(r.path)
+        orig = getattr(r, "original_router", None)
+        if orig is not None and hasattr(orig, "routes"):
+            paths.extend(_collect_route_paths(orig.routes))
+        elif hasattr(r, "routes") and r.routes:
+            paths.extend(_collect_route_paths(r.routes))
+    return paths
+
 
 os.environ["VECTORA_AUTH_REQUIRED"] = "false"
 
@@ -362,7 +377,7 @@ class TestUpdateThreadEndpoint:
         db = FakeDB()
         app, orig_get_db, orig_conn, t_mod = _make_app_with_db(db)
         try:
-            routes = [r.path for r in app.routes if hasattr(r, "path")]
+            routes = _collect_route_paths(app.routes)
             assert "/vectora.chat.v1.ThreadService/UpdateThread" in routes, (
                 f"Rota UpdateThread não encontrada. Rotas: {routes}"
             )
