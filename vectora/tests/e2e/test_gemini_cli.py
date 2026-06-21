@@ -17,8 +17,11 @@ Executar:
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -45,20 +48,42 @@ def _gemini_has_vectora_mcp() -> bool:
 
 
 def _run_gemini(prompt: str, timeout: int = 90) -> str:
-    """Invoca `gemini -p <prompt>` e retorna stdout + stderr."""
+    """Invoca `gemini -p <prompt>` e retorna stdout + stderr.
+
+    Usa thread daemon para evitar o deadlock do Windows onde subprocess.run
+    bloqueia indefinidamente em _readerthread.join() após process.kill()
+    quando subprocessos filhos mantêm o pipe aberto.
+    """
     try:
-        result = subprocess.run(
+        proc = subprocess.Popen(
             ["gemini", "-p", prompt],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout,
-            check=False,
         )
-        return result.stdout + result.stderr
-    except subprocess.TimeoutExpired:
-        return "[TIMEOUT] gemini CLI não respondeu dentro do tempo limite"
     except FileNotFoundError:
         return "[ERROR] gemini CLI não encontrado"
+
+    collected: list[str] = []
+    done = threading.Event()
+
+    def _collect() -> None:
+        try:
+            out, err = proc.communicate()
+            collected.append(out + err)
+        except Exception:
+            pass
+        finally:
+            done.set()
+
+    t = threading.Thread(target=_collect, daemon=True)
+    t.start()
+
+    if done.wait(timeout):
+        return collected[0] if collected else ""
+
+    proc.kill()
+    return "[TIMEOUT] gemini CLI não respondeu dentro do tempo limite"
 
 
 def _run_gemini_with_mcp(prompt: str, timeout: int = 120) -> str:
@@ -158,6 +183,22 @@ class TestGeminiCliConfig:
 
 class TestGeminiCallsVectora:
     """Testa que o Gemini CLI chama o vectora-mcp e o Vectora responde."""
+
+    @pytest.fixture(autouse=True)
+    def _require_gemini_environment(self):
+        """Falha imediatamente se pré-requisitos não estão configurados.
+
+        Fail (não skip): ausência de API key ou CLI é um erro de ambiente,
+        não uma condição opcional — detectado cedo evita timeout de 120s.
+        """
+        if not shutil.which("gemini"):
+            pytest.fail("gemini CLI não instalado no PATH")
+        if not os.getenv("GOOGLE_API_KEY"):
+            pytest.fail(
+                "GOOGLE_API_KEY não configurado — gemini travaria aguardando auth"
+            )
+        if not _gemini_has_vectora_mcp():
+            pytest.fail("vectora não encontrado em mcpServers do settings.json")
 
     @pytest.mark.timeout(120)
     @pytest.mark.flaky(reruns=2)
@@ -298,11 +339,7 @@ class TestVectoraMcpServerDirectly:
         assert proc.stdout is not None
         proc.stdin.write(request + "\n")
         proc.stdin.flush()
-        line = (
-            proc.stdout.readline(timeout=10)  # ty: ignore[unknown-argument]
-            if hasattr(proc.stdout, "timeout")
-            else proc.stdout.readline()
-        )
+        line = proc.stdout.readline()
         try:
             return json.loads(line) if line else {}
         except json.JSONDecodeError:
