@@ -25,7 +25,7 @@ def memory_client(tmp_path_factory):
     from backend.services.memory import MemoryStore
 
     store = MemoryStore(db_path)
-    asyncio.get_event_loop().run_until_complete(store.initialize())
+    asyncio.run(store.initialize())
 
     import backend.services.memory as mem_mod
 

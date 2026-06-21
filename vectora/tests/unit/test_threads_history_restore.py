@@ -33,21 +33,32 @@ class _FakeState:
         self.values = {"messages": messages} if messages is not None else {}
 
 
-class _FakeGraph:
-    """Expõe ``aget_state`` (como o CompiledStateGraph) para o laço de unwrap."""
-
-    def __init__(self, messages) -> None:
-        self._messages = messages
-
-    async def aget_state(self, _config):
-        return _FakeState(self._messages)
-
-
 def _patch_graph(monkeypatch, messages) -> None:
-    async def _fake_get_user_agent(user_id=None):
-        return _FakeGraph(messages)
+    """Patcha StateGraph para devolver um grafo fake cujo aget_state retorna messages."""
 
-    monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_user_agent)
+    class _FakeCompiled:
+        async def aget_state(self, _config):
+            return _FakeState(messages)
+
+    class _FakeStateGraph:
+        def add_node(self, *a, **kw) -> None:
+            pass
+
+        def add_edge(self, *a, **kw) -> None:
+            pass
+
+        def compile(self, **kw) -> _FakeCompiled:
+            return _FakeCompiled()
+
+    import langgraph.graph as _lg
+
+    monkeypatch.setattr(_lg, "StateGraph", lambda *a, **kw: _FakeStateGraph())
+    monkeypatch.setattr(agent_factory, "_checkpointer", object())
+
+    async def _noop_ensure() -> None:
+        pass
+
+    monkeypatch.setattr(agent_factory, "_ensure_infra", _noop_ensure)
 
 
 @pytest.mark.asyncio
