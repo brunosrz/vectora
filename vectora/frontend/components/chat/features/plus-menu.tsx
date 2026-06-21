@@ -1,15 +1,6 @@
 "use client";
 
-/**
- * PlusMenu (R3)
- *
- * Substitui o botão único de anexo por um menu popover:
- *   - Adicionar arquivos ou fotos  → fluxo de upload existente
- *   - Adicionar pasta              → trust dialog do workspace
- *   - Comandos de barra            → insere "/" no input (opcional)
- */
-
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   Database,
   FolderPlus,
@@ -26,6 +17,11 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { useEnvironmentDialogStore } from "@/lib/stores/environment-dialog-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { WorkspaceTrustDialog } from "@/components/sidebar/workspace-trust-dialog";
@@ -48,41 +44,39 @@ export function PlusMenu({
   const [open, setOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
   const [ingestOpen, setIngestOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
-    }
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, []);
 
   return (
-    <div className="relative" ref={ref}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            onClick={() => setOpen((o) => !o)}
-            variant="ghost"
-            size="sm"
-            disabled={disabled}
-            className="group h-9 w-9 p-0 mb-0.5 rounded-full bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary border-0 flex-shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
-            type="button"
-            aria-label={m.tooltip_chat_add_files()}
-            aria-expanded={open}
-          >
-            <Plus className="w-4.5 h-4.5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{m.tooltip_chat_add_files()}</TooltipContent>
-      </Tooltip>
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={disabled}
+                className="group h-9 w-9 p-0 mb-0.5 rounded-full bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary border-0 flex-shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
+                type="button"
+                aria-label={m.tooltip_chat_add_files()}
+                aria-expanded={open}
+              >
+                <Plus className="w-4.5 h-4.5" />
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {m.tooltip_chat_add_files()}
+          </TooltipContent>
+        </Tooltip>
 
-      {open && (
-        <div className="absolute left-0 bottom-11 z-50 w-60 rounded-lg border border-border bg-background shadow-xl py-1 animate-in fade-in slide-in-from-bottom-2">
+        <PopoverContent
+          side="top"
+          align="start"
+          sideOffset={8}
+          className="w-60 p-1 bg-background"
+        >
           <button
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
             onClick={(e) => {
               setOpen(false);
               onAddFiles(e);
@@ -93,7 +87,7 @@ export function PlusMenu({
           </button>
 
           <button
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
             onClick={() => {
               setOpen(false);
               setTrustOpen(true);
@@ -103,11 +97,8 @@ export function PlusMenu({
             {m.plus_add_folder()}
           </button>
 
-          {/* Abre o directory browser real (mesmo do trust). Ao confirmar,
-              encaminha o path para o input como prompt — o agente delega
-              para a tool ingest_docs. */}
           <button
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
             onClick={() => {
               setOpen(false);
               setIngestOpen(true);
@@ -119,7 +110,7 @@ export function PlusMenu({
 
           {onSlashCommands && (
             <button
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
               onClick={() => {
                 setOpen(false);
                 onSlashCommands();
@@ -133,7 +124,7 @@ export function PlusMenu({
           <div className="border-t border-border/60 my-1" />
 
           <button
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
             onClick={() => {
               setOpen(false);
               openEnvironment("integracoes");
@@ -144,7 +135,7 @@ export function PlusMenu({
           </button>
 
           <button
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-accent transition-colors text-left rounded-sm"
             onClick={() => {
               setOpen(false);
               openEnvironment("plugins");
@@ -153,8 +144,8 @@ export function PlusMenu({
             <Plug className="w-4 h-4 shrink-0 text-muted-foreground" />
             {m.plus_plugins()}
           </button>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
 
       <WorkspaceTrustDialog open={trustOpen} onOpenChange={setTrustOpen} />
       <WorkspaceTrustDialog
@@ -163,6 +154,6 @@ export function PlusMenu({
         mode="ingest"
         initialPath={activeCwd}
       />
-    </div>
+    </>
   );
 }
