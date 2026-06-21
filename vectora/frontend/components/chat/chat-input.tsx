@@ -192,7 +192,7 @@ export function ChatInput({
       {/* Enhanced visibility layer */}
       <div className="absolute inset-0 pointer-events-none" />
 
-      <div className="relative border-t border-border/60 bg-background backdrop-blur-sm">
+      <div className="relative z-[50] border-t border-border/60 bg-background backdrop-blur-sm">
         <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-1.5">
           {/* File Previews */}
           <FilePreviewGrid files={attachedFiles} onRemove={onRemoveFile} />
