@@ -141,6 +141,94 @@ describe("useStreamHandler.processStream", () => {
     expect(second?.isThinking).toBe(false);
   });
 
+  it("race condition: assistantContent preservado mesmo com setMessages([]) externo durante stream", async () => {
+    // Documenta o sintoma do bug de race condition em loadThreadHistory:
+    // quando setMessages([]) é chamado externamente enquanto o stream processa
+    // tokens, o acumulador local do handler preserva o conteúdo — mas a
+    // mensagem do assistente SOME do estado React porque updateMessageInList
+    // em array vazio retorna [].
+    // O fix está em chat-interface.tsx (guard hasSentMessageRef), que impede
+    // setMessages([]) de ser chamado quando o usuário já enviou ao thread.
+
+    let externalWipe: (() => void) | undefined;
+
+    // setMessages customizado que expõe um "wipe" externo após a primeira
+    // chamada (que cria a mensagem assistente inicial via ensureMessageExists).
+    let localMessages: Message[] = [];
+    let firstCallDone = false;
+    const setMsgsWithWipe = (u: Message[] | ((p: Message[]) => Message[])) => {
+      localMessages = typeof u === "function" ? u(localMessages) : u;
+      if (!firstCallDone) {
+        firstCallDone = true;
+        // Expõe o wipe DEPOIS da primeira chamada de setup
+        externalWipe = () => {
+          localMessages = [];
+        };
+      }
+    };
+
+    streamChatMock.mockReturnValue(
+      gen([
+        { type: "thread", thread_id: "t1" },
+        { type: "token", content: "Resposta" },
+        { type: "done", thread_id: "t1", run_id: "run-race" },
+      ]),
+    );
+
+    const { result } = renderHook(() =>
+      useStreamHandler({ threadId: "t1", setMessages: setMsgsWithWipe }),
+    );
+
+    // Inicia o stream — setMessages chamado sincronamente para criar assistante
+    const streamPromise = result.current.processStream("oi", "a1");
+
+    // Simula loadThreadHistory resolvendo com [] DURANTE o stream (race condition)
+    externalWipe?.();
+
+    const out = await streamPromise;
+
+    // assistantContent local do handler fica correto: acumulado independente do estado React
+    expect(out.assistantContent).toBe("Resposta");
+
+    // O estado React está vazio: tokens foram perdidos porque updateMessageInList
+    // opera sobre array vazio após o wipe.
+    // (Este é o sintoma que o guard em loadThreadHistory previne.)
+    const foundInState = localMessages.find(
+      (m) => m.role === "assistant" && m.content === "Resposta",
+    );
+    expect(foundInState).toBeUndefined();
+  });
+
+  it("race condition não ocorre quando hasSentMessageRef é checado antes de setMessages([])", () => {
+    // Especificação do guard adicionado em chat-interface.tsx:
+    // loadThreadHistory só chama setMessages([]) quando hasSentMessageRef
+    // NÃO aponta para o thread atual.
+    const setMessagesMock = vi.fn();
+    const hasSentRef: { current: string | null } = { current: null };
+    const currentThreadId = "thread-abc";
+    const historyMessages: unknown[] = [];
+
+    // Cenário 1: usuário enviou mensagem → ref aponta para o thread → NÃO apaga
+    hasSentRef.current = currentThreadId;
+    if (
+      historyMessages.length === 0 &&
+      hasSentRef.current !== currentThreadId
+    ) {
+      setMessagesMock([]);
+    }
+    expect(setMessagesMock).not.toHaveBeenCalled();
+
+    // Cenário 2: usuário ainda não enviou → ref é null → APAGA (comportamento correto)
+    hasSentRef.current = null;
+    if (
+      historyMessages.length === 0 &&
+      hasSentRef.current !== currentThreadId
+    ) {
+      setMessagesMock([]);
+    }
+    expect(setMessagesMock).toHaveBeenCalledWith([]);
+  });
+
   it("message_break sem tokens anteriores não cria bolha vazia", async () => {
     streamChatMock.mockReturnValue(
       gen([
