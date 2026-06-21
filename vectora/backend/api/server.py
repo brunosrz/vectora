@@ -81,7 +81,11 @@ def _chat_static_root() -> Path | None:
       4. Dev — ``<repo_root>/chat/dist`` (build Vite).
 
     Retorna ``None`` se nenhuma das localizações tiver um ``index.html``.
+    ``VECTORA_SKIP_STATIC=1`` força proxy para o dev server (modo dev).
     """
+    if os.environ.get("VECTORA_SKIP_STATIC"):
+        return None
+
     candidates: list[Path] = []
 
     compiled = getattr(sys, "__compiled__", None)

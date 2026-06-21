@@ -25,6 +25,7 @@ import logging
 import os
 import signal
 import socket
+import subprocess  # nosec B404
 import sys
 import warnings
 from pathlib import Path
@@ -87,6 +88,59 @@ def _install_terminal_signals(server: Any, icon_ref: list[Any]) -> None:
     signal.signal(signal.SIGTERM, _shutdown)
     if hasattr(signal, "SIGHUP"):
         signal.signal(signal.SIGHUP, _shutdown)  # type: ignore[attr-defined]
+
+
+# ---------------------------------------------------------------------------
+# Vite dev server helpers
+# ---------------------------------------------------------------------------
+
+
+def _start_vite_dev(frontend_dir: Path) -> subprocess.Popen[Any] | None:
+    """Inicia o servidor Vite em segundo plano quando não compilado pelo Nuitka.
+
+    Define VECTORA_SKIP_STATIC=1 para que create_app() use o proxy em vez
+    de servir frontend/dist/ estático — garante HMR em modo dev.
+    """
+    if getattr(sys, "__compiled__", False):
+        return None
+    os.environ["VECTORA_SKIP_STATIC"] = "1"
+    try:
+        if sys.platform == "win32":
+            proc: subprocess.Popen[Any] = subprocess.Popen(  # nosec B602 B603 B607
+                ["pnpm", "dev"],
+                cwd=str(frontend_dir),
+                shell=True,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+            )
+        else:
+            proc = subprocess.Popen(  # nosec B603 B607
+                ["pnpm", "dev"],
+                cwd=str(frontend_dir),
+                start_new_session=True,
+            )
+        logger.info("Vite dev server iniciado (pid=%d)", proc.pid)
+        return proc
+    except Exception as exc:
+        logger.warning("Falha ao iniciar Vite dev server: %s", exc)
+        return None
+
+
+def _kill_vite(proc: subprocess.Popen[Any] | None) -> None:
+    """Encerra o processo Vite e todos os seus filhos."""
+    if proc is None:
+        return
+    try:
+        if sys.platform == "win32":
+            subprocess.run(  # nosec B603 B607
+                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                check=False,
+                capture_output=True,
+            )
+        else:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        logger.debug("Vite dev server encerrado (pid=%d)", proc.pid)
+    except Exception as exc:
+        logger.debug("Falha ao encerrar Vite: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -347,6 +401,12 @@ def _run_start(args: argparse.Namespace) -> None:
         with contextlib.suppress(FileNotFoundError):
             Path(uds_path).unlink()
 
+    # Em modo dev (não-Nuitka) força proxy para o Vite — impede que o dist/
+    # desatualizado seja servido no lugar do HMR. O env var precisa ser setado
+    # antes de create_app() que lê VECTORA_SKIP_STATIC em _chat_static_root().
+    if not getattr(sys, "__compiled__", False):
+        os.environ["VECTORA_SKIP_STATIC"] = "1"
+
     app = create_app()
     scheme = "https" if use_tls else "http"
     if uds_path:
@@ -377,6 +437,7 @@ def _run_start(args: argparse.Namespace) -> None:
             ssl_keyfile=ssl_keyfile,
         )
     server = uvicorn.Server(config)
+    _vite_proc: subprocess.Popen[Any] | None = None
 
     # Windows + VECTORA_DESKTOP: named pipe em vez de TCP — nenhuma porta TCP é
     # exposta ao SO. O Electron conecta via \\.\pipe\vectora-<pid>, lido de stdout.
@@ -399,6 +460,11 @@ def _run_start(args: argparse.Namespace) -> None:
         asyncio.run(_run_win())
         return
 
+    # Inicia o Vite dev server em background (modo dev, fora do Electron).
+    # O env VECTORA_SKIP_STATIC=1 já foi setado antes de create_app().
+    _frontend_dir = Path(__file__).parent.parent / "frontend"
+    _vite_proc = _start_vite_dev(_frontend_dir)
+
     # Sobe o servidor e, quando há display, a bandeja do sistema (Python). Sem
     # display (VPS/Docker) ou sem pystray, degrada para servidor puro. A bandeja
     # bloqueia a main thread até "Sair"; o servidor roda em thread de fundo.
@@ -419,6 +485,7 @@ def _run_start(args: argparse.Namespace) -> None:
     # não-daemon de libs externas (langsmith, httpx, SQLite do tracer, Cohere
     # rate limiter) mantêm o interpreter vivo; os._exit ignora-as e libera o
     # terminal. Os recursos críticos já foram fechados no lifespan.
+    _kill_vite(_vite_proc)
     logger.info("Vectora: encerrando processo")
     os._exit(0)
 
