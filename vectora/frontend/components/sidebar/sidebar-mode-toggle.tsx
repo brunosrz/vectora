@@ -15,28 +15,8 @@ export const SidebarModeToggle = memo(function SidebarModeToggle() {
   const setChatMode = useSettingsStore((s) => s.setChatMode);
 
   return (
-    <div className="px-3 pb-1.5">
+    <div className="px-3 pt-2 pb-0">
       <div className="flex rounded-lg border border-border/40 overflow-hidden">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setChatMode(false)}
-              aria-pressed={!chatMode}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition-colors duration-150 ${
-                !chatMode
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
-              {m.mode_dev()}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{m.chat_mode_disable()}</TooltipContent>
-        </Tooltip>
-
-        <div className="w-px bg-border/40 self-stretch" />
-
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -53,6 +33,26 @@ export const SidebarModeToggle = memo(function SidebarModeToggle() {
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">{m.chat_mode_enable()}</TooltipContent>
+        </Tooltip>
+
+        <div className="w-px bg-border/40 self-stretch" />
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setChatMode(false)}
+              aria-pressed={!chatMode}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition-colors duration-150 ${
+                !chatMode
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
+              {m.mode_dev()}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{m.chat_mode_disable()}</TooltipContent>
         </Tooltip>
       </div>
     </div>

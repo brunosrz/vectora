@@ -100,6 +100,8 @@ export const Sidebar = memo(function Sidebar({
       <aside className="fixed md:relative inset-y-0 left-0 z-40 flex w-72 md:w-full bg-sidebar border-r border-border/40 flex-col">
         <SidebarHeader onToggle={onToggle} />
 
+        <SidebarModeToggle />
+
         {onNewChat && <NewChatButton onClick={onNewChat} />}
 
         <SessionSearch
@@ -107,8 +109,6 @@ export const Sidebar = memo(function Sidebar({
           onChange={setSearchQuery}
           onClear={handleClearSearch}
         />
-
-        <SidebarModeToggle />
 
         <ThreadList
           isLoading={isLoading}
