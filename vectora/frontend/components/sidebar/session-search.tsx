@@ -19,8 +19,8 @@ export const SessionSearch = memo(function SessionSearch({
   return (
     <div className="px-3 py-1.5">
       <div className="relative group">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-          <Search className="w-4 h-4 text-muted-foreground/70 group-focus-within:text-primary transition-all duration-200" />
+        <div className="absolute left-2.5 top-1/2 -translate-y-1/2 z-10">
+          <Search className="w-3.5 h-3.5 text-muted-foreground/60 group-focus-within:text-muted-foreground transition-colors duration-150" />
         </div>
         <Input
           type="search"
@@ -29,16 +29,16 @@ export const SessionSearch = memo(function SessionSearch({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           autoComplete="off"
-          className="pl-10 pr-8 h-10 text-sm bg-background/80 backdrop-blur-sm border-border/40 focus:border-primary/60 focus:bg-background/90 focus:shadow-sm transition-all duration-200 shadow-sm hover:shadow-md hover:bg-background/90 rounded-lg"
+          className="pl-8 pr-7 h-8 text-xs bg-background/60 border-border/40 focus:border-border/70 focus:bg-background/80 transition-colors duration-150 rounded-md"
         />
         {value && (
           <button
             type="button"
             onClick={onClear}
             aria-label={m.sidebar_clear_search()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-muted-foreground/60 hover:text-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-full p-0.5 hover:bg-muted/50"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 text-muted-foreground/50 hover:text-foreground transition-colors duration-150 focus:outline-none rounded p-0.5 hover:bg-muted/50"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3" />
           </button>
         )}
       </div>

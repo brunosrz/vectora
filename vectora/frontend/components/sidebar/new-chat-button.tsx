@@ -22,12 +22,12 @@ export const NewChatButton = memo(function NewChatButton({
         onClick={onClick}
         disabled={offline}
         aria-label={label}
-        className={`group w-full h-10 inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-2 pl-3 pr-3 bg-muted/30 hover:bg-muted/60 border border-border/50 hover:border-border/80 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground transition-colors duration-150 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
+        className={`group w-full h-8 inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-1.5 pl-3 pr-3 bg-muted/30 hover:bg-muted/60 border border-border/50 hover:border-border/80 rounded-md text-xs text-foreground/80 hover:text-foreground transition-colors duration-150 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

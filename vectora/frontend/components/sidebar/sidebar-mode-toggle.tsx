@@ -15,7 +15,7 @@ export const SidebarModeToggle = memo(function SidebarModeToggle() {
   const setChatMode = useSettingsStore((s) => s.setChatMode);
 
   return (
-    <div className="px-3 pt-2 pb-0">
+    <div className="px-3 pt-2 pb-1.5">
       <div className="flex rounded-lg border border-border/40 overflow-hidden">
         <Tooltip>
           <TooltipTrigger asChild>
