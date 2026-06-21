@@ -51,7 +51,7 @@ export const ThreadItem = memo(function ThreadItem({
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {isStreaming ? (
-          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-foreground/50 animate-pulse" />
         ) : (
           <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-transparent" />
         )}

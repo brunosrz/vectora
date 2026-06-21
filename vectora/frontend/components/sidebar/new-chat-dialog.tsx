@@ -62,11 +62,11 @@ export function NewChatDialog({
               onClick={() => setSelected(null)}
               className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
                 selected === null
-                  ? "border-primary bg-primary/10"
+                  ? "border-border/80 bg-muted/60"
                   : "border-border hover:bg-muted/50"
               }`}
             >
-              <FolderPlus className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+              <FolderPlus className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium text-foreground">
                   {m.new_chat_create_new()}
@@ -76,7 +76,7 @@ export function NewChatDialog({
                 </span>
               </span>
               {selected === null && (
-                <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                <Check className="w-4 h-4 mt-0.5 shrink-0 text-foreground" />
               )}
             </button>
 
@@ -93,12 +93,12 @@ export function NewChatDialog({
                 onClick={() => setSelected(ws.id)}
                 className={`w-full flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
                   selected === ws.id
-                    ? "border-primary bg-primary/10"
+                    ? "border-border/80 bg-muted/60"
                     : "border-border hover:bg-muted/50"
                 }`}
               >
                 {ws.is_git_repo ? (
-                  <FolderGit2 className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                  <FolderGit2 className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                 ) : (
                   <FolderOpen className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                 )}
@@ -111,7 +111,7 @@ export function NewChatDialog({
                   </span>
                 </span>
                 {selected === ws.id && (
-                  <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                  <Check className="w-4 h-4 mt-0.5 shrink-0 text-foreground" />
                 )}
               </button>
             ))}

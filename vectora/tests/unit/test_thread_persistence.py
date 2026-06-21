@@ -266,6 +266,13 @@ class TestStreamChatRegistersThread:
 
         from backend.api.schemas import StreamChatRequest
 
+        mock_ws = MagicMock()
+        mock_ws.id = "test-ws-explicit"
+        mock_registry = MagicMock()
+        mock_registry.get.return_value = None
+        mock_registry.get_active.return_value = None
+        mock_registry.get_or_create_session_workspace.return_value = mock_ws
+
         with (
             patch(
                 "backend.services.agent_factory.get_user_agent",
@@ -274,6 +281,10 @@ class TestStreamChatRegistersThread:
             patch(
                 "backend.api.handlers.threads._upsert_session",
                 side_effect=mock_upsert,
+            ),
+            patch(
+                "backend.services.workspace.workspace_registry",
+                mock_registry,
             ),
         ):
             import importlib
@@ -312,6 +323,13 @@ class TestStreamChatRegistersThread:
 
         from backend.api.schemas import StreamChatRequest
 
+        mock_ws2 = MagicMock()
+        mock_ws2.id = "test-ws-empty"
+        mock_registry2 = MagicMock()
+        mock_registry2.get.return_value = None
+        mock_registry2.get_active.return_value = None
+        mock_registry2.get_or_create_session_workspace.return_value = mock_ws2
+
         with (
             patch(
                 "backend.services.agent_factory.get_user_agent",
@@ -320,6 +338,10 @@ class TestStreamChatRegistersThread:
             patch(
                 "backend.api.handlers.threads._upsert_session",
                 side_effect=mock_upsert,
+            ),
+            patch(
+                "backend.services.workspace.workspace_registry",
+                mock_registry2,
             ),
         ):
             import importlib

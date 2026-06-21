@@ -229,6 +229,10 @@ function SessionPage() {
     [deleteThreadMutation, threadId, navigate],
   );
 
+  const handleThreadNotFound = useCallback(() => {
+    void navigate({ to: "/" });
+  }, [navigate]);
+
   const handleThreadUpdate = useCallback(
     (id: string, title: string, lastMessage?: string) => {
       // Chamada otimista do envio da 1ª mensagem (lastMessage vazio): a thread
@@ -388,7 +392,7 @@ function SessionPage() {
                     agentConfig={agentConfig}
                     onAgentConfigChange={setAgentConfig}
                     onThreadUpdate={handleThreadUpdate}
-                    onThreadNotFound={() => void navigate({ to: "/" })}
+                    onThreadNotFound={handleThreadNotFound}
                     inputLocked={inputLocked}
                     isNewThread={isNew(threadId)}
                   />

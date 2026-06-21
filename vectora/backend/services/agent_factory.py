@@ -440,28 +440,32 @@ def _message_text(content: Any) -> str:
 async def aget_thread_messages(thread_id: str) -> list[tuple[str, str]]:
     """Mensagens persistidas de uma thread como ``(role, text)``.
 
-    Lê o checkpoint do **mesmo** grafo que o chat escreve (deep-agent), o que
-    é essencial: ``aget_state`` reconstrói os canais conforme o schema do grafo
-    e a leitura por um grafo diferente devolve ``messages`` vazio. O laço
-    abaixo desembrulha eventuais wrappers (``.bound``) até achar o
-    ``CompiledStateGraph``, que é quem expõe ``aget_state``.
+    Usa um grafo mínimo com o schema DeepAgentState (sem LLM) para ler os
+    checkpoints via ``aget_state`` — mesma estrutura de canais que o agente
+    real escreve, sem precisar inicializar o LLM.
 
     Filtra mensagens de tool e turnos AI sem texto (só tool-call) — devolve um
     transcript humano/assistente limpo.
     """
-    graph = await get_user_agent()
-    compiled: Any = graph
-    for _ in range(6):
-        if hasattr(compiled, "aget_state"):
-            break
-        nxt = getattr(compiled, "bound", None)
-        if nxt is None:
-            break
-        compiled = nxt
-    if not hasattr(compiled, "aget_state"):
+    await _ensure_infra()
+    if _checkpointer is None:
         return []
 
-    config = {"configurable": {"thread_id": thread_id}}
+    from deepagents.graph import DeepAgentState
+    from langchain_core.runnables import RunnableConfig
+    from langgraph.graph import END, START, StateGraph
+
+    def _noop(state: DeepAgentState) -> dict:
+        return {}
+
+    _state_cls: Any = DeepAgentState
+    g = StateGraph(_state_cls)
+    g.add_node("_noop", _noop)
+    g.add_edge(START, "_noop")
+    g.add_edge("_noop", END)
+    compiled = g.compile(checkpointer=_checkpointer)
+
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     state = await compiled.aget_state(config)
     if not state or not state.values:
         return []

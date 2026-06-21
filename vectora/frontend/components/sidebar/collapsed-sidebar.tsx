@@ -60,7 +60,7 @@ export const CollapsedSidebar = memo(function CollapsedSidebar({
                 aria-label={
                   offline ? m.network_disabled_offline() : m.sidebar_new_chat()
                 }
-                className="w-full hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-lg"
+                className="w-full hover:bg-muted/40 hover:text-foreground transition-all duration-200 rounded-lg"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -91,8 +91,8 @@ export const CollapsedSidebar = memo(function CollapsedSidebar({
             title={thread.metadata?.title || m.sidebar_untitled_chat()}
             className={`flex items-center justify-center w-10 h-10 mx-auto rounded-lg transition-all duration-200 ${
               thread.thread_id === currentThreadId
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:bg-sidebar-primary/10 hover:text-sidebar-primary"
+                ? "bg-muted/70 text-foreground"
+                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
             }`}
           >
             <MessageSquare className="w-4 h-4" />

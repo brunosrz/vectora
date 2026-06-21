@@ -95,7 +95,7 @@ export function SidebarFolders() {
                   title={ws.cwd}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors text-left ${
                     active
-                      ? "bg-[#7FC8FF]/15 text-foreground border border-[#7FC8FF]/40"
+                      ? "bg-muted/60 text-foreground border border-border/60"
                       : "text-sidebar-foreground hover:bg-muted/50"
                   }`}
                 >
@@ -104,7 +104,7 @@ export function SidebarFolders() {
                     {ws.name || shortName(ws.cwd)}
                   </span>
                   {active && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 shrink-0" />
                   )}
                 </button>
               );

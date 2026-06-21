@@ -14,7 +14,7 @@ const scrollbarStyles = `
     scrollbar-color: transparent transparent;
   }
   .custom-scrollbar:hover {
-    scrollbar-color: var(--sidebar-primary, #7FC8FF) transparent;
+    scrollbar-color: var(--muted-foreground) transparent;
   }
   .custom-scrollbar::-webkit-scrollbar { width: 6px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -23,10 +23,10 @@ const scrollbarStyles = `
     border-radius: 3px;
   }
   .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: var(--sidebar-primary, #7FC8FF);
+    background: var(--muted-foreground);
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--sidebar-primary, #99D3FF);
+    background: var(--foreground);
   }
 `;
 

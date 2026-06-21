@@ -3,9 +3,14 @@
 Regressão: o chat escreve via o grafo deep-agent, mas get_history/share liam
 via o grafo orchestrator legado — aget_state por um grafo diferente devolvia
 messages vazio, fazendo a sessão abrir vazia após reiniciar.
+
+Correção: aget_thread_messages usa um StateGraph mínimo (sem LLM) com o mesmo
+DeepAgentState schema para ler checkpoints, tornando a leitura robusta e rápida.
 """
 
 from __future__ import annotations
+
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -36,47 +41,56 @@ class _Msg:
         self.content = content
 
 
-class _State:
+class _StateValues:
     def __init__(self, messages: list[_Msg] | None) -> None:
-        self.values = {"messages": messages} if messages is not None else None
+        self.values: dict | None = (
+            {"messages": messages} if messages is not None else None
+        )
 
 
-class _Compiled:
-    """Simula o CompiledStateGraph (tem aget_state)."""
-
-    def __init__(self, messages: list[_Msg] | None) -> None:
-        self._messages = messages
-
-    async def aget_state(self, config: dict) -> _State:
-        return _State(self._messages)
+def _make_compiled(state: _StateValues) -> MagicMock:
+    """Retorna um CompiledStateGraph fake com aget_state fixo."""
+    compiled = MagicMock()
+    compiled.aget_state = AsyncMock(return_value=state)
+    return compiled
 
 
-class _Retry:
-    """Simula o RunnableRetry: sem aget_state, só expõe .bound."""
-
-    def __init__(self, bound: object) -> None:
-        self.bound = bound
+def _make_graph_mock(compiled: MagicMock) -> MagicMock:
+    """Retorna um StateGraph fake cujo .compile() devolve compiled."""
+    g = MagicMock()
+    g.add_node = MagicMock()
+    g.add_edge = MagicMock()
+    g.compile = MagicMock(return_value=compiled)
+    return g
 
 
 @pytest.mark.asyncio
-async def test_aget_thread_messages_unwraps_retry_and_filters(
+async def test_aget_thread_messages_filters_tool_and_empty(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Filtra mensagens de tool e AI sem texto; mapeia human/ai → role correto."""
     messages = [
         _Msg("human", "oi"),
         _Msg("ai", [{"type": "text", "text": "olá"}]),
         _Msg("ai", [{"type": "tool_use", "name": "x"}]),  # sem texto → filtra
-        _Msg("tool", "[]"),  # mensagem de tool → filtra
+        _Msg("tool", "[]"),  # tool result → filtra
         _Msg("ai", "resposta final"),
     ]
-    graph = _Retry(_Compiled(messages))
+    state = _StateValues(messages)
+    compiled = _make_compiled(state)
+    graph = _make_graph_mock(compiled)
 
-    async def _fake_get_user_agent(user_id: str | None = None) -> object:
-        return graph
+    sentinel_checkpointer = object()
+    monkeypatch.setattr(agent_factory, "_checkpointer", sentinel_checkpointer)
 
-    monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_user_agent)
+    async def _noop_ensure() -> None:
+        pass
 
-    pairs = await aget_thread_messages("t1")
+    monkeypatch.setattr(agent_factory, "_ensure_infra", _noop_ensure)
+
+    with patch("langgraph.graph.StateGraph", return_value=graph):
+        pairs = await aget_thread_messages("t1")
+
     assert pairs == [
         ("human", "oi"),
         ("assistant", "olá"),
@@ -88,11 +102,36 @@ async def test_aget_thread_messages_unwraps_retry_and_filters(
 async def test_aget_thread_messages_empty_state(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    async def _fake_get_user_agent(user_id: str | None = None) -> object:
-        return _Compiled(None)
+    """Devolve lista vazia quando aget_state retorna state sem values."""
+    state = _StateValues(None)
+    compiled = _make_compiled(state)
+    graph = _make_graph_mock(compiled)
 
-    monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_user_agent)
-    assert await aget_thread_messages("t1") == []
+    sentinel_checkpointer = object()
+    monkeypatch.setattr(agent_factory, "_checkpointer", sentinel_checkpointer)
+
+    async def _noop_ensure() -> None:
+        pass
+
+    monkeypatch.setattr(agent_factory, "_ensure_infra", _noop_ensure)
+
+    with patch("langgraph.graph.StateGraph", return_value=graph):
+        assert await aget_thread_messages("t1") == []
+
+
+@pytest.mark.asyncio
+async def test_aget_thread_messages_no_checkpointer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Devolve lista vazia quando _checkpointer é None (sem infra inicializada)."""
+    monkeypatch.setattr(agent_factory, "_checkpointer", None)
+
+    async def _noop_ensure() -> None:
+        pass
+
+    monkeypatch.setattr(agent_factory, "_ensure_infra", _noop_ensure)
+
+    assert await aget_thread_messages("qualquer-thread") == []
 
 
 # ---------------------------------------------------------------------------
