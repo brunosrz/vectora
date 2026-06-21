@@ -498,7 +498,11 @@ export function ChatInterface({
               });
 
         if (historyMessages.length === 0) {
-          setMessages([]);
+          // Re-check: if user sent a message while getHistory() was in-flight,
+          // don't wipe their optimistic message from state.
+          if (hasSentMessageRef.current !== currentThreadId) {
+            setMessages([]);
+          }
           uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
           return;
         }
@@ -522,8 +526,13 @@ export function ChatInterface({
         );
 
         if (currentThreadId === threadId) {
-          setMessages(convertedMessages);
-          uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
+          // Re-check: don't overwrite with stale history if user sent while loading.
+          if (hasSentMessageRef.current === currentThreadId) {
+            uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
+          } else {
+            setMessages(convertedMessages);
+            uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
+          }
         } else {
           console.log(
             `Discarding messages for ${currentThreadId} - now on ${threadId}`,

@@ -134,3 +134,62 @@ async def test_provider_error_midstream_becomes_clean_rate_limit():
     assert errors[0]["code"] == "RATE_LIMIT"
     assert "RESOURCE_EXHAUSTED" not in errors[0]["message"]
     assert "429" not in errors[0]["message"]
+
+
+# ============================================================================
+# _record_turn_checkpoint
+# ============================================================================
+
+
+@pytest.mark.asyncio
+async def test_record_turn_checkpoint_nonexistent_directory_no_error(
+    tmp_path, monkeypatch, caplog
+):
+    """_record_turn_checkpoint não loga ERROR quando diretório do workspace não existe.
+
+    Regressão do NoSuchPathError — o diretório referenciado pelo workspace pode
+    não existir em disco (sessão nova ainda não inicializada). Antes do fix, a
+    exceção não era capturada pelo inner except (só pegava InvalidGitRepositoryError)
+    e chegava ao outer except como ERROR. Após o fix deve ser silenciosa.
+    """
+    import logging
+    from unittest.mock import MagicMock
+
+    from backend.api.adapters import _record_turn_checkpoint
+
+    ws = MagicMock()
+    ws.cwd = str(tmp_path / "nonexistent_workspace_dir_xyz")  # não existe
+
+    monkeypatch.setattr(
+        "backend.services.workspace.workspace_registry",
+        MagicMock(get=MagicMock(return_value=ws)),
+    )
+
+    with caplog.at_level(logging.ERROR, logger="backend.api.adapters"):
+        await _record_turn_checkpoint("ws-1", "thread-1", {"run_id": "r1"})
+
+    error_msgs = [r.message for r in caplog.records if r.levelno >= logging.ERROR]
+    assert not error_msgs, (
+        f"_record_turn_checkpoint logou ERROR para diretório inexistente: {error_msgs}"
+    )
+
+
+@pytest.mark.asyncio
+async def test_record_turn_checkpoint_nonexistent_directory_returns_silently(
+    tmp_path, monkeypatch
+):
+    """_record_turn_checkpoint retorna sem levantar exceção se diretório não existe."""
+    from unittest.mock import MagicMock
+
+    from backend.api.adapters import _record_turn_checkpoint
+
+    ws = MagicMock()
+    ws.cwd = str(tmp_path / "also_nonexistent_xyz")
+
+    monkeypatch.setattr(
+        "backend.services.workspace.workspace_registry",
+        MagicMock(get=MagicMock(return_value=ws)),
+    )
+
+    # Deve retornar sem levantar — best-effort
+    await _record_turn_checkpoint("ws-2", "thread-2", {"run_id": "r2"})

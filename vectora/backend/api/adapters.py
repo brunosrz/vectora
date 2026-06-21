@@ -233,9 +233,15 @@ async def _record_turn_checkpoint(
                 return
             strategy = "git"
             git_sha = result["sha"]
-        except gitpy.InvalidGitRepositoryError:
+        except (gitpy.InvalidGitRepositoryError, gitpy.NoSuchPathError):
             # Fallback: snapshot tarball para workspaces sem git.
+            # NoSuchPathError ocorre quando o diretório do workspace não existe
+            # ainda em disco (sessão nova não inicializada) — nesse caso não há
+            # snapshot possível e retornamos silenciosamente.
             from pathlib import Path as _Path
+
+            if not _Path(ws.cwd).exists():
+                return
 
             from backend.services.checkpoint import (
                 create_snapshot_checkpoint,
