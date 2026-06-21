@@ -124,8 +124,25 @@ class StackResult:
 
 def _run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(  # noqa: S603 — comandos docker montados internamente  # nosec B603
-        cmd, capture_output=True, text=True, timeout=180, check=False
+        cmd, capture_output=True, text=True, timeout=60, check=False
     )
+
+
+def _run_detached(cmd: list[str]) -> int:
+    """Roda comando docker que inicia processos em background (up -d, run -d, start).
+
+    Descarta stdout/stderr para evitar o deadlock de herança de pipe no Windows:
+    quando um processo filho herda os handles de pipe e o pai sai, _readerthread.join()
+    bloqueia indefinidamente aguardando o pipe fechar.
+    """
+    proc = subprocess.run(  # noqa: S603  # nosec B603
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        timeout=60,
+        check=False,
+    )
+    return proc.returncode
 
 
 def _docker_available() -> bool:
@@ -182,12 +199,12 @@ def stack_up() -> StackResult:
 
     compose = compose_file()
     if compose is not None:
-        proc = _run(["docker", "compose", "-f", str(compose), "up", "-d"])
-        if proc.returncode == 0:
+        rc = _run_detached(["docker", "compose", "-f", str(compose), "up", "-d"])
+        if rc == 0:
             result.messages.append(f"docker compose up -d ({compose})")
         else:
             result.ok = False
-            result.messages.append(proc.stderr.strip() or "docker compose falhou")
+            result.messages.append("docker compose up -d falhou")
         return result
 
     existing = _existing_containers()
@@ -196,23 +213,21 @@ def stack_up() -> StackResult:
         # --requirepass) é removido para ser recriado com a config atual. O
         # volume nomeado persiste, então nenhum dado é perdido.
         if spec.name in existing and not _container_matches_spec(spec.name, spec):
-            _run(["docker", "rm", "-f", spec.name])
+            _run_detached(["docker", "rm", "-f", spec.name])
             existing.discard(spec.name)
             result.messages.append(f"{spec.name}: config divergente — recriando")
 
         if spec.name in existing:
-            proc = _run(["docker", "start", spec.name])
+            rc = _run_detached(["docker", "start", spec.name])
             action = "start"
         else:
-            proc = _run(docker_run_cmd(spec))
+            rc = _run_detached(docker_run_cmd(spec))
             action = "run"
-        if proc.returncode == 0:
+        if rc == 0:
             result.messages.append(f"{spec.name}: docker {action} ok")
         else:
             result.ok = False
-            result.messages.append(
-                f"{spec.name}: falha no docker {action} — {proc.stderr.strip()}"
-            )
+            result.messages.append(f"{spec.name}: falha no docker {action}")
     return result
 
 
@@ -227,12 +242,12 @@ def stack_down() -> StackResult:
 
     compose = compose_file()
     if compose is not None:
-        proc = _run(["docker", "compose", "-f", str(compose), "down"])
-        if proc.returncode == 0:
+        rc = _run_detached(["docker", "compose", "-f", str(compose), "down"])
+        if rc == 0:
             result.messages.append(f"docker compose down ({compose})")
         else:
             result.ok = False
-            result.messages.append(proc.stderr.strip() or "docker compose falhou")
+            result.messages.append("docker compose down falhou")
         return result
 
     existing = _existing_containers()
@@ -240,14 +255,12 @@ def stack_down() -> StackResult:
         if spec.name not in existing:
             result.messages.append(f"{spec.name}: não existe — nada a fazer")
             continue
-        proc = _run(["docker", "stop", spec.name])
-        if proc.returncode == 0:
+        rc = _run_detached(["docker", "stop", spec.name])
+        if rc == 0:
             result.messages.append(f"{spec.name}: parado")
         else:
             result.ok = False
-            result.messages.append(
-                f"{spec.name}: falha ao parar — {proc.stderr.strip()}"
-            )
+            result.messages.append(f"{spec.name}: falha ao parar")
     return result
 
 

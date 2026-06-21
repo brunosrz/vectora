@@ -362,7 +362,7 @@ class TestUpdateThreadEndpoint:
         db = FakeDB()
         app, orig_get_db, orig_conn, t_mod = _make_app_with_db(db)
         try:
-            routes = [r.path for r in app.routes]
+            routes = [r.path for r in app.routes if hasattr(r, "path")]
             assert "/vectora.chat.v1.ThreadService/UpdateThread" in routes, (
                 f"Rota UpdateThread não encontrada. Rotas: {routes}"
             )

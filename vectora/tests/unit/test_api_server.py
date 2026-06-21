@@ -112,7 +112,7 @@ class TestMetrics:
 
 class TestRoutes:
     def _route_paths(self, app) -> list[str]:
-        return [r.path for r in app.routes]
+        return [r.path for r in app.routes if hasattr(r, "path")]
 
     def test_stream_chat_route_exists(self, headless_app):
         paths = self._route_paths(headless_app)
@@ -155,11 +155,11 @@ class TestMcpMount:
     executa no `vectora start`."""
 
     def test_mcp_mounted_at_slash_mcp(self, headless_app):
-        paths = [r.path for r in headless_app.routes]
+        paths = [r.path for r in headless_app.routes if hasattr(r, "path")]
         assert "/mcp" in paths, "MCP não montado em /mcp"
 
     def test_api_tools_schema_route_exists(self, headless_app):
-        paths = [r.path for r in headless_app.routes]
+        paths = [r.path for r in headless_app.routes if hasattr(r, "path")]
         assert "/api/tools/schema" in paths
 
     def test_lifespan_runs_mcp_env_bootstrap(self, headless_app, monkeypatch):
