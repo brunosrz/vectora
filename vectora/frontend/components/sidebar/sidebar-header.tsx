@@ -8,17 +8,14 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { NewChatButton } from "./new-chat-button";
 import { m } from "@/lib/paraglide/messages";
 
 interface SidebarHeaderProps {
   onToggle: () => void;
-  onNewChat?: () => void;
 }
 
 export const SidebarHeader = memo(function SidebarHeader({
   onToggle,
-  onNewChat,
 }: SidebarHeaderProps) {
   return (
     <div className="px-2 pt-2 pb-2 border-b border-border/40">
@@ -42,11 +39,7 @@ export const SidebarHeader = memo(function SidebarHeader({
           {m.sidebar_title()}
         </span>
 
-        {onNewChat ? (
-          <NewChatButton onClick={onNewChat} />
-        ) : (
-          <div className="w-7" />
-        )}
+        <div className="w-7" />
       </div>
     </div>
   );
