@@ -144,7 +144,7 @@ def qdrant_url() -> str:
 async def pg_pool(_storage_stack_ok: bool, pg_dsn: str):
     """Pool asyncpg para testes de integração. Skip se Postgres indisponível."""
     if not _storage_stack_ok:
-        pytest.fail("Docker indisponível — Postgres não iniciado")
+        pytest.skip("Docker indisponível — Postgres não iniciado")
 
     import asyncio
 
@@ -159,7 +159,7 @@ async def pg_pool(_storage_stack_ok: bool, pg_dsn: str):
             break
         except Exception:
             if attempt == 14:
-                pytest.fail("Postgres não respondeu após 15 tentativas")
+                pytest.skip("Postgres não respondeu após 15 tentativas")
             await asyncio.sleep(1)
 
     assert pool is not None
@@ -178,7 +178,7 @@ async def pg_conn(pg_pool):
 async def redis_client(_storage_stack_ok: bool, redis_url: str):
     """Cliente redis.asyncio para testes de integração. Skip se Redis indisponível."""
     if not _storage_stack_ok:
-        pytest.fail("Docker indisponível — Redis não iniciado")
+        pytest.skip("Docker indisponível — Redis não iniciado")
 
     import asyncio
 
@@ -192,7 +192,7 @@ async def redis_client(_storage_stack_ok: bool, redis_url: str):
         except Exception:
             if attempt == 14:
                 await client.aclose()
-                pytest.fail("Redis não respondeu após 15 tentativas")
+                pytest.skip("Redis não respondeu após 15 tentativas")
             await asyncio.sleep(1)
 
     yield client
@@ -203,7 +203,7 @@ async def redis_client(_storage_stack_ok: bool, redis_url: str):
 def qdrant_client(_storage_stack_ok: bool, qdrant_url: str):
     """QdrantClient síncrono para testes de integração. Skip se Qdrant indisponível."""
     if not _storage_stack_ok:
-        pytest.fail("Docker indisponível — Qdrant não iniciado")
+        pytest.skip("Docker indisponível — Qdrant não iniciado")
 
     import time
 
@@ -216,7 +216,7 @@ def qdrant_client(_storage_stack_ok: bool, qdrant_url: str):
             break
         except Exception:
             if attempt == 14:
-                pytest.fail("Qdrant não respondeu após 15 tentativas")
+                pytest.skip("Qdrant não respondeu após 15 tentativas")
             time.sleep(1)
 
     return client

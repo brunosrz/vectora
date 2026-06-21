@@ -205,7 +205,7 @@ export function RotinasTab() {
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{m.routines_new()}</DialogTitle>
           </DialogHeader>

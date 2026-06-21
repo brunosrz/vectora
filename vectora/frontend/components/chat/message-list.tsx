@@ -391,7 +391,7 @@ export const MessageList = memo(function MessageList({
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         @keyframes slideInUp {
           from {
             opacity: 0;

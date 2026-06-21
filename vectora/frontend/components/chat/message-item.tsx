@@ -641,7 +641,7 @@ export const MessageItem = memo(
 
     return (
       <>
-        <style jsx>{`
+        <style>{`
           @keyframes dance {
             0% {
               transform: rotate(-30deg) scale(1);

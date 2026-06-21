@@ -138,8 +138,11 @@ class TestPostgresPool:
 
     @pytest.mark.asyncio
     @pytest.mark.storage
-    async def test_get_pg_pool_factory(self, pg_dsn, monkeypatch):
+    async def test_get_pg_pool_factory(self, _storage_stack_ok, pg_dsn, monkeypatch):
         """get_pg_pool() cria pool e garante schema via migration runner."""
+        if not _storage_stack_ok:
+            pytest.skip("Docker indisponível — Postgres não iniciado")
+
         import backend.settings as _s
         import backend.storage.factory as _fac
 

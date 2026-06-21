@@ -209,6 +209,10 @@ filterwarnings = [
     "ignore:Api key is used with an insecure connection:UserWarning",
     # PyJWT avisa sobre chaves HMAC curtas em tokens de teste.
     "ignore:The HMAC key is.*bytes long.*below the minimum:Warning",
+    # Cohere SDK usa APIs Pydantic V1 (__fields__, model_fields, parse_obj) — lib externa.
+    "ignore:The `__fields__` attribute is deprecated:pydantic.warnings.PydanticDeprecatedSince20:cohere",
+    "ignore:Accessing the 'model_fields' attribute on the instance is deprecated:pydantic.warnings.PydanticDeprecatedSince211:cohere",
+    "ignore:The `parse_obj` method is deprecated:pydantic.warnings.PydanticDeprecatedSince20:cohere",
 ]
 markers = [
     "e2e: testes end-to-end com APIs reais (requer env vars e gemini CLI)",

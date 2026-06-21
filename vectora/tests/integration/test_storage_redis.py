@@ -153,7 +153,7 @@ class TestRedisChatHistory:
     ):
         """Com backend=redis e Redis acessível, retorna RedisChatMessageHistory."""
         if not _storage_stack_ok:
-            pytest.fail("Docker indisponível — Redis não iniciado")
+            pytest.skip("Docker indisponível — Redis não iniciado")
 
         from langchain_redis import RedisChatMessageHistory
 
