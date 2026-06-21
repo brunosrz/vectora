@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -28,16 +27,6 @@ import pytest
 logger = logging.getLogger(__name__)
 
 pytestmark = [pytest.mark.integration, pytest.mark.timeout(60)]
-
-REQUIRES_GOOGLE = pytest.mark.skipif(
-    not os.getenv("GOOGLE_API_KEY"),
-    reason="GOOGLE_API_KEY não configurado",
-)
-REQUIRES_COHERE = pytest.mark.skipif(
-    not os.getenv("COHERE_API_KEY"),
-    reason="COHERE_API_KEY não configurado",
-)
-
 
 # ============================================================================
 # TestMcpServerConfig — configuração e imports básicos
@@ -287,7 +276,6 @@ class TestMcpRagTools:
         # Deve retornar status de erro, não travamento
         assert data  # não vazio
 
-    @REQUIRES_COHERE
     async def test_embedding_tool_enqueues(self):
         """embedding_tool deve enfileirar documento (fire-and-forget)."""
         from backend.mcp.server import embedding_tool

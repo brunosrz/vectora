@@ -27,21 +27,6 @@ KNOWN_TEXT = (
 )
 KNOWN_KEYWORD = "LanceDB banco vetorial"
 
-# Marcadores de skip baseados em env vars
-REQUIRES_GOOGLE = pytest.mark.skipif(
-    not __import__("os").getenv("GOOGLE_API_KEY"),
-    reason="GOOGLE_API_KEY não configurado",
-)
-REQUIRES_COHERE = pytest.mark.skipif(
-    not __import__("os").getenv("COHERE_API_KEY"),
-    reason="COHERE_API_KEY não configurado",
-)
-REQUIRES_BOTH = pytest.mark.skipif(
-    not __import__("os").getenv("GOOGLE_API_KEY")
-    or not __import__("os").getenv("COHERE_API_KEY"),
-    reason="GOOGLE_API_KEY e COHERE_API_KEY são necessários",
-)
-
 
 # ============================================================================
 # Limpeza da session 1212 — roda UMA VEZ antes da suite de integração

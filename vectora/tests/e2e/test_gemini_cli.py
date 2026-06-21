@@ -17,7 +17,6 @@ Executar:
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -26,58 +25,18 @@ import pytest
 
 pytestmark = pytest.mark.e2e
 
-# ============================================================================
-# Marcadores de skip
-# ============================================================================
-
-REQUIRES_API_KEY = pytest.mark.skipif(
-    not os.getenv("GOOGLE_API_KEY"),
-    reason="GOOGLE_API_KEY não configurado",
-)
-
-
-def _gemini_available() -> bool:
-    """Returns True if gemini CLI is installed and reachable in PATH."""
-    try:
-        result = subprocess.run(
-            ["gemini", "--version"],
-            capture_output=True,
-            check=False,
-        )
-        return result.returncode == 0
-    except FileNotFoundError:
-        return False
-
-
-REQUIRES_GEMINI_CLI = pytest.mark.skipif(
-    not _gemini_available(),
-    reason="gemini CLI não instalado ou não encontrado em PATH",
-)
-
 # Arquivo de configuração MCP do projeto — settings.json na raiz do projeto.
-# Foi renomeado de .mcp.json para settings.json para ser legível por clientes
-# MCP que esperam esse nome (incluindo o Gemini CLI no modo projeto).
 _PROJECT_ROOT = Path(__file__).parent.parent.parent
 GEMINI_SETTINGS_PATH = _PROJECT_ROOT / "settings.json"
 
 
 def _gemini_has_vectora_mcp() -> bool:
-    """Verifica se settings.json (projeto) tem vectora em mcpServers.
-
-    A chave do servidor é case-insensitive: aceita "vectora" ou "Vectora".
-    """
     try:
         data = json.loads(GEMINI_SETTINGS_PATH.read_text(encoding="utf-8"))
         servers = data.get("mcpServers", {})
         return any(k.lower() == "vectora" for k in servers)
     except Exception:
         return False
-
-
-REQUIRES_MCP_CONFIG = pytest.mark.skipif(
-    not _gemini_has_vectora_mcp(),
-    reason="settings.json (projeto) não tem vectora em mcpServers",
-)
 
 
 # ============================================================================
@@ -180,7 +139,6 @@ class TestGeminiCliConfig:
                 f"Caminho do projeto não existe: {project_path}"
             )
 
-    @REQUIRES_GEMINI_CLI
     def test_gemini_cli_version_check(self):
         """gemini CLI deve responder ao --version."""
         result = subprocess.run(
@@ -198,9 +156,6 @@ class TestGeminiCliConfig:
 # ============================================================================
 
 
-@REQUIRES_API_KEY
-@REQUIRES_GEMINI_CLI
-@REQUIRES_MCP_CONFIG
 class TestGeminiCallsVectora:
     """Testa que o Gemini CLI chama o vectora-mcp e o Vectora responde."""
 
@@ -388,13 +343,11 @@ class TestVectoraMcpServerDirectly:
             proc.stdin.write(request + "\n")
             proc.stdin.flush()
 
-            import select
             import threading
-            import time
 
-            # Lê a primeira linha do stdout com timeout — compatível com Windows.
-            # readline() é bloqueante em todos os sistemas, incluindo Windows onde
-            # select() não funciona em pipes. Usamos uma thread daemon para não travar.
+            # Lê a primeira linha do stdout com timeout via thread daemon —
+            # readline() bloqueia em todos os sistemas; select() não funciona em
+            # pipes no Windows.
             def _readline_with_timeout(stream, timeout: float) -> str:
                 result: list[str] = []
 
