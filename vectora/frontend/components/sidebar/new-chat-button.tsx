@@ -22,7 +22,7 @@ export const NewChatButton = memo(function NewChatButton({
         onClick={onClick}
         disabled={offline}
         aria-label={label}
-        className={`group w-full h-10 inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-2 pl-3 pr-3 bg-gradient-to-r from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 border border-primary/30 hover:border-primary/50 rounded-lg text-sm font-medium text-foreground/90 hover:text-foreground transition-all duration-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
+        className={`group w-full h-10 inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-2 pl-3 pr-3 bg-muted/30 hover:bg-muted/60 border border-border/50 hover:border-border/80 rounded-lg text-sm font-medium text-foreground/80 hover:text-foreground transition-colors duration-150 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -34,7 +34,7 @@ export const NewChatButton = memo(function NewChatButton({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`shrink-0 text-primary ${sidebarOnRight ? "order-last" : ""}`}
+          className={`shrink-0 text-muted-foreground ${sidebarOnRight ? "order-last" : ""}`}
         >
           <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
         </svg>
