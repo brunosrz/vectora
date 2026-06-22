@@ -17,30 +17,30 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture()
-def client(tmp_path_factory):
-    """TestClient com MemoryStore usando SQLite temporário (DB limpo por teste)."""
+def client(tmp_path):
+    """TestClient com MemoryStore usando SQLite temporário."""
     import asyncio
+    from pathlib import Path
 
-    tmp = tmp_path_factory.mktemp(f"memory_api_{id(object())}")
-    db_file = str(tmp / "test_memory.db")
-
+    db_file = str(tmp_path / "test_memory.db")
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
     os.environ["VECTORA_DB_FILE"] = db_file
 
+    # Reset singleton
+    import backend.services.memory as mem_mod
+    mem_mod._memory_store = None
+
     from backend.api.server import create_app
-    from backend.services import memory as mem_mod
 
     app = create_app(serve_static=False)
-
-    async def init_store():
-        """Reinicializa o store com novo banco."""
-        if mem_mod._memory_store is not None:
-            await mem_mod._memory_store.initialize()
-
-    asyncio.run(init_store())
     tc = TestClient(app)
+
     yield tc
+
+    # Cleanup
     os.environ.pop("VECTORA_DB_FILE", None)
+    mem_mod._memory_store = None
+    Path(db_file).unlink(missing_ok=True)
 
 
 class TestMemoryList:
