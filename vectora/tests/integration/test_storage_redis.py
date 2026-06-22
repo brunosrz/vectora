@@ -155,6 +155,22 @@ class TestRedisChatHistory:
         if not _storage_stack_ok:
             pytest.skip("Docker indisponível — Redis não iniciado")
 
+        # Pré-checa conectividade autenticada. A porta pode estar aberta com um
+        # Redis legado sem --requirepass (o probe de _storage_stack_ok só testa
+        # o socket), e aí a URL default com senha falharia no AUTH. Isso é
+        # desconfiguração de ambiente, não bug — pula com motivo. Em setup limpo
+        # (compose recriou o Redis com senha) o ping passa e o teste roda.
+        import redis as _redis
+        from redis.exceptions import RedisError
+
+        _probe = _redis.from_url(redis_url)
+        try:
+            _probe.ping()
+        except RedisError as exc:
+            pytest.skip(f"Redis local incompatível com a URL default: {exc}")
+        finally:
+            _probe.close()
+
         from langchain_redis import RedisChatMessageHistory
 
         import backend.settings as _s

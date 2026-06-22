@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 def _reset_memory_singleton():
     """Reset memory singleton antes de cada teste (autouse)."""
     import backend.services.memory as mem_mod
+
     mem_mod._memory_store = None
     yield
     mem_mod._memory_store = None
@@ -30,6 +31,7 @@ def _reset_memory_singleton():
 def client(tmp_path):
     """TestClient com MemoryStore usando SQLite fresh por teste."""
     import asyncio
+
     import backend.services.memory as mem_mod
 
     db_file = str(tmp_path / "mem.db")
