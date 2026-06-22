@@ -106,14 +106,14 @@ def _start_vite_dev(frontend_dir: Path) -> subprocess.Popen[Any] | None:
     os.environ["VECTORA_SKIP_STATIC"] = "1"
     try:
         if sys.platform == "win32":
-            proc: subprocess.Popen[Any] = subprocess.Popen(  # nosec B602 B603 B607
+            proc: subprocess.Popen[Any] = subprocess.Popen(  # nosec B602 B603 B607  # noqa: S602 S607
                 ["pnpm", "dev"],
                 cwd=str(frontend_dir),
                 shell=True,
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
             )
         else:
-            proc = subprocess.Popen(  # nosec B603 B607
+            proc = subprocess.Popen(  # nosec B603 B607  # noqa: S603 S607
                 ["pnpm", "dev"],
                 cwd=str(frontend_dir),
                 start_new_session=True,
@@ -131,7 +131,7 @@ def _kill_vite(proc: subprocess.Popen[Any] | None) -> None:
         return
     try:
         if sys.platform == "win32":
-            subprocess.run(  # nosec B603 B607
+            subprocess.run(  # nosec B603 B607  # noqa: S603 S607
                 ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
                 check=False,
                 capture_output=True,

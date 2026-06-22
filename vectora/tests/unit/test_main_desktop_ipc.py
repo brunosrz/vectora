@@ -11,6 +11,7 @@ substituídos por mocks.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import sys
 from pathlib import Path
@@ -205,10 +206,8 @@ def test_desktop_windows_sets_pipe_env(capsys: pytest.CaptureFixture[str]) -> No
     ):
         from backend.main import _run_start
 
-        try:
+        with contextlib.suppress(asyncio.CancelledError, SystemExit):
             _run_start(args)
-        except (asyncio.CancelledError, SystemExit):
-            pass
 
     assert "VECTORA_IPC_PIPE" in os.environ
     pipe_val = os.environ["VECTORA_IPC_PIPE"]

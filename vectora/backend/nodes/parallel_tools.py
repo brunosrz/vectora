@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 class ParallelToolNode(ToolNode):
     """ToolNode que executa tools independentes em paralelo via asyncio.gather."""
 
-    async def arun(self, input: Any, **kwargs: Any) -> Any:
+    async def arun(self, data: Any, **kwargs: Any) -> Any:
         """Executa tools em paralelo quando possível."""
-        tool_calls = input.get("tool_calls", [])
+        tool_calls = data.get("tool_calls", [])
         if not tool_calls:
-            return await super().arun(input, **kwargs)
+            return await super().arun(data, **kwargs)
 
         # Agrupa tools por tipo — tools do mesmo tipo podem ter dependências
         # (ex: dois file_write sequenciais). Para máxima segurança, só paraleliza
@@ -33,8 +33,7 @@ class ParallelToolNode(ToolNode):
         # Se há tools de tipos diferentes, paraleliza por tipo
         if len(by_type) > 1:
             tasks = []
-            for tool_name, calls in by_type.items():
-                # Executa todos os calls deste tool sequencialmente
+            for _tool_name, calls in by_type.items():
                 for call in calls:
                     task = self._run_tool(call)
                     tasks.append(task)
@@ -44,9 +43,9 @@ class ParallelToolNode(ToolNode):
                 return {"tool_results": results}
             except Exception as e:
                 logger.exception("Erro em execução paralela: %s", e)
-                return await super().arun(input, **kwargs)
+                return await super().arun(data, **kwargs)
 
-        return await super().arun(input, **kwargs)
+        return await super().arun(data, **kwargs)
 
     async def _run_tool(self, tool_call: dict[str, Any]) -> Any:
         """Executa uma chamada de tool assincronamente."""

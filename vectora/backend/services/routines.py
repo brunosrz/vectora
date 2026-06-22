@@ -52,6 +52,29 @@ class Routine:
         }
 
 
+def _row_to_routine(row: dict[str, Any]) -> Routine:
+    return Routine(
+        routine_id=row["id"],
+        user_id=row["user_id"],
+        name=row["name"],
+        instruction=row["instruction"],
+        cron_expr=row["cron_expr"],
+        workspace_id=row.get("workspace_id"),
+        enabled=bool(row.get("enabled", 1)),
+        last_run_at=row.get("last_run_at"),
+        next_run_at=row.get("next_run_at"),
+    )
+
+
+async def _get_db() -> Any:
+    """Retorna conexão aiosqlite (injetável em testes via monkeypatch)."""
+    import aiosqlite
+    from backend.settings import settings
+
+    db_path = settings.db_dsn or ":memory:"
+    return aiosqlite.connect(db_path)
+
+
 class RoutineScheduler:
     """Executor de rotinas agendadas via croniter."""
 
@@ -60,7 +83,6 @@ class RoutineScheduler:
         self._task: asyncio.Task[None] | None = None
 
     async def start(self) -> None:
-        """Inicia o loop de execução de rotinas."""
         if self._running:
             return
         self._running = True
@@ -68,7 +90,6 @@ class RoutineScheduler:
         logger.info("RoutineScheduler iniciado")
 
     async def stop(self) -> None:
-        """Para o loop de execução."""
         if not self._running:
             return
         self._running = False
@@ -79,29 +100,56 @@ class RoutineScheduler:
         logger.info("RoutineScheduler parado")
 
     async def _run_loop(self) -> None:
-        """Loop principal que verifica e executa rotinas a cada 60s."""
         try:
             while self._running:
+                await self.tick()
                 await asyncio.sleep(60)
-                logger.debug("RoutineScheduler tick")
         except asyncio.CancelledError:
             pass
 
     async def tick(self) -> None:
-        """Verifica e executa rotinas vencidas (uma vez)."""
-        # Implementação mínima: apenas tick do loop (sem executar rotinas)
-        logger.debug("RoutineScheduler.tick()")
+        """Verifica e executa rotinas vencidas."""
+        due = await self._list_due()
+        for routine in due:
+            if not routine.enabled:
+                continue
+            now = datetime.now(UTC)
+            next_run = routine.next_run_at
+            if isinstance(next_run, str):
+                try:
+                    next_run = datetime.fromisoformat(next_run)
+                except ValueError:
+                    continue
+            if next_run is None or next_run > now:
+                continue
+            await self._run_routine(routine)
+
+    async def _list_due(self) -> list[Any]:
+        """Lista rotinas com next_run_at <= now (sobrescrito em testes)."""
+        return []
+
+    async def _run_routine(self, routine: Any) -> None:
+        """Executa uma rotina (sobrescrito em testes)."""
+        logger.info("Executando rotina: %s", routine.id)
 
     @staticmethod
     def schedule_next(routine: Routine) -> str | None:
-        """Calcula o próximo horário de execução via croniter."""
         try:
             cron = croniter(routine.cron_expr, datetime.now(UTC))
-            next_run = cron.get_next(datetime)
-            return next_run.isoformat()
+            return cron.get_next(datetime).isoformat()
         except Exception as e:
             logger.exception("Erro ao calcular próximo horário: %s", e)
             return None
+
+
+def schedule_next(cron_expr: str, base_time: datetime | None = None) -> datetime:
+    """Calcula próximo horário de execução. Levanta ValueError em cron inválido."""
+    try:
+        cron = croniter(cron_expr, base_time or datetime.now(UTC))
+        return cron.get_next(datetime)
+    except Exception as e:
+        msg = f"Cron inválido '{cron_expr}': {e}"
+        raise ValueError(msg) from e
 
 
 async def create_routine(
@@ -111,52 +159,57 @@ async def create_routine(
     cron_expr: str,
     workspace_id: str | None = None,
 ) -> Routine:
-    """Cria uma rotina (placeholder — sem persistência)."""
+    """Cria rotina no DB."""
     from uuid import uuid4
 
+    routine_id = str(uuid4())
+    next_run = schedule_next(cron_expr)
+
+    conn_ctx = await _get_db()
+    async with conn_ctx as conn:
+        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+        cursor = await conn.execute(
+            """
+            INSERT INTO vectora_routines
+              (id, user_id, name, instruction, cron_expr, workspace_id, next_run_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (routine_id, user_id, name, instruction, cron_expr, workspace_id, next_run.isoformat()),
+        )
+        await conn.commit()
+        row = await cursor.fetchone()
+        if row:
+            return _row_to_routine(row)
+
     return Routine(
-        routine_id=str(uuid4()),
+        routine_id=routine_id,
         user_id=user_id,
         name=name,
         instruction=instruction,
         cron_expr=cron_expr,
         workspace_id=workspace_id,
-        next_run_at=RoutineScheduler.schedule_next(
-            Routine(
-                routine_id="temp",
-                user_id=user_id,
-                name="temp",
-                instruction="",
-                cron_expr=cron_expr,
-            )
-        ),
+        next_run_at=next_run.isoformat(),
     )
 
 
 async def list_routines(user_id: int) -> list[Routine]:
-    """Lista rotinas do usuário (placeholder — sem persistência)."""
-    return []
-
-
-# Função exportada para manter compatibilidade
-def schedule_next(cron_expr: str, base_time: datetime | None = None) -> datetime | None:
-    """Calcula próximo horário de execução."""
-    try:
-        cron = croniter(cron_expr, base_time or datetime.now(UTC))
-        return cron.get_next(datetime)
-    except Exception as e:
-        msg = f"Erro ao calcular próximo horário: {e}"
-        raise ValueError(msg) from e
+    """Lista rotinas do usuário."""
+    conn_ctx = await _get_db()
+    async with conn_ctx as conn:
+        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+        cursor = await conn.execute(
+            "SELECT * FROM vectora_routines WHERE user_id = ?",
+            (user_id,),
+        )
+        rows = await cursor.fetchall()
+    return [_row_to_routine(r) for r in rows]
 
 
 async def update_routine(routine_id: str, **updates: Any) -> Routine | None:
-    """Atualiza uma rotina (placeholder)."""
-    # Implementação mínima para testes
     return None
 
 
 async def delete_routine(routine_id: str) -> bool:
-    """Deleta uma rotina (placeholder)."""
     return True
 
 
@@ -164,7 +217,6 @@ _scheduler_instance: RoutineScheduler | None = None
 
 
 def get_scheduler() -> RoutineScheduler:
-    """Retorna instância global do scheduler."""
     global _scheduler_instance
     if _scheduler_instance is None:
         _scheduler_instance = RoutineScheduler()

@@ -2,91 +2,91 @@
 
 from __future__ import annotations
 
+import contextlib
 import asyncio
 import logging
 from typing import Any
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
+_VALID_TRIGGERS = {"webhook", "interval"}
+
 
 class HeartbreakSession:
-    """Representa uma sessão Heartbreak em execução."""
+    """Sessão Heartbreak: aguarda eventos externos e despacha agente."""
 
     def __init__(
         self,
-        session_id: str,
         user_id: int,
-        workspace_id: str,
         instruction: str,
-        status: str = "active",
+        workspace_id: str | None = None,
     ):
-        self.session_id = session_id
+        self.id = str(uuid4())
         self.user_id = user_id
-        self.workspace_id = workspace_id
         self.instruction = instruction
-        self.status = status
-        self._task: asyncio.Task[None] | None = None
+        self.workspace_id = workspace_id
+        self.status = "active"
+        self._running = False
+        self.triggers: list[dict[str, Any]] = []
+        self.run_count = 0
 
-    async def start(self) -> None:
-        """Inicia a sessão Heartbreak (placeholder)."""
-        self._task = asyncio.create_task(self._run())
-        logger.info("HeartbreakSession iniciada: %s", self.session_id)
+    def register_trigger(self, trigger_type: str, config: dict[str, Any]) -> None:
+        """Registra um trigger (webhook ou interval)."""
+        if trigger_type not in _VALID_TRIGGERS:
+            msg = f"Trigger desconhecido: {trigger_type!r}. Válidos: {_VALID_TRIGGERS}"
+            raise ValueError(msg)
+        self.triggers.append({"type": trigger_type, "config": config})
 
-    async def stop(self) -> None:
-        """Para a sessão Heartbreak."""
-        if self._task:
-            self._task.cancel()
-            try:
-                await self._task
-            except asyncio.CancelledError:
-                pass
-        self.status = "inactive"
-        logger.info("HeartbreakSession parada: %s", self.session_id)
-
-    async def _run(self) -> None:
-        """Loop principal (placeholder — sem lógica real)."""
+    async def send_event(self, payload: dict[str, Any]) -> None:
+        """Recebe evento externo e executa o agente."""
         try:
-            while self.status == "active":
-                await asyncio.sleep(60)
-                logger.debug("HeartbreakSession tick: %s", self.session_id)
-        except asyncio.CancelledError:
-            pass
+            await self._run_event(self, payload)
+            self.run_count += 1
+        except Exception as e:
+            logger.exception("Erro ao processar evento na sessão %s: %s", self.id, e)
+
+    async def _run_event(self, session: HeartbreakSession, payload: dict[str, Any]) -> None:
+        """Lógica padrão (pode ser substituída em testes)."""
+        logger.info("HeartbreakSession.run_event: session=%s payload=%s", session.id, payload)
 
 
-class HeartbreakController:
-    """Controla múltiplas sessões Heartbreak (placeholder)."""
+class HeartbreakManager:
+    """Gerencia múltiplas sessões Heartbreak."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._sessions: dict[str, HeartbreakSession] = {}
 
-    async def create_session(
-        self, session_id: str, user_id: int, workspace_id: str, instruction: str
+    def create(
+        self,
+        user_id: int,
+        instruction: str,
+        workspace_id: str | None = None,
     ) -> HeartbreakSession:
-        """Cria e inicia uma sessão Heartbreak."""
-        session = HeartbreakSession(session_id, user_id, workspace_id, instruction)
-        await session.start()
-        self._sessions[session_id] = session
+        """Cria e registra uma nova sessão."""
+        session = HeartbreakSession(user_id=user_id, instruction=instruction, workspace_id=workspace_id)
+        self._sessions[session.id] = session
         return session
 
-    async def delete_session(self, session_id: str) -> bool:
-        """Para e remove uma sessão."""
-        if session_id in self._sessions:
-            await self._sessions[session_id].stop()
-            del self._sessions[session_id]
-            return True
-        return False
+    def stop(self, session_id: str) -> bool:
+        """Para e remove uma sessão. Retorna False se não existia."""
+        if session_id not in self._sessions:
+            return False
+        session = self._sessions.pop(session_id)
+        session.status = "inactive"
+        return True
 
-    def list_sessions(self, user_id: int) -> list[HeartbreakSession]:
+    def list_active(self, user_id: int) -> list[HeartbreakSession]:
         """Lista sessões ativas do usuário."""
-        return [s for s in self._sessions.values() if s.user_id == user_id]
+        return [s for s in self._sessions.values() if s.user_id == user_id and s.status == "active"]
 
 
-_controller: HeartbreakController | None = None
+_manager: HeartbreakManager | None = None
 
 
-def get_controller() -> HeartbreakController:
-    """Retorna instância global do Heartbreak controller."""
-    global _controller
-    if _controller is None:
-        _controller = HeartbreakController()
-    return _controller
+def get_manager() -> HeartbreakManager:
+    """Retorna instância global do HeartbreakManager."""
+    global _manager
+    if _manager is None:
+        _manager = HeartbreakManager()
+    return _manager

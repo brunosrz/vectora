@@ -11,22 +11,27 @@ Usa FastAPI TestClient com banco SQLite temporário, cobrindo:
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 
-@pytest.fixture()
-def client(tmp_path):
-    """TestClient com MemoryStore usando SQLite temporário limpo por teste."""
-    from pathlib import Path
+@pytest.fixture(autouse=True)
+def _reset_memory_singleton():
+    """Reset memory singleton antes de cada teste (autouse)."""
+    import backend.services.memory as mem_mod
+    mem_mod._memory_store = None
+    yield
+    mem_mod._memory_store = None
 
-    # Limpa DB anterior
-    db_file = str(tmp_path / "test_memory.db")
-    Path(db_file).unlink(missing_ok=True)
 
+@pytest.fixture
+def client():
+    """TestClient com MemoryStore em-memória (isolado por teste)."""
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
-    os.environ["VECTORA_DB_FILE"] = db_file
+    # Usa :memory: para garantir isolamento
+    os.environ["VECTORA_DB_FILE"] = ":memory:"
 
     # Reset singleton
     import backend.services.memory as mem_mod
@@ -42,7 +47,6 @@ def client(tmp_path):
     # Cleanup
     os.environ.pop("VECTORA_DB_FILE", None)
     mem_mod._memory_store = None
-    Path(db_file).unlink(missing_ok=True)
 
 
 class TestMemoryList:

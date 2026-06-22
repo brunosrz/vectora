@@ -324,9 +324,17 @@ _memory_store: MemoryStore | None = None
 
 
 async def get_memory_store(db_dsn: str | None = None) -> MemoryStore:
-    """Obtém a instância global de MemoryStore (lazy init)."""
+    """Obtém a instância global de MemoryStore (lazy init).
+
+    Se VECTORA_DB_FILE muda (ex: em testes), reinicializa o singleton.
+    """
     global _memory_store
-    if _memory_store is None:
-        _memory_store = MemoryStore(db_dsn)
+    import os
+
+    env_dsn = os.environ.get("VECTORA_DB_FILE")
+    effective_dsn = db_dsn or env_dsn or getattr(__import__("backend.settings", fromlist=["settings"]).settings, "db_dsn", None)
+
+    if _memory_store is None or (effective_dsn and _memory_store.db_dsn != effective_dsn):
+        _memory_store = MemoryStore(effective_dsn)
         await _memory_store.initialize()
     return _memory_store
