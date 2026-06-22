@@ -289,14 +289,16 @@ export function ChangesView({
     }
   }, [workspaceId, commitMsg, handleRefresh]);
 
-  const { staged, unstaged } = useMemo(() => {
+  const { staged, unstaged, untracked } = useMemo(() => {
     const stagedFiles: DiffFile[] = [];
     const unstagedFiles: DiffFile[] = [];
+    const untrackedFiles: DiffFile[] = [];
     for (const f of summary.files) {
       if (f.staged_change) stagedFiles.push(f);
-      if (f.unstaged_change || f.untracked) unstagedFiles.push(f);
+      if (f.unstaged_change) unstagedFiles.push(f);
+      if (f.untracked) untrackedFiles.push(f);
     }
-    return { staged: stagedFiles, unstaged: unstagedFiles };
+    return { staged: stagedFiles, unstaged: unstagedFiles, untracked: untrackedFiles };
   }, [summary.files]);
 
   if (summary.files.length === 0) {
@@ -341,6 +343,16 @@ export function ChangesView({
           onRefresh={handleRefresh}
           onContextMenu={handleContextMenu}
         />
+        {untracked.length > 0 && (
+          <DiffGroup
+            label={m.workbench_diff_group_untracked()}
+            tone="text-blue-500"
+            workspaceId={workspaceId}
+            files={untracked}
+            onRefresh={handleRefresh}
+            onContextMenu={handleContextMenu}
+          />
+        )}
       </div>
       <div className="border-t border-border/60 p-2 flex flex-col gap-1.5 bg-muted/10 shrink-0">
         <textarea

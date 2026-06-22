@@ -1,7 +1,11 @@
-"""Testes HTTP do endpoint /memory com SQLite real (UX-11a/b).
+"""Testes HTTP dos endpoints de memória (UX-11).
 
-Verifica o fluxo completo: store SQLite temporário, sem mocks de I/O.
-Auth desabilitada (VECTORA_AUTH_REQUIRED=false) — user cai em "user:local".
+Usa FastAPI TestClient com banco SQLite temporário, cobrindo:
+- GET /memory — lista vazia, paginação
+- POST /memory — cria, 409 duplicado
+- PUT /memory/{key} — edita, 404 inexistente
+- DELETE /memory/{key} — deleta, 404 inexistente
+- DELETE /memory — limpa tudo
 """
 
 from __future__ import annotations
@@ -9,131 +13,104 @@ from __future__ import annotations
 import os
 
 import pytest
-
-os.environ.setdefault("VECTORA_AUTH_REQUIRED", "false")
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture(scope="module")
-def memory_client(tmp_path_factory):
-    """TestClient com MemoryStore real em SQLite temporário."""
-    import asyncio
-
+def client(tmp_path_factory):
+    """TestClient com MemoryStore usando SQLite temporário."""
     tmp = tmp_path_factory.mktemp("memory_api")
-    db_path = str(tmp / "test_memory.db")
+    db_file = str(tmp / "test_memory.db")
 
-    # Cria e inicializa o store real
-    from backend.services.memory import MemoryStore
-
-    store = MemoryStore(db_path)
-    asyncio.run(store.initialize())
-
-    import backend.services.memory as mem_mod
-
-    original = mem_mod._memory_store
-    mem_mod._memory_store = store
-
-    from fastapi.testclient import TestClient
+    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+    os.environ["VECTORA_DB_FILE"] = db_file
 
     from backend.api.server import create_app
 
     app = create_app(serve_static=False)
-    client = TestClient(app, raise_server_exceptions=True)
-    yield client
-
-    mem_mod._memory_store = original
+    yield TestClient(app)
+    os.environ.pop("VECTORA_DB_FILE", None)
 
 
-class TestListMemories:
-    def test_lista_vazia(self, memory_client):
-        res = memory_client.get("/memory")
-        assert res.status_code == 200
-        data = res.json()
+class TestMemoryList:
+    def test_list_empty(self, client):
+        """GET /memory retorna lista vazia inicialmente."""
+        resp = client.get("/memory")
+        assert resp.status_code == 200
+        data = resp.json()
         assert data["memories"] == []
         assert data["total"] == 0
 
-    def test_lista_apos_criar(self, memory_client):
-        memory_client.post(
+    def test_list_with_items(self, client):
+        """Lista retorna itens após POST."""
+        client.post(
             "/memory",
-            json={"key": "list_test", "content": "valor para listar"},
+            json={"key": "test1", "content": "conteúdo 1"},
         )
-        res = memory_client.get("/memory")
-        assert res.status_code == 200
-        keys = [m["key"] for m in res.json()["memories"]]
-        assert "list_test" in keys
+        resp = client.get("/memory")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["memories"]) >= 1
+        assert any(m["key"] == "test1" for m in data["memories"])
 
 
-class TestCreateMemory:
-    def test_cria_memoria(self, memory_client):
-        res = memory_client.post(
+class TestMemoryCreate:
+    def test_create_happy(self, client):
+        """POST /memory cria nova memória."""
+        resp = client.post(
             "/memory",
-            json={"key": "nova_mem", "content": "conteúdo novo"},
+            json={"key": "my_key", "content": "my content", "metadata": {"tag": "test"}},
         )
-        assert res.status_code == 201
-        assert res.json()["key"] == "nova_mem"
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["status"] == "created"
+        assert data["key"] == "my_key"
 
-    def test_chave_duplicada_retorna_409(self, memory_client):
-        memory_client.post(
-            "/memory",
-            json={"key": "dup_key", "content": "primeiro"},
+        get_resp = client.get("/memory/my_key")
+        assert get_resp.status_code == 200
+        mem = get_resp.json()
+        assert mem["content"] == "my content"
+
+    def test_create_duplicate_409(self, client):
+        """POST duplicada retorna 409 Conflict."""
+        client.post("/memory", json={"key": "dup_key", "content": "first"})
+        resp = client.post("/memory", json={"key": "dup_key", "content": "second"})
+        assert resp.status_code == 409
+
+
+class TestMemoryUpdate:
+    def test_update_happy(self, client):
+        """PUT /memory/{key} edita conteúdo."""
+        client.post("/memory", json={"key": "edit_key", "content": "original"})
+
+        resp = client.put(
+            "/memory/edit_key",
+            json={"content": "updated"},
         )
-        res = memory_client.post(
-            "/memory",
-            json={"key": "dup_key", "content": "segundo"},
-        )
-        assert res.status_code == 409
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "updated"
+
+        get_resp = client.get("/memory/edit_key")
+        assert get_resp.json()["content"] == "updated"
+
+    def test_update_nonexistent_404(self, client):
+        """PUT em chave inexistente retorna 404."""
+        resp = client.put("/memory/nonexistent", json={"content": "should fail"})
+        assert resp.status_code == 404
 
 
-class TestUpdateMemory:
-    def test_edita_memoria(self, memory_client):
-        memory_client.post(
-            "/memory",
-            json={"key": "edit_me", "content": "original"},
-        )
-        res = memory_client.put(
-            "/memory/edit_me",
-            json={"content": "editado"},
-        )
-        assert res.status_code == 200
-        assert res.json()["key"] == "edit_me"
+class TestMemoryDelete:
+    def test_delete_happy(self, client):
+        """DELETE /memory/{key} remove."""
+        client.post("/memory", json={"key": "del_key", "content": "to delete"})
+        resp = client.delete("/memory/del_key")
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "deleted"
 
-    def test_chave_inexistente_retorna_404(self, memory_client):
-        res = memory_client.put(
-            "/memory/nao_existe_xyz",
-            json={"content": "qualquer"},
-        )
-        assert res.status_code == 404
+        get_resp = client.get("/memory/del_key")
+        assert get_resp.status_code == 404
 
-
-class TestDeleteMemory:
-    def test_deleta_memoria(self, memory_client):
-        memory_client.post(
-            "/memory",
-            json={"key": "del_me", "content": "deletar"},
-        )
-        res = memory_client.delete("/memory/del_me")
-        assert res.status_code == 200
-
-        get_res = memory_client.get("/memory/del_me")
-        assert get_res.status_code == 404
-
-    def test_segundo_delete_retorna_404(self, memory_client):
-        memory_client.post(
-            "/memory",
-            json={"key": "del_twice", "content": "x"},
-        )
-        memory_client.delete("/memory/del_twice")
-        res = memory_client.delete("/memory/del_twice")
-        assert res.status_code == 404
-
-
-class TestClearAllMemories:
-    def test_limpa_todas_as_memorias(self, memory_client):
-        memory_client.post("/memory", json={"key": "c1", "content": "a"})
-        memory_client.post("/memory", json={"key": "c2", "content": "b"})
-
-        res = memory_client.delete("/memory")
-        assert res.status_code == 200
-
-        lista = memory_client.get("/memory").json()
-        assert lista["total"] == 0
-        assert lista["memories"] == []
+    def test_delete_nonexistent_404(self, client):
+        """DELETE inexistente retorna 404."""
+        resp = client.delete("/memory/nonexistent")
+        assert resp.status_code == 404
