@@ -87,7 +87,7 @@ class TestSendEvent:
             called.append(session.id)
 
         session = HeartbreakSession(user_id=1, instruction="monit", workspace_id=None)
-        session._run_event = _fake_run  # type: ignore[method-assign]
+        session._run_event = _fake_run  # type: ignore
 
         await session.send_event({"data": "ping"})
         assert session.id in called
@@ -100,7 +100,7 @@ class TestSendEvent:
             raise RuntimeError("boom")
 
         session = HeartbreakSession(user_id=1, instruction="monit", workspace_id=None)
-        session._run_event = _fail  # type: ignore[method-assign]
+        session._run_event = _fail  # type: ignore
 
         await session.send_event({"data": "ping"})
         assert session.run_count == 0

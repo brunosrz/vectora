@@ -4,11 +4,13 @@ import base64
 import hashlib
 import json
 import re
+from typing import Any
 
 from langchain.tools import tool
 
 try:
-    import jwt
+    import jwt as _jwt
+    jwt: Any = _jwt
 except ImportError:
     jwt = None
 

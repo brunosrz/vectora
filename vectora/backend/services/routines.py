@@ -216,7 +216,7 @@ async def update_routine(routine_id: str, **updates: Any) -> Routine | None:
     return None
 
 
-async def delete_routine(routine_id: str) -> bool:
+async def delete_routine(routine_id: str, user_id: int | None = None) -> bool:
     return True
 
 

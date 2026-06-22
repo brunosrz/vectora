@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import contextlib
 import asyncio
+import contextlib
 import logging
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -30,6 +31,7 @@ class HeartbreakSession:
         self._running = False
         self.triggers: list[dict[str, Any]] = []
         self.run_count = 0
+        self.created_at: datetime = datetime.now(UTC)
 
     def register_trigger(self, trigger_type: str, config: dict[str, Any]) -> None:
         """Registra um trigger (webhook ou interval)."""
@@ -67,6 +69,10 @@ class HeartbreakManager:
         session = HeartbreakSession(user_id=user_id, instruction=instruction, workspace_id=workspace_id)
         self._sessions[session.id] = session
         return session
+
+    def get(self, session_id: str) -> HeartbreakSession | None:
+        """Retorna a sessão pelo ID, ou None se não existir."""
+        return self._sessions.get(session_id)
 
     def stop(self, session_id: str) -> bool:
         """Para e remove uma sessão. Retorna False se não existia."""
