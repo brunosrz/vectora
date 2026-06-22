@@ -69,6 +69,7 @@ def _row_to_routine(row: dict[str, Any]) -> Routine:
 async def _get_db() -> Any:
     """Retorna conexão aiosqlite já aberta (injetável em testes via monkeypatch)."""
     import aiosqlite
+
     from backend.settings import settings
 
     db_path = settings.db_dsn or ":memory:"
@@ -167,7 +168,7 @@ async def create_routine(
 
     conn = await _get_db()
     try:
-        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r, strict=False))
         cursor = await conn.execute(
             """
             INSERT INTO vectora_routines
@@ -199,7 +200,7 @@ async def list_routines(user_id: int) -> list[Routine]:
     """Lista rotinas do usuário."""
     conn = await _get_db()
     try:
-        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r, strict=False))
         cursor = await conn.execute(
             "SELECT * FROM vectora_routines WHERE user_id = ?",
             (user_id,),

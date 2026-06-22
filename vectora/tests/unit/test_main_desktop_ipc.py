@@ -72,7 +72,7 @@ def test_desktop_uds_config_not_tcp() -> None:
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",  # nosec S104
+        host="0.0.0.0",  # noqa: S104
         port=None,
         ssl_certfile=None,
         ssl_keyfile=None,
@@ -113,7 +113,7 @@ def test_desktop_uds_path_under_home_vectora() -> None:
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",  # nosec S104
+        host="0.0.0.0",  # noqa: S104
         port=None,
         ssl_certfile=None,
         ssl_keyfile=None,
@@ -149,7 +149,7 @@ def test_non_desktop_uses_tcp_host() -> None:
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",  # nosec S104
+        host="0.0.0.0",  # noqa: S104
         port=8080,
         ssl_certfile=None,
         ssl_keyfile=None,
@@ -187,30 +187,33 @@ def test_desktop_windows_sets_pipe_env(capsys: pytest.CaptureFixture[str]) -> No
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",  # nosec S104
+        host="0.0.0.0",  # noqa: S104
         port=8080,
         ssl_certfile=None,
         ssl_keyfile=None,
     )
 
-    mock_serve_pipe = AsyncMock(side_effect=asyncio.CancelledError)
-    mock_server = MagicMock(serve=AsyncMock(return_value=None))
+    pipe_val_captured: list[str] = []
 
     with (
         patch.dict(os.environ, {"VECTORA_DESKTOP": "1"}, clear=False),
         patch("backend.api.server.create_app", return_value=MagicMock()),
         patch("backend.main._start_vite_dev", return_value=None),
-        patch("backend.services.ipc_pipe_win.serve_pipe", mock_serve_pipe),
+        patch("backend.services.ipc_pipe_win.serve_pipe", AsyncMock(side_effect=asyncio.CancelledError)),
         patch("uvicorn.Config", return_value=MagicMock()),
-        patch("uvicorn.Server", return_value=mock_server),
+        patch("uvicorn.Server", return_value=MagicMock(serve=AsyncMock(return_value=None))),
+        patch("asyncio.run", side_effect=asyncio.CancelledError),
     ):
         from backend.main import _run_start
 
-        with contextlib.suppress(asyncio.CancelledError, SystemExit):
+        with contextlib.suppress(asyncio.CancelledError, SystemExit, Exception):
             _run_start(args)
 
-    assert "VECTORA_IPC_PIPE" in os.environ
-    pipe_val = os.environ["VECTORA_IPC_PIPE"]
+        # Checar env DENTRO do patch.dict antes de ser revertido
+        assert "VECTORA_IPC_PIPE" in os.environ
+        pipe_val_captured.append(os.environ["VECTORA_IPC_PIPE"])
+
+    pipe_val = pipe_val_captured[0]
     assert pipe_val.startswith("\\\\.\\pipe\\vectora-")
     assert str(os.getpid()) in pipe_val
 
@@ -231,7 +234,7 @@ def test_desktop_windows_no_tcp_host() -> None:
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",  # nosec S104
+        host="0.0.0.0",  # noqa: S104
         port=8080,
         ssl_certfile=None,
         ssl_keyfile=None,

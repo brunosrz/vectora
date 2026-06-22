@@ -33,7 +33,7 @@ class ParallelToolNode(ToolNode):
         # Se há tools de tipos diferentes, paraleliza por tipo
         if len(by_type) > 1:
             tasks = []
-            for _tool_name, calls in by_type.items():
+            for calls in by_type.values():
                 for call in calls:
                     task = self._run_tool(call)
                     tasks.append(task)
