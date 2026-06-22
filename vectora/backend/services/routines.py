@@ -139,12 +139,11 @@ async def list_routines(user_id: int) -> list[Routine]:
 
 
 # Função exportada para manter compatibilidade
-def schedule_next(cron_expr: str, base_time: datetime | None = None) -> str | None:
+def schedule_next(cron_expr: str, base_time: datetime | None = None) -> datetime | None:
     """Calcula próximo horário de execução."""
     try:
         cron = croniter(cron_expr, base_time or datetime.now(UTC))
-        next_run = cron.get_next(datetime)
-        return next_run.isoformat()
+        return cron.get_next(datetime)
     except Exception as e:
-        logger.exception("Erro ao calcular próximo horário: %s", e)
-        return None
+        msg = f"Erro ao calcular próximo horário: {e}"
+        raise ValueError(msg) from e

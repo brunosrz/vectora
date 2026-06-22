@@ -18,10 +18,10 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture()
 def client(tmp_path_factory):
-    """TestClient com MemoryStore usando SQLite temporário."""
+    """TestClient com MemoryStore usando SQLite temporário (DB limpo por teste)."""
     import asyncio
 
-    tmp = tmp_path_factory.mktemp("memory_api")
+    tmp = tmp_path_factory.mktemp(f"memory_api_{id(object())}")
     db_file = str(tmp / "test_memory.db")
 
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
@@ -31,13 +31,14 @@ def client(tmp_path_factory):
     from backend.services import memory as mem_mod
 
     app = create_app(serve_static=False)
+
+    async def init_store():
+        """Reinicializa o store com novo banco."""
+        if mem_mod._memory_store is not None:
+            await mem_mod._memory_store.initialize()
+
+    asyncio.run(init_store())
     tc = TestClient(app)
-
-    async def cleanup():
-        """Limpa memórias antes de cada teste."""
-        await mem_mod._memory_store.delete_all()
-
-    asyncio.run(cleanup())
     yield tc
     os.environ.pop("VECTORA_DB_FILE", None)
 
