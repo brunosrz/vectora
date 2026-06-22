@@ -147,7 +147,7 @@ def test_non_desktop_uses_tcp_host() -> None:
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec S104
         port=8080,
         ssl_certfile=None,
         ssl_keyfile=None,
@@ -185,7 +185,7 @@ def test_desktop_windows_sets_pipe_env(capsys: pytest.CaptureFixture[str]) -> No
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec S104
         port=8080,
         ssl_certfile=None,
         ssl_keyfile=None,
@@ -231,7 +231,7 @@ def test_desktop_windows_no_tcp_host() -> None:
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec S104
         port=8080,
         ssl_certfile=None,
         ssl_keyfile=None,
