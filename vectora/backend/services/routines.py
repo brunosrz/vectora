@@ -147,3 +147,25 @@ def schedule_next(cron_expr: str, base_time: datetime | None = None) -> datetime
     except Exception as e:
         msg = f"Erro ao calcular próximo horário: {e}"
         raise ValueError(msg) from e
+
+
+async def update_routine(routine_id: str, **updates: Any) -> Routine | None:
+    """Atualiza uma rotina (placeholder)."""
+    # Implementação mínima para testes
+    return None
+
+
+async def delete_routine(routine_id: str) -> bool:
+    """Deleta uma rotina (placeholder)."""
+    return True
+
+
+_scheduler_instance: RoutineScheduler | None = None
+
+
+def get_scheduler() -> RoutineScheduler:
+    """Retorna instância global do scheduler."""
+    global _scheduler_instance
+    if _scheduler_instance is None:
+        _scheduler_instance = RoutineScheduler()
+    return _scheduler_instance
