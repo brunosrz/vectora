@@ -23,6 +23,7 @@ from backend.tools.fs import file_edit, file_read, file_write, grep, list_dir, t
 from backend.tools.mcp import call_mcp_tool
 from backend.tools.memory import delete_memory, get_memory, save_memory
 from backend.tools.native import (
+    base64_decode,
     base64_encode,
     hash_text,
     http_request,
@@ -66,6 +67,7 @@ def _build_tools_list() -> list[BaseTool]:
             time_parse,
             hash_text,
             base64_encode,
+            base64_decode,
             regex_test,
             json_query,
             jwt_decode,
@@ -93,6 +95,7 @@ TOOLS_BY_NAME: dict[str, BaseTool] = {t.name: t for t in TOOLS}
 __all__ = [
     "TOOLS",
     "TOOLS_BY_NAME",
+    "base64_decode",
     "base64_encode",
     "call_mcp_tool",
     "delete_memory",

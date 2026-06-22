@@ -1,14 +1,19 @@
-"""Tools nativas — utilitárias sem dependências externas além da stdlib."""
+"""Native tools — utilities without external APIs."""
 
-from backend.tools.native.base64_tool import base64_encode
-from backend.tools.native.hash import hash_text
-from backend.tools.native.http import http_request
-from backend.tools.native.json_query import json_query
-from backend.tools.native.jwt_tool import jwt_decode
-from backend.tools.native.regex import regex_test
-from backend.tools.native.time import time_now, time_parse
+from backend.tools.native.crypto_utils import (
+    base64_decode,
+    base64_encode,
+    hash_text,
+    json_query,
+    jwt_decode,
+    regex_test,
+)
+from backend.tools.native.http_request import http_request
+from backend.tools.native.time_now import time_now
+from backend.tools.native.time_parse import time_parse
 
 __all__ = [
+    "base64_decode",
     "base64_encode",
     "hash_text",
     "http_request",
