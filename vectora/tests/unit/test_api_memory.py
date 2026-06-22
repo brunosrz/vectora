@@ -27,15 +27,19 @@ def _reset_memory_singleton():
 
 
 @pytest.fixture
-def client():
-    """TestClient com MemoryStore em-memória (isolado por teste)."""
-    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
-    # Usa :memory: para garantir isolamento
-    os.environ["VECTORA_DB_FILE"] = ":memory:"
-
-    # Reset singleton
+def client(tmp_path):
+    """TestClient com MemoryStore usando SQLite fresh por teste."""
+    import asyncio
     import backend.services.memory as mem_mod
-    mem_mod._memory_store = None
+
+    db_file = str(tmp_path / "mem.db")
+    os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+    os.environ["VECTORA_DB_FILE"] = db_file
+
+    # Cria e inicializa store com banco novo ANTES do app ser criado
+    store = mem_mod.MemoryStore(db_file)
+    asyncio.run(store.initialize())
+    mem_mod._memory_store = store
 
     from backend.api.server import create_app
 
@@ -44,7 +48,6 @@ def client():
 
     yield tc
 
-    # Cleanup
     os.environ.pop("VECTORA_DB_FILE", None)
     mem_mod._memory_store = None
 

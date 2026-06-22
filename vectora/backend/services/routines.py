@@ -67,12 +67,12 @@ def _row_to_routine(row: dict[str, Any]) -> Routine:
 
 
 async def _get_db() -> Any:
-    """Retorna conexão aiosqlite (injetável em testes via monkeypatch)."""
+    """Retorna conexão aiosqlite já aberta (injetável em testes via monkeypatch)."""
     import aiosqlite
     from backend.settings import settings
 
     db_path = settings.db_dsn or ":memory:"
-    return aiosqlite.connect(db_path)
+    return await aiosqlite.connect(db_path)
 
 
 class RoutineScheduler:
@@ -165,8 +165,8 @@ async def create_routine(
     routine_id = str(uuid4())
     next_run = schedule_next(cron_expr)
 
-    conn_ctx = await _get_db()
-    async with conn_ctx as conn:
+    conn = await _get_db()
+    try:
         conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
         cursor = await conn.execute(
             """
@@ -180,6 +180,9 @@ async def create_routine(
         row = await cursor.fetchone()
         if row:
             return _row_to_routine(row)
+    finally:
+        with contextlib.suppress(Exception):
+            await conn.close()
 
     return Routine(
         routine_id=routine_id,
@@ -194,14 +197,17 @@ async def create_routine(
 
 async def list_routines(user_id: int) -> list[Routine]:
     """Lista rotinas do usuário."""
-    conn_ctx = await _get_db()
-    async with conn_ctx as conn:
+    conn = await _get_db()
+    try:
         conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
         cursor = await conn.execute(
             "SELECT * FROM vectora_routines WHERE user_id = ?",
             (user_id,),
         )
         rows = await cursor.fetchall()
+    finally:
+        with contextlib.suppress(Exception):
+            await conn.close()
     return [_row_to_routine(r) for r in rows]
 
 
