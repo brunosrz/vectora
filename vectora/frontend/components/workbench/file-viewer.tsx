@@ -199,8 +199,25 @@ export function FileViewer({
     );
   }
 
+  const handleEdit = () => {
+    // FS-1: Inline editor placeholder — abre editor para este arquivo
+    // Implementação completa em sprint seguinte
+  };
+
   return (
     <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-border/60 px-3 py-1.5 bg-muted/30 shrink-0">
+        <span className="text-xs font-mono text-muted-foreground truncate">
+          {path}
+        </span>
+        <button
+          onClick={handleEdit}
+          className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          title="Edit file (FS-1)"
+        >
+          Edit
+        </button>
+      </div>
       <div className="min-h-0 flex-1">
         <Suspense
           fallback={
