@@ -267,6 +267,7 @@ def _build_session_system_prompt(
 # modelo tem seu grafo, todos compartilhando o MESMO checkpointer + store
 # (uma única conexão SQLite, sem disputa de lock).
 _graphs: dict[str, Any] = {}
+_graphs_by_user: dict[tuple[str, str], Any] = {}  # (user_id, model) → graph (DE-5)
 _checkpointer_ctx: Any = None
 _checkpointer: Any = None
 _store: Any = None
@@ -399,23 +400,31 @@ async def _build_graph_async(model_id: str = "") -> Any:
 
 
 async def get_user_agent(user_id: str | None = None, model: str = "") -> Any:
-    """Retorna o grafo compilado para ``model`` (cacheado por modelo).
+    """Retorna o grafo compilado para (user_id, model) com cache por sessão (DE-5).
 
-    ``model`` é o ``"provider:model"`` escolhido no chat (vazio = padrão). Cada
-    modelo tem seu grafo, construído sob demanda (uma vez) e cacheado; todos
-    compartilham o mesmo checkpointer/store. Inicialização thread-safe via
-    ``asyncio.Lock``. Registra a versão de tools/policy/skills do usuário.
+    Se user_id está presente: cacheia por (user_id, model) para personalizações por sessão.
+    Se user_id é None: usa cache global por modelo (__default__).
+    Todos compartilham checkpointer/store. Thread-safe via asyncio.Lock.
     """
-    key = model or "__default__"
-    if key not in _graphs:
-        async with _lock:
-            if key not in _graphs:
-                _graphs[key] = await _build_graph_async(model)
+    model_key = model or "__default__"
 
+    # DE-5: Cache por sessão (user_id, model)
     if user_id:
+        session_key = (user_id, model_key)
+        if session_key not in _graphs_by_user:
+            async with _lock:
+                if session_key not in _graphs_by_user:
+                    _graphs_by_user[session_key] = await _build_graph_async(model)
         _track_versions(user_id)
+        return _graphs_by_user[session_key]
 
-    return _graphs[key]
+    # Fallback: cache global por modelo
+    if model_key not in _graphs:
+        async with _lock:
+            if model_key not in _graphs:
+                _graphs[model_key] = await _build_graph_async(model)
+
+    return _graphs[model_key]
 
 
 def _message_text(content: Any) -> str:
