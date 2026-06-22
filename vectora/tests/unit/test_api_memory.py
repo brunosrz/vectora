@@ -18,11 +18,13 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture()
 def client(tmp_path):
-    """TestClient com MemoryStore usando SQLite temporário."""
-    import asyncio
+    """TestClient com MemoryStore usando SQLite temporário limpo por teste."""
     from pathlib import Path
 
+    # Limpa DB anterior
     db_file = str(tmp_path / "test_memory.db")
+    Path(db_file).unlink(missing_ok=True)
+
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
     os.environ["VECTORA_DB_FILE"] = db_file
 
