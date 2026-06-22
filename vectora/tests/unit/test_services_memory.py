@@ -109,19 +109,31 @@ class TestMemoryStore:
 # ── HTTP API (/memory) com SQLite real ───────────────────────────────────────
 
 
+@pytest.fixture(autouse=True)
+def _reset_memory_singleton():
+    import backend.services.memory as mem_mod
+    mem_mod._memory_store = None
+    yield
+    mem_mod._memory_store = None
+
+
 @pytest.fixture
-async def memory_client(tmp_path, monkeypatch):
+def memory_client(tmp_path):
     """TestClient com MemoryStore real (tmp SQLite) e auth desabilitada.
 
     _get_user_id() retorna "user:local" quando request.state.user é None.
     """
+    import asyncio
+
+    import backend.services.memory as mem_mod
+
+    db_file = str(tmp_path / "mem_test.db")
     os.environ["VECTORA_AUTH_REQUIRED"] = "false"
+    os.environ["VECTORA_DB_FILE"] = db_file
 
-    from backend.services import memory as mem_mod
-
-    store = MemoryStore(db_dsn=str(tmp_path / "mem_test.db"))
-    await store.initialize()
-    monkeypatch.setattr(mem_mod, "_memory_store", store)
+    store = MemoryStore(db_dsn=db_file)
+    asyncio.run(store.initialize())
+    mem_mod._memory_store = store
 
     from fastapi.testclient import TestClient
 
@@ -131,6 +143,8 @@ async def memory_client(tmp_path, monkeypatch):
     yield TestClient(app, raise_server_exceptions=False)
 
     os.environ.pop("VECTORA_AUTH_REQUIRED", None)
+    os.environ.pop("VECTORA_DB_FILE", None)
+    mem_mod._memory_store = None
 
 
 class TestMemoryAPI:
