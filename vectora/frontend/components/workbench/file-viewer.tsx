@@ -7,10 +7,11 @@
  * `GET /workspaces/{id}/fs/raw`. Texto é lido do `GET /file` (truncado).
  */
 
-import { lazy, Suspense, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { Loader2, Pencil } from "lucide-react";
 import { useTheme } from "next-themes";
 import { MarkdownView } from "@/components/workbench/markdown-view";
+import { useToastStore } from "@/lib/stores/toast-store";
 import { m } from "@/lib/paraglide/messages";
 
 // Monaco depende de `window` — carregado sob demanda (lazy) para não entrar no
@@ -122,8 +123,65 @@ interface RawText {
   truncated?: boolean;
 }
 
+function InlineTextEditor({
+  workspaceId,
+  path,
+  initialContent,
+  onSaved,
+}: {
+  workspaceId: string;
+  path: string;
+  initialContent: string;
+  onSaved: (content: string) => void;
+}) {
+  const [content, setContent] = useState(initialContent);
+  const [saving, setSaving] = useState(false);
+  const showError = useToastStore((s) => s.error);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      const resp = await fetch(`/workspaces/${encodeURIComponent(workspaceId)}/file`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ path, content }),
+      });
+      if (resp.ok) {
+        onSaved(content);
+      } else {
+        showError(m.workbench_files_save_error());
+      }
+    } catch {
+      showError(m.workbench_files_save_error());
+    } finally {
+      setSaving(false);
+    }
+  }, [workspaceId, path, content, onSaved, showError]);
+
+  return (
+    <div className="flex h-full flex-col">
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="flex-1 resize-none p-3 font-mono text-xs bg-background text-foreground focus:outline-none"
+        spellCheck={false}
+      />
+      <div className="shrink-0 flex justify-end gap-2 border-t border-border/60 px-3 py-1.5 bg-muted/30">
+        <button
+          onClick={() => void handleSave()}
+          disabled={saving}
+          className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+        >
+          {saving ? <Loader2 className="w-3 h-3 animate-spin inline" /> : m.workbench_files_save()}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /**
- * Viewer completo e autônomo (read-only) — usado pelas janelas flutuantes.
+ * Viewer completo e autônomo — usado pelas janelas flutuantes.
  * Decide entre mídia (raw) e texto (busca o conteúdo do `GET /file`).
  */
 export function FileViewer({
@@ -138,6 +196,10 @@ export function FileViewer({
   const isDark = resolvedTheme !== "light";
   const [text, setText] = useState<RawText | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  const handleEdit = useCallback(() => setEditing(true), [setEditing]);
+  const handleCancelEdit = useCallback(() => setEditing(false), [setEditing]);
 
   useEffect(() => {
     if (media) return; // mídia não busca conteúdo de texto
@@ -199,10 +261,30 @@ export function FileViewer({
     );
   }
 
-  const handleEdit = () => {
-    // FS-1: Inline editor placeholder — abre editor para este arquivo
-    // Implementação completa em sprint seguinte
-  };
+  if (editing) {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between border-b border-border/60 px-3 py-1.5 bg-muted/30 shrink-0">
+          <span className="text-xs font-mono text-muted-foreground truncate">{path}</span>
+          <button
+            onClick={handleCancelEdit}
+            className="text-xs px-2 py-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {m.workbench_files_cancel()}
+          </button>
+        </div>
+        <InlineTextEditor
+          workspaceId={workspaceId}
+          path={path}
+          initialContent={text?.content ?? ""}
+          onSaved={(content) => {
+            setText((prev) => (prev ? { ...prev, content } : prev));
+            setEditing(false);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -212,10 +294,10 @@ export function FileViewer({
         </span>
         <button
           onClick={handleEdit}
-          className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          title="Edit file (FS-1)"
+          className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+          title={m.workbench_files_edit()}
         >
-          Edit
+          <Pencil className="w-3.5 h-3.5" />
         </button>
       </div>
       <div className="min-h-0 flex-1">

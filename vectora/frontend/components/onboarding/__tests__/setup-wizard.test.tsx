@@ -165,9 +165,11 @@ function mockStorageFetch(opts: {
 async function renderAtStepMode() {
   render(<SetupWizard userId="u-mode" onComplete={vi.fn()} />);
   await waitFor(() => screen.getByText("1 / 7"));
-  for (let i = 0; i < 3; i++) {
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-  }
+  await act(async () => {
+    for (let i = 0; i < 3; i++) {
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    }
+  });
   await waitFor(() => screen.getByText("4 / 7"));
   await act(async () => {
     fireEvent.click(screen.getByText("Complete")); // modo completo → cards

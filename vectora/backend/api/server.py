@@ -276,7 +276,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     try:
         from backend.services.routines import get_scheduler
 
-        get_scheduler().start()
+        await get_scheduler().start()
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar routine scheduler: %s", exc)
 
@@ -287,7 +287,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         try:
             from backend.services.routines import get_scheduler as _gs
 
-            _gs().stop()
+            await _gs().stop()
         except Exception:
             pass
         license_task.cancel()
