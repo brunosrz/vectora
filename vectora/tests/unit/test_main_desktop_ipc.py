@@ -70,7 +70,7 @@ def test_desktop_uds_config_not_tcp() -> None:
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec S104
         port=None,
         ssl_certfile=None,
         ssl_keyfile=None,
@@ -111,7 +111,7 @@ def test_desktop_uds_path_under_home_vectora() -> None:
 
     args = argparse.Namespace(
         headless=False,
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec S104
         port=None,
         ssl_certfile=None,
         ssl_keyfile=None,

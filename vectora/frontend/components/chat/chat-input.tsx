@@ -28,6 +28,7 @@ import { ModelSelector } from "./model-selector";
 import { VscodeIcon } from "@/components/icons/vscode-icon";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { LayoutDashboard, MessageSquare } from "lucide-react";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { AgentConfig } from "@/components/layout/agent-settings";
 import type { ImageAttachment } from "@/lib/types";
@@ -166,6 +167,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   const chatMode = useSettingsStore((s) => s.chatMode);
+  const setChatMode = useSettingsStore((s) => s.setChatMode);
   // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
@@ -394,6 +396,28 @@ export function ChatInput({
                 </>
               )}
               <PermissionModeMenu />
+              <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setChatMode(!chatMode)}
+                    data-chatmode={chatMode ? "on" : "off"}
+                    aria-label={
+                      chatMode ? m.chat_mode_disable() : m.chat_mode_enable()
+                    }
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 shrink-0 transition-colors"
+                  >
+                    {chatMode ? (
+                      <MessageSquare className="w-4 h-4" />
+                    ) : (
+                      <LayoutDashboard className="w-4 h-4" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {chatMode ? m.chat_mode_disable() : m.chat_mode_enable()}
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             <div className="flex items-center gap-1 min-w-0 justify-end">
