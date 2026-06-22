@@ -114,7 +114,7 @@ async def create_routine(
     """Cria uma rotina (placeholder — sem persistência)."""
     from uuid import uuid4
 
-    routine = Routine(
+    return Routine(
         routine_id=str(uuid4()),
         user_id=user_id,
         name=name,
@@ -131,7 +131,6 @@ async def create_routine(
             )
         ),
     )
-    return routine
 
 
 async def list_routines(user_id: int) -> list[Routine]:
@@ -140,14 +139,12 @@ async def list_routines(user_id: int) -> list[Routine]:
 
 
 # Função exportada para manter compatibilidade
-def schedule_next(cron_expr: str) -> str | None:
+def schedule_next(cron_expr: str, base_time: datetime | None = None) -> str | None:
     """Calcula próximo horário de execução."""
-    return RoutineScheduler.schedule_next(
-        Routine(
-            routine_id="temp",
-            user_id=0,
-            name="temp",
-            instruction="",
-            cron_expr=cron_expr,
-        )
-    )
+    try:
+        cron = croniter(cron_expr, base_time or datetime.now(UTC))
+        next_run = cron.get_next(datetime)
+        return next_run.isoformat()
+    except Exception as e:
+        logger.exception("Erro ao calcular próximo horário: %s", e)
+        return None

@@ -294,6 +294,12 @@ class MemoryStore:
             logger.debug("Memória deletada: %s:%s", user_id, key)
         return deleted
 
+    async def delete_all(self) -> None:
+        """Limpa todas as memórias (para testes)."""
+        async with aiosqlite.connect(self.db_dsn) as db:
+            await db.execute("DELETE FROM memories")
+            await db.commit()
+
     async def cleanup_expired(self) -> int:
         """Remove memórias expiradas.
 

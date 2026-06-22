@@ -16,9 +16,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def client(tmp_path_factory):
     """TestClient com MemoryStore usando SQLite temporário."""
+    import asyncio
+
     tmp = tmp_path_factory.mktemp("memory_api")
     db_file = str(tmp / "test_memory.db")
 
@@ -26,9 +28,17 @@ def client(tmp_path_factory):
     os.environ["VECTORA_DB_FILE"] = db_file
 
     from backend.api.server import create_app
+    from backend.services import memory as mem_mod
 
     app = create_app(serve_static=False)
-    yield TestClient(app)
+    tc = TestClient(app)
+
+    async def cleanup():
+        """Limpa memórias antes de cada teste."""
+        await mem_mod._memory_store.delete_all()
+
+    asyncio.run(cleanup())
+    yield tc
     os.environ.pop("VECTORA_DB_FILE", None)
 
 
@@ -59,7 +69,11 @@ class TestMemoryCreate:
         """POST /memory cria nova memória."""
         resp = client.post(
             "/memory",
-            json={"key": "my_key", "content": "my content", "metadata": {"tag": "test"}},
+            json={
+                "key": "my_key",
+                "content": "my content",
+                "metadata": {"tag": "test"},
+            },
         )
         assert resp.status_code == 201
         data = resp.json()

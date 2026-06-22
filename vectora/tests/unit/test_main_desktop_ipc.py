@@ -10,6 +10,7 @@ substituídos por mocks.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import sys
 from pathlib import Path
@@ -191,7 +192,8 @@ def test_desktop_windows_sets_pipe_env(capsys: pytest.CaptureFixture[str]) -> No
         ssl_keyfile=None,
     )
 
-    mock_serve_pipe = AsyncMock(return_value=None)
+    mock_serve_pipe = AsyncMock(side_effect=asyncio.CancelledError)
+    mock_server = MagicMock(serve=AsyncMock(return_value=None))
 
     with (
         patch.dict(os.environ, {"VECTORA_DESKTOP": "1"}, clear=False),
@@ -199,15 +201,14 @@ def test_desktop_windows_sets_pipe_env(capsys: pytest.CaptureFixture[str]) -> No
         patch("backend.main._start_vite_dev", return_value=None),
         patch("backend.services.ipc_pipe_win.serve_pipe", mock_serve_pipe),
         patch("uvicorn.Config", return_value=MagicMock()),
-        patch(
-            "uvicorn.Server",
-            return_value=MagicMock(serve=AsyncMock(return_value=None)),
-        ),
-        patch("asyncio.run"),
+        patch("uvicorn.Server", return_value=mock_server),
     ):
         from backend.main import _run_start
 
-        _run_start(args)
+        try:
+            _run_start(args)
+        except (asyncio.CancelledError, SystemExit):
+            pass
 
     assert "VECTORA_IPC_PIPE" in os.environ
     pipe_val = os.environ["VECTORA_IPC_PIPE"]
