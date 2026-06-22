@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -172,10 +173,8 @@ async def test_parallel_tool_node_same_type_not_parallelized():
 
     gather_mock = AsyncMock()
     with patch("backend.nodes.parallel_tools.asyncio.gather", gather_mock):
-        try:
+        with contextlib.suppress(Exception):
             await node.arun(data)
-        except Exception:
-            pass
 
     gather_mock.assert_not_called()
 
@@ -191,10 +190,8 @@ async def test_parallel_tool_node_empty_tool_calls_delegates():
 
     gather_mock = AsyncMock()
     with patch("backend.nodes.parallel_tools.asyncio.gather", gather_mock):
-        try:
+        with contextlib.suppress(Exception):
             await node.arun(data)
-        except Exception:
-            pass
 
     gather_mock.assert_not_called()
 
