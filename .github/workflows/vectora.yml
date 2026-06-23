@@ -53,6 +53,8 @@ jobs:
         run: uv run ruff check backend tests
       - name: Ruff format check
         run: uv run ruff format --check backend tests
+      - name: Type check (ty)
+        run: uv run ty check backend tests
 
   # ── 2. Security Scanning ────────────────────────────────────────────────
   security:
@@ -69,11 +71,46 @@ jobs:
       - name: pip-audit (vulnerable dependencies)
         run: uv run --with pip-audit pip-audit || true
 
+  # ── 2b. Frontend (oxlint + tsc + vitest) ────────────────────────────────
+  # O job `lint` cobre só o Python (ruff + ty). A suíte TypeScript — lint
+  # (oxlint), type check (tsc --noEmit) e testes (vitest) — roda aqui. i18n e
+  # rotas (Paraglide + TanStack Router) são gerados antes; ambos são pré-req do
+  # tsc e do vitest.
+  frontend:
+    name: Frontend (lint + types + tests)
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.0
+      - name: Install deps
+        working-directory: vectora/frontend
+        run: pnpm install --frozen-lockfile
+      - name: Compile i18n messages (Paraglide)
+        working-directory: vectora/frontend
+        run: pnpm i18n:compile
+      - name: Lint (oxlint)
+        working-directory: vectora/frontend
+        run: pnpm exec oxlint
+      - name: Type check (tsc --noEmit)
+        working-directory: vectora/frontend
+        run: pnpm typecheck
+      - name: Unit tests (vitest)
+        working-directory: vectora/frontend
+        run: pnpm test
+
   # ── 3. Build Verification (backend compile + frontend SPA) ──────────────
   build_verification:
     name: Build Verification
     runs-on: ubuntu-latest
-    needs: [lint, security]
+    needs: [lint, security, frontend]
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-uv
