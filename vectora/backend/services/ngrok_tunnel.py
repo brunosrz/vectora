@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,21 @@ def start_tunnel(port: int = 8080) -> str | None:
                 "(URL temporária, 1 sessão simultânea, limite de 40 req/min)"
             )
 
-        _tunnel = ngrok.connect(str(port), "http")
+        # Domínio estático (NGROK_DOMAIN) mantém a mesma URL pública entre
+        # restarts — evita reconfigurar o webhook no GitHub a cada boot. Requer
+        # authtoken (domínios reservados são por conta).
+        domain = (cfg.ngrok_domain or os.environ.get("NGROK_DOMAIN", "")).strip()
+        options: dict[str, Any] = {}
+        if domain:
+            if not authtoken:
+                logger.warning(
+                    "ngrok_tunnel: NGROK_DOMAIN exige NGROK_AUTHTOKEN — ignorando "
+                    "domínio e usando URL temporária"
+                )
+            else:
+                options["domain"] = domain
+
+        _tunnel = ngrok.connect(str(port), "http", **options)
         _public_url = getattr(_tunnel, "public_url", None)
 
         if _public_url and _public_url.startswith("http://"):

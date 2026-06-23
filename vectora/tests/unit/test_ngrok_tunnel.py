@@ -131,3 +131,63 @@ def test_http_url_nao_exposta_quando_tunel_inativo():
 
     _reset(mod)
     assert mod.get_public_url() is None
+
+
+def _mock_pyngrok(connect):
+    ngrok_mod = MagicMock()
+    ngrok_mod.connect = connect
+    conf_mod = MagicMock()
+    conf_mod.get_default.return_value = MagicMock()
+    pkg = MagicMock()
+    pkg.ngrok = ngrok_mod
+    pkg.conf = conf_mod
+    return {"pyngrok": pkg, "pyngrok.ngrok": ngrok_mod, "pyngrok.conf": conf_mod}
+
+
+def test_start_tunnel_passa_domain_estatico_quando_configurado():
+    import backend.services.ngrok_tunnel as mod
+
+    _reset(mod)
+    cfg = MagicMock(
+        ngrok_enabled=True,
+        ngrok_authtoken="tok_abc",
+        ngrok_domain="lucky-rabbit.ngrok-free.app",
+    )
+    connect = MagicMock(
+        return_value=MagicMock(public_url="https://lucky-rabbit.ngrok-free.app")
+    )
+
+    with (
+        patch("backend.services.ngrok_tunnel.get_settings", return_value=cfg),
+        patch.dict("sys.modules", _mock_pyngrok(connect)),
+    ):
+        mod.start_tunnel(8080)
+
+    assert connect.called
+    assert connect.call_args.kwargs.get("domain") == "lucky-rabbit.ngrok-free.app"
+    _reset(mod)
+
+
+def test_start_tunnel_ignora_domain_sem_authtoken():
+    """Erro/borda: domínio estático exige authtoken — sem ele, não passa domain."""
+    import backend.services.ngrok_tunnel as mod
+
+    _reset(mod)
+    cfg = MagicMock(
+        ngrok_enabled=True,
+        ngrok_authtoken="",
+        ngrok_domain="lucky-rabbit.ngrok-free.app",
+    )
+    connect = MagicMock(
+        return_value=MagicMock(public_url="https://temp.ngrok-free.app")
+    )
+
+    with (
+        patch("backend.services.ngrok_tunnel.get_settings", return_value=cfg),
+        patch.dict("sys.modules", _mock_pyngrok(connect)),
+    ):
+        mod.start_tunnel(8080)
+
+    assert connect.called
+    assert "domain" not in connect.call_args.kwargs
+    _reset(mod)

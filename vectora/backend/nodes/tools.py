@@ -23,6 +23,11 @@ from backend.tools.fs import (
     list_dir,
     terminal,
 )
+from backend.tools.gdrive import (
+    google_drive_list,
+    google_drive_read,
+    google_drive_search,
+)
 from backend.tools.gh import (
     gh_issue_comment,
     gh_issue_create,
@@ -46,8 +51,17 @@ from backend.tools.git import (
     git_status,
     git_worktree,
 )
+from backend.tools.gmail import gmail_list, gmail_read
+from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
+from backend.tools.linear import (
+    linear_create_issue,
+    linear_list_issues,
+    linear_update_issue,
+)
 from backend.tools.memory import delete_memory, get_memory, save_memory, search_memory
+from backend.tools.notion import notion_create_page, notion_read_page, notion_search
 from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
+from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.web import fetch_url, web_search
 from backend.tools.workspace import bucket_summary, workspace_describe, workspace_list
 
@@ -162,6 +176,25 @@ for _t in [
     gh_issue_create,
     gh_issue_view,
     gh_issue_comment,
+    # Integrações externas (configuradas via OAuth/API key; cada tool degrada
+    # para erro tipado quando o provider não está conectado).
+    google_drive_list,
+    google_drive_read,
+    google_drive_search,
+    gmail_list,
+    gmail_read,
+    slack_send,
+    slack_list_channels,
+    slack_read,
+    linear_list_issues,
+    linear_create_issue,
+    linear_update_issue,
+    jira_list_issues,
+    jira_create_issue,
+    jira_transition,
+    notion_search,
+    notion_read_page,
+    notion_create_page,
 ]:
     _all[_t.name] = _t
 
