@@ -31,3 +31,10 @@ allowedDeprecatedVersions:
   "@react-email/section": "*"
   "@react-email/tailwind": "*"
   "@react-email/text": "*"
+
+minimumReleaseAgeExclude:
+  - undici@7.28.0
+
+overrides:
+  undici@>=7.0.0 <7.28.0: ^7.28.0
+  undici@>=7.23.0 <7.28.0: ^7.28.0

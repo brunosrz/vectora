@@ -431,6 +431,112 @@ class Settings(BaseSettings):
     """Endpoint alternativo (ex: self-hosted). Default usa api.smith.langchain.com."""
 
     # ============================================================================
+    # WEBHOOKS — secrets de verificação de assinatura por provider
+    # ============================================================================
+
+    github_webhook_secret: str = ""
+    """Secret HMAC-SHA256 configurado no GitHub App → Webhook Secret."""
+
+    gitlab_webhook_secret: str = ""
+    """Token de verificação configurado nos webhooks do GitLab."""
+
+    slack_signing_secret: str = ""
+    """Signing secret do Slack App (aba Basic Information)."""
+
+    linear_webhook_secret: str = ""
+    """Secret configurado nos webhooks do Linear."""
+
+    resend_webhook_secret: str = ""
+    """Webhook signing secret do Resend (via Svix)."""
+
+    sendgrid_webhook_key: str = ""
+    """Chave pública ECDSA base64 para verificar eventos do SendGrid."""
+
+    mailgun_webhook_signing_key: str = ""
+    """Chave HMAC-SHA256 para verificar webhooks do Mailgun."""
+
+    # ============================================================================
+    # OAUTH — Google
+    # ============================================================================
+
+    google_oauth_client_id: str = ""
+    """Client ID do Google OAuth App (console.cloud.google.com)."""
+
+    google_oauth_client_secret: str = ""
+    """Client secret do Google OAuth App."""
+
+    google_oauth_redirect_uri: str = "http://localhost:8080/auth/google/callback"
+    """Redirect URI registrada no Google OAuth App."""
+
+    # ============================================================================
+    # OAUTH — GitLab
+    # ============================================================================
+
+    gitlab_oauth_client_id: str = ""
+    """Application ID do GitLab OAuth (suporta gitlab.com e self-hosted)."""
+
+    gitlab_oauth_client_secret: str = ""
+    """Secret do GitLab OAuth App."""
+
+    gitlab_base_url: str = "https://gitlab.com"
+    """URL base do GitLab (troque para instância self-hosted quando necessário)."""
+
+    # ============================================================================
+    # OAUTH — Slack
+    # ============================================================================
+
+    slack_oauth_client_id: str = ""
+    """Client ID do Slack App."""
+
+    slack_oauth_client_secret: str = ""
+    """Client secret do Slack App."""
+
+    slack_redirect_uri: str = "http://localhost:8080/auth/slack/callback"
+    """Redirect URI do Slack OAuth."""
+
+    # ============================================================================
+    # INTEGRAÇÕES — Linear / Jira / Notion (API Key)
+    # ============================================================================
+
+    linear_api_key: str = ""
+    """Personal API key do Linear (settings.linear.app/api)."""
+
+    jira_api_token: str = ""
+    """API token do Jira (id.atlassian.com/manage-profile/security/api-tokens)."""
+
+    jira_base_url: str = ""
+    """URL base do Jira (ex: https://minha-empresa.atlassian.net)."""
+
+    jira_email: str = ""
+    """Email da conta Jira (usado na autenticação Basic)."""
+
+    notion_api_key: str = ""
+    """Integration token do Notion (notion.so/my-integrations)."""
+
+    # ============================================================================
+    # EMAIL PROVIDER (para webhooks de email recebido)
+    # ============================================================================
+
+    email_provider: str = ""
+    """Provider de email: 'resend', 'sendgrid' ou 'mailgun'. Vazio = desativado."""
+
+    # ============================================================================
+    # NGROK — túnel público para desenvolvimento local
+    # ============================================================================
+
+    ngrok_authtoken: str = ""
+    """Auth token do ngrok (dashboard.ngrok.com/get-started/your-authtoken).
+    Quando configurado, o Vectora inicia automaticamente um túnel público em
+    /webhook/* permitindo que GitHub, Slack e Linear entreguem webhooks no localhost.
+    Sem token, o ngrok funciona com limitações (URL temporária, 1 sessão simultânea).
+    """
+
+    ngrok_enabled: bool = True
+    """Liga o túnel ngrok automaticamente no startup quando NGROK_AUTHTOKEN estiver
+    configurado. Desative com NGROK_ENABLED=false para desligar o túnel mesmo
+    tendo o token configurado."""
+
+    # ============================================================================
     # PYDANTIC CONFIGURATION
     # ============================================================================
 

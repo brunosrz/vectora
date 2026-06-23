@@ -53,6 +53,7 @@ from backend.api.handlers.tools import router as tools_router
 from backend.api.handlers.v1.classify import router as v1_classify_router
 from backend.api.handlers.v1.extract import router as v1_extract_router
 from backend.api.handlers.v1.jobs import router as v1_jobs_router
+from backend.api.handlers.webhooks import router as webhooks_router
 from backend.api.handlers.workspaces import router as workspace_router
 from backend.api.handlers.workspaces import view_router as workspace_view_router
 
@@ -280,6 +281,16 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar routine scheduler: %s", exc)
 
+    # Túnel ngrok — expõe /webhook/* para o mundo externo em desenvolvimento.
+    # Só ativo quando NGROK_AUTHTOKEN ou ngrok_enabled=true nas settings.
+    try:
+        from backend.services.ngrok_tunnel import start_tunnel
+
+        _port = int(os.environ.get("VECTORA_PORT", "8080"))
+        start_tunnel(_port)
+    except Exception as exc:
+        logger.warning("api/server: falha ao iniciar túnel ngrok: %s", exc)
+
     try:
         yield
     finally:
@@ -288,6 +299,12 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
             from backend.services.routines import get_scheduler as _gs
 
             await _gs().stop()
+        except Exception:
+            pass
+        try:
+            from backend.services.ngrok_tunnel import stop_tunnel
+
+            stop_tunnel()
         except Exception:
             pass
         license_task.cancel()
@@ -400,6 +417,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(share_router)
     app.include_router(memory_router)
     app.include_router(oauth_router)
+    app.include_router(webhooks_router)
     app.include_router(admin_router)
     app.include_router(workspace_router)
     app.include_router(workspace_view_router)

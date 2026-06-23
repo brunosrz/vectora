@@ -5,3 +5,13 @@
 # core-js: o postinstall só imprime mensagem de funding — não é necessário.
 allowBuilds:
   core-js: false
+minimumReleaseAgeExclude:
+  - serialize-javascript@7.0.3
+  - serialize-javascript@7.0.5
+  - uuid@11.1.1
+  - js-yaml@4.1.2
+overrides:
+  js-yaml@<=4.1.1: ^4.1.2
+  serialize-javascript@<=7.0.2: ^7.0.3
+  serialize-javascript@>=5.0.0 <7.0.5: ^7.0.5
+  uuid@<11.1.1: ^11.1.1

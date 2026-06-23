@@ -1,26 +1,22 @@
 "use client";
 
 /**
- * IntegracoesTab — cards de integrações externas (Bloco O).
+ * IntegracoesTab — cards de integrações externas.
  *
- * O1 — API key: usuário insere chave manualmente; salva via /auth/envs.
- * O2 — OAuth: botão "Conectar" redireciona para o fluxo GitHub OAuth.
- *
- * Cada card mostra:
- * - Nome + descrição da integração
- * - Badge de status (Conectado / Não configurado)
- * - Formulário inline para API keys (masked, revela ao clicar Editar)
- * - Botão "Verificar" para testar a chave imediatamente
- * - Para GitHub: botão "Conectar via OAuth" ou "Desconectar"
+ * O1 — API key: usuário insere chave manualmente.
+ * O2–O5 — OAuth: GitHub, GitLab, Google, Slack.
+ * Webhook URL: exibida para providers que têm webhook configurado.
  */
 
 import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Copy,
   ExternalLink,
   GitBranch,
   KeyRound,
+  Link2,
   Loader2,
   XCircle,
 } from "lucide-react";
@@ -29,7 +25,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { VECTORA_API_URL } from "@/lib/constants/api";
+import { m } from "@/lib/paraglide/messages";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -44,15 +40,16 @@ interface Integration {
   docs_url: string;
   icon: string;
   oauth_scopes?: string[];
+  parent?: string;
   connected: boolean;
 }
 
 type VerifyState = "idle" | "loading" | "ok" | "error";
 
-function startGitBranchOAuth(): void {
-  // Redireciona para o backend que inicia o fluxo OAuth.
-  window.location.href = `${VECTORA_API_URL}/auth/github`;
-}
+// Providers que têm suporte a webhook no backend
+const WEBHOOK_PROVIDERS = new Set(["github", "gitlab", "slack", "linear"]);
+// Providers com fluxo OAuth (além de hybrid = github)
+const OAUTH_PROVIDERS = new Set(["github", "gitlab", "google", "slack"]);
 
 // ---------------------------------------------------------------------------
 // API helpers
@@ -61,8 +58,19 @@ function startGitBranchOAuth(): void {
 async function fetchIntegrations(): Promise<Integration[]> {
   const res = await fetch("/integrations/");
   if (!res.ok) return [];
-  const data = await res.json();
+  const data = (await res.json()) as { integrations?: Integration[] };
   return data.integrations ?? [];
+}
+
+async function fetchNgrokUrl(): Promise<string | null> {
+  try {
+    const res = await fetch("/webhook/ngrok-url");
+    if (!res.ok) return null;
+    const data = (await res.json()) as { url?: string | null };
+    return data.url ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function saveApiKey(envVar: string, value: string): Promise<void> {
@@ -84,15 +92,17 @@ async function removeApiKey(envVar: string): Promise<void> {
 async function verifyIntegration(
   id: string,
 ): Promise<{ ok: boolean; message: string }> {
-  const res = await fetch(`/integrations/${id}/verify`, {
-    method: "POST",
-  });
+  const res = await fetch(`/integrations/${id}/verify`, { method: "POST" });
   if (!res.ok) return { ok: false, message: `Erro ${res.status}` };
-  return res.json();
+  return res.json() as Promise<{ ok: boolean; message: string }>;
 }
 
-async function disconnectGitBranch(): Promise<void> {
-  await fetch("/integrations/github", { method: "DELETE" });
+async function disconnectOAuth(provider: string): Promise<void> {
+  await fetch(`/auth/${provider}`, { method: "DELETE" });
+}
+
+function startOAuth(provider: string): void {
+  window.location.href = `/auth/${provider}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,9 +112,11 @@ async function disconnectGitBranch(): Promise<void> {
 function IntegrationCard({
   integ,
   onUpdated,
+  ngrokUrl,
 }: {
   integ: Integration;
   onUpdated: () => void;
+  ngrokUrl: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [keyValue, setKeyValue] = useState("");
@@ -113,11 +125,20 @@ function IntegrationCard({
   const [verifyState, setVerifyState] = useState<VerifyState>("idle");
   const [verifyMsg, setVerifyMsg] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [webhookCopied, setWebhookCopied] = useState(false);
 
-  const isGitBranch = integ.id === "github";
-  // hybrid (ex.: GitHub) aceita tanto token manual quanto OAuth — por isso
-  // mostra o campo de chave E o botão OAuth ao mesmo tempo.
+  const isOAuthProvider = OAUTH_PROVIDERS.has(integ.id);
+  const isChildOAuth = !!integ.parent; // google-drive, gmail dependem de google
   const allowToken = integ.kind === "apikey" || integ.kind === "hybrid";
+  const hasWebhook = WEBHOOK_PROVIDERS.has(integ.id);
+
+  // URL de webhook — usa ngrok quando disponível (desenvolvimento local),
+  // ou a origem do site em produção (self-hosted com domínio próprio).
+  const webhookUrl = ngrokUrl
+    ? `${ngrokUrl}/webhook/${integ.id}`
+    : typeof window !== "undefined"
+      ? `${window.location.origin}/webhook/${integ.id}`
+      : `/webhook/${integ.id}`;
 
   const handleSave = async () => {
     if (!keyValue.trim()) return;
@@ -161,30 +182,65 @@ function IntegrationCard({
     }
   };
 
-  const handleGitBranchDisconnect = async () => {
+  const handleOAuthDisconnect = async () => {
     setRemoving(true);
     try {
-      await disconnectGitBranch();
+      const provider = integ.parent ?? integ.id;
+      await disconnectOAuth(provider);
       onUpdated();
     } finally {
       setRemoving(false);
     }
   };
 
+  const handleCopyWebhook = async () => {
+    await navigator.clipboard.writeText(webhookUrl);
+    setWebhookCopied(true);
+    setTimeout(() => setWebhookCopied(false), 2000);
+  };
+
+  // Providers filho (google-drive, gmail) herdam conexão do pai — não mostram
+  // card próprio com botão de OAuth; apenas mostram status herdado.
+  if (isChildOAuth) {
+    return (
+      <div className="rounded-lg border bg-card/50">
+        <div className="flex items-center gap-3 p-3">
+          <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+            <Link2 className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{integ.name}</span>
+              <Badge
+                variant={integ.connected ? "default" : "secondary"}
+                className="text-[10px] h-4 px-1.5"
+              >
+                {integ.connected
+                  ? m.integrations_connected()
+                  : m.integrations_disconnected()}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground truncate">
+              {integ.description}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border bg-card">
-      {/* Cabeçalho do card */}
+      {/* Cabeçalho */}
       <div className="flex items-center gap-3 p-3">
-        {/* Ícone */}
         <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-          {isGitBranch ? (
+          {isOAuthProvider ? (
             <GitBranch className="w-4 h-4" />
           ) : (
             <KeyRound className="w-4 h-4 text-muted-foreground" />
           )}
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{integ.name}</span>
@@ -192,7 +248,9 @@ function IntegrationCard({
               variant={integ.connected ? "default" : "secondary"}
               className="text-[10px] h-4 px-1.5"
             >
-              {integ.connected ? "Conectado" : "Não configurado"}
+              {integ.connected
+                ? m.integrations_connected()
+                : m.integrations_disconnected()}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground truncate">
@@ -200,7 +258,6 @@ function IntegrationCard({
           </p>
         </div>
 
-        {/* Ações rápidas */}
         <div className="flex items-center gap-1 shrink-0">
           {integ.connected && (
             <Button
@@ -217,7 +274,7 @@ function IntegrationCard({
               ) : verifyState === "error" ? (
                 <XCircle className="w-3 h-3 text-destructive" />
               ) : (
-                "Verificar"
+                m.integrations_verify()
               )}
             </Button>
           )}
@@ -242,20 +299,24 @@ function IntegrationCard({
       {/* Mensagem de verificação */}
       {verifyMsg && (
         <div
-          className={`mx-3 mb-2 text-xs px-2 py-1 rounded ${verifyState === "ok" ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-destructive/10 text-destructive"}`}
+          className={`mx-3 mb-2 text-xs px-2 py-1 rounded ${
+            verifyState === "ok"
+              ? "bg-green-500/10 text-green-600 dark:text-green-400"
+              : "bg-destructive/10 text-destructive"
+          }`}
         >
           {verifyMsg}
         </div>
       )}
 
-      {/* Expansão para API key (O1) — apikey e hybrid (token manual) */}
+      {/* Expansão para API key */}
       {allowToken && expanded && (
         <div className="px-3 pb-3 space-y-2 border-t pt-3">
           <div className="flex gap-2">
             <Input
               type="password"
               autoComplete="new-password"
-              placeholder={`Cole sua ${integ.env_var} aqui`}
+              placeholder={m.integrations_api_key_placeholder()}
               value={keyValue}
               onChange={(e) => setKeyValue(e.target.value)}
               className="h-8 text-xs font-mono"
@@ -269,7 +330,11 @@ function IntegrationCard({
               onClick={handleSave}
               disabled={saving || !keyValue.trim()}
             >
-              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Salvar"}
+              {saving ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                m.integrations_save_key()
+              )}
             </Button>
           </div>
 
@@ -283,7 +348,7 @@ function IntegrationCard({
                 disabled={removing}
               >
                 {removing && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
-                Remover chave
+                {m.integrations_remove_key()}
               </Button>
             )}
             <a
@@ -292,7 +357,7 @@ function IntegrationCard({
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground ml-auto"
             >
-              Obter chave
+              {m.integrations_get_key()}
               <ExternalLink className="w-2.5 h-2.5" />
             </a>
           </div>
@@ -301,45 +366,91 @@ function IntegrationCard({
         </div>
       )}
 
-      {/* GitHub OAuth (O2) */}
-      {isGitBranch && (
+      {/* OAuth section — para providers com fluxo OAuth */}
+      {isOAuthProvider && (
         <div className="px-3 pb-3 border-t pt-3 space-y-2">
           {integ.connected ? (
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
-                Conexão ativa (OAuth ou token)
+                Conexão ativa (OAuth)
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 className="h-7 text-xs text-destructive hover:text-destructive"
-                onClick={handleGitBranchDisconnect}
+                onClick={handleOAuthDisconnect}
                 disabled={removing}
               >
                 {removing && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
-                Desconectar
+                {m.integrations_disconnect()}
               </Button>
             </div>
           ) : (
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
-                Acesso a repos, PRs e issues
+                {integ.description}
               </span>
               <Button
                 size="sm"
                 className="h-7 text-xs"
-                onClick={startGitBranchOAuth}
+                onClick={() => startOAuth(integ.id)}
               >
                 <GitBranch className="w-3 h-3 mr-1.5" />
-                Conectar via OAuth
+                {m.integrations_connect_oauth()}
               </Button>
             </div>
           )}
         </div>
       )}
+
+      {/* Webhook URL — para providers com webhook configurado */}
+      {hasWebhook && integ.connected && (
+        <div className="px-3 pb-3 border-t pt-3 space-y-1.5">
+          <p className="text-xs text-muted-foreground font-medium">
+            {m.integrations_webhook_url()}
+          </p>
+          <div className="flex gap-1.5">
+            <code className="flex-1 text-xs bg-muted px-2 py-1 rounded font-mono truncate">
+              {webhookUrl}
+            </code>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 shrink-0"
+              onClick={handleCopyWebhook}
+              title={m.integrations_webhook_copy()}
+            >
+              {webhookCopied ? (
+                <CheckCircle2 className="w-3 h-3 text-green-500" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Categorias
+// ---------------------------------------------------------------------------
+
+const CATEGORIES: { label: string; ids: string[] }[] = [
+  { label: "Git", ids: ["github", "gitlab"] },
+  {
+    label: "IA",
+    ids: ["openai", "anthropic", "cohere", "tavily"],
+  },
+  {
+    label: "Google",
+    ids: ["google", "google-drive", "gmail"],
+  },
+  { label: "Comunicação", ids: ["slack"] },
+  { label: "Produtividade", ids: ["linear", "jira", "notion"] },
+  { label: "Email", ids: ["resend", "sendgrid", "mailgun"] },
+];
 
 // ---------------------------------------------------------------------------
 // Componente principal
@@ -348,12 +459,17 @@ function IntegrationCard({
 export function IntegracoesTab() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ngrokUrl, setNgrokUrl] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
     try {
-      const data = await fetchIntegrations();
+      const [data, tunnel] = await Promise.all([
+        fetchIntegrations(),
+        fetchNgrokUrl(),
+      ]);
       setIntegrations(data);
+      setNgrokUrl(tunnel);
     } finally {
       setLoading(false);
     }
@@ -366,8 +482,7 @@ export function IntegracoesTab() {
   // Detecta oauth_success/oauth_error na URL após callback OAuth
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("oauth_success") || params.get("oauth_error")) {
-      // Remove os params da URL sem reload
+    if (params.get("oauth_success") ?? params.get("oauth_error")) {
       const url = new URL(window.location.href);
       url.searchParams.delete("oauth_success");
       url.searchParams.delete("oauth_error");
@@ -384,35 +499,62 @@ export function IntegracoesTab() {
     );
   }
 
-  // Agrupa: OAuth/híbridos primeiro, depois API keys por ordem de relevância
-  const sorted = [
-    ...integrations.filter((i) => i.kind === "oauth" || i.kind === "hybrid"),
-    ...integrations.filter((i) => i.kind === "apikey"),
-  ];
-
-  const connected = sorted.filter((i) => i.connected).length;
+  const byId = Object.fromEntries(integrations.map((i) => [i.id, i]));
+  const connected = integrations.filter((i) => i.connected).length;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Sumário */}
       <div className="space-y-0.5">
         <p className="text-sm font-medium">
           {connected > 0
             ? `${connected} integração${connected > 1 ? "s" : ""} ativa${connected > 1 ? "s" : ""}`
-            : "Nenhuma integração configurada"}
+            : m.integrations_none_active()}
         </p>
         <p className="text-xs text-muted-foreground">
-          Chaves são armazenadas de forma privada e nunca compartilhadas com
-          outros usuários.
+          {m.integrations_keys_private()}
         </p>
       </div>
 
-      {/* Cards */}
-      <div className="space-y-2">
-        {sorted.map((integ) => (
-          <IntegrationCard key={integ.id} integ={integ} onUpdated={load} />
-        ))}
-      </div>
+      {/* Banner ngrok — mostra URL pública quando o túnel estiver ativo */}
+      {ngrokUrl && (
+        <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2 text-xs space-y-0.5">
+          <p className="font-medium text-green-600 dark:text-green-400">
+            Túnel ngrok ativo
+          </p>
+          <p className="text-muted-foreground font-mono break-all">
+            {ngrokUrl}
+          </p>
+          <p className="text-muted-foreground">
+            Use{" "}
+            <span className="font-mono">
+              {ngrokUrl}/webhook/&#123;provider&#125;
+            </span>{" "}
+            como Webhook URL no GitHub, Slack ou Linear.
+          </p>
+        </div>
+      )}
+
+      {/* Cards por categoria */}
+      {CATEGORIES.map((cat) => {
+        const items = cat.ids.flatMap((id) => (byId[id] ? [byId[id]] : []));
+        if (items.length === 0) return null;
+        return (
+          <div key={cat.label} className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              {cat.label}
+            </p>
+            {items.map((integ) => (
+              <IntegrationCard
+                key={integ.id}
+                integ={integ}
+                onUpdated={load}
+                ngrokUrl={ngrokUrl}
+              />
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 }

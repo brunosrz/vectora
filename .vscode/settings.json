@@ -130,7 +130,7 @@
     "editor.defaultFormatter": "yzhang.markdown-all-in-one"
   },
   "window.confirmSaveUntitledWorkspace": false,
-  "geminicodeassist.project": "ageless-falcon-j2j41",
+  "geminicodeassist.project": "gen-lang-client-0946331142",
   "security.promptForLocalFileProtocolHandling": false,
   "python.languageServer": "Default",
   "python.terminal.activateEnvironment": false,

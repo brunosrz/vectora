@@ -3052,6 +3052,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pyngrok"
+version = "8.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8d/ae/6664934258773db4666e65730c43b4b06730f78d49861a9a04ebcf4742ff/pyngrok-8.1.2.tar.gz", hash = "sha256:3b5383ec7dc4646ac0d046435eb58c6cd1cbc9acad70e6dee012b05dc25b070a", size = 45078, upload-time = "2026-04-29T15:16:53.969Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/5c/7733776a6a9704bffee19d203f9be80f25f78a5011a9863971be60fe2763/pyngrok-8.1.2-py3-none-any.whl", hash = "sha256:849e9f55706288b00eb28f4ae8ea16b05e52c609f80ef4a88ca23b385f2f9178", size = 25935, upload-time = "2026-04-29T15:16:52.088Z" },
+]
+
+[[package]]
 name = "pyobjc-core"
 version = "12.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3670,8 +3682,8 @@ name = "secretstorage"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography" },
-    { name = "jeepney" },
+    { name = "cryptography", marker = "sys_platform != 'win32'" },
+    { name = "jeepney", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
@@ -4190,6 +4202,7 @@ dependencies = [
     { name = "pyjwt" },
     { name = "pykeepass" },
     { name = "pynacl" },
+    { name = "pyngrok" },
     { name = "pyright" },
     { name = "pystray" },
     { name = "pytest" },
@@ -4268,6 +4281,7 @@ requires-dist = [
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "pykeepass", specifier = ">=4.1.1" },
     { name = "pynacl", specifier = ">=1.6.2" },
+    { name = "pyngrok", specifier = ">=7.2.6" },
     { name = "pyright", specifier = ">=1.1.410" },
     { name = "pystray", specifier = ">=0.19.5" },
     { name = "pytest", specifier = ">=9.1.1" },

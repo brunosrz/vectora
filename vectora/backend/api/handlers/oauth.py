@@ -1,19 +1,20 @@
-"""Handler de OAuth e registry de integrações externas — Bloco O.
+"""Handler de OAuth e registry de integrações externas.
 
 O1 — API Key integrations:
     GET  /integrations                  — lista integrações com status (conectado/não)
     POST /integrations/{id}/verify      — testa se a API key configurada é válida
 
-O2 — GitHub OAuth:
-    GET  /auth/github                   — inicia o fluxo OAuth (redirect para GitHub)
-    GET  /auth/github/callback          — callback do GitHub, salva token, redireciona
-    GET  /auth/github/status            — {connected: bool, username: str | None}
-    DELETE /auth/github                 — desconecta (remove token do vault)
+O2 — GitHub OAuth + GitLab OAuth + Google OAuth + Slack OAuth:
+    GET  /auth/{provider}               — inicia o fluxo OAuth
+    GET  /auth/{provider}/callback      — callback, salva token
+    GET  /auth/{provider}/status        — {connected: bool, ...}
+    DELETE /auth/{provider}             — desconecta
 
-Configuração necessária (em ~/.vectora/config.toml ou env vars):
-    GITHUB_OAUTH_CLIENT_ID
-    GITHUB_OAUTH_CLIENT_SECRET
-    GITHUB_OAUTH_REDIRECT_URI  (padrão: http://localhost:8080/auth/github/callback)
+Configuração necessária (env vars):
+    GITHUB_OAUTH_CLIENT_ID / GITHUB_OAUTH_CLIENT_SECRET
+    GITLAB_OAUTH_CLIENT_ID / GITLAB_OAUTH_CLIENT_SECRET / GITLAB_BASE_URL
+    GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET
+    SLACK_OAUTH_CLIENT_ID / SLACK_OAUTH_CLIENT_SECRET
 """
 
 from __future__ import annotations
@@ -86,6 +87,116 @@ INTEGRATIONS_REGISTRY: list[dict[str, Any]] = [
         "docs_url": "https://github.com/settings/tokens",
         "icon": "github",
         "oauth_scopes": ["repo", "user:email", "read:org"],
+    },
+    {
+        "id": "gitlab",
+        "name": "GitLab",
+        "env_var": "GITLAB_TOKEN",
+        "kind": "oauth",
+        "description": "Repositórios, merge requests e pipelines do GitLab",
+        "docs_url": "https://gitlab.com/-/profile/applications",
+        "icon": "gitlab",
+        "oauth_scopes": ["api", "read_repository", "write_repository", "read_user"],
+    },
+    {
+        "id": "google",
+        "name": "Google",
+        "env_var": "GOOGLE_ACCESS_TOKEN",
+        "kind": "oauth",
+        "description": "Conta Google (base para Drive e Gmail)",
+        "docs_url": "https://console.cloud.google.com/apis/credentials",
+        "icon": "google",
+        "oauth_scopes": ["openid", "email", "profile"],
+    },
+    {
+        "id": "google-drive",
+        "name": "Google Drive",
+        "env_var": "GOOGLE_ACCESS_TOKEN",
+        "kind": "oauth",
+        "description": "Leitura e busca de arquivos no Google Drive",
+        "docs_url": "https://console.cloud.google.com/apis/credentials",
+        "icon": "google-drive",
+        "parent": "google",
+    },
+    {
+        "id": "gmail",
+        "name": "Gmail",
+        "env_var": "GOOGLE_ACCESS_TOKEN",
+        "kind": "oauth",
+        "description": "Leitura de emails recebidos no Gmail",
+        "docs_url": "https://console.cloud.google.com/apis/credentials",
+        "icon": "gmail",
+        "parent": "google",
+    },
+    {
+        "id": "slack",
+        "name": "Slack",
+        "env_var": "SLACK_BOT_TOKEN",
+        "kind": "oauth",
+        "description": "Envio e leitura de mensagens no Slack",
+        "docs_url": "https://api.slack.com/apps",
+        "icon": "slack",
+        "oauth_scopes": [
+            "chat:write",
+            "channels:read",
+            "users:read",
+            "channels:history",
+        ],
+    },
+    {
+        "id": "linear",
+        "name": "Linear",
+        "env_var": "LINEAR_API_KEY",
+        "kind": "apikey",
+        "description": "Issues e projetos do Linear",
+        "docs_url": "https://linear.app/settings/api",
+        "icon": "linear",
+    },
+    {
+        "id": "jira",
+        "name": "Jira",
+        "env_var": "JIRA_API_TOKEN",
+        "kind": "apikey",
+        "description": "Issues e sprints do Jira (Atlassian)",
+        "docs_url": "https://id.atlassian.com/manage-profile/security/api-tokens",
+        "icon": "jira",
+        "extra_vars": ["JIRA_BASE_URL", "JIRA_EMAIL"],
+    },
+    {
+        "id": "notion",
+        "name": "Notion",
+        "env_var": "NOTION_API_KEY",
+        "kind": "apikey",
+        "description": "Páginas e databases do Notion",
+        "docs_url": "https://www.notion.so/my-integrations",
+        "icon": "notion",
+    },
+    {
+        "id": "resend",
+        "name": "Resend",
+        "env_var": "RESEND_API_KEY",
+        "kind": "apikey",
+        "description": "Envio de emails transacionais via Resend",
+        "docs_url": "https://resend.com/api-keys",
+        "icon": "resend",
+    },
+    {
+        "id": "sendgrid",
+        "name": "SendGrid",
+        "env_var": "SENDGRID_API_KEY",
+        "kind": "apikey",
+        "description": "Envio de emails e campanhas via SendGrid (Twilio)",
+        "docs_url": "https://app.sendgrid.com/settings/api_keys",
+        "icon": "sendgrid",
+    },
+    {
+        "id": "mailgun",
+        "name": "Mailgun",
+        "env_var": "MAILGUN_API_KEY",
+        "kind": "apikey",
+        "description": "Envio e recebimento de emails via Mailgun",
+        "docs_url": "https://app.mailgun.com/settings/api-security",
+        "icon": "mailgun",
     },
 ]
 
@@ -238,6 +349,70 @@ async def _verify_apikey(integration_id: str, token: str) -> tuple[bool, str]:  
                 return True, f"Conectado como @{username}"
             return False, f"GitHub retornou {r.status_code}"
 
+        if integration_id == "gitlab":
+            base = os.environ.get("GITLAB_BASE_URL", "https://gitlab.com")
+            r = await client.get(
+                f"{base}/api/v4/user",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if r.status_code == 200:
+                username = r.json().get("username", "")
+                return True, f"Conectado como @{username}"
+            return False, f"GitLab retornou {r.status_code}"
+
+        if integration_id == "google":
+            r = await client.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if r.status_code == 200:
+                email = r.json().get("email", "")
+                return True, f"Conectado como {email}"
+            return False, f"Google retornou {r.status_code}"
+
+        if integration_id in ("google-drive", "gmail"):
+            r = await client.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if r.status_code == 200:
+                return True, "Token Google válido"
+            return False, f"Google retornou {r.status_code}"
+
+        if integration_id == "slack":
+            r = await client.get(
+                "https://slack.com/api/auth.test",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            data = r.json()
+            if data.get("ok"):
+                return True, f"Conectado como @{data.get('user', '')}"
+            return False, data.get("error", "Token Slack inválido")
+
+        if integration_id == "linear":
+            r = await client.post(
+                "https://api.linear.app/graphql",
+                json={"query": "{ viewer { id name } }"},
+                headers={"Authorization": token, "Content-Type": "application/json"},
+            )
+            if r.status_code == 200 and "data" in r.json():
+                name = r.json()["data"]["viewer"]["name"]
+                return True, f"Conectado como {name}"
+            return False, f"Linear retornou {r.status_code}"
+
+        if integration_id == "notion":
+            r = await client.get(
+                "https://api.notion.com/v1/users/me",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Notion-Version": "2022-06-28",
+                },
+            )
+            if r.status_code == 200:
+                name = r.json().get("name", "")
+                return True, f"Conectado como {name}"
+            return False, f"Notion retornou {r.status_code}"
+
     # Provedores sem verificação automática
     return True, "Chave salva (verificação não disponível para este provedor)"
 
@@ -366,4 +541,410 @@ async def github_oauth_disconnect(request: Request) -> dict:
         logger.info("GitHub OAuth: token removido para user_id=%s", user.id)
     except Exception as exc:
         logger.warning("GitHub OAuth disconnect error: %s", exc)
+    return {"status": "disconnected"}
+
+
+# ---------------------------------------------------------------------------
+# O3 — GitLab OAuth
+# ---------------------------------------------------------------------------
+
+
+def _gitlab_cfg() -> tuple[str, str, str, str]:
+    client_id = os.environ.get("GITLAB_OAUTH_CLIENT_ID", "")
+    client_secret = os.environ.get("GITLAB_OAUTH_CLIENT_SECRET", "")
+    base_url = os.environ.get("GITLAB_BASE_URL", "https://gitlab.com")
+    redirect_uri = os.environ.get(
+        "GITLAB_OAUTH_REDIRECT_URI",
+        "http://localhost:8080/auth/gitlab/callback",
+    )
+    if not client_id or not client_secret:
+        raise HTTPException(
+            status_code=503,
+            detail="GitLab OAuth não configurado. Defina GITLAB_OAUTH_CLIENT_ID e GITLAB_OAUTH_CLIENT_SECRET.",
+        )
+    return client_id, client_secret, base_url, redirect_uri
+
+
+@router.get("/auth/gitlab")
+async def gitlab_oauth_start(request: Request) -> RedirectResponse:
+    user = _get_user(request)
+    client_id, _secret, base_url, redirect_uri = _gitlab_cfg()
+    scopes = " ".join(
+        _REGISTRY_BY_ID["gitlab"].get("oauth_scopes", ["api", "read_user"])
+    )
+    url = (
+        f"{base_url}/oauth/authorize"
+        f"?client_id={client_id}"
+        f"&redirect_uri={redirect_uri}"
+        f"&response_type=code"
+        f"&scope={scopes}"
+        f"&state={user.id}"
+    )
+    return RedirectResponse(url=url, status_code=302)
+
+
+@router.get("/auth/gitlab/callback")
+async def gitlab_oauth_callback(
+    request: Request, code: str = "", state: str = ""
+) -> RedirectResponse:
+    if not code:
+        raise HTTPException(status_code=400, detail="Parâmetro 'code' ausente")
+    client_id, client_secret, base_url, redirect_uri = _gitlab_cfg()
+
+    import httpx
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            f"{base_url}/oauth/token",
+            json={
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": redirect_uri,
+            },
+        )
+
+    if r.status_code != 200:
+        logger.error("GitLab token exchange failed: %s", r.text)
+        return RedirectResponse(
+            url="/?oauth_error=gitlab_exchange_failed", status_code=302
+        )
+
+    access_token = r.json().get("access_token", "")
+    if not access_token:
+        return RedirectResponse(url="/?oauth_error=gitlab_no_token", status_code=302)
+
+    try:
+        from backend.services import auth as auth_svc
+
+        await auth_svc.set_env_override(state, "GITLAB_TOKEN", access_token)
+        logger.info("GitLab OAuth: token salvo para user_id=%s", state)
+    except Exception as exc:
+        logger.exception("GitLab OAuth: falha ao salvar token: %s", exc)
+        return RedirectResponse(url="/?oauth_error=gitlab_save_failed", status_code=302)
+
+    return RedirectResponse(url="/?oauth_success=gitlab", status_code=302)
+
+
+@router.get("/auth/gitlab/status")
+async def gitlab_oauth_status(request: Request) -> dict:
+    user = _get_user(request)
+    try:
+        from backend.services import auth as auth_svc
+
+        overrides = await auth_svc.get_env_overrides(user.id)
+        token = overrides.get("GITLAB_TOKEN") or os.environ.get("GITLAB_TOKEN", "")
+    except Exception:
+        token = os.environ.get("GITLAB_TOKEN", "")
+
+    if not token:
+        return {"connected": False, "username": None}
+
+    try:
+        import httpx
+
+        base_url = os.environ.get("GITLAB_BASE_URL", "https://gitlab.com")
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(
+                f"{base_url}/api/v4/user",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        if r.status_code == 200:
+            return {"connected": True, "username": r.json().get("username")}
+    except Exception:
+        pass
+
+    return {"connected": True, "username": None}
+
+
+@router.delete("/auth/gitlab")
+async def gitlab_oauth_disconnect(request: Request) -> dict:
+    user = _get_user(request)
+    try:
+        from backend.services import auth as auth_svc
+
+        await auth_svc.delete_env_override(user.id, "GITLAB_TOKEN")
+    except Exception as exc:
+        logger.warning("GitLab disconnect error: %s", exc)
+    return {"status": "disconnected"}
+
+
+# ---------------------------------------------------------------------------
+# O4 — Google OAuth (Drive + Gmail)
+# ---------------------------------------------------------------------------
+
+
+def _google_cfg() -> tuple[str, str, str]:
+    client_id = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+    client_secret = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
+    redirect_uri = os.environ.get(
+        "GOOGLE_OAUTH_REDIRECT_URI",
+        "http://localhost:8080/auth/google/callback",
+    )
+    if not client_id or not client_secret:
+        raise HTTPException(
+            status_code=503,
+            detail="Google OAuth não configurado. Defina GOOGLE_OAUTH_CLIENT_ID e GOOGLE_OAUTH_CLIENT_SECRET.",
+        )
+    return client_id, client_secret, redirect_uri
+
+
+@router.get("/auth/google")
+async def google_oauth_start(request: Request) -> RedirectResponse:
+    user = _get_user(request)
+    client_id, _secret, redirect_uri = _google_cfg()
+    scopes = " ".join(
+        [
+            "openid",
+            "email",
+            "profile",
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/gmail.readonly",
+        ]
+    )
+    import urllib.parse
+
+    url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={client_id}"
+        f"&redirect_uri={urllib.parse.quote(redirect_uri)}"
+        "&response_type=code"
+        f"&scope={urllib.parse.quote(scopes)}"
+        "&access_type=offline"
+        "&prompt=consent"
+        f"&state={user.id}"
+    )
+    return RedirectResponse(url=url, status_code=302)
+
+
+@router.get("/auth/google/callback")
+async def google_oauth_callback(
+    request: Request, code: str = "", state: str = ""
+) -> RedirectResponse:
+    if not code:
+        raise HTTPException(status_code=400, detail="Parâmetro 'code' ausente")
+    client_id, client_secret, redirect_uri = _google_cfg()
+
+    import httpx
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": redirect_uri,
+            },
+        )
+
+    if r.status_code != 200:
+        logger.error("Google token exchange failed: %s", r.text)
+        return RedirectResponse(
+            url="/?oauth_error=google_exchange_failed", status_code=302
+        )
+
+    data = r.json()
+    access_token = data.get("access_token", "")
+    refresh_token = data.get("refresh_token", "")
+    if not access_token:
+        return RedirectResponse(url="/?oauth_error=google_no_token", status_code=302)
+
+    try:
+        from backend.services import auth as auth_svc
+
+        await auth_svc.set_env_override(state, "GOOGLE_ACCESS_TOKEN", access_token)
+        if refresh_token:
+            await auth_svc.set_env_override(
+                state, "GOOGLE_REFRESH_TOKEN", refresh_token
+            )
+        logger.info("Google OAuth: token salvo para user_id=%s", state)
+    except Exception as exc:
+        logger.exception("Google OAuth: falha ao salvar token: %s", exc)
+        return RedirectResponse(url="/?oauth_error=google_save_failed", status_code=302)
+
+    return RedirectResponse(url="/?oauth_success=google", status_code=302)
+
+
+@router.get("/auth/google/status")
+async def google_oauth_status(request: Request) -> dict:
+    user = _get_user(request)
+    try:
+        from backend.services import auth as auth_svc
+
+        overrides = await auth_svc.get_env_overrides(user.id)
+        token = overrides.get("GOOGLE_ACCESS_TOKEN") or os.environ.get(
+            "GOOGLE_ACCESS_TOKEN", ""
+        )
+    except Exception:
+        token = os.environ.get("GOOGLE_ACCESS_TOKEN", "")
+
+    if not token:
+        return {"connected": False, "email": None}
+
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        if r.status_code == 200:
+            info = r.json()
+            return {
+                "connected": True,
+                "email": info.get("email"),
+                "name": info.get("name"),
+            }
+    except Exception:
+        pass
+
+    return {"connected": True, "email": None}
+
+
+@router.delete("/auth/google")
+async def google_oauth_disconnect(request: Request) -> dict:
+    user = _get_user(request)
+    try:
+        from backend.services import auth as auth_svc
+
+        await auth_svc.delete_env_override(user.id, "GOOGLE_ACCESS_TOKEN")
+        await auth_svc.delete_env_override(user.id, "GOOGLE_REFRESH_TOKEN")
+    except Exception as exc:
+        logger.warning("Google disconnect error: %s", exc)
+    return {"status": "disconnected"}
+
+
+# ---------------------------------------------------------------------------
+# O5 — Slack OAuth
+# ---------------------------------------------------------------------------
+
+
+def _slack_cfg() -> tuple[str, str, str]:
+    client_id = os.environ.get("SLACK_OAUTH_CLIENT_ID", "")
+    client_secret = os.environ.get("SLACK_OAUTH_CLIENT_SECRET", "")
+    redirect_uri = os.environ.get(
+        "SLACK_REDIRECT_URI",
+        "http://localhost:8080/auth/slack/callback",
+    )
+    if not client_id or not client_secret:
+        raise HTTPException(
+            status_code=503,
+            detail="Slack OAuth não configurado. Defina SLACK_OAUTH_CLIENT_ID e SLACK_OAUTH_CLIENT_SECRET.",
+        )
+    return client_id, client_secret, redirect_uri
+
+
+@router.get("/auth/slack")
+async def slack_oauth_start(request: Request) -> RedirectResponse:
+    user = _get_user(request)
+    client_id, _secret, redirect_uri = _slack_cfg()
+    scopes = ",".join(
+        _REGISTRY_BY_ID["slack"].get("oauth_scopes", ["chat:write", "channels:read"])
+    )
+    import urllib.parse
+
+    url = (
+        "https://slack.com/oauth/v2/authorize"
+        f"?client_id={client_id}"
+        f"&redirect_uri={urllib.parse.quote(redirect_uri)}"
+        f"&scope={scopes}"
+        f"&state={user.id}"
+    )
+    return RedirectResponse(url=url, status_code=302)
+
+
+@router.get("/auth/slack/callback")
+async def slack_oauth_callback(
+    request: Request, code: str = "", state: str = ""
+) -> RedirectResponse:
+    if not code:
+        raise HTTPException(status_code=400, detail="Parâmetro 'code' ausente")
+    client_id, client_secret, redirect_uri = _slack_cfg()
+
+    import httpx
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            "https://slack.com/api/oauth.v2.access",
+            data={
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "code": code,
+                "redirect_uri": redirect_uri,
+            },
+        )
+
+    data = r.json()
+    if not data.get("ok"):
+        logger.error("Slack OAuth failed: %s", data)
+        return RedirectResponse(
+            url="/?oauth_error=slack_exchange_failed", status_code=302
+        )
+
+    bot_token = data.get("access_token", "")
+    if not bot_token:
+        return RedirectResponse(url="/?oauth_error=slack_no_token", status_code=302)
+
+    try:
+        from backend.services import auth as auth_svc
+
+        await auth_svc.set_env_override(state, "SLACK_BOT_TOKEN", bot_token)
+        logger.info("Slack OAuth: token salvo para user_id=%s", state)
+    except Exception as exc:
+        logger.exception("Slack OAuth: falha ao salvar token: %s", exc)
+        return RedirectResponse(url="/?oauth_error=slack_save_failed", status_code=302)
+
+    return RedirectResponse(url="/?oauth_success=slack", status_code=302)
+
+
+@router.get("/auth/slack/status")
+async def slack_oauth_status(request: Request) -> dict:
+    user = _get_user(request)
+    try:
+        from backend.services import auth as auth_svc
+
+        overrides = await auth_svc.get_env_overrides(user.id)
+        token = overrides.get("SLACK_BOT_TOKEN") or os.environ.get(
+            "SLACK_BOT_TOKEN", ""
+        )
+    except Exception:
+        token = os.environ.get("SLACK_BOT_TOKEN", "")
+
+    if not token:
+        return {"connected": False, "team": None}
+
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(
+                "https://slack.com/api/auth.test",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        data = r.json()
+        if data.get("ok"):
+            return {
+                "connected": True,
+                "team": data.get("team"),
+                "user": data.get("user"),
+            }
+    except Exception:
+        pass
+
+    return {"connected": True, "team": None}
+
+
+@router.delete("/auth/slack")
+async def slack_oauth_disconnect(request: Request) -> dict:
+    user = _get_user(request)
+    try:
+        from backend.services import auth as auth_svc
+
+        await auth_svc.delete_env_override(user.id, "SLACK_BOT_TOKEN")
+    except Exception as exc:
+        logger.warning("Slack disconnect error: %s", exc)
     return {"status": "disconnected"}
