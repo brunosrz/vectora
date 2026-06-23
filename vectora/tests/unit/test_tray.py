@@ -126,7 +126,9 @@ def test_enable_dark_mode_noop_em_nao_windows(monkeypatch: pytest.MonkeyPatch) -
     """Em plataformas não-Windows, _enable_dark_mode_win32 não toca o ctypes."""
     monkeypatch.setattr(sys, "platform", "linux")
 
-    with patch("ctypes.WinDLL", side_effect=AssertionError("não deve chamar")):
+    with patch(
+        "ctypes.WinDLL", side_effect=AssertionError("não deve chamar"), create=True
+    ):
         from backend.services.tray import _enable_dark_mode_win32
 
         _enable_dark_mode_win32()  # não deve levantar
@@ -136,7 +138,11 @@ def test_enable_dark_mode_swallows_exception(monkeypatch: pytest.MonkeyPatch) ->
     """Mesmo que ctypes falhe, _enable_dark_mode_win32 não propaga exceção."""
     monkeypatch.setattr(sys, "platform", "win32")
 
-    with patch("ctypes.WinDLL", side_effect=OSError("uxtheme.dll não encontrado")):
+    with patch(
+        "ctypes.WinDLL",
+        side_effect=OSError("uxtheme.dll não encontrado"),
+        create=True,
+    ):
         from backend.services.tray import _enable_dark_mode_win32
 
         _enable_dark_mode_win32()  # deve engolir o OSError
