@@ -22,7 +22,13 @@ e delega para ``src.main:run``.
 # (mypy/pytest/ruff/ty/…): nada disso roda em produção e compilá-las inflava o
 # build em milhares de arquivos C. `--jobs` é o único knob dinâmico e fica no CLI.
 #
+# `--msvc=latest` fixa o compilador no MSVC do VS Build Tools. Sem isso o Nuitka
+# escolhe o `zig` (presente como dep no venv) e a compilação de módulos grandes
+# (google.genai.types, qdrant_client.http.models) passa de minutos para horas.
+# Requer VS Build Tools com workload VCTools + Windows SDK instalados.
+#
 # nuitka-project: --mode=onefile
+# nuitka-project: --msvc=latest
 # nuitka-project: --output-filename=vectora
 # nuitka-project: --output-dir={MAIN_DIRECTORY}/../dist-nuitka
 # nuitka-project: --include-data-dir={MAIN_DIRECTORY}/../frontend/dist=chat_static
