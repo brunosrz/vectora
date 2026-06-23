@@ -2,10 +2,13 @@
 /**
  * Tests para useWebhookWorkbench — eventos de CI do GitHub via webhook viram
  * estado no ci-store + toast. Par erro/borda no mesmo teste (CLAUDE.md §18).
+ *
+ * Os métodos do toast-store são substituídos por `vi.fn()` frescos a cada teste
+ * (via setState) — evita acúmulo de chamadas entre testes que um spy global teria.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, cleanup } from "@testing-library/react";
 
 type Handler = (e: {
   provider: string;
@@ -26,6 +29,18 @@ import { useWebhookWorkbench } from "../use-webhook-workbench";
 import { useCIStore } from "@/lib/stores/ci-store";
 import { useToastStore } from "@/lib/stores/toast-store";
 
+let success: ReturnType<typeof vi.fn>;
+let error: ReturnType<typeof vi.fn>;
+
+beforeEach(() => {
+  useCIStore.getState().clear();
+  success = vi.fn();
+  error = vi.fn();
+  useToastStore.setState({ success, error } as never);
+});
+
+afterEach(() => cleanup());
+
 function mount(): Handler {
   captured = undefined;
   renderHook(() => useWebhookWorkbench());
@@ -35,14 +50,7 @@ function mount(): Handler {
 }
 
 describe("useWebhookWorkbench", () => {
-  beforeEach(() => {
-    useCIStore.getState().clear();
-    vi.restoreAllMocks();
-  });
-
   it("workflow_run completed=success → ci-store + toast de sucesso", () => {
-    const success = vi.spyOn(useToastStore.getState(), "success");
-    const error = vi.spyOn(useToastStore.getState(), "error");
     const handle = mount();
 
     handle({
@@ -63,7 +71,7 @@ describe("useWebhookWorkbench", () => {
     expect(success).toHaveBeenCalledTimes(1);
     expect(error).not.toHaveBeenCalled();
 
-    // Erro/borda: evento de provider não-github é ignorado (store intacto).
+    // Erro/borda: provider não-github é ignorado (store intacto).
     handle({
       provider: "slack",
       event_type: "workflow_run.completed",
@@ -76,8 +84,6 @@ describe("useWebhookWorkbench", () => {
   });
 
   it("failure → toast de erro; in_progress → store sem toast", () => {
-    const success = vi.spyOn(useToastStore.getState(), "success");
-    const error = vi.spyOn(useToastStore.getState(), "error");
     const handle = mount();
 
     handle({
@@ -97,7 +103,7 @@ describe("useWebhookWorkbench", () => {
     const run = useCIStore.getState().lastRun;
     expect(run?.status).toBe("in_progress");
     expect(run?.conclusion).toBeNull();
-    expect(error).toHaveBeenCalledTimes(1); // continua 1, sem novo toast
+    expect(error).toHaveBeenCalledTimes(1);
     expect(success).not.toHaveBeenCalled();
   });
 });

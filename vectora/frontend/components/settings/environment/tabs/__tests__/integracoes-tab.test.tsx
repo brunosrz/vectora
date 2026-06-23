@@ -12,10 +12,28 @@
  * - Categorias exibem apenas providers presentes
  */
 
-import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  afterEach,
+  beforeEach,
+  beforeAll,
+} from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 
 afterEach(cleanup);
+
+// Import frio do componente é lento neste ambiente — pré-carrega uma vez para
+// o primeiro teste não estourar o timeout de 5s.
+beforeAll(async () => {
+  await import("../integracoes-tab");
+}, 30000);
+
+// Restaura o locale padrão após cada teste (overwriteGetLocale é global).
+afterEach(() => overwriteGetLocale(() => baseLocale));
 
 // Mock do fetch para simular GET /integrations/
 function mockFetch(integrations: object[]) {
@@ -101,6 +119,7 @@ const BASE_INTEGRATIONS = [
 
 describe("IntegracoesTab", () => {
   beforeEach(() => {
+    overwriteGetLocale(() => "pt");
     mockFetch(BASE_INTEGRATIONS);
   });
 

@@ -508,7 +508,7 @@ def _event_matches(event_type: str, events: list[str]) -> bool:
     if not events:
         return True
     base = event_type.split(".", 1)[0]
-    return any(e == event_type or e == base for e in events)
+    return any(e in (event_type, base) for e in events)
 
 
 async def dispatch_webhook_event(

@@ -46,6 +46,7 @@ describe("WORKBENCH_TABS", () => {
       "plan",
       "preview",
       "storage",
+      "background",
       "terminal",
     ]);
   });

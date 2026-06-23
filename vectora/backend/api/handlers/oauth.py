@@ -694,14 +694,10 @@ def _google_cfg() -> tuple[str, str, str]:
 async def google_oauth_start(request: Request) -> RedirectResponse:
     user = _get_user(request)
     client_id, _secret, redirect_uri = _google_cfg()
-    scopes = " ".join(
-        [
-            "openid",
-            "email",
-            "profile",
-            "https://www.googleapis.com/auth/drive.readonly",
-            "https://www.googleapis.com/auth/gmail.readonly",
-        ]
+    scopes = (
+        "openid email profile "
+        "https://www.googleapis.com/auth/drive.readonly "
+        "https://www.googleapis.com/auth/gmail.readonly"
     )
     import urllib.parse
 

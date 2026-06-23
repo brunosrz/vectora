@@ -320,10 +320,8 @@ def _emit_sse_event(provider: str, event_type: str, data: dict[str, Any]) -> Non
         "data": data,
     }
     for q in _sse_queues:
-        try:
+        with contextlib.suppress(Exception):
             q.put_nowait(event)
-        except Exception:
-            pass
 
 
 # ---------------------------------------------------------------------------
@@ -398,7 +396,7 @@ async def receive_webhook(provider: str, request: Request) -> Response:
     try:
         payload: WebhookPayload = json.loads(body) if body else {}
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Payload JSON inválido")
+        raise HTTPException(status_code=400, detail="Payload JSON inválido") from None
 
     # Determina tipo do evento
     event_type = (

@@ -29,12 +29,11 @@ def _headers() -> dict[str, str]:
 
 def _rich_text_content(blocks: list[dict]) -> str:
     """Extrai texto de blocos de rich_text."""
-    parts = []
+    parts: list[str] = []
     for block in blocks:
         btype = block.get("type", "")
         b = block.get(btype, {})
-        for rt in b.get("rich_text", []):
-            parts.append(rt.get("plain_text", ""))
+        parts.extend(rt.get("plain_text", "") for rt in b.get("rich_text", []))
     return "\n".join(parts)
 
 

@@ -140,10 +140,10 @@ async def google_drive_search(query: str, max_results: int = 10) -> str:
         if not files:
             return f"Nenhum arquivo encontrado para '{query}'."
         lines = [f"Resultados para '{query}':"]
-        for f in files:
-            lines.append(
-                f"  • {f['name']} (id={f['id']}, modificado={f.get('modifiedTime', '')})"
-            )
+        lines.extend(
+            f"  • {f['name']} (id={f['id']}, modificado={f.get('modifiedTime', '')})"
+            for f in files
+        )
         return "\n".join(lines)
     except Exception as exc:
         logger.exception("google_drive_search error query=%s", query)
