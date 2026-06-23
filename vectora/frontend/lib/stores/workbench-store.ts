@@ -43,7 +43,8 @@ export type WorkbenchTab =
   | "diff"
   | "plan"
   | "preview"
-  | "storage";
+  | "storage"
+  | "background";
 
 export const WORKBENCH_TABS: WorkbenchTab[] = [
   "files",
@@ -51,6 +52,7 @@ export const WORKBENCH_TABS: WorkbenchTab[] = [
   "plan",
   "preview",
   "storage",
+  "background",
   "terminal",
 ];
 

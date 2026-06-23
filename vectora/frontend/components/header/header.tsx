@@ -5,7 +5,6 @@ import { Menu } from "lucide-react";
 
 import { ContextualHelp } from "./contextual-help";
 import { GitStatusBadge } from "./git-status-badge";
-import { HeartbreakIndicator } from "./heartbreak-indicator";
 import { SettingsMenu } from "./settings-menu";
 import { m } from "@/lib/paraglide/messages";
 interface HeaderProps {
@@ -48,7 +47,6 @@ export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <HeartbreakIndicator />
           <GitStatusBadge />
           <ContextualHelp onShowShortcuts={onShowShortcuts} />
           <SettingsMenu />

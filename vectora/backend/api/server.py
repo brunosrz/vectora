@@ -38,13 +38,12 @@ from fastapi.staticfiles import StaticFiles
 from backend.api.handlers.admin import router as admin_router
 from backend.api.handlers.artifacts import router as artifacts_router
 from backend.api.handlers.auth import router as auth_router
+from backend.api.handlers.background import router as background_router
 from backend.api.handlers.chat import router as chat_router
-from backend.api.handlers.heartbreak import router as heartbreak_router
 from backend.api.handlers.license import router as license_router
 from backend.api.handlers.memory import router as memory_router
 from backend.api.handlers.oauth import router as oauth_router
 from backend.api.handlers.plugins import router as plugins_router
-from backend.api.handlers.routines import router as routines_router
 from backend.api.handlers.share import router as share_router
 from backend.api.handlers.skills import router as skills_router
 from backend.api.handlers.terminal import router as terminal_router
@@ -273,13 +272,13 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar embedding worker: %s", exc)
 
-    # Modo Rotina: scheduler de tarefas agendadas (cron)
+    # Tarefas em segundo plano: scheduler das tasks 'interval' (cron) por session.
     try:
-        from backend.services.routines import get_scheduler
+        from backend.services.background_tasks import get_scheduler
 
         await get_scheduler().start()
     except Exception as exc:
-        logger.warning("api/server: falha ao iniciar routine scheduler: %s", exc)
+        logger.warning("api/server: falha ao iniciar background scheduler: %s", exc)
 
     # Túnel ngrok — expõe /webhook/* para o mundo externo em desenvolvimento.
     # Só ativo quando NGROK_AUTHTOKEN ou ngrok_enabled=true nas settings.
@@ -296,7 +295,7 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     finally:
         logger.info("api/server: shutdown — fechando recursos")
         try:
-            from backend.services.routines import get_scheduler as _gs
+            from backend.services.background_tasks import get_scheduler as _gs
 
             await _gs().stop()
         except Exception:
@@ -427,8 +426,7 @@ def create_app(serve_static: bool = True) -> FastAPI:
     app.include_router(license_router)
     app.include_router(tools_router)
     app.include_router(terminal_router)
-    app.include_router(routines_router)
-    app.include_router(heartbreak_router)
+    app.include_router(background_router)
     # REST API v1 — structured output endpoints
     app.include_router(v1_extract_router)
     app.include_router(v1_classify_router)

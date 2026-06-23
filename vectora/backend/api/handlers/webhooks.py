@@ -422,6 +422,21 @@ async def receive_webhook(provider: str, request: Request) -> Response:
         except Exception:
             logger.exception("webhook: erro no handler provider=%s", provider)
 
+    # Ponte webhook→IA: dispara tasks 'webhook' cujo filtro casa este evento.
+    # Fire-and-forget — a execução do agente pode demorar, e o provider (GitHub
+    # etc.) espera resposta rápida; não bloqueamos o 200.
+    async def _dispatch_bg() -> None:
+        try:
+            from backend.services.background_tasks import dispatch_webhook_event
+
+            await dispatch_webhook_event(provider, str(event_type), payload)
+        except Exception:
+            logger.exception("webhook: erro ao despachar para background tasks")
+
+    import asyncio
+
+    asyncio.create_task(_dispatch_bg())  # noqa: RUF006
+
     return Response(status_code=200)
 
 
