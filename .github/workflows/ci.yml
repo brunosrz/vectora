@@ -1,20 +1,17 @@
 name: CI
 
-# Orquestrador único do monorepo. É o ÚNICO workflow com gatilhos de push/PR/
-# schedule — os demais (vectora, company, docs, update-server, codeql) são
-# reusable (`on: workflow_call`) e só rodam quando este runner os chama.
+# Orquestrador único do monorepo. É o ÚNICO workflow com gatilhos de push/PR —
+# os demais (vectora, company, docs, update-server) são reusable
+# (`on: workflow_call`) e só rodam quando este runner os chama.
 #
 # Path-gating centralizado: `dorny/paths-filter` detecta o que mudou e cada
 # projeto só roda se sua árvore foi tocada (ou em workflow_dispatch manual).
-# CodeQL roda sempre (varre o repo inteiro), inclusive no schedule semanal.
 on:
   push:
     branches: ["**"]
     tags: ["v*"]
   pull_request:
     branches: ["**"]
-  schedule:
-    - cron: "20 2 * * 3"
   workflow_dispatch:
 
 concurrency:
@@ -23,16 +20,12 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write
-  packages: read
-  actions: read
 
 jobs:
   # ── Detecção de mudanças por projeto ─────────────────────────────────────
   changes:
     name: Detect changes
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
     outputs:
       vectora: ${{ steps.filter.outputs.vectora }}
       company: ${{ steps.filter.outputs.company }}
@@ -81,10 +74,4 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.update_server == 'true' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/update-server.yml
-    secrets: inherit
-
-  # CodeQL varre o repo inteiro — roda sempre (push/PR/schedule/dispatch),
-  # sem depender da detecção de mudanças.
-  codeql:
-    uses: ./.github/workflows/codeql.yml
     secrets: inherit
