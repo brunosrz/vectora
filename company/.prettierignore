@@ -12,3 +12,6 @@ build
 
 # Código gerado (TanStack Router)
 src/routeTree.gen.ts
+
+# Código gerado (Paraglide i18n) — compilado no build, não versionado
+src/paraglide
