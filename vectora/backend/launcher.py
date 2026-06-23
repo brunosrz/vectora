@@ -45,6 +45,15 @@ e delega para ``src.main:run``.
 # nuitka-project: --nofollow-import-to=black
 # nuitka-project: --nofollow-import-to=isort
 # nuitka-project: --include-module=backend.services.ipc_pipe_win
+#
+# langchain_core / langgraph resolvem submódulos por lazy import (`__getattr__`
+# → `_import_utils.import_attr`), invisíveis à análise estática do Nuitka. Sem
+# embarcar os pacotes inteiros o binário falha em runtime com ImportError (ex.:
+# `langchain_core.embeddings.embeddings` puxado por `langgraph.store.base`).
+# nuitka-project: --include-package=langchain_core
+# nuitka-project: --include-package=langgraph
+# nuitka-project: --include-package=langchain
+# nuitka-project: --include-package=deepagents
 
 from __future__ import annotations
 

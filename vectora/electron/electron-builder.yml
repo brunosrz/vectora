@@ -153,6 +153,8 @@ msi:
     - "-sw1105"
 
 nsis:
+  # ManifestDPIAware true vem de build-resources/installer.nsh (hook customHeader,
+  # auto-incluído pelo electron-builder) — sem ele a fonte do instalador borra em HiDPI.
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
