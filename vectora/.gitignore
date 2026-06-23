@@ -339,6 +339,7 @@ AbilitySystem_repo/
 # SCons cache
 .sconsign.dblite
 /dist-nuitka
+/nuitka-report.xml
 
 # Logs limpos (tee) de `scons lint` / `scons tests`
 /.scons-logs/

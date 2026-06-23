@@ -30,6 +30,11 @@ e delega para ``src.main:run``.
 # nuitka-project: --mode=onefile
 # nuitka-project: --msvc=latest
 # nuitka-project: --output-filename=vectora
+# --report gera o manifesto do que o Nuitka incluiu e o que tentou importar e não
+# achou (nuitka-report.xml na raiz). Custo ~zero, escrito no fim do build; útil pra
+# auditar imports faltando. NÃO captura lazy imports (`__getattr__`) — esses só o
+# smoke test do binário detecta.
+# nuitka-project: --report={MAIN_DIRECTORY}/../nuitka-report.xml
 # nuitka-project: --output-dir={MAIN_DIRECTORY}/../dist-nuitka
 # nuitka-project: --include-data-dir={MAIN_DIRECTORY}/../frontend/dist=chat_static
 # nuitka-project: --include-data-dir={MAIN_DIRECTORY}/assets=backend/assets
