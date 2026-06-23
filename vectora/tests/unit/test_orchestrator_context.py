@@ -50,7 +50,7 @@ def test_overview_returns_none_when_empty(monkeypatch):
     """Erro/borda: sem workspaces registrados → None (nada a injetar)."""
     from backend.services import workspace as ws_mod
 
-    monkeypatch.setattr(ws_mod.workspace_registry, "list_all", lambda: [])
+    monkeypatch.setattr(ws_mod.workspace_registry, "list_all", list)
     assert orchestrator._load_workspaces_overview() is None
 
 

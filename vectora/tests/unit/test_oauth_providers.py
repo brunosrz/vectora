@@ -21,12 +21,12 @@ from fastapi.testclient import TestClient
 from backend.api.handlers.oauth import router
 
 
-@pytest.fixture()
+@pytest.fixture
 def client() -> TestClient:
     app = FastAPI()
     app.include_router(router)
 
-    def fake_user(request):  # noqa: ANN001
+    def fake_user(request):
         from types import SimpleNamespace
 
         request.state.user = SimpleNamespace(id="user-123")

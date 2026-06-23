@@ -286,7 +286,7 @@ async def test_scheduler_runs_due_and_skips_disabled(db, monkeypatch):
 async def test_dispatch_webhook_matches_provider_and_event(db, monkeypatch):
     fired: list[tuple[str, str]] = []
 
-    async def _fake_run(task, trigger_source, payload=None):  # noqa: ANN001
+    async def _fake_run(task, trigger_source, payload=None):
         fired.append((task.id, trigger_source))
         return "bg-x"
 

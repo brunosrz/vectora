@@ -24,6 +24,7 @@ import {
   useWorkbenchStore,
 } from "@/lib/stores/workbench-store";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useCIStore } from "@/lib/stores/ci-store";
 import { DiffSkeleton } from "../tabs/diff-skeleton";
 import {
   apiCreatePR,
@@ -168,6 +169,7 @@ function PrDialog({
 export function GitTab(_props: { threadId: string }) {
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
+  const lastCi = useCIStore((s) => s.lastRun);
 
   const summary = useWorkbenchStore((s) => s.getDiff(wsId).summary);
   const fetchedAt = useWorkbenchStore((s) => s.getDiff(wsId).summaryFetchedAt);
@@ -254,6 +256,34 @@ export function GitTab(_props: { threadId: string }) {
         onOpenPR={handleOpenPR}
         onChanged={handleChanged}
       />
+
+      {lastCi && (
+        <a
+          href={lastCi.htmlUrl || undefined}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1.5 px-3 py-1 shrink-0 border-b border-border/60 text-[11px] text-muted-foreground hover:bg-muted/40 transition-colors"
+          data-testid="git-ci-badge"
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              lastCi.status !== "completed"
+                ? "bg-amber-500 animate-pulse"
+                : lastCi.conclusion === "success"
+                  ? "bg-emerald-500"
+                  : "bg-red-500"
+            }`}
+          />
+          <span className="font-medium text-foreground/80">
+            {lastCi.status !== "completed"
+              ? m.workbench_ci_running()
+              : lastCi.conclusion === "success"
+                ? m.workbench_ci_passed()
+                : m.workbench_ci_failed()}
+          </span>
+          <span className="truncate">{lastCi.name}</span>
+        </a>
+      )}
 
       {compareOpen ? (
         <div className="flex-1 min-h-0">

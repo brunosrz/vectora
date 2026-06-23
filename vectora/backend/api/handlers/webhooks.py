@@ -319,7 +319,7 @@ def _emit_sse_event(provider: str, event_type: str, data: dict[str, Any]) -> Non
         "event_type": event_type,
         "data": data,
     }
-    for q in list(_sse_queues):
+    for q in _sse_queues:
         try:
             q.put_nowait(event)
         except Exception:
@@ -463,7 +463,7 @@ async def webhook_events_stream(request: Request) -> Any:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=30.0)
                     yield f"data: {json.dumps(event)}\n\n"
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield ": ping\n\n"
         finally:
             _sse_queues.remove(queue)

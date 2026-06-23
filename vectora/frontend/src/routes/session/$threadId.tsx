@@ -20,6 +20,7 @@ import { WindowLayer } from "@/components/workbench/windows/window-layer";
 import { WindowDock } from "@/components/workbench/windows/window-dock";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
+import { useWebhookWorkbench } from "@/lib/hooks/use-webhook-workbench";
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { usePreferenciasDialogStore } from "@/lib/stores/preferencias-dialog-store";
@@ -86,6 +87,9 @@ function SessionPage() {
   const workbenchOpen = useWorkbenchStore((s) => s.isOpen(threadId));
   const splitSize = useWorkbenchStore((s) => s.splitSize);
   const setSplitSize = useWorkbenchStore((s) => s.setSplitSize);
+
+  // CI em tempo real: webhook do GitHub → toast + badge no git-tab (sem F5).
+  useWebhookWorkbench();
 
   // Largura da sidebar (desktop) arrastável pela borda direita.
   const sidebarWidth = useSettingsStore((s) => s.sidebarWidth);

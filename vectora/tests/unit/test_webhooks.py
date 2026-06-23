@@ -36,7 +36,7 @@ from backend.api.handlers.webhooks import (
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def client() -> TestClient:
     from fastapi import FastAPI
 
