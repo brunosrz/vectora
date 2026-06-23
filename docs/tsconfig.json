@@ -1,7 +1,10 @@
 {
-  "extends": "@docusaurus/module-type-aliases/tsconfig.json",
+  "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
     "strict": true,
-    "noEmit": true
-  }
+    "noEmit": true,
+    "skipLibCheck": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "exclude": [".docusaurus", "build"]
 }
