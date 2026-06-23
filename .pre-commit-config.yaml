@@ -77,7 +77,7 @@ repos:
   # Python Validation
   # ==========================================
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.14
+    rev: v0.15.18
     hooks:
       - id: ruff
         name: Ruff Lint (Python)

@@ -332,9 +332,19 @@ async def get_memory_store(db_dsn: str | None = None) -> MemoryStore:
     import os
 
     env_dsn = os.environ.get("VECTORA_DB_FILE")
-    effective_dsn = db_dsn or env_dsn or getattr(__import__("backend.settings", fromlist=["settings"]).settings, "db_dsn", None)
+    effective_dsn = (
+        db_dsn
+        or env_dsn
+        or getattr(
+            __import__("backend.settings", fromlist=["settings"]).settings,
+            "db_dsn",
+            None,
+        )
+    )
 
-    if _memory_store is None or (effective_dsn and _memory_store.db_dsn != effective_dsn):
+    if _memory_store is None or (
+        effective_dsn and _memory_store.db_dsn != effective_dsn
+    ):
         _memory_store = MemoryStore(effective_dsn)
         await _memory_store.initialize()
     return _memory_store

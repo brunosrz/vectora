@@ -80,8 +80,16 @@ def _to_out(r: Routine) -> RoutineOut:
         cron_expr=r.cron_expr,
         workspace_id=r.workspace_id,
         enabled=r.enabled,
-        last_run_at=r.last_run_at if isinstance(r.last_run_at, str) else r.last_run_at.isoformat() if r.last_run_at else None,
-        next_run_at=r.next_run_at if isinstance(r.next_run_at, str) else r.next_run_at.isoformat() if r.next_run_at else None,
+        last_run_at=r.last_run_at
+        if isinstance(r.last_run_at, str)
+        else r.last_run_at.isoformat()
+        if r.last_run_at
+        else None,
+        next_run_at=r.next_run_at
+        if isinstance(r.next_run_at, str)
+        else r.next_run_at.isoformat()
+        if r.next_run_at
+        else None,
         created_at=now,
         updated_at=now,
     )

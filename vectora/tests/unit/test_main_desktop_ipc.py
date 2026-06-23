@@ -199,9 +199,14 @@ def test_desktop_windows_sets_pipe_env(capsys: pytest.CaptureFixture[str]) -> No
         patch.dict(os.environ, {"VECTORA_DESKTOP": "1"}, clear=False),
         patch("backend.api.server.create_app", return_value=MagicMock()),
         patch("backend.main._start_vite_dev", return_value=None),
-        patch("backend.services.ipc_pipe_win.serve_pipe", AsyncMock(side_effect=asyncio.CancelledError)),
+        patch(
+            "backend.services.ipc_pipe_win.serve_pipe",
+            AsyncMock(side_effect=asyncio.CancelledError),
+        ),
         patch("uvicorn.Config", return_value=MagicMock()),
-        patch("uvicorn.Server", return_value=MagicMock(serve=AsyncMock(return_value=None))),
+        patch(
+            "uvicorn.Server", return_value=MagicMock(serve=AsyncMock(return_value=None))
+        ),
         patch("asyncio.run", side_effect=asyncio.CancelledError),
     ):
         from backend.main import _run_start

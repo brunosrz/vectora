@@ -168,14 +168,24 @@ async def create_routine(
 
     conn = await _get_db()
     try:
-        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r, strict=False))
+        conn.row_factory = lambda c, r: dict(
+            zip([col[0] for col in c.description], r, strict=False)
+        )
         cursor = await conn.execute(
             """
             INSERT INTO vectora_routines
               (id, user_id, name, instruction, cron_expr, workspace_id, next_run_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (routine_id, user_id, name, instruction, cron_expr, workspace_id, next_run.isoformat()),
+            (
+                routine_id,
+                user_id,
+                name,
+                instruction,
+                cron_expr,
+                workspace_id,
+                next_run.isoformat(),
+            ),
         )
         await conn.commit()
         row = await cursor.fetchone()
@@ -200,7 +210,9 @@ async def list_routines(user_id: int) -> list[Routine]:
     """Lista rotinas do usuário."""
     conn = await _get_db()
     try:
-        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r, strict=False))
+        conn.row_factory = lambda c, r: dict(
+            zip([col[0] for col in c.description], r, strict=False)
+        )
         cursor = await conn.execute(
             "SELECT * FROM vectora_routines WHERE user_id = ?",
             (user_id,),

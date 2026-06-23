@@ -10,6 +10,7 @@ from langchain.tools import tool
 
 try:
     import jwt as _jwt
+
     jwt: Any = _jwt
 except ImportError:
     jwt = None

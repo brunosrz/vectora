@@ -48,9 +48,13 @@ class HeartbreakSession:
         except Exception as e:
             logger.exception("Erro ao processar evento na sessão %s: %s", self.id, e)
 
-    async def _run_event(self, session: HeartbreakSession, payload: dict[str, Any]) -> None:
+    async def _run_event(
+        self, session: HeartbreakSession, payload: dict[str, Any]
+    ) -> None:
         """Lógica padrão (pode ser substituída em testes)."""
-        logger.info("HeartbreakSession.run_event: session=%s payload=%s", session.id, payload)
+        logger.info(
+            "HeartbreakSession.run_event: session=%s payload=%s", session.id, payload
+        )
 
 
 class HeartbreakManager:
@@ -66,7 +70,9 @@ class HeartbreakManager:
         workspace_id: str | None = None,
     ) -> HeartbreakSession:
         """Cria e registra uma nova sessão."""
-        session = HeartbreakSession(user_id=user_id, instruction=instruction, workspace_id=workspace_id)
+        session = HeartbreakSession(
+            user_id=user_id, instruction=instruction, workspace_id=workspace_id
+        )
         self._sessions[session.id] = session
         return session
 
@@ -84,7 +90,11 @@ class HeartbreakManager:
 
     def list_active(self, user_id: int) -> list[HeartbreakSession]:
         """Lista sessões ativas do usuário."""
-        return [s for s in self._sessions.values() if s.user_id == user_id and s.status == "active"]
+        return [
+            s
+            for s in self._sessions.values()
+            if s.user_id == user_id and s.status == "active"
+        ]
 
 
 _manager: HeartbreakManager | None = None

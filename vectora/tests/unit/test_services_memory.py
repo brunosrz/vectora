@@ -112,6 +112,7 @@ class TestMemoryStore:
 @pytest.fixture(autouse=True)
 def _reset_memory_singleton():
     import backend.services.memory as mem_mod
+
     mem_mod._memory_store = None
     yield
     mem_mod._memory_store = None
