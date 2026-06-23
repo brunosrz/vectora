@@ -1,23 +1,9 @@
 name: Update Server (Cloudflare Worker)
 
-# Servidor de updates (Hono em Cloudflare Workers). Gated por path: só roda
-# quando update-server/** muda.
+# Servidor de updates (Hono em Cloudflare Workers). Reusable: disparado só pelo
+# runner ci.yml, que faz o path-gating (update-server/**).
 on:
-  push:
-    branches: ["**"]
-    paths:
-      - "update-server/**"
-      - ".github/workflows/update-server.yml"
-  pull_request:
-    branches: ["**"]
-    paths:
-      - "update-server/**"
-      - ".github/workflows/update-server.yml"
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
 
 permissions:
   contents: read

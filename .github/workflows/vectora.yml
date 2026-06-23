@@ -1,27 +1,10 @@
 name: Vectora (app)
 
 # Pipeline do app Vectora (backend Python + frontend Vite + casca Electron).
-# Gated por path: só roda quando algo em vectora/** muda (ou o próprio workflow).
-# Tags v* sempre rodam (release nativo), independente de path.
+# Reusable: disparado só pelo runner ci.yml (que faz o path-gating). O job
+# release-native continua gated a tags v* / workflow_dispatch internamente.
 on:
-  push:
-    branches: ["**"]
-    tags: ["v*"]
-    paths:
-      - "vectora/**"
-      - ".github/workflows/vectora.yml"
-      - ".github/actions/setup-uv/**"
-  pull_request:
-    branches: ["**"]
-    paths:
-      - "vectora/**"
-      - ".github/workflows/vectora.yml"
-      - ".github/actions/setup-uv/**"
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
 
 permissions:
   contents: read

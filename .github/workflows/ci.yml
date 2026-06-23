@@ -1,0 +1,90 @@
+name: CI
+
+# Orquestrador único do monorepo. É o ÚNICO workflow com gatilhos de push/PR/
+# schedule — os demais (vectora, company, docs, update-server, codeql) são
+# reusable (`on: workflow_call`) e só rodam quando este runner os chama.
+#
+# Path-gating centralizado: `dorny/paths-filter` detecta o que mudou e cada
+# projeto só roda se sua árvore foi tocada (ou em workflow_dispatch manual).
+# CodeQL roda sempre (varre o repo inteiro), inclusive no schedule semanal.
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["**"]
+  schedule:
+    - cron: "20 2 * * 3"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+  actions: read
+
+jobs:
+  # ── Detecção de mudanças por projeto ─────────────────────────────────────
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    outputs:
+      vectora: ${{ steps.filter.outputs.vectora }}
+      company: ${{ steps.filter.outputs.company }}
+      docs: ${{ steps.filter.outputs.docs }}
+      update_server: ${{ steps.filter.outputs.update_server }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            vectora:
+              - 'vectora/**'
+              - '.github/workflows/vectora.yml'
+              - '.github/actions/setup-uv/**'
+            company:
+              - 'company/**'
+              - '.github/workflows/company.yml'
+            docs:
+              - 'docs/**'
+              - '.github/workflows/docs.yml'
+            update_server:
+              - 'update-server/**'
+              - '.github/workflows/update-server.yml'
+
+  # ── Workflows de projeto (reusable, gated pelo runner) ───────────────────
+  vectora:
+    needs: changes
+    if: ${{ needs.changes.outputs.vectora == 'true' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/vectora.yml
+    secrets: inherit
+
+  company:
+    needs: changes
+    if: ${{ needs.changes.outputs.company == 'true' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/company.yml
+    secrets: inherit
+
+  docs:
+    needs: changes
+    if: ${{ needs.changes.outputs.docs == 'true' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/docs.yml
+    secrets: inherit
+
+  update-server:
+    needs: changes
+    if: ${{ needs.changes.outputs.update_server == 'true' || github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/update-server.yml
+    secrets: inherit
+
+  # CodeQL varre o repo inteiro — roda sempre (push/PR/schedule/dispatch),
+  # sem depender da detecção de mudanças.
+  codeql:
+    uses: ./.github/workflows/codeql.yml
+    secrets: inherit

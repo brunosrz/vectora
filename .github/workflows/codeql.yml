@@ -11,13 +11,10 @@
 #
 name: "CodeQL Advanced"
 
+# Reusable: disparado só pelo runner ci.yml (push/PR/schedule). Varre o repo
+# inteiro, então não é path-gated.
 on:
-  push:
-    branches: ["master"]
-  pull_request:
-    branches: ["master"]
-  schedule:
-    - cron: "20 2 * * 3"
+  workflow_call:
 
 env:
   # Força todas as actions JS (checkout, codeql-action…) a Node 24, nunca Node 20.

@@ -1,23 +1,9 @@
 name: Docs (docs.vectora.company)
 
 # Site de documentação (Docusaurus) → deploy na Vercel em docs.vectora.company.
-# Gated por path: só roda quando docs/** muda.
+# Reusable: disparado só pelo runner ci.yml, que faz o path-gating (docs/**).
 on:
-  push:
-    branches: ["**"]
-    paths:
-      - "docs/**"
-      - ".github/workflows/docs.yml"
-  pull_request:
-    branches: ["**"]
-    paths:
-      - "docs/**"
-      - ".github/workflows/docs.yml"
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
 
 permissions:
   contents: read
