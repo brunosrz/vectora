@@ -192,7 +192,7 @@ jobs:
   release-native:
     name: Release native (${{ matrix.target }}/${{ matrix.arch }})
     needs: [test-unit, test-stress, test-external]
-    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build]') }}
     strategy:
       fail-fast: false
       matrix:
