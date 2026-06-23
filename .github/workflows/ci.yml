@@ -32,8 +32,8 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       update_server: ${{ steps.filter.outputs.update_server }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
