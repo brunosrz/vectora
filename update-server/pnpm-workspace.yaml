@@ -1,4 +1,10 @@
+# Config do pnpm 11 para o update-server (Cloudflare Worker).
+# allowBuilds: decisão explícita por pacote com build script (pnpm bloqueia os
+# não listados com strictDepBuilds, abortando o install).
 allowBuilds:
-  esbuild: set this to true or false
-  sharp: set this to true or false
-  workerd: set this to true or false
+  # esbuild e workerd são o bundler e o runtime que o wrangler usa para
+  # dev/build/deploy — precisam rodar o build nativo.
+  esbuild: true
+  workerd: true
+  # sharp é transitivo e não é usado pelo worker — não compila o build nativo.
+  sharp: false
