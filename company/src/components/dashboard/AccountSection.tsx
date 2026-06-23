@@ -1,73 +1,73 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
-import { m } from '#/paraglide/messages'
-import { sendMagicLink } from '#/server/fns/auth'
-import { exportData, requestAccountDeletion } from '#/server/fns/gdpr'
-import { updateProfile } from '#/server/fns/profile'
-import { useAuthStore } from '#/store/auth'
-import { toast } from 'sonner'
-import { Download, Trash2, Save } from 'lucide-react'
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { m } from "#/paraglide/messages";
+import { sendMagicLink } from "#/server/fns/auth";
+import { exportData, requestAccountDeletion } from "#/server/fns/gdpr";
+import { updateProfile } from "#/server/fns/profile";
+import { useAuthStore } from "#/store/auth";
+import { toast } from "sonner";
+import { Download, Trash2, Save } from "lucide-react";
 
 const LANGUAGES = [
-  { value: 'pt', label: 'Português' },
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Español' },
-  { value: 'fr', label: 'Français' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'it', label: 'Italiano' },
-  { value: 'ru', label: 'Русский' },
-]
+  { value: "pt", label: "Português" },
+  { value: "en", label: "English" },
+  { value: "es", label: "Español" },
+  { value: "fr", label: "Français" },
+  { value: "de", label: "Deutsch" },
+  { value: "it", label: "Italiano" },
+  { value: "ru", label: "Русский" },
+];
 
 export default function AccountSection() {
-  const navigate = useNavigate()
-  const user = useAuthStore((s) => s.session)
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.session);
 
-  const [name, setName] = useState(user?.user_metadata.full_name ?? '')
-  const [country, setCountry] = useState<'BR' | 'INTL'>(
-    (user?.user_metadata.country as 'BR' | 'INTL' | undefined) ?? 'INTL',
-  )
+  const [name, setName] = useState(user?.user_metadata.full_name ?? "");
+  const [country, setCountry] = useState<"BR" | "INTL">(
+    (user?.user_metadata.country as "BR" | "INTL" | undefined) ?? "INTL",
+  );
   const [language, setLanguage] = useState<string>(
-    (user?.user_metadata.language as string | undefined) ?? 'pt',
-  )
+    (user?.user_metadata.language as string | undefined) ?? "pt",
+  );
 
-  const [confirmEmail, setConfirmEmail] = useState('')
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const profileMutation = useMutation({
     mutationFn: () =>
       updateProfile({ data: { full_name: name, country, language } }),
     onSuccess: () => toast.success(m.account_profile_saved()),
     onError: () => toast.error(m.error_generic()),
-  })
+  });
 
   const magicLinkMutation = useMutation({
-    mutationFn: () => sendMagicLink({ data: { email: user?.email ?? '' } }),
+    mutationFn: () => sendMagicLink({ data: { email: user?.email ?? "" } }),
     onSuccess: () => toast.success(m.login_magic_sent()),
     onError: () => toast.error(m.error_generic()),
-  })
+  });
 
   const exportMutation = useMutation({
     mutationFn: () => exportData(),
     onSuccess: (res) => {
-      const a = document.createElement('a')
-      a.href = res.url
-      a.download = 'vectora-export.json'
-      a.click()
+      const a = document.createElement("a");
+      a.href = res.url;
+      a.download = "vectora-export.json";
+      a.click();
     },
     onError: () => toast.error(m.error_generic()),
-  })
+  });
 
   const deleteMutation = useMutation({
     mutationFn: () => requestAccountDeletion(),
-    onSuccess: () => navigate({ to: '/' }),
+    onSuccess: () => navigate({ to: "/" }),
     onError: () => toast.error(m.error_generic()),
-  })
+  });
 
-  const canDelete = confirmEmail === user?.email && !deleteMutation.isPending
-  const canSave = name.length >= 2 && !profileMutation.isPending
+  const canDelete = confirmEmail === user?.email && !deleteMutation.isPending;
+  const canSave = name.length >= 2 && !profileMutation.isPending;
 
   return (
     <div className="max-w-xl space-y-8">
@@ -104,18 +104,18 @@ export default function AccountSection() {
               {m.form_country()}
             </label>
             <div className="flex gap-2">
-              {(['BR', 'INTL'] as const).map((c) => (
+              {(["BR", "INTL"] as const).map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setCountry(c)}
                   className={`flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all ${
                     country === c
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:text-foreground/90'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground/90"
                   }`}
                 >
-                  {c === 'BR' ? '🇧🇷 Brasil' : '🌍 Internacional'}
+                  {c === "BR" ? "🇧🇷 Brasil" : "🌍 Internacional"}
                 </button>
               ))}
             </div>
@@ -219,8 +219,8 @@ export default function AccountSection() {
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    setShowDeleteConfirm(false)
-                    setConfirmEmail('')
+                    setShowDeleteConfirm(false);
+                    setConfirmEmail("");
                   }}
                   className="rounded-xl border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-all"
                 >
@@ -241,5 +241,5 @@ export default function AccountSection() {
         </div>
       </div>
     </div>
-  )
+  );
 }

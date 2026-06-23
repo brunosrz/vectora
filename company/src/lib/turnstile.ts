@@ -8,11 +8,11 @@
 
 export const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as
   | string
-  | undefined
+  | undefined;
 
 export interface TurnstileVerifyResult {
-  success: boolean
-  errorCodes?: string[]
+  success: boolean;
+  errorCodes?: string[];
 }
 
 export async function verifyTurnstile(
@@ -22,25 +22,25 @@ export async function verifyTurnstile(
   const body: Record<string, string> = {
     secret: process.env.TURNSTILE_SECRET_KEY!,
     response: token,
-  }
-  if (ip) body['remoteip'] = ip
+  };
+  if (ip) body["remoteip"] = ip;
 
   const res = await fetch(
-    'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     },
-  )
+  );
 
   const data = (await res.json()) as {
-    success: boolean
-    'error-codes'?: string[]
-  }
+    success: boolean;
+    "error-codes"?: string[];
+  };
 
   return {
     success: data.success,
-    errorCodes: data['error-codes'],
-  }
+    errorCodes: data["error-codes"],
+  };
 }

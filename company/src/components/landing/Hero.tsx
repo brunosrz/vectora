@@ -1,6 +1,6 @@
-import { Link } from '@tanstack/react-router'
-import { m } from '#/paraglide/messages'
-import Logo from '#/components/shared/Logo'
+import { Link } from "@tanstack/react-router";
+import { m } from "#/paraglide/messages";
+import Logo from "#/components/shared/Logo";
 
 /** Três bullets do eyebrow — textos vindos das mensagens i18n */
 function Eyebrow() {
@@ -8,7 +8,7 @@ function Eyebrow() {
     <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-1.5 rounded-3xl border border-border bg-card/60 px-4 py-2 backdrop-blur sm:flex-nowrap sm:gap-7 sm:rounded-full sm:px-[17px] sm:py-1.5">
       {m
         .hero_eyebrow()
-        .split(' · ')
+        .split(" · ")
         .map((text) => (
           <span key={text} className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
@@ -18,7 +18,7 @@ function Eyebrow() {
           </span>
         ))}
     </div>
-  )
+  );
 }
 
 export default function Hero() {
@@ -37,10 +37,10 @@ export default function Hero() {
           className="text-center text-4xl font-semibold leading-[1.25] tracking-[-1.2px] sm:text-5xl lg:text-[48px]"
           style={{
             background:
-              'linear-gradient(90deg, #79B8FF 0%, rgba(121,184,255,0.7) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+              "linear-gradient(90deg, #79B8FF 0%, rgba(121,184,255,0.7) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
           }}
         >
           {m.hero_tagline()}
@@ -72,9 +72,9 @@ export default function Hero() {
           <div
             className="overflow-hidden rounded-3xl border border-primary"
             style={{
-              aspectRatio: '1023 / 358.67',
+              aspectRatio: "1023 / 358.67",
               boxShadow:
-                '0px 10px 15px -3px rgba(121,184,255,0.25), 0px 4px 6px -4px rgba(121,184,255,0.25)',
+                "0px 10px 15px -3px rgba(121,184,255,0.25), 0px 4px 6px -4px rgba(121,184,255,0.25)",
             }}
           >
             <img
@@ -83,11 +83,11 @@ export default function Hero() {
               loading="lazy"
               decoding="async"
               className="h-full w-full object-cover gif-skeleton"
-              onLoad={(e) => (e.currentTarget.style.background = 'none')}
+              onLoad={(e) => (e.currentTarget.style.background = "none")}
             />
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

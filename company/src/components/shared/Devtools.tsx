@@ -1,6 +1,6 @@
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import TanStackQueryDevtools from '#/integrations/tanstack-query/devtools'
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import TanStackQueryDevtools from "#/integrations/tanstack-query/devtools";
 
 /**
  * Devtools — extraído do __root.tsx porque o plugin @tanstack/devtools-vite
@@ -9,7 +9,7 @@ import TanStackQueryDevtools from '#/integrations/tanstack-query/devtools'
  * com parênteses sobraria `return ( );`, que quebra o parse.
  */
 export default function Devtools() {
-  if (!import.meta.env.DEV) return null
+  if (!import.meta.env.DEV) return null;
   // prettier-ignore
   return <TanStackDevtools
     config={{ position: "bottom-right" }}

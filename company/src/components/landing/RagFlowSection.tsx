@@ -1,16 +1,16 @@
-import { m } from '#/paraglide/messages'
+import { m } from "#/paraglide/messages";
 
 const BULLETS = [
-  'PDF, DOCX, TXT, Markdown e código-fonte',
-  'Embeddings via Cohere (assimétrico: search_document / search_query)',
-  'Busca híbrida: densa (Cohere) + esparsa (BM25) com fusão RRF',
-  'Multi-query: o LLM gera variantes da pergunta para mais recall',
-  'HyDE: documento hipotético quando o score inicial é baixo',
-  'Reranker Cohere para ordenar por relevância antes de responder',
-  'Indexação em segundo plano: o worker de embeddings processa sem travar o chat',
-  'Curador automático resume a base indexada no MANIFEST do workspace',
-  'Citação da fonte em cada resposta',
-]
+  "PDF, DOCX, TXT, Markdown e código-fonte",
+  "Embeddings via Cohere (assimétrico: search_document / search_query)",
+  "Busca híbrida: densa (Cohere) + esparsa (BM25) com fusão RRF",
+  "Multi-query: o LLM gera variantes da pergunta para mais recall",
+  "HyDE: documento hipotético quando o score inicial é baixo",
+  "Reranker Cohere para ordenar por relevância antes de responder",
+  "Indexação em segundo plano: o worker de embeddings processa sem travar o chat",
+  "Curador automático resume a base indexada no MANIFEST do workspace",
+  "Citação da fonte em cada resposta",
+];
 
 function RagDiagram() {
   return (
@@ -21,12 +21,12 @@ function RagDiagram() {
       <svg
         viewBox="0 0 400 280"
         className="w-full"
-        style={{ fontFamily: 'inherit' }}
+        style={{ fontFamily: "inherit" }}
       >
         {/* Left column: Documento → Chunking → LanceDB */}
         {[
-          { y: 30, label: 'Documento', sub: 'PDF · MD · código' },
-          { y: 100, label: 'Chunking', sub: '→ Cohere Embed' },
+          { y: 30, label: "Documento", sub: "PDF · MD · código" },
+          { y: 100, label: "Chunking", sub: "→ Cohere Embed" },
         ].map((item) => (
           <g key={item.label}>
             <rect
@@ -129,27 +129,27 @@ function RagDiagram() {
         {[
           {
             y: 30,
-            label: 'Query',
-            sub: 'multi-query expand',
-            fill: 'var(--accent-purple)',
-            stroke: 'var(--accent-purple)',
-            textFill: 'var(--foreground)',
+            label: "Query",
+            sub: "multi-query expand",
+            fill: "var(--accent-purple)",
+            stroke: "var(--accent-purple)",
+            textFill: "var(--foreground)",
           },
           {
             y: 100,
-            label: 'Hybrid Search',
-            sub: 'dense + BM25 + RRF',
-            fill: '#262626',
-            stroke: 'var(--primary)',
-            textFill: 'var(--foreground)',
+            label: "Hybrid Search",
+            sub: "dense + BM25 + RRF",
+            fill: "#262626",
+            stroke: "var(--primary)",
+            textFill: "var(--foreground)",
           },
           {
             y: 170,
-            label: 'Reranker',
-            sub: 'Cohere rerank',
-            fill: '#000',
-            stroke: 'var(--accent-amber)',
-            textFill: 'var(--foreground)',
+            label: "Reranker",
+            sub: "Cohere rerank",
+            fill: "#000",
+            stroke: "var(--accent-amber)",
+            textFill: "var(--foreground)",
           },
         ].map((item) => (
           <g key={item.label}>
@@ -256,7 +256,7 @@ function RagDiagram() {
         />
       </svg>
     </div>
-  )
+  );
 }
 
 export default function RagFlowSection() {
@@ -272,7 +272,7 @@ export default function RagFlowSection() {
             {BULLETS.map((text, i) => (
               <li
                 key={i}
-                className={`flex items-start gap-[10px] text-[14px] leading-5 text-muted-foreground${i > 0 ? ' pt-[10px]' : ''}`}
+                className={`flex items-start gap-[10px] text-[14px] leading-5 text-muted-foreground${i > 0 ? " pt-[10px]" : ""}`}
               >
                 <span className="flex w-[6px] shrink-0 pt-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary" />
@@ -287,5 +287,5 @@ export default function RagFlowSection() {
         <RagDiagram />
       </div>
     </section>
-  )
+  );
 }

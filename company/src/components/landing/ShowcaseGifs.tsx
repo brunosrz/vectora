@@ -1,19 +1,19 @@
-import { m } from '#/paraglide/messages'
-import { track } from '#/lib/analytics/plausible'
+import { m } from "#/paraglide/messages";
+import { track } from "#/lib/analytics/plausible";
 
 interface ShowcaseCardProps {
-  gif: string
-  alt: string
-  title: string
-  desc: string
+  gif: string;
+  alt: string;
+  title: string;
+  desc: string;
 }
 
 function ShowcaseCard({ gif, alt, title, desc }: ShowcaseCardProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card/40">
       <div
-        style={{ aspectRatio: '496 / 232' }}
-        onMouseEnter={() => track('gif_viewed', { gif })}
+        style={{ aspectRatio: "496 / 232" }}
+        onMouseEnter={() => track("gif_viewed", { gif })}
       >
         <img
           src={gif}
@@ -21,7 +21,7 @@ function ShowcaseCard({ gif, alt, title, desc }: ShowcaseCardProps) {
           loading="lazy"
           decoding="async"
           className="h-full w-full object-cover gif-skeleton"
-          onLoad={(e) => (e.currentTarget.style.background = 'none')}
+          onLoad={(e) => (e.currentTarget.style.background = "none")}
         />
       </div>
       <div className="p-4">
@@ -33,36 +33,36 @@ function ShowcaseCard({ gif, alt, title, desc }: ShowcaseCardProps) {
         </p>
       </div>
     </div>
-  )
+  );
 }
 
 export default function ShowcaseGifs() {
   const cards: ShowcaseCardProps[] = [
     {
-      gif: '/gifs/showcase-chat.gif',
+      gif: "/gifs/showcase-chat.gif",
       alt: m.showcase_chat_alt(),
       title: m.showcase_chat_title(),
       desc: m.showcase_chat_desc(),
     },
     {
-      gif: '/gifs/showcase-rag.gif',
+      gif: "/gifs/showcase-rag.gif",
       alt: m.showcase_rag_alt(),
       title: m.showcase_rag_title(),
       desc: m.showcase_rag_desc(),
     },
     {
-      gif: '/gifs/showcase-code.gif',
+      gif: "/gifs/showcase-code.gif",
       alt: m.showcase_code_alt(),
       title: m.showcase_code_title(),
       desc: m.showcase_code_desc(),
     },
     {
-      gif: '/gifs/showcase-plan.gif',
+      gif: "/gifs/showcase-plan.gif",
       alt: m.showcase_plan_alt(),
       title: m.showcase_plan_title(),
       desc: m.showcase_plan_desc(),
     },
-  ]
+  ];
 
   return (
     <section className="bg-background/50 py-[23px]">
@@ -77,5 +77,5 @@ export default function ShowcaseGifs() {
         </div>
       </div>
     </section>
-  )
+  );
 }

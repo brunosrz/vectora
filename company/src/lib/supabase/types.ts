@@ -8,245 +8,245 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export type Database = {
   public: {
     Tables: {
       profiles: {
         Row: {
-          id: string
-          full_name: string | null
-          company: string | null
-          country: 'BR' | 'INTL'
-          language: string
-          soft_delete_at: string | null
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          full_name: string | null;
+          company: string | null;
+          country: "BR" | "INTL";
+          language: string;
+          soft_delete_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
         Insert: {
-          id: string
-          full_name?: string | null
-          company?: string | null
-          country: 'BR' | 'INTL'
-          language?: string
-          soft_delete_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id: string;
+          full_name?: string | null;
+          company?: string | null;
+          country: "BR" | "INTL";
+          language?: string;
+          soft_delete_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
         Update: {
-          full_name?: string | null
-          company?: string | null
-          country?: 'BR' | 'INTL'
-          language?: string
-          soft_delete_at?: string | null
-          updated_at?: string
-        }
-      }
+          full_name?: string | null;
+          company?: string | null;
+          country?: "BR" | "INTL";
+          language?: string;
+          soft_delete_at?: string | null;
+          updated_at?: string;
+        };
+      };
       issues: {
         Row: {
-          id: string
-          title: string
-          category: 'bug' | 'feedback' | 'feature'
-          description: string | null
-          email: string | null
-          created_at: string
-        }
+          id: string;
+          title: string;
+          category: "bug" | "feedback" | "feature";
+          description: string | null;
+          email: string | null;
+          created_at: string;
+        };
         Insert: {
-          id?: string
-          title: string
-          category: 'bug' | 'feedback' | 'feature'
-          description?: string | null
-          email?: string | null
-          created_at?: string
-        }
-        Update: Record<string, never>
-      }
+          id?: string;
+          title: string;
+          category: "bug" | "feedback" | "feature";
+          description?: string | null;
+          email?: string | null;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
+      };
       tokens: {
         Row: {
-          id: string
-          user_id: string
-          token: string | null
-          token_hash: string
-          created_at: string
-          rotated_at: string | null
-        }
+          id: string;
+          user_id: string;
+          token: string | null;
+          token_hash: string;
+          created_at: string;
+          rotated_at: string | null;
+        };
         Insert: {
-          id?: string
-          user_id: string
-          token?: string | null
-          token_hash: string
-          created_at?: string
-          rotated_at?: string | null
-        }
+          id?: string;
+          user_id: string;
+          token?: string | null;
+          token_hash: string;
+          created_at?: string;
+          rotated_at?: string | null;
+        };
         Update: {
-          token?: string | null
-          rotated_at?: string | null
-        }
-      }
+          token?: string | null;
+          rotated_at?: string | null;
+        };
+      };
       subscriptions: {
         Row: {
-          id: string
-          user_id: string
-          tier: 'plus' | 'pro'
-          status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
-          trial_ends_at: string | null
-          current_period_start: string
-          current_period_end: string
-          provider: 'stripe' | 'asaas' | 'manual'
-          provider_sub_id: string | null
-          currency: 'BRL' | 'USD'
-          amount_cents: number
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          user_id: string;
+          tier: "plus" | "pro";
+          status: "trialing" | "active" | "past_due" | "canceled" | "expired";
+          trial_ends_at: string | null;
+          current_period_start: string;
+          current_period_end: string;
+          provider: "stripe" | "asaas" | "manual";
+          provider_sub_id: string | null;
+          currency: "BRL" | "USD";
+          amount_cents: number;
+          created_at: string;
+          updated_at: string;
+        };
         Insert: {
-          id?: string
-          user_id: string
-          tier: 'plus' | 'pro'
-          status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
-          trial_ends_at?: string | null
-          current_period_start: string
-          current_period_end: string
-          provider: 'stripe' | 'asaas' | 'manual'
-          provider_sub_id?: string | null
-          currency: 'BRL' | 'USD'
-          amount_cents: number
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+          user_id: string;
+          tier: "plus" | "pro";
+          status: "trialing" | "active" | "past_due" | "canceled" | "expired";
+          trial_ends_at?: string | null;
+          current_period_start: string;
+          current_period_end: string;
+          provider: "stripe" | "asaas" | "manual";
+          provider_sub_id?: string | null;
+          currency: "BRL" | "USD";
+          amount_cents: number;
+          created_at?: string;
+          updated_at?: string;
+        };
         Update: {
-          tier?: 'plus' | 'pro'
-          status?: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
-          trial_ends_at?: string | null
-          current_period_start?: string
-          current_period_end?: string
-          provider_sub_id?: string | null
-          updated_at?: string
-        }
-      }
+          tier?: "plus" | "pro";
+          status?: "trialing" | "active" | "past_due" | "canceled" | "expired";
+          trial_ends_at?: string | null;
+          current_period_start?: string;
+          current_period_end?: string;
+          provider_sub_id?: string | null;
+          updated_at?: string;
+        };
+      };
       license_checks: {
         Row: {
-          id: string
-          user_id: string | null
-          token_hash: string
-          result: 'valid' | 'invalid' | 'expired' | 'trial'
-          tier: string | null
-          ip: string | null
-          vectora_version: string | null
-          checked_at: string
-        }
+          id: string;
+          user_id: string | null;
+          token_hash: string;
+          result: "valid" | "invalid" | "expired" | "trial";
+          tier: string | null;
+          ip: string | null;
+          vectora_version: string | null;
+          checked_at: string;
+        };
         Insert: {
-          id?: string
-          user_id?: string | null
-          token_hash: string
-          result: 'valid' | 'invalid' | 'expired' | 'trial'
-          tier?: string | null
-          ip?: string | null
-          vectora_version?: string | null
-          checked_at?: string
-        }
-        Update: Record<string, never>
-      }
+          id?: string;
+          user_id?: string | null;
+          token_hash: string;
+          result: "valid" | "invalid" | "expired" | "trial";
+          tier?: string | null;
+          ip?: string | null;
+          vectora_version?: string | null;
+          checked_at?: string;
+        };
+        Update: Record<string, never>;
+      };
       payment_events: {
         Row: {
-          id: string
-          provider: string
-          provider_event_id: string
-          event_type: string
-          subscription_id: string | null
-          payload: Json
-          processed_at: string
-        }
+          id: string;
+          provider: string;
+          provider_event_id: string;
+          event_type: string;
+          subscription_id: string | null;
+          payload: Json;
+          processed_at: string;
+        };
         Insert: {
-          id?: string
-          provider: string
-          provider_event_id: string
-          event_type: string
-          subscription_id?: string | null
-          payload: Json
-          processed_at?: string
-        }
-        Update: Record<string, never>
-      }
+          id?: string;
+          provider: string;
+          provider_event_id: string;
+          event_type: string;
+          subscription_id?: string | null;
+          payload: Json;
+          processed_at?: string;
+        };
+        Update: Record<string, never>;
+      };
       api_keys: {
         Row: {
-          id: string
-          user_id: string
-          name: string
-          scopes: string[]
-          key_hash: string
-          created_at: string
-          last_used_at: string | null
-          revoked_at: string | null
-        }
+          id: string;
+          user_id: string;
+          name: string;
+          scopes: string[];
+          key_hash: string;
+          created_at: string;
+          last_used_at: string | null;
+          revoked_at: string | null;
+        };
         Insert: {
-          id?: string
-          user_id: string
-          name: string
-          scopes: string[]
-          key_hash: string
-          created_at?: string
-          last_used_at?: string | null
-          revoked_at?: string | null
-        }
+          id?: string;
+          user_id: string;
+          name: string;
+          scopes: string[];
+          key_hash: string;
+          created_at?: string;
+          last_used_at?: string | null;
+          revoked_at?: string | null;
+        };
         Update: {
-          name?: string
-          scopes?: string[]
-          revoked_at?: string | null
-          last_used_at?: string | null
-        }
-      }
+          name?: string;
+          scopes?: string[];
+          revoked_at?: string | null;
+          last_used_at?: string | null;
+        };
+      };
       waitlist: {
         Row: {
-          id: string
-          email: string
-          country: 'BR' | 'INTL' | null
-          source: string | null
-          created_at: string
-        }
+          id: string;
+          email: string;
+          country: "BR" | "INTL" | null;
+          source: string | null;
+          created_at: string;
+        };
         Insert: {
-          id?: string
-          email: string
-          country?: 'BR' | 'INTL' | null
-          source?: string | null
-          created_at?: string
-        }
+          id?: string;
+          email: string;
+          country?: "BR" | "INTL" | null;
+          source?: string | null;
+          created_at?: string;
+        };
         Update: {
-          country?: 'BR' | 'INTL' | null
-          source?: string | null
-        }
-      }
-    }
-    Views: Record<never, never>
+          country?: "BR" | "INTL" | null;
+          source?: string | null;
+        };
+      };
+    };
+    Views: Record<never, never>;
     Functions: {
       validate_license: {
-        Args: { token: string; vectora_version: string }
-        Returns: Json
-      }
-    }
+        Args: { token: string; vectora_version: string };
+        Returns: Json;
+      };
+    };
     Enums: {
-      subscription_tier: 'plus' | 'pro'
+      subscription_tier: "plus" | "pro";
       subscription_status:
-        | 'trialing'
-        | 'active'
-        | 'past_due'
-        | 'canceled'
-        | 'expired'
-      currency: 'BRL' | 'USD'
-      country: 'BR' | 'INTL'
-    }
-  }
-}
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "canceled"
+        | "expired";
+      currency: "BRL" | "USD";
+      country: "BR" | "INTL";
+    };
+  };
+};
 
-export type Tables<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Row']
+export type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
 
-export type TablesInsert<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Insert']
+export type TablesInsert<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Insert"];
 
-export type TablesUpdate<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Update']
+export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Update"];
 
-export type Enums<T extends keyof Database['public']['Enums']> =
-  Database['public']['Enums'][T]
+export type Enums<T extends keyof Database["public"]["Enums"]> =
+  Database["public"]["Enums"][T];

@@ -1,40 +1,40 @@
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { z } from 'zod'
-import { m } from '#/paraglide/messages'
-import AuthLayout from '#/components/shared/AuthLayout'
-import Turnstile from '#/components/shared/Turnstile'
-import { getSession, signUp } from '#/server/fns/auth'
-import { track } from '#/lib/analytics/plausible'
-import { toast } from 'sonner'
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+import { m } from "#/paraglide/messages";
+import AuthLayout from "#/components/shared/AuthLayout";
+import Turnstile from "#/components/shared/Turnstile";
+import { getSession, signUp } from "#/server/fns/auth";
+import { track } from "#/lib/analytics/plausible";
+import { toast } from "sonner";
 
-const SearchSchema = z.object({ plan: z.enum(['plus', 'pro']).optional() })
+const SearchSchema = z.object({ plan: z.enum(["plus", "pro"]).optional() });
 
-export const Route = createFileRoute('/signup')({
+export const Route = createFileRoute("/signup")({
   validateSearch: SearchSchema,
   beforeLoad: async () => {
-    const user = await getSession()
-    if (user) throw { redirect: { to: '/dashboard' } }
+    const user = await getSession();
+    if (user) throw { redirect: { to: "/dashboard" } };
   },
   head: () => ({ meta: [{ title: m.page_signup_title() }] }),
   component: SignupPage,
-})
+});
 
 const AUTH_ERROR_MAP: Partial<Record<string, () => string>> = {
-  'User already registered': m.error_email_taken,
-  'Password should be at least 6 characters': m.error_password_weak,
-}
+  "User already registered": m.error_email_taken,
+  "Password should be at least 6 characters": m.error_password_weak,
+};
 
 function SignupPage() {
-  const navigate = useNavigate()
-  const { plan } = Route.useSearch()
+  const navigate = useNavigate();
+  const { plan } = Route.useSearch();
 
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [country, setCountry] = useState<'BR' | 'INTL'>('BR')
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [country, setCountry] = useState<"BR" | "INTL">("BR");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -48,21 +48,21 @@ function SignupPage() {
         },
       }),
     onSuccess: (res) => {
-      track('signup', { plan: plan ?? 'plus' })
-      navigate({ to: res.redirect as '/dashboard' })
+      track("signup", { plan: plan ?? "plus" });
+      navigate({ to: res.redirect as "/dashboard" });
     },
     onError: (err: Error) => {
-      const msgFn = AUTH_ERROR_MAP[err.message]
-      toast.error(msgFn ? msgFn() : m.error_generic())
+      const msgFn = AUTH_ERROR_MAP[err.message];
+      toast.error(msgFn ? msgFn() : m.error_generic());
     },
-  })
+  });
 
   const canSubmit =
     name.length >= 2 &&
-    email.includes('@') &&
+    email.includes("@") &&
     password.length >= 8 &&
     turnstileToken !== null &&
-    !mutation.isPending
+    !mutation.isPending;
 
   return (
     <AuthLayout
@@ -70,15 +70,15 @@ function SignupPage() {
       subheading={
         plan && (
           <p className="mt-1 text-sm text-primary">
-            Plano {plan === 'pro' ? 'Pro' : 'Plus'} selecionado
+            Plano {plan === "pro" ? "Pro" : "Plus"} selecionado
           </p>
         )
       }
     >
       <form
         onSubmit={(e) => {
-          e.preventDefault()
-          if (canSubmit) mutation.mutate()
+          e.preventDefault();
+          if (canSubmit) mutation.mutate();
         }}
         className="space-y-4"
       >
@@ -131,18 +131,18 @@ function SignupPage() {
             {m.form_country()}
           </label>
           <div className="flex gap-2">
-            {(['BR', 'INTL'] as const).map((c) => (
+            {(["BR", "INTL"] as const).map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setCountry(c)}
                 className={`flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all ${
                   country === c
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:text-foreground/90'
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:text-foreground/90"
                 }`}
               >
-                {c === 'BR' ? '🇧🇷 Brasil' : '🌍 Internacional'}
+                {c === "BR" ? "🇧🇷 Brasil" : "🌍 Internacional"}
               </button>
             ))}
           </div>
@@ -174,5 +174,5 @@ function SignupPage() {
         </Link>
       </div>
     </AuthLayout>
-  )
+  );
 }

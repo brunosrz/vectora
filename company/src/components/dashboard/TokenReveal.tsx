@@ -1,57 +1,57 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { m } from '#/paraglide/messages'
-import { getToken, rotateToken } from '#/server/fns/token'
-import { Copy, Eye, RefreshCw, AlertTriangle } from 'lucide-react'
-import { toast } from 'sonner'
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { m } from "#/paraglide/messages";
+import { getToken, rotateToken } from "#/server/fns/token";
+import { Copy, Eye, RefreshCw, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
-  initialRevealed: boolean
-  welcome?: boolean
+  initialRevealed: boolean;
+  welcome?: boolean;
 }
 
 const QUICKSTART = [
-  'Revele e copie seu VECTORA_TOKEN abaixo',
-  'pip install vectora',
-  'vectora setup  (cole o token quando solicitado)',
-  'vectora chat',
-]
+  "Revele e copie seu VECTORA_TOKEN abaixo",
+  "pip install vectora",
+  "vectora setup  (cole o token quando solicitado)",
+  "vectora chat",
+];
 
 export default function TokenReveal({ initialRevealed, welcome }: Props) {
-  const [revealed, setRevealed] = useState(initialRevealed)
-  const [token, setToken] = useState<string | null>(null)
+  const [revealed, setRevealed] = useState(initialRevealed);
+  const [token, setToken] = useState<string | null>(null);
 
   const revealMutation = useMutation({
     mutationFn: () => getToken(),
     onSuccess: (res) => {
       if (res.revealed) {
-        setRevealed(true)
+        setRevealed(true);
       } else {
-        setToken(res.token)
-        setRevealed(false)
+        setToken(res.token);
+        setRevealed(false);
       }
     },
     onError: () => toast.error(m.error_generic()),
-  })
+  });
 
   const rotateMutation = useMutation({
     mutationFn: () => rotateToken(),
     onSuccess: (res) => {
-      setToken(res.token)
-      setRevealed(false)
-      toast.success(m.token_rotated())
+      setToken(res.token);
+      setRevealed(false);
+      toast.success(m.token_rotated());
     },
     onError: () => toast.error(m.error_generic()),
-  })
+  });
 
   const handleCopy = () => {
-    if (!token) return
-    navigator.clipboard.writeText(token)
-    toast.success(m.token_copied())
-    setToken(null)
-  }
+    if (!token) return;
+    navigator.clipboard.writeText(token);
+    toast.success(m.token_copied());
+    setToken(null);
+  };
 
   return (
     <div className="max-w-2xl">
@@ -135,7 +135,7 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
               className="flex items-center gap-2 rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-foreground/90 hover:border-primary hover:text-foreground disabled:opacity-50 transition-all"
             >
               <RefreshCw
-                className={`h-4 w-4 ${rotateMutation.isPending ? 'animate-spin' : ''}`}
+                className={`h-4 w-4 ${rotateMutation.isPending ? "animate-spin" : ""}`}
               />
               {rotateMutation.isPending
                 ? m.form_submitting()
@@ -145,5 +145,5 @@ export default function TokenReveal({ initialRevealed, welcome }: Props) {
         )}
       </div>
     </div>
-  )
+  );
 }

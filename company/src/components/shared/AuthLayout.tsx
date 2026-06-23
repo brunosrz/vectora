@@ -1,4 +1,4 @@
-import Logo from '#/components/shared/Logo'
+import Logo from "#/components/shared/Logo";
 
 /**
  * AuthLayout — casca centralizada das telas de autenticação (login, signup).
@@ -8,9 +8,9 @@ import Logo from '#/components/shared/Logo'
  */
 
 interface AuthLayoutProps {
-  heading: string
-  subheading?: React.ReactNode
-  children: React.ReactNode
+  heading: string;
+  subheading?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export default function AuthLayout({
@@ -31,5 +31,5 @@ export default function AuthLayout({
         {children}
       </div>
     </div>
-  )
+  );
 }

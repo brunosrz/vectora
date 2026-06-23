@@ -1,86 +1,86 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { m } from '#/paraglide/messages'
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { m } from "#/paraglide/messages";
 import {
   getSubscription,
   getLicenseHistory,
   createCheckout,
   createPortal,
-} from '#/server/fns/subscription'
-import { toast } from 'sonner'
+} from "#/server/fns/subscription";
+import { toast } from "sonner";
 
-type SubStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
+type SubStatus = "trialing" | "active" | "past_due" | "canceled" | "expired";
 
 const STATUS_CONFIG: Record<SubStatus, { label: string; color: string }> = {
   trialing: {
-    label: 'Trial ativo',
-    color: 'text-accent-green bg-accent-green/10 border-accent-green/30',
+    label: "Trial ativo",
+    color: "text-accent-green bg-accent-green/10 border-accent-green/30",
   },
   active: {
-    label: 'Ativo',
-    color: 'text-accent-green bg-accent-green/10 border-accent-green/30',
+    label: "Ativo",
+    color: "text-accent-green bg-accent-green/10 border-accent-green/30",
   },
   past_due: {
-    label: 'Pagamento pendente',
-    color: 'text-accent-amber bg-accent-amber/10 border-accent-amber/30',
+    label: "Pagamento pendente",
+    color: "text-accent-amber bg-accent-amber/10 border-accent-amber/30",
   },
   canceled: {
-    label: 'Cancelado',
-    color: 'text-accent-red bg-accent-red/10 border-accent-red/30',
+    label: "Cancelado",
+    color: "text-accent-red bg-accent-red/10 border-accent-red/30",
   },
   expired: {
-    label: 'Expirado',
-    color: 'text-muted-foreground bg-muted border-border',
+    label: "Expirado",
+    color: "text-muted-foreground bg-muted border-border",
   },
-}
+};
 
 function daysRemaining(dateStr: string | null) {
-  if (!dateStr) return null
-  const diff = new Date(dateStr).getTime() - Date.now()
-  return Math.max(0, Math.ceil(diff / 86_400_000))
+  if (!dateStr) return null;
+  const diff = new Date(dateStr).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86_400_000));
 }
 
 function maskIp(ip: string) {
-  const parts = ip.split('.')
-  if (parts.length === 4) return `${parts[0]}.${parts[1]}.*.*`
-  return ip.slice(0, 8) + '...'
+  const parts = ip.split(".");
+  if (parts.length === 4) return `${parts[0]}.${parts[1]}.*.*`;
+  return ip.slice(0, 8) + "...";
 }
 
 export function LicenseStatus() {
   const { data: sub, isLoading } = useQuery({
-    queryKey: ['subscription'],
+    queryKey: ["subscription"],
     queryFn: () => getSubscription(),
     staleTime: 30_000,
-  })
+  });
 
   const checkoutMutation = useMutation({
-    mutationFn: (plan: 'plus' | 'pro') => createCheckout({ data: { plan } }),
+    mutationFn: (plan: "plus" | "pro") => createCheckout({ data: { plan } }),
     onSuccess: (res) => {
-      window.location.href = res.url
+      window.location.href = res.url;
     },
     onError: () => toast.error(m.error_generic()),
-  })
+  });
 
   const portalMutation = useMutation({
     mutationFn: () => createPortal(),
     onSuccess: (res) => {
-      window.location.href = res.url
+      window.location.href = res.url;
     },
     onError: () => toast.error(m.error_generic()),
-  })
+  });
 
   if (isLoading) {
-    return <div className="h-32 rounded-xl bg-card/30 animate-pulse" />
+    return <div className="h-32 rounded-xl bg-card/30 animate-pulse" />;
   }
 
-  if (!sub) return null
+  if (!sub) return null;
 
-  const status = sub.status
-  const config = STATUS_CONFIG[status]
-  const days = daysRemaining(sub.trial_ends_at)
-  const isPro = sub.tier === 'pro'
-  const isActive = status === 'active' || status === 'trialing'
-  const isPortalBusy = portalMutation.isPending
-  const isCheckoutBusy = checkoutMutation.isPending
+  const status = sub.status;
+  const config = STATUS_CONFIG[status];
+  const days = daysRemaining(sub.trial_ends_at);
+  const isPro = sub.tier === "pro";
+  const isActive = status === "active" || status === "trialing";
+  const isPortalBusy = portalMutation.isPending;
+  const isCheckoutBusy = checkoutMutation.isPending;
 
   return (
     <div className="max-w-2xl space-y-5">
@@ -131,12 +131,12 @@ export function LicenseStatus() {
 
         {/* CTAs */}
         <div className="mt-5 flex flex-wrap gap-2">
-          {(status === 'trialing' ||
-            status === 'canceled' ||
-            status === 'expired') &&
+          {(status === "trialing" ||
+            status === "canceled" ||
+            status === "expired") &&
             !isPro && (
               <button
-                onClick={() => checkoutMutation.mutate('plus')}
+                onClick={() => checkoutMutation.mutate("plus")}
                 disabled={isCheckoutBusy}
                 className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all"
               >
@@ -145,7 +145,7 @@ export function LicenseStatus() {
             )}
           {!isPro && isActive && (
             <button
-              onClick={() => checkoutMutation.mutate('pro')}
+              onClick={() => checkoutMutation.mutate("pro")}
               disabled={isCheckoutBusy}
               className="rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-50 transition-all"
             >
@@ -161,7 +161,7 @@ export function LicenseStatus() {
               {isPortalBusy ? m.form_submitting() : m.license_cta_manage()}
             </button>
           )}
-          {status === 'past_due' && (
+          {status === "past_due" && (
             <button
               onClick={() => portalMutation.mutate()}
               disabled={isPortalBusy}
@@ -173,25 +173,25 @@ export function LicenseStatus() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function LicenseHistory() {
   const { data, isLoading } = useQuery({
-    queryKey: ['license-checks'],
+    queryKey: ["license-checks"],
     queryFn: () => getLicenseHistory(),
     staleTime: 5 * 60_000,
-  })
+  });
 
   if (isLoading)
-    return <div className="h-24 rounded-xl bg-card/30 animate-pulse" />
+    return <div className="h-24 rounded-xl bg-card/30 animate-pulse" />;
 
   if (!data?.length) {
     return (
       <div className="rounded-xl border border-border bg-card/10 p-6 text-center text-sm text-muted-foreground">
         {m.license_no_checks()}
       </div>
-    )
+    );
   }
 
   return (
@@ -217,17 +217,17 @@ export function LicenseHistory() {
           {data.map(
             (
               row: {
-                id: string
-                checked_at: string
-                vectora_version: string
-                result: string
-                ip: string
+                id: string;
+                checked_at: string;
+                vectora_version: string;
+                result: string;
+                ip: string;
               },
               i: number,
             ) => (
               <tr
                 key={row.id}
-                className={`border-b border-border ${i % 2 === 0 ? '' : 'bg-background/20'}`}
+                className={`border-b border-border ${i % 2 === 0 ? "" : "bg-background/20"}`}
               >
                 <td className="px-4 py-2.5 text-muted-foreground">
                   {new Date(row.checked_at).toLocaleString()}
@@ -238,9 +238,9 @@ export function LicenseHistory() {
                 <td className="px-4 py-2.5">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      row.result === 'valid'
-                        ? 'bg-accent-green/10 text-accent-green'
-                        : 'bg-accent-red/10 text-accent-red'
+                      row.result === "valid"
+                        ? "bg-accent-green/10 text-accent-green"
+                        : "bg-accent-red/10 text-accent-red"
                     }`}
                   >
                     {row.result}
@@ -255,5 +255,5 @@ export function LicenseHistory() {
         </tbody>
       </table>
     </div>
-  )
+  );
 }

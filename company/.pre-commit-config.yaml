@@ -27,13 +27,13 @@ repos:
         args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
       - id: check-yaml
-        args: ['--allow-multiple-documents', '--unsafe']
+        args: ["--allow-multiple-documents", "--unsafe"]
       - id: check-json
         exclude: tsconfig.*\.json$
       - id: check-toml
       - id: check-merge-conflict
       - id: check-added-large-files
-        args: ['--maxkb=5000']
+        args: ["--maxkb=5000"]
       - id: detect-private-key
 
   # ==========================================
@@ -96,8 +96,8 @@ repos:
         files: ^\.github/workflows/.*\.ya?ml$
 
 ci:
-  autofix_commit_msg: 'chore: auto fixes from pre-commit hooks'
+  autofix_commit_msg: "chore: auto fixes from pre-commit hooks"
   autofix_prs: false
-  autoupdate_branch: ''
+  autoupdate_branch: ""
   skip: []
   submodules: false

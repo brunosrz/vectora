@@ -1,30 +1,30 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { m } from '#/paraglide/messages'
+import { useState } from "react";
+import { m } from "#/paraglide/messages";
 import {
   useApiKeys,
   useCreateApiKey,
   useRevokeApiKey,
-} from '#/hooks/use-api-keys'
-import { Plus, Trash2, Copy } from 'lucide-react'
-import { toast } from 'sonner'
+} from "#/hooks/use-api-keys";
+import { Plus, Trash2, Copy } from "lucide-react";
+import { toast } from "sonner";
 
-type Scope = 'read' | 'write' | 'admin'
-const SCOPES: Scope[] = ['read', 'write', 'admin']
+type Scope = "read" | "write" | "admin";
+const SCOPES: Scope[] = ["read", "write", "admin"];
 
 function CreateKeyModal({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [scopes, setScopes] = useState<Scope[]>(['read'])
-  const [secret, setSecret] = useState<string | null>(null)
+  const [name, setName] = useState("");
+  const [scopes, setScopes] = useState<Scope[]>(["read"]);
+  const [secret, setSecret] = useState<string | null>(null);
 
-  const mutation = useCreateApiKey()
+  const mutation = useCreateApiKey();
 
   const toggleScope = (s: Scope) => {
     setScopes((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
-    )
-  }
+    );
+  };
 
   const handleCreate = () => {
     mutation.mutate(
@@ -33,8 +33,8 @@ function CreateKeyModal({ onClose }: { onClose: () => void }) {
         onSuccess: (res) => setSecret(res.secret),
         onError: () => toast.error(m.error_generic()),
       },
-    )
-  }
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
@@ -53,8 +53,8 @@ function CreateKeyModal({ onClose }: { onClose: () => void }) {
               </code>
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(secret)
-                  toast.success(m.token_copied())
+                  navigator.clipboard.writeText(secret);
+                  toast.success(m.token_copied());
                 }}
                 className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
               >
@@ -98,8 +98,8 @@ function CreateKeyModal({ onClose }: { onClose: () => void }) {
                     onClick={() => toggleScope(s)}
                     className={`rounded-lg border px-3 py-1.5 text-sm transition-all ${
                       scopes.includes(s)
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:text-foreground/90'
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:text-foreground/90"
                     }`}
                   >
                     {s}
@@ -130,19 +130,19 @@ function CreateKeyModal({ onClose }: { onClose: () => void }) {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 export default function ApiKeysList() {
-  const { data: keys, isLoading } = useApiKeys()
-  const revokeMutation = useRevokeApiKey()
-  const [showModal, setShowModal] = useState(false)
-  const [revokeId, setRevokeId] = useState<string | null>(null)
+  const { data: keys, isLoading } = useApiKeys();
+  const revokeMutation = useRevokeApiKey();
+  const [showModal, setShowModal] = useState(false);
+  const [revokeId, setRevokeId] = useState<string | null>(null);
 
   if (isLoading)
     return (
       <div className="h-32 max-w-3xl rounded-xl bg-card/30 animate-pulse" />
-    )
+    );
 
   return (
     <div className="max-w-3xl">
@@ -173,7 +173,7 @@ export default function ApiKeysList() {
                   m.apikeys_col_scopes(),
                   m.apikeys_col_created(),
                   m.apikeys_col_last_used(),
-                  '',
+                  "",
                 ].map((h, i) => (
                   <th
                     key={i}
@@ -188,17 +188,17 @@ export default function ApiKeysList() {
               {keys?.map(
                 (
                   key: {
-                    id: string
-                    name: string
-                    scopes: string[]
-                    created_at: string
-                    last_used_at: string | null
+                    id: string;
+                    name: string;
+                    scopes: string[];
+                    created_at: string;
+                    last_used_at: string | null;
                   },
                   i: number,
                 ) => (
                   <tr
                     key={key.id}
-                    className={`border-b border-border ${i % 2 === 0 ? '' : 'bg-background/20'}`}
+                    className={`border-b border-border ${i % 2 === 0 ? "" : "bg-background/20"}`}
                   >
                     <td className="px-4 py-3 font-medium text-foreground">
                       {key.name}
@@ -221,7 +221,7 @@ export default function ApiKeysList() {
                     <td className="px-4 py-3 text-muted-foreground">
                       {key.last_used_at
                         ? new Date(key.last_used_at).toLocaleDateString()
-                        : '—'}
+                        : "—"}
                     </td>
                     <td className="px-4 py-3">
                       {revokeId === key.id ? (
@@ -230,7 +230,7 @@ export default function ApiKeysList() {
                             onClick={() => {
                               revokeMutation.mutate(key.id, {
                                 onSuccess: () => setRevokeId(null),
-                              })
+                              });
                             }}
                             disabled={revokeMutation.isPending}
                             className="text-xs text-accent-red hover:text-destructive font-medium"
@@ -264,5 +264,5 @@ export default function ApiKeysList() {
 
       {showModal && <CreateKeyModal onClose={() => setShowModal(false)} />}
     </div>
-  )
+  );
 }

@@ -39,15 +39,15 @@ paraglide/
 ## Usage
 
 ```js
-import * as m from './paraglide/messages.js'
+import * as m from "./paraglide/messages.js";
 
 // Messages are functions that return localized strings
-m.hello_world() // "Hello, World!" (in current locale)
-m.greeting({ name: 'Sam' }) // "Hello, Sam!"
+m.hello_world(); // "Hello, World!" (in current locale)
+m.greeting({ name: "Sam" }); // "Hello, Sam!"
 
 // Override locale per-call
-m.hello_world({}, { locale: 'de' }) // "Hallo, Welt!"
-m.greeting({ name: 'Sam' }, { locale: 'de' }) // "Hallo, Sam!"
+m.hello_world({}, { locale: "de" }); // "Hallo, Welt!"
+m.greeting({ name: "Sam" }, { locale: "de" }); // "Hallo, Sam!"
 ```
 
 ## Runtime API
@@ -59,13 +59,13 @@ import {
   setLocale,
   locales,
   baseLocale,
-} from './paraglide/runtime.js'
+} from "./paraglide/runtime.js";
 
-getLocale() // Current locale, e.g., "en"
-getTextDirection() // "ltr" | "rtl" for current locale
-setLocale('de') // Set locale
-locales // Available locales, e.g., ["en", "de", "fr"]
-baseLocale // Default locale, e.g., "en"
+getLocale(); // Current locale, e.g., "en"
+getTextDirection(); // "ltr" | "rtl" for current locale
+setLocale("de"); // Set locale
+locales; // Available locales, e.g., ["en", "de", "fr"]
+baseLocale; // Default locale, e.g., "en"
 ```
 
 ## Strategy
@@ -81,10 +81,10 @@ Strategies can be combined. The order defines precedence:
 
 ```js
 await compile({
-  project: './project.inlang',
-  outdir: './src/paraglide',
-  strategy: ['url', 'cookie', 'baseLocale'],
-})
+  project: "./project.inlang",
+  outdir: "./src/paraglide",
+  strategy: ["url", "cookie", "baseLocale"],
+});
 ```
 
 See the [strategy documentation](https://paraglidejs.com/strategy) for details.
@@ -120,13 +120,13 @@ This is the default inlang message syntax. Paraglide's message format is plugin-
 Calling the message function still returns **plain text** (markup stripped):
 
 ```js
-m.cta({ relationship: 'noopener' }) // "Read the docs"
+m.cta({ relationship: "noopener" }); // "Read the docs"
 ```
 
 To render markup, use the framework adapter or the low-level `parts()` API:
 
 ```js
-const parts = m.cta.parts({ relationship: 'noopener' })
+const parts = m.cta.parts({ relationship: "noopener" });
 // [
 //   { type: "markup-start", name: "link", options: { to: "/docs", rel: "noopener" }, attributes: { track: true } },
 //   { type: "text", value: "Read the docs" },
@@ -142,15 +142,15 @@ Framework adapters provide a `<ParaglideMessage>` component that accepts markup 
 - `@inlang/paraglide-js-solid`
 
 ```jsx
-import { ParaglideMessage } from '@inlang/paraglide-js-react' // or -vue, -svelte, -solid
-;<ParaglideMessage
+import { ParaglideMessage } from "@inlang/paraglide-js-react"; // or -vue, -svelte, -solid
+<ParaglideMessage
   message={m.welcome}
-  inputs={{ name: 'Ada' }}
+  inputs={{ name: "Ada" }}
   markup={{
     b: ({ children }) => <b>{children}</b>,
     icon: () => <span aria-hidden="true" className="icon-wave" />,
   }}
-/>
+/>;
 ```
 
 The available renderer/snippet names come from the message itself. You can inspect them through `message.parts()`, and TypeScript uses the same names to type-check your markup renderers.

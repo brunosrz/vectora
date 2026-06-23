@@ -7,26 +7,26 @@ declare global {
     plausible?: (
       event: string,
       options?: { props?: Record<string, string | number | boolean> },
-    ) => void
+    ) => void;
   }
 }
 
 type TrackableEvent =
-  | 'signup'
-  | 'trial_started'
-  | 'paid_conversion'
-  | 'cancel'
-  | 'gif_viewed'
-  | 'pricing_viewed'
-  | 'waitlist_join'
-  | 'token_revealed'
-  | 'token_rotated'
+  | "signup"
+  | "trial_started"
+  | "paid_conversion"
+  | "cancel"
+  | "gif_viewed"
+  | "pricing_viewed"
+  | "waitlist_join"
+  | "token_revealed"
+  | "token_rotated";
 
 export function track(
   event: TrackableEvent,
   props?: Record<string, string | number | boolean>,
 ) {
-  if (typeof window !== 'undefined' && window.plausible) {
-    window.plausible(event, props ? { props } : undefined)
+  if (typeof window !== "undefined" && window.plausible) {
+    window.plausible(event, props ? { props } : undefined);
   }
 }

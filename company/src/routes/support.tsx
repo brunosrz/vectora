@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { m } from '#/paraglide/messages'
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { m } from "#/paraglide/messages";
 import {
   Mail,
   Bug,
@@ -7,38 +7,38 @@ import {
   Users,
   MessageCircle,
   FileText,
-} from 'lucide-react'
-import Container from '#/components/shared/Container'
-import PageHeader from '#/components/shared/PageHeader'
+} from "lucide-react";
+import Container from "#/components/shared/Container";
+import PageHeader from "#/components/shared/PageHeader";
 
-export const Route = createFileRoute('/support')({
+export const Route = createFileRoute("/support")({
   head: () => ({
     meta: [
       { title: m.page_support_title() },
       {
-        property: 'og:image',
-        content: `/api/og?title=${encodeURIComponent(m.page_support_title())}&desc=${encodeURIComponent('Email, GitHub Issues e documentação. Suporte rápido para seu Vectora.')}`,
+        property: "og:image",
+        content: `/api/og?title=${encodeURIComponent(m.page_support_title())}&desc=${encodeURIComponent("Email, GitHub Issues e documentação. Suporte rápido para seu Vectora.")}`,
       },
     ],
     scripts: [
       {
-        type: 'application/ld+json',
+        type: "application/ld+json",
         children: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'ContactPage',
-          name: 'Suporte — Vectora',
-          url: 'https://vectora.company/support',
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          name: "Suporte — Vectora",
+          url: "https://vectora.company/support",
           contactPoint: [
             {
-              '@type': 'ContactPoint',
-              email: 'support@vectora.company',
-              contactType: 'customer support',
+              "@type": "ContactPoint",
+              email: "support@vectora.company",
+              contactType: "customer support",
             },
             {
-              '@type': 'ContactPoint',
-              telephone: '+55-35-91017-9164',
-              contactType: 'technical support',
-              contactOption: 'WhatsApp',
+              "@type": "ContactPoint",
+              telephone: "+55-35-91017-9164",
+              contactType: "technical support",
+              contactOption: "WhatsApp",
             },
           ],
         }),
@@ -46,59 +46,59 @@ export const Route = createFileRoute('/support')({
     ],
   }),
   component: SupportPage,
-})
+});
 
 const CHANNELS = [
   {
     icon: Mail,
-    title: 'Email',
-    desc: 'Resposta em até 48h (Plus) ou 24h (Pro)',
+    title: "Email",
+    desc: "Resposta em até 48h (Plus) ou 24h (Pro)",
     action: {
-      label: 'support@vectora.company',
-      href: 'mailto:support@vectora.company',
+      label: "support@vectora.company",
+      href: "mailto:support@vectora.company",
     },
-    sla: { plus: '48h', pro: '24h', trial: 'Community' },
+    sla: { plus: "48h", pro: "24h", trial: "Community" },
     badge: null as string | null,
   },
   {
     icon: Users,
-    title: 'Discord',
-    desc: 'Comunidade ativa de usuários. Tire dúvidas, compartilhe casos de uso e acompanhe novidades.',
-    action: { label: 'discord.gg/vectora', href: 'https://discord.gg/vectora' },
+    title: "Discord",
+    desc: "Comunidade ativa de usuários. Tire dúvidas, compartilhe casos de uso e acompanhe novidades.",
+    action: { label: "discord.gg/vectora", href: "https://discord.gg/vectora" },
     sla: null,
-    badge: 'Community',
+    badge: "Community",
   },
   {
     icon: MessageCircle,
-    title: 'WhatsApp',
-    desc: 'Contato direto com o fundador. Somente WhatsApp — sem chamadas de voz.',
-    action: { label: '+55 35 91017-9164', href: 'https://wa.me/5535910179164' },
+    title: "WhatsApp",
+    desc: "Contato direto com o fundador. Somente WhatsApp — sem chamadas de voz.",
+    action: { label: "+55 35 91017-9164", href: "https://wa.me/5535910179164" },
     sla: null,
-    badge: 'WhatsApp only',
+    badge: "WhatsApp only",
   },
   {
     icon: Bug,
-    title: 'GitHub Issues',
-    desc: 'Bugs, feature requests e discussões técnicas abertas',
+    title: "GitHub Issues",
+    desc: "Bugs, feature requests e discussões técnicas abertas",
     action: {
-      label: 'github.com/vectora-company/vectora',
-      href: 'https://github.com/vectora-company/vectora/issues',
+      label: "github.com/vectora-company/vectora",
+      href: "https://github.com/vectora-company/vectora/issues",
     },
     sla: null,
     badge: null,
   },
   {
     icon: BookOpen,
-    title: 'Documentação',
-    desc: 'Guias de instalação, API reference e tutoriais',
+    title: "Documentação",
+    desc: "Guias de instalação, API reference e tutoriais",
     action: {
-      label: 'docs.vectora.company',
-      href: 'https://docs.vectora.company',
+      label: "docs.vectora.company",
+      href: "https://docs.vectora.company",
     },
     sla: null,
     badge: null,
   },
-]
+];
 
 function SupportPage() {
   return (
@@ -132,7 +132,7 @@ function SupportPage() {
 
       <div className="space-y-3">
         {CHANNELS.map((ch) => {
-          const Icon = ch.icon
+          const Icon = ch.icon;
           return (
             <div
               key={ch.title}
@@ -154,7 +154,7 @@ function SupportPage() {
                 <a
                   href={ch.action.href}
                   target={
-                    ch.action.href.startsWith('http') ? '_blank' : undefined
+                    ch.action.href.startsWith("http") ? "_blank" : undefined
                   }
                   rel="noopener noreferrer"
                   className="break-all text-sm font-medium text-primary transition-colors hover:text-primary"
@@ -176,9 +176,9 @@ function SupportPage() {
                 )}
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </Container>
-  )
+  );
 }

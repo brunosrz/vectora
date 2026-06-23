@@ -1,49 +1,49 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { m } from '#/paraglide/messages'
-import Turnstile from '#/components/shared/Turnstile'
-import { joinWaitlist } from '#/server/fns/issues'
-import { track } from '#/lib/analytics/plausible'
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { m } from "#/paraglide/messages";
+import Turnstile from "#/components/shared/Turnstile";
+import { joinWaitlist } from "#/server/fns/issues";
+import { track } from "#/lib/analytics/plausible";
 
 export default function WaitlistCta() {
-  const [email, setEmail] = useState('')
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
-  const [duplicate, setDuplicate] = useState(false)
+  const [email, setEmail] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [duplicate, setDuplicate] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () =>
       joinWaitlist({
-        data: { email, turnstileToken: turnstileToken!, source: 'landing-cta' },
+        data: { email, turnstileToken: turnstileToken!, source: "landing-cta" },
       }),
     onSuccess: () => {
-      track('waitlist_join', { source: 'landing-cta' })
-      setDone(true)
+      track("waitlist_join", { source: "landing-cta" });
+      setDone(true);
     },
     onError: (err: Error) => {
       if (
-        err.message.includes('duplicate') ||
-        err.message.includes('already')
+        err.message.includes("duplicate") ||
+        err.message.includes("already")
       ) {
-        setDuplicate(true)
+        setDuplicate(true);
       }
     },
-  })
+  });
 
   const canSubmit =
-    email.length > 0 && turnstileToken !== null && !mutation.isPending
+    email.length > 0 && turnstileToken !== null && !mutation.isPending;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!canSubmit) return
-    setDuplicate(false)
-    mutation.mutate()
-  }
+    e.preventDefault();
+    if (!canSubmit) return;
+    setDuplicate(false);
+    mutation.mutate();
+  };
 
-  const isVisible = import.meta.env.VITE_LAUNCH_MODE === 'waitlist'
-  if (!isVisible) return null
+  const isVisible = import.meta.env.VITE_LAUNCH_MODE === "waitlist";
+  if (!isVisible) return null;
 
   return (
     <section className="px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
@@ -54,7 +54,7 @@ export default function WaitlistCta() {
           className="pointer-events-none absolute inset-0 -z-10 opacity-20"
           style={{
             background:
-              'radial-gradient(ellipse 60% 40% at 50% 50%, color-mix(in srgb, var(--primary) 35%, transparent) 0%, transparent 70%)',
+              "radial-gradient(ellipse 60% 40% at 50% 50%, color-mix(in srgb, var(--primary) 35%, transparent) 0%, transparent 70%)",
           }}
         />
 
@@ -109,5 +109,5 @@ export default function WaitlistCta() {
         )}
       </div>
     </section>
-  )
+  );
 }

@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react'
-import { TURNSTILE_SITE_KEY } from '#/lib/turnstile'
+import { useEffect, useRef } from "react";
+import { TURNSTILE_SITE_KEY } from "#/lib/turnstile";
 
 interface TurnstileProps {
-  onSuccess: (token: string) => void
-  onError?: () => void
-  onExpire?: () => void
+  onSuccess: (token: string) => void;
+  onError?: () => void;
+  onExpire?: () => void;
 }
 
 declare global {
@@ -13,17 +13,17 @@ declare global {
       render: (
         container: HTMLElement,
         options: {
-          sitekey: string
-          callback: (token: string) => void
-          'error-callback'?: () => void
-          'expired-callback'?: () => void
-          theme?: 'light' | 'dark' | 'auto'
-          size?: 'normal' | 'compact' | 'flexible'
+          sitekey: string;
+          callback: (token: string) => void;
+          "error-callback"?: () => void;
+          "expired-callback"?: () => void;
+          theme?: "light" | "dark" | "auto";
+          size?: "normal" | "compact" | "flexible";
         },
-      ) => string
-      remove: (widgetId: string) => void
-      reset: (widgetId: string) => void
-    }
+      ) => string;
+      remove: (widgetId: string) => void;
+      reset: (widgetId: string) => void;
+    };
   }
 }
 
@@ -32,51 +32,51 @@ export default function Turnstile({
   onError,
   onExpire,
 }: TurnstileProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const widgetIdRef = useRef<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!TURNSTILE_SITE_KEY || !containerRef.current) return
+    if (!TURNSTILE_SITE_KEY || !containerRef.current) return;
 
-    const scriptId = 'cf-turnstile-script'
+    const scriptId = "cf-turnstile-script";
     const render = () => {
-      if (!containerRef.current) return
+      if (!containerRef.current) return;
       widgetIdRef.current = window.turnstile!.render(containerRef.current, {
         sitekey: TURNSTILE_SITE_KEY!,
         callback: onSuccess,
-        'error-callback': onError,
-        'expired-callback': onExpire,
-        theme: 'dark',
-        size: 'flexible',
-      })
-    }
+        "error-callback": onError,
+        "expired-callback": onExpire,
+        theme: "dark",
+        size: "flexible",
+      });
+    };
 
     if (window.turnstile) {
-      render()
+      render();
     } else if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script')
-      script.id = scriptId
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
-      script.async = true
-      script.onload = render
-      document.head.appendChild(script)
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.onload = render;
+      document.head.appendChild(script);
     } else {
       const interval = setInterval(() => {
         if (window.turnstile) {
-          clearInterval(interval)
-          render()
+          clearInterval(interval);
+          render();
         }
-      }, 100)
+      }, 100);
     }
 
     return () => {
       if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current)
+        window.turnstile.remove(widgetIdRef.current);
       }
-    }
-  }, [onSuccess, onError, onExpire])
+    };
+  }, [onSuccess, onError, onExpire]);
 
-  if (!TURNSTILE_SITE_KEY) return null
+  if (!TURNSTILE_SITE_KEY) return null;
 
-  return <div ref={containerRef} className="mt-2" />
+  return <div ref={containerRef} className="mt-2" />;
 }

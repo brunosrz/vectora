@@ -1,101 +1,101 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { m } from '#/paraglide/messages'
-import { CheckCircle2, Construction, MapPin } from 'lucide-react'
-import Container from '#/components/shared/Container'
-import PageHeader from '#/components/shared/PageHeader'
+import { createFileRoute } from "@tanstack/react-router";
+import { m } from "#/paraglide/messages";
+import { CheckCircle2, Construction, MapPin } from "lucide-react";
+import Container from "#/components/shared/Container";
+import PageHeader from "#/components/shared/PageHeader";
 
-export const Route = createFileRoute('/roadmap')({
+export const Route = createFileRoute("/roadmap")({
   head: () => ({
     meta: [
       { title: m.page_roadmap_title() },
-      { name: 'description', content: m.page_roadmap_desc() },
+      { name: "description", content: m.page_roadmap_desc() },
       {
-        property: 'og:image',
+        property: "og:image",
         content: `/api/og?title=${encodeURIComponent(m.page_roadmap_title())}&desc=${encodeURIComponent(m.page_roadmap_desc())}`,
       },
     ],
   }),
   component: RoadmapPage,
-})
+});
 
 const SHIPPED = [
-  { label: 'vectora.company — site institucional e dashboard de licença' },
-  { label: 'Autenticação + billing (Stripe INTL + Asaas BR)' },
-  { label: 'VECTORA_TOKEN — sistema de licença com show-once e rotação' },
-  { label: 'REST API /v1 — API keys com escopos (read/write/admin)' },
-  { label: 'Suporte multi-idioma — 7 locales (pt, en, es, fr, it, de, ru)' },
-  { label: 'Sistema de issues e feedback pelo site' },
-  { label: 'Webhooks de billing com Stripe e Asaas' },
-  { label: 'GDPR — exportação de dados e exclusão de conta em 30 dias' },
+  { label: "vectora.company — site institucional e dashboard de licença" },
+  { label: "Autenticação + billing (Stripe INTL + Asaas BR)" },
+  { label: "VECTORA_TOKEN — sistema de licença com show-once e rotação" },
+  { label: "REST API /v1 — API keys com escopos (read/write/admin)" },
+  { label: "Suporte multi-idioma — 7 locales (pt, en, es, fr, it, de, ru)" },
+  { label: "Sistema de issues e feedback pelo site" },
+  { label: "Webhooks de billing com Stripe e Asaas" },
+  { label: "GDPR — exportação de dados e exclusão de conta em 30 dias" },
   {
-    label: 'Edge Functions — validate-license, rotate-token, cron-hard-delete',
+    label: "Edge Functions — validate-license, rotate-token, cron-hard-delete",
   },
-]
+];
 
 const BUILDING = [
-  { label: 'Vectora CLI — agente principal Python com LangGraph' },
-  { label: 'RAG pipeline — Cohere Embed + LanceDB + hybrid search + reranker' },
-  { label: 'Chat web multi-usuário — workspace com projetos e histórico' },
-  { label: 'MCP server — integração com Claude Desktop e outros clientes MCP' },
-  { label: 'Coder Agent — arquivos, terminal, git, geração de código' },
+  { label: "Vectora CLI — agente principal Python com LangGraph" },
+  { label: "RAG pipeline — Cohere Embed + LanceDB + hybrid search + reranker" },
+  { label: "Chat web multi-usuário — workspace com projetos e histórico" },
+  { label: "MCP server — integração com Claude Desktop e outros clientes MCP" },
+  { label: "Coder Agent — arquivos, terminal, git, geração de código" },
   {
-    label: 'Search Agent — web em tempo real + curação da base de conhecimento',
+    label: "Search Agent — web em tempo real + curação da base de conhecimento",
   },
-  { label: 'VS Code extension (beta)' },
-  { label: 'docs.vectora.company — documentação de API e uso diário' },
-]
+  { label: "VS Code extension (beta)" },
+  { label: "docs.vectora.company — documentação de API e uso diário" },
+];
 
 const PLANNED = [
-  { label: 'Desktop app — Windows, macOS, Linux (Electron + Nuitka)' },
-  { label: 'SDK Python — pacote PyPI oficial' },
-  { label: 'SDK TypeScript/Node — pacote NPM oficial' },
-  { label: 'GitHub Actions integration — run Vectora directly from CI' },
-  { label: 'n8n workflow nodes' },
-  { label: 'Kubernetes helm chart' },
-  { label: 'Audit log completo — todas as ações de usuários e agentes' },
-  { label: 'Conformidade SOC 2 Type I' },
-  { label: 'SAML SSO para plano Enterprise' },
-]
+  { label: "Desktop app — Windows, macOS, Linux (Electron + Nuitka)" },
+  { label: "SDK Python — pacote PyPI oficial" },
+  { label: "SDK TypeScript/Node — pacote NPM oficial" },
+  { label: "GitHub Actions integration — run Vectora directly from CI" },
+  { label: "n8n workflow nodes" },
+  { label: "Kubernetes helm chart" },
+  { label: "Audit log completo — todas as ações de usuários e agentes" },
+  { label: "Conformidade SOC 2 Type I" },
+  { label: "SAML SSO para plano Enterprise" },
+];
 
 type Section = {
-  id: string
-  label: string
-  icon: typeof CheckCircle2
-  iconClass: string
-  borderClass: string
-  badgeClass: string
-  items: { label: string }[]
-}
+  id: string;
+  label: string;
+  icon: typeof CheckCircle2;
+  iconClass: string;
+  borderClass: string;
+  badgeClass: string;
+  items: { label: string }[];
+};
 
 const SECTIONS: Section[] = [
   {
-    id: 'shipped',
-    label: 'Lançado',
+    id: "shipped",
+    label: "Lançado",
     icon: CheckCircle2,
-    iconClass: 'text-accent-green',
-    borderClass: 'border-accent-green/20',
-    badgeClass: 'bg-accent-green/10 text-accent-green border-accent-green/30',
+    iconClass: "text-accent-green",
+    borderClass: "border-accent-green/20",
+    badgeClass: "bg-accent-green/10 text-accent-green border-accent-green/30",
     items: SHIPPED,
   },
   {
-    id: 'building',
-    label: 'Em desenvolvimento',
+    id: "building",
+    label: "Em desenvolvimento",
     icon: Construction,
-    iconClass: 'text-accent-amber',
-    borderClass: 'border-accent-amber/20',
-    badgeClass: 'bg-accent-amber/10 text-accent-amber border-accent-amber/30',
+    iconClass: "text-accent-amber",
+    borderClass: "border-accent-amber/20",
+    badgeClass: "bg-accent-amber/10 text-accent-amber border-accent-amber/30",
     items: BUILDING,
   },
   {
-    id: 'planned',
-    label: 'Planejado',
+    id: "planned",
+    label: "Planejado",
     icon: MapPin,
-    iconClass: 'text-primary',
-    borderClass: 'border-primary/20',
-    badgeClass: 'bg-primary/10 text-primary border-primary/30',
+    iconClass: "text-primary",
+    borderClass: "border-primary/20",
+    badgeClass: "bg-primary/10 text-primary border-primary/30",
     items: PLANNED,
   },
-]
+];
 
 function RoadmapPage() {
   return (
@@ -109,7 +109,7 @@ function RoadmapPage() {
 
       <div className="grid gap-8 md:grid-cols-3">
         {SECTIONS.map((section) => {
-          const Icon = section.icon
+          const Icon = section.icon;
           return (
             <div
               key={section.id}
@@ -137,7 +137,7 @@ function RoadmapPage() {
                 ))}
               </ul>
             </div>
-          )
+          );
         })}
       </div>
 
@@ -145,5 +145,5 @@ function RoadmapPage() {
         Última atualização: junho 2025 · Roadmap sujeito a alterações
       </p>
     </Container>
-  )
+  );
 }

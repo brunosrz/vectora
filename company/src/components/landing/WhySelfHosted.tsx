@@ -1,36 +1,36 @@
-import { m } from '#/paraglide/messages'
-import { Lock, Coins, Settings, Server } from 'lucide-react'
+import { m } from "#/paraglide/messages";
+import { Lock, Coins, Settings, Server } from "lucide-react";
 
 const CARDS = [
   {
     Icon: Lock,
-    titleKey: 'why_privacy_title' as const,
-    descKey: 'why_privacy_desc' as const,
-    iconBg: 'rgba(121,184,255,0.1)',
-    iconColor: 'var(--primary)',
+    titleKey: "why_privacy_title" as const,
+    descKey: "why_privacy_desc" as const,
+    iconBg: "rgba(121,184,255,0.1)",
+    iconColor: "var(--primary)",
   },
   {
     Icon: Coins,
-    titleKey: 'why_cost_title' as const,
-    descKey: 'why_cost_desc' as const,
-    iconBg: 'rgba(78,201,160,0.1)',
-    iconColor: 'var(--accent-green)',
+    titleKey: "why_cost_title" as const,
+    descKey: "why_cost_desc" as const,
+    iconBg: "rgba(78,201,160,0.1)",
+    iconColor: "var(--accent-green)",
   },
   {
     Icon: Settings,
-    titleKey: 'why_custom_title' as const,
-    descKey: 'why_custom_desc' as const,
-    iconBg: 'rgba(173,70,255,0.1)',
-    iconColor: 'var(--accent-purple)',
+    titleKey: "why_custom_title" as const,
+    descKey: "why_custom_desc" as const,
+    iconBg: "rgba(173,70,255,0.1)",
+    iconColor: "var(--accent-purple)",
   },
   {
     Icon: Server,
-    titleKey: 'why_sovereign_title' as const,
-    descKey: 'why_sovereign_desc' as const,
-    iconBg: 'rgba(226,192,141,0.1)',
-    iconColor: 'var(--accent-amber)',
+    titleKey: "why_sovereign_title" as const,
+    descKey: "why_sovereign_desc" as const,
+    iconBg: "rgba(226,192,141,0.1)",
+    iconColor: "var(--accent-amber)",
   },
-]
+];
 
 export default function WhySelfHosted() {
   return (
@@ -49,7 +49,7 @@ export default function WhySelfHosted() {
         {/* Grid 2×2 */}
         <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
           {CARDS.map((card) => {
-            const { Icon } = card
+            const { Icon } = card;
             return (
               <div
                 key={card.titleKey}
@@ -68,10 +68,10 @@ export default function WhySelfHosted() {
                   {m[card.descKey]()}
                 </p>
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }
