@@ -23,9 +23,19 @@ def test_identity_contains_stack():
     assert "LanceDB" in VECTORA_IDENTITY
 
 
-def test_identity_contains_license_and_repo():
-    assert "Apache 2.0" in VECTORA_IDENTITY
-    assert "github.com" in VECTORA_IDENTITY
+def test_identity_is_commercial_not_open_source():
+    """Vectora é produto comercial self-hosted — NÃO open source (positioning.md).
+
+    Erro/borda no mesmo teste: a identidade não pode reivindicar OSS nem licença
+    Apache, senão contradiz o posicionamento e induz o agente a mentir sobre si.
+    """
+    lowered = VECTORA_IDENTITY.lower()
+    assert "comercial" in lowered
+    assert "self-hosted" in lowered or "self hosted" in lowered
+    # Negativo: sem alegação de open source / Apache.
+    assert "apache" not in lowered
+    assert "open source" not in lowered
+    assert "open-source" not in lowered
 
 
 def test_identity_mentions_cohere():

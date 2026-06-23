@@ -48,12 +48,55 @@ def _load_project_docs() -> str | None:
     return "\n\n---\n\n".join(sections) if sections else None
 
 
+def _load_workspaces_overview(active_id: str | None = None) -> str | None:
+    """Lista os workspaces registrados para o Vectora ter consciência deles.
+
+    O Vectora gerencia projetos isolados por diretório (workspaces). Injetar a
+    lista no system prompt dá conhecimento proativo — o agente sabe quais
+    projetos conhece sem precisar chamar `workspace_list`, e pode sugerir trocar
+    de workspace quando a pergunta for sobre outro projeto.
+
+    Retorna None se não houver nenhum workspace registrado.
+    """
+    try:
+        from backend.services.workspace import workspace_registry
+
+        workspaces = workspace_registry.list_all()
+    except Exception:
+        logger.debug("Falha ao listar workspaces para o contexto", exc_info=True)
+        return None
+
+    if not workspaces:
+        return None
+
+    lines: list[str] = [
+        "## Seus Workspaces",
+        "",
+        "Você gerencia estes projetos isolados (cada um com diretório, base RAG e "
+        "MANIFEST.md próprios). O marcado com ◀ é o ativo desta sessão:",
+        "",
+    ]
+    # Limita a 30 entradas para não inflar o contexto; o restante via `workspace_list`.
+    for ws in workspaces[:30]:
+        marker = " ◀ ativo" if active_id and ws.id == active_id else ""
+        git = " · git" if getattr(ws, "is_git_repo", False) else ""
+        lines.append(f"- **{ws.name}** (`{ws.id}`) — `{ws.cwd}`{git}{marker}")
+    if len(workspaces) > 30:
+        lines.append(f"- … e mais {len(workspaces) - 30} (use `workspace_list`).")
+    lines.append(
+        "\nUse `workspace_describe`/`bucket_summary` para detalhes de um workspace "
+        "e `vector_search` para buscar no conhecimento indexado do ativo."
+    )
+    return "\n".join(lines)
+
+
 def _load_session_context(workspace_id: str | None = None) -> str | None:
     """Carrega contexto completo da sessão: arquivos de projeto + manifest do workspace.
 
     Seções:
     1. AGENTS.md / CLAUDE.md / VECTORA.md / GEMINI.md — instrução do projeto
-    2. MANIFEST.md do workspace ativo — base de conhecimento indexada
+    2. Lista de workspaces registrados (consciência dos projetos do Vectora)
+    3. MANIFEST.md do workspace ativo — base de conhecimento indexada
 
     O manifest é truncado a ~3200 chars para não inflar o contexto. Detalhes
     por bucket ficam disponíveis via `bucket_summary` (tool sob demanda).
@@ -63,6 +106,10 @@ def _load_session_context(workspace_id: str | None = None) -> str | None:
     project_docs = _load_project_docs()
     if project_docs:
         parts.append(project_docs)
+
+    workspaces_overview = _load_workspaces_overview(workspace_id)
+    if workspaces_overview:
+        parts.append(workspaces_overview)
 
     if workspace_id:
         try:

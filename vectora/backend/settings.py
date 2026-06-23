@@ -536,6 +536,20 @@ class Settings(BaseSettings):
     configurado. Desative com NGROK_ENABLED=false para desligar o túnel mesmo
     tendo o token configurado."""
 
+    ngrok_domain: str = ""
+    """Domínio estático ngrok (opcional).
+
+    Sem isso: URL muda a cada restart (ex: https://abc123.ngrok-free.app).
+    Com isso: URL fixa entre restarts.
+
+    Como obter domínio estático GRATUITO:
+      1. dashboard.ngrok.com/cloud-edge/domains → 'Create Domain'
+      2. Copie o domínio (ex: lucky-rabbit-abc123.ngrok-free.app)
+      3. No .env: NGROK_DOMAIN=lucky-rabbit-abc123.ngrok-free.app
+
+    Domínio próprio (ex: vectora.app): requer plano pago ngrok Pro + CNAME configurado.
+    """
+
     # ============================================================================
     # PYDANTIC CONFIGURATION
     # ============================================================================
