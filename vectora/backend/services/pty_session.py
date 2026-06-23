@@ -20,18 +20,25 @@ logger = logging.getLogger(__name__)
 
 _IS_WINDOWS = platform.system() == "Windows"
 
-if _IS_WINDOWS:
-    try:
-        from winpty import PtyProcess as _Backend  # type: ignore[import-not-found]
-    except Exception:  # pragma: no cover — fallback se pywinpty não instalou
-        _Backend = None  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
-else:
-    try:
-        import ptyprocess  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
 
-        _Backend = ptyprocess.PtyProcess
-    except Exception:  # pragma: no cover
-        _Backend = None  # type: ignore[assignment]
+def _load_pty_backend() -> Any:
+    """Carrega o backend de PTY da plataforma: pywinpty no Windows, ptyprocess fora.
+
+    Import dinâmico via importlib: as libs são mutuamente exclusivas por SO e não
+    resolvem estaticamente na outra plataforma — resolver dinamicamente evita o
+    type checker falhar em ``winpty`` no Linux (e vice-versa). Retorna None se o
+    backend não estiver instalado; o caller degrada com erro tratado.
+    """
+    import importlib
+
+    module = "winpty" if _IS_WINDOWS else "ptyprocess"
+    try:
+        return importlib.import_module(module).PtyProcess
+    except Exception:  # pragma: no cover — backend de PTY indisponível na plataforma
+        return None
+
+
+_Backend: Any = _load_pty_backend()
 
 
 def _default_shell() -> list[str]:
