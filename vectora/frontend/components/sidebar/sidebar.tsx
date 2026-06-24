@@ -21,6 +21,8 @@ interface SidebarProps {
   onDeleteThread: (threadId: string) => void;
   onNewChat?: () => void;
   isLoading?: boolean;
+  /** true quando a sessão atual é nova/vazia — destaca "Nova sessão". */
+  isNewSession?: boolean;
 }
 
 export const Sidebar = memo(function Sidebar({
@@ -32,6 +34,7 @@ export const Sidebar = memo(function Sidebar({
   onDeleteThread,
   onNewChat,
   isLoading = false,
+  isNewSession = false,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Set<string>>(
@@ -102,7 +105,9 @@ export const Sidebar = memo(function Sidebar({
 
         <SidebarModeToggle />
 
-        {onNewChat && <NewChatButton onClick={onNewChat} />}
+        {onNewChat && (
+          <NewChatButton onClick={onNewChat} active={isNewSession} />
+        )}
 
         <SessionSearch
           value={searchQuery}

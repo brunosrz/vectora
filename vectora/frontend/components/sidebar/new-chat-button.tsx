@@ -7,10 +7,13 @@ import { m } from "@/lib/paraglide/messages";
 
 interface NewChatButtonProps {
   onClick: () => void;
+  /** true quando a sessão atual é nova/vazia — destaca o botão como ativo. */
+  active?: boolean;
 }
 
 export const NewChatButton = memo(function NewChatButton({
   onClick,
+  active = false,
 }: NewChatButtonProps) {
   const { offline } = useNetworkStatus();
   const sidebarOnRight = useSettingsStore((s) => s.sidebarPosition === "right");
@@ -22,7 +25,12 @@ export const NewChatButton = memo(function NewChatButton({
         onClick={onClick}
         disabled={offline}
         aria-label={label}
-        className={`group w-full h-8 inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-1.5 pl-3 pr-3 bg-muted/30 hover:bg-muted/60 border border-border/50 hover:border-border/80 rounded-md text-xs text-foreground/80 hover:text-foreground transition-colors duration-150 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
+        aria-current={active ? "page" : undefined}
+        className={`group w-full h-8 inline-flex items-center ${sidebarOnRight ? "justify-end" : "justify-start"} gap-1.5 pl-3 pr-3 border rounded-md text-xs transition-colors duration-150 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed ${
+          active
+            ? "bg-muted border-border text-foreground"
+            : "bg-muted/30 hover:bg-muted/60 border-border/50 hover:border-border/80 text-foreground/80 hover:text-foreground"
+        }`}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -314,6 +314,9 @@ function SessionPage() {
     [threadId],
   );
 
+  // Sessão nova/vazia (ainda sem 1ª mensagem persistida) → destaca "Nova sessão".
+  const isNewSession = isNew(threadId);
+
   // ── Sidebar (instância única reutilizada em desktop e mobile Sheet) ───────
   const sidebar = useMemo(
     () => (
@@ -326,10 +329,11 @@ function SessionPage() {
         onDeleteThread={handleDeleteThread}
         onNewChat={handleNewChat}
         isLoading={isLoading}
+        isNewSession={isNewSession}
       />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [threads, threadId, isLoading, isSidebarCollapsed],
+    [threads, threadId, isLoading, isSidebarCollapsed, isNewSession],
   );
 
   return (
