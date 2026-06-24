@@ -162,7 +162,7 @@ vi.mock("@/components/workbench/markdown-view", () => ({
   MarkdownView: () => null,
 }));
 
-vi.mock("./file-tree-skeleton", () => ({
+vi.mock("@/components/workbench/tabs/file-tree-skeleton", () => ({
   FileTreeSkeleton: () => null,
 }));
 

@@ -45,7 +45,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { TerminalPanel } from "@/components/workbench/terminal/terminal-panel";
-import { FilesTab } from "./tabs/files-tab";
+import { FilesTab } from "./files/files-tab";
 import { GitTab } from "./git/git-tab";
 import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";

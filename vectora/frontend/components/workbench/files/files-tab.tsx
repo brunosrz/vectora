@@ -63,7 +63,7 @@ import { fetchFile, apiUpdateFile } from "@/lib/api/fs-files";
 import { VerticalSplit } from "@/components/layout/vertical-split";
 import { getMediaKind, MediaView } from "@/components/workbench/file-viewer";
 import { MarkdownView } from "@/components/workbench/markdown-view";
-import { FileTreeSkeleton } from "./file-tree-skeleton";
+import { FileTreeSkeleton } from "@/components/workbench/tabs/file-tree-skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { m } from "@/lib/paraglide/messages";
 
