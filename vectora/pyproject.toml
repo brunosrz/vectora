@@ -211,7 +211,7 @@ line-ending = "lf"
 # extract.py: 8500+ linhas de parsers tree-sitter com imports opcionais (try/except).
 # Os módulos tree_sitter_* não estão nas deps do projeto — são extras opcionais.
 # Os atributos .type/.children são da API dinâmica do tree-sitter (sem stubs py.typed).
-match = ["backend/services/context_graph/extract.py"]
+include = ["backend/services/context_graph/extract.py"]
 
 [tool.ty.overrides.rules]
 unresolved-import = "ignore"
@@ -223,7 +223,7 @@ invalid-assignment = "ignore"
 [[tool.ty.overrides]]
 # cluster.py: graspologic é opcional (fallback para networkx louvain).
 # dedup.py: usa load_llm via asyncio.get_event_loop() em contexto sync.
-match = [
+include = [
     "backend/services/context_graph/cluster.py",
     "backend/services/context_graph/dedup.py",
     "backend/services/context_graph/export.py",

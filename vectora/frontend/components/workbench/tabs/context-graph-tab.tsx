@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, RefreshCw, Waypoints, ExternalLink } from "lucide-react";
+import { Loader2, RefreshCw, ExternalLink } from "lucide-react";
 
 import { useContextGraph } from "@/lib/hooks/use-context-graph";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -59,12 +59,8 @@ export function ContextGraphTab({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 shrink-0">
-        <div className="flex items-center gap-2">
-          <Waypoints className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Context Graph</span>
-        </div>
+      {/* Barra de ação */}
+      <div className="flex items-center justify-end px-3 py-2 border-b border-border/60 shrink-0">
         <button
           onClick={handleBuild}
           disabled={isRunning || loading}
