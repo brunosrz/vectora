@@ -136,6 +136,22 @@ def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
     return HumanMessage(content=parts)
 
 
+def _prepend_text_context(msg: Any, block: str) -> Any:
+    """Prepende um bloco de texto de contexto à HumanMessage (str ou multimodal).
+
+    Preserva o conteúdo original: para texto puro, concatena; para conteúdo
+    multimodal (lista de parts), insere uma part de texto no início.
+    """
+    from langchain_core.messages import HumanMessage
+
+    content = getattr(msg, "content", None)
+    if isinstance(content, str):
+        return HumanMessage(content=f"{block}\n\n{content}")
+    if isinstance(content, list):
+        return HumanMessage(content=[{"type": "text", "text": block}, *content])
+    return msg
+
+
 # ---------------------------------------------------------------------------
 # Lazy graph loader — delegado para src.graph
 # ---------------------------------------------------------------------------
@@ -361,6 +377,22 @@ async def stream_chat(
     }
 
     human_msg = _build_human_message(request.content, request.attachments)
+
+    # Pins (WB-1): injeta o conteúdo dos arquivos fixados no turno, para que
+    # "fixar" mantenha o arquivo no contexto do agente. Só em modo Dev (chat
+    # puro não tem workspace). Defensivo — falha aqui nunca impede a conversa.
+    if not chat_mode and workspace_id:
+        try:
+            from backend.api.handlers.threads import build_pinned_context
+            from backend.services.workspace import workspace_registry
+
+            ws = workspace_registry.get(workspace_id)
+            if ws is not None:
+                pinned = await build_pinned_context(thread_id, ws.cwd)
+                if pinned:
+                    human_msg = _prepend_text_context(human_msg, pinned)
+        except Exception:
+            logger.warning("api/chat: falha ao injetar pinned_files", exc_info=True)
 
     events = graph.astream_events(
         {"messages": [human_msg]},

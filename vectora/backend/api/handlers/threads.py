@@ -279,6 +279,62 @@ async def _set_session_pins(thread_id: str, pins: list[str]) -> list[str]:
     return clean
 
 
+_PIN_CONTENT_CAP = 4000  # chars por arquivo fixado injetados no contexto
+
+
+async def build_pinned_context(
+    thread_id: str,
+    workspace_cwd: str | Any | None,
+    *,
+    cap: int = _PIN_CONTENT_CAP,
+) -> str:
+    """Monta o bloco ``<pinned_files>`` com o conteúdo dos arquivos fixados.
+
+    Lido per-request e injetado no turno do agente (chat.py) para que "fixar"
+    realmente mantenha o arquivo no contexto. Defensivo (§11): arquivo ausente,
+    binário, grande, fora do workspace (path traversal) ou ilegível é ignorado
+    — nunca derruba o turno. Sem pins ou sem workspace → string vazia.
+    """
+    if not workspace_cwd:
+        return ""
+    from pathlib import Path
+
+    try:
+        pins = await _get_session_pins(thread_id)
+    except Exception:
+        return ""
+    if not pins:
+        return ""
+
+    try:
+        root = Path(workspace_cwd).resolve()
+    except Exception:
+        return ""
+
+    blocks: list[str] = []
+    for pin in pins:
+        try:
+            fp = (root / pin).resolve()
+            if root != fp and root not in fp.parents:
+                continue  # path traversal — fora do workspace
+            if not fp.is_file():
+                continue
+            raw = fp.read_bytes()
+            if b"\x00" in raw[:8192]:
+                continue  # binário
+            text = raw.decode("utf-8", errors="replace")
+            if len(text) > cap:
+                text = text[:cap] + "\n… (truncado)"
+            blocks.append(f'<file path="{pin}">\n{text}\n</file>')
+        except Exception:
+            logger.debug("pins: ignorando arquivo fixado %r", pin, exc_info=True)
+            continue
+
+    if not blocks:
+        return ""
+    return "<pinned_files>\n" + "\n".join(blocks) + "\n</pinned_files>"
+
+
 @router.post("/vectora.chat.v1.ThreadService/GetThreadPins")
 async def get_thread_pins(request: GetThreadPinsRequest) -> ThreadPinsResponse:
     return ThreadPinsResponse(
