@@ -275,6 +275,7 @@ __all__ = [
     "CHAT_TOOLS",
     "FS_TOOLS",
     "GIT_TOOLS",
+    "GRAPH_TOOLS",
     "MEMORY_TOOLS",
     "RAG_TOOLS",
     "SEARCH_TOOLS",

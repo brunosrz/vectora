@@ -48,6 +48,7 @@ describe("WORKBENCH_TABS", () => {
       "storage",
       "background",
       "terminal",
+      "context_graph",
     ]);
   });
 });

@@ -46,7 +46,8 @@ export type WorkbenchTab =
   | "plan"
   | "preview"
   | "storage"
-  | "background";
+  | "background"
+  | "context_graph";
 
 export const WORKBENCH_TABS: WorkbenchTab[] = [
   "files",
@@ -56,6 +57,7 @@ export const WORKBENCH_TABS: WorkbenchTab[] = [
   "storage",
   "background",
   "terminal",
+  "context_graph",
 ];
 
 // ── Files cache ────────────────────────────────────────────────────────────

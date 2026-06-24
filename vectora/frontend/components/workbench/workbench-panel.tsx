@@ -30,6 +30,7 @@ import {
   MonitorPlay,
   Brain,
   Radar,
+  Waypoints,
 } from "lucide-react";
 import { useWorkspaceWatcher } from "@/lib/hooks/use-workspace-watcher";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
@@ -51,6 +52,7 @@ import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";
 import { MemoryTab } from "./tabs/memory-tab";
 import { BackgroundTab } from "./tabs/background-tab";
+import { GraphTab } from "./tabs/graph-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 
@@ -71,6 +73,7 @@ const TAB_ICON: Record<
   preview: MonitorPlay,
   storage: Brain,
   background: Radar,
+  context_graph: Waypoints,
 };
 
 /** Lê o cache do workbench-store e devolve o texto do chip por aba. */
@@ -103,6 +106,7 @@ function useTabBadge(
     case "preview":
     case "storage":
     case "background":
+    case "context_graph":
       return null;
   }
 }
@@ -249,6 +253,7 @@ export function WorkbenchContent({
         {activeTab === "preview" && <PreviewTab threadId={threadId} />}
         {activeTab === "storage" && <MemoryTab threadId={threadId} />}
         {activeTab === "background" && <BackgroundTab threadId={threadId} />}
+        {activeTab === "context_graph" && <GraphTab threadId={threadId} />}
       </div>
     </div>
   );
