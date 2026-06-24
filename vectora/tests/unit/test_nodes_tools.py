@@ -67,5 +67,6 @@ def test_search_memory_registered():
 
 def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas.
-    # Atualize ao adicionar/remover tool em src/tools/__init__.py.
-    assert len(ALL_TOOLS) == 39
+    # Atualize ao adicionar/remover tool em backend/nodes/tools.py.
+    # 39 base + 17 integrações (gdrive/gmail/slack/linear/jira/notion).
+    assert len(ALL_TOOLS) == 56

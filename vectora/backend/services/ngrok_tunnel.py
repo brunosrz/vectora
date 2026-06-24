@@ -13,6 +13,8 @@ import logging
 import os
 from typing import Any
 
+from backend.settings import get_settings
+
 logger = logging.getLogger(__name__)
 
 _public_url: str | None = None
@@ -35,8 +37,6 @@ def start_tunnel(port: int = 8080) -> str | None:
 
     if _public_url is not None:
         return _public_url
-
-    from backend.settings import get_settings
 
     cfg = get_settings()
 

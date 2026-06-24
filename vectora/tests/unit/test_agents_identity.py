@@ -32,10 +32,9 @@ def test_identity_is_commercial_not_open_source():
     lowered = VECTORA_IDENTITY.lower()
     assert "comercial" in lowered
     assert "self-hosted" in lowered or "self hosted" in lowered
-    # Negativo: sem alegação de open source / Apache.
+    # Afirma explicitamente que NÃO é open source e não reivindica licença OSS.
+    assert "não é open source" in lowered
     assert "apache" not in lowered
-    assert "open source" not in lowered
-    assert "open-source" not in lowered
 
 
 def test_identity_mentions_cohere():

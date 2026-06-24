@@ -21,7 +21,7 @@ _MIGRATION = (
     / "storage"
     / "migrations"
     / "sqlite"
-    / "0007_background_tasks.sql"
+    / "0008_background_tasks.sql"
 )
 
 

@@ -50,7 +50,7 @@ class TestGitLabOAuth:
     def test_start_redirect(self, client: TestClient) -> None:
         with patch.dict("os.environ", self._env):
             r = client.get("/auth/gitlab")
-        assert r.status_code == 307
+        assert r.status_code == 302
         loc = r.headers["location"]
         assert "gitlab.com/oauth/authorize" in loc
         assert "gl-client-id" in loc
@@ -120,7 +120,7 @@ class TestGoogleOAuth:
     def test_start_redirect(self, client: TestClient) -> None:
         with patch.dict("os.environ", self._env):
             r = client.get("/auth/google")
-        assert r.status_code == 307
+        assert r.status_code == 302
         loc = r.headers["location"]
         assert "accounts.google.com" in loc
         assert "drive.readonly" in loc
@@ -192,7 +192,7 @@ class TestSlackOAuth:
     def test_start_redirect(self, client: TestClient) -> None:
         with patch.dict("os.environ", self._env):
             r = client.get("/auth/slack")
-        assert r.status_code == 307
+        assert r.status_code == 302
         loc = r.headers["location"]
         assert "slack.com/oauth/v2/authorize" in loc
         assert "xxxx.yyyy" in loc

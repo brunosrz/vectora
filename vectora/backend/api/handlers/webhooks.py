@@ -398,12 +398,16 @@ async def receive_webhook(provider: str, request: Request) -> Response:
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Payload JSON inválido") from None
 
-    # Determina tipo do evento
+    # Determina tipo do evento. `payload["event"]` pode ser dict (Slack) OU
+    # string (ex: email providers com {"event": "delivered"}) — só extrai
+    # `.type` quando for dict.
+    event_field = payload.get("event")
+    nested_type = event_field.get("type") if isinstance(event_field, dict) else None
     event_type = (
         headers.get("x-github-event")
         or headers.get("x-gitlab-event")
         or payload.get("type")
-        or payload.get("event", {}).get("type")
+        or nested_type
         or "unknown"
     )
 
