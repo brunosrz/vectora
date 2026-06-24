@@ -1,3 +1,24 @@
+# Garante LF em todo texto — sem loop CRLF↔LF entre git checkout e Prettier no Windows.
+* text=auto eol=lf
+
+# Binários genuínos: sem conversão de linha.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.pdf binary
+*.mjs -text
+
 # Impede que arquivos de config JS/MJS sejam contabilizados pelo GitHub Linguist
 # como linguagem principal do projeto (que é Python + TypeScript).
 company/eslint.config.js linguist-vendored

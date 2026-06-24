@@ -47,7 +47,7 @@ def _make_ws(tmp_path: Path) -> tuple[MagicMock, Path]:
 
 
 def _config(workspace_id: str) -> RunnableConfig:
-    return cast(RunnableConfig, {"configurable": {"workspace_id": workspace_id}})
+    return cast("RunnableConfig", {"configurable": {"workspace_id": workspace_id}})
 
 
 def _patch_registry(ws_mock):
@@ -90,7 +90,7 @@ async def test_graph_query_no_workspace():
 
     with _patch_registry(None):
         result = await graph_query.ainvoke(
-            {"question": "auth"}, config=cast(RunnableConfig, {"configurable": {}})
+            {"question": "auth"}, config=cast("RunnableConfig", {"configurable": {}})
         )
     assert "Erro" in result or "workspace" in result.lower()
 
@@ -198,6 +198,6 @@ async def test_build_knowledge_graph_no_workspace():
     from backend.tools.context_graph import build_knowledge_graph
 
     result = await build_knowledge_graph.ainvoke(
-        {}, config=cast(RunnableConfig, {"configurable": {}})
+        {}, config=cast("RunnableConfig", {"configurable": {}})
     )
     assert "Erro" in result or "workspace" in result.lower()
