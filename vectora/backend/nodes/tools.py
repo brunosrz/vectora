@@ -52,6 +52,12 @@ from backend.tools.git import (
     git_worktree,
 )
 from backend.tools.gmail import gmail_list, gmail_read
+from backend.tools.graph import (
+    build_knowledge_graph,
+    graph_explain,
+    graph_path,
+    graph_query,
+)
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.linear import (
     linear_create_issue,
@@ -100,6 +106,14 @@ MEMORY_TOOLS: list[BaseTool] = [save_memory, get_memory, delete_memory, search_m
 
 #: Ferramentas de workspace e manifests (B6)
 WORKSPACE_TOOLS: list[BaseTool] = [workspace_describe, workspace_list, bucket_summary]
+
+#: Ferramentas do Context Graph (grafo de conhecimento do workspace)
+GRAPH_TOOLS: list[BaseTool] = [
+    build_knowledge_graph,
+    graph_query,
+    graph_explain,
+    graph_path,
+]
 
 #: Ferramentas RAG de ingestão e gestão
 RAG_TOOLS: list[BaseTool] = [vector_search, embedding, ingest_docs, manage_retriever]
@@ -195,6 +209,10 @@ for _t in [
     notion_search,
     notion_read_page,
     notion_create_page,
+    build_knowledge_graph,
+    graph_query,
+    graph_explain,
+    graph_path,
 ]:
     _all[_t.name] = _t
 

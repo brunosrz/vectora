@@ -68,5 +68,19 @@ def test_search_memory_registered():
 def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas.
     # Atualize ao adicionar/remover tool em backend/nodes/tools.py.
-    # 39 base + 17 integrações (gdrive/gmail/slack/linear/jira/notion).
-    assert len(ALL_TOOLS) == 56
+    # 39 base + 17 integrações (gdrive/gmail/slack/linear/jira/notion) + 4 context graph.
+    assert len(ALL_TOOLS) == 60
+
+
+def test_graph_tools_registered():
+    # Context graph tools (GF-3) devem estar disponíveis aos agentes.
+    names = [t.name for t in ALL_TOOLS]
+    for expected in (
+        "build_knowledge_graph",
+        "graph_query",
+        "graph_explain",
+        "graph_path",
+    ):
+        assert expected in names, f"Tool ausente: {expected}"
+    # Erro: tools que não existem não devem estar presentes
+    assert "context_graph_build" not in names
