@@ -56,6 +56,7 @@ import { VerticalSplit } from "@/components/layout/vertical-split";
 import { getMediaKind, MediaView } from "@/components/workbench/file-viewer";
 import { MarkdownView } from "@/components/workbench/markdown-view";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { usePins } from "@/lib/hooks/use-pins";
 import { m } from "@/lib/paraglide/messages";
 import { norm } from "./files-utils";
 import {
@@ -88,6 +89,9 @@ interface FilesTabProps {
 export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
   const workspace = useWorkspacesStore((s) => s.getActive());
   const wsId = workspace?.id ?? "";
+
+  // Pins (WB-1): backend é a fonte de verdade — carrega ao abrir a sessão.
+  usePins(threadId);
 
   const filter = useWorkbenchStore((s) => s.getFiles(wsId).filter);
   const openPath = useWorkbenchStore((s) => s.getFiles(wsId).openPath);

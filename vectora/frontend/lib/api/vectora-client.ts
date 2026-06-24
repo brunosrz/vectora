@@ -327,6 +327,22 @@ export const getHistory = (
 export const generateTitle = (thread_id: string): Promise<{ title: string }> =>
   postRpc("/vectora.chat.v1.ThreadService/GenerateTitle", { thread_id });
 
+export interface ThreadPins {
+  thread_id: string;
+  pins: string[];
+}
+
+/** Lê os arquivos fixados da sessão (fonte de verdade: backend). */
+export const getThreadPins = (thread_id: string): Promise<ThreadPins> =>
+  postRpc("/vectora.chat.v1.ThreadService/GetThreadPins", { thread_id });
+
+/** Grava os arquivos fixados da sessão; devolve a lista normalizada. */
+export const setThreadPins = (
+  thread_id: string,
+  pins: string[],
+): Promise<ThreadPins> =>
+  postRpc("/vectora.chat.v1.ThreadService/SetThreadPins", { thread_id, pins });
+
 // ============================================================================
 // Auth usage — quota consumption
 // ============================================================================

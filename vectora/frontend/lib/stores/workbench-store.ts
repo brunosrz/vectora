@@ -18,6 +18,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
+import { getThreadPins, setThreadPins } from "@/lib/api/vectora-client";
+
 /** Referência estável de lista vazia (evita criar novo [] a cada selector). */
 const EMPTY_LIST: TerminalInstance[] = [];
 /** Janela default para considerar uma entrada do cache "stale" (ms). */
@@ -180,6 +182,10 @@ interface WorkbenchState {
 
   togglePinned: (threadId: string, path: string) => void;
   isPinned: (threadId: string, path: string) => boolean;
+  /** Substitui o cache local de pins com a lista vinda do backend (§8). */
+  setPins: (threadId: string, pins: string[]) => void;
+  /** Carrega os pins da sessão do backend (fonte de verdade). */
+  loadPins: (threadId: string) => Promise<void>;
 
   // ── Caches voláteis ───────────────────────────────────────────────────────
   files: Record<string, FilesCache>;
@@ -370,16 +376,31 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         setSplitSize: (size) => set({ splitSize: size }),
         setViewerHeight: (height) => set({ viewerHeight: height }),
 
-        togglePinned: (threadId, path) =>
-          set((s) => {
-            const cur = s.pinnedFiles[threadId] ?? [];
-            const next = cur.includes(path)
-              ? cur.filter((p) => p !== path)
-              : [...cur, path];
-            return { pinnedFiles: { ...s.pinnedFiles, [threadId]: next } };
-          }),
+        togglePinned: (threadId, path) => {
+          const cur = get().pinnedFiles[threadId] ?? [];
+          const next = cur.includes(path)
+            ? cur.filter((p) => p !== path)
+            : [...cur, path];
+          // Otimista: atualiza o cache já; o backend é a fonte de verdade (§8)
+          // e persiste a lista por sessão, injetando os pins no contexto do
+          // agente. Falha de rede não trava a UI — reload reconcilia.
+          set((s) => ({ pinnedFiles: { ...s.pinnedFiles, [threadId]: next } }));
+          void setThreadPins(threadId, next)
+            .then((res) => get().setPins(threadId, res.pins))
+            .catch(() => {});
+        },
         isPinned: (threadId, path) =>
           (get().pinnedFiles[threadId] ?? []).includes(path),
+        setPins: (threadId, pins) =>
+          set((s) => ({ pinnedFiles: { ...s.pinnedFiles, [threadId]: pins } })),
+        loadPins: async (threadId) => {
+          try {
+            const res = await getThreadPins(threadId);
+            get().setPins(threadId, res.pins);
+          } catch {
+            // backend indisponível — mantém o cache atual
+          }
+        },
 
         // ── Caches voláteis ─────────────────────────────────────────────────
         files: {},
@@ -579,6 +600,8 @@ export const useWorkbenchStore = create<WorkbenchState>()(
         ),
         // Apenas o "shell" persiste. Caches voláteis (files/diff/plan) ficam
         // de fora — são revalidados rápido e a verdade vive no backend.
+        // `pinnedFiles` NÃO persiste: o backend é a fonte de verdade (§8) e
+        // `loadPins` reconcilia o cache ao abrir a sessão.
         partialize: (state) => ({
           byThread: state.byThread,
           activeByThread: state.activeByThread,
@@ -586,7 +609,6 @@ export const useWorkbenchStore = create<WorkbenchState>()(
           activeTabByThread: state.activeTabByThread,
           splitSize: state.splitSize,
           viewerHeight: state.viewerHeight,
-          pinnedFiles: state.pinnedFiles,
         }),
       },
     ),

@@ -101,6 +101,10 @@ const mockWorkbench = {
   setDiffSummary: vi.fn(),
   pinnedFiles: {},
   setPinnedFiles: vi.fn(),
+  loadPins: vi.fn(),
+  setPins: vi.fn(),
+  togglePinned: vi.fn(),
+  isPinned: () => false,
   getOpen: () => true,
 };
 
