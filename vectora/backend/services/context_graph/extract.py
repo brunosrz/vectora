@@ -10884,7 +10884,7 @@ def extract_bash(path: Path) -> dict:
     function_bodies: list[tuple[str, Any]] = []
     defined_functions: set[str] = set()
 
-    from graphify.security import sanitize_metadata  # module-level cached import
+    from .security import sanitize_metadata  # module-level cached import
 
     def add_node(nid: str, label: str, line: int, kind: str = "code") -> None:
         if nid and nid not in seen_ids:
@@ -13011,7 +13011,7 @@ def collect_files(target: Path, *, follow_symlinks: bool = False, root: Path | N
     if target.is_file():
         return [target]
     _EXTENSIONS = set(_DISPATCH.keys())
-    from graphify.detect import _is_ignored, _is_noise_dir, _load_graphifyignore
+    from .detect import _is_ignored, _is_noise_dir, _load_graphifyignore
     ignore_root = root if root is not None else target
     patterns = _load_graphifyignore(ignore_root)
     # Shared across all _is_ignored calls in this scan so ancestor-directory

@@ -9,12 +9,18 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
 
-from graphify.google_workspace import (
-    GOOGLE_WORKSPACE_EXTENSIONS,
-    convert_google_workspace_file,
-    google_workspace_enabled,
-)
-from graphify.paths import GRAPHIFY_OUT, GRAPHIFY_OUT_NAME, out_path
+from .paths import GRAPHIFY_OUT, GRAPHIFY_OUT_NAME, out_path
+
+# Google Workspace não entra no v1 do Context Graph — stubs para manter a API estável.
+GOOGLE_WORKSPACE_EXTENSIONS: frozenset[str] = frozenset()
+
+
+def google_workspace_enabled() -> bool:
+    return False
+
+
+def convert_google_workspace_file(path, out_dir, **kwargs):  # type: ignore[no-untyped-def]
+    return None
 
 
 class FileType(str, Enum):
@@ -388,7 +394,7 @@ def classify_file(path: Path) -> FileType | None:
     # deterministically, so route them to the AST path (CODE) rather than the LLM
     # document path — otherwise apm.yml (a .yml "document") would be LLM-extracted
     # and a package would split into duplicate file-anchored nodes (#1377).
-    from graphify.manifest_ingest import is_package_manifest_path
+    from .manifest_ingest import is_package_manifest_path
     if is_package_manifest_path(path):
         return FileType.CODE
     # Compound extensions must be checked before simple suffix lookup

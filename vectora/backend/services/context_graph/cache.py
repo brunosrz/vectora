@@ -13,7 +13,7 @@ from pathlib import Path
 # shared-output setups. Accepts a relative name ("graphify-out-feature") or an
 # absolute path ("/shared/graphify-out"). Single source of truth in graphify.paths
 # (#1423); re-exported here as _GRAPHIFY_OUT for the existing call sites.
-from graphify.paths import GRAPHIFY_OUT as _GRAPHIFY_OUT
+from .paths import GRAPHIFY_OUT as _GRAPHIFY_OUT
 
 # AST cache entries are the output of graphify's own extractor code, so they
 # are only valid for the version that wrote them: keying purely on file

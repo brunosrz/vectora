@@ -12,9 +12,9 @@ from datetime import date
 from pathlib import Path
 import networkx as nx
 from networkx.readwrite import json_graph
-from graphify.security import sanitize_label
-from graphify.analyze import _node_community_map
-from graphify.build import edge_data
+from .security import sanitize_label
+from .analyze import _node_community_map
+from .build import edge_data
 
 
 # Artifacts worth preserving across rebuilds (non-regenerable without LLM or curation).
@@ -486,7 +486,7 @@ def to_json(G: nx.Graph, communities: dict[int, list[str]], output_path: str, *,
     existing_path = Path(output_path)
     if not force and existing_path.exists():
         try:
-            from graphify.security import check_graph_file_size_cap
+            from .security import check_graph_file_size_cap
             check_graph_file_size_cap(existing_path)
             existing_data = json.loads(existing_path.read_text(encoding="utf-8"))
             existing_n = len(existing_data.get("nodes", []))

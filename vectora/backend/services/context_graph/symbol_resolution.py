@@ -10,8 +10,8 @@ from pathlib import Path
 from collections.abc import Sequence
 from typing import Any
 
-from graphify.ids import make_id as _shared_make_id
-from graphify.security import sanitize_metadata
+from .ids import make_id as _shared_make_id
+from .security import sanitize_metadata
 
 
 
