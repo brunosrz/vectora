@@ -24,8 +24,7 @@ afterEach(() => {
 
 class MockEventSource {
   url: string;
-  onmessage: ((ev: { data: string }) => void) | null = null;
-  onerror: (() => void) | null = null;
+  listeners: Record<string, ((ev: { data: string }) => void)[]> = {};
   static instances: MockEventSource[] = [];
 
   constructor(url: string) {
@@ -33,14 +32,18 @@ class MockEventSource {
     MockEventSource.instances.push(this);
   }
 
+  addEventListener(type: string, handler: (ev: { data: string }) => void) {
+    (this.listeners[type] ??= []).push(handler);
+  }
+
   close() {}
 
   dispatchMessage(data: string) {
-    this.onmessage?.({ data });
+    for (const h of this.listeners.message ?? []) h({ data });
   }
 
   triggerError() {
-    this.onerror?.();
+    for (const h of this.listeners.error ?? []) h({ data: "" });
   }
 }
 
