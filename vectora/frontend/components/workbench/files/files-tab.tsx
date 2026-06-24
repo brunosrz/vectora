@@ -83,6 +83,8 @@ import {
   type FileLogResponse,
   type ShowFileAtRevResponse,
 } from "./files-api";
+import { FileHistoryPanel } from "./file-history-panel";
+import { SearchResultGroup } from "./search-result-group";
 
 // ---------------------------------------------------------------------------
 // Estado de criação inline
@@ -621,124 +623,6 @@ function PinnedSection({
 }
 
 const EMPTY_PINNED: string[] = [];
-
-// ---------------------------------------------------------------------------
-// FileHistoryPanel — lista de commits que tocaram um arquivo (A.6)
-// ---------------------------------------------------------------------------
-
-function FileHistoryPanel({
-  entries,
-  loading,
-  selectedSha,
-  onSelectSha,
-}: {
-  entries: FileLogEntry[] | null;
-  loading: boolean;
-  selectedSha: string | null;
-  onSelectSha: (sha: string) => void;
-}) {
-  if (loading) {
-    return (
-      <div className="flex justify-center py-6">
-        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-  if (!entries || entries.length === 0) {
-    return (
-      <p className="text-[10px] text-muted-foreground text-center py-6 px-4">
-        Nenhum commit encontrado para este arquivo.
-      </p>
-    );
-  }
-  return (
-    <div className="px-1 py-1">
-      {entries.map((entry) => (
-        <button
-          key={entry.sha}
-          onClick={() => onSelectSha(entry.sha)}
-          className={`w-full text-left px-2 py-1.5 rounded mb-0.5 hover:bg-muted/40 transition-colors ${
-            selectedSha === entry.sha ? "bg-primary/10 hover:bg-primary/15" : ""
-          }`}
-        >
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="text-[10px] font-mono text-primary shrink-0">
-              {entry.sha_short}
-            </span>
-            <span className="text-[10px] text-muted-foreground shrink-0">
-              {fmtDate(entry.date)}
-            </span>
-          </div>
-          <p className="text-[11px] text-foreground/90 truncate leading-tight">
-            {entry.message}
-          </p>
-          <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-            {entry.author.split("<")[0].trim()}
-          </p>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// SearchResultGroup — grupo colapsável de resultados por arquivo (A.5)
-// ---------------------------------------------------------------------------
-
-function SearchResultGroup({
-  filePath,
-  hits,
-  onOpenHit,
-}: {
-  filePath: string;
-  hits: SearchHit[];
-  onOpenHit: (path: string, lineNumber: number) => void;
-}) {
-  const [collapsed, setCollapsed] = useState(false);
-  const fileName = filePath.split("/").pop() ?? filePath;
-
-  return (
-    <div className="mb-0.5">
-      <button
-        onClick={() => setCollapsed((v) => !v)}
-        className="flex items-center gap-1 w-full px-2 py-0.5 hover:bg-muted/40 rounded text-left"
-      >
-        <ChevronRight
-          className={`w-3 h-3 text-muted-foreground shrink-0 transition-transform ${
-            collapsed ? "" : "rotate-90"
-          }`}
-        />
-        <span
-          className="text-[11px] font-medium truncate flex-1"
-          title={filePath}
-        >
-          {fileName}
-        </span>
-        <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
-          {hits.length}
-        </span>
-      </button>
-      {!collapsed && (
-        <div className="ml-4">
-          {hits.map((hit, i) => (
-            <button
-              key={i}
-              onClick={() => onOpenHit(hit.path, hit.line_number)}
-              className="flex items-start gap-2 w-full px-2 py-px hover:bg-muted/40 rounded text-left"
-            >
-              <span className="text-[10px] text-muted-foreground shrink-0 w-7 text-right leading-relaxed tabular-nums">
-                {hit.line_number}
-              </span>
-              <span className="text-[11px] font-mono text-foreground/80 truncate leading-relaxed">
-                {hit.line_text.trimStart()}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // FilesTab principal
