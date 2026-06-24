@@ -126,7 +126,10 @@ repos:
     hooks:
       - id: ty
         name: Type Check — Python (ty)
-        entry: uv run --project vectora ty check vectora/backend vectora/tests
+        # Roda de dentro de vectora/ (igual ao `scons lint`) para que o exclude
+        # de [tool.ty.src] no pyproject case os caminhos relativos — senão o
+        # pacote context_graph (ainda não nativizado) não é excluído.
+        entry: bash -c "cd vectora && uv run ty check backend tests"
         language: system
         types: [python]
         pass_filenames: false

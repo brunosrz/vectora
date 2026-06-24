@@ -103,6 +103,20 @@ class UpdateThreadRequest(BaseModel):
     title: str = ""
 
 
+class GetThreadPinsRequest(BaseModel):
+    thread_id: str
+
+
+class SetThreadPinsRequest(BaseModel):
+    thread_id: str
+    pins: list[str] = Field(default_factory=list)
+
+
+class ThreadPinsResponse(BaseModel):
+    thread_id: str
+    pins: list[str] = Field(default_factory=list)
+
+
 class GetHistoryRequest(BaseModel):
     thread_id: str
 

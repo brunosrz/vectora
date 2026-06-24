@@ -34,11 +34,14 @@ from backend.api.schemas import (
     GenerateTitleResponse,
     GetHistoryRequest,
     GetHistoryResponse,
+    GetThreadPinsRequest,
     GetThreadRequest,
     HistoryMessage,
     ListThreadsRequest,
     ListThreadsResponse,
+    SetThreadPinsRequest,
     Thread,
+    ThreadPinsResponse,
     UpdateThreadRequest,
 )
 
@@ -203,6 +206,91 @@ async def _upsert_session(
         (thread_id, now, now, extra_json),
     )
     await db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Pins de sessão (WB-1) — arquivos fixados, persistidos em extra["pins"]
+# ---------------------------------------------------------------------------
+
+
+def _normalize_pins(pins: list[str]) -> list[str]:
+    """Limpa a lista de pins: trim, separador POSIX, dedup, descarta vazios."""
+    clean: list[str] = []
+    seen: set[str] = set()
+    for raw in pins:
+        path = str(raw).strip().replace("\\", "/")
+        if path and path not in seen:
+            seen.add(path)
+            clean.append(path)
+    return clean
+
+
+async def _get_session_pins(thread_id: str) -> list[str]:
+    """Lê os pins gravados na sessão; thread inexistente ou extra inválido → []."""
+    db = await _get_db()
+    async with db.execute(
+        "SELECT extra FROM vectora_sessions WHERE thread_id = ?", (thread_id,)
+    ) as cur:
+        row = await cur.fetchone()
+    if row is None:
+        return []
+    try:
+        extra = json.loads(row[0] or "{}")
+    except Exception:
+        return []
+    pins = extra.get("pins", [])
+    return [str(p) for p in pins] if isinstance(pins, list) else []
+
+
+async def _set_session_pins(thread_id: str, pins: list[str]) -> list[str]:
+    """Grava os pins na sessão (UPSERT), mesclando com o extra existente.
+
+    Devolve a lista normalizada efetivamente persistida.
+    """
+    clean = _normalize_pins(pins)
+    db = await _get_db()
+    now = datetime.now(UTC).isoformat()
+
+    async with db.execute(
+        "SELECT extra FROM vectora_sessions WHERE thread_id = ?", (thread_id,)
+    ) as cur:
+        row = await cur.fetchone()
+    extra: dict[str, Any] = {}
+    if row:
+        try:
+            extra = json.loads(row[0] or "{}")
+        except Exception:
+            extra = {}
+    extra["pins"] = clean
+    extra_json = json.dumps(extra)
+
+    await db.execute(
+        """
+        INSERT INTO vectora_sessions
+            (thread_id, created_at, last_activity, message_count, extra)
+        VALUES (?, ?, ?, 0, ?)
+        ON CONFLICT(thread_id) DO UPDATE SET
+            last_activity = excluded.last_activity,
+            extra        = excluded.extra
+        """,
+        (thread_id, now, now, extra_json),
+    )
+    await db.commit()
+    return clean
+
+
+@router.post("/vectora.chat.v1.ThreadService/GetThreadPins")
+async def get_thread_pins(request: GetThreadPinsRequest) -> ThreadPinsResponse:
+    return ThreadPinsResponse(
+        thread_id=request.thread_id,
+        pins=await _get_session_pins(request.thread_id),
+    )
+
+
+@router.post("/vectora.chat.v1.ThreadService/SetThreadPins")
+async def set_thread_pins(request: SetThreadPinsRequest) -> ThreadPinsResponse:
+    pins = await _set_session_pins(request.thread_id, request.pins)
+    return ThreadPinsResponse(thread_id=request.thread_id, pins=pins)
 
 
 # ---------------------------------------------------------------------------
