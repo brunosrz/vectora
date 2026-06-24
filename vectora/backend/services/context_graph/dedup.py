@@ -397,7 +397,7 @@ def deduplicate_entities(
         return unique_nodes, edges
 
     total = len(remap)
-    msg = f"[graphify] Deduplicated {total} node(s)"
+    msg = f"[context_graph] Deduplicated {total} node(s)"
     if exact_merges:
         msg += f" ({exact_merges} exact"
         if fuzzy_merges:
@@ -496,7 +496,7 @@ def _llm_tiebreak(
     try:
         llm = load_llm(backend)
     except Exception as exc:
-        print(f"[graphify] --dedup-llm: cannot load LLM {backend!r} ({exc}); skipping.", flush=True)
+        print(f"[context_graph] --dedup-llm: cannot load LLM {backend!r} ({exc}); skipping.", flush=True)
         return
 
     for batch_start in range(0, len(ambiguous), batch_size):
@@ -537,4 +537,4 @@ def _llm_tiebreak(
                         uf.union(winner["id"], a["id"])
                         uf.union(winner["id"], b["id"])
         except Exception as exc:
-            print(f"[graphify] --dedup-llm batch failed: {exc}", flush=True)
+            print(f"[context_graph] --dedup-llm batch failed: {exc}", flush=True)

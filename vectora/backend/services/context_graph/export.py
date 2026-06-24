@@ -88,11 +88,11 @@ def backup_if_protected(out_dir: Path) -> Path | None:
                 except Exception:
                     pass
         if copied:
-            print(f"[graphify] backed up {reason} graph ({copied} files) -> {backup_dir.name}/")
+            print(f"[context_graph] backed up {reason} graph ({copied} files) -> {backup_dir.name}/")
         return backup_dir
     except Exception as exc:
         import sys
-        print(f"[graphify] warning: backup failed ({exc}) - continuing with overwrite", file=sys.stderr)
+        print(f"[context_graph] warning: backup failed ({exc}) - continuing with overwrite", file=sys.stderr)
         return None
 
 def _obsidian_tag(name: str) -> str:
@@ -496,7 +496,7 @@ def to_json(G: nx.Graph, communities: dict[int, list[str]], output_path: str, *,
             if new_n < existing_n:
                 import sys as _sys
                 print(
-                    f"[graphify] WARNING: new graph has {new_n} nodes but existing "
+                    f"[context_graph] WARNING: new graph has {new_n} nodes but existing "
                     f"graph.json has {existing_n} (net -{existing_n - new_n}). "
                     f"Refusing to overwrite. Possible causes: missing chunk files from "
                     f"a previous session, or fuzzy dedup collapsed same-named symbols "
