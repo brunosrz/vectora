@@ -24,9 +24,9 @@ interface WebhookEvent {
   data: Record<string, unknown>;
 }
 
-const _CI_EVENTS = ["workflow_run", "check_run", "check_suite"];
+const CI_EVENTS = new Set(["workflow_run", "check_run", "check_suite"]);
 
-function _str(v: unknown): string {
+function toStr(v: unknown): string {
   return typeof v === "string" ? v : v == null ? "" : String(v);
 }
 
@@ -34,19 +34,19 @@ export function useWebhookWorkbench(): void {
   const handler = useCallback((evt: WebhookEvent) => {
     if (evt.provider !== "github") return;
     const base = evt.event_type.split(".")[0];
-    if (!_CI_EVENTS.includes(base)) return;
+    if (!CI_EVENTS.has(base)) return;
 
     const d = evt.data;
-    const name = _str(d.name) || "CI";
-    const status = _str(d.status);
-    const conclusion = _str(d.conclusion);
+    const name = toStr(d.name) || "CI";
+    const status = toStr(d.status);
+    const conclusion = toStr(d.conclusion);
 
     useCIStore.getState().setRun({
-      repo: _str(d.repo),
+      repo: toStr(d.repo),
       name,
       status,
       conclusion: conclusion || null,
-      htmlUrl: _str(d.html_url),
+      htmlUrl: toStr(d.html_url),
       at: Date.now(),
     });
 

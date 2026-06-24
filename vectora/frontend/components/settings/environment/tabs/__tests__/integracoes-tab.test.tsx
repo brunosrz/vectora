@@ -126,13 +126,19 @@ describe("IntegracoesTab", () => {
   it("renderiza os nomes de todas as integrações", async () => {
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
+    // Alguns nomes (ex: "Google") aparecem como cabeçalho de categoria E como
+    // nome do provider — por isso getAllByText (≥1 ocorrência) em vez de getByText.
     await waitFor(() => {
-      expect(screen.getByText("GitHub")).toBeTruthy();
-      expect(screen.getByText("GitLab")).toBeTruthy();
-      expect(screen.getByText("Google")).toBeTruthy();
-      expect(screen.getByText("Slack")).toBeTruthy();
-      expect(screen.getByText("OpenAI")).toBeTruthy();
-      expect(screen.getByText("Linear")).toBeTruthy();
+      for (const name of [
+        "GitHub",
+        "GitLab",
+        "Google",
+        "Slack",
+        "OpenAI",
+        "Linear",
+      ]) {
+        expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+      }
     });
   });
 
