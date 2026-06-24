@@ -107,7 +107,7 @@ target-version = "py313"
 fix = true
 show-fixes = true
 indent-width = 4
-exclude = [".venv", "data", "logs"]
+exclude = [".venv", "data", "logs", "backend/services/graph"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -164,10 +164,12 @@ line-ending = "lf"
 
 # ─── ty (Astral type checker) ──────────────────────────────────────────────────
 [tool.ty.src]
-exclude = []
+# backend/services/graph: código do graphify (MIT) copiado, sendo nativizado
+# incrementalmente — excluído dos gates estritos até cada módulo ser refatorado.
+exclude = ["backend/services/graph"]
 
 [tool.bandit]
-exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py"]
+exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py", "backend/services/graph"]
 skips = ["B110", "B101"]
 
 [tool.pyright]
