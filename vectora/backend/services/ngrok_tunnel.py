@@ -44,31 +44,30 @@ def start_tunnel(port: int = 8080) -> str | None:
         logger.info("ngrok_tunnel: desativado por configuração (NGROK_ENABLED=false)")
         return None
 
+    authtoken = cfg.ngrok_authtoken or os.environ.get("NGROK_AUTHTOKEN", "")
+    if not authtoken:
+        # O ngrok atual exige conta + authtoken (ERR_NGROK_4018): sem token a
+        # sessão nem inicia. Não tentamos conectar — evita poluir o log com o
+        # erro de autenticação e deixa claro o que falta.
+        logger.info(
+            "ngrok_tunnel: NGROK_AUTHTOKEN não configurado — túnel desativado. "
+            "Crie uma conta grátis em https://dashboard.ngrok.com/get-started/"
+            "your-authtoken e defina NGROK_AUTHTOKEN no .env para expor "
+            "/webhook/* publicamente."
+        )
+        return None
+
     try:
         from pyngrok import conf, ngrok  # type: ignore[import-untyped]
 
-        authtoken = cfg.ngrok_authtoken or os.environ.get("NGROK_AUTHTOKEN", "")
-        if authtoken:
-            conf.get_default().auth_token = authtoken
-        else:
-            logger.info(
-                "ngrok_tunnel: sem NGROK_AUTHTOKEN — túnel iniciado sem autenticação "
-                "(URL temporária, 1 sessão simultânea, limite de 40 req/min)"
-            )
+        conf.get_default().auth_token = authtoken
 
         # Domínio estático (NGROK_DOMAIN) mantém a mesma URL pública entre
-        # restarts — evita reconfigurar o webhook no GitHub a cada boot. Requer
-        # authtoken (domínios reservados são por conta).
+        # restarts — evita reconfigurar o webhook no GitHub a cada boot.
         domain = (cfg.ngrok_domain or os.environ.get("NGROK_DOMAIN", "")).strip()
         options: dict[str, Any] = {}
         if domain:
-            if not authtoken:
-                logger.warning(
-                    "ngrok_tunnel: NGROK_DOMAIN exige NGROK_AUTHTOKEN — ignorando "
-                    "domínio e usando URL temporária"
-                )
-            else:
-                options["domain"] = domain
+            options["domain"] = domain
 
         _tunnel = ngrok.connect(str(port), "http", **options)
         _public_url = getattr(_tunnel, "public_url", None)
