@@ -355,6 +355,7 @@ def _action_lint(target, source, env):
         _run(
             [
                 "uv", "run", "python", "-m", "bandit",
+                "-q",
                 "-s", "B110,B101",
                 "-c", "pyproject.toml",
                 "--exclude", "backend/services/context_graph",
