@@ -3,6 +3,7 @@
 import { useState, useMemo, memo, useCallback } from "react";
 import type { Thread } from "@/lib/hooks/threads";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { groupThreads, groupThreadsByWorkspace } from "./sidebar-utils";
 import { CollapsedSidebar } from "./collapsed-sidebar";
 import { SidebarHeader } from "./sidebar-header";
@@ -42,16 +43,24 @@ export const Sidebar = memo(function Sidebar({
   );
 
   const workspaces = useWorkspacesStore((s) => s.workspaces);
+  const chatMode = useSettingsStore((s) => s.chatMode);
+
+  // Chat e Dev são pools separados: a sidebar mostra só as sessões do modo ativo.
+  // Sessões legadas sem modo são tratadas como "dev".
+  const modeThreads = useMemo(() => {
+    const wanted = chatMode ? "chat" : "dev";
+    return threads.filter((t) => (t.mode ?? "dev") === wanted);
+  }, [threads, chatMode]);
 
   const filteredThreads = useMemo(() => {
-    if (!searchQuery.trim()) return threads;
+    if (!searchQuery.trim()) return modeThreads;
     const query = searchQuery.toLowerCase();
-    return threads.filter((thread) => {
+    return modeThreads.filter((thread) => {
       const title = thread.metadata?.title?.toLowerCase() ?? "";
       const lastMessage = thread.metadata?.lastMessage?.toLowerCase() ?? "";
       return title.includes(query) || lastMessage.includes(query);
     });
-  }, [threads, searchQuery]);
+  }, [modeThreads, searchQuery]);
 
   const { groups: workspaceGroups, orphans } = useMemo(
     () => groupThreadsByWorkspace(filteredThreads, workspaces),

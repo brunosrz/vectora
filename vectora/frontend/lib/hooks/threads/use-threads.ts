@@ -55,6 +55,8 @@ export interface Thread {
   values?: Record<string, unknown>;
   /** Workspace físico associado à sessão (P3 — sidebar pasta=workspace). */
   workspace_id?: string;
+  /** Modo da sessão: "chat" | "dev" (default "dev"). */
+  mode?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +70,7 @@ function toThread(t: VectoraThread, userId: string): Thread {
     updated_at: t.updated_at,
     metadata: { user_id: userId, title: t.title ?? "" },
     workspace_id: t.workspace_id,
+    mode: t.mode ?? "dev",
   };
 }
 

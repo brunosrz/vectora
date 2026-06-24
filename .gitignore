@@ -352,3 +352,4 @@ AbilitySystem_repo/
 *.blockmap
 *.msi
 env.gha
+/graphify

@@ -175,9 +175,12 @@ export function useStreamHandler({
       if (agentConfig?.model) config.model = agentConfig.model;
       const customSystemPrompt = useSettingsStore.getState().customSystemPrompt;
       if (customSystemPrompt) config.custom_system_prompt = customSystemPrompt;
-      const activeWorkspaceId = useWorkspacesStore.getState().active_id;
-      if (activeWorkspaceId) config.workspace_id = activeWorkspaceId;
       const settings = useSettingsStore.getState();
+      // Modo Chat: conversacional puro, sem workspace/folders.
+      config.chat_mode = settings.chatMode;
+      const activeWorkspaceId = useWorkspacesStore.getState().active_id;
+      if (!settings.chatMode && activeWorkspaceId)
+        config.workspace_id = activeWorkspaceId;
       config.permission_mode = settings.permissionMode;
       // Modo rápido força esforço mínimo; senão usa o nível escolhido.
       config.reasoning_effort = settings.fastMode

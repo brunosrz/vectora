@@ -28,6 +28,7 @@ import { ModelSelector } from "./model-selector";
 import { VscodeIcon } from "@/components/icons/vscode-icon";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { useSwitchMode } from "@/lib/hooks/use-switch-mode";
 import { LayoutDashboard, MessageSquare } from "lucide-react";
 import type { SlashCommand } from "@/lib/constants/slash-commands";
 import type { AgentConfig } from "@/components/layout/agent-settings";
@@ -167,7 +168,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const wsId = useWorkspacesStore((s) => s.getActive())?.id ?? "";
   const chatMode = useSettingsStore((s) => s.chatMode);
-  const setChatMode = useSettingsStore((s) => s.setChatMode);
+  const switchMode = useSwitchMode();
   // UX-16 — sem rede não há para onde enviar; desabilita entrada e ações
   // que dependem do backend (anexos, voz) em vez de deixar o usuário digitar
   // para uma falha certa.
@@ -400,7 +401,7 @@ export function ChatInput({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => setChatMode(!chatMode)}
+                    onClick={() => switchMode(!chatMode)}
                     data-chatmode={chatMode ? "on" : "off"}
                     aria-label={
                       chatMode ? m.chat_mode_disable() : m.chat_mode_enable()

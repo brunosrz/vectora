@@ -8,11 +8,12 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { useSwitchMode } from "@/lib/hooks/use-switch-mode";
 import { m } from "@/lib/paraglide/messages";
 
 export const SidebarModeToggle = memo(function SidebarModeToggle() {
   const chatMode = useSettingsStore((s) => s.chatMode);
-  const setChatMode = useSettingsStore((s) => s.setChatMode);
+  const switchMode = useSwitchMode();
 
   return (
     <div className="px-3 pt-2 pb-1.5">
@@ -20,7 +21,7 @@ export const SidebarModeToggle = memo(function SidebarModeToggle() {
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => setChatMode(true)}
+              onClick={() => switchMode(true)}
               aria-pressed={chatMode}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition-colors duration-150 ${
                 chatMode
@@ -40,7 +41,7 @@ export const SidebarModeToggle = memo(function SidebarModeToggle() {
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => setChatMode(false)}
+              onClick={() => switchMode(false)}
               aria-pressed={!chatMode}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition-colors duration-150 ${
                 !chatMode

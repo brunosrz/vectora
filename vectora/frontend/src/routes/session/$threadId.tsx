@@ -97,6 +97,7 @@ function SessionPage() {
   const sidebarPosition = useSettingsStore((s) => s.sidebarPosition);
   const sidebarOnRight = sidebarPosition === "right";
   const chatMode = useSettingsStore((s) => s.chatMode);
+  const setChatMode = useSettingsStore((s) => s.setChatMode);
   const sidebarWrapRef = useRef<HTMLDivElement>(null);
   const draggingSidebar = useRef(false);
 
@@ -199,15 +200,26 @@ function SessionPage() {
 
   const handleSelectThread = useCallback(
     (id: string) => {
+      // Abrir uma sessão entra no modo dela (chat/dev).
+      const t = threads.find((th) => th.thread_id === id);
+      if (t) setChatMode((t.mode ?? "dev") === "chat");
       goTo(id);
       setIsMobileSidebarOpen(false);
     },
-    [goTo],
+    [goTo, threads, setChatMode],
   );
 
   const handleNewChat = useCallback(() => {
+    // Chat: cria sessão direto (sem workspace/folders). Dev: dialog de workspace.
+    if (chatMode) {
+      const id = safeRandomUUID();
+      markAsNew(id);
+      goTo(id);
+      setIsMobileSidebarOpen(false);
+      return;
+    }
     setShowNewChatDialog(true);
-  }, []);
+  }, [chatMode, goTo]);
 
   const handleConfirmNewChat = useCallback(
     (workspaceId: string | null) => {

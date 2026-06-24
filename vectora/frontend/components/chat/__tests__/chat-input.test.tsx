@@ -56,10 +56,18 @@ vi.mock("@/lib/stores/workspaces-store", () => ({
     selector(mockWsState),
 }));
 
+// O toggle de modo agora delega a use-switch-mode (que usa o router p/ abrir
+// uma sessão nova do modo). Mockado para isolar do TanStack Router no unit test.
+const mockSwitchMode = vi.fn();
+vi.mock("@/lib/hooks/use-switch-mode", () => ({
+  useSwitchMode: () => mockSwitchMode,
+}));
+
 afterEach(() => {
   cleanup();
   mockSettings.chatMode = false;
   mockSettings.setChatMode.mockReset();
+  mockSwitchMode.mockReset();
 });
 
 // ChatInput usa Tooltip — precisa do provider no entorno.
@@ -156,14 +164,14 @@ describe("ChatInput", () => {
     expect(toggle?.getAttribute("aria-label")).toBe(m.chat_mode_disable());
   });
 
-  it("clicar no toggle chama setChatMode com valor invertido", () => {
+  it("clicar no toggle troca de modo (switchMode com valor invertido)", () => {
     mockSettings.chatMode = false;
     render(<ChatInput {...baseProps()} />);
     const toggle = document.querySelector(
       "[data-chatmode]",
     ) as HTMLButtonElement;
     fireEvent.click(toggle);
-    expect(mockSettings.setChatMode).toHaveBeenCalledWith(true);
+    expect(mockSwitchMode).toHaveBeenCalledWith(true);
   });
 
   it("em chatMode=true WorkspaceSelector não está no DOM", () => {

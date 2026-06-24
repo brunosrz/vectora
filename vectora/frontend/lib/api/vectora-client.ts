@@ -23,6 +23,8 @@ export interface ChatConfig {
   llm_provider?: string;
   recursion_limit?: number;
   workspace_id?: string;
+  /** Modo Chat: conversacional puro, sem workspace/tools de dev. */
+  chat_mode?: boolean;
   /** L4 — instrução personalizada prefixada ao system prompt */
   custom_system_prompt?: string;
   /** R2 — ask|accept_edits|plan|auto|bypass */
@@ -130,6 +132,8 @@ export interface Thread {
   title?: string;
   /** Workspace associado à sessão (R — workspace por sessão). */
   workspace_id?: string;
+  /** Modo da sessão: "chat" | "dev". Sessões legadas sem modo são "dev". */
+  mode?: string;
 }
 
 export interface HistoryMessage {
