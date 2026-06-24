@@ -23,58 +23,59 @@ const MAX_RECONNECT_MS = 30_000;
 
 type WebhookEventHandler = (event: WebhookEvent) => void;
 
-const _handlers: Set<WebhookEventHandler> = new Set();
+const handlers: Set<WebhookEventHandler> = new Set();
 
 export function onWebhookEvent(handler: WebhookEventHandler): () => void {
-  _handlers.add(handler);
-  return () => _handlers.delete(handler);
+  handlers.add(handler);
+  return () => handlers.delete(handler);
 }
 
-let _globalEs: EventSource | null = null;
-let _globalReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
-let _globalDelay = MIN_RECONNECT_MS;
-let _refCount = 0;
+let globalEs: EventSource | null = null;
+let globalReconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+let globalDelay = MIN_RECONNECT_MS;
+let refCount = 0;
 
 function startGlobalSSE(): void {
-  if (_globalEs) return;
+  if (globalEs) return;
 
   function connect() {
-    _globalEs = new EventSource("/webhook/events");
+    const es = new EventSource("/webhook/events");
+    globalEs = es;
 
-    _globalEs.onmessage = (ev: MessageEvent) => {
+    es.addEventListener("message", (ev: MessageEvent) => {
       try {
         const event = JSON.parse(ev.data as string) as WebhookEvent;
         if (event.type === "connected") return;
-        _globalDelay = MIN_RECONNECT_MS;
-        for (const handler of _handlers) {
+        globalDelay = MIN_RECONNECT_MS;
+        for (const handler of handlers) {
           handler(event);
         }
       } catch {
         // payload malformado — ignora
       }
-    };
+    });
 
-    _globalEs.onerror = () => {
-      _globalEs?.close();
-      _globalEs = null;
-      _globalReconnectTimeout = setTimeout(() => {
-        _globalDelay = Math.min(_globalDelay * 2, MAX_RECONNECT_MS);
+    es.addEventListener("error", () => {
+      es.close();
+      globalEs = null;
+      globalReconnectTimeout = setTimeout(() => {
+        globalDelay = Math.min(globalDelay * 2, MAX_RECONNECT_MS);
         connect();
-      }, _globalDelay);
-    };
+      }, globalDelay);
+    });
   }
 
   connect();
 }
 
 function stopGlobalSSE(): void {
-  if (_globalReconnectTimeout) {
-    clearTimeout(_globalReconnectTimeout);
-    _globalReconnectTimeout = null;
+  if (globalReconnectTimeout) {
+    clearTimeout(globalReconnectTimeout);
+    globalReconnectTimeout = null;
   }
-  _globalEs?.close();
-  _globalEs = null;
-  _globalDelay = MIN_RECONNECT_MS;
+  globalEs?.close();
+  globalEs = null;
+  globalDelay = MIN_RECONNECT_MS;
 }
 
 export function useWebhookEvents(onEvent?: WebhookEventHandler): void {
@@ -82,17 +83,20 @@ export function useWebhookEvents(onEvent?: WebhookEventHandler): void {
   handlerRef.current = onEvent;
 
   useEffect(() => {
-    _refCount++;
+    refCount++;
     startGlobalSSE();
 
+    // Sempre registra o wrapper; ele lê handlerRef.current (atualizado a cada
+    // render) e é no-op quando não há onEvent — assim o efeito não depende de
+    // `onEvent` e monta só uma vez.
     const wrapped: WebhookEventHandler = (event) => handlerRef.current?.(event);
-    if (onEvent) _handlers.add(wrapped);
+    handlers.add(wrapped);
 
     return () => {
-      if (onEvent) _handlers.delete(wrapped);
-      _refCount--;
-      if (_refCount <= 0) {
-        _refCount = 0;
+      handlers.delete(wrapped);
+      refCount--;
+      if (refCount <= 0) {
+        refCount = 0;
         stopGlobalSSE();
       }
     };
