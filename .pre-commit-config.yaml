@@ -16,7 +16,7 @@ exclude: |
     \.env.*|
     \.venv/.*|
     graphify.*|
-    vectora/backend/services/graph/.*|
+    vectora/backend/services/context_graph/.*|
      \.mjs.*
   )$
 
