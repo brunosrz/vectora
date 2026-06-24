@@ -254,6 +254,7 @@ class TestStreamChatRegistersThread:
             thread_id: str,
             title: str = "",
             workspace_id: str | None = None,
+            mode: str | None = None,
         ) -> None:
             upsert_calls.append(thread_id)
 
@@ -311,6 +312,7 @@ class TestStreamChatRegistersThread:
             thread_id: str,
             title: str = "",
             workspace_id: str | None = None,
+            mode: str | None = None,
         ) -> None:
             upsert_calls.append(thread_id)
 
