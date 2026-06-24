@@ -23,6 +23,9 @@ class ChatConfig(BaseModel):
     llm_provider: str = ""
     recursion_limit: int = 50
     workspace_id: str = ""
+    chat_mode: bool = (
+        False  # modo Chat: conversacional puro, sem workspace/tools de dev
+    )
     custom_system_prompt: str = ""  # L4 — instrução personalizada por usuário
     permission_mode: str = "ask"  # R2 — ask|accept_edits|plan|auto|bypass
     reasoning_effort: str = ""  # R4 — low|medium|high|max (vazio = default do modelo)
@@ -275,6 +278,7 @@ class Thread(BaseModel):
     updated_at: str
     title: str = ""
     workspace_id: str = ""
+    mode: str = "dev"  # "chat" | "dev" — sessões legadas sem modo são "dev"
 
 
 class HistoryMessage(BaseModel):

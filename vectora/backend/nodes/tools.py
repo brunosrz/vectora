@@ -201,6 +201,39 @@ for _t in [
 ALL_TOOLS: list[BaseTool] = list(_all.values())
 
 # ---------------------------------------------------------------------------
+# CHAT_TOOLS — modo Chat (conversacional puro, sem workspace/folders)
+# ---------------------------------------------------------------------------
+# Sem filesystem/git/terminal/workspace: só conversa, web, RAG (retrieval),
+# memória e integrações externas. Usado quando chat_mode=True no agent_factory.
+
+CHAT_TOOLS: list[BaseTool] = [
+    web_search,
+    fetch_url,
+    vector_search,
+    save_memory,
+    get_memory,
+    delete_memory,
+    search_memory,
+    google_drive_list,
+    google_drive_read,
+    google_drive_search,
+    gmail_list,
+    gmail_read,
+    slack_send,
+    slack_list_channels,
+    slack_read,
+    linear_list_issues,
+    linear_create_issue,
+    linear_update_issue,
+    jira_list_issues,
+    jira_create_issue,
+    jira_transition,
+    notion_search,
+    notion_read_page,
+    notion_create_page,
+]
+
+# ---------------------------------------------------------------------------
 # ToolNodes — todos usam ALL_TOOLS
 # ---------------------------------------------------------------------------
 
@@ -221,6 +254,7 @@ logger.debug(
 
 __all__ = [
     "ALL_TOOLS",
+    "CHAT_TOOLS",
     "FS_TOOLS",
     "GIT_TOOLS",
     "MEMORY_TOOLS",

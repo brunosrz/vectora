@@ -131,10 +131,12 @@ def _row_to_thread(row: tuple) -> Thread:
     thread_id, _, created_at, last_activity, _, extra_json = row
     title = ""
     workspace_id = ""
+    mode = "dev"
     try:
         extra = json.loads(extra_json or "{}")
         title = extra.get("title", "")
         workspace_id = extra.get("workspace_id", "")
+        mode = extra.get("mode", "dev")
     except Exception:
         pass
     return Thread(
@@ -143,6 +145,7 @@ def _row_to_thread(row: tuple) -> Thread:
         updated_at=last_activity,
         title=title,
         workspace_id=workspace_id,
+        mode=mode,
     )
 
 
@@ -152,15 +155,18 @@ def _row_to_thread(row: tuple) -> Thread:
 
 
 async def _upsert_session(
-    thread_id: str, title: str | None = None, workspace_id: str | None = None
+    thread_id: str,
+    title: str | None = None,
+    workspace_id: str | None = None,
+    mode: str | None = None,
 ) -> None:
     """Garante que thread_id existe em vectora_sessions (cria ou atualiza).
 
     Chamado por stream_chat() para que threads criadas via chat normal
     apareçam em ListThreads após reinicialização do servidor.
 
-    O campo extra é mesclado: title e workspace_id só são sobrescritos quando
-    fornecidos, preservando os demais dados já gravados.
+    O campo extra é mesclado: title, workspace_id e mode só são sobrescritos
+    quando fornecidos, preservando os demais dados já gravados.
     """
     db = await _get_db()
     now = datetime.now(UTC).isoformat()
@@ -180,6 +186,8 @@ async def _upsert_session(
         extra["title"] = title
     if workspace_id is not None:
         extra["workspace_id"] = workspace_id
+    if mode is not None:
+        extra["mode"] = mode
     extra_json = json.dumps(extra)
 
     # ON CONFLICT preserva created_at original; atualiza last_activity e extra.

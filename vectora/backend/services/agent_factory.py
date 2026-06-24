@@ -317,11 +317,13 @@ async def _ensure_infra() -> None:
         _store = await build_store()
 
 
-async def _build_graph_async(model_id: str = "") -> Any:
+async def _build_graph_async(model_id: str = "", chat_mode: bool = False) -> Any:
     """Compila um grafo deepagents para ``model_id`` (checkpointer/store compartilhados).
 
     Não muta estado global de cache — quem cacheia é ``get_user_agent``. Vazio
-    em ``model_id`` usa o modelo padrão de env/settings.
+    em ``model_id`` usa o modelo padrão de env/settings. Em ``chat_mode`` o agente
+    é conversacional puro: ``CHAT_TOOLS`` (sem fs/git/terminal/workspace) e sem
+    subagents de dev.
     """
     await _ensure_infra()
 
@@ -330,13 +332,15 @@ async def _build_graph_async(model_id: str = "") -> Any:
     from deepagents import create_deep_agent
     from langchain_core.language_models.chat_models import BaseChatModel
 
-    from backend.nodes.tools import ALL_TOOLS
+    from backend.nodes.tools import ALL_TOOLS, CHAT_TOOLS
     from backend.services.utils import load_llm
 
     # load_llm() retorna BaseChatModel concreto em runtime (deepagents exige
     # um BaseChatModel, não um modelo configurável). A anotação usa a base.
     llm: BaseChatModel = _cast("BaseChatModel", load_llm(model_id))
-    subagents = _subagent_specs()  # sem user_id: toolset completo no singleton
+    tools = CHAT_TOOLS if chat_mode else ALL_TOOLS
+    # Chat puro não usa subagents (coder/search são orientados a dev/filesystem).
+    subagents = [] if chat_mode else _subagent_specs()
 
     system_prompt = _build_session_system_prompt()
 
@@ -368,7 +372,7 @@ async def _build_graph_async(model_id: str = "") -> Any:
 
     compiled = create_deep_agent(
         llm,
-        tools=ALL_TOOLS,
+        tools=tools,
         system_prompt=system_prompt,
         subagents=subagents,
         middleware=middleware,
@@ -390,39 +394,46 @@ async def _build_graph_async(model_id: str = "") -> Any:
     # são tratados pelo `max_retries` do próprio modelo (nível da chamada LLM,
     # não quebra o stream) e classificados/limpos em `adapters.classify_stream_error`.
     logger.info(
-        "agent_factory: grafo compilado (model=%r, deepagents + %d tools + %d subagents + %d middleware)",
+        "agent_factory: grafo compilado (model=%r, chat_mode=%s, deepagents + %d tools + %d subagents + %d middleware)",
         model_id or "default",
-        len(ALL_TOOLS),
+        chat_mode,
+        len(tools),
         len(subagents),
         len(middleware),
     )
     return compiled
 
 
-async def get_user_agent(user_id: str | None = None, model: str = "") -> Any:
-    """Retorna o grafo compilado para (user_id, model) com cache por sessão (DE-5).
+async def get_user_agent(
+    user_id: str | None = None, model: str = "", chat_mode: bool = False
+) -> Any:
+    """Retorna o grafo compilado para (user_id, model, chat_mode), cache por sessão.
 
-    Se user_id está presente: cacheia por (user_id, model) para personalizações por sessão.
-    Se user_id é None: usa cache global por modelo (__default__).
+    Se user_id está presente: cacheia por (user_id, model_key). Se user_id é None:
+    usa cache global por model_key. O ``chat_mode`` entra no ``model_key`` (sufixo
+    ``#chat``) — chat e dev têm grafos compilados separados (toolsets diferentes).
     Todos compartilham checkpointer/store. Thread-safe via asyncio.Lock.
     """
-    model_key = model or "__default__"
+    base = model or "__default__"
+    model_key = f"{base}#chat" if chat_mode else base
 
-    # DE-5: Cache por sessão (user_id, model)
+    # DE-5: Cache por sessão (user_id, model_key)
     if user_id:
         session_key = (user_id, model_key)
         if session_key not in _graphs_by_user:
             async with _lock:
                 if session_key not in _graphs_by_user:
-                    _graphs_by_user[session_key] = await _build_graph_async(model)
+                    _graphs_by_user[session_key] = await _build_graph_async(
+                        model, chat_mode
+                    )
         _track_versions(user_id)
         return _graphs_by_user[session_key]
 
-    # Fallback: cache global por modelo
+    # Fallback: cache global por model_key
     if model_key not in _graphs:
         async with _lock:
             if model_key not in _graphs:
-                _graphs[model_key] = await _build_graph_async(model)
+                _graphs[model_key] = await _build_graph_async(model, chat_mode)
 
     return _graphs[model_key]
 

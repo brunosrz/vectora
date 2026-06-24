@@ -283,40 +283,52 @@ async def stream_chat(
     # caía em session_<thread_id> e a aba Memória ficava vazia.
     user_id = _user_id_from_request(http_request)
 
-    # Resolve o workspace da sessão (cria o padrão em Documents/src/<id>
-    # quando o cliente não escolheu uma pasta) e fixa no config da request.
-    workspace_id = _resolve_workspace_id(
-        request.config.workspace_id, thread_id, user_id
-    )
-    request.config.workspace_id = workspace_id
+    chat_mode = request.config.chat_mode
 
-    # Cria vectora.toml e .vectora/ na pasta do workspace, se ainda não
-    # existirem (ex: workspace de sessão cuja pasta só foi materializada
-    # após uma operação de fs em turno anterior). Idempotente e degrada
-    # silenciosamente — nunca impede o início da sessão.
-    if workspace_id:
-        try:
-            from pathlib import Path
+    # Modo Chat: conversacional puro — sem workspace/folders. Não resolve nem
+    # materializa workspace; a sessão é gravada como mode="chat".
+    if chat_mode:
+        request.config.workspace_id = ""
+        workspace_id = ""
+    else:
+        # Resolve o workspace da sessão (cria o padrão em Documents/src/<id>
+        # quando o cliente não escolheu uma pasta) e fixa no config da request.
+        workspace_id = _resolve_workspace_id(
+            request.config.workspace_id, thread_id, user_id
+        )
+        request.config.workspace_id = workspace_id
 
-            from backend.services.workspace import workspace_registry
+        # Cria vectora.toml e .vectora/ na pasta do workspace, se ainda não
+        # existirem (ex: workspace de sessão cuja pasta só foi materializada
+        # após uma operação de fs em turno anterior). Idempotente e degrada
+        # silenciosamente — nunca impede o início da sessão.
+        if workspace_id:
+            try:
+                from pathlib import Path
 
-            ws = workspace_registry.get(workspace_id)
-            if ws is not None and Path(ws.cwd).is_dir():
-                workspace_registry.ensure_local_files(ws)
-        except Exception:
-            logger.warning(
-                "api/chat: falha ao garantir arquivos do workspace %s",
-                workspace_id,
-            )
+                from backend.services.workspace import workspace_registry
+
+                ws = workspace_registry.get(workspace_id)
+                if ws is not None and Path(ws.cwd).is_dir():
+                    workspace_registry.ensure_local_files(ws)
+            except Exception:
+                logger.warning(
+                    "api/chat: falha ao garantir arquivos do workspace %s",
+                    workspace_id,
+                )
 
     # Registra thread em vectora_sessions para que ListThreads a inclua
     # mesmo após reinicialização do servidor (o checkpointer LangGraph persiste
     # separadamente e não é consultado pelo endpoint de listagem). Persiste o
-    # workspace para que trocar de chat restaure a pasta correta.
+    # workspace e o modo (chat/dev) para que a sidebar filtre e restaure a pasta.
     try:
         from backend.api.handlers.threads import _upsert_session
 
-        await _upsert_session(thread_id, workspace_id=workspace_id or None)
+        await _upsert_session(
+            thread_id,
+            workspace_id=workspace_id or None,
+            mode="chat" if chat_mode else "dev",
+        )
     except Exception as exc:
         logger.warning(
             "api/chat: falha ao registrar thread em vectora_sessions: %s", exc
@@ -330,9 +342,10 @@ async def stream_chat(
     try:
         # Troca de modelo por request: o grafo é cacheado por modelo escolhido
         # (configurable["model"] já normalizado para "provider:model"). Sem
-        # escolha, usa o grafo do modelo padrão.
+        # escolha, usa o grafo do modelo padrão. chat_mode usa um grafo separado
+        # com toolset conversacional (CHAT_TOOLS).
         graph = await agent_factory.get_user_agent(
-            user_id, model=configurable.get("model", "")
+            user_id, model=configurable.get("model", ""), chat_mode=chat_mode
         )
     except Exception as exc:
         logger.exception("api/chat: erro ao inicializar grafo")
