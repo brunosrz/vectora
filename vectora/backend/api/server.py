@@ -40,7 +40,7 @@ from backend.api.handlers.artifacts import router as artifacts_router
 from backend.api.handlers.auth import router as auth_router
 from backend.api.handlers.background import router as background_router
 from backend.api.handlers.chat import router as chat_router
-from backend.api.handlers.graph import router as graph_router
+from backend.api.handlers.context_graph import router as graph_router
 from backend.api.handlers.license import router as license_router
 from backend.api.handlers.memory import router as memory_router
 from backend.api.handlers.oauth import router as oauth_router

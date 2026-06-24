@@ -298,7 +298,11 @@ export function ChangesView({
       if (f.unstaged_change) unstagedFiles.push(f);
       if (f.untracked) untrackedFiles.push(f);
     }
-    return { staged: stagedFiles, unstaged: unstagedFiles, untracked: untrackedFiles };
+    return {
+      staged: stagedFiles,
+      unstaged: unstagedFiles,
+      untracked: untrackedFiles,
+    };
   }, [summary.files]);
 
   if (summary.files.length === 0) {

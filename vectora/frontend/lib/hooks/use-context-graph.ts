@@ -26,7 +26,7 @@ async function asJson<T>(res: Response, fallback: T): Promise<T> {
   }
 }
 
-export function useGraph(workspaceId: string | null | undefined) {
+export function useContextGraph(workspaceId: string | null | undefined) {
   const [status, setStatus] = useState<GraphStatus>({ status: "unknown" });
   const [report, setReport] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

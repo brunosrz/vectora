@@ -52,7 +52,7 @@ import { PlanTab } from "./tabs/plan-tab";
 import { PreviewTab } from "./tabs/preview-tab";
 import { MemoryTab } from "./tabs/memory-tab";
 import { BackgroundTab } from "./tabs/background-tab";
-import { GraphTab } from "./tabs/graph-tab";
+import { ContextGraphTab } from "./tabs/context-graph-tab";
 import { m } from "@/lib/paraglide/messages";
 import { mDyn } from "@/lib/i18n-dyn";
 
@@ -253,7 +253,9 @@ export function WorkbenchContent({
         {activeTab === "preview" && <PreviewTab threadId={threadId} />}
         {activeTab === "storage" && <MemoryTab threadId={threadId} />}
         {activeTab === "background" && <BackgroundTab threadId={threadId} />}
-        {activeTab === "context_graph" && <GraphTab threadId={threadId} />}
+        {activeTab === "context_graph" && (
+          <ContextGraphTab threadId={threadId} />
+        )}
       </div>
     </div>
   );

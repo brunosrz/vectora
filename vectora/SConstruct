@@ -11,7 +11,7 @@ Uso (PowerShell / cmd, sem Git bash):
     scons tests         → suíte completa: vitest (frontend) + pytest (backend),
                           sem relatório de cobertura
     scons coverage      → a mesma suíte, com relatório de cobertura
-    scons lint          → ruff + ty + tsc + oxlint
+    scons lint          → ruff + ty + bandit + tsc + oxlint
     scons docker        → build da imagem Docker + docker compose up -d
     scons clean         → remove outputs de build
 
@@ -352,6 +352,16 @@ def _action_lint(target, source, env):
     with _open_log("lint") as log:
         _run(["uv", "run", "ruff", "check", "backend", "tests"], log=log)
         _run(["uv", "run", "ty", "check", "backend", "tests"], log=log)
+        _run(
+            [
+                "uv", "run", "python", "-m", "bandit",
+                "-s", "B110,B101",
+                "-c", "pyproject.toml",
+                "--exclude", "backend/services/context_graph",
+                "-r", "backend",
+            ],
+            log=log,
+        )
         # `typecheck` = i18n:compile (paraglide) + tsr generate (routeTree.gen.ts
         # gitignored, gerado pelo plugin) + tsc --noEmit. Ambos os geradores são
         # gitignored; rodar tsc puro falharia sem eles (e sem chaves i18n novas).
@@ -447,7 +457,7 @@ def _action_help(target, source, env):
     scons coverage         a mesma suíte COM relatório de cobertura (vitest + pytest)
     scons tests-storage    só testes de storage (Postgres, Redis, Qdrant, SQLite,
                            LanceDB) — sobe docker automaticamente se disponível
-    scons lint             ruff + ty + tsc + oxlint
+    scons lint             ruff + ty + bandit + tsc + oxlint
     scons clean            remove todos os outputs de build
 """)
     sys.stdout.flush()

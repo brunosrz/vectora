@@ -141,12 +141,15 @@ function InlineTextEditor({
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const resp = await fetch(`/workspaces/${encodeURIComponent(workspaceId)}/file`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ path, content }),
-      });
+      const resp = await fetch(
+        `/workspaces/${encodeURIComponent(workspaceId)}/file`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ path, content }),
+        },
+      );
       if (resp.ok) {
         onSaved(content);
       } else {
@@ -173,7 +176,11 @@ function InlineTextEditor({
           disabled={saving}
           className="text-xs px-2 py-0.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
-          {saving ? <Loader2 className="w-3 h-3 animate-spin inline" /> : m.workbench_files_save()}
+          {saving ? (
+            <Loader2 className="w-3 h-3 animate-spin inline" />
+          ) : (
+            m.workbench_files_save()
+          )}
         </button>
       </div>
     </div>
@@ -265,7 +272,9 @@ export function FileViewer({
     return (
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between border-b border-border/60 px-3 py-1.5 bg-muted/30 shrink-0">
-          <span className="text-xs font-mono text-muted-foreground truncate">{path}</span>
+          <span className="text-xs font-mono text-muted-foreground truncate">
+            {path}
+          </span>
           <button
             onClick={handleCancelEdit}
             className="text-xs px-2 py-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"

@@ -14,6 +14,12 @@ from typing import TYPE_CHECKING
 
 from langgraph.prebuilt import ToolNode
 
+from backend.tools.context_graph import (
+    build_knowledge_graph,
+    graph_explain,
+    graph_path,
+    graph_query,
+)
 from backend.tools.fs import (
     create_artifact,
     file_edit,
@@ -52,12 +58,6 @@ from backend.tools.git import (
     git_worktree,
 )
 from backend.tools.gmail import gmail_list, gmail_read
-from backend.tools.graph import (
-    build_knowledge_graph,
-    graph_explain,
-    graph_path,
-    graph_query,
-)
 from backend.tools.jira import jira_create_issue, jira_list_issues, jira_transition
 from backend.tools.linear import (
     linear_create_issue,

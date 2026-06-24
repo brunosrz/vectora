@@ -3,18 +3,22 @@
 import { useState } from "react";
 import { Loader2, RefreshCw, Waypoints, ExternalLink } from "lucide-react";
 
-import { useGraph } from "@/lib/hooks/use-graph";
+import { useContextGraph } from "@/lib/hooks/use-context-graph";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
 import { m } from "@/lib/paraglide/messages";
 
-interface GraphTabProps {
+interface ContextGraphTabProps {
   threadId: string;
   onSendPrompt?: (text: string) => void;
 }
 
-export function GraphTab({ threadId, onSendPrompt }: GraphTabProps) {
+export function ContextGraphTab({
+  threadId,
+  onSendPrompt,
+}: ContextGraphTabProps) {
   const workspaceId = useWorkspacesStore((s) => s.active_id);
-  const { status, report, loading, build, getHtmlUrl } = useGraph(workspaceId);
+  const { status, report, loading, build, getHtmlUrl } =
+    useContextGraph(workspaceId);
   const [showReport, setShowReport] = useState(false);
 
   const isBuilt = status.status === "done";
