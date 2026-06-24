@@ -3,17 +3,16 @@ from __future__ import annotations
 
 import html
 import http.client
+import ipaddress
 import os
 import re
+import socket
 import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
-
-import ipaddress
-import socket
 
 from .paths import GRAPHIFY_OUT, GRAPHIFY_OUT_NAME
 
@@ -110,7 +109,7 @@ def _resolve_and_validate(host: str, port: int) -> tuple[int, str]:
 
 class _SSRFGuardedHTTPConnection(http.client.HTTPConnection):
     def connect(self) -> None:
-        family, ip = _resolve_and_validate(self.host, self.port)
+        _family, ip = _resolve_and_validate(self.host, self.port)
         self.sock = socket.create_connection(
             (ip, self.port), self.timeout, self.source_address,
         )
@@ -120,7 +119,7 @@ class _SSRFGuardedHTTPConnection(http.client.HTTPConnection):
 
 class _SSRFGuardedHTTPSConnection(http.client.HTTPSConnection):
     def connect(self) -> None:
-        family, ip = _resolve_and_validate(self.host, self.port)
+        _family, ip = _resolve_and_validate(self.host, self.port)
         sock = socket.create_connection(
             (ip, self.port), self.timeout, self.source_address,
         )

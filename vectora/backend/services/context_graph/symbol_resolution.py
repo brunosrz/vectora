@@ -5,14 +5,13 @@ from __future__ import annotations
 import ast
 import re
 import unicodedata
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from collections.abc import Sequence
 from typing import Any
 
 from .ids import make_id as _shared_make_id
 from .security import sanitize_metadata
-
 
 
 @dataclass(frozen=True)
@@ -416,7 +415,7 @@ def resolve_bash_source_edges(
     file_nid_by_path = {p: _file_node_id_for_path(p, root) for p in path_by_index}  # resolved paths only
 
     functions_by_file: dict[str, dict[str, str]] = {}
-    for result, path in zip(per_file, path_by_index):
+    for result, path in zip(per_file, path_by_index, strict=False):
         if not isinstance(result, dict):
             continue
         file_nid = file_nid_by_path[path]
@@ -441,7 +440,7 @@ def resolve_bash_source_edges(
     resolved_edges: list[dict] = []
     existing = existing_edge_pairs(existing_edges or [])
 
-    for result, path in zip(per_file, path_by_index):
+    for result, path in zip(per_file, path_by_index, strict=False):
         if not isinstance(result, dict):
             continue
         src_file_nid = file_nid_by_path[path]
@@ -488,7 +487,7 @@ def resolve_bash_source_edges(
                 }
             )
 
-    for result, path in zip(per_file, path_by_index):
+    for result, path in zip(per_file, path_by_index, strict=False):
         if not isinstance(result, dict):
             continue
         caller_file_nid = file_nid_by_path[path]

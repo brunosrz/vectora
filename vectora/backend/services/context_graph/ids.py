@@ -26,7 +26,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-__all__ = ["normalize_id", "make_id"]
+__all__ = ["make_id", "normalize_id"]
 
 
 def normalize_id(s: str) -> str:

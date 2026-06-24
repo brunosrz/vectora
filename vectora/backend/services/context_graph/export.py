@@ -1,5 +1,6 @@
 # write graph to HTML, JSON, SVG, GraphML, Obsidian vault, and Neo4j Cypher
 from __future__ import annotations
+
 import hashlib
 import html as _html
 import json
@@ -10,12 +11,13 @@ import shutil
 from collections import Counter
 from datetime import date
 from pathlib import Path
+
 import networkx as nx
 from networkx.readwrite import json_graph
-from .security import sanitize_label
+
 from .analyze import _node_community_map
 from .build import edge_data
-
+from .security import sanitize_label
 
 # Artifacts worth preserving across rebuilds (non-regenerable without LLM or curation).
 _BACKUP_ARTIFACTS = [
@@ -29,7 +31,7 @@ _BACKUP_ARTIFACTS = [
 ]
 
 
-def backup_if_protected(out_dir: Path) -> "Path | None":
+def backup_if_protected(out_dir: Path) -> Path | None:
     """Snapshot graph artifacts to a dated subfolder before an overwrite.
 
     Triggers when graph.json exists AND either:
@@ -653,11 +655,12 @@ def to_html(
         if node_limit is not None:
             # Build aggregated community meta-graph
             from collections import Counter as _Counter
+
             import networkx as _nx
             print(f"Graph has {G.number_of_nodes()} nodes (above {limit} limit). Building aggregated community view...")
             node_to_community = {nid: cid for cid, members in communities.items() for nid in members}
             meta = _nx.Graph()
-            for cid, members in communities.items():
+            for cid in communities:
                 meta.add_node(str(cid), label=(community_labels or {}).get(cid, f"Community {cid}"))
             edge_counts = _Counter()
             for u, v in G.edges():
@@ -889,7 +892,7 @@ def to_obsidian(
     # Helper: compute dominant confidence for a node across all its edges
     def _dominant_confidence(node_id: str) -> str:
         confs = []
-        for u, v, edata in G.edges(node_id, data=True):
+        for _u, _v, edata in G.edges(node_id, data=True):
             confs.append(edata.get("confidence", "EXTRACTED"))
         if not confs:
             return "EXTRACTED"
@@ -1090,7 +1093,7 @@ def to_obsidian(
         "colorGroups": [
             {
                 "query": f"tag:#community/{label.replace(' ', '_')}",
-                "color": {"a": 1, "rgb": int(COMMUNITY_COLORS[cid % len(COMMUNITY_COLORS)].lstrip('#'), 16)}
+                "color": {"a": 1, "rgb": int(COMMUNITY_COLORS[cid % len(COMMUNITY_COLORS)].lstrip("#"), 16)}
             }
             for cid, label in sorted((community_labels or {}).items())
         ]
@@ -1302,7 +1305,7 @@ def push_to_neo4j(
     def _safe_label(label: str) -> str:
         """Sanitize a Neo4j node label to prevent Cypher injection."""
         sanitized = re.sub(r"[^A-Za-z0-9_]", "", label)
-        return sanitized if sanitized else "Entity"
+        return sanitized or "Entity"
 
     driver = GraphDatabase.driver(uri, auth=(user, password))
     nodes_pushed = 0
@@ -1390,7 +1393,7 @@ def push_to_falkordb(
     def _safe_label(label: str) -> str:
         """Sanitize a FalkorDB node label to prevent Cypher injection."""
         sanitized = re.sub(r"[^A-Za-z0-9_]", "", label)
-        return sanitized if sanitized else "Entity"
+        return sanitized or "Entity"
 
     parsed = urlparse(uri if "://" in uri else f"redis://{uri}")
     # FalkorDB auth is optional. Only send credentials when a password is
@@ -1482,10 +1485,10 @@ def to_svg(
     Node size scales with degree. Community colors match the HTML output.
     """
     try:
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
+        import matplotlib as mpl
+        mpl.use("Agg")
         import matplotlib.patches as mpatches
+        import matplotlib.pyplot as plt
     except ImportError as e:
         raise ImportError("matplotlib not installed. Run: pip install matplotlib") from e
 

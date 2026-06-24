@@ -16,7 +16,7 @@ from typing import Any
 
 from .ids import make_id
 
-__all__ = ["is_package_manifest_path", "extract_package_manifest", "PACKAGE_MANIFEST_NAMES"]
+__all__ = ["PACKAGE_MANIFEST_NAMES", "extract_package_manifest", "is_package_manifest_path"]
 
 PACKAGE_MANIFEST_NAMES: dict[str, str] = {
     "apm.yml": "apm",
@@ -131,21 +131,21 @@ def _parse_apm_fallback(text: str) -> dict | None:
             if m:
                 name = m.group(1)
                 continue
-        if re.match(r'^dependencies:\s*$', line):
+        if re.match(r"^dependencies:\s*$", line):
             in_deps = True
             continue
         if in_deps:
             dm = (re.match(r'^\s*-\s*["\']?([^"\'\s#:]+)', line)
-                  or re.match(r'^\s{2,}([A-Za-z0-9._/@-]+)\s*:', line))
+                  or re.match(r"^\s{2,}([A-Za-z0-9._/@-]+)\s*:", line))
             if dm:
                 deps.append(dm.group(1))
-            elif re.match(r'^\S', line):
+            elif re.match(r"^\S", line):
                 in_deps = False
     return {"name": name, "version": None, "deps": deps} if name else None
 
 
 def _pep508_name(spec: str) -> str:
-    return re.split(r'[\s<>=!~;\[\(]', spec.strip(), maxsplit=1)[0]
+    return re.split(r"[\s<>=!~;\[\(]", spec.strip(), maxsplit=1)[0]
 
 
 def _parse_pyproject(text: str) -> dict | None:
@@ -181,29 +181,29 @@ def _parse_gomod(text: str) -> dict | None:
     for line in text.splitlines():
         s = line.strip()
         if name is None:
-            m = re.match(r'^module\s+(\S+)', s)
+            m = re.match(r"^module\s+(\S+)", s)
             if m:
                 name = m.group(1)
                 continue
-        if re.match(r'^require\s*\(', s):
+        if re.match(r"^require\s*\(", s):
             in_block = True
             continue
         if in_block:
-            if s.startswith(')'):
+            if s.startswith(")"):
                 in_block = False
                 continue
-            dm = re.match(r'^(\S+)\s+v\S+', s)
+            dm = re.match(r"^(\S+)\s+v\S+", s)
             if dm:
                 deps.append(dm.group(1))
         else:
-            dm = re.match(r'^require\s+(\S+)\s+v\S+', s)
+            dm = re.match(r"^require\s+(\S+)\s+v\S+", s)
             if dm:
                 deps.append(dm.group(1))
     return {"name": name, "version": None, "deps": deps} if name else None
 
 
 def _parse_pom(text: str) -> dict | None:
-    text = re.sub(r'\sxmlns="[^"]*"', '', text, count=1)
+    text = re.sub(r'\sxmlns="[^"]*"', "", text, count=1)
     root = ET.fromstring(text)
     aid = root.findtext("artifactId")
     gid = root.findtext("groupId")

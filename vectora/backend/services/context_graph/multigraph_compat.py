@@ -11,10 +11,10 @@ require_multigraph_capabilities() before enabling MDG mode.
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
-import sys
 from typing import Any
 
 import networkx as nx

@@ -17,7 +17,6 @@ from typing import Any
 from .ids import make_id as _shared_make_id
 from .security import sanitize_label
 
-
 MCP_CONFIG_FILENAMES: frozenset[str] = frozenset({
     ".mcp.json",
     "claude_desktop_config.json",
@@ -182,7 +181,7 @@ def _emit_server(
 
     env = spec.get("env")
     if isinstance(env, dict):
-        for env_name in env.keys():
+        for env_name in env:
             if not isinstance(env_name, str) or not env_name:
                 continue
             env_nid = _make_id("env_var", env_name)

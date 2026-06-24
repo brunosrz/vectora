@@ -4,14 +4,15 @@ Pipeline: exact normalization → entropy gate → MinHash/LSH blocking →
 Jaro-Winkler verification → same-community boost → union-find merge.
 """
 from __future__ import annotations
+
 import math
 import re
 import unicodedata
 from collections import defaultdict
 
-from ._minhash import MinHash, MinHashLSH
 from rapidfuzz.distance import Jaro, JaroWinkler
 
+from ._minhash import MinHash, MinHashLSH
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -84,9 +85,7 @@ def _short_label_blocked(a: str, b: str, jw_score: float) -> bool:
     from rapidfuzz.distance import DamerauLevenshtein
     # Allow only same-length single-char substitutions (true typos like "Extractor"/"Extractar").
     # Block length-differing pairs regardless of score.
-    if jw_score >= 97.0 and len(a) == len(b) and DamerauLevenshtein.distance(a, b) <= 1:
-        return False
-    return True
+    return not (jw_score >= 97.0 and len(a) == len(b) and DamerauLevenshtein.distance(a, b) <= 1)
 
 
 _DIGIT_RUN = re.compile(r"\d+")
@@ -452,18 +451,12 @@ def _llm_tiebreak(
     low: float = 75.0,
     high: float = 92.0,
 ) -> None:
-    """Batch-resolve ambiguous pairs (score in [low, high)) via LLM."""
-    try:
-        from graphify.llm import BACKENDS, _format_backend_env_keys, _get_backend_api_key
-        if backend not in BACKENDS:
-            print(f"[graphify] --dedup-llm: unknown backend {backend!r}, skipping LLM tiebreaker.", flush=True)
-            return
-        if not _get_backend_api_key(backend):
-            env_keys = _format_backend_env_keys(backend)
-            print(f"[graphify] --dedup-llm: {env_keys} not set, skipping LLM tiebreaker.", flush=True)
-            return
-    except ImportError:
-        return
+    """Batch-resolve ambiguous pairs (score in [low, high)) via the Vectora LLM."""
+    import asyncio
+
+    from langchain_core.messages import HumanMessage, SystemMessage
+
+    from backend.services.utils import load_llm
 
     ambiguous: list[tuple[dict, dict, float]] = []
     for i, node in enumerate(candidates):
@@ -473,7 +466,6 @@ def _llm_tiebreak(
             if uf.find(node["id"]) == uf.find(neighbor["id"]):
                 continue
             norm_j = _norm(neighbor.get("label", neighbor.get("id", "")))
-            # Mirror pass 2: plain Jaro for cross-file long labels (#1243).
             _xfile = (node.get("source_file") or "") != (neighbor.get("source_file") or "")
             if _xfile and max(len(norm_i), len(norm_j)) >= 12:
                 score = Jaro.normalized_similarity(norm_i, norm_j) * 100
@@ -486,7 +478,6 @@ def _llm_tiebreak(
             _lo, _hi = sorted((norm_i, norm_j), key=len)
             if _hi.startswith(_lo) and _hi != _lo:
                 continue
-            # Mirror pass 2: decisively-distinct pairs never reach the LLM (#1284).
             if _numeric_tokens_differ(norm_i, norm_j):
                 continue
             if _crossfile_fileanchored_blocked(node, neighbor):
@@ -503,21 +494,15 @@ def _llm_tiebreak(
         return
 
     try:
-        from graphify.llm import _call_llm
-    except ImportError as exc:
-        # F-038: previously this silent fallback hid the fact that `_call_llm`
-        # didn't exist in `graphify.llm` at all, so `--dedup-llm` was a no-op.
-        # Surface the import failure so future regressions are visible.
-        print(
-            f"[graphify] --dedup-llm: cannot import _call_llm ({exc}); skipping LLM tiebreaker.",
-            flush=True,
-        )
+        llm = load_llm(backend)
+    except Exception as exc:
+        print(f"[graphify] --dedup-llm: cannot load LLM {backend!r} ({exc}); skipping.", flush=True)
         return
 
     for batch_start in range(0, len(ambiguous), batch_size):
         batch = ambiguous[batch_start : batch_start + batch_size]
         pairs_text = "\n".join(
-            f"{i+1}. \"{a['label']}\" vs \"{b['label']}\""
+            f'{i+1}. "{a["label"]}" vs "{b["label"]}"'
             for i, (a, b, _) in enumerate(batch)
         )
         prompt = (
@@ -526,8 +511,13 @@ def _llm_tiebreak(
             "Reply with one line per pair: '1. yes', '2. no', etc."
         )
         try:
-            response = _call_llm(prompt, backend=backend, max_tokens=200)
-            lines = response.strip().splitlines()
+            response = asyncio.get_event_loop().run_until_complete(
+                llm.ainvoke([
+                    SystemMessage(content="You are a deduplication assistant."),
+                    HumanMessage(content=prompt),
+                ])
+            )
+            lines = (response.content or "").strip().splitlines()
             for line in lines:
                 line = line.strip()
                 if not line:

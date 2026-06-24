@@ -1,12 +1,14 @@
 # file discovery, type classification, and corpus health checks
 from __future__ import annotations
+
+import contextlib
 import fnmatch
 import json
 import os
 import re
 import shlex
 from concurrent.futures import ThreadPoolExecutor
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 
 from .paths import GRAPHIFY_OUT, GRAPHIFY_OUT_NAME, out_path
@@ -19,11 +21,11 @@ def google_workspace_enabled() -> bool:
     return False
 
 
-def convert_google_workspace_file(path, out_dir, **kwargs):  # type: ignore[no-untyped-def]
+def convert_google_workspace_file(path, out_dir, **kwargs) -> None:  # type: ignore[no-untyped-def]
     return None
 
 
-class FileType(str, Enum):
+class FileType(StrEnum):
     CODE = "code"
     DOCUMENT = "document"
     PAPER = "paper"
@@ -33,12 +35,12 @@ class FileType(str, Enum):
 
 _MANIFEST_PATH = str(out_path("manifest.json"))
 
-CODE_EXTENSIONS = {'.py', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.ejs', '.ets', '.go', '.rs', '.java', '.groovy', '.gradle', '.cpp', '.cc', '.cxx', '.c', '.h', '.hpp', '.cu', '.cuh', '.rb', '.swift', '.kt', '.kts', '.cs', '.scala', '.php', '.lua', '.luau', '.toc', '.zig', '.ps1', '.psm1', '.psd1', '.ex', '.exs', '.m', '.mm', '.jl', '.vue', '.svelte', '.astro', '.dart', '.v', '.sv', '.svh', '.sql', '.r', '.f', '.F', '.f90', '.F90', '.f95', '.F95', '.f03', '.F03', '.f08', '.F08', '.pas', '.pp', '.dpr', '.dpk', '.lpr', '.inc', '.dfm', '.lfm', '.lpk', '.sh', '.bash', '.json', '.tf', '.tfvars', '.hcl', '.dm', '.dme', '.dmi', '.dmm', '.dmf', '.sln', '.slnx', '.csproj', '.fsproj', '.vbproj', '.razor', '.cshtml', '.cls', '.trigger'}
-DOC_EXTENSIONS = {'.md', '.mdx', '.qmd', '.txt', '.rst', '.html', '.yaml', '.yml'}
-PAPER_EXTENSIONS = {'.pdf'}
-IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'}
-OFFICE_EXTENSIONS = {'.docx', '.xlsx'}
-VIDEO_EXTENSIONS = {'.mp4', '.mov', '.webm', '.mkv', '.avi', '.m4v', '.mp3', '.wav', '.m4a', '.ogg'}
+CODE_EXTENSIONS = {".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".ejs", ".ets", ".go", ".rs", ".java", ".groovy", ".gradle", ".cpp", ".cc", ".cxx", ".c", ".h", ".hpp", ".cu", ".cuh", ".rb", ".swift", ".kt", ".kts", ".cs", ".scala", ".php", ".lua", ".luau", ".toc", ".zig", ".ps1", ".psm1", ".psd1", ".ex", ".exs", ".m", ".mm", ".jl", ".vue", ".svelte", ".astro", ".dart", ".v", ".sv", ".svh", ".sql", ".r", ".f", ".F", ".f90", ".F90", ".f95", ".F95", ".f03", ".F03", ".f08", ".F08", ".pas", ".pp", ".dpr", ".dpk", ".lpr", ".inc", ".dfm", ".lfm", ".lpk", ".sh", ".bash", ".json", ".tf", ".tfvars", ".hcl", ".dm", ".dme", ".dmi", ".dmm", ".dmf", ".sln", ".slnx", ".csproj", ".fsproj", ".vbproj", ".razor", ".cshtml", ".cls", ".trigger"}
+DOC_EXTENSIONS = {".md", ".mdx", ".qmd", ".txt", ".rst", ".html", ".yaml", ".yml"}
+PAPER_EXTENSIONS = {".pdf"}
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+OFFICE_EXTENSIONS = {".docx", ".xlsx"}
+VIDEO_EXTENSIONS = {".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v", ".mp3", ".wav", ".m4a", ".ogg"}
 
 CORPUS_WARN_THRESHOLD = 50_000    # words - below this, warn "you may not need a graph"
 CORPUS_UPPER_THRESHOLD = 500_000  # words - above this, warn about token cost
@@ -109,11 +111,11 @@ _SENSITIVE_DIRS = frozenset({
 # Files that may contain secrets - skip silently. These patterns are specific
 # (extensions, exact credential-store names) and always apply.
 _SENSITIVE_PATTERNS = [
-    re.compile(r'(^|[\\/])\.(env|envrc)(\.|$)', re.IGNORECASE),
-    re.compile(r'\.(pem|key|p12|pfx|cert|crt|der|p8)$', re.IGNORECASE),
-    re.compile(r'(id_rsa|id_dsa|id_ecdsa|id_ed25519)(\.pub)?$'),
-    re.compile(r'(\.netrc|\.pgpass|\.htpasswd)$', re.IGNORECASE),
-    re.compile(r'(aws_credentials|gcloud_credentials|service.account)', re.IGNORECASE),
+    re.compile(r"(^|[\\/])\.(env|envrc)(\.|$)", re.IGNORECASE),
+    re.compile(r"\.(pem|key|p12|pfx|cert|crt|der|p8)$", re.IGNORECASE),
+    re.compile(r"(id_rsa|id_dsa|id_ecdsa|id_ed25519)(\.pub)?$"),
+    re.compile(r"(\.netrc|\.pgpass|\.htpasswd)$", re.IGNORECASE),
+    re.compile(r"(aws_credentials|gcloud_credentials|service.account)", re.IGNORECASE),
 ]
 
 # Generic keyword patterns - these only count when the keyword is LOAD-BEARING
@@ -127,14 +129,14 @@ _SENSITIVE_PATTERNS = [
 # `token` is kept separate because its longer suffix "izer"/"ize" is the only
 # common false-positive; other keywords have no such well-known derivatives.
 _GENERIC_KEYWORD_PATTERNS = [
-    re.compile(r'(?<![a-zA-Z0-9])(credential|secret|passwd|password|private_key)s?(?![a-zA-Z])', re.IGNORECASE),
-    re.compile(r'(?<![a-zA-Z0-9])tokens?(?![a-zA-Z])', re.IGNORECASE),
+    re.compile(r"(?<![a-zA-Z0-9])(credential|secret|passwd|password|private_key)s?(?![a-zA-Z])", re.IGNORECASE),
+    re.compile(r"(?<![a-zA-Z0-9])tokens?(?![a-zA-Z])", re.IGNORECASE),
 ]
 
 # Word separators for the load-bearing check (underscore intentionally included;
 # multi-word keywords like private_key are handled by the end-of-stem check,
 # which runs before word counting).
-_WORD_SPLIT = re.compile(r'[-_\s]+')
+_WORD_SPLIT = re.compile(r"[-_\s]+")
 
 
 def _generic_keyword_hit(name: str) -> bool:
@@ -149,7 +151,7 @@ def _generic_keyword_hit(name: str) -> bool:
     """
     # Stem = name up to the first dot, ignoring leading dots so dotfiles like
     # ".token" keep their keyword ("" stems would never match).
-    stem = name.lstrip('.').split('.')[0]
+    stem = name.lstrip(".").split(".")[0]
     for pat in _GENERIC_KEYWORD_PATTERNS:
         hit = False
         for m in pat.finditer(stem):
@@ -162,19 +164,19 @@ def _generic_keyword_hit(name: str) -> bool:
 
 # Signals that a .md/.txt file is actually a converted academic paper
 _PAPER_SIGNALS = [
-    re.compile(r'\barxiv\b', re.IGNORECASE),
-    re.compile(r'\bdoi\s*:', re.IGNORECASE),
-    re.compile(r'\babstract\b', re.IGNORECASE),
-    re.compile(r'\bproceedings\b', re.IGNORECASE),
-    re.compile(r'\bjournal\b', re.IGNORECASE),
-    re.compile(r'\bpreprint\b', re.IGNORECASE),
-    re.compile(r'\\cite\{'),          # LaTeX citation
-    re.compile(r'\[\d+\]'),           # Numbered citation [1], [23] (inline)
-    re.compile(r'\[\n\d+\n\]'),       # Numbered citation spread across lines (markdown conversion)
-    re.compile(r'eq\.\s*\d+|equation\s+\d+', re.IGNORECASE),
-    re.compile(r'\d{4}\.\d{4,5}'),   # arXiv ID like 1706.03762
-    re.compile(r'\bwe propose\b', re.IGNORECASE),   # common academic phrasing
-    re.compile(r'\bliterature\b', re.IGNORECASE),   # "from the literature"
+    re.compile(r"\barxiv\b", re.IGNORECASE),
+    re.compile(r"\bdoi\s*:", re.IGNORECASE),
+    re.compile(r"\babstract\b", re.IGNORECASE),
+    re.compile(r"\bproceedings\b", re.IGNORECASE),
+    re.compile(r"\bjournal\b", re.IGNORECASE),
+    re.compile(r"\bpreprint\b", re.IGNORECASE),
+    re.compile(r"\\cite\{"),          # LaTeX citation
+    re.compile(r"\[\d+\]"),           # Numbered citation [1], [23] (inline)
+    re.compile(r"\[\n\d+\n\]"),       # Numbered citation spread across lines (markdown conversion)
+    re.compile(r"eq\.\s*\d+|equation\s+\d+", re.IGNORECASE),
+    re.compile(r"\d{4}\.\d{4,5}"),   # arXiv ID like 1706.03762
+    re.compile(r"\bwe propose\b", re.IGNORECASE),   # common academic phrasing
+    re.compile(r"\bliterature\b", re.IGNORECASE),   # "from the literature"
 ]
 _PAPER_SIGNAL_THRESHOLD = 3  # need at least this many signals to call it a paper
 
@@ -599,10 +601,8 @@ def xlsx_extract_structure(path: Path) -> dict:
                         _edge(sheet_nid, col_nid, "contains")
                 break
 
-    try:
+    with contextlib.suppress(Exception):
         wb.close()
-    except Exception:
-        pass
 
     return {"nodes": nodes, "edges": edges}
 
@@ -691,19 +691,17 @@ _SKIP_FILES = {
     "composer.lock", "go.sum", "go.work.sum",
 }
 
-def _is_noise_dir(part: str, parent: "Path | None" = None) -> bool:
+def _is_noise_dir(part: str, parent: Path | None = None) -> bool:
     """Return True if this directory name looks like a venv, cache, or dep dir."""
     if part in _SKIP_DIRS:
         return True
     # Catch *_venv, *_repo/site-packages patterns
-    if part.endswith("_venv") or part.endswith("_env"):
+    if part.endswith(("_venv", "_env")):
         return True
     if part.endswith(".egg-info"):
         return True
     # worktrees/ nested inside a dotted dir (e.g. .claude/worktrees/, .git/worktrees/)
-    if part == "worktrees" and parent is not None and parent.name.startswith("."):
-        return True
-    return False
+    return bool(part == "worktrees" and parent is not None and parent.name.startswith("."))
 
 
 _VCS_MARKERS = (".git", ".hg", ".svn", "_darcs", ".fossil")
@@ -729,8 +727,7 @@ def _parse_gitignore_line(raw: str) -> str:
     # Unescape \# → literal #
     line = line.replace("\\#", "#")
     # Remove unescaped trailing spaces (per gitignore spec)
-    line = re.sub(r"(?<!\\) +$", "", line)
-    return line
+    return re.sub(r"(?<!\\) +$", "", line)
 
 
 def _find_vcs_root(start: Path) -> Path | None:
@@ -741,7 +738,7 @@ def _find_vcs_root(start: Path) -> Path | None:
         if any((current / m).exists() for m in _VCS_MARKERS):
             return current
         parent = current.parent
-        if parent == current or current == home:
+        if current in (parent, home):
             return None
         current = parent
 
@@ -970,16 +967,12 @@ def _could_contain_included_path(path: Path, root: Path, patterns: list[tuple[Pa
         return False
 
     rels: list[str] = []
-    try:
+    with contextlib.suppress(ValueError):
         rels.append(str(path.relative_to(root)).replace(os.sep, "/"))
-    except ValueError:
-        pass
     for anchor, _ in patterns:
         if anchor != root:
-            try:
+            with contextlib.suppress(ValueError):
                 rels.append(str(path.relative_to(anchor)).replace(os.sep, "/"))
-            except ValueError:
-                pass
 
     for rel in rels:
         rel = rel.strip("/")
@@ -1086,7 +1079,7 @@ def detect(root: Path, *, follow_symlinks: bool | None = None, google_workspace:
                     seen.add(p)
                     all_files.append(p)
 
-    all_files.sort(key=lambda p: str(p))
+    all_files.sort(key=str)
 
     converted_dir = root / GRAPHIFY_OUT / "converted"
 
@@ -1220,7 +1213,7 @@ def _to_relative_for_storage(key: str, root: Path) -> str:
     # ``os.path.relpath`` happily produces ``../foo`` for paths outside
     # root; mirror the prior ``relative_to``-raises-ValueError semantics by
     # keeping out-of-root entries in their absolute form.
-    if rel == ".." or rel.startswith(".." + os.sep) or rel.startswith("../"):
+    if rel == ".." or rel.startswith((".." + os.sep, "../")):
         return key
     return rel.replace(os.sep, "/")
 

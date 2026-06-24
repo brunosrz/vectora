@@ -1,6 +1,8 @@
 """Graph analysis: god nodes (most connected), surprising connections (cross-community), suggested questions."""
 from __future__ import annotations
+
 from pathlib import Path
+
 import networkx as nx
 
 from .build import edge_data
@@ -22,17 +24,17 @@ _BUILTIN_NOISE_LABELS = frozenset({
 
 # Language families — extensions sharing a runtime can legitimately call each other
 _LANG_FAMILY: dict[str, str] = {
-    **{e: "python" for e in (".py", ".pyw")},
-    **{e: "js" for e in (".js", ".jsx", ".mjs", ".ejs", ".ts", ".tsx", ".vue", ".svelte")},
-    **{e: "go" for e in (".go",)},
-    **{e: "rust" for e in (".rs",)},
-    **{e: "jvm" for e in (".java", ".kt", ".kts", ".scala")},
-    **{e: "c" for e in (".c", ".h", ".cpp", ".cc", ".cxx", ".hpp")},
-    **{e: "ruby" for e in (".rb",)},
-    **{e: "swift" for e in (".swift",)},
-    **{e: "dotnet" for e in (".cs",)},
-    **{e: "php" for e in (".php",)},
-    **{e: "r" for e in (".r",)},
+    **dict.fromkeys((".py", ".pyw"), "python"),
+    **dict.fromkeys((".js", ".jsx", ".mjs", ".ejs", ".ts", ".tsx", ".vue", ".svelte"), "js"),
+    **dict.fromkeys((".go",), "go"),
+    **dict.fromkeys((".rs",), "rust"),
+    **dict.fromkeys((".java", ".kt", ".kts", ".scala"), "jvm"),
+    **dict.fromkeys((".c", ".h", ".cpp", ".cc", ".cxx", ".hpp"), "c"),
+    **dict.fromkeys((".rb",), "ruby"),
+    **dict.fromkeys((".swift",), "swift"),
+    **dict.fromkeys((".cs",), "dotnet"),
+    **dict.fromkeys((".php",), "php"),
+    **dict.fromkeys((".r",), "r"),
 }
 
 
@@ -75,9 +77,7 @@ def _is_file_node(G: nx.Graph, node_id: str) -> bool:
         return True
     # Module-level function stub: labeled 'function_name()' - only has a contains edge
     # These are real functions but structurally isolated by definition; not a gap worth flagging
-    if label.endswith("()") and G.degree(node_id) <= 1:
-        return True
-    return False
+    return bool(label.endswith("()") and G.degree(node_id) <= 1)
 
 
 _JSON_NOISE_LABELS: frozenset[str] = frozenset({
@@ -149,8 +149,7 @@ def surprising_connections(
 
     if is_multi_source:
         return _cross_file_surprises(G, communities or {}, top_n)
-    else:
-        return _cross_community_surprises(G, communities or {}, top_n)
+    return _cross_community_surprises(G, communities or {}, top_n)
 
 
 def _is_concept_node(G: nx.Graph, node_id: str) -> bool:
@@ -167,12 +166,10 @@ def _is_concept_node(G: nx.Graph, node_id: str) -> bool:
     if not source:
         return True
     # Has no file extension → probably a concept label, not a real file
-    if "." not in source.split("/")[-1]:
-        return True
-    return False
+    return "." not in source.split("/")[-1]
 
 
-from .detect import CODE_EXTENSIONS, DOC_EXTENSIONS, PAPER_EXTENSIONS, IMAGE_EXTENSIONS
+from .detect import CODE_EXTENSIONS, DOC_EXTENSIONS, IMAGE_EXTENSIONS, PAPER_EXTENSIONS
 
 
 def _file_category(path: str) -> str:
@@ -188,7 +185,7 @@ def _file_category(path: str) -> str:
 
 def _top_level_dir(path: str) -> str:
     """Return the first path component - used to detect cross-repo edges."""
-    return path.split("/")[0] if "/" in path else path
+    return path.split("/", maxsplit=1)[0] if "/" in path else path
 
 
 def _surprise_score(

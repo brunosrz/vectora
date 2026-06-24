@@ -54,7 +54,7 @@ class FileSlice:
 Unit = "Path | FileSlice"
 
 
-def unit_path(unit: "Path | FileSlice") -> Path:
+def unit_path(unit: Path | FileSlice) -> Path:
     """The on-disk path a unit belongs to (the parent file for a slice)."""
     return unit.path if isinstance(unit, FileSlice) else unit
 
@@ -106,14 +106,14 @@ def slice_boundaries(text: str, max_chars: int) -> list[tuple[int, int]]:
 
 def expand_oversized_files(
     files: list[Path], max_chars: int
-) -> list["Path | FileSlice"]:
+) -> list[Path | FileSlice]:
     """Replace each oversized splittable-text file with a list of ``FileSlice``s.
 
     Files at or below ``max_chars`` (and all non-splittable files) pass through
     unchanged as ``Path``, so behaviour is identical for everything that already
     fit. Unreadable files pass through untouched (the reader handles the error).
     """
-    out: list["Path | FileSlice"] = []
+    out: list[Path | FileSlice] = []
     for f in files:
         if not is_splittable_text(f):
             out.append(f)

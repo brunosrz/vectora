@@ -89,7 +89,7 @@ _INJECTION_SENTINELS = re.compile(
 
 
 def _neutralise_injection_sentinels(text: str) -> str:
-    return _INJECTION_SENTINELS.sub(lambda m: m.group(0)[0] + "​" + m.group(0)[1:], text)
+    return _INJECTION_SENTINELS.sub(lambda m: m.group(0)[0] + "\u200b" + m.group(0)[1:], text)
 
 
 def _wrap_untrusted(rel: str, content: str) -> str:
@@ -259,6 +259,7 @@ async def _call_llm_async(
 ) -> dict[str, Any]:
     """Chama o LLM do Vectora de forma assíncrona e parseia o resultado."""
     from langchain_core.messages import HumanMessage, SystemMessage
+
     from backend.services.utils import load_llm
 
     llm = load_llm(model_id)

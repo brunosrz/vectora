@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import atexit
+import contextlib
 import hashlib
 import json
 import os
@@ -129,14 +130,10 @@ def _flush_stat_index() -> None:
             os.close(fd)
             os.replace(tmp, p)
         except Exception:
-            try:
+            with contextlib.suppress(OSError):
                 os.close(fd)
-            except OSError:
-                pass
-            try:
+            with contextlib.suppress(OSError):
                 os.unlink(tmp)
-            except OSError:
-                pass
     except OSError:
         pass
     _stat_index_dirty = False
@@ -148,12 +145,11 @@ def _normalize_path(path: Path) -> Path:
     if sys.platform != "win32":
         return path
     s = str(path)
-    if s.startswith("\\\\?\\"):
-        s = s[4:]  # strip extended-length prefix \\?\
+    s = s.removeprefix("\\\\?\\")  # strip extended-length prefix \\?\
     return Path(os.path.normcase(s))
 
 
-def file_hash(path: Path, root: Path = Path(".")) -> str:
+def file_hash(path: Path, root: Path = Path()) -> str:
     """SHA256 of file contents + path relative to root.
 
     Uses a stat-based fastpath (size + mtime_ns) to skip full reads when the
@@ -175,7 +171,7 @@ def file_hash(path: Path, root: Path = Path(".")) -> str:
 
     _ensure_stat_index(root)
     abs_key = str(p.resolve())
-    st: "os.stat_result | None" = None
+    st: os.stat_result | None = None
     try:
         st = p.stat()
         entry = _stat_index.get(abs_key)
@@ -236,7 +232,7 @@ def _relativize_source_files_in(payload: dict, root: Path) -> None:
                 rel = os.path.relpath(sp, root_resolved)
             except (ValueError, OSError):
                 continue  # out-of-root (e.g. Windows cross-drive)
-            if rel == ".." or rel.startswith(".." + os.sep) or rel.startswith("../"):
+            if rel == ".." or rel.startswith((".." + os.sep, "../")):
                 continue  # escaped root — keep absolute
             item["source_file"] = rel.replace(os.sep, "/")
 
@@ -269,7 +265,7 @@ def _absolutize_source_files_in(payload: dict, root: Path) -> None:
                 continue
 
 
-def cache_dir(root: Path = Path("."), kind: str = "ast") -> Path:
+def cache_dir(root: Path = Path(), kind: str = "ast") -> Path:
     """Returns the cache directory for ``kind`` - creates it if needed.
 
     kind is "ast" or "semantic". Separate subdirectories prevent semantic cache
@@ -290,7 +286,7 @@ def cache_dir(root: Path = Path("."), kind: str = "ast") -> Path:
     return d
 
 
-def load_cached(path: Path, root: Path = Path("."), kind: str = "ast") -> dict | None:
+def load_cached(path: Path, root: Path = Path(), kind: str = "ast") -> dict | None:
     """Return cached extraction for this file if hash matches, else None.
 
     Cache key: SHA256 of file contents.
@@ -322,7 +318,7 @@ def load_cached(path: Path, root: Path = Path("."), kind: str = "ast") -> dict |
     return None
 
 
-def save_cached(path: Path, result: dict, root: Path = Path("."), kind: str = "ast") -> None:
+def save_cached(path: Path, result: dict, root: Path = Path(), kind: str = "ast") -> None:
     """Save extraction result for this file.
 
     Stores as graphify-out/cache/{kind}/{hash}.json where hash = SHA256 of current file contents.
@@ -366,18 +362,14 @@ def save_cached(path: Path, result: dict, root: Path = Path("."), kind: str = "a
             shutil.copy2(tmp_path, entry)
             os.unlink(tmp_path)
     except Exception:
-        try:
+        with contextlib.suppress(OSError):
             os.close(fd)
-        except OSError:
-            pass
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except OSError:
-            pass
         raise
 
 
-def cached_files(root: Path = Path(".")) -> set[str]:
+def cached_files(root: Path = Path()) -> set[str]:
     """Return set of file hashes that have a valid cache entry (any kind)."""
     base = Path(root).resolve() / _GRAPHIFY_OUT / "cache"
     hashes: set[str] = set()
@@ -392,7 +384,7 @@ def cached_files(root: Path = Path(".")) -> set[str]:
     return hashes
 
 
-def clear_cache(root: Path = Path(".")) -> None:
+def clear_cache(root: Path = Path()) -> None:
     """Delete all cache entries (ast/, semantic/, and legacy flat entries)."""
     base = Path(root).resolve() / _GRAPHIFY_OUT / "cache"
     # Legacy flat entries
@@ -409,7 +401,7 @@ def clear_cache(root: Path = Path(".")) -> None:
 
 def check_semantic_cache(
     files: list[str],
-    root: Path = Path("."),
+    root: Path = Path(),
 ) -> tuple[list[dict], list[dict], list[dict], list[str]]:
     """Check semantic extraction cache for a list of absolute file paths.
 
@@ -440,7 +432,7 @@ def save_semantic_cache(
     nodes: list[dict],
     edges: list[dict],
     hyperedges: list[dict] | None = None,
-    root: Path = Path("."),
+    root: Path = Path(),
 ) -> int:
     """Save semantic extraction results to cache, keyed by source_file.
 

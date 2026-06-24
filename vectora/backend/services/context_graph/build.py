@@ -21,17 +21,20 @@
 #    before any graph construction happens.
 #
 from __future__ import annotations
+
+import contextlib
 import json
 import os
 import re
 import sys
 import unicodedata
 from pathlib import Path
+
 import networkx as nx
+
 from .ids import normalize_id as _normalize_id
 from .paths import default_graph_json as _default_graph_json
 from .validate import validate_extraction
-
 
 # Synonym mapper for known invalid file_type values that LLM subagents commonly
 # emit. Keeps semantic intent close (markdown→document, tool→code) and falls
@@ -64,10 +67,8 @@ def _norm_source_file(p: str | None, root: str | None = None) -> str | None:
         return p
     p = p.replace("\\", "/")
     if root and os.path.isabs(p):
-        try:
+        with contextlib.suppress(ValueError):
             p = Path(p).relative_to(root).as_posix()
-        except ValueError:
-            pass
     return p
 
 
@@ -410,10 +411,7 @@ def deduplicate_by_label(nodes: list[dict], edges: list[dict]) -> tuple[list[dic
             existing_has_suffix = bool(_CHUNK_SUFFIX.search(existing["id"]))
             if has_suffix and not existing_has_suffix:
                 remap[node["id"]] = existing["id"]
-            elif existing_has_suffix and not has_suffix:
-                remap[existing["id"]] = node["id"]
-                canonical[key] = node
-            elif len(node["id"]) < len(existing["id"]):
+            elif (existing_has_suffix and not has_suffix) or len(node["id"]) < len(existing["id"]):
                 remap[existing["id"]] = node["id"]
                 canonical[key] = node
             else:

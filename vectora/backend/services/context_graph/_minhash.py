@@ -11,11 +11,11 @@ Hash family (Mersenne-prime permutations) and LSH band structure are
 equivalent to datasketch so dedup quality is unchanged.
 """
 from __future__ import annotations
+
 import hashlib
 import struct
 
 import numpy as np
-
 
 _MP = np.uint64((1 << 61) - 1)  # Mersenne prime for the hash family
 _MH = np.uint64(0xFFFF_FFFF)    # mask to 32-bit values
@@ -36,7 +36,7 @@ def _mh_coeffs(num_perm: int) -> tuple[np.ndarray, np.ndarray]:
 class MinHash:
     """MinHash sketch — same API as datasketch.MinHash for the subset used here."""
 
-    __slots__ = ("num_perm", "hashvalues", "_a", "_b")
+    __slots__ = ("_a", "_b", "hashvalues", "num_perm")
 
     def __init__(self, num_perm: int = 128) -> None:
         self.num_perm = num_perm

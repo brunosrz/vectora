@@ -120,7 +120,7 @@ target-version = "py313"
 fix = true
 show-fixes = true
 indent-width = 4
-exclude = [".venv", "data", "logs", "backend/services/context_graph"]
+exclude = [".venv", "data", "logs"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -156,6 +156,35 @@ ignore = [
 "check_coverage.py" = ["S603", "PLW1510", "PLW2901", "B007"]
 "run_coverage.py" = ["S603", "PLW1510", "RUF005"]
 "backend/tools/*.py" = ["PLR0911", "S602"]
+# context_graph: código portado do graphify (MIT) — usa convenção networkx (G maiúsculo),
+# tem código XML real (S314), hashes do graphify (S324), e anotações incompletas herdadas.
+"backend/services/context_graph/*.py" = [
+    "N803", "N806",           # G é convenção networkx para grafos
+    "ANN001", "ANN002", "ANN003", "ANN202",  # anotações em código portado
+    "B023",                   # loop variable binding — padrão em closures networkx
+    "PERF401",                # list comprehensions — estilo do graphify
+    "PLR0911",                # muitos returns — algoritmos de grafo complexos
+    "PLW2901",                # redefined loop var — idiomático no código
+    "S314",                   # XML (ET.parse) — lê manifests de pacote controlados
+    "S324",                   # sha1/md5 — minhash usa sha1 por velocidade, não segurança
+    "S603", "S607", "S310",   # subprocess/URL — graphify itera executáveis externos
+    "E701",                   # múltiplos statements por linha — estilo do código portado
+    "E741",                   # nomes ambíguos (l, O, I) — variáveis de grafo
+    "PTH105", "PTH108", "PTH114", "PTH117", "PTH119", "PTH120", "PTH123",  # os.path vs pathlib
+    "PLW0602",                # global sem assign — padrão de singletons
+    "PLW1510",                # subprocess sem check= — código portado
+    "DTZ011",                 # date.today() sem tz — backup timestamp
+    "B904",                   # raise from — código portado
+    "B007",                   # loop var não usado — idiomático
+    "B005",                   # .strip() com multi-char — intencional
+    "SIM105",                 # use contextlib.suppress — estilo explícito preferido
+    "RUF002", "RUF003",       # comentários com caracteres Unicode (fórmulas matemáticas)
+    "PLC0206",                # dict.items() — estilo do código
+    "PERF402",                # list copy — código portado
+    "ICN001",                 # import convention — graphify usa convenções próprias
+    "F402",                   # import shadowing — código portado
+    "S112",                   # use continue — estilo do código portado
+]
 "backend/agents/*.py" = ["PLR0911"]
 "backend/nodes/engine.py" = ["E501"]
 "backend/nodes/base.py" = ["PLR0911"]
@@ -177,12 +206,48 @@ line-ending = "lf"
 
 # ─── ty (Astral type checker) ──────────────────────────────────────────────────
 [tool.ty.src]
-# backend/services/context_graph: base do graphify (MIT) copiada, sendo nativizada
-# incrementalmente — excluída dos gates estritos até cada módulo ser refatorado.
-exclude = ["backend/services/context_graph"]
+
+[[tool.ty.overrides]]
+# extract.py: 8500+ linhas de parsers tree-sitter com imports opcionais (try/except).
+# Os módulos tree_sitter_* não estão nas deps do projeto — são extras opcionais.
+# Os atributos .type/.children são da API dinâmica do tree-sitter (sem stubs py.typed).
+match = ["backend/services/context_graph/extract.py"]
+
+[tool.ty.overrides.rules]
+unresolved-import = "ignore"
+unresolved-attribute = "ignore"
+invalid-argument-type = "ignore"
+invalid-return-type = "ignore"
+invalid-assignment = "ignore"
+
+[[tool.ty.overrides]]
+# cluster.py: graspologic é opcional (fallback para networkx louvain).
+# dedup.py: usa load_llm via asyncio.get_event_loop() em contexto sync.
+match = [
+    "backend/services/context_graph/cluster.py",
+    "backend/services/context_graph/dedup.py",
+    "backend/services/context_graph/export.py",
+    "backend/services/context_graph/analyze.py",
+    "backend/services/context_graph/build.py",
+    "backend/services/context_graph/cache.py",
+    "backend/services/context_graph/detect.py",
+    "backend/services/context_graph/manifest_ingest.py",
+    "backend/services/context_graph/multigraph_compat.py",
+    "backend/services/context_graph/symbol_resolution.py",
+    "backend/services/context_graph/paths.py",
+    "backend/services/context_graph/report.py",
+    "backend/services/context_graph/security.py",
+]
+
+[tool.ty.overrides.rules]
+unresolved-import = "ignore"
+unresolved-attribute = "ignore"
+invalid-argument-type = "ignore"
+invalid-return-type = "ignore"
+invalid-assignment = "ignore"
 
 [tool.bandit]
-exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py", "backend/services/context_graph"]
+exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py"]
 skips = ["B110", "B101"]
 
 [tool.pyright]

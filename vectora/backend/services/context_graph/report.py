@@ -1,7 +1,9 @@
 # generate GRAPH_REPORT.md - the human-readable audit trail
 from __future__ import annotations
+
 import re
 from datetime import date
+
 import networkx as nx
 
 
@@ -129,7 +131,7 @@ def generate(
             length = c.get("length", len(cycle))
             if not cycle:
                 continue
-            cycle_path = " -> ".join(cycle + [cycle[0]])
+            cycle_path = " -> ".join([*cycle, cycle[0]])
             lines.append(f"- {length}-file cycle: `{cycle_path}`")
     else:
         lines.append("- None detected.")
@@ -158,7 +160,7 @@ def generate(
         suffix = f" (+{len(real_nodes)-8} more)" if len(real_nodes) > 8 else ""
         lines += [
             "",
-            f"### Community {cid} - \"{label}\"",
+            f'### Community {cid} - "{label}"',
             f"Cohesion: {score:.2f}",
             f"Nodes ({len(real_nodes)}): {', '.join(display)}{suffix}",
         ]
@@ -175,7 +177,7 @@ def generate(
             ]
 
     # --- Gaps section ---
-    from .analyze import _is_file_node, _is_concept_node
+    from .analyze import _is_concept_node, _is_file_node
 
     isolated = [
         n for n in G.nodes()

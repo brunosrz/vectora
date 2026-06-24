@@ -65,10 +65,10 @@ async def build_workspace_graph(
         logger.error(msg)
         return GraphResult(
             workspace_id=workspace_id,
-            workspace_path=Path("."),
-            graph_path=Path("."),
-            report_path=Path("."),
-            html_path=Path("."),
+            workspace_path=Path(),
+            graph_path=Path(),
+            report_path=Path(),
+            html_path=Path(),
             error=msg,
         )
 
@@ -182,7 +182,7 @@ async def build_workspace_graph(
             logger.exception("context_graph: falha no clustering", extra={"workspace_id": workspace_id})
 
         # ── Passo 6: analyze (god nodes, conexões surpreendentes, perguntas) ──
-        from .analyze import god_nodes, surprising_connections, suggest_questions
+        from .analyze import god_nodes, suggest_questions, surprising_connections
 
         community_labels: dict[int, str] = {}
         god_node_list: list[dict] = []
@@ -199,8 +199,8 @@ async def build_workspace_graph(
             logger.exception("context_graph: falha na análise", extra={"workspace_id": workspace_id})
 
         # ── Passo 7: report + export ──────────────────────────────────────────
+        from .export import to_html, to_json
         from .report import generate as generate_report
-        from .export import to_json, to_html
 
         token_cost = {"input": result.input_tokens, "output": result.output_tokens}
 
