@@ -66,201 +66,23 @@ import { MarkdownView } from "@/components/workbench/markdown-view";
 import { FileTreeSkeleton } from "@/components/workbench/tabs/file-tree-skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { m } from "@/lib/paraglide/messages";
-
-// ---------------------------------------------------------------------------
-// Badge de status git — derivado do diff porcelain por join client-side.
-// ---------------------------------------------------------------------------
-
-const GIT_BADGE_TONE: Record<string, string> = {
-  M: "text-amber-500",
-  A: "text-green-500",
-  D: "text-destructive",
-  R: "text-blue-400",
-  "?": "text-muted-foreground",
-};
-
-/** Normaliza separadores para "/" (backend devolve POSIX). */
-function norm(path: string): string {
-  return path.replace(/\\/g, "/");
-}
-
-function GitBadge({ status }: { status?: string }) {
-  if (!status) return null;
-  return (
-    <span
-      className={`w-3 text-center font-bold shrink-0 text-[10px] ${
-        GIT_BADGE_TONE[status] ?? "text-muted-foreground"
-      }`}
-      title={status}
-    >
-      {status}
-    </span>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// API helpers
-// ---------------------------------------------------------------------------
-
-async function fetchTree(
-  workspaceId: string,
-  path: string,
-): Promise<FileEntry[] | null> {
-  const qs = new URLSearchParams({ path });
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/tree?${qs}`,
-  );
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.entries ?? [];
-}
-
-async function fetchDiffSummary(
-  workspaceId: string,
-): Promise<DiffSummary | null> {
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/git/diff`,
-  );
-  if (!res.ok) return null;
-  return res.json();
-}
-
-async function apiFsCreate(
-  workspaceId: string,
-  type: "file" | "dir",
-  path: string,
-): Promise<boolean> {
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/fs/${type}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path }),
-    },
-  );
-  return res.ok;
-}
-
-async function apiFsDelete(
-  workspaceId: string,
-  path: string,
-  permanent = false,
-): Promise<boolean> {
-  const qs = new URLSearchParams({ path });
-  if (permanent) qs.set("permanent", "true");
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/fs?${qs}`,
-    { method: "DELETE" },
-  );
-  return res.ok;
-}
-
-async function apiFsMove(
-  workspaceId: string,
-  fromPath: string,
-  toPath: string,
-): Promise<{ ok: boolean; message?: string }> {
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/fs/move`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ from_path: fromPath, to_path: toPath }),
-    },
-  );
-  const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, message: data.message };
-}
-
-// ---------------------------------------------------------------------------
-// A.5 — Busca de texto em arquivos
-// ---------------------------------------------------------------------------
-
-interface SearchHit {
-  path: string;
-  line_number: number;
-  line_text: string;
-}
-
-interface SearchResult {
-  hits: SearchHit[];
-  truncated: boolean;
-}
-
-async function apiFsSearch(
-  workspaceId: string,
-  query: string,
-  path = "",
-): Promise<SearchResult | null> {
-  const qs = new URLSearchParams({ q: query });
-  if (path) qs.set("path", path);
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/fs/search?${qs}`,
-  );
-  if (!res.ok) return null;
-  return res.json() as Promise<SearchResult>;
-}
-
-// ---------------------------------------------------------------------------
-// A.6 — Histórico de arquivo (git log/file + git show)
-// ---------------------------------------------------------------------------
-
-interface FileLogEntry {
-  sha: string;
-  sha_short: string;
-  author: string;
-  date: string; // ISO 8601
-  message: string;
-}
-
-interface FileLogResponse {
-  path: string;
-  entries: FileLogEntry[];
-}
-
-interface ShowFileAtRevResponse {
-  path: string;
-  sha: string;
-  content: string | null;
-  binary: boolean;
-  truncated: boolean;
-}
-
-async function apiFsGitLogFile(
-  workspaceId: string,
-  path: string,
-  n = 50,
-): Promise<FileLogResponse | null> {
-  const qs = new URLSearchParams({ path, n: String(n) });
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/git/log/file?${qs}`,
-  );
-  if (!res.ok) return null;
-  return res.json() as Promise<FileLogResponse>;
-}
-
-async function apiFsGitShow(
-  workspaceId: string,
-  sha: string,
-  path: string,
-): Promise<ShowFileAtRevResponse | null> {
-  const qs = new URLSearchParams({ sha, path });
-  const res = await fetch(
-    `/workspaces/${encodeURIComponent(workspaceId)}/git/show?${qs}`,
-  );
-  if (!res.ok) return null;
-  return res.json() as Promise<ShowFileAtRevResponse>;
-}
-
-/** Formata data ISO 8601 em string compacta (dd/mm/yyyy). */
-function fmtDate(iso: string): string {
-  try {
-    const d = new Date(iso);
-    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-  } catch {
-    return iso.slice(0, 10);
-  }
-}
+import { GitBadge } from "./git-badge";
+import { norm, fmtDate } from "./files-utils";
+import {
+  fetchTree,
+  fetchDiffSummary,
+  apiFsCreate,
+  apiFsDelete,
+  apiFsMove,
+  apiFsSearch,
+  apiFsGitLogFile,
+  apiFsGitShow,
+  type SearchHit,
+  type SearchResult,
+  type FileLogEntry,
+  type FileLogResponse,
+  type ShowFileAtRevResponse,
+} from "./files-api";
 
 // ---------------------------------------------------------------------------
 // Estado de criação inline
