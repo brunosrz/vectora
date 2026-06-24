@@ -104,7 +104,7 @@ def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
     if not attachments:
         return HumanMessage(content=content)
 
-    parts: list[dict[str, Any]] = [{"type": "text", "text": content}]
+    parts: list[str | dict[str, Any]] = [{"type": "text", "text": content}]
 
     for att in attachments:
         if att.kind == AttachmentKind.IMAGE:
@@ -133,7 +133,7 @@ def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
 
             parts.append({"type": "text", "text": block})
 
-    return HumanMessage(content=parts)  # ty: ignore[no-matching-overload]
+    return HumanMessage(content=parts)
 
 
 # ---------------------------------------------------------------------------
