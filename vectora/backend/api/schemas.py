@@ -341,6 +341,12 @@ class GetHistoryResponse(BaseModel):
     messages: list[HistoryMessage]
 
 
+class PagedHistoryResponse(BaseModel):
+    messages: list[HistoryMessage]
+    has_more: bool
+    total_count: int
+
+
 # ---------------------------------------------------------------------------
 # Share schemas (leitura pública de threads compartilhadas)
 # ---------------------------------------------------------------------------

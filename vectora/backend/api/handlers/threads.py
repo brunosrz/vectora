@@ -39,6 +39,7 @@ from backend.api.schemas import (
     HistoryMessage,
     ListThreadsRequest,
     ListThreadsResponse,
+    PagedHistoryResponse,
     SetThreadPinsRequest,
     Thread,
     ThreadPinsResponse,
@@ -792,6 +793,48 @@ async def rewind_thread(
 
 # ---------------------------------------------------------------------------
 # C.27 — Activity endpoint: arquivos tocados + resumo de tool calls
+MESSAGES_CAP = 200
+
+
+@router.get("/threads/{thread_id}/history", response_model=PagedHistoryResponse)
+async def get_thread_history_paginated(
+    thread_id: str,
+    limit: int = MESSAGES_CAP,
+    offset: int = 0,
+) -> PagedHistoryResponse:
+    """Histórico paginado de mensagens de uma thread.
+
+    Retorna as ``limit`` mensagens mais recentes (excluindo as ``offset`` mais
+    recentes), em ordem cronológica. ``has_more=True`` quando existem mensagens
+    mais antigas além das retornadas.
+    """
+    try:
+        from backend.services import agent_factory
+
+        pairs = await agent_factory.aget_thread_messages(thread_id)
+    except Exception:
+        logger.exception("api/threads: erro ao carregar histórico paginado")
+        return PagedHistoryResponse(messages=[], has_more=False, total_count=0)
+
+    total = len(pairs)
+    effective_limit = min(limit, MESSAGES_CAP)
+
+    # Fatia: pega as [effective_limit] mensagens anteriores às [offset] mais recentes
+    # Índice do fim da janela (a partir do final da lista)
+    end = total - offset
+    start = max(0, end - effective_limit)
+    page = pairs[start:end]
+
+    has_more = start > 0
+
+    messages = [HistoryMessage(role=role, content=text) for role, text in page]
+    return PagedHistoryResponse(
+        messages=messages,
+        has_more=has_more,
+        total_count=total,
+    )
+
+
 # ---------------------------------------------------------------------------
 
 

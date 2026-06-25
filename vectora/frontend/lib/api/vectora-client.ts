@@ -331,6 +331,22 @@ export const getHistory = (
 ): Promise<{ messages: HistoryMessage[] }> =>
   postRpc("/vectora.chat.v1.ThreadService/GetHistory", { thread_id });
 
+export interface PagedHistoryResponse {
+  messages: HistoryMessage[];
+  has_more: boolean;
+  total_count: number;
+}
+
+/** Carrega mensagens antigas paginadas (FASE 4.1 — GC + scroll infinito). */
+export const getHistoryPage = (
+  thread_id: string,
+  limit = 200,
+  offset = 0,
+): Promise<PagedHistoryResponse> =>
+  fetch(
+    `/threads/${encodeURIComponent(thread_id)}/history?limit=${limit}&offset=${offset}`,
+  ).then((r) => r.json() as Promise<PagedHistoryResponse>);
+
 /** Pede ao backend um título gerado pela IA (idempotente: só no 1º turno). */
 export const generateTitle = (thread_id: string): Promise<{ title: string }> =>
   postRpc("/vectora.chat.v1.ThreadService/GenerateTitle", { thread_id });
