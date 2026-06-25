@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import networkx as nx
-import pytest
 
 from backend.services.context_graph.query import (
     affected_summary,
@@ -199,3 +198,105 @@ class TestAffectedSummary:
         data = _sample_data()
         text = affected_summary(data, "n.db", depth=1)
         assert "No affected nodes" in text or "não há" in text.lower() or len(text) > 0
+
+    def test_custom_depth(self) -> None:
+        data = _sample_data()
+        text = affected_summary(data, "n.db", depth=2)
+        assert "Depth: 2" in text
+
+    def test_seed_by_label(self) -> None:
+        data = _sample_data()
+        text = affected_summary(data, "Database")
+        assert len(text) > 0
+
+
+# ─────────────────────────── load_graph_nx (extras) ──────────────────────────
+
+
+class TestLoadGraphNxExtra:
+    def test_handles_links_key(self, tmp_path: Path) -> None:
+        data = {
+            "directed": True,
+            "nodes": [{"id": "a"}, {"id": "b"}],
+            "links": [{"source": "a", "target": "b", "relation": "calls"}],
+        }
+        gf = tmp_path / "graph.json"
+        gf.write_text(json.dumps(data), encoding="utf-8")
+        g = load_graph_nx(gf)
+        assert g.has_edge("a", "b")
+
+    def test_empty_graph(self, tmp_path: Path) -> None:
+        gf = tmp_path / "graph.json"
+        gf.write_text(json.dumps({"nodes": [], "edges": []}), encoding="utf-8")
+        g = load_graph_nx(gf)
+        assert g.number_of_nodes() == 0
+
+
+# ─────────────────────────── query_nodes (extras) ────────────────────────────
+
+
+class TestQueryNodesExtra:
+    def test_empty_data_returns_empty(self) -> None:
+        assert query_nodes({}, "x") == ([], [])
+
+    def test_no_nodes_returns_empty(self) -> None:
+        assert query_nodes({"nodes": [], "edges": []}, "x") == ([], [])
+
+    def test_match_by_id_substring(self) -> None:
+        data = _sample_data()
+        nodes, _edges = query_nodes(data, "n.db")
+        assert any(n["id"] == "n.db" for n in nodes)
+
+    def test_exact_id_resolves(self) -> None:
+        data = _sample_data()
+        nodes, _edges = query_nodes(data, "n.cache")
+        assert {n["id"] for n in nodes} == {"n.cache"}
+
+    def test_isolated_node_has_no_edges(self) -> None:
+        data = _sample_data()
+        data["nodes"].append({"id": "n.iso", "label": "Iso", "file_type": "code"})
+        _nodes, edges = query_nodes(data, "n.iso")
+        assert edges == []
+
+
+# ─────────────────────────── explain_node (extras) ───────────────────────────
+
+
+class TestExplainNodeExtra:
+    def test_depth_2_expands_further(self) -> None:
+        data = _sample_data()
+        _target, neighbors, _edges = explain_node(data, "n.auth", depth=2)
+        ids = {n["id"] for n in neighbors}
+        assert "n.db" in ids  # auth → token → db
+
+    def test_depth_1_neighbors_populated(self) -> None:
+        data = _sample_data()
+        _target, neighbors, _edges = explain_node(data, "n.auth", depth=1)
+        ids = {n["id"] for n in neighbors}
+        assert "n.token" in ids and "n.cache" in ids
+
+    def test_connected_edges_touch_target(self) -> None:
+        data = _sample_data()
+        _target, _neighbors, edges = explain_node(data, "n.auth")
+        assert all(e["source"] == "n.auth" or e["target"] == "n.auth" for e in edges)
+
+
+# ─────────────────────────── path_between (extras) ───────────────────────────
+
+
+class TestPathBetweenExtra:
+    def test_same_source_and_target(self) -> None:
+        data = _sample_data()
+        path_nodes, _edges = path_between(data, "n.auth", "n.auth")
+        assert {n["id"] for n in path_nodes} == {"n.auth"}
+
+    def test_target_not_found_returns_empty(self) -> None:
+        data = _sample_data()
+        path_nodes, _edges = path_between(data, "n.auth", "GHOST_NODE_X")
+        assert path_nodes == []
+
+    def test_path_via_label(self) -> None:
+        data = _sample_data()
+        path_nodes, _edges = path_between(data, "AuthService", "TokenHandler")
+        ids = {n["id"] for n in path_nodes}
+        assert "n.auth" in ids and "n.token" in ids
