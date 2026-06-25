@@ -89,6 +89,18 @@ def _mime_to_lang(mime_type: str, filename: str) -> str:
     return _EXT_TO_LANG.get(ext, "")
 
 
+def _detect_planning_mode(content: str) -> tuple[str, bool]:
+    """Detecta prefixo /plan no início da mensagem.
+
+    Retorna (texto_sem_prefixo, planning_mode). Case-insensitive.
+    """
+    stripped = content.lstrip()
+    if stripped.lower().startswith("/plan"):
+        remainder = stripped[5:].lstrip()
+        return remainder, True
+    return content, False
+
+
 def _build_human_message(content: str, attachments: list[Attachment]) -> Any:
     """Constrói HumanMessage com suporte a conteúdo multimodal.
 
@@ -351,9 +363,17 @@ async def stream_chat(
         )
 
     user_name = _user_name_from_request(http_request)
+
+    # Planning mode: /plan prefix ativa instrução de planejamento multi-step
+    planning_content, planning_mode = _detect_planning_mode(request.content)
+    if planning_mode:
+        request.content = planning_content
+
     configurable = _build_configurable(
         request.config, thread_id, user_id, user_name=user_name
     )
+    if planning_mode:
+        configurable["planning_mode"] = True
 
     try:
         # Troca de modelo por request: o grafo é cacheado por modelo escolhido
@@ -377,6 +397,17 @@ async def stream_chat(
     }
 
     human_msg = _build_human_message(request.content, request.attachments)
+
+    # Planning mode: injeta instrução de planejamento no HumanMessage
+    if planning_mode:
+        planning_prefix = (
+            "[MODO PLANEJAMENTO ATIVO] Antes de executar qualquer ação:\n"
+            "1. Analise a tarefa e crie um plano de 3-5 passos via create_artifact "
+            "(tipo task_list, slug: plano-<slug-descritivo>).\n"
+            "2. Aguarde confirmação do usuário antes de executar.\n"
+            "3. Execute cada passo marcando-o com update_plan_item conforme avança.\n\n"
+        )
+        human_msg = _prepend_text_context(human_msg, planning_prefix)
 
     # Pins (WB-1): injeta o conteúdo dos arquivos fixados no turno, para que
     # "fixar" mantenha o arquivo no contexto do agente. Só em modo Dev (chat
