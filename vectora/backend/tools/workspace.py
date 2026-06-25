@@ -21,6 +21,36 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _append_graph_summary(workspace_cwd: str, result: dict) -> None:
+    """Injeta resumo do Context Graph no resultado de workspace_describe, se existir."""
+    from pathlib import Path
+
+    graph_file = Path(workspace_cwd) / ".vectora/graph/graph.json"
+    if not graph_file.exists():
+        return
+    try:
+        data = json.loads(graph_file.read_text(encoding="utf-8"))
+        n_nodes = len(data.get("nodes", []))
+        n_edges = len(data.get("edges", []))
+        report_file = Path(workspace_cwd) / ".vectora/graph/GRAPH_REPORT.md"
+        god_nodes: list[str] = []
+        if report_file.exists():
+            report_text = report_file.read_text(encoding="utf-8")
+            for line in report_text.splitlines():
+                stripped = line.strip()
+                if stripped.startswith("-") and god_nodes.__len__() < 3:
+                    god_nodes.append(stripped[1:].strip())
+        result["context_graph"] = {
+            "available": True,
+            "node_count": n_nodes,
+            "edge_count": n_edges,
+            "god_nodes": god_nodes[:3],
+            "hint": "Use graph_query, graph_explain, graph_affected para explorar estruturalmente.",
+        }
+    except Exception:
+        pass
+
+
 def _resolve_workspace(
     workspace_id: str | None, config: RunnableConfig | None
 ) -> Workspace | None:
@@ -84,14 +114,14 @@ async def workspace_describe(
 
     try:
         content = manifest_path.read_text(encoding="utf-8")
-        return json.dumps(
-            {
-                "status": "success",
-                "workspace_id": ws.id,
-                "name": ws.name,
-                "manifest": content,
-            }
-        )
+        result: dict = {
+            "status": "success",
+            "workspace_id": ws.id,
+            "name": ws.name,
+            "manifest": content,
+        }
+        _append_graph_summary(ws.cwd, result)
+        return json.dumps(result)
     except Exception as e:
         logger.exception("workspace_describe: erro ao ler manifest %s", ws.id)
         return json.dumps({"status": "error", "error": str(e)})

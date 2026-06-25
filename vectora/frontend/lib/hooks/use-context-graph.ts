@@ -88,5 +88,40 @@ export function useContextGraph(workspaceId: string | null | undefined) {
     return `${base(workspaceId)}/html`;
   }, [workspaceId]);
 
-  return { status, report, loading, build, fetchStatus, getHtmlUrl };
+  const queryAffected = useCallback(
+    async (nodeQuery: string, depth = 2): Promise<string> => {
+      if (!workspaceId) return "";
+      try {
+        const res = await fetch(`${base(workspaceId)}/affected`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ node_query: nodeQuery, depth }),
+        });
+        if (!res.ok) return "";
+        const data = await res.json();
+        return (data as { answer?: string }).answer ?? "";
+      } catch {
+        return "";
+      }
+    },
+    [workspaceId],
+  );
+
+  const update = useCallback(
+    async (opts: { model?: string } = {}) => {
+      await build({ ...opts, update: true });
+    },
+    [build],
+  );
+
+  return {
+    status,
+    report,
+    loading,
+    build,
+    update,
+    queryAffected,
+    fetchStatus,
+    getHtmlUrl,
+  };
 }

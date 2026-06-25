@@ -9,6 +9,7 @@ Defensivo (§11): cada passo tem try/except com logging estruturado.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -243,6 +244,20 @@ async def build_workspace_graph(
             )
         except Exception:
             logger.exception("context_graph: falha ao salvar manifesto", extra={"workspace_id": workspace_id})
+
+        # ── Passo 9: indexar nós do grafo no LanceDB (GraphRAG) ──────────────
+        try:
+            from .graph_index import index_graph_nodes, purge_graph_index
+
+            graph_data = json.loads(graph_json.read_text(encoding="utf-8"))
+            if not update:
+                await purge_graph_index(workspace_id)
+            await index_graph_nodes(workspace_id, graph_data)
+        except Exception:
+            logger.exception(
+                "context_graph: falha ao indexar nós no LanceDB",
+                extra={"workspace_id": workspace_id},
+            )
 
         logger.info(
             "context_graph: build completo — %d nós, %d arestas, %d tokens",

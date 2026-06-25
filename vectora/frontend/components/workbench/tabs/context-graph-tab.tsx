@@ -17,7 +17,7 @@ export function ContextGraphTab({
   onSendPrompt,
 }: ContextGraphTabProps) {
   const workspaceId = useWorkspacesStore((s) => s.active_id);
-  const { status, report, loading, build, getHtmlUrl } =
+  const { status, report, loading, build, update, queryAffected, getHtmlUrl } =
     useContextGraph(workspaceId);
   const [showReport, setShowReport] = useState(false);
 
@@ -60,7 +60,17 @@ export function ContextGraphTab({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Barra de ação */}
-      <div className="flex items-center justify-end px-3 py-2 border-b border-border/60 shrink-0">
+      <div className="flex items-center justify-end gap-2 px-3 py-2 border-b border-border/60 shrink-0">
+        {isBuilt && !isRunning && (
+          <button
+            onClick={() => update()}
+            disabled={loading}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-border/80 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className="h-3 w-3" />
+            {m.graph_update_button()}
+          </button>
+        )}
         <button
           onClick={handleBuild}
           disabled={isRunning || loading}
@@ -138,17 +148,29 @@ export function ContextGraphTab({
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {godNodes.map((node) => (
-                    <button
-                      key={node}
-                      onClick={() =>
-                        handleQuestion(
-                          `Explique o nó "${node}" no grafo de contexto`,
-                        )
-                      }
-                      className="text-xs px-2 py-0.5 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {node}
-                    </button>
+                    <span key={node} className="flex items-center gap-0.5">
+                      <button
+                        onClick={() =>
+                          handleQuestion(
+                            `Explique o nó "${node}" no grafo de contexto`,
+                          )
+                        }
+                        className="text-xs px-2 py-0.5 rounded-l-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {node}
+                      </button>
+                      <button
+                        title={m.graph_affected_button()}
+                        onClick={() =>
+                          queryAffected(node).then((text) => {
+                            if (text) handleQuestion(text);
+                          })
+                        }
+                        className="text-xs px-1.5 py-0.5 rounded-r-full bg-muted hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors border-l border-border/40"
+                      >
+                        ↯
+                      </button>
+                    </span>
                   ))}
                 </div>
               </div>

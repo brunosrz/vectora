@@ -1,9 +1,9 @@
 """Testes para backend/api/handlers/context_graph.py.
 
-Cobre helpers (_graph_dir, _status_from_disk, _require_graph_json) e
-os endpoints assíncronos (query, explain, path, status) via chamada direta
-das funções com request mockado — sem TestClient para evitar dependência de
-toda a stack FastAPI.
+Cobre helpers (_graph_dir, _read_status_file, _require_graph_json) e
+os endpoints assíncronos (query, explain, path, status, affected) via chamada
+direta das funções com request mockado — sem TestClient para evitar dependência
+de toda a stack FastAPI.
 """
 
 from __future__ import annotations
@@ -32,6 +32,11 @@ def _write_graph(tmp_path: Path, data: dict) -> Path:
     d.mkdir(parents=True, exist_ok=True)
     (d / "graph.json").write_text(json.dumps(data), encoding="utf-8")
     return d
+
+
+def _write_status(graph_dir: Path, status: str, **extra) -> None:
+    payload = {"status": status, "built_at": "2026-01-01T00:00:00Z", **extra}
+    (graph_dir / "build_status.json").write_text(json.dumps(payload), encoding="utf-8")
 
 
 def _fake_request(user_id: str = "u1") -> MagicMock:
@@ -65,47 +70,50 @@ class TestGraphDir:
 
 
 # ---------------------------------------------------------------------------
-# _status_from_disk
+# _read_status_file
 # ---------------------------------------------------------------------------
 
 
-class TestStatusFromDisk:
-    def test_not_built_when_graph_json_absent(self, tmp_path):
-        from backend.api.handlers.context_graph import _status_from_disk
+class TestReadStatusFile:
+    def test_returns_none_when_file_absent(self, tmp_path):
+        from backend.api.handlers.context_graph import _read_status_file
 
-        registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
-            s = _status_from_disk("ws1")
-        assert s.status == "not_built"
+        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir.mkdir(parents=True)
+        assert _read_status_file(graph_dir) is None
 
-    def test_done_counts_nodes_and_edges(self, tmp_path):
-        from backend.api.handlers.context_graph import _status_from_disk
+    def test_reads_done_status_with_counts(self, tmp_path):
+        from backend.api.handlers.context_graph import _read_status_file
 
-        _write_graph(
-            tmp_path,
-            {
-                "nodes": [{"id": "a"}, {"id": "b"}],
-                "edges": [{"source": "a", "target": "b"}],
-            },
-        )
-        registry, _ = _make_registry(tmp_path)
-        with patch("backend.services.workspace.workspace_registry", registry):
-            s = _status_from_disk("ws1")
+        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir.mkdir(parents=True)
+        _write_status(graph_dir, "done", node_count=5, edge_count=12)
+        s = _read_status_file(graph_dir)
+        assert s is not None
         assert s.status == "done"
-        assert s.node_count == 2
-        assert s.edge_count == 1
+        assert s.node_count == 5
+        assert s.edge_count == 12
 
-    def test_workspace_missing_raises_404(self):
-        from fastapi import HTTPException
+    def test_reads_running_status(self, tmp_path):
+        from backend.api.handlers.context_graph import _read_status_file
 
-        from backend.api.handlers.context_graph import _status_from_disk
+        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir.mkdir(parents=True)
+        _write_status(graph_dir, "running")
+        s = _read_status_file(graph_dir)
+        assert s is not None
+        assert s.status == "running"
 
-        registry = MagicMock()
-        registry.get = MagicMock(return_value=None)
-        with patch("backend.services.workspace.workspace_registry", registry):
-            with pytest.raises(HTTPException) as exc:
-                _status_from_disk("no-ws")
-        assert exc.value.status_code == 404
+    def test_reads_error_status(self, tmp_path):
+        from backend.api.handlers.context_graph import _read_status_file
+
+        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir.mkdir(parents=True)
+        _write_status(graph_dir, "error", error="Pipeline falhou")
+        s = _read_status_file(graph_dir)
+        assert s is not None
+        assert s.status == "error"
+        assert "Pipeline falhou" in (s.error or "")
 
 
 # ---------------------------------------------------------------------------
@@ -136,60 +144,65 @@ class TestRequireGraphJson:
 
 
 # ---------------------------------------------------------------------------
-# get_status — leitura de _active_builds
+# get_status — leitura via build_status.json no disco
 # ---------------------------------------------------------------------------
 
 
 class TestGetStatus:
     @pytest.mark.asyncio
-    async def test_running_from_active_builds(self, tmp_path):
-        from backend.api.handlers.context_graph import _active_builds, get_status
+    async def test_running_from_status_file(self, tmp_path):
+        from backend.api.handlers.context_graph import get_status
 
+        graph_dir = _write_graph(tmp_path, {})
+        _write_status(graph_dir, "running")
         registry, _ = _make_registry(tmp_path)
-        _active_builds["__test_running__"] = "running"
         with patch("backend.services.workspace.workspace_registry", registry):
-            s = await get_status(_fake_request(), "__test_running__")
-        del _active_builds["__test_running__"]
+            s = await get_status(_fake_request(), "ws1")
         assert s.status == "running"
 
     @pytest.mark.asyncio
-    async def test_error_from_active_builds(self, tmp_path):
-        from backend.api.handlers.context_graph import _active_builds, get_status
+    async def test_error_from_status_file(self, tmp_path):
+        from backend.api.handlers.context_graph import get_status
 
+        graph_dir = _write_graph(tmp_path, {})
+        _write_status(graph_dir, "error", error="Pipeline falhou")
         registry, _ = _make_registry(tmp_path)
-        _active_builds["__test_err__"] = "error:Pipeline falhou"
         with patch("backend.services.workspace.workspace_registry", registry):
-            s = await get_status(_fake_request(), "__test_err__")
-        del _active_builds["__test_err__"]
+            s = await get_status(_fake_request(), "ws1")
         assert s.status == "error"
         assert "Pipeline falhou" in (s.error or "")
 
     @pytest.mark.asyncio
-    async def test_done_parses_counts(self, tmp_path):
-        from backend.api.handlers.context_graph import _active_builds, get_status
+    async def test_done_from_status_file(self, tmp_path):
+        from backend.api.handlers.context_graph import get_status
 
+        graph_dir = _write_graph(tmp_path, {})
+        _write_status(graph_dir, "done", node_count=10, edge_count=25)
         registry, _ = _make_registry(tmp_path)
-        _active_builds["__test_done__"] = "done:10:25"
         with patch("backend.services.workspace.workspace_registry", registry):
-            s = await get_status(_fake_request(), "__test_done__")
-        del _active_builds["__test_done__"]
+            s = await get_status(_fake_request(), "ws1")
         assert s.status == "done"
         assert s.node_count == 10
         assert s.edge_count == 25
 
     @pytest.mark.asyncio
-    async def test_falls_back_to_disk_when_not_in_builds(self, tmp_path):
-        from backend.api.handlers.context_graph import _active_builds, get_status
+    async def test_falls_back_to_graph_json_when_no_status_file(self, tmp_path):
+        from backend.api.handlers.context_graph import get_status
 
-        _active_builds.pop("__test_fallback__", None)
-        _write_graph(
-            tmp_path,
-            {"nodes": [{"id": "a"}], "edges": []},
-        )
+        _write_graph(tmp_path, {"nodes": [{"id": "a"}], "edges": []})
         registry, _ = _make_registry(tmp_path)
         with patch("backend.services.workspace.workspace_registry", registry):
-            s = await get_status(_fake_request(), "__test_fallback__")
+            s = await get_status(_fake_request(), "ws1")
         assert s.status == "done"
+
+    @pytest.mark.asyncio
+    async def test_not_built_when_no_files(self, tmp_path):
+        from backend.api.handlers.context_graph import get_status
+
+        registry, _ = _make_registry(tmp_path)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            s = await get_status(_fake_request(), "ws1")
+        assert s.status == "not_built"
 
 
 # ---------------------------------------------------------------------------
@@ -199,13 +212,23 @@ class TestGetStatus:
 
 SAMPLE_DATA = {
     "nodes": [
-        {"id": "n_auth", "label": "AuthService", "type": "class"},
-        {"id": "n_login", "label": "login", "type": "function"},
-        {"id": "n_token", "label": "Token", "type": "class"},
+        {"id": "n_auth", "label": "AuthService", "file_type": "code"},
+        {"id": "n_login", "label": "login", "file_type": "code"},
+        {"id": "n_token", "label": "Token", "file_type": "code"},
     ],
     "edges": [
-        {"source": "n_auth", "target": "n_login", "label": "calls"},
-        {"source": "n_login", "target": "n_token", "label": "returns"},
+        {
+            "source": "n_auth",
+            "target": "n_login",
+            "relation": "calls",
+            "label": "calls",
+        },
+        {
+            "source": "n_login",
+            "target": "n_token",
+            "relation": "calls",
+            "label": "returns",
+        },
     ],
 }
 
@@ -315,7 +338,10 @@ class TestPostPath:
         _write_graph(
             tmp_path,
             {
-                "nodes": [{"id": "a"}, {"id": "b"}],
+                "nodes": [
+                    {"id": "a", "label": "A", "file_type": "code"},
+                    {"id": "b", "label": "B", "file_type": "code"},
+                ],
                 "edges": [],
             },
         )
@@ -339,5 +365,38 @@ class TestPostPath:
             with pytest.raises(HTTPException) as exc:
                 await post_path(
                     _fake_request(), "ws1", PathRequest(source="ghost", target="n_auth")
+                )
+        assert exc.value.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# post_affected
+# ---------------------------------------------------------------------------
+
+
+class TestPostAffected:
+    @pytest.mark.asyncio
+    async def test_seed_found_returns_answer(self, tmp_path):
+        from backend.api.handlers.context_graph import AffectedRequest, post_affected
+
+        _write_graph(tmp_path, SAMPLE_DATA)
+        registry, _ = _make_registry(tmp_path)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            resp = await post_affected(
+                _fake_request(), "ws1", AffectedRequest(node_query="login")
+            )
+        assert len(resp.answer) > 0
+
+    @pytest.mark.asyncio
+    async def test_no_graph_raises_404(self, tmp_path):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.context_graph import AffectedRequest, post_affected
+
+        registry, _ = _make_registry(tmp_path)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            with pytest.raises(HTTPException) as exc:
+                await post_affected(
+                    _fake_request(), "ws1", AffectedRequest(node_query="anything")
                 )
         assert exc.value.status_code == 404

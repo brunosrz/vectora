@@ -1,20 +1,22 @@
 """Handler REST do Context Graph — build, query e export por workspace.
 
 Endpoints (todos exigem autenticação; workspace deve existir):
-    POST  /workspaces/{workspace_id}/context-graph/build    — enfileira build
-    GET   /workspaces/{workspace_id}/context-graph/status   — status do build
-    GET   /workspaces/{workspace_id}/context-graph          — graph.json
-    GET   /workspaces/{workspace_id}/context-graph/report   — GRAPH_REPORT.md
-    GET   /workspaces/{workspace_id}/context-graph/html     — graph.html
-    POST  /workspaces/{workspace_id}/context-graph/query    — pergunta livre
-    POST  /workspaces/{workspace_id}/context-graph/explain  — explica nó
-    POST  /workspaces/{workspace_id}/context-graph/path     — caminho entre nós
+    POST  /workspaces/{workspace_id}/context-graph/build      — enfileira build
+    GET   /workspaces/{workspace_id}/context-graph/status     — status do build
+    GET   /workspaces/{workspace_id}/context-graph            — graph.json
+    GET   /workspaces/{workspace_id}/context-graph/report     — GRAPH_REPORT.md
+    GET   /workspaces/{workspace_id}/context-graph/html       — graph.html
+    POST  /workspaces/{workspace_id}/context-graph/query      — pergunta livre
+    POST  /workspaces/{workspace_id}/context-graph/explain    — explica nó
+    POST  /workspaces/{workspace_id}/context-graph/path       — caminho entre nós
+    POST  /workspaces/{workspace_id}/context-graph/affected   — impacto de mudança
 """
 
 from __future__ import annotations
 
 import json
 import logging
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +31,7 @@ router = APIRouter(
 )
 
 _GRAPH_DIR = ".vectora/graph"
-_active_builds: dict[str, str] = {}  # workspace_id → "running" | "done" | "error:<msg>"
+_STATUS_FILE = "build_status.json"
 
 
 # ---------------------------------------------------------------------------
@@ -68,6 +70,11 @@ class ExplainRequest(BaseModel):
 class PathRequest(BaseModel):
     source: str
     target: str
+
+
+class AffectedRequest(BaseModel):
+    node_query: str
+    depth: int = 2
 
 
 class GraphQueryResponse(BaseModel):
@@ -119,8 +126,42 @@ def _require_graph_json(workspace_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="Grafo corrompido") from exc
 
 
+def _write_status(graph_dir: Path, status: str, **extra: Any) -> None:
+    payload: dict[str, Any] = {
+        "status": status,
+        "built_at": datetime.now(UTC).isoformat(),
+        **extra,
+    }
+    try:
+        (graph_dir / _STATUS_FILE).write_text(
+            json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+        )
+    except Exception:
+        logger.exception("context-graph: falha ao escrever build_status.json")
+
+
+def _read_status_file(graph_dir: Path) -> StatusResponse | None:
+    status_file = graph_dir / _STATUS_FILE
+    if not status_file.exists():
+        return None
+    try:
+        data = json.loads(status_file.read_text(encoding="utf-8"))
+        return StatusResponse(
+            status=data.get("status", "unknown"),
+            node_count=data.get("node_count"),
+            edge_count=data.get("edge_count"),
+            error=data.get("error"),
+        )
+    except Exception:
+        return None
+
+
 async def _run_build(workspace_id: str, req: BuildRequest) -> None:
-    _active_builds[workspace_id] = "running"
+    d = _graph_dir(workspace_id)
+    if d is None:
+        return
+    d.mkdir(parents=True, exist_ok=True)
+    _write_status(d, "running")
     try:
         from backend.services.context_graph.pipeline import build_workspace_graph
 
@@ -131,17 +172,20 @@ async def _run_build(workspace_id: str, req: BuildRequest) -> None:
             update=req.update,
         )
         if result.error:
-            _active_builds[workspace_id] = f"error:{result.error}"
+            _write_status(d, "error", error=result.error)
         else:
-            _active_builds[workspace_id] = (
-                f"done:{result.node_count}:{result.edge_count}"
+            _write_status(
+                d,
+                "done",
+                node_count=result.node_count,
+                edge_count=result.edge_count,
             )
     except Exception:
         logger.exception(
             "context-graph: falha no build em background",
             extra={"workspace_id": workspace_id},
         )
-        _active_builds[workspace_id] = "error:Falha interna no pipeline"
+        _write_status(d, "error", error="Falha interna no pipeline")
 
 
 # ---------------------------------------------------------------------------
@@ -157,19 +201,27 @@ async def post_build(
     background_tasks: BackgroundTasks,
 ) -> BuildResponse:
     _user_id(request)
-    _require_graph_dir(workspace_id)
+    d = _require_graph_dir(workspace_id)
 
-    if _active_builds.get(workspace_id) == "running":
+    status_resp = _read_status_file(d)
+    if status_resp and status_resp.status == "running":
         return BuildResponse(status="running", message="Build já em andamento")
 
     background_tasks.add_task(_run_build, workspace_id, body)
     return BuildResponse(status="queued", message="Build enfileirado")
 
 
-def _status_from_disk(workspace_id: str) -> StatusResponse:
+@router.get("/status", response_model=StatusResponse)
+async def get_status(request: Request, workspace_id: str) -> StatusResponse:
+    _user_id(request)
     d = _graph_dir(workspace_id)
     if d is None:
         raise HTTPException(status_code=404, detail="Workspace não encontrado")
+
+    from_file = _read_status_file(d)
+    if from_file is not None:
+        return from_file
+
     graph_file = d / "graph.json"
     if not graph_file.exists():
         return StatusResponse(status="not_built")
@@ -182,27 +234,6 @@ def _status_from_disk(workspace_id: str) -> StatusResponse:
         )
     except Exception:
         return StatusResponse(status="error", error="graph.json ilegível")
-
-
-@router.get("/status", response_model=StatusResponse)
-async def get_status(request: Request, workspace_id: str) -> StatusResponse:
-    _user_id(request)
-    raw = _active_builds.get(workspace_id)
-
-    if raw is None:
-        return _status_from_disk(workspace_id)
-    if raw == "running":
-        return StatusResponse(status="running")
-    if raw.startswith("error:"):
-        return StatusResponse(status="error", error=raw[6:])
-    if raw.startswith("done:"):
-        parts = raw[5:].split(":")
-        return StatusResponse(
-            status="done",
-            node_count=int(parts[0]) if parts else None,
-            edge_count=int(parts[1]) if len(parts) > 1 else None,
-        )
-    return StatusResponse(status="unknown")
 
 
 @router.get("", response_model=dict)
@@ -238,35 +269,25 @@ async def post_query(
     _user_id(request)
     data = _require_graph_json(workspace_id)
 
-    nodes: list[dict] = data.get("nodes", [])
-    edges: list[dict] = data.get("edges", [])
-    q_lower = body.question.lower()
+    from backend.services.context_graph.query import query_nodes
 
-    matched_nodes = [
-        n
-        for n in nodes
-        if q_lower in str(n.get("label", "")).lower()
-        or q_lower in str(n.get("id", "")).lower()
-    ][: body.top_k]
+    matched_nodes, neighborhood_edges = query_nodes(
+        data, body.question, top_k=body.top_k
+    )
     matched_ids = {n.get("id") for n in matched_nodes}
+    neighbor_ids = (
+        {e.get("source") for e in neighborhood_edges}
+        | {e.get("target") for e in neighborhood_edges}
+    ) - matched_ids
+    all_nodes: list[dict] = data.get("nodes", [])
+    neighbor_nodes = [n for n in all_nodes if n.get("id") in neighbor_ids]
 
-    neighborhood_edges = [
-        e
-        for e in edges
-        if e.get("source") in matched_ids or e.get("target") in matched_ids
-    ]
-    neighbor_ids = {e.get("source") for e in neighborhood_edges} | {
-        e.get("target") for e in neighborhood_edges
-    }
-    neighbor_nodes = [
-        n
-        for n in nodes
-        if n.get("id") in neighbor_ids and n.get("id") not in matched_ids
-    ]
-
-    all_nodes = matched_nodes + neighbor_nodes
     summary = f"Encontrei {len(matched_nodes)} nó(s) correspondente(s) à consulta."
-    return GraphQueryResponse(answer=summary, nodes=all_nodes, edges=neighborhood_edges)
+    return GraphQueryResponse(
+        answer=summary,
+        nodes=matched_nodes + neighbor_nodes,
+        edges=neighborhood_edges,
+    )
 
 
 @router.post("/explain", response_model=GraphQueryResponse)
@@ -276,29 +297,20 @@ async def post_explain(
     _user_id(request)
     data = _require_graph_json(workspace_id)
 
-    nodes: list[dict] = data.get("nodes", [])
-    edges: list[dict] = data.get("edges", [])
+    from backend.services.context_graph.query import explain_node
 
-    target = next((n for n in nodes if n.get("id") == body.node_id), None)
+    target, neighbors, connected = explain_node(data, body.node_id, depth=body.depth)
     if target is None:
         raise HTTPException(
             status_code=404, detail=f"Nó '{body.node_id}' não encontrado"
         )
 
-    connected_edges = [
-        e
-        for e in edges
-        if e.get("source") == body.node_id or e.get("target") == body.node_id
-    ]
-    neighbor_ids = {e.get("source") for e in connected_edges} | {
-        e.get("target") for e in connected_edges
-    }
-    neighbor_ids.discard(body.node_id)
-    neighbor_nodes = [n for n in nodes if n.get("id") in neighbor_ids]
-
-    summary = f"Nó: {target.get('label', body.node_id)} | {len(connected_edges)} arestas | {len(neighbor_nodes)} vizinhos"
+    summary = (
+        f"Nó: {target.get('label', body.node_id)} | "
+        f"{len(connected)} arestas | {len(neighbors)} vizinhos"
+    )
     return GraphQueryResponse(
-        answer=summary, nodes=[target, *neighbor_nodes], edges=connected_edges
+        answer=summary, nodes=[target, *neighbors], edges=connected
     )
 
 
@@ -309,34 +321,27 @@ async def post_path(
     _user_id(request)
     data = _require_graph_json(workspace_id)
 
-    nodes: list[dict] = data.get("nodes", [])
-    edges: list[dict] = data.get("edges", [])
+    from backend.services.context_graph.query import path_between
 
-    try:
-        import networkx as nx
-
-        graph = nx.Graph()
-        for n in nodes:
-            graph.add_node(n.get("id"))
-        for e in edges:
-            graph.add_edge(
-                e.get("source"),
-                e.get("target"),
-                **{k: v for k, v in e.items() if k not in {"source", "target"}},
-            )
-
-        path_ids: list[str] = nx.shortest_path(graph, body.source, body.target)
-    except Exception as exc:
+    path_nodes, path_edges = path_between(data, body.source, body.target)
+    if not path_nodes:
         raise HTTPException(
-            status_code=404, detail=f"Caminho não encontrado: {exc}"
-        ) from exc
+            status_code=404,
+            detail=f"Caminho não encontrado entre '{body.source}' e '{body.target}'",
+        )
 
-    path_id_set = set(path_ids)
-    path_nodes = [n for n in nodes if n.get("id") in path_id_set]
-    path_edges = [
-        e
-        for e in edges
-        if e.get("source") in path_id_set and e.get("target") in path_id_set
-    ]
-    summary = f"Caminho de {body.source} → {body.target}: {len(path_ids)} nós"
+    summary = f"Caminho de {body.source} → {body.target}: {len(path_nodes)} nós"
     return GraphQueryResponse(answer=summary, nodes=path_nodes, edges=path_edges)
+
+
+@router.post("/affected", response_model=GraphQueryResponse)
+async def post_affected(
+    request: Request, workspace_id: str, body: AffectedRequest
+) -> GraphQueryResponse:
+    _user_id(request)
+    data = _require_graph_json(workspace_id)
+
+    from backend.services.context_graph.query import affected_summary
+
+    answer = affected_summary(data, body.node_query, depth=body.depth)
+    return GraphQueryResponse(answer=answer, nodes=[], edges=[])

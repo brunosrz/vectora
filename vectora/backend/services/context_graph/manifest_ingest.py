@@ -153,7 +153,7 @@ def _parse_pyproject(text: str) -> dict | None:
         import tomllib as _toml
     except ImportError:
         try:
-            import tomli as _toml  # type: ignore
+            import tomli as _toml
         except ImportError:
             return None
     data = _toml.loads(text)

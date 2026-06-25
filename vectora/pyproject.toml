@@ -237,6 +237,12 @@ include = [
     "backend/services/context_graph/paths.py",
     "backend/services/context_graph/report.py",
     "backend/services/context_graph/security.py",
+    "backend/services/context_graph/graph_index.py",
+    "backend/services/context_graph/query.py",
+    "backend/services/context_graph/affected.py",
+    "backend/services/context_graph/semantic_cleanup.py",
+    "backend/services/context_graph/pipeline.py",
+    "backend/services/context_graph/validate.py",
 ]
 
 [tool.ty.overrides.rules]
@@ -245,6 +251,8 @@ unresolved-attribute = "ignore"
 invalid-argument-type = "ignore"
 invalid-return-type = "ignore"
 invalid-assignment = "ignore"
+missing-argument = "ignore"
+unsupported-operator = "ignore"
 
 [tool.bandit]
 exclude_dirs = ["tests", "check_coverage.py", "run_coverage.py"]

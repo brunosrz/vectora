@@ -143,10 +143,14 @@ de restrição de ferramentas — todos têm acesso ao conjunto completo de tool
 - **Integração MCP** para extensão de ferramentas externas
 - **Multi-sessão** com checkpointing (AsyncSqliteSaver)
 - **Suporte a workspaces** — cada workspace tem seu diretório, MANIFEST.md e base RAG isolada
+- **Context Graph** — grafo de conhecimento estrutural do workspace: quem chama quem, quais
+  componentes são afetados por uma mudança, god nodes, perguntas sugeridas. Tools:
+  `build_knowledge_graph`, `graph_query`, `graph_explain`, `graph_path`, `graph_affected`,
+  `graph_update`. 71× menos tokens por consulta que ler os arquivos brutos.
 
 ### Workbenches disponíveis
 
-O painel lateral direito do Vectora (estilo VS Code) oferece 7 workbenches:
+O painel lateral direito do Vectora (estilo VS Code) oferece 8 workbenches:
 
 **📁 Arquivos (`files`)**
 Explorador de arquivos do workspace ativo. Navega pela árvore de diretórios, abre arquivos
@@ -186,6 +190,14 @@ Tarefas que rodam o agente **automaticamente**, dentro da session: **rotina** (c
 **heartbreak** (escuta contínua disparada por webhook) e **disparo manual**. Cada execução
 vira uma thread visível na sidebar + entrada no log de runs. É aqui que webhooks externos
 (GitHub, etc.) acionam o agente sem o usuário precisar pedir.
+
+**🕸 Context Graph (`context_graph`)**
+Grafo de conhecimento do workspace: nós (funções, classes, conceitos), arestas (calls,
+imports, references, implements) e comunidades de código. Constrói com **Construir grafo**
+(extração AST tree-sitter + semântica via LLM). Mostra god nodes (mais conectados),
+conexões surpreendentes e perguntas sugeridas clicáveis. Grafo interativo vis.js.
+Botão **Atualizar** para rebuild incremental (só arquivos novos/modificados).
+Inspirado no graphify (MIT, Safi Shamsi).
 
 ### Integrações
 

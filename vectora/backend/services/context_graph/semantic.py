@@ -290,6 +290,9 @@ async def _call_llm_async(
     parsed.setdefault("nodes", [])
     parsed.setdefault("edges", [])
     parsed.setdefault("hyperedges", [])
+
+    from .semantic_cleanup import sanitize_semantic_fragment
+    sanitize_semantic_fragment(parsed)
     parsed["input_tokens"] = input_tokens
     parsed["output_tokens"] = output_tokens
     parsed["finish_reason"] = "stop"

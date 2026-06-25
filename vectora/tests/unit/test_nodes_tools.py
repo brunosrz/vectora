@@ -68,8 +68,9 @@ def test_search_memory_registered():
 def test_all_tools_count():
     # Guarda contra perda acidental de registro de ferramentas.
     # Atualize ao adicionar/remover tool em backend/nodes/tools.py.
-    # 39 base + 17 integrações (gdrive/gmail/slack/linear/jira/notion) + 4 context graph.
-    assert len(ALL_TOOLS) == 60
+    # 39 base + 17 integrações (gdrive/gmail/slack/linear/jira/notion) + 6 context graph
+    # (build_knowledge_graph, graph_query, graph_explain, graph_path, graph_affected, graph_update).
+    assert len(ALL_TOOLS) == 62
 
 
 def test_graph_tools_registered():

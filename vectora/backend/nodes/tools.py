@@ -16,9 +16,11 @@ from langgraph.prebuilt import ToolNode
 
 from backend.tools.context_graph import (
     build_knowledge_graph,
+    graph_affected,
     graph_explain,
     graph_path,
     graph_query,
+    graph_update,
 )
 from backend.tools.fs import (
     create_artifact,
@@ -113,6 +115,8 @@ GRAPH_TOOLS: list[BaseTool] = [
     graph_query,
     graph_explain,
     graph_path,
+    graph_affected,
+    graph_update,
 ]
 
 #: Ferramentas RAG de ingestão e gestão
@@ -213,6 +217,8 @@ for _t in [
     graph_query,
     graph_explain,
     graph_path,
+    graph_affected,
+    graph_update,
 ]:
     _all[_t.name] = _t
 
