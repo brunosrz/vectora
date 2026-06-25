@@ -8,13 +8,13 @@ por projeto, gated por path) e o **pre-commit** compartilhado na raiz.
 
 ## Estrutura
 
-| Pasta                                       | Projeto                                         | Stack                            | Deploy                               |
-| ------------------------------------------- | ----------------------------------------------- | -------------------------------- | ------------------------------------ |
-| [`vectora/`](vectora/README.md)             | App Vectora (assistente de IA self-hosted)      | Python (uv) + Vite + Electron    | Docker (GHCR) + instaladores nativos |
-| [`company/`](company/README.md)             | Site institucional                              | TanStack Start + Vite (pnpm)     | Vercel → **vectora.company**         |
-| [`docs/`](docs/README.md)                   | Documentação                                    | Docusaurus (pnpm)                | Vercel → **docs.vectora.company**    |
-| [`update-server/`](update-server/README.md) | Servidor de updates                             | Hono + Cloudflare Workers (pnpm) | Cloudflare (wrangler)                |
-| `documents/`                                | Notas de design/planejamento (markdown interno) | —                                | não publicado                        |
+| Pasta                                       | Projeto                                         | Stack                            | Deploy                                             |
+| ------------------------------------------- | ----------------------------------------------- | -------------------------------- | -------------------------------------------------- |
+| [`vectora/`](vectora/README.md)             | App Vectora (assistente de IA self-hosted)      | Python (uv) + Vite + Electron    | Docker (GHCR) + instaladores nativos               |
+| [`company/`](company/README.md)             | Site institucional                              | TanStack Start + Vite (pnpm)     | Vercel → **vectora.company**![alt text](image.png) |
+| [`docs/`](docs/README.md)                   | Documentação                                    | Docusaurus (pnpm)                | Vercel → **docs.vectora.company**                  |
+| [`update-server/`](update-server/README.md) | Servidor de updates                             | Hono + Cloudflare Workers (pnpm) | Cloudflare (wrangler)                              |
+| `documents/`                                | Notas de design/planejamento (markdown interno) | —                                | não publicado                                      |
 
 > O app em si (backend Python, frontend Vite, casca Electron) fica todo dentro
 > de `vectora/` — veja [vectora/README.md](vectora/README.md) para detalhes de

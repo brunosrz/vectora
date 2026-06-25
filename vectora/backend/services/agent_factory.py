@@ -460,33 +460,30 @@ def _message_text(content: Any) -> str:
 async def aget_thread_messages(thread_id: str) -> list[tuple[str, str]]:
     """Mensagens persistidas de uma thread como ``(role, text)``.
 
-    Usa um grafo mínimo com o schema DeepAgentState (sem LLM) para ler os
-    checkpoints via ``aget_state`` — mesma estrutura de canais que o agente
-    real escreve, sem precisar inicializar o LLM.
+    Usa o grafo deepagents compilado (schema idêntico ao que escreveu os
+    checkpoints) para ler estado via ``aget_state``. Um grafo mínimo NOOP
+    falha na desserialização porque não possui os canais internos do deepagents.
 
-    Filtra mensagens de tool e turnos AI sem texto (só tool-call) — devolve um
-    transcript humano/assistente limpo.
+    Filtra mensagens de tool e turnos AI sem texto — devolve transcript limpo.
     """
     await _ensure_infra()
     if _checkpointer is None:
         return []
 
-    from deepagents.graph import DeepAgentState
     from langchain_core.runnables import RunnableConfig
-    from langgraph.graph import END, START, StateGraph
 
-    def _noop(state: DeepAgentState) -> dict:
-        return {}
-
-    _state_cls: Any = DeepAgentState
-    g = StateGraph(_state_cls)
-    g.add_node("_noop", _noop)
-    g.add_edge(START, "_noop")
-    g.add_edge("_noop", END)
-    compiled = g.compile(checkpointer=_checkpointer)
-
+    graph = await get_user_agent()
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    state = await compiled.aget_state(config)
+    try:
+        state = await graph.aget_state(config)
+    except Exception:
+        logger.debug(
+            "aget_thread_messages: falha ao ler estado thread=%s",
+            thread_id,
+            exc_info=True,
+        )
+        return []
+
     if not state or not state.values:
         return []
 
