@@ -288,3 +288,236 @@ async def test_graph_update_calls_pipeline_with_update_true(tmp_path):
     mock_build.assert_called_once()
     assert mock_build.call_args.kwargs.get("update") is True
     assert "5" in result or "atualizado" in result.lower()
+
+
+# ---------------------------------------------------------------------------
+# graph_query — extras
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_graph_query_by_label(tmp_path):
+    from backend.tools.context_graph import graph_query
+
+    ws, _ = _make_ws(tmp_path)
+    with _patch_registry(ws):
+        result = await graph_query.ainvoke(
+            {"question": "AuthService"}, config=_config("ws1")
+        )
+    assert "AuthService" in result
+
+
+@pytest.mark.asyncio
+async def test_graph_query_top_k_limits(tmp_path):
+    from backend.tools.context_graph import graph_query
+
+    ws, _ = _make_ws(tmp_path)
+    with _patch_registry(ws):
+        result = await graph_query.ainvoke(
+            {"question": "a", "top_k": 1}, config=_config("ws1")
+        )
+    assert "Encontrei" in result
+
+
+@pytest.mark.asyncio
+async def test_graph_query_invalid_json(tmp_path):
+    from backend.tools.context_graph import graph_query
+
+    ws, graph_file = _make_ws(tmp_path)
+    graph_file.write_text("NOTJSON{", encoding="utf-8")
+    with _patch_registry(ws):
+        result = await graph_query.ainvoke({"question": "a"}, config=_config("ws1"))
+    assert "Falha" in result or "erro" in result.lower()
+
+
+# ---------------------------------------------------------------------------
+# graph_explain — extras
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_graph_explain_no_workspace():
+    from backend.tools.context_graph import graph_explain
+
+    with _patch_registry(None):
+        result = await graph_explain.ainvoke(
+            {"node_id": "x"}, config=cast("RunnableConfig", {"configurable": {}})
+        )
+    assert "Erro" in result or "workspace" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_graph_explain_by_label(tmp_path):
+    from backend.tools.context_graph import graph_explain
+
+    ws, _ = _make_ws(tmp_path)
+    with _patch_registry(ws):
+        result = await graph_explain.ainvoke(
+            {"node_id": "AuthService"}, config=_config("ws1")
+        )
+    assert "AuthService" in result
+
+
+# ---------------------------------------------------------------------------
+# graph_path — extras
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_graph_path_no_workspace():
+    from backend.tools.context_graph import graph_path
+
+    with _patch_registry(None):
+        result = await graph_path.ainvoke(
+            {"source": "a", "target": "b"},
+            config=cast("RunnableConfig", {"configurable": {}}),
+        )
+    assert "Erro" in result or "workspace" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_graph_path_source_nonexistent(tmp_path):
+    from backend.tools.context_graph import graph_path
+
+    ws, _ = _make_ws(tmp_path)
+    with _patch_registry(ws):
+        result = await graph_path.ainvoke(
+            {"source": "GHOST", "target": "node_token"}, config=_config("ws1")
+        )
+    assert "não encontrado" in result.lower()
+
+
+# ---------------------------------------------------------------------------
+# graph_affected — extras
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_graph_affected_no_workspace():
+    from backend.tools.context_graph import graph_affected
+
+    with _patch_registry(None):
+        result = await graph_affected.ainvoke(
+            {"node_query": "x"}, config=cast("RunnableConfig", {"configurable": {}})
+        )
+    assert "Erro" in result or "workspace" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_graph_affected_depth_param(tmp_path):
+    from backend.tools.context_graph import graph_affected
+
+    ws, _ = _make_ws(tmp_path)
+    with _patch_registry(ws):
+        result = await graph_affected.ainvoke(
+            {"node_query": "node_token", "depth": 1}, config=_config("ws1")
+        )
+    assert len(result) > 0
+
+
+# ---------------------------------------------------------------------------
+# graph_update / build — extras de erro
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_graph_update_no_workspace():
+    from backend.tools.context_graph import graph_update
+
+    with _patch_registry(None):
+        result = await graph_update.ainvoke(
+            {"model": ""}, config=cast("RunnableConfig", {"configurable": {}})
+        )
+    assert "Erro" in result or "workspace" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_graph_update_pipeline_error(tmp_path):
+    from backend.tools.context_graph import graph_update
+
+    ws, _ = _make_ws(tmp_path)
+    rm = MagicMock()
+    rm.error = "boom"
+    with (
+        _patch_registry(ws),
+        patch(
+            "backend.services.context_graph.pipeline.build_workspace_graph",
+            new_callable=AsyncMock,
+            return_value=rm,
+        ),
+    ):
+        result = await graph_update.ainvoke({"model": ""}, config=_config("ws1"))
+    assert "boom" in result or "erro" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_build_pipeline_error(tmp_path):
+    from backend.tools.context_graph import build_knowledge_graph
+
+    ws, _ = _make_ws(tmp_path)
+    rm = MagicMock()
+    rm.error = "fail-x"
+    with (
+        _patch_registry(ws),
+        patch(
+            "backend.services.context_graph.pipeline.build_workspace_graph",
+            new_callable=AsyncMock,
+            return_value=rm,
+        ),
+    ):
+        result = await build_knowledge_graph.ainvoke(
+            {"model": "", "mode": "semantic"}, config=_config("ws1")
+        )
+    assert "fail-x" in result or "erro" in result.lower()
+
+
+@pytest.mark.asyncio
+async def test_build_shows_god_nodes(tmp_path):
+    from backend.tools.context_graph import build_knowledge_graph
+
+    ws, _ = _make_ws(tmp_path)
+    rm = MagicMock()
+    rm.error = None
+    rm.node_count = 3
+    rm.edge_count = 2
+    rm.god_nodes = ["GodA", "GodB"]
+    rm.suggested_questions = []
+    rm.report_path = tmp_path / "r.md"
+    with (
+        _patch_registry(ws),
+        patch(
+            "backend.services.context_graph.pipeline.build_workspace_graph",
+            new_callable=AsyncMock,
+            return_value=rm,
+        ),
+    ):
+        result = await build_knowledge_graph.ainvoke(
+            {"model": "", "mode": "semantic"}, config=_config("ws1")
+        )
+    assert "GodA" in result
+
+
+@pytest.mark.asyncio
+async def test_build_ast_mode_passed_to_pipeline(tmp_path):
+    from backend.tools.context_graph import build_knowledge_graph
+
+    ws, _ = _make_ws(tmp_path)
+    rm = MagicMock()
+    rm.error = None
+    rm.node_count = 1
+    rm.edge_count = 0
+    rm.god_nodes = []
+    rm.suggested_questions = []
+    rm.report_path = tmp_path / "r.md"
+    with (
+        _patch_registry(ws),
+        patch(
+            "backend.services.context_graph.pipeline.build_workspace_graph",
+            new_callable=AsyncMock,
+            return_value=rm,
+        ) as mb,
+    ):
+        await build_knowledge_graph.ainvoke(
+            {"model": "", "mode": "ast"}, config=_config("ws1")
+        )
+    assert mb.call_args.kwargs.get("mode") == "ast"
