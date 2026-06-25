@@ -27,6 +27,22 @@ function job(jobId: string, over: Partial<RagJob> = {}): RagJob {
   };
 }
 
+function pollFetch(pollBody: object) {
+  return vi.fn(async (url: string) => {
+    if (String(url).includes("/rag/ingest")) {
+      return {
+        ok: true,
+        json: async () => ({
+          job_id: "jp",
+          total_chunks: 5,
+          status: "indexing",
+        }),
+      } as Response;
+    }
+    return { ok: true, json: async () => pollBody } as Response;
+  });
+}
+
 describe("rag-jobs-store", () => {
   it("dismiss remove o job da lista", () => {
     useRagJobsStore.setState({ jobs: { j1: job("j1") } });
@@ -168,27 +184,11 @@ describe("rag-jobs-store", () => {
     expect(useRagJobsStore.getState().jobs.jt.total).toBe(7);
   });
 
-  function _pollFetch(pollBody: object) {
-    return vi.fn(async (url: string) => {
-      if (String(url).includes("/rag/ingest")) {
-        return {
-          ok: true,
-          json: async () => ({
-            job_id: "jp",
-            total_chunks: 5,
-            status: "indexing",
-          }),
-        } as Response;
-      }
-      return { ok: true, json: async () => pollBody } as Response;
-    });
-  }
-
   it("poll atualiza processed/failed/status", async () => {
     vi.useFakeTimers();
     vi.stubGlobal(
       "fetch",
-      _pollFetch({ total: 5, processed: 2, failed: 1, status: "indexing" }),
+      pollFetch({ total: 5, processed: 2, failed: 1, status: "indexing" }),
     );
     await useRagJobsStore.getState().start("ws1", "/d", "code");
     await vi.advanceTimersByTimeAsync(1300);
@@ -201,7 +201,7 @@ describe("rag-jobs-store", () => {
 
   it("poll done para o timer", async () => {
     vi.useFakeTimers();
-    const fetchMock = _pollFetch({
+    const fetchMock = pollFetch({
       total: 5,
       processed: 5,
       failed: 0,
@@ -221,7 +221,7 @@ describe("rag-jobs-store", () => {
     vi.useFakeTimers();
     vi.stubGlobal(
       "fetch",
-      _pollFetch({
+      pollFetch({
         total: 5,
         processed: 3,
         failed: 0,
@@ -239,7 +239,7 @@ describe("rag-jobs-store", () => {
 
   it("poll failed para o timer", async () => {
     vi.useFakeTimers();
-    const fetchMock = _pollFetch({
+    const fetchMock = pollFetch({
       total: 5,
       processed: 1,
       failed: 4,
@@ -283,7 +283,7 @@ describe("rag-jobs-store", () => {
     vi.useFakeTimers();
     vi.stubGlobal(
       "fetch",
-      _pollFetch({ total: 5, processed: 5, failed: 0, status: "indexing" }),
+      pollFetch({ total: 5, processed: 5, failed: 0, status: "indexing" }),
     );
     await useRagJobsStore.getState().start("ws1", "/d", "code");
     useRagJobsStore.getState().dismiss("jp");

@@ -50,19 +50,30 @@ def _find_pnpm() -> str:
 PNPM = _find_pnpm()
 
 
-def _run(cmd: list[str], env: dict | None = None, cwd: str | None = None, log=None) -> None:
+def _run(
+    cmd: list[str],
+    env: dict | None = None,
+    cwd: str | None = None,
+    log=None,
+    discard_stderr: bool = False,
+) -> None:
     """Executa um comando, falha se o código de retorno for ≠ 0.
 
     Com ``log`` (file handle), espelha stdout+stderr para o terminal E para o
     arquivo (tee) — usado por `scons lint`/`scons tests` para gravar o log
     completo em `.scons-logs/` (gitignored). O pipe desliga cores ANSI, deixando
     o .txt limpo para colar/ler.
+
+    ``discard_stderr=True`` roteia stderr para DEVNULL — útil para ferramentas
+    que emitem avisos ruidosos em stderr mas reportam erros reais via código de
+    retorno (ex: bandit com comentários em língua não-inglesa).
     """
     merged = {**os.environ, **(env or {})}
     header = f"\n>> {' '.join(str(c) for c in cmd)}"
     print(header)
+    stderr_dest = subprocess.DEVNULL if discard_stderr else None
     if log is None:
-        result = subprocess.run(cmd, cwd=cwd or ROOT, env=merged)
+        result = subprocess.run(cmd, cwd=cwd or ROOT, env=merged, stderr=stderr_dest)
         rc = result.returncode
     else:
         merged["PYTHONIOENCODING"] = "utf-8"
@@ -73,7 +84,7 @@ def _run(cmd: list[str], env: dict | None = None, cwd: str | None = None, log=No
             cwd=cwd or ROOT,
             env=merged,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.DEVNULL if discard_stderr else subprocess.STDOUT,
             text=True,
             encoding="utf-8",
             errors="replace",
@@ -362,6 +373,7 @@ def _action_lint(target, source, env):
                 "-r", "backend",
             ],
             log=log,
+            discard_stderr=True,
         )
         # `typecheck` = i18n:compile (paraglide) + tsr generate (routeTree.gen.ts
         # gitignored, gerado pelo plugin) + tsc --noEmit. Ambos os geradores são
