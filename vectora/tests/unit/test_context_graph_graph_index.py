@@ -1,16 +1,21 @@
-"""Testes para backend/services/context_graph/graph_index.py."""
+"""Testes para backend/services/context_graph/graph_index.py (GraphRAG)."""
 
 from __future__ import annotations
 
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from backend.services.context_graph.graph_index import (
+    _node_text,
     index_graph_nodes,
     purge_graph_index,
     search_graph_nodes,
 )
+
+_GETDB = "backend.services.context_graph.graph_index._get_db"
+_EMBED = "backend.services.context_graph.graph_index._embed_texts"
 
 _GRAPH_DATA = {
     "nodes": [
@@ -37,6 +42,8 @@ _GRAPH_DATA = {
     "edges": [],
 }
 
+_VEC3 = [[0.1] * 10, [0.2] * 10, [0.3] * 10]
+
 
 def _mock_lancedb():
     """Mock do LanceDB para testes sem conexão real."""
@@ -50,43 +57,91 @@ def _mock_lancedb():
     return db
 
 
+def _df(rows: list[tuple[int, dict]]) -> MagicMock:
+    """Fake DataFrame com iterrows()."""
+    df = MagicMock()
+    df.iterrows.return_value = iter(rows)
+    return df
+
+
+def _search_table(db, df: MagicMock):
+    # vector_search().limit().to_pandas() é encadeamento SÍNCRONO terminando num
+    # await — table precisa ser MagicMock (não AsyncMock) com to_pandas async.
+    table = MagicMock()
+    table.vector_search.return_value.limit.return_value.to_pandas = AsyncMock(
+        return_value=df
+    )
+    db.open_table = AsyncMock(return_value=table)
+    db.table_names = AsyncMock(return_value=["context_graph_nodes"])
+    return table
+
+
+# ---------------------------------------------------------------------------
+# _node_text — texto canônico de um nó
+# ---------------------------------------------------------------------------
+
+
+class TestNodeText:
+    def test_label_only(self) -> None:
+        assert _node_text({"id": "x", "label": "Foo"}) == "Foo"
+
+    def test_fallback_to_id_when_no_label(self) -> None:
+        assert _node_text({"id": "x.y"}) == "x.y"
+
+    def test_includes_file_type(self) -> None:
+        assert "— code" in _node_text({"label": "Foo", "file_type": "code"})
+
+    def test_includes_source_file(self) -> None:
+        assert "em a.py" in _node_text({"label": "Foo", "source_file": "a.py"})
+
+    def test_includes_docstring(self) -> None:
+        assert ". Does X" in _node_text({"label": "Foo", "docstring": "Does X"})
+
+    def test_docstring_truncated_to_200(self) -> None:
+        out = _node_text({"label": "F", "docstring": "x" * 500})
+        assert out.count("x") == 200
+
+    def test_full_node_has_all_parts(self) -> None:
+        out = _node_text(
+            {
+                "label": "Auth",
+                "file_type": "class",
+                "source_file": "a.py",
+                "docstring": "D",
+            }
+        )
+        assert "Auth" in out and "class" in out and "a.py" in out and "D" in out
+
+    def test_non_string_docstring_coerced(self) -> None:
+        assert "123" in _node_text({"label": "F", "docstring": 123})
+
+    def test_empty_node_is_empty_string(self) -> None:
+        assert _node_text({}) == ""
+
+
+# ---------------------------------------------------------------------------
+# index_graph_nodes
+# ---------------------------------------------------------------------------
+
+
 class TestIndexGraphNodes:
     @pytest.mark.asyncio
     async def test_empty_graph_indexes_zero(self) -> None:
         db = _mock_lancedb()
         with (
-            patch(
-                "backend.services.context_graph.graph_index._get_db",
-                new_callable=AsyncMock,
-                return_value=db,
-            ),
-            patch(
-                "backend.services.context_graph.graph_index._embed_texts",
-                new_callable=AsyncMock,
-                return_value=[],
-            ),
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[]),
         ):
-            count = await index_graph_nodes("ws-1", {"nodes": [], "edges": []})
-        assert count == 0
+            assert await index_graph_nodes("ws-1", {"nodes": [], "edges": []}) == 0
 
     @pytest.mark.asyncio
     async def test_three_nodes_indexes_three(self) -> None:
         db = _mock_lancedb()
-        fake_vectors = [[0.1] * 10, [0.2] * 10, [0.3] * 10]
         with (
-            patch(
-                "backend.services.context_graph.graph_index._get_db",
-                new_callable=AsyncMock,
-                return_value=db,
-            ),
-            patch(
-                "backend.services.context_graph.graph_index._embed_texts",
-                new_callable=AsyncMock,
-                return_value=fake_vectors,
-            ),
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=_VEC3),
         ):
-            count = await index_graph_nodes("ws-1", _GRAPH_DATA)
-        assert count == 3
+            assert await index_graph_nodes("ws-1", _GRAPH_DATA) == 3
 
     @pytest.mark.asyncio
     async def test_node_without_docstring_does_not_break(self) -> None:
@@ -95,93 +150,289 @@ class TestIndexGraphNodes:
             "nodes": [{"id": "n.x", "label": "X", "file_type": "code"}],
             "edges": [],
         }
-        fake_vectors = [[0.5] * 10]
         with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.5] * 10]),
+        ):
+            assert await index_graph_nodes("ws-1", data) == 1
+
+    @pytest.mark.asyncio
+    async def test_embeddings_unavailable_returns_zero(self) -> None:
+        db = _mock_lancedb()
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[]),
+        ):
+            assert await index_graph_nodes("ws-1", _GRAPH_DATA) == 0
+
+    @pytest.mark.asyncio
+    async def test_vector_count_mismatch_returns_zero(self) -> None:
+        db = _mock_lancedb()
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10]),
+        ):
+            assert await index_graph_nodes("ws-1", _GRAPH_DATA) == 0
+
+    @pytest.mark.asyncio
+    async def test_nodes_without_id_are_filtered(self) -> None:
+        db = _mock_lancedb()
+        data = {
+            "nodes": [{"id": "n.ok", "label": "Ok"}, {"label": "NoId"}],
+            "edges": [],
+        }
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
             patch(
-                "backend.services.context_graph.graph_index._get_db",
-                new_callable=AsyncMock,
-                return_value=db,
-            ),
-            patch(
-                "backend.services.context_graph.graph_index._embed_texts",
-                new_callable=AsyncMock,
-                return_value=fake_vectors,
+                _EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10, [0.2] * 10]
             ),
         ):
-            count = await index_graph_nodes("ws-1", data)
-        assert count == 1
+            assert await index_graph_nodes("ws-1", data) == 1
+
+    @pytest.mark.asyncio
+    async def test_all_nodes_without_id_returns_zero(self) -> None:
+        db = _mock_lancedb()
+        data = {"nodes": [{"label": "A"}, {"label": "B"}], "edges": []}
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(
+                _EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10, [0.2] * 10]
+            ),
+        ):
+            assert await index_graph_nodes("ws-1", data) == 0
+
+    @pytest.mark.asyncio
+    async def test_creates_table_when_absent(self) -> None:
+        db = _mock_lancedb()
+        db.table_names = AsyncMock(return_value=[])
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=_VEC3),
+        ):
+            await index_graph_nodes("ws-1", _GRAPH_DATA)
+        db.create_table.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_adds_to_existing_table(self) -> None:
+        db = _mock_lancedb()
+        table = AsyncMock()
+        db.table_names = AsyncMock(return_value=["context_graph_nodes"])
+        db.open_table = AsyncMock(return_value=table)
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=_VEC3),
+        ):
+            await index_graph_nodes("ws-1", _GRAPH_DATA)
+        table.add.assert_called_once()
+        db.create_table.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_db_exception_returns_zero(self) -> None:
+        with (
+            patch(_GETDB, side_effect=Exception("boom")),
+            patch(_EMBED, new_callable=AsyncMock, return_value=_VEC3),
+        ):
+            assert await index_graph_nodes("ws-1", _GRAPH_DATA) == 0
+
+    @pytest.mark.asyncio
+    async def test_custom_collection_used(self) -> None:
+        db = _mock_lancedb()
+        db.table_names = AsyncMock(return_value=[])
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=_VEC3),
+        ):
+            await index_graph_nodes("ws-1", _GRAPH_DATA, collection="custom_col")
+        assert db.create_table.call_args.args[0] == "custom_col"
+
+    @pytest.mark.asyncio
+    async def test_metadata_contains_workspace_and_source(self) -> None:
+        db = _mock_lancedb()
+        db.table_names = AsyncMock(return_value=[])
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=_VEC3),
+        ):
+            await index_graph_nodes("ws-9", _GRAPH_DATA)
+        rows = db.create_table.call_args.kwargs["data"]
+        meta = json.loads(rows[0]["metadata"])
+        assert meta["workspace_id"] == "ws-9"
+        assert meta["source_file"] == "auth.py"
+        assert meta["file_type"] == "code"
+
+
+# ---------------------------------------------------------------------------
+# search_graph_nodes
+# ---------------------------------------------------------------------------
 
 
 class TestSearchGraphNodes:
     @pytest.mark.asyncio
     async def test_returns_node_ids_from_search(self) -> None:
         db = _mock_lancedb()
-        table = db.open_table.return_value
-        mock_df = MagicMock()
-        mock_df.iterrows.return_value = iter(
-            [
-                (
-                    0,
-                    {
-                        "id": "n.auth",
-                        "metadata": '{"node_id": "n.auth", "workspace_id": "ws-1"}',
-                    },
-                ),
-            ]
+        _search_table(
+            db,
+            _df(
+                [
+                    (
+                        0,
+                        {
+                            "id": "n.auth",
+                            "metadata": '{"node_id":"n.auth","workspace_id":"ws-1"}',
+                        },
+                    )
+                ]
+            ),
         )
-        table.vector_search.return_value.limit.return_value.to_pandas = AsyncMock(
-            return_value=mock_df
-        )
-        db.table_names = AsyncMock(return_value=["context_graph_nodes"])
-
         with (
-            patch(
-                "backend.services.context_graph.graph_index._get_db",
-                new_callable=AsyncMock,
-                return_value=db,
-            ),
-            patch(
-                "backend.services.context_graph.graph_index._embed_texts",
-                new_callable=AsyncMock,
-                return_value=[[0.1] * 10],
-            ),
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10]),
         ):
-            node_ids = await search_graph_nodes("authentication", "ws-1", top_k=5)
-        assert isinstance(node_ids, list)
+            ids = await search_graph_nodes("authentication", "ws-1", top_k=5)
+        assert ids == ["n.auth"]
+
+    @pytest.mark.asyncio
+    async def test_embeddings_empty_returns_empty(self) -> None:
+        with patch(_EMBED, new_callable=AsyncMock, return_value=[]):
+            assert await search_graph_nodes("q", "ws-1") == []
+
+    @pytest.mark.asyncio
+    async def test_collection_absent_returns_empty(self) -> None:
+        db = _mock_lancedb()
+        db.table_names = AsyncMock(return_value=[])
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10]),
+        ):
+            assert await search_graph_nodes("q", "ws-1") == []
+
+    @pytest.mark.asyncio
+    async def test_filters_by_workspace_id(self) -> None:
+        db = _mock_lancedb()
+        _search_table(
+            db,
+            _df(
+                [
+                    (
+                        0,
+                        {
+                            "id": "n.a",
+                            "metadata": '{"node_id":"n.a","workspace_id":"ws-1"}',
+                        },
+                    ),
+                    (
+                        1,
+                        {
+                            "id": "n.b",
+                            "metadata": '{"node_id":"n.b","workspace_id":"OTHER"}',
+                        },
+                    ),
+                ]
+            ),
+        )
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10]),
+        ):
+            ids = await search_graph_nodes("q", "ws-1", top_k=10)
+        assert ids == ["n.a"]
+
+    @pytest.mark.asyncio
+    async def test_respects_top_k(self) -> None:
+        db = _mock_lancedb()
+        rows = [
+            (
+                i,
+                {
+                    "id": f"n.{i}",
+                    "metadata": f'{{"node_id":"n.{i}","workspace_id":"ws-1"}}',
+                },
+            )
+            for i in range(10)
+        ]
+        _search_table(db, _df(rows))
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10]),
+        ):
+            ids = await search_graph_nodes("q", "ws-1", top_k=3)
+        assert len(ids) == 3
+
+    @pytest.mark.asyncio
+    async def test_malformed_metadata_skipped(self) -> None:
+        db = _mock_lancedb()
+        _search_table(db, _df([(0, {"id": "n.a", "metadata": "NOTJSON{"})]))
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10]),
+        ):
+            assert await search_graph_nodes("q", "ws-1") == []
+
+    @pytest.mark.asyncio
+    async def test_node_id_falls_back_to_row_id(self) -> None:
+        db = _mock_lancedb()
+        _search_table(
+            db, _df([(0, {"id": "row-id", "metadata": '{"workspace_id":"ws-1"}'})])
+        )
+        with (
+            patch(_GETDB, new_callable=AsyncMock, return_value=db),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10]),
+        ):
+            ids = await search_graph_nodes("q", "ws-1")
+        assert ids == ["row-id"]
 
     @pytest.mark.asyncio
     async def test_lancedb_unavailable_returns_empty(self) -> None:
-        with patch(
-            "backend.services.context_graph.graph_index._get_db",
-            side_effect=Exception("LanceDB not available"),
+        with (
+            patch(_GETDB, side_effect=Exception("LanceDB not available")),
+            patch(_EMBED, new_callable=AsyncMock, return_value=[[0.1] * 10]),
         ):
-            node_ids = await search_graph_nodes("anything", "ws-1")
-        assert node_ids == []
+            assert await search_graph_nodes("anything", "ws-1") == []
+
+
+# ---------------------------------------------------------------------------
+# purge_graph_index
+# ---------------------------------------------------------------------------
 
 
 class TestPurgeGraphIndex:
     @pytest.mark.asyncio
-    async def test_purge_without_nodes_does_not_break(self) -> None:
+    async def test_purge_without_table_does_not_break(self) -> None:
         db = _mock_lancedb()
         db.table_names = AsyncMock(return_value=[])
-        with patch(
-            "backend.services.context_graph.graph_index._get_db",
-            new_callable=AsyncMock,
-            return_value=db,
-        ):
+        with patch(_GETDB, new_callable=AsyncMock, return_value=db):
             await purge_graph_index("ws-1")
+        db.open_table.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_purge_calls_delete_on_existing_table(self) -> None:
         db = _mock_lancedb()
         table = AsyncMock()
-        table.delete = AsyncMock()
         db.table_names = AsyncMock(return_value=["context_graph_nodes"])
         db.open_table = AsyncMock(return_value=table)
-        with patch(
-            "backend.services.context_graph.graph_index._get_db",
-            new_callable=AsyncMock,
-            return_value=db,
-        ):
+        with patch(_GETDB, new_callable=AsyncMock, return_value=db):
             await purge_graph_index("ws-1")
         table.delete.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_purge_delete_filter_contains_workspace(self) -> None:
+        db = _mock_lancedb()
+        table = AsyncMock()
+        db.table_names = AsyncMock(return_value=["context_graph_nodes"])
+        db.open_table = AsyncMock(return_value=table)
+        with patch(_GETDB, new_callable=AsyncMock, return_value=db):
+            await purge_graph_index("ws-xyz")
+        assert "ws-xyz" in table.delete.call_args.args[0]
+
+    @pytest.mark.asyncio
+    async def test_purge_exception_does_not_raise(self) -> None:
+        with patch(_GETDB, side_effect=Exception("boom")):
+            await purge_graph_index("ws-1")
+
+    @pytest.mark.asyncio
+    async def test_purge_custom_collection_absent_is_noop(self) -> None:
+        db = _mock_lancedb()
+        db.table_names = AsyncMock(return_value=["context_graph_nodes"])
+        with patch(_GETDB, new_callable=AsyncMock, return_value=db):
+            await purge_graph_index("ws-1", collection="other")
+        db.open_table.assert_not_called()
