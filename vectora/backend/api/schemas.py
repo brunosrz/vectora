@@ -252,10 +252,12 @@ class ToolActivityEvent(BaseModel):
     Emitido em ``on_tool_start`` (``elapsed_ms=None``) e em ``on_tool_end``
     (``elapsed_ms`` preenchido com a duração em ms). O frontend exibe a
     ferramenta ativa enquanto ``elapsed_ms`` é ``None``; ao receber o evento
-    de fim, atualiza a duração e encerra o indicador.
+    de fim, atualiza a duração e encerra o indicador. ``tool_call_id`` permite
+    ao frontend enriquecer o ``ToolCall`` correspondente com o elapsed.
     """
 
     tool_name: str
+    tool_call_id: str = ""
     args_preview: str = ""
     elapsed_ms: int | None = None
 

@@ -371,6 +371,15 @@ const RENDERERS: Record<RenderHint, RendererFn> = {
 };
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+function formatElapsed(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+// ============================================================================
 // Componente principal
 // ============================================================================
 
@@ -402,6 +411,14 @@ export const ToolCallRenderer = memo(function ToolCallRenderer({
           <span className="ml-auto flex items-center gap-1 text-[10px] text-primary/70 font-medium">
             <Loader2 className="w-2.5 h-2.5 animate-spin" />
             executando…
+          </span>
+        )}
+        {tool.elapsedMs !== undefined && (
+          <span
+            data-testid="tool-elapsed"
+            className="ml-auto text-[10px] text-muted-foreground tabular-nums"
+          >
+            {formatElapsed(tool.elapsedMs)}
           </span>
         )}
       </div>

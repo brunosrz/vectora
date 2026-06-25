@@ -22,6 +22,9 @@ export interface ToolCall {
   category?: ToolCategory;
   destructive?: boolean;
   icon?: string;
+  /** Duração em ms — preenchido pelo tool_activity(end) SSE (FASE 3.3) */
+  elapsedMs?: number;
+  isError?: boolean;
 }
 
 /**

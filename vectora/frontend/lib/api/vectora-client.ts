@@ -128,6 +128,7 @@ export type StreamEvent =
   | {
       type: "tool_activity";
       tool_name: string;
+      tool_call_id: string;
       args_preview: string;
       elapsed_ms: number | null;
     };

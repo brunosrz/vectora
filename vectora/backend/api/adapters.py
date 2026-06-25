@@ -417,7 +417,10 @@ def adapt_stream(
                     tool_args_previews[run_id] = preview
                     yield encode_event(
                         ToolActivityEvent(
-                            tool_name=name, args_preview=preview, elapsed_ms=None
+                            tool_name=name,
+                            tool_call_id=run_id,
+                            args_preview=preview,
+                            elapsed_ms=None,
                         )
                     )
 
@@ -464,7 +467,10 @@ def adapt_stream(
                     preview = tool_args_previews.pop(run_id, "")
                     yield encode_event(
                         ToolActivityEvent(
-                            tool_name=name, args_preview=preview, elapsed_ms=elapsed
+                            tool_name=name,
+                            tool_call_id=run_id,
+                            args_preview=preview,
+                            elapsed_ms=elapsed,
                         )
                     )
                     meta = _get_tool_meta(name)

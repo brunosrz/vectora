@@ -1284,15 +1284,26 @@ export const MessageItem = memo(
                 {showToolCalls &&
                   message.toolCalls &&
                   message.toolCalls.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {message.toolCalls.map((tool) => (
-                        <ToolCallRenderer
-                          key={tool.id}
-                          tool={tool}
-                          isStreaming={message.isThinking}
-                        />
-                      ))}
-                    </div>
+                    <details className="mt-3 group" open={!!message.isThinking}>
+                      <summary className="cursor-pointer list-none flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors select-none">
+                        <span className="group-open:hidden">▶</span>
+                        <span className="hidden group-open:inline">▾</span>
+                        <span>
+                          {message.toolCalls.length === 1
+                            ? "1 ação"
+                            : `${message.toolCalls.length} ações`}
+                        </span>
+                      </summary>
+                      <div className="mt-2 space-y-2">
+                        {message.toolCalls.map((tool) => (
+                          <ToolCallRenderer
+                            key={tool.id}
+                            tool={tool}
+                            isStreaming={message.isThinking}
+                          />
+                        ))}
+                      </div>
+                    </details>
                   )}
 
                 {message.isThinking && (

@@ -714,15 +714,21 @@ async function handleEvent(
           })),
         );
       } else {
-        // Tool terminou: registrar elapsed e limpar após breve delay
+        const elapsedMs = event.elapsed_ms;
+        const tcId = event.tool_call_id;
+        // Tool terminou: enriquecer ToolCall com elapsed + atualizar status line
         setMessages((prev) =>
           updateMessageInList(prev, assistantMessageId, (m) => ({
             ...m,
             activeTool: {
               name: event.tool_name,
               argsPreview: event.args_preview,
-              elapsedMs: event.elapsed_ms ?? undefined,
+              elapsedMs,
             },
+            // Enriquece o ToolCall correspondente com o elapsed_ms
+            toolCalls: (m.toolCalls ?? []).map((tc) =>
+              tc.id === tcId ? { ...tc, elapsedMs } : tc,
+            ),
           })),
         );
         // Limpa o indicador após 800ms para o usuário ver o tempo
