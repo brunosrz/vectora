@@ -35,6 +35,8 @@ vi.mock("@/lib/stores/workspaces-store", () => ({
 }));
 
 const mockBuild = vi.fn();
+const mockUpdate = vi.fn();
+const mockQueryAffected = vi.fn(() => Promise.resolve(""));
 const mockGetHtmlUrl = vi.fn(() => "/workspaces/ws1/context-graph/html");
 const mockFetchStatus = vi.fn();
 const mockUseContextGraph = vi.fn();
@@ -57,6 +59,8 @@ function setup(
     report: null,
     loading: false,
     build: mockBuild,
+    update: mockUpdate,
+    queryAffected: mockQueryAffected,
     getHtmlUrl: mockGetHtmlUrl,
     fetchStatus: mockFetchStatus,
     ...overrides,
@@ -240,6 +244,107 @@ describe("ContextGraphTab", () => {
         fireEvent.click(screen.getByText("Ocultar"));
       });
       expect(document.querySelector("pre")).toBeNull();
+    });
+  });
+
+  describe("Atualizar e afetados (CG-9)", () => {
+    it("estado queued exibe graph_building", () => {
+      setup({ status: { status: "queued" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getAllByText("graph_building").length).toBeGreaterThan(0);
+    });
+
+    it("done exibe botão graph_update_button", () => {
+      setup({ status: { status: "done" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getByText("graph_update_button")).toBeTruthy();
+    });
+
+    it("not_built não exibe botão Atualizar", () => {
+      setup();
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.queryByText("graph_update_button")).toBeNull();
+    });
+
+    it("running não exibe botão Atualizar", () => {
+      setup({ status: { status: "running" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.queryByText("graph_update_button")).toBeNull();
+    });
+
+    it("clicar em Atualizar chama update()", async () => {
+      setup({ status: { status: "done" } });
+      render(<ContextGraphTab threadId="t1" />);
+      await act(async () => {
+        fireEvent.click(screen.getByText("graph_update_button"));
+      });
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it("botão ↯ do god node chama queryAffected com o nó", async () => {
+      setup({
+        status: { status: "done" },
+        report: "**God nodes**\n- AuthService\n",
+      });
+      render(<ContextGraphTab threadId="t1" />);
+      await act(async () => {
+        fireEvent.click(screen.getByText("↯"));
+      });
+      expect(mockQueryAffected).toHaveBeenCalledWith("AuthService");
+    });
+
+    it("queryAffected com texto envia para o chat", async () => {
+      mockQueryAffected.mockResolvedValueOnce("impacto: A, B");
+      const onSendPrompt = vi.fn();
+      setup({
+        status: { status: "done" },
+        report: "**God nodes**\n- AuthService\n",
+      });
+      render(<ContextGraphTab threadId="t1" onSendPrompt={onSendPrompt} />);
+      await act(async () => {
+        fireEvent.click(screen.getByText("↯"));
+      });
+      expect(onSendPrompt).toHaveBeenCalledWith("impacto: A, B");
+    });
+  });
+
+  describe("done — bordas (CG-9)", () => {
+    it("node_count null não exibe contagem de nós", () => {
+      setup({ status: { status: "done", node_count: null, edge_count: null } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.queryByText(/nós/)).toBeNull();
+    });
+
+    it("done sem report não renderiza god nodes", () => {
+      setup({ status: { status: "done" }, report: null });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.queryByText("graph_god_nodes_title")).toBeNull();
+    });
+
+    it("god nodes limitados a 8", () => {
+      const lines = Array.from({ length: 12 }, (_, i) => `- God${i}`).join(
+        "\n",
+      );
+      setup({
+        status: { status: "done" },
+        report: `**God nodes**\n${lines}\n`,
+      });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getAllByText(/^God\d+$/).length).toBeLessThanOrEqual(8);
+    });
+
+    it("perguntas limitadas a 5", () => {
+      const qs = Array.from({ length: 8 }, (_, i) => `- Pergunta ${i}?`).join(
+        "\n",
+      );
+      setup({
+        status: { status: "done" },
+        report: `**Perguntas sugeridas**\n${qs}\n`,
+      });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getAllByText(/^Pergunta \d\?$/).length).toBeLessThanOrEqual(
+        5,
+      );
     });
   });
 });
