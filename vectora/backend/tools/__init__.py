@@ -20,6 +20,7 @@ from langchain.tools import BaseTool
 
 from backend.settings import settings
 from backend.tools.fs import file_edit, file_read, file_write, grep, list_dir, terminal
+from backend.tools.git import git_stage, git_unstage
 from backend.tools.mcp import call_mcp_tool
 from backend.tools.memory import delete_memory, get_memory, save_memory
 from backend.tools.native import (
@@ -59,6 +60,9 @@ def _build_tools_list() -> list[BaseTool]:
 
     # Filesystem + Terminal
     tools.extend([file_read, file_edit, file_write, grep, list_dir, terminal])
+
+    # Git stage/unstage (operações de index)
+    tools.extend([git_stage, git_unstage])
 
     # Native utilities
     tools.extend(
@@ -106,6 +110,8 @@ __all__ = [
     "file_write",
     "get_memory",
     "get_tools",
+    "git_stage",
+    "git_unstage",
     "grep",
     "hash_text",
     "http_request",

@@ -149,6 +149,7 @@ def file_read(
         "category": "filesystem",
         "destructive": True,
         "icon": "file-edit",
+        "invalidates": ["files", "diff"],
     }
 )
 def file_edit(
@@ -219,6 +220,7 @@ def file_edit(
         "category": "filesystem",
         "destructive": True,
         "icon": "file-plus",
+        "invalidates": ["files", "diff"],
     }
 )
 def file_write(
@@ -402,6 +404,7 @@ def list_dir(
         "category": "filesystem",
         "destructive": True,
         "icon": "terminal",
+        "invalidates": ["files", "diff"],
     }
 )
 async def terminal(

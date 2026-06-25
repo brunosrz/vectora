@@ -123,7 +123,8 @@ export type StreamEvent =
     }
   | { type: "error"; message: string; code?: string }
   | { type: "done"; thread_id: string; run_id?: string }
-  | { type: "message_break" };
+  | { type: "message_break" }
+  | { type: "workbench_invalidate"; tabs: string[]; tool_name?: string };
 
 export interface Thread {
   id: string;

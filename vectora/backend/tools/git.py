@@ -633,6 +633,7 @@ async def git_branch(
         "category": "git",
         "destructive": True,
         "icon": "git-branch",
+        "invalidates": ["files", "diff"],
     }
 )
 async def git_checkout(
@@ -662,6 +663,7 @@ async def git_checkout(
         "category": "git",
         "destructive": True,
         "icon": "git-commit",
+        "invalidates": ["diff"],
     }
 )
 async def git_commit(
@@ -727,6 +729,7 @@ async def git_push(
         "category": "git",
         "destructive": True,
         "icon": "download-cloud",
+        "invalidates": ["files", "diff"],
     }
 )
 async def git_pull(
@@ -754,6 +757,7 @@ async def git_pull(
         "category": "git",
         "destructive": False,
         "icon": "layers",
+        "invalidates": ["diff"],
     }
 )
 async def git_stash(
@@ -836,6 +840,64 @@ async def git_worktree(
     )
 
 
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": False,
+        "icon": "plus-circle",
+        "invalidates": ["diff"],
+    }
+)
+async def git_stage(
+    path: str = "",
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Stageia um arquivo específico (`git add <path>`).
+
+    Use antes de git_commit para preparar os arquivos desejados.
+
+    Args:
+        path: Caminho do arquivo a stagear (relativo à raiz do repositório).
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    if not path:
+        return json.dumps({"status": "error", "message": "path é obrigatório."})
+    return json.dumps(_git_stage_impl(repo, path=path))
+
+
+@tool(
+    extras={
+        "render_hint": "code_block",
+        "category": "git",
+        "destructive": False,
+        "icon": "minus-circle",
+        "invalidates": ["diff"],
+    }
+)
+async def git_unstage(
+    path: str = "",
+    workspace_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Remove um arquivo do stage (`git reset HEAD <path>`).
+
+    Args:
+        path: Caminho do arquivo a remover do stage.
+        workspace_id: ID do workspace.
+    """
+    repo, err = _open_repo(workspace_id, config)
+    if err:
+        return err
+    if not path:
+        return json.dumps({"status": "error", "message": "path é obrigatório."})
+    return json.dumps(_git_unstage_impl(repo, path=path))
+
+
 # Sincroniza .extras → .metadata para compatibilidade com testes e endpoint GetTools
 for _t in (
     git_status,
@@ -849,6 +911,8 @@ for _t in (
     git_stash,
     git_init,
     git_worktree,
+    git_stage,
+    git_unstage,
 ):
     if _t.extras:
         _t.metadata = _t.extras

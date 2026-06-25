@@ -704,6 +704,22 @@ async function handleEvent(
       break;
     }
 
+    case "workbench_invalidate": {
+      const ws = useWorkspacesStore.getState().getActive();
+      if (ws) {
+        const tabs = event.tabs as string[];
+        if (tabs.includes("files"))
+          useWorkbenchStore.getState().invalidateFiles(ws.id);
+        if (tabs.includes("diff"))
+          useWorkbenchStore.getState().invalidateDiff(ws.id);
+        if (tabs.includes("plan") && threadId)
+          useWorkbenchStore.getState().invalidatePlan(threadId);
+        if (tabs.includes("background") || tabs.includes("files"))
+          useWorkbenchStore.getState().markPending(ws.id);
+      }
+      break;
+    }
+
     default:
       break;
   }

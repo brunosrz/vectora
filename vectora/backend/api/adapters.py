@@ -28,6 +28,7 @@ from backend.api.schemas import (
     TokenEvent,
     ToolCallEvent,
     ToolResultEvent,
+    WorkbenchInvalidateEvent,
     encode_event,
 )
 
@@ -80,7 +81,7 @@ _DEFAULT_META = {
 
 
 def _get_tool_meta(tool_name: str) -> dict:
-    """Retorna metadados de UI da tool (render_hint, category, destructive, icon)."""
+    """Retorna metadados de UI da tool (render_hint, category, destructive, icon, invalidates)."""
     if not _tool_meta_cache:
         try:
             from backend.nodes.tools import ALL_TOOLS
@@ -92,6 +93,7 @@ def _get_tool_meta(tool_name: str) -> dict:
                     "category": meta.get("category", "general"),
                     "destructive": bool(meta.get("destructive", False)),
                     "icon": meta.get("icon", "tool"),
+                    "invalidates": meta.get("invalidates", []),
                 }
         except Exception:
             pass
@@ -173,7 +175,7 @@ def langgraph_event_to_payload(  # noqa: PLR0911
 
         is_error = False
         if hasattr(output, "status"):
-            is_error = output.status == "error"
+            is_error = output.status == "error"  # type: ignore[union-attr]
 
         content_json = raw if isinstance(raw, str) else json.dumps(raw)
         return ToolResultEvent(
@@ -387,6 +389,17 @@ def adapt_stream(
                         await _record_turn_checkpoint(workspace_id, thread_id, event)
 
                 payload = langgraph_event_to_payload(event)
+
+                # Após tool_end, emite WorkbenchInvalidateEvent para tabs declaradas
+                # nos metadados da tool (campo "invalidates").
+                if kind == "on_tool_end":
+                    meta = _get_tool_meta(name)
+                    tabs = meta.get("invalidates", [])
+                    if tabs:
+                        yield encode_event(
+                            WorkbenchInvalidateEvent(tabs=tabs, tool_name=name)
+                        )
+
                 if payload is None:
                     continue
 

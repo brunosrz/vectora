@@ -234,6 +234,18 @@ class MessageBreakEvent(BaseModel):
     """
 
 
+class WorkbenchInvalidateEvent(BaseModel):
+    """Notifica o frontend para recarregar abas específicas do workbench.
+
+    Emitido automaticamente ao fim de tool calls que modificam o workspace.
+    ``tabs`` lista quais abas devem ser revalidadas: ``"files"``, ``"diff"``,
+    ``"plan"``, ``"background"``.
+    """
+
+    tabs: list[str]
+    tool_name: str = ""
+
+
 # ---------------------------------------------------------------------------
 # Envelope de streaming
 # ---------------------------------------------------------------------------
@@ -254,6 +266,7 @@ StreamChatEventPayload = (
     | ErrorEvent
     | DoneEvent
     | MessageBreakEvent
+    | WorkbenchInvalidateEvent
 )
 
 _TYPE_MAP: dict[type, str] = {
@@ -269,6 +282,7 @@ _TYPE_MAP: dict[type, str] = {
     ErrorEvent: "error",
     DoneEvent: "done",
     MessageBreakEvent: "message_break",
+    WorkbenchInvalidateEvent: "workbench_invalidate",
 }
 
 
