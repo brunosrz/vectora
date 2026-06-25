@@ -17,35 +17,30 @@ logger = logging.getLogger(__name__)
 
 
 def _load_project_docs() -> str | None:
-    """Escaneia cwd recursivamente por AGENTS.md, CLAUDE.md, VECTORA.md, GEMINI.md.
+    """Carrega arquivos de instrução do projeto e contexto do .vectora/.
 
-    Usa ``iter_files`` (varredura com poda de node_modules/.venv/etc. e
-    respeito ao .gitignore) em vez de ``rglob`` puro — em repositórios JS
-    grandes o rglob varria centenas de milhares de entradas e congelava o
-    primeiro turno do agente (e a suite de testes) por minutos.
+    Coleta (em ordem de prioridade por weight):
+    1. Arquivos de instrução na raiz: AGENTS.md, CLAUDE.md, GEMINI.md, VECTORA.md, …
+    2. Todos os .md em .vectora/ com enabled=true (exceto MANIFEST.md e subpastas reservadas)
 
-    Retorna conteúdo concatenado com cabeçalho por arquivo, ou None se não
-    encontrar nada. Limita cada arquivo a 4000 chars e a busca a 10 arquivos
-    por nome para não inflar o contexto.
+    Frontmatter YAML/Paperclip é parseado — campos weight, inject_when, enabled,
+    truncate_at, title, description e tags são respeitados. Arquivos com
+    inject_when='on_request' são omitidos do system prompt (disponíveis via tool).
+
+    Retorna conteúdo formatado ou None se não encontrar nada.
     """
-    from backend.services.ignore import iter_files, load_ignore_spec
+    from backend.services.context_files import (
+        collect_context_files,
+        format_context_files_for_prompt,
+    )
 
-    targets = ["AGENTS.md", "CLAUDE.md", "VECTORA.md", "GEMINI.md"]
     cwd = Path.cwd()
-    spec = load_ignore_spec(cwd)
-    sections: list[str] = []
+    files = collect_context_files(str(cwd))
+    if not files:
+        return None
 
-    for name in targets:
-        for found in iter_files(cwd, name, spec)[:10]:
-            try:
-                text = found.read_text(encoding="utf-8", errors="ignore").strip()
-                if text:
-                    rel = found.relative_to(cwd)
-                    sections.append(f"## {name} ({rel})\n\n{text[:4000]}")
-            except Exception:
-                pass
-
-    return "\n\n---\n\n".join(sections) if sections else None
+    text = format_context_files_for_prompt(files, include_on_request=False)
+    return text or None
 
 
 def _load_workspaces_overview(active_id: str | None = None) -> str | None:
@@ -119,14 +114,13 @@ def _load_session_context(workspace_id: str | None = None) -> str | None:
             if ws is not None:
                 manifest_path = ws.manifest_path()
                 if manifest_path.exists():
-                    manifest = manifest_path.read_text(
+                    raw_manifest = manifest_path.read_text(
                         encoding="utf-8", errors="ignore"
                     ).strip()
-                    # Remove frontmatter YAML se presente (--- ... ---)
-                    if manifest.startswith("---"):
-                        end = manifest.find("---", 3)
-                        if end != -1:
-                            manifest = manifest[end + 3 :].strip()
+                    from backend.services.context_files import parse_frontmatter
+
+                    _, manifest = parse_frontmatter(raw_manifest)
+                    manifest = manifest.strip()
                     # Trunca a ~3200 chars (~800 tokens) para economizar contexto
                     if len(manifest) > 3200:
                         manifest = manifest[:3200] + "\n\n[... manifest truncado ...]"

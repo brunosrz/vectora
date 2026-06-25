@@ -21,6 +21,30 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _append_context_files_summary(workspace_cwd: str, result: dict) -> None:
+    """Anexa lista dos arquivos de contexto encontrados no workspace ao resultado."""
+    try:
+        from backend.services.context_files import collect_context_files
+
+        files = collect_context_files(workspace_cwd)
+        if not files:
+            return
+        result["context_files"] = [
+            {
+                "title": f.title,
+                "path": str(f.path.relative_to(workspace_cwd)),
+                "type": f.type,
+                "weight": f.weight,
+                "inject_when": f.inject_when,
+                "tags": f.tags,
+                "description": f.description,
+            }
+            for f in files
+        ]
+    except Exception:
+        pass
+
+
 def _append_graph_summary(workspace_cwd: str, result: dict) -> None:
     """Injeta resumo do Context Graph no resultado de workspace_describe, se existir."""
     from pathlib import Path
@@ -121,6 +145,7 @@ async def workspace_describe(
             "manifest": content,
         }
         _append_graph_summary(ws.cwd, result)
+        _append_context_files_summary(ws.cwd, result)
         return json.dumps(result)
     except Exception as e:
         logger.exception("workspace_describe: erro ao ler manifest %s", ws.id)
