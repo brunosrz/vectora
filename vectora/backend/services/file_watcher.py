@@ -8,6 +8,7 @@ o SSE notifique o frontend e invalide os tabs (files, diff).
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from collections.abc import Callable, Coroutine
 from typing import Any
@@ -24,7 +25,7 @@ _IGNORE_PATTERNS = {
 }
 
 # Singleton registry: workspace_id → FileWatcher
-_registry: dict[str, "FileWatcher"] = {}
+_registry: dict[str, FileWatcher] = {}
 
 
 async def debounce_collect(
@@ -44,7 +45,7 @@ async def debounce_collect(
         try:
             path = await asyncio.wait_for(queue.get(), timeout=debounce_s)
             pending.add(path)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             if pending:
                 batch = pending.copy()
                 pending.clear()
@@ -111,10 +112,8 @@ class FileWatcher:
                     src = getattr(event, "src_path", "") or ""
                     if any(pat in src for pat in ignore):
                         return
-                    try:
+                    with contextlib.suppress(asyncio.QueueFull):
                         queue.put_nowait(src)
-                    except asyncio.QueueFull:
-                        pass
 
             observer = Observer()
             observer.schedule(_Handler(), self._path, recursive=True)
@@ -129,10 +128,8 @@ class FileWatcher:
         self.running = False
         if self._task is not None:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
         if self._observer is not None:
             try:
                 await asyncio.to_thread(self._observer.stop)

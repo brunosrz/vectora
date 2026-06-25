@@ -42,8 +42,8 @@ async def test_marca_item_como_done(tmp_path: Path) -> None:
                     "artifact_slug": "plano",
                     "item": "Implementar auth",
                     "status": "done",
-                    "config": _cfg(),
-                }
+                },
+                _cfg(),
             )
         )
 
@@ -72,8 +72,8 @@ async def test_marca_item_como_in_progress(tmp_path: Path) -> None:
                     "artifact_slug": "plano",
                     "item": "Implementar login",
                     "status": "in_progress",
-                    "config": _cfg(),
-                }
+                },
+                _cfg(),
             )
         )
 
@@ -100,8 +100,8 @@ async def test_item_nao_encontrado_retorna_erro(tmp_path: Path) -> None:
                     "artifact_slug": "plano",
                     "item": "Item inexistente",
                     "status": "done",
-                    "config": _cfg(),
-                }
+                },
+                _cfg(),
             )
         )
 
@@ -122,8 +122,8 @@ async def test_artifact_inexistente_retorna_erro(tmp_path: Path) -> None:
                     "artifact_slug": "inexistente",
                     "item": "Algo",
                     "status": "done",
-                    "config": _cfg(),
-                }
+                },
+                _cfg(),
             )
         )
 
@@ -148,8 +148,8 @@ async def test_status_invalido_retorna_erro(tmp_path: Path) -> None:
                     "artifact_slug": "plano",
                     "item": "Item",
                     "status": "flying",
-                    "config": _cfg(),
-                }
+                },
+                _cfg(),
             )
         )
 
@@ -162,10 +162,10 @@ async def test_status_invalido_retorna_erro(tmp_path: Path) -> None:
 
 
 def test_update_plan_item_nao_e_destrutivo() -> None:
-    extras = getattr(update_plan_item, "metadata", {}) or {}
+    extras = getattr(update_plan_item, "extras", {}) or {}
     assert extras.get("destructive") is False
 
 
 def test_update_plan_item_invalida_plan() -> None:
-    extras = getattr(update_plan_item, "metadata", {}) or {}
+    extras = getattr(update_plan_item, "extras", {}) or {}
     assert "plan" in extras.get("invalidates", [])

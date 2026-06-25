@@ -270,6 +270,7 @@ async def get_workbench_context(
     Lê o contexto do editor que o frontend publica via KV ao trocar de arquivo.
     Use para saber qual arquivo o usuário está editando antes de fazer alterações.
     """
+    workspace_id = "default"
     try:
         configurable = (config or {}).get("configurable") or {}
         workspace_id = configurable.get("workspace_id", "default")

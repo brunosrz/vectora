@@ -46,7 +46,7 @@ describe("GitStatusBadge", () => {
       "fetch",
       vi.fn(async () => ({
         ok: true,
-        json: async () => ({ git_current_branch: "feature-x" }),
+        json: async () => ({ workspace: { git_current_branch: "feature-x" } }),
       })),
     );
     useWorkspacesStore.setState({

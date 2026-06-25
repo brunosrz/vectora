@@ -32,7 +32,7 @@ async def test_no_context_retorna_status_vazio() -> None:
         kv.get.return_value = None
         mock_get_kv.return_value = kv
 
-        result = json.loads(await get_workbench_context.ainvoke({"config": _cfg()}))
+        result = json.loads(await get_workbench_context.ainvoke({}, _cfg()))
 
     assert result["status"] == "no_context"
     assert "open_file" not in result or result.get("open_file") is None
@@ -53,7 +53,7 @@ async def test_com_open_file_retorna_contexto() -> None:
         kv.get.return_value = json.dumps(ctx_data)
         mock_get_kv.return_value = kv
 
-        result = json.loads(await get_workbench_context.ainvoke({"config": _cfg()}))
+        result = json.loads(await get_workbench_context.ainvoke({}, _cfg()))
 
     assert result["status"] == "success"
     assert result["open_file"] == "src/auth.py"
@@ -73,7 +73,7 @@ async def test_workspace_id_lido_do_config() -> None:
         kv.get.return_value = None
         mock_get_kv.return_value = kv
 
-        await get_workbench_context.ainvoke({"config": _cfg(workspace_id="myws")})
+        await get_workbench_context.ainvoke({}, _cfg(workspace_id="myws"))
 
         kv.get.assert_awaited_once()
         call_key = kv.get.call_args[0][0]
@@ -93,7 +93,7 @@ async def test_kv_corrompido_retorna_erro_tipado() -> None:
         kv.get.return_value = "not-valid-json{{{"
         mock_get_kv.return_value = kv
 
-        result = json.loads(await get_workbench_context.ainvoke({"config": _cfg()}))
+        result = json.loads(await get_workbench_context.ainvoke({}, _cfg()))
 
     assert result["status"] == "error"
 
@@ -104,10 +104,10 @@ async def test_kv_corrompido_retorna_erro_tipado() -> None:
 
 
 def test_get_workbench_context_nao_e_destrutiva() -> None:
-    extras = getattr(get_workbench_context, "metadata", {}) or {}
+    extras = getattr(get_workbench_context, "extras", {}) or {}
     assert extras.get("destructive") is False
 
 
 def test_get_workbench_context_categoria_workbench() -> None:
-    extras = getattr(get_workbench_context, "metadata", {}) or {}
+    extras = getattr(get_workbench_context, "extras", {}) or {}
     assert extras.get("category") == "workspace"

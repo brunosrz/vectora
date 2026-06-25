@@ -61,8 +61,8 @@ async def test_cria_tarefa_rotina() -> None:
                     "kind": "routine",
                     "trigger_type": "interval",
                     "trigger_config": {"cron_expr": "0 9 * * *"},
-                    "config": _cfg(),
-                }
+                },
+                _cfg(),
             )
         )
 
@@ -145,10 +145,10 @@ async def test_sem_sessao_retorna_erro() -> None:
 
 
 def test_create_background_task_invalida_background() -> None:
-    extras = getattr(create_background_task, "metadata", {}) or {}
+    extras = getattr(create_background_task, "extras", {}) or {}
     assert "background" in extras.get("invalidates", [])
 
 
 def test_create_background_task_e_destrutiva() -> None:
-    extras = getattr(create_background_task, "metadata", {}) or {}
+    extras = getattr(create_background_task, "extras", {}) or {}
     assert extras.get("destructive") is False

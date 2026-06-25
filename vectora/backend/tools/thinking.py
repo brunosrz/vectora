@@ -65,10 +65,8 @@ async def sequential_thinking(
                 }
             )
 
-        is_final = (
+        is_final = (thought_number == total_thoughts and not next_thought_needed) or (
             thought_number == total_thoughts
-            and not next_thought_needed
-            or (thought_number == total_thoughts)
         )
 
         result: dict = {

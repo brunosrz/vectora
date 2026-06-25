@@ -83,8 +83,8 @@ def test_desktop_uds_config_not_tcp() -> None:
         patch("uvicorn.Config", side_effect=_FakeConfig),
         patch("uvicorn.Server", return_value=_FakeServer()),
         patch("backend.api.server.create_app", return_value=MagicMock()),
-        patch("backend.main._start_vite_dev", return_value=None),
-        patch("backend.main._kill_vite"),
+        patch("backend.main._start_vite_dev", return_value=None, create=True),
+        patch("backend.main._kill_vite", create=True),
         patch("backend.services.tray.run_server_with_tray", return_value=None),
         patch("os._exit"),
     ):
@@ -124,8 +124,8 @@ def test_desktop_uds_path_under_home_vectora() -> None:
         patch("uvicorn.Config", side_effect=_FakeConfig),
         patch("uvicorn.Server", return_value=MagicMock()),
         patch("backend.api.server.create_app", return_value=MagicMock()),
-        patch("backend.main._start_vite_dev", return_value=None),
-        patch("backend.main._kill_vite"),
+        patch("backend.main._start_vite_dev", return_value=None, create=True),
+        patch("backend.main._kill_vite", create=True),
         patch("backend.services.tray.run_server_with_tray"),
         patch("os._exit"),
     ):
@@ -162,8 +162,8 @@ def test_non_desktop_uses_tcp_host() -> None:
         patch("uvicorn.Config", side_effect=_FakeConfig),
         patch("uvicorn.Server", return_value=MagicMock()),
         patch("backend.api.server.create_app", return_value=MagicMock()),
-        patch("backend.main._start_vite_dev", return_value=None),
-        patch("backend.main._kill_vite"),
+        patch("backend.main._start_vite_dev", return_value=None, create=True),
+        patch("backend.main._kill_vite", create=True),
         patch("backend.services.tray.run_server_with_tray"),
         patch("os._exit"),
     ):
@@ -198,7 +198,7 @@ def test_desktop_windows_sets_pipe_env(capsys: pytest.CaptureFixture[str]) -> No
     with (
         patch.dict(os.environ, {"VECTORA_DESKTOP": "1"}, clear=False),
         patch("backend.api.server.create_app", return_value=MagicMock()),
-        patch("backend.main._start_vite_dev", return_value=None),
+        patch("backend.main._start_vite_dev", return_value=None, create=True),
         patch(
             "backend.services.ipc_pipe_win.serve_pipe",
             AsyncMock(side_effect=asyncio.CancelledError),
@@ -248,7 +248,7 @@ def test_desktop_windows_no_tcp_host() -> None:
     with (
         patch.dict(os.environ, {"VECTORA_DESKTOP": "1"}, clear=False),
         patch("backend.api.server.create_app", return_value=MagicMock()),
-        patch("backend.main._start_vite_dev", return_value=None),
+        patch("backend.main._start_vite_dev", return_value=None, create=True),
         patch("backend.services.ipc_pipe_win.serve_pipe", AsyncMock()),
         patch("uvicorn.Config", side_effect=_FakeConfig),
         patch(
