@@ -174,4 +174,204 @@ describe("useContextGraph", () => {
 
     expect(result.current.status.status).toBe("unknown");
   });
+
+  it("status JSON malformado cai no fallback unknown", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      new Response("NOTJSON{", {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    expect(result.current.status.status).toBe("unknown");
+  });
+
+  it("status queued é preservado", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(mockOk({ status: "queued" }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    expect(result.current.status.status).toBe("queued");
+  });
+
+  it("report não é setado quando o backend devolve report vazio", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "done" }),
+    ).mockResolvedValueOnce(mockOk({ report: "" }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    expect(result.current.report).toBeNull();
+  });
+
+  it("report não-ok mantém report null", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "done" }),
+    ).mockResolvedValueOnce(mockFail(500));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    expect(result.current.report).toBeNull();
+  });
+
+  it("getHtmlUrl codifica caracteres especiais do workspaceId", async () => {
+    FETCH_MOCK.mockResolvedValue(mockOk({ status: "unknown" }));
+    const { result } = renderHook(() => useContextGraph("a b/c"));
+    await act(async () => {});
+    const url = result.current.getHtmlUrl();
+    expect(url).toContain("a%20b%2Fc");
+  });
+
+  // ── queryAffected ──────────────────────────────────────────────────────────
+
+  it("queryAffected: POST /affected com node_query e depth no body", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "not_built" }),
+    ).mockResolvedValueOnce(mockOk({ answer: "impacto: X" }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    let out = "";
+    await act(async () => {
+      out = await result.current.queryAffected("AuthService", 3);
+    });
+    const call = FETCH_MOCK.mock.calls.find((a) =>
+      String(a[0]).includes("/affected"),
+    );
+    const body = JSON.parse(call![1].body as string);
+    expect(body.node_query).toBe("AuthService");
+    expect(body.depth).toBe(3);
+    expect(out).toBe("impacto: X");
+  });
+
+  it("queryAffected: depth padrão é 2", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "not_built" }),
+    ).mockResolvedValueOnce(mockOk({ answer: "ok" }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    await act(async () => {
+      await result.current.queryAffected("X");
+    });
+    const call = FETCH_MOCK.mock.calls.find((a) =>
+      String(a[0]).includes("/affected"),
+    );
+    expect(JSON.parse(call![1].body as string).depth).toBe(2);
+  });
+
+  it("queryAffected: resposta não-ok retorna string vazia", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "not_built" }),
+    ).mockResolvedValueOnce(mockFail(404));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    let out = "x";
+    await act(async () => {
+      out = await result.current.queryAffected("X");
+    });
+    expect(out).toBe("");
+  });
+
+  it("queryAffected: sem workspaceId retorna string vazia sem fetch", async () => {
+    const { result } = renderHook(() => useContextGraph(null));
+    const out = await result.current.queryAffected("X");
+    expect(out).toBe("");
+    expect(FETCH_MOCK).not.toHaveBeenCalled();
+  });
+
+  it("queryAffected: fetch rejeitado retorna string vazia", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "not_built" }),
+    ).mockRejectedValueOnce(new Error("offline"));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    let out = "x";
+    await act(async () => {
+      out = await result.current.queryAffected("X");
+    });
+    expect(out).toBe("");
+  });
+
+  it("queryAffected: answer ausente retorna string vazia", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "not_built" }),
+    ).mockResolvedValueOnce(mockOk({ nada: 1 }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    let out = "x";
+    await act(async () => {
+      out = await result.current.queryAffected("X");
+    });
+    expect(out).toBe("");
+  });
+
+  // ── update (incremental) ─────────────────────────────────────────────────────
+
+  it("update chama build com update:true", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "not_built" }),
+    ).mockResolvedValueOnce(mockOk({ status: "queued" }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    await act(async () => {
+      await result.current.update();
+    });
+    const call = FETCH_MOCK.mock.calls.find((a) =>
+      String(a[0]).includes("/build"),
+    );
+    expect(JSON.parse(call![1].body as string).update).toBe(true);
+  });
+
+  it("update propaga o model para o build", async () => {
+    FETCH_MOCK.mockResolvedValueOnce(
+      mockOk({ status: "not_built" }),
+    ).mockResolvedValueOnce(mockOk({ status: "queued" }));
+    const { result } = renderHook(() => useContextGraph("ws1"));
+    await act(async () => {});
+    await act(async () => {
+      await result.current.update({ model: "claude" });
+    });
+    const call = FETCH_MOCK.mock.calls.find((a) =>
+      String(a[0]).includes("/build"),
+    );
+    expect(JSON.parse(call![1].body as string).model).toBe("claude");
+  });
+
+  // ── polling ──────────────────────────────────────────────────────────────────
+
+  it("status running agenda polling a cada 3s", async () => {
+    vi.useFakeTimers();
+    try {
+      FETCH_MOCK.mockResolvedValue(mockOk({ status: "running" }));
+      renderHook(() => useContextGraph("ws1"));
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      const before = FETCH_MOCK.mock.calls.length;
+      await act(async () => {
+        vi.advanceTimersByTime(3100);
+        await Promise.resolve();
+      });
+      expect(FETCH_MOCK.mock.calls.length).toBeGreaterThan(before);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("status not_built não agenda polling", async () => {
+    vi.useFakeTimers();
+    try {
+      FETCH_MOCK.mockResolvedValue(mockOk({ status: "not_built" }));
+      renderHook(() => useContextGraph("ws1"));
+      await act(async () => {
+        await Promise.resolve();
+      });
+      const before = FETCH_MOCK.mock.calls.length;
+      await act(async () => {
+        vi.advanceTimersByTime(6000);
+        await Promise.resolve();
+      });
+      expect(FETCH_MOCK.mock.calls.length).toBe(before);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
