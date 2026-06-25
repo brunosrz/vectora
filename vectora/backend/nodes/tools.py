@@ -72,6 +72,7 @@ from backend.tools.notion import notion_create_page, notion_read_page, notion_se
 from backend.tools.plans import update_plan_item
 from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
+from backend.tools.thinking import sequential_thinking
 from backend.tools.web import fetch_url, web_search
 from backend.tools.workspace import (
     bucket_summary,
@@ -236,6 +237,7 @@ for _t in [
     graph_path,
     graph_affected,
     graph_update,
+    sequential_thinking,
 ]:
     _all[_t.name] = _t
 

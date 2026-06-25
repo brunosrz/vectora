@@ -315,6 +315,57 @@ function QueueProgress({ data }: { data: unknown }) {
   );
 }
 
+/** Imagem inline — browser_screenshot, image tools */
+function ImagePreview({ data }: { data: unknown }) {
+  let url = "";
+  let alt = "";
+  if (typeof data === "string") {
+    url = data;
+  } else if (data && typeof data === "object") {
+    const d = data as Record<string, unknown>;
+    url = String(d.url ?? d.src ?? d.image_url ?? "");
+    alt = String(d.alt ?? d.description ?? "");
+  }
+  if (!url) return <JsonViewer data={data} label="Ver output" />;
+  return (
+    <img
+      src={url}
+      alt={alt}
+      className="mt-1 max-w-full rounded border border-border"
+      style={{ maxHeight: "240px" }}
+    />
+  );
+}
+
+/** Accordion de passo de raciocínio — sequential_thinking */
+function ThinkingStep({ data }: { data: unknown }) {
+  let d: Record<string, unknown> = {};
+  try {
+    d = (typeof data === "string" ? JSON.parse(data) : (data as Record<string, unknown>)) ?? {};
+  } catch {
+    /* usa {} */
+  }
+  const thought = String(d.thought ?? "");
+  const num = Number(d.thought_number ?? 0);
+  const total = Number(d.total_thoughts ?? 0);
+  const isFinal = Boolean(d.is_final);
+  const isRevision = Boolean(d.is_revision);
+  return (
+    <div className="mt-1 text-[11px] text-muted-foreground space-y-0.5">
+      {(num > 0 || total > 0) && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono text-primary/60">
+            {num}/{total}
+          </span>
+          {isFinal && <span className="text-green-500 text-[10px]">✓ Final</span>}
+          {isRevision && <span className="text-amber-500 text-[10px]">↩ Revisão</span>}
+        </div>
+      )}
+      <p className="whitespace-pre-wrap">{thought}</p>
+    </div>
+  );
+}
+
 /** Card de artifact — create_artifact */
 function ArtifactCard({ data }: { data: unknown }) {
   let info: Record<string, unknown> = {};
@@ -367,6 +418,8 @@ const RENDERERS: Record<RenderHint, RendererFn> = {
   queue_progress: (out) => <QueueProgress data={out} />,
   queue_badge: (out) => <QueueBadge data={out} />,
   artifact: (out) => <ArtifactCard data={out} />,
+  image_preview: (out) => <ImagePreview data={out} />,
+  thinking_step: (out) => <ThinkingStep data={out} />,
   json: (out) => <JsonViewer data={out} label="Ver output" />,
 };
 

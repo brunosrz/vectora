@@ -85,7 +85,17 @@ export function FileItem({
         />
       ) : (
         <button
-          onClick={() => openWindow(workspaceId, entry.path)}
+          onClick={() => {
+            openWindow(workspaceId, entry.path);
+            void fetch(
+              `/workspaces/${encodeURIComponent(workspaceId)}/context/active`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ open_file: entry.path }),
+              },
+            ).catch(() => undefined);
+          }}
           onDoubleClick={() => {
             if (onRename) {
               setRenameValue(entry.name);

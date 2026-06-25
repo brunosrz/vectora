@@ -3209,3 +3209,35 @@ async def rag_jobs(workspace_id: str) -> list[RagJobStatus]:
             stats = {}
         out.append(_rag_job_status(job_id, stats))
     return out
+
+
+# ---------------------------------------------------------------------------
+# Context bridge — arquivo em foco (FASE 2.1)
+# ---------------------------------------------------------------------------
+
+
+class ActiveContextRequest(BaseModel):
+    open_file: str | None = None
+
+
+@view_router.post("/{workspace_id}/context/active", response_model=StatusResponse)
+async def set_active_context(
+    workspace_id: str,
+    body: ActiveContextRequest,
+    request: Request,
+) -> StatusResponse:
+    """Atualiza o arquivo em foco no editor para o agente via get_workbench_context."""
+    try:
+        from backend.services.kv import get_kv
+
+        kv = get_kv()
+        import json
+
+        key = f"workbench:context:{workspace_id}"
+        payload: dict = {"open_file": body.open_file}
+        await kv.set(key, json.dumps(payload), ttl_s=1800)
+    except Exception:
+        logger.debug(
+            "set_active_context: falha ao gravar KV workspace=%s", workspace_id
+        )
+    return StatusResponse(status="ok")

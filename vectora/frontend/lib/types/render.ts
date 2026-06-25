@@ -15,6 +15,8 @@ export type RenderHint =
   | "queue_progress" // ingest_docs — barra de progresso com contagem
   | "queue_badge" // embedding — badge com queue_id + status
   | "artifact" // create_artifact — card com ícone + link para download
+  | "image_preview" // ferramentas que retornam URL de imagem (browser screenshot, etc.)
+  | "thinking_step" // sequential_thinking — accordion com passo de raciocínio
   | "json"; // save_memory, get_memory, delete_memory, fallback universal
 
 /** Categoria de uma tool — agrupa tools afins na UI. */
