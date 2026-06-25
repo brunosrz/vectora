@@ -56,8 +56,10 @@ from backend.tools.git import (
     git_log,
     git_pull,
     git_push,
+    git_stage,
     git_stash,
     git_status,
+    git_unstage,
     git_worktree,
 )
 from backend.tools.gmail import gmail_list, gmail_read
@@ -150,6 +152,8 @@ GIT_TOOLS: list[BaseTool] = [
     git_stash,
     git_init,
     git_worktree,
+    git_stage,
+    git_unstage,
     gh_pr_list,
     gh_pr_create,
     gh_pr_view,
@@ -204,6 +208,8 @@ for _t in [
     git_stash,
     git_init,
     git_worktree,
+    git_stage,
+    git_unstage,
     gh_pr_list,
     gh_pr_create,
     gh_pr_view,
