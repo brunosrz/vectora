@@ -10,7 +10,7 @@ DeepAgentState schema para ler checkpoints, tornando a leitura robusta e rápida
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -55,15 +55,6 @@ def _make_compiled(state: _StateValues) -> MagicMock:
     return compiled
 
 
-def _make_graph_mock(compiled: MagicMock) -> MagicMock:
-    """Retorna um StateGraph fake cujo .compile() devolve compiled."""
-    g = MagicMock()
-    g.add_node = MagicMock()
-    g.add_edge = MagicMock()
-    g.compile = MagicMock(return_value=compiled)
-    return g
-
-
 @pytest.mark.asyncio
 async def test_aget_thread_messages_filters_tool_and_empty(
     monkeypatch: pytest.MonkeyPatch,
@@ -78,7 +69,6 @@ async def test_aget_thread_messages_filters_tool_and_empty(
     ]
     state = _StateValues(messages)
     compiled = _make_compiled(state)
-    graph = _make_graph_mock(compiled)
 
     sentinel_checkpointer = object()
     monkeypatch.setattr(agent_factory, "_checkpointer", sentinel_checkpointer)
@@ -87,9 +77,11 @@ async def test_aget_thread_messages_filters_tool_and_empty(
         pass
 
     monkeypatch.setattr(agent_factory, "_ensure_infra", _noop_ensure)
+    monkeypatch.setattr(
+        agent_factory, "get_user_agent", AsyncMock(return_value=compiled)
+    )
 
-    with patch("langgraph.graph.StateGraph", return_value=graph):
-        pairs = await aget_thread_messages("t1")
+    pairs = await aget_thread_messages("t1")
 
     assert pairs == [
         ("human", "oi"),
@@ -105,7 +97,6 @@ async def test_aget_thread_messages_empty_state(
     """Devolve lista vazia quando aget_state retorna state sem values."""
     state = _StateValues(None)
     compiled = _make_compiled(state)
-    graph = _make_graph_mock(compiled)
 
     sentinel_checkpointer = object()
     monkeypatch.setattr(agent_factory, "_checkpointer", sentinel_checkpointer)
@@ -114,9 +105,11 @@ async def test_aget_thread_messages_empty_state(
         pass
 
     monkeypatch.setattr(agent_factory, "_ensure_infra", _noop_ensure)
+    monkeypatch.setattr(
+        agent_factory, "get_user_agent", AsyncMock(return_value=compiled)
+    )
 
-    with patch("langgraph.graph.StateGraph", return_value=graph):
-        assert await aget_thread_messages("t1") == []
+    assert await aget_thread_messages("t1") == []
 
 
 @pytest.mark.asyncio

@@ -34,25 +34,16 @@ class _FakeState:
 
 
 def _patch_graph(monkeypatch, messages) -> None:
-    """Patcha StateGraph para devolver um grafo fake cujo aget_state retorna messages."""
+    """Patcha get_user_agent para devolver um grafo fake cujo aget_state retorna messages."""
 
     class _FakeCompiled:
         async def aget_state(self, _config):
             return _FakeState(messages)
 
-    class _FakeStateGraph:
-        def add_node(self, *a, **kw) -> None:
-            pass
+    async def _fake_get_user_agent(*a, **kw):
+        return _FakeCompiled()
 
-        def add_edge(self, *a, **kw) -> None:
-            pass
-
-        def compile(self, **kw) -> _FakeCompiled:
-            return _FakeCompiled()
-
-    import langgraph.graph as _lg
-
-    monkeypatch.setattr(_lg, "StateGraph", lambda *a, **kw: _FakeStateGraph())
+    monkeypatch.setattr(agent_factory, "get_user_agent", _fake_get_user_agent)
     monkeypatch.setattr(agent_factory, "_checkpointer", object())
 
     async def _noop_ensure() -> None:
