@@ -1,4 +1,4 @@
-"""Workspace tools: describe, list, bucket summary.
+"""Workspace tools: describe, list, bucket summary, workbench context.
 
 Ferramentas que expõem o estado do WorkspaceRegistry para os agents,
 permitindo que o orchestrator e search respondam perguntas sobre o
@@ -15,10 +15,18 @@ from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg
 
+from backend.services.kv import get_kv
+
 if TYPE_CHECKING:
     from backend.vtypes import Workspace
 
 logger = logging.getLogger(__name__)
+
+WORKBENCH_CTX_TTL = 1800  # segundos (30 min)
+
+
+def _workbench_ctx_key(workspace_id: str) -> str:
+    return f"workbench:ctx:{workspace_id}"
 
 
 def _append_context_files_summary(workspace_cwd: str, result: dict) -> None:
@@ -243,4 +251,40 @@ async def bucket_summary(
         )
     except Exception as e:
         logger.exception("bucket_summary: erro ao ler manifest bucket=%s", bucket)
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@tool(
+    extras={
+        "render_hint": "json",
+        "category": "workspace",
+        "destructive": False,
+        "icon": "file-search",
+    }
+)
+async def get_workbench_context(
+    config: Annotated[RunnableConfig, InjectedToolArg] = None,  # ty: ignore[invalid-parameter-default]
+) -> str:
+    """Retorna o arquivo em foco e os arquivos abertos no editor do workbench.
+
+    Lê o contexto do editor que o frontend publica via KV ao trocar de arquivo.
+    Use para saber qual arquivo o usuário está editando antes de fazer alterações.
+    """
+    try:
+        configurable = (config or {}).get("configurable") or {}
+        workspace_id = configurable.get("workspace_id", "default")
+        key = _workbench_ctx_key(workspace_id)
+        kv = get_kv()
+        raw = await kv.get(key)
+        if raw is None:
+            return json.dumps({"status": "no_context"})
+        ctx = json.loads(raw)
+        return json.dumps({"status": "success", **ctx})
+    except json.JSONDecodeError:
+        logger.warning(
+            "get_workbench_context: KV corrompido para workspace=%s", workspace_id
+        )
+        return json.dumps({"status": "error", "error": "contexto corrompido no KV"})
+    except Exception as e:
+        logger.exception("get_workbench_context: erro inesperado")
         return json.dumps({"status": "error", "error": str(e)})

@@ -4,7 +4,6 @@ import Image from "next/image";
 import { Menu } from "lucide-react";
 
 import { ContextualHelp } from "./contextual-help";
-import { GitStatusBadge } from "./git-status-badge";
 import { SettingsMenu } from "./settings-menu";
 import { m } from "@/lib/paraglide/messages";
 interface HeaderProps {
@@ -47,7 +46,6 @@ export function Header({ onShowShortcuts, onOpenSidebar }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <GitStatusBadge />
           <ContextualHelp onShowShortcuts={onShowShortcuts} />
           <SettingsMenu />
         </div>

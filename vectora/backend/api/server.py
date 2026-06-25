@@ -604,7 +604,12 @@ def create_app(serve_static: bool = True) -> FastAPI:
                 media_type="text/html; charset=utf-8",
             )
         except Exception as exc:
-            logger.warning("frontend_proxy: erro ao encaminhar /%s: %s", path, exc)
+            logger.warning(
+                "frontend_proxy: erro ao encaminhar /%s [%s]: %s",
+                path,
+                type(exc).__name__,
+                exc or repr(exc),
+            )
             return FastAPIResponse(
                 content=b'{"detail":"Erro no proxy do frontend"}',
                 status_code=502,

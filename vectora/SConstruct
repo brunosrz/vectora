@@ -7,7 +7,6 @@ Uso (PowerShell / cmd, sem Git bash):
     scons release-win   → instalador Windows (.msi + .exe NSIS)
     scons release-mac   → instalador macOS (.dmg universal)
     scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
-    scons package       → build completo (frontend + Nuitka + Electron) + instalador
     scons tests         → suíte completa: vitest (frontend) + pytest (backend),
                           sem relatório de cobertura
     scons coverage      → a mesma suíte, com relatório de cobertura
@@ -459,8 +458,7 @@ def _action_help(target, source, env):
     scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
 
   Build
-    scons package          build completo (frontend + Nuitka + Electron) +
-                           instalador para o SO atual
+    scons frontend         só o build do frontend (frontend/dist/) — rode antes de "vectora start"
     scons docker           sobe infraestrutura (PostgreSQL, Redis, Qdrant);
                            o Vectora roda no host como binário instalado
 
@@ -499,19 +497,19 @@ def _cmd(name: str, action, deps: list | None = None):
     return t
 
 
+# Build só do frontend — chamável diretamente pelo usuário.
+_cmd("frontend", _action_build_chat)
+
 # Passos de build — internos, não aparecem no menu nem são chamáveis direto.
-# O usuário usa `scons package` (ou `scons release*`), que encadeia tudo.
 _build_chat    = _node("build-chat",    _action_build_chat)
 _build_nuitka  = _node("build-nuitka",  _action_build_nuitka,    deps=[_build_chat])
 _inst_desktop  = _node("install-desktop", _action_install_desktop)
 _build_desktop = _node("build-desktop", _action_build_desktop,   deps=[_inst_desktop])
 
 # Build completo do SO atual: chat (Vite) + Nuitka onefile + Electron TS +
-# electron-builder. `package` e `release` fazem o mesmo; releases por plataforma
-# passam o alvo (`win`/`mac`/`linux`) ao electron-builder.
+# electron-builder. Releases por plataforma passam o alvo (`win`/`mac`/`linux`)
+# ao electron-builder.
 _FULL_DEPS = [_build_chat, _build_nuitka, _build_desktop]
-_package   = _cmd("package",       lambda target, source, env: _action_package(target, source, env),
-                  deps=_FULL_DEPS)
 
 # Releases por plataforma
 _rel_win   = _cmd("release-win",   lambda target, source, env: _action_package(target, source, env, "win"),

@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from langgraph.prebuilt import ToolNode
 
+from backend.tools.background import create_background_task
 from backend.tools.context_graph import (
     build_knowledge_graph,
     graph_affected,
@@ -68,10 +69,16 @@ from backend.tools.linear import (
 )
 from backend.tools.memory import delete_memory, get_memory, save_memory, search_memory
 from backend.tools.notion import notion_create_page, notion_read_page, notion_search
+from backend.tools.plans import update_plan_item
 from backend.tools.rag import embedding, ingest_docs, manage_retriever, vector_search
 from backend.tools.slack import slack_list_channels, slack_read, slack_send
 from backend.tools.web import fetch_url, web_search
-from backend.tools.workspace import bucket_summary, workspace_describe, workspace_list
+from backend.tools.workspace import (
+    bucket_summary,
+    get_workbench_context,
+    workspace_describe,
+    workspace_list,
+)
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
@@ -107,7 +114,14 @@ FS_TOOLS: list[BaseTool] = [
 MEMORY_TOOLS: list[BaseTool] = [save_memory, get_memory, delete_memory, search_memory]
 
 #: Ferramentas de workspace e manifests (B6)
-WORKSPACE_TOOLS: list[BaseTool] = [workspace_describe, workspace_list, bucket_summary]
+WORKSPACE_TOOLS: list[BaseTool] = [
+    workspace_describe,
+    workspace_list,
+    bucket_summary,
+    get_workbench_context,
+    update_plan_item,
+    create_background_task,
+]
 
 #: Ferramentas do Context Graph (grafo de conhecimento do workspace)
 GRAPH_TOOLS: list[BaseTool] = [
@@ -174,6 +188,9 @@ for _t in [
     workspace_describe,
     workspace_list,
     bucket_summary,
+    get_workbench_context,
+    update_plan_item,
+    create_background_task,
     # G3 — Git + GitHub CLI
     git_status,
     git_log,

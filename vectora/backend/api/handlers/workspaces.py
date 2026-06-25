@@ -1038,7 +1038,7 @@ async def workspace_git_diff(workspace_id: str, response: Response) -> DiffSumma
         return DiffSummary(is_git_repo=False, files=[])
 
     try:
-        repo = Repo(ws.cwd, search_parent_directories=False)
+        repo = Repo(ws.cwd, search_parent_directories=True)
     except (InvalidGitRepositoryError, NoSuchPathError):
         return DiffSummary(is_git_repo=False, files=[])
 
@@ -1127,7 +1127,7 @@ async def workspace_git_diff_file(
         return DiffFileResponse(path=path, hunks=[])
 
     try:
-        repo = Repo(ws.cwd, search_parent_directories=False)
+        repo = Repo(ws.cwd, search_parent_directories=True)
     except (InvalidGitRepositoryError, NoSuchPathError):
         return DiffFileResponse(path=path, hunks=[])
 
@@ -1203,7 +1203,7 @@ def _open_workspace_repo(workspace_id: str) -> Any | None:
         ws = workspace_registry.get(workspace_id)
         if ws is None:
             return None
-        return Repo(ws.cwd, search_parent_directories=False)
+        return Repo(ws.cwd, search_parent_directories=True)
     except Exception:
         return None
 

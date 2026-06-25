@@ -16,7 +16,6 @@ import { MessageList } from "./message-list";
 import { EmptyStateHeader } from "./features/empty-state-header";
 import { ChatInput } from "./chat-input";
 import type { AgentConfig } from "@/components/layout/agent-settings";
-import { VECTORA_API_URL } from "@/lib/constants/api";
 import {
   generateTitle,
   getHistory,
@@ -452,14 +451,6 @@ export function ChatInterface({
       // This prevents race conditions where history reload overwrites trace URLs
       if (hasSentMessageRef.current === currentThreadId) {
         console.log("Skipping reload - we just sent a message on this thread");
-        uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
-        return;
-      }
-
-      if (!VECTORA_API_URL) {
-        console.error(
-          "Missing NEXT_PUBLIC_VECTORA_API_URL; cannot load thread history",
-        );
         uiDispatch({ type: "SET_LOADING_THREAD", payload: false });
         return;
       }

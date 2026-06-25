@@ -82,6 +82,8 @@ export default defineConfig({
           /^\/vectora\./,
           /^\/admin\//,
           /^\/workspaces\b/,
+          /^\/sessions\b/,
+          /^\/threads\b/,
           /^\/plugins\b/,
           /^\/skills\b/,
           /^\/memory\b/,
@@ -90,6 +92,7 @@ export default defineConfig({
           /^\/artifacts\b/,
           /^\/health\b/,
           /^\/metrics\b/,
+          /^\/mcp\b/,
         ],
         runtimeCaching: [
           {
@@ -115,6 +118,7 @@ export default defineConfig({
       "/admin": apiProxy,
       "/workspaces": apiProxy,
       "/threads": apiProxy,
+      "/sessions": apiProxy,
       "/plugins": apiProxy,
       "/skills": apiProxy,
       "/license": apiProxy,
@@ -123,6 +127,7 @@ export default defineConfig({
       "/artifacts": apiProxy,
       "/health": apiProxy,
       "/metrics": apiProxy,
+      "/mcp": apiProxy,
     },
   },
   resolve: {
