@@ -116,4 +116,179 @@ describe("rag-jobs-store", () => {
     expect("jix" in useRagJobsStore.getState().jobs).toBe(false);
     vi.useRealTimers();
   });
+
+  it("start devolve null quando o fetch lança", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("network");
+      }),
+    );
+    const r = await useRagJobsStore.getState().start("ws1", "/x", "all");
+    expect(r).toBeNull();
+    expect(Object.keys(useRagJobsStore.getState().jobs)).toHaveLength(0);
+  });
+
+  it("start envia path e file_types no body do POST", async () => {
+    const fetchMock = vi.fn((..._a: unknown[]) =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({
+          job_id: "j",
+          total_chunks: 3,
+          status: "no_files",
+        }),
+      } as Response),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await useRagJobsStore.getState().start("ws1", "/p", "markdown");
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.path).toBe("/p");
+    expect(body.file_types).toBe("markdown");
+  });
+
+  it("start define total a partir de total_chunks", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          ({
+            ok: true,
+            json: async () => ({
+              job_id: "jt",
+              total_chunks: 7,
+              status: "no_files",
+            }),
+          }) as Response,
+      ),
+    );
+    await useRagJobsStore.getState().start("ws1", "/p", "all");
+    expect(useRagJobsStore.getState().jobs.jt.total).toBe(7);
+  });
+
+  function _pollFetch(pollBody: object) {
+    return vi.fn(async (url: string) => {
+      if (String(url).includes("/rag/ingest")) {
+        return {
+          ok: true,
+          json: async () => ({
+            job_id: "jp",
+            total_chunks: 5,
+            status: "indexing",
+          }),
+        } as Response;
+      }
+      return { ok: true, json: async () => pollBody } as Response;
+    });
+  }
+
+  it("poll atualiza processed/failed/status", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      _pollFetch({ total: 5, processed: 2, failed: 1, status: "indexing" }),
+    );
+    await useRagJobsStore.getState().start("ws1", "/d", "code");
+    await vi.advanceTimersByTimeAsync(1300);
+    const j = useRagJobsStore.getState().jobs.jp;
+    expect(j.processed).toBe(2);
+    expect(j.failed).toBe(1);
+    useRagJobsStore.getState().dismiss("jp");
+    vi.useRealTimers();
+  });
+
+  it("poll done para o timer", async () => {
+    vi.useFakeTimers();
+    const fetchMock = _pollFetch({
+      total: 5,
+      processed: 5,
+      failed: 0,
+      status: "done",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await useRagJobsStore.getState().start("ws1", "/d", "code");
+    await vi.advanceTimersByTimeAsync(1300);
+    const callsAfter = fetchMock.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(fetchMock.mock.calls.length).toBe(callsAfter);
+    expect(useRagJobsStore.getState().jobs.jp.status).toBe("done");
+    vi.useRealTimers();
+  });
+
+  it("poll paused para o timer e guarda o motivo", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      _pollFetch({
+        total: 5,
+        processed: 3,
+        failed: 0,
+        status: "paused",
+        error_reason: "Cohere 429",
+      }),
+    );
+    await useRagJobsStore.getState().start("ws1", "/d", "code");
+    await vi.advanceTimersByTimeAsync(1300);
+    const j = useRagJobsStore.getState().jobs.jp;
+    expect(j.status).toBe("paused");
+    expect(j.errorReason).toBe("Cohere 429");
+    vi.useRealTimers();
+  });
+
+  it("poll failed para o timer", async () => {
+    vi.useFakeTimers();
+    const fetchMock = _pollFetch({
+      total: 5,
+      processed: 1,
+      failed: 4,
+      status: "failed",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await useRagJobsStore.getState().start("ws1", "/d", "code");
+    await vi.advanceTimersByTimeAsync(1300);
+    const callsAfter = fetchMock.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(fetchMock.mock.calls.length).toBe(callsAfter);
+    vi.useRealTimers();
+  });
+
+  it("poll com resposta não-ok mantém o job inalterado", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (String(url).includes("/rag/ingest")) {
+          return {
+            ok: true,
+            json: async () => ({
+              job_id: "jp",
+              total_chunks: 5,
+              status: "indexing",
+            }),
+          } as Response;
+        }
+        return { ok: false } as Response;
+      }),
+    );
+    await useRagJobsStore.getState().start("ws1", "/d", "code");
+    await vi.advanceTimersByTimeAsync(1300);
+    expect(useRagJobsStore.getState().jobs.jp.status).toBe("indexing");
+    useRagJobsStore.getState().dismiss("jp");
+    vi.useRealTimers();
+  });
+
+  it("dismiss antes do poll não recria o job", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      _pollFetch({ total: 5, processed: 5, failed: 0, status: "indexing" }),
+    );
+    await useRagJobsStore.getState().start("ws1", "/d", "code");
+    useRagJobsStore.getState().dismiss("jp");
+    await vi.advanceTimersByTimeAsync(4000);
+    expect("jp" in useRagJobsStore.getState().jobs).toBe(false);
+    vi.useRealTimers();
+  });
 });

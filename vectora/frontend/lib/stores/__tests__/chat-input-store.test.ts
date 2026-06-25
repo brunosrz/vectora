@@ -26,6 +26,39 @@ describe("chat-input-store — injeção cross-component", () => {
     useChatInputStore.getState().consumeMention();
     expect(useChatInputStore.getState().mention).toBeNull();
   });
+
+  it("pushDraft sobrescreve o draft anterior", () => {
+    const s = useChatInputStore.getState();
+    s.pushDraft("primeiro");
+    s.pushDraft("segundo");
+    expect(useChatInputStore.getState().draft).toBe("segundo");
+  });
+
+  it("pushDraft aceita string vazia", () => {
+    useChatInputStore.getState().pushDraft("");
+    expect(useChatInputStore.getState().draft).toBe("");
+  });
+
+  it("pushMention sobrescreve a mention anterior", () => {
+    const s = useChatInputStore.getState();
+    s.pushMention("a.ts");
+    s.pushMention("b.ts");
+    expect(useChatInputStore.getState().mention).toBe("b.ts");
+  });
+
+  it("consumeDraft com draft já nulo é no-op", () => {
+    useChatInputStore.getState().consumeDraft();
+    expect(useChatInputStore.getState().draft).toBeNull();
+  });
+
+  it("draft e mention são independentes", () => {
+    const s = useChatInputStore.getState();
+    s.pushDraft("texto");
+    s.pushMention("path");
+    s.consumeDraft();
+    expect(useChatInputStore.getState().draft).toBeNull();
+    expect(useChatInputStore.getState().mention).toBe("path");
+  });
 });
 
 describe("chat-input-store — rascunhos por thread", () => {
@@ -67,5 +100,59 @@ describe("chat-input-store — rascunhos por thread", () => {
     const before = useChatInputStore.getState().drafts;
     useChatInputStore.getState().clearDraft("inexistente");
     expect(useChatInputStore.getState().drafts).toBe(before);
+  });
+
+  it("setDraft sobrescreve o rascunho da mesma thread", () => {
+    const s = useChatInputStore.getState();
+    s.setDraft("t1", "antigo");
+    s.setDraft("t1", "novo");
+    expect(useChatInputStore.getState().getDraft("t1")).toBe("novo");
+  });
+
+  it("setDraft vazio em thread inexistente é no-op (mesmo estado)", () => {
+    const before = useChatInputStore.getState().drafts;
+    useChatInputStore.getState().setDraft("ghost", "");
+    expect(useChatInputStore.getState().drafts).toBe(before);
+  });
+
+  it("setDraft preserva os rascunhos das outras threads", () => {
+    const s = useChatInputStore.getState();
+    s.setDraft("t1", "A");
+    s.setDraft("t2", "B");
+    s.setDraft("t1", "A2");
+    expect(useChatInputStore.getState().getDraft("t2")).toBe("B");
+  });
+
+  it("clearDraft de uma thread não afeta as outras", () => {
+    const s = useChatInputStore.getState();
+    s.setDraft("t1", "A");
+    s.setDraft("t2", "B");
+    s.clearDraft("t1");
+    expect(useChatInputStore.getState().getDraft("t1")).toBe("");
+    expect(useChatInputStore.getState().getDraft("t2")).toBe("B");
+  });
+
+  it("suporta múltiplos rascunhos simultâneos", () => {
+    const s = useChatInputStore.getState();
+    for (let i = 0; i < 5; i++) s.setDraft(`t${i}`, `draft ${i}`);
+    expect(Object.keys(useChatInputStore.getState().drafts)).toHaveLength(5);
+    expect(useChatInputStore.getState().getDraft("t3")).toBe("draft 3");
+  });
+
+  it("getDraft volta a vazio após clearDraft", () => {
+    const s = useChatInputStore.getState();
+    s.setDraft("t1", "algo");
+    expect(useChatInputStore.getState().getDraft("t1")).toBe("algo");
+    s.clearDraft("t1");
+    expect(useChatInputStore.getState().getDraft("t1")).toBe("");
+  });
+
+  it("setDraft vazio remove só a thread alvo", () => {
+    const s = useChatInputStore.getState();
+    s.setDraft("t1", "A");
+    s.setDraft("t2", "B");
+    s.setDraft("t1", "");
+    expect("t1" in useChatInputStore.getState().drafts).toBe(false);
+    expect(useChatInputStore.getState().getDraft("t2")).toBe("B");
   });
 });

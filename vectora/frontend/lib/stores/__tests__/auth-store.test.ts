@@ -38,6 +38,24 @@ describe("auth-store — síncrono", () => {
     expect(useAuthStore.getState().user).toBeNull();
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
+
+  it("isAuthenticated começa false", () => {
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(useAuthStore.getState().user).toBeNull();
+  });
+
+  it("setUser substitui o usuário anterior", () => {
+    useAuthStore.getState().setUser(USER);
+    const other = { id: "u2", email: "c@d.com" } as unknown as AuthUser;
+    useAuthStore.getState().setUser(other);
+    expect(useAuthStore.getState().user).toEqual(other);
+  });
+
+  it("clearUser é idempotente quando já está nulo", () => {
+    useAuthStore.getState().clearUser();
+    useAuthStore.getState().clearUser();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
 });
 
 describe("auth-store — hydrate", () => {
@@ -84,5 +102,108 @@ describe("auth-store — hydrate", () => {
     await useAuthStore.getState().hydrate();
     // Não muda nada — cache anterior continua válido.
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+
+  it("chama /auth/me com credentials include", async () => {
+    const fetchMock = vi.fn((..._args: unknown[]) =>
+      Promise.resolve(jsonRes(USER)),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await useAuthStore.getState().hydrate();
+    const [url, opts] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/auth/me");
+    expect((opts as RequestInit).credentials).toBe("include");
+  });
+
+  it("200 seta o objeto user exato do backend", async () => {
+    const fresh = { id: "u9", email: "z@z.com" } as unknown as AuthUser;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonRes(fresh)),
+    );
+    await useAuthStore.getState().hydrate();
+    expect(useAuthStore.getState().user).toEqual(fresh);
+  });
+
+  it("403 (não-401) limpa a sessão", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonRes(null, false, 403)),
+    );
+    useAuthStore.getState().setUser(USER);
+    await useAuthStore.getState().hydrate();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it("500 limpa a sessão", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonRes(null, false, 500)),
+    );
+    useAuthStore.getState().setUser(USER);
+    await useAuthStore.getState().hydrate();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it("401 → refresh ok → segundo /auth/me falha → limpa", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonRes(null, false, 401)) // /auth/me
+      .mockResolvedValueOnce(jsonRes({}, true)) // /auth/refresh ok
+      .mockResolvedValueOnce(jsonRes(null, false, 401)); // /auth/me de novo falha
+    vi.stubGlobal("fetch", fetchMock);
+    useAuthStore.getState().setUser(USER);
+    await useAuthStore.getState().hydrate();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it("401 → refresh lança → limpa (catch interno)", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonRes(null, false, 401))
+      .mockRejectedValueOnce(new Error("refresh blew up"));
+    vi.stubGlobal("fetch", fetchMock);
+    useAuthStore.getState().setUser(USER);
+    await useAuthStore.getState().hydrate();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it("401 → refresh é POST com credentials include", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonRes(null, false, 401))
+      .mockResolvedValueOnce(jsonRes({}, true))
+      .mockResolvedValueOnce(jsonRes(USER, true));
+    vi.stubGlobal("fetch", fetchMock);
+    await useAuthStore.getState().hydrate();
+    const refreshCall = fetchMock.mock.calls.find((c) =>
+      String(c[0]).includes("/auth/refresh"),
+    );
+    expect((refreshCall![1] as RequestInit).method).toBe("POST");
+    expect((refreshCall![1] as RequestInit).credentials).toBe("include");
+  });
+
+  it("401 → refresh ok seta o user do segundo /auth/me", async () => {
+    const refreshed = { id: "ur", email: "r@r.com" } as unknown as AuthUser;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonRes(null, false, 401))
+      .mockResolvedValueOnce(jsonRes({}, true))
+      .mockResolvedValueOnce(jsonRes(refreshed, true));
+    vi.stubGlobal("fetch", fetchMock);
+    await useAuthStore.getState().hydrate();
+    expect(useAuthStore.getState().user).toEqual(refreshed);
+  });
+
+  it("offline com sessão nula permanece não autenticado", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("down");
+      }),
+    );
+    await useAuthStore.getState().hydrate();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(useAuthStore.getState().user).toBeNull();
   });
 });
