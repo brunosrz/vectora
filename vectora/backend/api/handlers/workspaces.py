@@ -708,6 +708,11 @@ async def git_init_workspace_rest(
     return await git_init_workspace(request, body)
 
 
+@view_router.get("/active", response_model=ActiveWorkspaceResponse)
+async def get_active_workspace_rest(request: Request) -> ActiveWorkspaceResponse:
+    return await get_active_workspace(request)
+
+
 @view_router.post("/test-ssh", response_model=TestSshResponse)
 async def test_ssh_rest(body: TestSshRequest, request: Request) -> TestSshResponse:
     return await test_ssh(body, request)

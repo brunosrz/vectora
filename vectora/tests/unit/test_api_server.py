@@ -140,6 +140,14 @@ class TestRoutes:
         paths = self._route_paths(headless_app)
         assert "/vectora.chat.v1.ChatService/GetTools" in paths
 
+    def test_workspaces_active_route_exists(self, headless_app):
+        paths = self._route_paths(headless_app)
+        assert "/workspaces/active" in paths, (
+            "GET /workspaces/active ausente — GitStatusBadge chama esse "
+            "endpoint a cada 5 s; sem a rota o proxy encaminha para o Vite "
+            "e falha com 502."
+        )
+
     def test_thread_routes_exist(self, headless_app):
         paths = self._route_paths(headless_app)
         for route in (
@@ -155,6 +163,31 @@ class TestRoutes:
         paths = self._route_paths(headless_app)
         assert "/threads/share" in paths
         assert "/threads/share/{token}" in paths
+
+
+# ---------------------------------------------------------------------------
+# /workspaces/active — alias REST-friendly (sem auth required = false)
+# ---------------------------------------------------------------------------
+
+
+class TestWorkspacesActive:
+    def test_returns_200(self, client):
+        res = client.get("/workspaces/active")
+        assert res.status_code == 200
+
+    def test_response_has_workspace_key(self, client):
+        body = client.get("/workspaces/active").json()
+        assert "workspace" in body, (
+            "Resposta não tem campo 'workspace' — GitStatusBadge acessa "
+            "'data.workspace?.git_current_branch'."
+        )
+
+    def test_workspace_is_none_or_object(self, client):
+        body = client.get("/workspaces/active").json()
+        ws = body["workspace"]
+        if ws is not None:
+            assert "id" in ws
+            assert "git_current_branch" in ws or ws.get("is_git_repo") is False
 
 
 # ---------------------------------------------------------------------------

@@ -39,9 +39,10 @@ export function GitStatusBadge() {
       const res = await fetch("/workspaces/active");
       if (!res.ok) return;
       const data = await res.json();
-      if (data?.git_current_branch) {
+      const ws = data?.workspace;
+      if (ws?.git_current_branch) {
         setGitStatus({
-          branch: data.git_current_branch,
+          branch: ws.git_current_branch,
           clean: true, // API básica — status completo exige endpoint dedicado
           ahead: 0,
           behind: 0,
