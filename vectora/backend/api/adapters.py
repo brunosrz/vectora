@@ -26,6 +26,7 @@ from backend.api.schemas import (
     RagCitationEvent,
     StreamChatEventPayload,
     TokenEvent,
+    ToolActivityEvent,
     ToolCallEvent,
     ToolResultEvent,
     WorkbenchInvalidateEvent,
@@ -98,6 +99,22 @@ def _get_tool_meta(tool_name: str) -> dict:
         except Exception:
             pass
     return _tool_meta_cache.get(tool_name, _DEFAULT_META)
+
+
+def _args_preview(tool_input: dict | str) -> str:
+    """Gera preview curto (≤80 chars) dos args para exibir no AgentStatusLine."""
+    if isinstance(tool_input, dict):
+        # Prefere campos semânticos: path, query, command, url, name, file_path
+        for key in ("path", "file_path", "query", "command", "url", "name"):
+            val = tool_input.get(key)
+            if val and isinstance(val, str):
+                preview = val
+                break
+        else:
+            preview = ", ".join(f"{k}={v}" for k, v in list(tool_input.items())[:2])
+    else:
+        preview = str(tool_input)
+    return preview[:80]
 
 
 # ---------------------------------------------------------------------------
@@ -314,6 +331,8 @@ def adapt_stream(
         yield encode_event(ThreadEvent(thread_id=thread_id))
 
         node_start_times: dict[str, float] = {}
+        tool_start_times: dict[str, float] = {}
+        tool_args_previews: dict[str, str] = {}
         import time
 
         # Multi-bubble: rastreia o nó que gera tokens para emitir message_break
@@ -388,17 +407,21 @@ def adapt_stream(
                     if workspace_id:
                         await _record_turn_checkpoint(workspace_id, thread_id, event)
 
-                payload = langgraph_event_to_payload(event)
-
-                # Após tool_end, emite WorkbenchInvalidateEvent para tabs declaradas
-                # nos metadados da tool (campo "invalidates").
-                if kind == "on_tool_end":
-                    meta = _get_tool_meta(name)
-                    tabs = meta.get("invalidates", [])
-                    if tabs:
-                        yield encode_event(
-                            WorkbenchInvalidateEvent(tabs=tabs, tool_name=name)
+                # ── ToolActivityEvent: status line ao vivo ────────────────
+                # Emite antes do ToolCallEvent (start) e após ToolResultEvent (end).
+                if kind == "on_tool_start":
+                    tool_input = data.get("input", {})
+                    preview = _args_preview(tool_input)
+                    run_id: str = event.get("run_id", name)
+                    tool_start_times[run_id] = time.monotonic()
+                    tool_args_previews[run_id] = preview
+                    yield encode_event(
+                        ToolActivityEvent(
+                            tool_name=name, args_preview=preview, elapsed_ms=None
                         )
+                    )
+
+                payload = langgraph_event_to_payload(event)
 
                 if payload is None:
                     continue
@@ -429,6 +452,27 @@ def adapt_stream(
                         )
 
                 yield encode_event(payload)
+
+                # Após tool_result (payload): emite ToolActivityEvent de fim e
+                # WorkbenchInvalidateEvent. Ordem: result → activity(end) → invalidate.
+                if kind == "on_tool_end":
+                    run_id = event.get("run_id", name)
+                    t0 = tool_start_times.pop(run_id, None)
+                    elapsed = (
+                        int((time.monotonic() - t0) * 1000) if t0 is not None else 0
+                    )
+                    preview = tool_args_previews.pop(run_id, "")
+                    yield encode_event(
+                        ToolActivityEvent(
+                            tool_name=name, args_preview=preview, elapsed_ms=elapsed
+                        )
+                    )
+                    meta = _get_tool_meta(name)
+                    tabs = meta.get("invalidates", [])
+                    if tabs:
+                        yield encode_event(
+                            WorkbenchInvalidateEvent(tabs=tabs, tool_name=name)
+                        )
 
         except Exception as exc:
             logger.exception("adapt_stream: erro no stream LangGraph")

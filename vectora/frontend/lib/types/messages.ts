@@ -45,6 +45,8 @@ export interface Message {
   currentNodeLabel?: string;
   /** Durações por nó, acumuladas durante o stream (D3) */
   nodeDurations?: { node: string; label: string; duration_ms: number }[];
+  /** Tool ativa no momento (FASE 3.1) — limpo quando tool termina */
+  activeTool?: { name: string; argsPreview: string; elapsedMs?: number } | null;
 
   // LangSmith tracing
   runId?: string;

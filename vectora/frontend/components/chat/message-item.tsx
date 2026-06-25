@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { ToolCallRenderer } from "./tool-call-renderer";
+import { AgentStatusLine } from "./agent-status-line";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -1293,6 +1294,10 @@ export const MessageItem = memo(
                       ))}
                     </div>
                   )}
+
+                {message.isThinking && (
+                  <AgentStatusLine activeTool={message.activeTool} />
+                )}
 
                 {message.subgraphOutputs &&
                   message.subgraphOutputs.length > 0 && (

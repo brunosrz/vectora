@@ -704,6 +704,41 @@ async function handleEvent(
       break;
     }
 
+    case "tool_activity": {
+      if (event.elapsed_ms === null) {
+        // Tool iniciou: mostrar na status line
+        setMessages((prev) =>
+          updateMessageInList(prev, assistantMessageId, (m) => ({
+            ...m,
+            activeTool: { name: event.tool_name, argsPreview: event.args_preview },
+          })),
+        );
+      } else {
+        // Tool terminou: registrar elapsed e limpar após breve delay
+        setMessages((prev) =>
+          updateMessageInList(prev, assistantMessageId, (m) => ({
+            ...m,
+            activeTool: {
+              name: event.tool_name,
+              argsPreview: event.args_preview,
+              elapsedMs: event.elapsed_ms ?? undefined,
+            },
+          })),
+        );
+        // Limpa o indicador após 800ms para o usuário ver o tempo
+        setTimeout(() => {
+          setMessages((prev) =>
+            updateMessageInList(prev, assistantMessageId, (m) =>
+              m.activeTool?.name === event.tool_name
+                ? { ...m, activeTool: null }
+                : m,
+            ),
+          );
+        }, 800);
+      }
+      break;
+    }
+
     case "workbench_invalidate": {
       const ws = useWorkspacesStore.getState().getActive();
       if (ws) {

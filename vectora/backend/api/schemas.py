@@ -246,6 +246,20 @@ class WorkbenchInvalidateEvent(BaseModel):
     tool_name: str = ""
 
 
+class ToolActivityEvent(BaseModel):
+    """Status da tool em execução — alimenta o AgentStatusLine no frontend.
+
+    Emitido em ``on_tool_start`` (``elapsed_ms=None``) e em ``on_tool_end``
+    (``elapsed_ms`` preenchido com a duração em ms). O frontend exibe a
+    ferramenta ativa enquanto ``elapsed_ms`` é ``None``; ao receber o evento
+    de fim, atualiza a duração e encerra o indicador.
+    """
+
+    tool_name: str
+    args_preview: str = ""
+    elapsed_ms: int | None = None
+
+
 # ---------------------------------------------------------------------------
 # Envelope de streaming
 # ---------------------------------------------------------------------------
@@ -267,6 +281,7 @@ StreamChatEventPayload = (
     | DoneEvent
     | MessageBreakEvent
     | WorkbenchInvalidateEvent
+    | ToolActivityEvent
 )
 
 _TYPE_MAP: dict[type, str] = {
@@ -283,6 +298,7 @@ _TYPE_MAP: dict[type, str] = {
     DoneEvent: "done",
     MessageBreakEvent: "message_break",
     WorkbenchInvalidateEvent: "workbench_invalidate",
+    ToolActivityEvent: "tool_activity",
 }
 
 
