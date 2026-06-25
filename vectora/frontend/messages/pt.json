@@ -839,6 +839,7 @@
   "heartbreak_empty": "Nenhuma sessão ativa",
   "mode_chat": "Chat",
   "mode_dev": "Dev",
+  "mode_code": "Code",
   "integrations_page_title": "Integrações",
   "integrations_page_subtitle": "Conecte serviços externos ao Vectora",
   "integrations_category_git": "Controle de versão",

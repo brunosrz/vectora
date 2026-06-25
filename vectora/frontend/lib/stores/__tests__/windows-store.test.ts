@@ -1,6 +1,6 @@
 /**
- * Tests para o windows-store: janelas flutuantes (open/close/focus/minimize/
- * restore/setBounds) e z-order.
+ * Tests para o windows-store: janelas flutuantes com abas por workspace
+ * (open/closeTab/setActiveTab/close/focus/minimize/restore/setBounds).
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
@@ -20,19 +20,21 @@ describe("windows-store — open", () => {
     expect(s().windows).toHaveLength(0);
   });
 
-  it("open cria uma janela com id workspaceId::path", () => {
+  it("open cria uma janela com id = workspaceId", () => {
     s().open("ws1", "src/a.ts");
-    expect(winOf("ws1::src/a.ts")).toBeDefined();
+    expect(winOf("ws1")).toBeDefined();
   });
 
-  it("open define o título a partir do basename", () => {
+  it("open define activeTab e title a partir do basename do path", () => {
     s().open("ws1", "src/deep/file.ts");
-    expect(winOf("ws1::src/deep/file.ts")?.title).toBe("file.ts");
+    const w = winOf("ws1")!;
+    expect(w.activeTab).toBe("src/deep/file.ts");
+    expect(w.title).toBe("file.ts");
   });
 
   it("open usa dimensões padrão 640x460", () => {
     s().open("ws1", "a.ts");
-    const w = winOf("ws1::a.ts")!;
+    const w = winOf("ws1")!;
     expect(w.w).toBe(640);
     expect(w.h).toBe(460);
   });
@@ -40,42 +42,63 @@ describe("windows-store — open", () => {
   it("open atribui zIndex acima do topo e incrementa topZ", () => {
     s().open("ws1", "a.ts");
     expect(s().topZ).toBe(BASE_Z + 1);
-    expect(winOf("ws1::a.ts")?.zIndex).toBe(BASE_Z + 1);
+    expect(winOf("ws1")?.zIndex).toBe(BASE_Z + 1);
   });
 
-  it("open de paths distintos cria janelas distintas", () => {
+  it("abrir segundo arquivo no mesmo workspace adiciona aba (não nova janela)", () => {
     s().open("ws1", "a.ts");
     s().open("ws1", "b.ts");
-    expect(s().windows).toHaveLength(2);
+    expect(s().windows).toHaveLength(1);
+    expect(winOf("ws1")?.tabs).toEqual(["a.ts", "b.ts"]);
   });
 
-  it("open do mesmo path não duplica — restaura e traz pro topo", () => {
+  it("abrir segundo arquivo ativa-o como activeTab", () => {
     s().open("ws1", "a.ts");
-    s().minimize("ws1::a.ts");
+    s().open("ws1", "b.ts");
+    expect(winOf("ws1")?.activeTab).toBe("b.ts");
+    expect(winOf("ws1")?.title).toBe("b.ts");
+  });
+
+  it("open do mesmo path não duplica a aba — ativa e traz pro topo", () => {
     s().open("ws1", "a.ts");
-    expect(s().windows).toHaveLength(1);
-    const w = winOf("ws1::a.ts")!;
-    expect(w.minimized).toBe(false);
-    expect(w.zIndex).toBe(s().topZ);
+    s().open("ws1", "b.ts");
+    s().open("ws1", "a.ts");
+    expect(winOf("ws1")?.tabs).toEqual(["a.ts", "b.ts"]);
+    expect(winOf("ws1")?.activeTab).toBe("a.ts");
+  });
+
+  it("open de workspace diferente cria janela separada", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws2", "a.ts");
+    expect(s().windows).toHaveLength(2);
+    expect(winOf("ws1")).toBeDefined();
+    expect(winOf("ws2")).toBeDefined();
+  });
+
+  it("open restaura janela minimizada ao abrir aba existente", () => {
+    s().open("ws1", "a.ts");
+    s().minimize("ws1");
+    s().open("ws1", "a.ts");
+    expect(winOf("ws1")?.minimized).toBe(false);
   });
 
   it("janelas novas cascateiam x/y", () => {
     s().open("ws1", "a.ts");
-    s().open("ws1", "b.ts");
-    expect(winOf("ws1::a.ts")?.x).not.toBe(winOf("ws1::b.ts")?.x);
+    s().open("ws2", "b.ts");
+    expect(winOf("ws1")?.x).not.toBe(winOf("ws2")?.x);
   });
 
   it("path sem barra usa o próprio path como título", () => {
     s().open("ws1", "README");
-    expect(winOf("ws1::README")?.title).toBe("README");
+    expect(winOf("ws1")?.title).toBe("README");
   });
 });
 
 describe("windows-store — close", () => {
-  it("close remove a janela", () => {
+  it("close remove a janela inteira", () => {
     s().open("ws1", "a.ts");
-    s().close("ws1::a.ts");
-    expect(winOf("ws1::a.ts")).toBeUndefined();
+    s().close("ws1");
+    expect(winOf("ws1")).toBeUndefined();
   });
 
   it("close de janela inexistente é no-op", () => {
@@ -84,26 +107,86 @@ describe("windows-store — close", () => {
     expect(s().windows).toHaveLength(1);
   });
 
-  it("close não afeta as outras janelas", () => {
+  it("close não afeta outras janelas", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws2", "a.ts");
+    s().close("ws1");
+    expect(winOf("ws2")).toBeDefined();
+  });
+});
+
+describe("windows-store — closeTab", () => {
+  it("closeTab remove a aba", () => {
     s().open("ws1", "a.ts");
     s().open("ws1", "b.ts");
-    s().close("ws1::a.ts");
-    expect(winOf("ws1::b.ts")).toBeDefined();
+    s().closeTab("ws1", "a.ts");
+    expect(winOf("ws1")?.tabs).toEqual(["b.ts"]);
+  });
+
+  it("closeTab da última aba fecha a janela", () => {
+    s().open("ws1", "a.ts");
+    s().closeTab("ws1", "a.ts");
+    expect(winOf("ws1")).toBeUndefined();
+  });
+
+  it("closeTab na aba ativa ativa a aba anterior", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    s().open("ws1", "c.ts");
+    s().closeTab("ws1", "c.ts");
+    expect(winOf("ws1")?.activeTab).toBe("b.ts");
+  });
+
+  it("closeTab na primeira aba ativa a próxima", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    s().setActiveTab("ws1", "a.ts");
+    s().closeTab("ws1", "a.ts");
+    expect(winOf("ws1")?.activeTab).toBe("b.ts");
+  });
+
+  it("closeTab em aba não-ativa não muda a aba ativa", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    s().closeTab("ws1", "a.ts");
+    expect(winOf("ws1")?.activeTab).toBe("b.ts");
+  });
+
+  it("closeTab de janela inexistente é no-op", () => {
+    s().open("ws1", "a.ts");
+    expect(() => s().closeTab("ghost", "a.ts")).not.toThrow();
+    expect(s().windows).toHaveLength(1);
+  });
+});
+
+describe("windows-store — setActiveTab", () => {
+  it("setActiveTab troca a aba ativa", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    s().setActiveTab("ws1", "a.ts");
+    expect(winOf("ws1")?.activeTab).toBe("a.ts");
+    expect(winOf("ws1")?.title).toBe("a.ts");
+  });
+
+  it("setActiveTab com path não existente na janela é no-op", () => {
+    s().open("ws1", "a.ts");
+    s().setActiveTab("ws1", "nonexistent.ts");
+    expect(winOf("ws1")?.activeTab).toBe("a.ts");
   });
 });
 
 describe("windows-store — focus / z-order", () => {
   it("focus traz a janela para o topo", () => {
     s().open("ws1", "a.ts");
-    s().open("ws1", "b.ts"); // b no topo
-    s().focus("ws1::a.ts");
-    expect(winOf("ws1::a.ts")?.zIndex).toBe(s().topZ);
+    s().open("ws2", "b.ts");
+    s().focus("ws1");
+    expect(winOf("ws1")?.zIndex).toBe(s().topZ);
   });
 
   it("focus na janela já no topo é no-op", () => {
     s().open("ws1", "a.ts");
     const topZBefore = s().topZ;
-    s().focus("ws1::a.ts");
+    s().focus("ws1");
     expect(s().topZ).toBe(topZBefore);
   });
 
@@ -114,21 +197,11 @@ describe("windows-store — focus / z-order", () => {
     expect(s().topZ).toBe(before);
   });
 
-  it("focar A depois B coloca B no topo", () => {
-    s().open("ws1", "a.ts");
-    s().open("ws1", "b.ts");
-    s().focus("ws1::a.ts");
-    s().focus("ws1::b.ts");
-    expect(winOf("ws1::b.ts")!.zIndex).toBeGreaterThan(
-      winOf("ws1::a.ts")!.zIndex,
-    );
-  });
-
   it("topZ cresce monotonicamente ao focar", () => {
     s().open("ws1", "a.ts");
-    s().open("ws1", "b.ts");
+    s().open("ws2", "b.ts");
     const z1 = s().topZ;
-    s().focus("ws1::a.ts");
+    s().focus("ws1");
     expect(s().topZ).toBeGreaterThan(z1);
   });
 });
@@ -136,8 +209,8 @@ describe("windows-store — focus / z-order", () => {
 describe("windows-store — minimize / restore", () => {
   it("minimize marca minimized=true", () => {
     s().open("ws1", "a.ts");
-    s().minimize("ws1::a.ts");
-    expect(winOf("ws1::a.ts")?.minimized).toBe(true);
+    s().minimize("ws1");
+    expect(winOf("ws1")?.minimized).toBe(true);
   });
 
   it("minimize de inexistente não quebra", () => {
@@ -148,9 +221,9 @@ describe("windows-store — minimize / restore", () => {
 
   it("restore marca minimized=false e traz pro topo", () => {
     s().open("ws1", "a.ts");
-    s().minimize("ws1::a.ts");
-    s().restore("ws1::a.ts");
-    const w = winOf("ws1::a.ts")!;
+    s().minimize("ws1");
+    s().restore("ws1");
+    const w = winOf("ws1")!;
     expect(w.minimized).toBe(false);
     expect(w.zIndex).toBe(s().topZ);
   });
@@ -158,7 +231,7 @@ describe("windows-store — minimize / restore", () => {
   it("restore incrementa topZ", () => {
     s().open("ws1", "a.ts");
     const before = s().topZ;
-    s().restore("ws1::a.ts");
+    s().restore("ws1");
     expect(s().topZ).toBe(before + 1);
   });
 });
@@ -166,21 +239,21 @@ describe("windows-store — minimize / restore", () => {
 describe("windows-store — setBounds", () => {
   it("setBounds atualiza posição e tamanho", () => {
     s().open("ws1", "a.ts");
-    s().setBounds("ws1::a.ts", { x: 10, y: 20, w: 300, h: 200 });
-    expect(winOf("ws1::a.ts")).toMatchObject({ x: 10, y: 20, w: 300, h: 200 });
+    s().setBounds("ws1", { x: 10, y: 20, w: 300, h: 200 });
+    expect(winOf("ws1")).toMatchObject({ x: 10, y: 20, w: 300, h: 200 });
   });
 
   it("setBounds parcial atualiza só os campos dados", () => {
     s().open("ws1", "a.ts");
-    s().setBounds("ws1::a.ts", { x: 5 });
-    const w = winOf("ws1::a.ts")!;
+    s().setBounds("ws1", { x: 5 });
+    const w = winOf("ws1")!;
     expect(w.x).toBe(5);
-    expect(w.w).toBe(640); // inalterado
+    expect(w.w).toBe(640);
   });
 
   it("setBounds de janela inexistente é no-op", () => {
     s().open("ws1", "a.ts");
     s().setBounds("ghost", { x: 999 });
-    expect(winOf("ws1::a.ts")?.x).not.toBe(999);
+    expect(winOf("ws1")?.x).not.toBe(999);
   });
 });

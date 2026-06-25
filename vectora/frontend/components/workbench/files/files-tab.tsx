@@ -735,7 +735,7 @@ export function FilesTab({ threadId, onAddToContext }: FilesTabProps) {
               <>
                 <PinnedSection
                   threadId={threadId}
-                  onOpenFile={handleOpenFile}
+                  workspaceId={wsId}
                   onAddToContext={onAddToContext}
                 />
 

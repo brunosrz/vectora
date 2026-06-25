@@ -50,7 +50,7 @@ export const SidebarModeToggle = memo(function SidebarModeToggle() {
               }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
-              {m.mode_dev()}
+              {m.mode_code()}
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">{m.chat_mode_disable()}</TooltipContent>

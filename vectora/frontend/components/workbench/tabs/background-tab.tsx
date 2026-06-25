@@ -126,8 +126,7 @@ export function BackgroundTab({ threadId }: { threadId: string }) {
 
   return (
     <div className="h-full overflow-y-auto p-3 space-y-4 text-xs">
-      <div className="flex items-center justify-between">
-        <span className="font-medium">{m.background_tasks_title()}</span>
+      <div className="flex justify-end">
         <button
           onClick={() => setShowForm((v) => !v)}
           className="flex items-center gap-1 px-2 py-1 rounded-md text-primary hover:bg-muted/50 transition-colors"

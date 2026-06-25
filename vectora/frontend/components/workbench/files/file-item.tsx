@@ -1,4 +1,4 @@
-import { AppWindow, AtSign, Pencil, Pin, Trash2 } from "lucide-react";
+import { AtSign, Pencil, Pin, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { FileIcon } from "@/components/icons/file-icon";
@@ -85,7 +85,7 @@ export function FileItem({
         />
       ) : (
         <button
-          onClick={() => onOpenFile(entry.path)}
+          onClick={() => openWindow(workspaceId, entry.path)}
           onDoubleClick={() => {
             if (onRename) {
               setRenameValue(entry.name);
@@ -112,14 +112,6 @@ export function FileItem({
             <AtSign className="w-3 h-3" />
           </button>
         )}
-        <button
-          onClick={() => openWindow(workspaceId, entry.path)}
-          className="p-0.5 rounded text-muted-foreground hover:text-foreground"
-          aria-label={m.window_open_as_window()}
-          title={m.window_open_as_window()}
-        >
-          <AppWindow className="w-3 h-3" />
-        </button>
         {onRename && !renaming && (
           <button
             onClick={() => {

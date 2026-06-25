@@ -1,20 +1,24 @@
 /**
  * windows-store — janelas flutuantes da "workstation".
  *
- * Cada arquivo aberto como app vira uma janela (`<Rnd>`) que flutua sobre todo
- * o Vectora, com posição/tamanho/minimização/z-order persistidos por usuário
- * (chave `vectora-windows-{user_id}`). O conteúdo (FileViewer) é remontado a
- * partir de `{workspaceId, path}` — nada de DOM persistido.
+ * Uma janela por workspace (id = workspaceId). Cada janela suporta múltiplas
+ * abas (tabs). Abrir um arquivo já aberto na mesma janela apenas ativa a aba;
+ * abrir um arquivo novo adiciona uma aba. Fechar a última aba fecha a janela.
+ * Posição/tamanho/minimização persists por usuário em localStorage.
  */
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 export interface FileWindowState {
+  /** workspaceId — uma janela por workspace */
   id: string;
   workspaceId: string;
-  path: string;
-  /** Nome curto exibido na barra de título e no dock. */
+  /** Caminhos de arquivo abertos como abas (na ordem de abertura). */
+  tabs: string[];
+  /** Aba atualmente visível. */
+  activeTab: string;
+  /** Basename da aba ativa, exibido na barra de título e no dock. */
   title: string;
   x: number;
   y: number;
@@ -29,8 +33,15 @@ interface WindowsState {
   /** Maior zIndex já atribuído (cresce ao focar). */
   topZ: number;
 
+  /** Abre path na janela do workspace. Cria a janela se não existir, ou
+   * adiciona uma aba se a janela já existir. */
   open: (workspaceId: string, path: string) => void;
+  /** Fecha a janela inteira (todas as abas). */
   close: (id: string) => void;
+  /** Remove uma aba. Se for a última, fecha a janela. */
+  closeTab: (id: string, path: string) => void;
+  /** Ativa uma aba existente na janela. */
+  setActiveTab: (id: string, path: string) => void;
   focus: (id: string) => void;
   minimize: (id: string) => void;
   restore: (id: string) => void;
@@ -42,8 +53,8 @@ interface WindowsState {
 
 const BASE_Z = 100;
 
-function windowId(workspaceId: string, path: string): string {
-  return `${workspaceId}::${path}`;
+function basename(path: string): string {
+  return path.split(/[/\\]/).pop() || path;
 }
 
 export const useWindowsStore = create<WindowsState>()(
@@ -54,25 +65,38 @@ export const useWindowsStore = create<WindowsState>()(
 
       open: (workspaceId, path) =>
         set((s) => {
-          const id = windowId(workspaceId, path);
+          const id = workspaceId;
           const z = s.topZ + 1;
           const existing = s.windows.find((w) => w.id === id);
+
           if (existing) {
-            // Já aberta: restaura, foca e traz pro topo.
+            const tabs = existing.tabs.includes(path)
+              ? existing.tabs
+              : [...existing.tabs, path];
             return {
               topZ: z,
               windows: s.windows.map((w) =>
-                w.id === id ? { ...w, minimized: false, zIndex: z } : w,
+                w.id === id
+                  ? {
+                      ...w,
+                      tabs,
+                      activeTab: path,
+                      title: basename(path),
+                      minimized: false,
+                      zIndex: z,
+                    }
+                  : w,
               ),
             };
           }
+
           const count = s.windows.length;
           const next: FileWindowState = {
             id,
             workspaceId,
-            path,
-            title: path.split("/").pop() || path,
-            // Cascata leve para janelas novas não empilharem exatamente.
+            tabs: [path],
+            activeTab: path,
+            title: basename(path),
             x: 80 + (count % 6) * 32,
             y: 80 + (count % 6) * 32,
             w: 640,
@@ -85,6 +109,36 @@ export const useWindowsStore = create<WindowsState>()(
 
       close: (id) =>
         set((s) => ({ windows: s.windows.filter((w) => w.id !== id) })),
+
+      closeTab: (id, path) =>
+        set((s) => {
+          const win = s.windows.find((w) => w.id === id);
+          if (!win) return s;
+          const tabs = win.tabs.filter((t) => t !== path);
+          if (tabs.length === 0) {
+            return { windows: s.windows.filter((w) => w.id !== id) };
+          }
+          const activeTab =
+            win.activeTab === path
+              ? (tabs[Math.max(0, win.tabs.indexOf(path) - 1)] ?? tabs[0])
+              : win.activeTab;
+          return {
+            windows: s.windows.map((w) =>
+              w.id === id
+                ? { ...w, tabs, activeTab, title: basename(activeTab) }
+                : w,
+            ),
+          };
+        }),
+
+      setActiveTab: (id, path) =>
+        set((s) => ({
+          windows: s.windows.map((w) =>
+            w.id === id && w.tabs.includes(path)
+              ? { ...w, activeTab: path, title: basename(path) }
+              : w,
+          ),
+        })),
 
       focus: (id) =>
         set((s) => {

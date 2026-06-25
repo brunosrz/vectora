@@ -1,6 +1,7 @@
 import { AtSign, Pin, PinOff } from "lucide-react";
 
 import { useWorkbenchStore } from "@/lib/stores/workbench-store";
+import { useWindowsStore } from "@/lib/stores/windows-store";
 import { m } from "@/lib/paraglide/messages";
 
 const EMPTY_PINNED: string[] = [];
@@ -8,17 +9,18 @@ const EMPTY_PINNED: string[] = [];
 /** Seção de arquivos fixados ("pin") da sessão, no topo da árvore. */
 export function PinnedSection({
   threadId,
-  onOpenFile,
+  workspaceId,
   onAddToContext,
 }: {
   threadId: string;
-  onOpenFile: (path: string) => void;
+  workspaceId: string;
   onAddToContext?: (path: string) => void;
 }) {
   const pinned = useWorkbenchStore(
     (s) => s.pinnedFiles[threadId] ?? EMPTY_PINNED,
   );
   const togglePinned = useWorkbenchStore((s) => s.togglePinned);
+  const openWindow = useWindowsStore((s) => s.open);
 
   if (pinned.length === 0) return null;
 
@@ -36,7 +38,7 @@ export function PinnedSection({
           >
             <Pin className="w-3 h-3 shrink-0 text-primary" />
             <button
-              onClick={() => onOpenFile(path)}
+              onClick={() => openWindow(workspaceId, path)}
               className="flex-1 text-left truncate text-foreground/80 hover:text-foreground"
               title={path}
             >
