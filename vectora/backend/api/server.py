@@ -281,6 +281,22 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception as exc:
         logger.warning("api/server: falha ao iniciar background scheduler: %s", exc)
 
+    # Memory consolidation: sintetiza threads a cada 6h e atualiza AGENTS.md.
+    consolidation_task: asyncio.Task[None] | None = None
+    try:
+        from backend.services.memory_consolidation import (
+            run_consolidation_for_all_users,
+        )
+
+        async def _consolidation_loop() -> None:
+            while True:
+                await asyncio.sleep(6 * 3600)
+                await run_consolidation_for_all_users()
+
+        consolidation_task = asyncio.create_task(_consolidation_loop())
+    except Exception as exc:
+        logger.warning("api/server: falha ao iniciar memory consolidation: %s", exc)
+
     # Túnel ngrok — expõe /webhook/* para o mundo externo em desenvolvimento.
     # Só ativo quando NGROK_AUTHTOKEN ou ngrok_enabled=true nas settings.
     try:
@@ -295,6 +311,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         yield
     finally:
         logger.info("api/server: shutdown — fechando recursos")
+        if consolidation_task is not None:
+            consolidation_task.cancel()
         try:
             from backend.services.background_tasks import get_scheduler as _gs
 
