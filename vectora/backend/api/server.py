@@ -25,7 +25,7 @@ import asyncio
 import logging
 import os
 import sys
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 import httpx
@@ -328,10 +328,8 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
         if consolidation_task is not None:
             consolidation_task.cancel()
         if _relay_client is not None:
-            try:
+            with suppress(Exception):
                 await _relay_client.stop()
-            except Exception:
-                pass
         try:
             from backend.services.background_tasks import get_scheduler as _gs
 

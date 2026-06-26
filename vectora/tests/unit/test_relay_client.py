@@ -1,6 +1,7 @@
 """TDD — RelayClient (backend/relay/__init__.py)"""
 
 import asyncio
+import contextlib
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -74,10 +75,8 @@ class TestRelayClientBackoff:
                 with patch(
                     "backend.relay.RelayClient._register", return_value="tok123"
                 ):
-                    try:
+                    with contextlib.suppress(asyncio.CancelledError):
                         await client._connect_loop()
-                    except asyncio.CancelledError:
-                        pass
 
         assert len(delays) >= 2
         assert delays[1] == delays[0] * 2
@@ -105,10 +104,8 @@ class TestRelayClientBackoff:
                 with patch(
                     "backend.relay.RelayClient._register", return_value="tok123"
                 ):
-                    try:
+                    with contextlib.suppress(asyncio.CancelledError):
                         await client._connect_loop()
-                    except asyncio.CancelledError:
-                        pass
 
         assert all(d <= 60.0 for d in delays)
         assert max(delays) == 60.0

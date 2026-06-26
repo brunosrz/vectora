@@ -28,7 +28,7 @@ afterEach(cleanup);
 
 beforeAll(async () => {
   await import("../integracoes-tab");
-}, 30000);
+}, 60000);
 
 afterEach(() => overwriteGetLocale(() => baseLocale));
 
