@@ -257,3 +257,53 @@ describe("windows-store — setBounds", () => {
     expect(winOf("ws1")?.x).not.toBe(999);
   });
 });
+
+// ── Fluxo multi-arquivo (Part F): 2+ arquivos = 1 janela com abas ─────────────
+
+describe("windows-store — fluxo multi-arquivo (abas)", () => {
+  it("abrir 2 arquivos no mesmo workspace → 1 janela com 2 abas", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    expect(s().windows).toHaveLength(1);
+    expect(winOf("ws1")?.tabs).toEqual(["a.ts", "b.ts"]);
+  });
+
+  it("abrir 3 arquivos → 3 abas na ordem de abertura, último ativo", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    s().open("ws1", "c.ts");
+    const w = winOf("ws1");
+    expect(w?.tabs).toEqual(["a.ts", "b.ts", "c.ts"]);
+    expect(w?.activeTab).toBe("c.ts");
+  });
+
+  it("alternar entre abas via setActiveTab", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    s().setActiveTab("ws1", "a.ts");
+    expect(winOf("ws1")?.activeTab).toBe("a.ts");
+    expect(winOf("ws1")?.title).toBe("a.ts");
+  });
+
+  it("fechar a aba ativa volta para a anterior", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    s().closeTab("ws1", "b.ts");
+    expect(winOf("ws1")?.tabs).toEqual(["a.ts"]);
+    expect(winOf("ws1")?.activeTab).toBe("a.ts");
+  });
+
+  it("fechar a última aba fecha a janela inteira", () => {
+    s().open("ws1", "a.ts");
+    s().closeTab("ws1", "a.ts");
+    expect(winOf("ws1")).toBeUndefined();
+  });
+
+  it("reabrir um arquivo já aberto não duplica a aba", () => {
+    s().open("ws1", "a.ts");
+    s().open("ws1", "b.ts");
+    s().open("ws1", "a.ts");
+    expect(winOf("ws1")?.tabs).toEqual(["a.ts", "b.ts"]);
+    expect(winOf("ws1")?.activeTab).toBe("a.ts");
+  });
+});
