@@ -23,7 +23,6 @@ import { PlusMenu } from "./features/plus-menu";
 import { UsagePopover } from "./features/usage-popover";
 import { SlashCommandMenu } from "./features/slash-command-menu";
 import { AtMentionMenu } from "./features/at-mention-menu";
-import { WorkspaceSelector } from "@/components/sidebar/workspace-selector";
 import { ModelSelector } from "./model-selector";
 import { VscodeIcon } from "@/components/icons/vscode-icon";
 import { useWorkspacesStore } from "@/lib/stores/workspaces-store";
@@ -53,7 +52,7 @@ function VscodeMenu({ workspaceId }: { workspaceId: string }) {
       `/workspaces/${encodeURIComponent(workspaceId)}/vscode-options`,
     );
     const options: VscodeOption[] = res.ok
-      ? (await res.json()).options ?? []
+      ? ((await res.json()).options ?? [])
       : [];
     const opt =
       options.find((o) => o.strategy === "local") ?? options[0] ?? null;
@@ -386,10 +385,11 @@ export function ChatInput({
                 onAddFiles={onFileButtonClick}
               />
               <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
-              {!chatMode && (
+              {/* O workspace é escolhido só no modal de nova conversa e é imutável
+                  depois disso — por isso não há seletor de workspace na appbar. */}
+              {!chatMode && wsId && (
                 <>
-                  <WorkspaceSelector compact />
-                  {wsId && <VscodeMenu workspaceId={wsId} />}
+                  <VscodeMenu workspaceId={wsId} />
                   <div className="hidden sm:block h-4 w-px bg-border/60 mx-0.5" />
                 </>
               )}

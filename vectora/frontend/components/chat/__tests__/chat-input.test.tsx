@@ -146,4 +146,13 @@ describe("ChatInput", () => {
       document.querySelector("[data-testid='workspace-selector']"),
     ).toBeNull();
   });
+
+  it("em code mode (chatMode=false) WorkspaceSelector não está na AppBar", () => {
+    // O workspace é imutável após iniciar a conversa — escolhido só no modal.
+    mockSettings.chatMode = false;
+    render(<ChatInput {...baseProps()} />);
+    expect(
+      document.querySelector("[data-testid='workspace-selector']"),
+    ).toBeNull();
+  });
 });
