@@ -597,3 +597,59 @@ class TestManageRetriever:
         data = json.loads(result)
         assert data["status"] == "no_match"
         mock_table.delete.assert_not_awaited()
+
+
+# ---------------------------------------------------------------------------
+# _build_reranker — Cohere ↔ VoyageAI (Parte B)
+# ---------------------------------------------------------------------------
+
+
+class TestBuildReranker:
+    def test_cohere_without_key_returns_none(self):
+        from backend.tools.rag import _build_reranker
+
+        with patch("backend.tools.rag.settings") as ms:
+            ms.reranker_type = "cohere"
+            ms.get_cohere_api_key.return_value = None
+            assert _build_reranker() is None
+
+    def test_voyage_without_key_returns_none(self):
+        from backend.tools.rag import _build_reranker
+
+        with patch("backend.tools.rag.settings") as ms:
+            ms.reranker_type = "voyage"
+            ms.voyage_api_key = None
+            assert _build_reranker() is None
+
+    def test_unknown_type_returns_none(self):
+        from backend.tools.rag import _build_reranker
+
+        with patch("backend.tools.rag.settings") as ms:
+            ms.reranker_type = "qualquer-outro"
+            assert _build_reranker() is None
+
+    def test_cohere_sdk_absent_returns_none(self):
+        from backend.tools.rag import _build_reranker
+
+        with (
+            patch("backend.tools.rag.settings") as ms,
+            patch("backend.tools.rag.CohereRerank", None),
+        ):
+            ms.reranker_type = "cohere"
+            ms.get_cohere_api_key.return_value = "ck-1"
+            assert _build_reranker() is None
+
+    def test_voyage_with_key_returns_voyage_reranker(self):
+        from langchain_voyageai import VoyageAIRerank
+
+        from backend.tools.rag import _build_reranker
+
+        with patch("backend.tools.rag.settings") as ms:
+            ms.reranker_type = "voyage"
+            ms.voyage_api_key = "voy-1"
+            ms.voyage_rerank_model = "rerank-2"
+            ms.reranker_top_k = 5
+            out = _build_reranker()
+        assert isinstance(out, VoyageAIRerank)
+        assert out.model == "rerank-2"
+        assert out.top_k == 5

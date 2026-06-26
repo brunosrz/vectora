@@ -64,6 +64,37 @@ def _is_cohere_quota_error(err: str) -> bool:
     )
 
 
+def _build_reranker() -> Any:
+    """Reranker conforme ``settings.reranker_type``: "cohere" (CohereRerank) ou
+    "voyage" (VoyageAIRerank). Retorna ``None`` se o provider não tem credencial
+    ou SDK disponível — o caller cai para os resultados sem rerank.
+    """
+    rtype = settings.reranker_type
+    if rtype == "cohere" and CohereRerank is not None:
+        key = settings.get_cohere_api_key()
+        if not key:
+            return None
+        return CohereRerank(
+            cohere_api_key=SecretStr(key),
+            model=settings.reranker_model,
+            top_n=settings.reranker_top_k,
+        )
+    if rtype == "voyage":
+        try:
+            from langchain_voyageai import VoyageAIRerank
+        except Exception:
+            return None
+        key = settings.voyage_api_key
+        if not key:
+            return None
+        return VoyageAIRerank(
+            voyage_api_key=key,  # ty: ignore[unknown-argument]
+            model=settings.voyage_rerank_model,
+            top_k=settings.reranker_top_k,
+        )
+    return None
+
+
 @tool(
     extras={
         "render_hint": "queue_badge",
@@ -258,14 +289,10 @@ async def vector_search(
             for _, row in search_results.iterrows()
         ]
 
-        # Reranking opcional — melhora precisão
-        if results and settings.reranker_type == "cohere" and CohereRerank:
+        # Reranking opcional — melhora precisão (Cohere ou VoyageAI)
+        reranker = _build_reranker()
+        if results and reranker is not None:
             try:
-                reranker = CohereRerank(
-                    cohere_api_key=SecretStr(api_key),
-                    model=settings.reranker_model,
-                    top_n=settings.reranker_top_k,
-                )
                 docs_to_rerank = [
                     LCDoc(page_content=str(r["content"]), metadata=r["metadata"])
                     for r in results
