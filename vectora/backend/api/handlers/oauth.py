@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -29,6 +30,24 @@ from fastapi.responses import RedirectResponse
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["oauth"])
+
+_RELAY_TOKEN_PATH = Path.home() / ".vectora" / "relay_token"
+
+
+def _relay_callback_url(
+    provider: str,
+    token_path: Path | None = None,
+) -> str | None:
+    """Retorna URL de callback via relay se token disponível, ou None."""
+    path = token_path if token_path is not None else _RELAY_TOKEN_PATH
+    try:
+        token = path.read_text().strip()
+        if token:
+            return f"https://{token}.vectora.chat/auth/{provider}/callback"
+    except OSError:
+        pass
+    return None
+
 
 # ---------------------------------------------------------------------------
 # Registry de integrações (O1)
@@ -224,9 +243,10 @@ def _github_cfg() -> tuple[str, str, str]:
     """
     client_id = os.environ.get("GITHUB_OAUTH_CLIENT_ID", "")
     client_secret = os.environ.get("GITHUB_OAUTH_CLIENT_SECRET", "")
-    redirect_uri = os.environ.get(
-        "GITHUB_OAUTH_REDIRECT_URI",
-        "http://localhost:8080/auth/github/callback",
+    redirect_uri = (
+        os.environ.get("GITHUB_OAUTH_REDIRECT_URI")
+        or _relay_callback_url("github")
+        or "http://localhost:8080/auth/github/callback"
     )
     if not client_id or not client_secret:
         raise HTTPException(
@@ -553,9 +573,10 @@ def _gitlab_cfg() -> tuple[str, str, str, str]:
     client_id = os.environ.get("GITLAB_OAUTH_CLIENT_ID", "")
     client_secret = os.environ.get("GITLAB_OAUTH_CLIENT_SECRET", "")
     base_url = os.environ.get("GITLAB_BASE_URL", "https://gitlab.com")
-    redirect_uri = os.environ.get(
-        "GITLAB_OAUTH_REDIRECT_URI",
-        "http://localhost:8080/auth/gitlab/callback",
+    redirect_uri = (
+        os.environ.get("GITLAB_OAUTH_REDIRECT_URI")
+        or _relay_callback_url("gitlab")
+        or "http://localhost:8080/auth/gitlab/callback"
     )
     if not client_id or not client_secret:
         raise HTTPException(
@@ -678,9 +699,10 @@ async def gitlab_oauth_disconnect(request: Request) -> dict:
 def _google_cfg() -> tuple[str, str, str]:
     client_id = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
     client_secret = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "")
-    redirect_uri = os.environ.get(
-        "GOOGLE_OAUTH_REDIRECT_URI",
-        "http://localhost:8080/auth/google/callback",
+    redirect_uri = (
+        os.environ.get("GOOGLE_OAUTH_REDIRECT_URI")
+        or _relay_callback_url("google")
+        or "http://localhost:8080/auth/google/callback"
     )
     if not client_id or not client_secret:
         raise HTTPException(
@@ -822,9 +844,10 @@ async def google_oauth_disconnect(request: Request) -> dict:
 def _slack_cfg() -> tuple[str, str, str]:
     client_id = os.environ.get("SLACK_OAUTH_CLIENT_ID", "")
     client_secret = os.environ.get("SLACK_OAUTH_CLIENT_SECRET", "")
-    redirect_uri = os.environ.get(
-        "SLACK_REDIRECT_URI",
-        "http://localhost:8080/auth/slack/callback",
+    redirect_uri = (
+        os.environ.get("SLACK_REDIRECT_URI")
+        or _relay_callback_url("slack")
+        or "http://localhost:8080/auth/slack/callback"
     )
     if not client_id or not client_secret:
         raise HTTPException(

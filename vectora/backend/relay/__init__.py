@@ -180,19 +180,28 @@ def _machine_fingerprint() -> str:
     """Fingerprint estável por máquina — SHA-256 do machine-id ou hostname."""
     import hashlib
     import socket
+    import sys
 
-    candidates = [
-        Path("/etc/machine-id"),
-        Path("/var/lib/dbus/machine-id"),
-        Path(r"C:\ProgramData\Microsoft\Crypto\RSA\MachineKeys"),
-    ]
-    for p in candidates:
+    if sys.platform == "win32":
         try:
-            if p.is_file():
-                raw = p.read_text().strip()
-                return hashlib.sha256(raw.encode()).hexdigest()[:32]
-        except OSError:
+            import winreg
+
+            with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"SOFTWARE\Microsoft\Cryptography",
+            ) as key:
+                raw, _ = winreg.QueryValueEx(key, "MachineGuid")
+                return hashlib.sha256(str(raw).encode()).hexdigest()[:32]
+        except Exception:
             pass
+    else:
+        for p in (Path("/etc/machine-id"), Path("/var/lib/dbus/machine-id")):
+            try:
+                if p.is_file():
+                    raw = p.read_text().strip()
+                    return hashlib.sha256(raw.encode()).hexdigest()[:32]
+            except OSError:
+                pass
 
     return hashlib.sha256(socket.getfqdn().encode()).hexdigest()[:32]
 
