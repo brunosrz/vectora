@@ -400,3 +400,105 @@ class TestPostAffected:
                     _fake_request(), "ws1", AffectedRequest(node_query="anything")
                 )
         assert exc.value.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# post_build / delete_build
+# ---------------------------------------------------------------------------
+
+
+class TestPostBuild:
+    @pytest.mark.asyncio
+    async def test_enfileira_build_e_retorna_queued(self, tmp_path):
+        from backend.api.handlers.context_graph import BuildRequest, post_build
+
+        registry, _ = _make_registry(tmp_path)
+        mock_task = MagicMock()
+        mock_task.add_done_callback = MagicMock()
+
+        with patch("backend.services.workspace.workspace_registry", registry):
+            with patch(
+                "backend.api.handlers.context_graph.asyncio.create_task",
+                return_value=mock_task,
+            ):
+                resp = await post_build(_fake_request(), "ws1", BuildRequest())
+
+        assert resp.status == "queued"
+        mock_task.add_done_callback.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_build_ja_em_andamento_retorna_running(self, tmp_path):
+        from backend.api.handlers.context_graph import BuildRequest, post_build
+
+        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir.mkdir(parents=True)
+        _write_status(graph_dir, "running")
+        registry, _ = _make_registry(tmp_path)
+
+        with patch("backend.services.workspace.workspace_registry", registry):
+            resp = await post_build(_fake_request(), "ws1", BuildRequest())
+
+        assert resp.status == "running"
+
+    @pytest.mark.asyncio
+    async def test_workspace_nao_encontrado_levanta_404(self):
+        from fastapi import HTTPException
+
+        from backend.api.handlers.context_graph import BuildRequest, post_build
+
+        registry = MagicMock()
+        registry.get = MagicMock(return_value=None)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            with pytest.raises(HTTPException) as exc:
+                await post_build(_fake_request(), "ws_miss", BuildRequest())
+
+        assert exc.value.status_code == 404
+
+
+class TestDeleteBuild:
+    @pytest.mark.asyncio
+    async def test_cancela_task_ativa(self, tmp_path):
+        from backend.api.handlers.context_graph import delete_build
+
+        graph_dir = tmp_path / ".vectora" / "graph"
+        graph_dir.mkdir(parents=True)
+        _write_status(graph_dir, "running")
+
+        mock_task = MagicMock()
+        mock_task.done = MagicMock(return_value=False)
+        mock_task.cancel = MagicMock()
+
+        registry, _ = _make_registry(tmp_path)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            with patch(
+                "backend.api.handlers.context_graph._active_builds", {"ws1": mock_task}
+            ):
+                await delete_build(_fake_request(), "ws1")
+
+        mock_task.cancel.assert_called_once()
+        assert not (graph_dir / "build_status.json").exists()
+
+    @pytest.mark.asyncio
+    async def test_sem_task_ativa_nao_falha(self, tmp_path):
+        from backend.api.handlers.context_graph import delete_build
+
+        registry, _ = _make_registry(tmp_path)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            await delete_build(_fake_request(), "ws1")
+
+    @pytest.mark.asyncio
+    async def test_task_ja_concluida_nao_cancela(self, tmp_path):
+        from backend.api.handlers.context_graph import delete_build
+
+        mock_task = MagicMock()
+        mock_task.done = MagicMock(return_value=True)
+        mock_task.cancel = MagicMock()
+
+        registry, _ = _make_registry(tmp_path)
+        with patch("backend.services.workspace.workspace_registry", registry):
+            with patch(
+                "backend.api.handlers.context_graph._active_builds", {"ws1": mock_task}
+            ):
+                await delete_build(_fake_request(), "ws1")
+
+        mock_task.cancel.assert_not_called()

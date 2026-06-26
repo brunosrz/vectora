@@ -1,30 +1,34 @@
 """Handler REST do Context Graph — build, query e export por workspace.
 
 Endpoints (todos exigem autenticação; workspace deve existir):
-    POST  /workspaces/{workspace_id}/context-graph/build      — enfileira build
-    GET   /workspaces/{workspace_id}/context-graph/status     — status do build
-    GET   /workspaces/{workspace_id}/context-graph            — graph.json
-    GET   /workspaces/{workspace_id}/context-graph/report     — GRAPH_REPORT.md
-    GET   /workspaces/{workspace_id}/context-graph/html       — graph.html
-    POST  /workspaces/{workspace_id}/context-graph/query      — pergunta livre
-    POST  /workspaces/{workspace_id}/context-graph/explain    — explica nó
-    POST  /workspaces/{workspace_id}/context-graph/path       — caminho entre nós
-    POST  /workspaces/{workspace_id}/context-graph/affected   — impacto de mudança
+    POST   /workspaces/{workspace_id}/context-graph/build      — inicia build
+    DELETE /workspaces/{workspace_id}/context-graph/build      — cancela build
+    GET    /workspaces/{workspace_id}/context-graph/status     — status do build
+    GET    /workspaces/{workspace_id}/context-graph            — graph.json
+    GET    /workspaces/{workspace_id}/context-graph/report     — GRAPH_REPORT.md
+    GET    /workspaces/{workspace_id}/context-graph/html       — graph.html
+    POST   /workspaces/{workspace_id}/context-graph/query      — pergunta livre
+    POST   /workspaces/{workspace_id}/context-graph/explain    — explica nó
+    POST   /workspaces/{workspace_id}/context-graph/path       — caminho entre nós
+    POST   /workspaces/{workspace_id}/context-graph/affected   — impacto de mudança
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+
+_active_builds: dict[str, asyncio.Task[None]] = {}
 
 router = APIRouter(
     prefix="/workspaces/{workspace_id}/context-graph", tags=["context-graph"]
@@ -198,7 +202,6 @@ async def post_build(
     request: Request,
     workspace_id: str,
     body: BuildRequest,
-    background_tasks: BackgroundTasks,
 ) -> BuildResponse:
     _user_id(request)
     d = _require_graph_dir(workspace_id)
@@ -207,8 +210,23 @@ async def post_build(
     if status_resp and status_resp.status == "running":
         return BuildResponse(status="running", message="Build já em andamento")
 
-    background_tasks.add_task(_run_build, workspace_id, body)
+    task = asyncio.create_task(_run_build(workspace_id, body))
+    _active_builds[workspace_id] = task
+    task.add_done_callback(lambda _: _active_builds.pop(workspace_id, None))
     return BuildResponse(status="queued", message="Build enfileirado")
+
+
+@router.delete("/build", status_code=204)
+async def delete_build(request: Request, workspace_id: str) -> None:
+    _user_id(request)
+    task = _active_builds.pop(workspace_id, None)
+    if task and not task.done():
+        task.cancel()
+    d = _graph_dir(workspace_id)
+    if d is not None:
+        status_file = d / _STATUS_FILE
+        if status_file.exists():
+            status_file.unlink()
 
 
 @router.get("/status", response_model=StatusResponse)

@@ -114,12 +114,21 @@ export function useContextGraph(workspaceId: string | null | undefined) {
     [build],
   );
 
+  const cancel = useCallback(async () => {
+    if (!workspaceId) return;
+    await fetch(`${base(workspaceId)}/build`, { method: "DELETE" }).catch(
+      () => null,
+    );
+    setStatus({ status: "not_built" });
+  }, [workspaceId]);
+
   return {
     status,
     report,
     loading,
     build,
     update,
+    cancel,
     queryAffected,
     fetchStatus,
     getHtmlUrl,

@@ -517,6 +517,7 @@
   "graph_questions_title": "Perguntas sugeridas",
   "graph_report_title": "Relatório",
   "graph_update_button": "Atualizar",
+  "graph_cancel_button": "Cancelar",
   "graph_affected_button": "Ver impacto",
   "graph_affected_title": "Componentes afetados",
   "graph_credit": "Inspirado no graphify (MIT, Safi Shamsi)",

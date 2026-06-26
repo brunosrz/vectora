@@ -17,8 +17,16 @@ export function ContextGraphTab({
   onSendPrompt,
 }: ContextGraphTabProps) {
   const workspaceId = useWorkspacesStore((s) => s.active_id);
-  const { status, report, loading, build, update, queryAffected, getHtmlUrl } =
-    useContextGraph(workspaceId);
+  const {
+    status,
+    report,
+    loading,
+    build,
+    update,
+    cancel,
+    queryAffected,
+    getHtmlUrl,
+  } = useContextGraph(workspaceId);
   const [showReport, setShowReport] = useState(false);
 
   const isBuilt = status.status === "done";
@@ -61,6 +69,14 @@ export function ContextGraphTab({
     <div className="flex flex-col h-full overflow-hidden">
       {/* Barra de ação */}
       <div className="flex items-center justify-end gap-2 px-3 py-2 border-b border-border/60 shrink-0">
+        {isRunning && (
+          <button
+            onClick={() => void cancel()}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-border/80"
+          >
+            {m.graph_cancel_button()}
+          </button>
+        )}
         {isBuilt && !isRunning && (
           <button
             onClick={() => update()}
@@ -108,7 +124,7 @@ export function ContextGraphTab({
 
         {/* Status: running */}
         {isRunning && (
-          <div className="px-3 py-4 text-sm text-muted-foreground text-center flex flex-col items-center gap-2">
+          <div className="h-full flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
             <p>{m.graph_building()}</p>
           </div>
