@@ -1,0 +1,42 @@
+
+>> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend run i18n:compile
+Already up to date
+Done in 50ms using pnpm v11.5.0
+$ paraglide-js compile --project ./project.inlang --outdir ./lib/paraglide
+ℹ [paraglide-js] Compiling inlang project ...
+✔ [paraglide-js] Successfully compiled inlang project.
+
+>> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend exec vitest run
+Already up to date
+Done in 97ms using pnpm v11.5.0
+
+ RUN  v4.1.9 C:/Users/Machi/Desktop/vectora/vectora/frontend
+
+···············x····················································································································································································································································································································································································································································································································································································································································································································································································································
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  components/workbench/tabs/__tests__/context-graph-tab.test.tsx > ContextGraphTab > estado running > botão está desabilitado
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ components/workbench/tabs/__tests__/context-graph-tab.test.tsx:123:28
+    121|       render(<ContextGraphTab threadId="t1" />);
+    122|       const btn = document.querySelector("button") as HTMLButtonElemen…
+    123|       expect(btn.disabled).toBe(true);
+       |                            ^
+    124|     });
+    125|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 76 passed (77)
+      Tests  1 failed | 803 passed (804)
+   Start at  09:40:10
+   Duration  75.71s (transform 68.24s, setup 38.69s, import 165.52s, tests 28.48s, environment 185.92s)

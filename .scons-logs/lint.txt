@@ -9,15 +9,17 @@ All checks passed!
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend run typecheck
 Already up to date
-Done in 55ms using pnpm v11.5.0
+Done in 58ms using pnpm v11.5.0
 $ pnpm i18n:compile && tsr generate && tsc --noEmit
 $ paraglide-js compile --project ./project.inlang --outdir ./lib/paraglide
-i [paraglide-js] Compiling inlang project ...
-√ [paraglide-js] Successfully compiled inlang project.
+ℹ [paraglide-js] Compiling inlang project ...
+✔ [paraglide-js] Successfully compiled inlang project.
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir vectora/frontend exec oxlint
 Already up to date
-Done in 61ms using pnpm v11.5.0
+Done in 62ms using pnpm v11.5.0
+Found 0 warnings and 0 errors.
+Finished in 1.1s on 325 files with 146 rules using 8 threads.
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir relay run typecheck
 $ tsc --noEmit
@@ -27,8 +29,8 @@ $ eslint
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir company run typecheck
 $ paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && tsr generate && tsc --noEmit
-i [paraglide-js] Compiling inlang project ...
-√ [paraglide-js] Successfully compiled inlang project.
+ℹ [paraglide-js] Compiling inlang project ...
+✔ [paraglide-js] Successfully compiled inlang project.
 
 >> [.] C:\Users\Machi\AppData\Local\pnpm\bin\pnpm.cmd --dir docs run typecheck
 $ tsc --noEmit

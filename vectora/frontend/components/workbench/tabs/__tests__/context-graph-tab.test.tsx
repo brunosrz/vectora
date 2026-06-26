@@ -36,6 +36,7 @@ vi.mock("@/lib/stores/workspaces-store", () => ({
 
 const mockBuild = vi.fn();
 const mockUpdate = vi.fn();
+const mockCancel = vi.fn(() => Promise.resolve());
 const mockQueryAffected = vi.fn(() => Promise.resolve(""));
 const mockGetHtmlUrl = vi.fn(() => "/workspaces/ws1/context-graph/html");
 const mockFetchStatus = vi.fn();
@@ -60,6 +61,7 @@ function setup(
     loading: false,
     build: mockBuild,
     update: mockUpdate,
+    cancel: mockCancel,
     queryAffected: mockQueryAffected,
     getHtmlUrl: mockGetHtmlUrl,
     fetchStatus: mockFetchStatus,
@@ -119,15 +121,40 @@ describe("ContextGraphTab", () => {
     it("botão está desabilitado", () => {
       setup({ status: { status: "running" } });
       render(<ContextGraphTab threadId="t1" />);
-      const btn = document.querySelector("button") as HTMLButtonElement;
+      const btn = document.querySelector(
+        "[data-testid='graph-build-btn']",
+      ) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
     });
 
     it("botão está desabilitado quando loading=true", () => {
       setup({ loading: true });
       render(<ContextGraphTab threadId="t1" />);
-      const btn = document.querySelector("button") as HTMLButtonElement;
+      const btn = document.querySelector(
+        "[data-testid='graph-build-btn']",
+      ) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
+    });
+
+    it("exibe botão cancelar durante running", () => {
+      setup({ status: { status: "running" } });
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.getByText("graph_cancel_button")).toBeTruthy();
+    });
+
+    it("clicar no cancelar chama cancel()", async () => {
+      setup({ status: { status: "running" } });
+      render(<ContextGraphTab threadId="t1" />);
+      await act(async () => {
+        fireEvent.click(screen.getByText("graph_cancel_button"));
+      });
+      expect(mockCancel).toHaveBeenCalledTimes(1);
+    });
+
+    it("not_built não exibe botão cancelar", () => {
+      setup();
+      render(<ContextGraphTab threadId="t1" />);
+      expect(screen.queryByText("graph_cancel_button")).toBeNull();
     });
   });
 
