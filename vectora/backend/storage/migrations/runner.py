@@ -28,7 +28,7 @@ import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -196,10 +196,7 @@ class MigrationRunner:
             "SELECT version, applied_at, checksum FROM schema_migrations ORDER BY version"
         )
         rows = await cursor.fetchall()
-        return {
-            r["version"]: {"applied_at": r["applied_at"], "checksum": r["checksum"]}
-            for r in rows
-        }
+        return {r[0]: {"applied_at": r[1], "checksum": r[2]} for r in rows}
 
     async def status(self) -> list[MigrationStatus]:
         """Retorna o status de cada migration (aplicada / pendente / drift).

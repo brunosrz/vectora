@@ -22,6 +22,16 @@ class TestMigrationRunner:
         yield conn
         await conn.close()
 
+    @pytest.fixture
+    async def raw_conn(self, tmp_path):
+        """Conexão sem row_factory — simula o contexto de produção (server.py)."""
+        import aiosqlite
+
+        db_path = str(tmp_path / "test_migrations_raw.db")
+        conn = await aiosqlite.connect(db_path)
+        yield conn
+        await conn.close()
+
     @pytest.mark.asyncio
     async def test_status_lists_pending_migrations(self, runner_conn):
         """status() lista as migrations SQLite como pendentes num banco vazio."""
@@ -76,6 +86,18 @@ class TestMigrationRunner:
         )
         row = await cur.fetchone()
         assert row is not None
+
+    @pytest.mark.asyncio
+    async def test_upgrade_without_row_factory(self, raw_conn):
+        """upgrade() funciona com conexão sem row_factory (caso de produção)."""
+        from backend.storage.migrations.runner import MigrationRunner
+
+        runner = MigrationRunner(raw_conn)
+        applied = await runner.upgrade()
+        assert isinstance(applied, list)
+        assert len(applied) >= 1
+        second = await runner.upgrade()
+        assert second == []
 
 
 class TestDataMigrationDryRun:
