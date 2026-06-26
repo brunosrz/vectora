@@ -216,6 +216,21 @@ async def _lifespan(app: FastAPI):  # type: ignore[return]  # noqa: ANN202
     except Exception:
         pass  # Não bloqueia o startup se o DB ainda não estiver criado
 
+    # Aplica migrations SQLite pendentes (idempotente via schema_migrations).
+    try:
+        import aiosqlite
+
+        from backend.settings import settings as _db_settings
+        from backend.storage.migrations import run_migrations
+
+        _db_path = _db_settings.db_dsn or ":memory:"
+        async with aiosqlite.connect(_db_path) as _conn:
+            applied = await run_migrations(_conn)
+            if applied:
+                logger.info("api/server: migrations SQLite aplicadas: %s", applied)
+    except Exception as exc:
+        logger.warning("api/server: migrations SQLite falhou: %s", exc)
+
     # Garante que a tabela vectora_sessions existe antes do primeiro request.
     # Evita race com AsyncSqliteSaver do LangGraph (mesmo arquivo .db) que
     # podia fazer o CREATE TABLE silenciar e get_thread/list_threads
