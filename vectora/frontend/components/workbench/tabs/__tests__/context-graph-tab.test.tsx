@@ -416,11 +416,12 @@ describe("ContextGraphTab", () => {
       expect(screen.getByText("graph_continue_button")).toBeTruthy();
     });
 
-    it("clicar em Continuar chama build()", () => {
+    it("clicar em Continuar retoma incremental (chama update, não build do zero)", () => {
       setup({ status: { status: "paused" } });
       render(<ContextGraphTab threadId="t1" />);
       fireEvent.click(screen.getByText("graph_continue_button"));
-      expect(mockBuild).toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockBuild).not.toHaveBeenCalled();
     });
 
     it("exibe a mensagem de erro da quota quando presente", () => {
