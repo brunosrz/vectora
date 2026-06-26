@@ -289,6 +289,15 @@ class Settings(BaseSettings):
     cohere_api_key: str | None = None
     """API key for Cohere embeddings and reranking service."""
 
+    voyage_api_key: str | None = None
+    """API key da VoyageAI — alternativa/fallback ao Cohere (embeddings + rerank)."""
+
+    voyage_embedding_model: str = "voyage-3"
+    """Modelo de embedding da VoyageAI (hosted, quality-first)."""
+
+    voyage_rerank_model: str = "rerank-2"
+    """Modelo de reranking da VoyageAI."""
+
     embedding_model: str = "embed-multilingual-v3.0"
     """Cohere embedding model. v3.0 multilingual cobre 100+ idiomas (PT-BR)."""
 

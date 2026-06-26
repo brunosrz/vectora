@@ -188,3 +188,50 @@ def test_llm_provider_literal_accepts_cohere():
     s = Settings()
     s.llm_provider = "cohere"  # type: ignore[assignment]
     assert s.llm_provider == "cohere"
+
+
+# ---------------------------------------------------------------------------
+# VoyageAI (Parte B) — embeddings/rerank alternativos ao Cohere
+# ---------------------------------------------------------------------------
+
+
+def test_voyage_api_key_default_none(monkeypatch):
+    monkeypatch.delenv("VOYAGE_API_KEY", raising=False)
+    s = Settings()
+    assert s.voyage_api_key is None
+
+
+def test_voyage_embedding_model_default():
+    s = Settings()
+    assert s.voyage_embedding_model == "voyage-3"
+
+
+def test_voyage_rerank_model_default():
+    s = Settings()
+    assert s.voyage_rerank_model == "rerank-2"
+
+
+def test_voyage_api_key_from_env(monkeypatch):
+    monkeypatch.setenv("VOYAGE_API_KEY", "voy-secret-123")
+    s = Settings()
+    assert s.voyage_api_key == "voy-secret-123"
+
+
+def test_voyage_embedding_model_from_env(monkeypatch):
+    monkeypatch.setenv("VOYAGE_EMBEDDING_MODEL", "voyage-3-large")
+    s = Settings()
+    assert s.voyage_embedding_model == "voyage-3-large"
+
+
+def test_voyage_rerank_model_from_env(monkeypatch):
+    monkeypatch.setenv("VOYAGE_RERANK_MODEL", "rerank-2-lite")
+    s = Settings()
+    assert s.voyage_rerank_model == "rerank-2-lite"
+
+
+def test_voyage_key_independent_from_cohere(monkeypatch):
+    # voyage_api_key e cohere_api_key são campos separados — setar um não muda o outro.
+    monkeypatch.setenv("VOYAGE_API_KEY", "voy-1")
+    s = Settings()
+    assert s.voyage_api_key == "voy-1"
+    assert s.voyage_api_key != s.cohere_api_key
