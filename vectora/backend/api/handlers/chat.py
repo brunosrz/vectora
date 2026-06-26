@@ -355,7 +355,7 @@ async def stream_chat(
         await _upsert_session(
             thread_id,
             workspace_id=workspace_id or None,
-            mode="chat" if chat_mode else "dev",
+            mode="chat" if chat_mode else "code",
         )
     except Exception as exc:
         logger.warning(

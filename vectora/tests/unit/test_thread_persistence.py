@@ -570,3 +570,78 @@ class TestListThreadsIncludesUpserted:
             assert thread.get("title") == "Conversa Persistida"
         finally:
             _restore_app(t_mod, orig_get_db, orig_conn)
+
+
+# ---------------------------------------------------------------------------
+# 4. Modo: dev → code (Parte E) — _normalize_mode + _row_to_thread
+# ---------------------------------------------------------------------------
+
+
+class TestNormalizeMode:
+    def test_dev_becomes_code(self):
+        from backend.api.handlers.threads import _normalize_mode
+
+        assert _normalize_mode("dev") == "code"
+
+    def test_code_stays_code(self):
+        from backend.api.handlers.threads import _normalize_mode
+
+        assert _normalize_mode("code") == "code"
+
+    def test_chat_preserved(self):
+        from backend.api.handlers.threads import _normalize_mode
+
+        assert _normalize_mode("chat") == "chat"
+
+    def test_none_defaults_to_code(self):
+        from backend.api.handlers.threads import _normalize_mode
+
+        assert _normalize_mode(None) == "code"
+
+    def test_empty_defaults_to_code(self):
+        from backend.api.handlers.threads import _normalize_mode
+
+        assert _normalize_mode("") == "code"
+
+    def test_unknown_defaults_to_code(self):
+        from backend.api.handlers.threads import _normalize_mode
+
+        assert _normalize_mode("qualquer") == "code"
+
+
+def _row(extra: dict) -> tuple:
+    return ("tid", "human", "2026-01-01", "2026-01-02", 0, json.dumps(extra))
+
+
+class TestRowToThreadMode:
+    def test_legacy_dev_read_as_code(self):
+        from backend.api.handlers.threads import _row_to_thread
+
+        t = _row_to_thread(_row({"mode": "dev", "title": "X"}))
+        assert t.mode == "code"
+        assert t.title == "X"
+
+    def test_chat_mode_preserved(self):
+        from backend.api.handlers.threads import _row_to_thread
+
+        t = _row_to_thread(_row({"mode": "chat"}))
+        assert t.mode == "chat"
+
+    def test_code_mode_preserved(self):
+        from backend.api.handlers.threads import _row_to_thread
+
+        t = _row_to_thread(_row({"mode": "code"}))
+        assert t.mode == "code"
+
+    def test_missing_mode_defaults_code(self):
+        from backend.api.handlers.threads import _row_to_thread
+
+        t = _row_to_thread(_row({"title": "sem modo"}))
+        assert t.mode == "code"
+
+    def test_malformed_extra_defaults_code(self):
+        from backend.api.handlers.threads import _row_to_thread
+
+        bad_row = ("tid", "human", "2026-01-01", "2026-01-02", 0, "NOTJSON{")
+        t = _row_to_thread(bad_row)
+        assert t.mode == "code"

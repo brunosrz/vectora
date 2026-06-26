@@ -130,17 +130,29 @@ async def ensure_sessions_table() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _normalize_mode(mode: str | None) -> str:
+    """Normaliza o modo de sessão.
+
+    O modo de desenvolvimento foi renomeado de ``"dev"`` para ``"code"``; linhas
+    antigas com ``"dev"`` (e o default ausente) são lidas como ``"code"``. O modo
+    conversacional ``"chat"`` é preservado.
+    """
+    if mode == "chat":
+        return "chat"
+    return "code"
+
+
 def _row_to_thread(row: tuple) -> Thread:
     """Converte uma linha da tabela vectora_sessions em Thread."""
     thread_id, _, created_at, last_activity, _, extra_json = row
     title = ""
     workspace_id = ""
-    mode = "dev"
+    mode = "code"
     try:
         extra = json.loads(extra_json or "{}")
         title = extra.get("title", "")
         workspace_id = extra.get("workspace_id", "")
-        mode = extra.get("mode", "dev")
+        mode = _normalize_mode(extra.get("mode"))
     except Exception:
         pass
     return Thread(
