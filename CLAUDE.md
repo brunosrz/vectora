@@ -6,19 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Comandos essenciais
 
-Build e testes rodam via **SCons** dentro de `vectora/` (requer `uv` e `pnpm`):
+Build e testes rodam via **SCons** a partir da **raiz do monorepo** (requer `uv` e `pnpm`):
 
 ```powershell
-cd vectora
+# na raiz do monorepo (C:\...\vectora\)
 
-scons tests          # vitest (frontend) + pytest (backend) — sem cobertura
+scons tests          # todos os subprojetos: vectora + relay + company
 scons coverage       # mesma suíte com relatório de cobertura
-scons lint           # ruff + ty + tsc + oxlint
+scons lint           # todos: ruff+ty+bandit (vectora) + tsc+oxlint+eslint (TS)
 scons docker         # sobe PostgreSQL + Redis + Qdrant via docker compose
 scons clean          # remove outputs de build
 ```
 
-Rodar teste específico (Python):
+Subprojetos cobertos por `scons lint` e `scons tests`:
+
+- `vectora/` — Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
+- `relay/` — TypeScript (tsc, vitest)
+- `company/` — TypeScript (eslint, tsc, vitest)
+- `docs/` — TypeScript (tsc) — sem testes
+- `update-server/` — TypeScript (tsc) — sem testes
+
+Rodar teste específico (Python — a partir da raiz):
 
 ```powershell
 cd vectora
@@ -26,21 +34,31 @@ uv run pytest tests/unit/test_services_auth.py -q --tb=short
 uv run pytest tests/ -k "test_chat" -q --tb=short
 ```
 
-Rodar teste específico (frontend):
+Rodar teste específico (frontend — a partir da raiz):
 
 ```powershell
-cd vectora/frontend
-pnpm exec vitest run src/components/chat/__tests__/message-item.test.tsx
+pnpm --dir vectora/frontend exec vitest run src/components/chat/__tests__/message-item.test.tsx
 ```
 
-Verificar tipos e lint separados:
+Rodar testes do relay:
+
+```powershell
+pnpm --dir relay run test
+```
+
+Verificar tipos e lint separados (a partir da raiz):
 
 ```powershell
 cd vectora
 uv run ruff check backend tests          # lint Python
 uv run ty check backend tests            # type check Python
-pnpm --dir frontend run typecheck        # i18n:compile + tsc --noEmit
-pnpm --dir frontend exec oxlint          # lint TypeScript
+
+# TypeScript (da raiz do monorepo)
+pnpm --dir vectora/frontend run typecheck   # i18n:compile + tsc --noEmit
+pnpm --dir vectora/frontend exec oxlint     # lint TypeScript
+pnpm --dir relay run typecheck              # tsc --noEmit
+pnpm --dir company run lint                 # eslint
+pnpm --dir company exec tsc --noEmit
 ```
 
 Compilar mensagens i18n (obrigatório antes do vitest quando mensagens mudam):
@@ -67,8 +85,11 @@ vectora/          ← produto principal (Python backend + React frontend)
   frontend/       ← Vite + React + TanStack Router
   tests/          ← pytest (unit/ integration/ e2e/ stress/)
   docker-compose.yml
-  SConstruct      ← build orchestrator (SCons)
+SConstruct        ← build orchestrator (SCons) — raiz do monorepo
 company/          ← site/dashboard externo (Nuxt/TanStack Start) — separado
+relay/            ← Cloudflare Workers relay (TypeScript)
+docs/             ← Docusaurus docs
+update-server/    ← Cloudflare Workers update manifest server
 ```
 
 ### Backend (`vectora/backend/`)

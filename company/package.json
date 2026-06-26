@@ -11,6 +11,7 @@
     "generate-routes": "tsr generate",
     "build": "vite build && node -e \"require('fs').copyFileSync('instrument.server.mjs','.output/server/instrument.server.mjs')\"",
     "preview": "vite preview",
+    "typecheck": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && tsr generate && tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",

@@ -1,0 +1,519 @@
+"""
+Vectora — SConstruct (SCons build file)
+
+Uso (PowerShell / cmd, a partir da raiz do monorepo):
+    scons               → exibe ajuda
+    scons release       → build completo + instalador para o SO atual
+    scons release-win   → instalador Windows (.msi + .exe NSIS)
+    scons release-mac   → instalador macOS (.dmg universal)
+    scons release-linux → instaladores Linux (.AppImage + .deb + .rpm)
+    scons tests         → suíte completa: todos os subprojetos (sem cobertura)
+    scons coverage      → mesma suíte com relatório de cobertura
+    scons lint          → todos os subprojetos: ruff+ty+bandit+tsc+oxlint+eslint
+    scons docker        → sobe PostgreSQL + Redis + Qdrant via docker compose
+    scons clean         → remove outputs de build
+
+Pré-requisitos: uv, pnpm, nuitka (incluído no uv.lock)
+Instalar SCons: pip install scons (ou uv add --dev scons)
+
+Subprojetos cobertos por lint e tests:
+    vectora/        Python (ruff, ty, bandit) + TS frontend (tsc, oxlint, vitest)
+    relay/          TypeScript (tsc, vitest)
+    company/        TypeScript (eslint, tsc, vitest)
+    docs/           TypeScript (tsc) — sem testes
+    update-server/  TypeScript (tsc) — sem testes
+"""
+
+import base64
+import glob
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+ROOT = Dir(".").abspath
+
+# Subprojetos
+VECTORA = os.path.join(ROOT, "vectora")
+RELAY   = os.path.join(ROOT, "relay")
+COMPANY = os.path.join(ROOT, "company")
+DOCS    = os.path.join(ROOT, "docs")
+UPDATE  = os.path.join(ROOT, "update-server")
+
+_ANSI_RE = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def _find_pnpm() -> str:
+    if sys.platform == "win32":
+        for name in ("pnpm.cmd", "pnpm.exe", "pnpm"):
+            found = shutil.which(name)
+            if found:
+                return found
+    return shutil.which("pnpm") or "pnpm"
+
+
+PNPM = _find_pnpm()
+
+
+def _run(
+    cmd: list[str],
+    env: dict | None = None,
+    cwd: str | None = None,
+    log=None,
+    discard_stderr: bool = False,
+) -> None:
+    """Executa um comando, falha se o código de retorno for ≠ 0.
+
+    Com ``log`` (file handle), espelha stdout+stderr para o terminal E para o
+    arquivo (tee). O pipe desliga cores ANSI, deixando o .txt limpo.
+
+    ``discard_stderr=True`` roteia stderr para DEVNULL — útil para ferramentas
+    que emitem avisos ruidosos em stderr mas reportam erros reais via código de
+    retorno (ex: bandit com comentários em língua não-inglesa).
+    """
+    merged = {**os.environ, **(env or {})}
+    run_cwd = cwd or ROOT
+    header = f"\n>> [{os.path.relpath(run_cwd, ROOT)}] {' '.join(str(c) for c in cmd)}"
+    print(header)
+    stderr_dest = subprocess.DEVNULL if discard_stderr else None
+    if log is None:
+        result = subprocess.run(cmd, cwd=run_cwd, env=merged, stderr=stderr_dest)
+        rc = result.returncode
+    else:
+        merged["PYTHONIOENCODING"] = "utf-8"
+        log.write(header + "\n")
+        log.flush()
+        proc = subprocess.Popen(
+            cmd,
+            cwd=run_cwd,
+            env=merged,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL if discard_stderr else subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+        )
+        for line in proc.stdout:  # type: ignore[union-attr]
+            sys.stdout.write(line)
+            log.write(_ANSI_RE.sub("", line))
+        proc.wait()
+        rc = proc.returncode
+    if rc != 0:
+        raise SystemExit(rc)
+
+
+def _open_log(name: str):
+    logdir = os.path.join(ROOT, ".scons-logs")
+    os.makedirs(logdir, exist_ok=True)
+    return open(os.path.join(logdir, f"{name}.txt"), "w", encoding="utf-8")
+
+
+# ── Ações de build ────────────────────────────────────────────────────────────
+
+
+def _action_build_chat(target, source, env):
+    frontend_dir = os.path.join(VECTORA, "frontend")
+    node_env = {"NODE_NO_WARNINGS": "1"}
+    _run([PNPM, "install", "--frozen-lockfile"], env=node_env, cwd=frontend_dir)
+    _run([PNPM, "build"], env=node_env, cwd=frontend_dir)
+
+    dist = os.path.join(VECTORA, "frontend", "dist")
+    if not os.path.isdir(dist) or not os.path.isfile(os.path.join(dist, "index.html")):
+        raise SystemExit(
+            "ERRO: vectora/frontend/dist/index.html não foi gerado. "
+            "Verifique a configuração do Vite em vectora/frontend/vite.config.ts."
+        )
+    print(f">> chat dist pronto em {dist}")
+
+
+def _action_build_nuitka(target, source, env):
+    cpu = os.cpu_count() or 4
+    _run(["uv", "run", "nuitka", f"--jobs={cpu}", "backend/launcher.py"], cwd=VECTORA)
+
+
+def _find_signtool() -> str | None:
+    if sys.platform != "win32":
+        return None
+    kits_root = r"C:\Program Files (x86)\Windows Kits\10\bin"
+    if os.path.isdir(kits_root):
+        for version_dir in sorted(os.listdir(kits_root), reverse=True):
+            for arch in ("x64", "x86"):
+                candidate = os.path.join(kits_root, version_dir, arch, "signtool.exe")
+                if os.path.isfile(candidate):
+                    return candidate
+    return shutil.which("signtool.exe")
+
+
+def _get_dev_cert_env() -> dict[str, str] | None:
+    pfx_path = os.path.join(VECTORA, "electron", "build-resources", "dev-cert.pfx")
+    if not os.path.isfile(pfx_path):
+        return None
+    password = os.environ.get("DEV_CSC_PASSWORD", "vectora-dev")
+    with open(pfx_path, "rb") as f:
+        pfx_b64 = base64.b64encode(f.read()).decode()
+    return {"CSC_LINK": pfx_b64, "CSC_KEY_PASSWORD": password}
+
+
+def _sign_binary(binary: str) -> None:
+    pfx_path = os.path.join(VECTORA, "electron", "build-resources", "dev-cert.pfx")
+    if not os.path.isfile(pfx_path) or not os.path.isfile(binary):
+        return
+    signtool = _find_signtool()
+    if not signtool:
+        print(">> signtool.exe nao encontrado — assinatura manual ignorada")
+        return
+    password = os.environ.get("DEV_CSC_PASSWORD", "vectora-dev")
+    _run([signtool, "sign", "/f", pfx_path, "/p", password, "/fd", "SHA256", "/v", binary])
+    print(f">> assinado: {os.path.basename(binary)}")
+
+
+def _action_install_desktop(target, source, env):
+    _run([PNPM, "--dir", "vectora/electron", "install", "--frozen-lockfile"])
+
+
+def _action_build_desktop(target, source, env):
+    _run([PNPM, "--dir", "vectora/electron", "build"])
+
+
+def _free_desktop_dist() -> None:
+    if sys.platform != "win32":
+        return
+    subprocess.run(
+        ["taskkill", "/F", "/IM", "vectora.exe", "/T"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    unpacked = os.path.join(VECTORA, "electron", "dist-electron", "win-unpacked")
+    if os.path.isdir(unpacked):
+        shutil.rmtree(unpacked, ignore_errors=True)
+        print(">> limpou win-unpacked travado (lock prevention)")
+
+
+def _action_package(target, source, env, platform=""):
+    """Empaqueta com electron-builder escrevendo fora do repositório.
+
+    O watcher de arquivos do editor/IDE trava o win-unpacked/resources/app.asar
+    quando escrito dentro da árvore observada. Buildar num diretório externo
+    elimina a corrida; ao final copiamos só os instaladores de volta.
+    """
+    _free_desktop_dist()
+    out_dir = os.path.join(
+        os.environ.get("LOCALAPPDATA") or tempfile.gettempdir(),
+        "Vectora",
+        "dist-electron",
+    )
+    shutil.rmtree(out_dir, ignore_errors=True)
+    os.makedirs(out_dir, exist_ok=True)
+
+    flag = {"win": "--win", "mac": "--mac", "linux": "--linux"}.get(platform)
+    cmd = [PNPM, "--dir", "vectora/electron", "exec", "electron-builder"]
+    if flag:
+        cmd.append(flag)
+    cmd.append(f"-c.directories.output={out_dir}")
+
+    build_env: dict[str, str] = {}
+    has_signing_creds = any(
+        os.environ.get(k)
+        for k in ("CSC_LINK", "WIN_CSC_LINK", "CSC_KEY_PASSWORD", "MAC_CSC_LINK")
+    )
+    if not has_signing_creds:
+        dev_env = _get_dev_cert_env() if sys.platform == "win32" else None
+        if dev_env:
+            build_env.update(dev_env)
+            nuitka_bin = os.path.join(VECTORA, "dist-nuitka", "vectora.exe")
+            if os.path.isfile(nuitka_bin):
+                print(">> assinando binário Nuitka (extraResource) com dev-cert.pfx...")
+                _sign_binary(nuitka_bin)
+            print(">> assinando instaladores com dev-cert.pfx")
+        else:
+            build_env["CSC_IDENTITY_AUTO_DISCOVERY"] = "false"
+    _run(cmd, env=build_env or None)
+
+    dest = os.path.join(VECTORA, "electron", "dist-electron")
+    os.makedirs(dest, exist_ok=True)
+    patterns = (
+        "*.exe", "*.msi", "*.dmg", "*.AppImage", "*.deb", "*.rpm",
+        "latest*.yml", "*.blockmap",
+    )
+    copied: list[str] = []
+    for pat in patterns:
+        for f in glob.glob(os.path.join(out_dir, pat)):
+            shutil.copy2(f, dest)
+            copied.append(os.path.basename(f))
+    if copied:
+        print(f">> instaladores em {dest}:")
+        for name in copied:
+            print(f"     {name}")
+    else:
+        print(f">> build concluído em {out_dir} (nenhum instalador encontrado)")
+
+
+# ── Lint ──────────────────────────────────────────────────────────────────────
+
+
+def _pnpm_install_if_needed(pkg_dir: str, log) -> None:
+    """Instala deps do subprojeto se node_modules ausente ou desatualizado."""
+    modules = os.path.join(ROOT, pkg_dir, "node_modules")
+    lock = os.path.join(ROOT, pkg_dir, "pnpm-lock.yaml")
+    stamp = os.path.join(modules, ".pnpm-install-stamp")
+    if (
+        not os.path.isdir(modules)
+        or not os.path.isfile(stamp)
+        or (os.path.isfile(lock) and os.path.getmtime(lock) > os.path.getmtime(stamp))
+    ):
+        _run([PNPM, "--dir", pkg_dir, "install", "--frozen-lockfile"], log=log)
+        open(stamp, "w").close()  # noqa: PTH123 WPS515
+
+
+def _action_lint(target, source, env):
+    with _open_log("lint") as log:
+        # ── vectora: Python ───────────────────────────────────────────────────
+        _run(["uv", "run", "ruff", "check", "backend", "tests"], log=log, cwd=VECTORA)
+        _run(["uv", "run", "ty", "check", "backend", "tests"], log=log, cwd=VECTORA)
+        _run(
+            [
+                "uv", "run", "python", "-m", "bandit",
+                "-q",
+                "-s", "B110,B101",
+                "-c", "pyproject.toml",
+                "--exclude", "backend/services/context_graph",
+                "-r", "backend",
+            ],
+            log=log,
+            cwd=VECTORA,
+            discard_stderr=True,
+        )
+        # ── vectora: TypeScript frontend ──────────────────────────────────────
+        # `typecheck` = i18n:compile (paraglide) + tsr generate + tsc --noEmit
+        _run([PNPM, "--dir", "vectora/frontend", "run", "typecheck"], log=log)
+        _run([PNPM, "--dir", "vectora/frontend", "exec", "oxlint"], log=log)
+        # ── relay ─────────────────────────────────────────────────────────────
+        _pnpm_install_if_needed("relay", log)
+        _run([PNPM, "--dir", "relay", "run", "typecheck"], log=log)
+        # ── company ───────────────────────────────────────────────────────────
+        _pnpm_install_if_needed("company", log)
+        _run([PNPM, "--dir", "company", "run", "lint"], log=log)
+        _run([PNPM, "--dir", "company", "run", "typecheck"], log=log)
+        # ── docs ──────────────────────────────────────────────────────────────
+        _pnpm_install_if_needed("docs", log)
+        _run([PNPM, "--dir", "docs", "run", "typecheck"], log=log)
+        # ── update-server ─────────────────────────────────────────────────────
+        _pnpm_install_if_needed("update-server", log)
+        _run([PNPM, "--dir", "update-server", "exec", "tsc", "--noEmit"], log=log)
+    print("\n>> log completo (limpo) em .scons-logs/lint.txt")
+
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+
+
+def _action_tests_storage(target, source, env):
+    """Testes de storage (Postgres, Redis, Qdrant, SQLite, LanceDB).
+
+    Pulam automaticamente quando o serviço não está acessível.
+    """
+    with _open_log("tests-storage") as log:
+        _run(
+            [
+                "uv", "run", "pytest", "tests/integration",
+                "-q", "--tb=short",
+                "-m", "storage",
+            ],
+            log=log,
+            cwd=VECTORA,
+        )
+    print("\n>> log completo em .scons-logs/tests-storage.txt")
+
+
+def _run_full_suite(log, *, coverage: bool):
+    """Suíte completa: vectora (vitest + pytest) + relay (vitest) + company (vitest).
+
+    docs e update-server não têm testes — cobertos só pelo lint (typecheck).
+
+    Com ``coverage=True``, ativa --coverage no vitest e --cov no pytest
+    (relatórios em vectora/frontend/coverage/ e vectora/htmlcov/).
+    """
+    # ── vectora/frontend ──────────────────────────────────────────────────────
+    # Paraglide deve compilar antes do vitest: lib/paraglide é gitignored e o
+    # vitest importa os messages compilados. O plugin Vite só compila em dev/build.
+    _run([PNPM, "--dir", "vectora/frontend", "run", "i18n:compile"], log=log)
+
+    vitest_cmd = [PNPM, "--dir", "vectora/frontend", "exec", "vitest", "run"]
+    if coverage:
+        vitest_cmd.append("--coverage")
+    _run(vitest_cmd, log=log)
+
+    # ── vectora/backend ───────────────────────────────────────────────────────
+    pytest_cmd = ["uv", "run", "pytest", "tests", "-q", "--tb=short"]
+    if coverage:
+        pytest_cmd += [
+            "--cov=backend",
+            "--cov-report=term:skip-covered",
+            "--cov-report=html:htmlcov",
+        ]
+    _run(pytest_cmd, log=log, cwd=VECTORA)
+
+    # ── relay ─────────────────────────────────────────────────────────────────
+    _pnpm_install_if_needed("relay", log)
+    _run([PNPM, "--dir", "relay", "run", "test"], log=log)
+
+    # ── company ───────────────────────────────────────────────────────────────
+    _pnpm_install_if_needed("company", log)
+    _run([PNPM, "--dir", "company", "run", "test"], log=log)
+
+
+def _action_tests(target, source, env):
+    with _open_log("tests") as log:
+        _run_full_suite(log, coverage=False)
+    print("\n>> log completo (limpo) em .scons-logs/tests.txt")
+
+
+def _action_coverage(target, source, env):
+    with _open_log("coverage") as log:
+        _run_full_suite(log, coverage=True)
+    print("\n>> log completo (limpo) em .scons-logs/coverage.txt")
+    print(">> cobertura HTML: vectora/frontend/coverage/index.html e vectora/htmlcov/index.html")
+
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+
+
+def _action_docker(target, source, env):
+    """Sobe a infraestrutura do Vectora (PostgreSQL, Redis, Qdrant).
+
+    O Vectora em si NÃO roda como container. O backend roda no host.
+    """
+    probe = subprocess.run(  # noqa: S603 S607
+        ["docker", "info"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        cwd=ROOT,
+        text=True,
+        check=False,
+    )
+    daemon_error = (
+        probe.returncode != 0
+        or "failed to connect" in (probe.stderr or "").lower()
+        or "cannot connect" in (probe.stderr or "").lower()
+        or "is the docker daemon running" in (probe.stderr or "").lower()
+    )
+    if daemon_error:
+        print(
+            "\n[scons docker] Docker não está acessível.\n"
+            "  Inicie o Docker Desktop e tente novamente.\n"
+        )
+        raise SystemExit(1)
+
+    compose_env: dict[str, str] = {}
+    dotenv = os.path.join(os.path.expanduser("~"), ".vectora", ".env")
+    if os.path.isfile(dotenv):
+        with open(dotenv, encoding="utf-8") as f:  # noqa: PTH123
+            for line in f:
+                stripped = line.strip()
+                if stripped and not stripped.startswith("#") and "=" in stripped:
+                    key, value = stripped.split("=", 1)
+                    compose_env[key.strip()] = value.strip()
+
+    _run(["docker", "compose", "up", "-d"], env=compose_env or None, cwd=VECTORA)
+    print("\n>> Infraestrutura pronta. Configure ~/.vectora/.env:")
+    print(">>   STORAGE_MODE=complete")
+    print(">>   POSTGRES_DSN=postgresql+asyncpg://vectora:vectora@127.0.0.1:5432/vectora")
+    print(">>   REDIS_URL=redis://127.0.0.1:6379/0")
+    print(">>   QDRANT_URL=http://127.0.0.1:6333")
+    print(">> Depois execute: vectora start")
+
+
+# ── Clean ─────────────────────────────────────────────────────────────────────
+
+
+def _action_clean(target, source, env):
+    paths = [
+        "vectora/dist-nuitka",
+        "vectora/frontend/dist",
+        "vectora/frontend/.next",
+        "vectora/frontend/out",
+        "vectora/electron/dist",
+        "vectora/electron/dist-electron",
+    ]
+    for path in paths:
+        full = os.path.join(ROOT, path.replace("/", os.sep))
+        if os.path.exists(full):
+            shutil.rmtree(full)
+            print(f">> removido: {path}")
+
+
+# ── Help ──────────────────────────────────────────────────────────────────────
+
+
+def _action_help(target, source, env):
+    sys.stdout.write("""
+  Vectora — alvos SCons  (rodar da raiz do monorepo)
+
+  Produto final
+    scons release          build completo + instalador para o SO atual
+    scons release-win      instalador Windows (.msi + .exe NSIS)
+    scons release-mac      instalador macOS (.dmg universal)
+    scons release-linux    instaladores Linux (.AppImage + .deb + .rpm)
+
+  Build
+    scons frontend         só o build do frontend (vectora/frontend/dist/)
+    scons docker           sobe infraestrutura (PostgreSQL, Redis, Qdrant)
+
+  Qualidade — cobrem todos os subprojetos
+    scons tests            suíte completa: vectora + relay + company (sem cobertura)
+    scons coverage         a mesma suíte COM relatório de cobertura
+    scons tests-storage    só testes de storage (Postgres, Redis, Qdrant, SQLite, LanceDB)
+    scons lint             vectora (ruff+ty+bandit+tsc+oxlint) + relay (tsc)
+                           + company (eslint+tsc) + docs (tsc) + update-server (tsc)
+    scons clean            remove todos os outputs de build
+""")
+    sys.stdout.flush()
+
+
+# ── Alvos SCons ───────────────────────────────────────────────────────────────
+
+env = Environment(ENV=os.environ)
+env.Decider("timestamp-match")
+
+
+def _node(name: str, action, deps: list | None = None):
+    t = env.Command(f"_{name}", deps or [], action)
+    env.AlwaysBuild(t)
+    return t
+
+
+def _cmd(name: str, action, deps: list | None = None):
+    t = env.Command(f"_{name}", deps or [], action)
+    env.AlwaysBuild(t)
+    env.Alias(name, t)
+    return t
+
+
+_cmd("frontend", _action_build_chat)
+
+_build_chat    = _node("build-chat",      _action_build_chat)
+_build_nuitka  = _node("build-nuitka",    _action_build_nuitka,   deps=[_build_chat])
+_inst_desktop  = _node("install-desktop", _action_install_desktop)
+_build_desktop = _node("build-desktop",   _action_build_desktop,  deps=[_inst_desktop])
+
+_FULL_DEPS = [_build_chat, _build_nuitka, _build_desktop]
+
+_cmd("release-win",   lambda t, s, e: _action_package(t, s, e, "win"),   deps=_FULL_DEPS)
+_cmd("release-mac",   lambda t, s, e: _action_package(t, s, e, "mac"),   deps=_FULL_DEPS)
+_cmd("release-linux", lambda t, s, e: _action_package(t, s, e, "linux"), deps=_FULL_DEPS)
+_cmd("release",       lambda t, s, e: _action_package(t, s, e),          deps=_FULL_DEPS)
+
+_cmd("tests",         _action_tests)
+_cmd("coverage",      _action_coverage)
+_cmd("tests-storage", _action_tests_storage)
+_cmd("lint",          _action_lint)
+_cmd("clean",         _action_clean)
+_cmd("help",          _action_help)
+_cmd("docker",        _action_docker)
+
+Default(env.Command("_default", [], _action_help))

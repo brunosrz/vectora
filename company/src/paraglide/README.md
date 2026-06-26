@@ -2,7 +2,7 @@
 
 > Auto-generated i18n message functions. Import `messages.js` to use translated strings.
 
-Compiled from: `./project.inlang`
+Compiled from: `C:\Users\Machi\Desktop\vectora\company\project.inlang`
 
 ## What is this folder?
 
@@ -143,6 +143,7 @@ Framework adapters provide a `<ParaglideMessage>` component that accepts markup 
 
 ```jsx
 import { ParaglideMessage } from "@inlang/paraglide-js-react"; // or -vue, -svelte, -solid
+
 <ParaglideMessage
   message={m.welcome}
   inputs={{ name: "Ada" }}
