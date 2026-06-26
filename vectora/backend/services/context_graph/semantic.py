@@ -260,14 +260,25 @@ async def _call_llm_async(
     """Chama o LLM do Vectora de forma assíncrona e parseia o resultado."""
     from langchain_core.messages import HumanMessage, SystemMessage
 
+    from backend.services.provider_fallback import (
+        QuotaExhaustedError,
+        try_with_fallback,
+    )
     from backend.services.utils import load_llm
 
-    llm = load_llm(model_id)
     system = _extraction_system(deep=deep)
     messages = [SystemMessage(content=system), HumanMessage(content=user_msg)]
 
+    async def _invoke(mid: str) -> Any:
+        return await load_llm(mid).ainvoke(messages)
+
     try:
-        response = await llm.ainvoke(messages)
+        # Em 429/quota, tenta os outros providers configurados (fallback_order).
+        response = await try_with_fallback(_invoke, model_id)
+    except QuotaExhaustedError:
+        # Quota esgotada em TODOS os providers — não degrada em silêncio: propaga
+        # para o pipeline pausar e oferecer "Continuar" do ponto onde parou.
+        raise
     except Exception as exc:
         logger.exception("semantic: falha na chamada LLM", extra={"model_id": model_id, "error": str(exc)})
         return {"nodes": [], "edges": [], "hyperedges": [], "input_tokens": 0, "output_tokens": 0, "finish_reason": "error"}

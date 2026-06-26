@@ -328,3 +328,70 @@ class TestExtractSemantic:
             )
 
         assert "nodes" in result
+
+
+class TestCallLlmAsyncQuota:
+    """_call_llm_async não engole 429: propaga QuotaExhaustedError (Parte C)."""
+
+    @pytest.mark.asyncio
+    async def test_quota_empty_chain_raises(self):
+        from backend.services.context_graph import semantic
+        from backend.services.provider_fallback import QuotaExhaustedError
+
+        llm = MagicMock()
+        llm.ainvoke = AsyncMock(side_effect=Exception("429 RESOURCE_EXHAUSTED"))
+        with (
+            patch("backend.services.utils.load_llm", return_value=llm),
+            patch(
+                "backend.services.provider_fallback.get_fallback_chain",
+                return_value=[],
+            ),
+        ):
+            with pytest.raises(QuotaExhaustedError):
+                await semantic._call_llm_async(
+                    "msg", model_id="google-genai:gemini-2.5-flash"
+                )
+
+    @pytest.mark.asyncio
+    async def test_non_quota_returns_degraded(self):
+        from backend.services.context_graph import semantic
+
+        llm = MagicMock()
+        llm.ainvoke = AsyncMock(side_effect=ValueError("network boom"))
+        with patch("backend.services.utils.load_llm", return_value=llm):
+            out = await semantic._call_llm_async(
+                "msg", model_id="google-genai:gemini-2.5-flash"
+            )
+        assert out["finish_reason"] == "error"
+        assert out["nodes"] == []
+
+    @pytest.mark.asyncio
+    async def test_quota_then_fallback_succeeds(self):
+        from backend.services.context_graph import semantic
+
+        resp = MagicMock()
+        resp.content = (
+            '{"nodes": [{"id": "n1", "label": "X"}], "edges": [], "hyperedges": []}'
+        )
+        resp.response_metadata = {}
+
+        def loader(mid):
+            llm = MagicMock()
+            if mid == "google-genai:gemini-2.5-flash":
+                llm.ainvoke = AsyncMock(side_effect=Exception("quota exceeded"))
+            else:
+                llm.ainvoke = AsyncMock(return_value=resp)
+            return llm
+
+        with (
+            patch("backend.services.utils.load_llm", side_effect=loader),
+            patch(
+                "backend.services.provider_fallback.get_fallback_chain",
+                return_value=["openai:gpt-4o"],
+            ),
+        ):
+            out = await semantic._call_llm_async(
+                "msg", model_id="google-genai:gemini-2.5-flash"
+            )
+        assert out["finish_reason"] == "stop"
+        assert len(out["nodes"]) == 1
