@@ -7,9 +7,9 @@
  * - Status badge correto por provider
  * - Botão "Conectar via OAuth" presente para providers OAuth não conectados
  * - Botão "Desconectar" presente para providers OAuth conectados
- * - Webhook URL exibida para providers com webhook quando conectado
+ * - Webhook URL via relay (quando relay conectado) e fallback local
  * - Providers filho (google-drive, gmail) renderizam sem botão OAuth próprio
- * - Categorias exibem apenas providers presentes
+ * - Relay status: conectado mostra subdomain; desconectado mostra mensagem padrão
  */
 
 import {
@@ -26,21 +26,40 @@ import { overwriteGetLocale, baseLocale } from "@/lib/paraglide/runtime";
 
 afterEach(cleanup);
 
-// Import frio do componente é lento neste ambiente — pré-carrega uma vez para
-// o primeiro teste não estourar o timeout de 5s.
 beforeAll(async () => {
   await import("../integracoes-tab");
 }, 30000);
 
-// Restaura o locale padrão após cada teste (overwriteGetLocale é global).
 afterEach(() => overwriteGetLocale(() => baseLocale));
 
-// Mock do fetch para simular GET /integrations/
-function mockFetch(integrations: object[]) {
-  global.fetch = vi.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ integrations }),
-  } as Response);
+type RelayStatus = {
+  connected: boolean;
+  token: string | null;
+  subdomain: string | null;
+  webhook_base: string | null;
+};
+
+function mockFetch(
+  integrations: object[],
+  relay: RelayStatus = {
+    connected: false,
+    token: null,
+    subdomain: null,
+    webhook_base: null,
+  },
+) {
+  global.fetch = vi.fn().mockImplementation((url: string) => {
+    if (url === "/relay/status") {
+      return Promise.resolve({
+        ok: true,
+        json: async () => relay,
+      } as Response);
+    }
+    return Promise.resolve({
+      ok: true,
+      json: async () => ({ integrations }),
+    } as Response);
+  });
 }
 
 const BASE_INTEGRATIONS = [
@@ -126,8 +145,6 @@ describe("IntegracoesTab", () => {
   it("renderiza os nomes de todas as integrações", async () => {
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
-    // Alguns nomes (ex: "Google") aparecem como cabeçalho de categoria E como
-    // nome do provider — por isso getAllByText (≥1 ocorrência) em vez de getByText.
     await waitFor(() => {
       for (const name of [
         "GitHub",
@@ -165,7 +182,6 @@ describe("IntegracoesTab", () => {
     render(<IntegracoesTab />);
     await waitFor(() => {
       const oauthBtns = screen.getAllByText(/conectar via oauth/i);
-      // GitLab e Google não estão conectados → devem ter botões OAuth
       expect(oauthBtns.length).toBeGreaterThanOrEqual(2);
     });
   });
@@ -187,11 +203,28 @@ describe("IntegracoesTab", () => {
     });
   });
 
-  it("GitHub conectado exibe URL de webhook", async () => {
+  it("GitHub conectado exibe URL de webhook local quando relay desconectado", async () => {
     const { IntegracoesTab } = await import("../integracoes-tab");
     render(<IntegracoesTab />);
     await waitFor(() => {
       const webhookUrls = screen.getAllByText(/\/webhook\/github/i);
+      expect(webhookUrls.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("GitHub usa relay webhook_base quando relay conectado", async () => {
+    mockFetch(BASE_INTEGRATIONS, {
+      connected: true,
+      token: "abc123",
+      subdomain: "abc123.vectora.chat",
+      webhook_base: "https://abc123.vectora.chat",
+    });
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      const webhookUrls = screen.getAllByText(
+        /abc123\.vectora\.chat\/webhook\/github/i,
+      );
       expect(webhookUrls.length).toBeGreaterThan(0);
     });
   });
@@ -219,6 +252,32 @@ describe("IntegracoesTab", () => {
     // GitHub + Slack = 2 conectadas
     await waitFor(() => {
       expect(screen.getByText(/2 integraç/i)).toBeTruthy();
+    });
+  });
+
+  it("relay desconectado exibe mensagem de relay desconectado", async () => {
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getByText(/relay desconectado/i)).toBeTruthy();
+    });
+  });
+
+  it("relay conectado exibe subdomain e mensagem de relay conectado", async () => {
+    mockFetch(BASE_INTEGRATIONS, {
+      connected: true,
+      token: "abc123",
+      subdomain: "abc123.vectora.chat",
+      webhook_base: "https://abc123.vectora.chat",
+    });
+    const { IntegracoesTab } = await import("../integracoes-tab");
+    render(<IntegracoesTab />);
+    await waitFor(() => {
+      expect(screen.getByText(/relay conectado/i)).toBeTruthy();
+      // subdomain e webhook_base podem aparecer em múltiplos spans — getAllByText é correto
+      expect(
+        screen.getAllByText(/abc123\.vectora\.chat/).length,
+      ).toBeGreaterThan(0);
     });
   });
 });
